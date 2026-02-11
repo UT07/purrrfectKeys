@@ -1,0 +1,110 @@
+{
+  "id": "lesson-03-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "Bass Notes Exploration",
+    "description": "Learn to play bass notes used in accompanying patterns",
+    "difficulty": 2,
+    "estimatedMinutes": 3,
+    "skills": ["left-hand", "bass-notes", "low-register", "accompaniment"],
+    "prerequisites": ["lesson-03-ex-02"]
+  },
+  "settings": {
+    "tempo": 70,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 36,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 36,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 55,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 2
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 68,
+    "starThresholds": [68, 82, 94]
+  },
+  "hints": {
+    "beforeStart": "Bass notes are the deep notes on the left side of the keyboard. This exercise explores C (36, 48, 60) and nearby notes (55=F). In real music, these form the 'bass line' that accompanies the melody.",
+    "commonMistakes": [
+      {
+        "pattern": "hand-stretch",
+        "advice": "Moving from very low notes (36) to higher notes (60) requires hand movement, not stretching. Move your hand down the keyboard for low notes, up for high notes.",
+        "triggerCondition": {
+          "type": "pitch",
+          "threshold": 24
+        }
+      },
+      {
+        "pattern": "timing-inconsistency",
+        "advice": "Each note lasts one full beat. Stay with the metronome precisely, even when you need to move your hand. The motion happens between beats, not during them."
+      }
+    ],
+    "successMessage": "Excellent! You've learned the lower register of the piano. This is the foundation for accompaniment patterns."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

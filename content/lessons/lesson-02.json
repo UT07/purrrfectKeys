@@ -1,0 +1,67 @@
+{
+  "id": "lesson-02",
+  "version": 1,
+  "metadata": {
+    "title": "Right Hand Basics",
+    "description": "Master right hand placement and play simple melodies using C major notes",
+    "difficulty": 1,
+    "estimatedMinutes": 20,
+    "skills": ["right-hand", "c-major", "melodies", "quarter-notes", "eighth-notes"]
+  },
+  "exercises": [
+    {
+      "id": "lesson-02-ex-01",
+      "title": "C-D-E Simple Pattern",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-02-ex-02",
+      "title": "C-D-E-F-G Extended",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-02-ex-03",
+      "title": "C Major Scale (Octave)",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-02-ex-04",
+      "title": "Mary Had a Little Lamb (Intro)",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-02-ex-05",
+      "title": "Broken C Chord (Arpeggio)",
+      "order": 5,
+      "required": false
+    },
+    {
+      "id": "lesson-02-ex-06",
+      "title": "Twinkle Twinkle Little Star",
+      "order": 6,
+      "required": false
+    },
+    {
+      "id": "lesson-02-ex-07",
+      "title": "Eighth Note Drill",
+      "order": 7,
+      "required": false
+    },
+    {
+      "id": "lesson-02-ex-08",
+      "title": "C Position Review",
+      "order": 8,
+      "required": false
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-01"
+  },
+  "xpReward": 250,
+  "estimatedMinutes": 25
+}

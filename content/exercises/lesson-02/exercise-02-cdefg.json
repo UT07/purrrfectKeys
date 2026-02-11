@@ -1,0 +1,100 @@
+{
+  "id": "lesson-02-ex-02",
+  "version": 1,
+  "metadata": {
+    "title": "C-D-E-F-G Extended",
+    "description": "Extend your scale knowledge by adding F and G notes",
+    "difficulty": 1,
+    "estimatedMinutes": 3,
+    "skills": ["right-hand", "quarter-notes", "c-major", "finger-crossing"],
+    "prerequisites": ["lesson-02-ex-01"]
+  },
+  "settings": {
+    "tempo": 60,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [70, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "Use fingers 1-2-3-4-5 for C-D-E-F-G. Notice how you run out of fingers at G. In the next lesson, you'll learn to shift your hand to continue the scale upward.",
+    "commonMistakes": [
+      {
+        "pattern": "finger-numbering",
+        "advice": "Thumb=1, Index=2, Middle=3, Ring=4, Pinky=5. For C-D-E-F-G, use these fingers in order: 1-2-3-4-5.",
+        "triggerCondition": {
+          "type": "sequence",
+          "threshold": 2
+        }
+      },
+      {
+        "pattern": "missed-f",
+        "advice": "F is the fourth white key from C. Make sure you're not skipping F and going straight to G. Check the spacing between black keys.",
+        "triggerCondition": {
+          "type": "pitch",
+          "threshold": 3
+        }
+      }
+    ],
+    "successMessage": "Excellent! You've expanded your range. The five-finger pattern is very common in piano teaching."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

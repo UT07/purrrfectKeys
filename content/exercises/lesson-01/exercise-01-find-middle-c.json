@@ -1,0 +1,86 @@
+{
+  "id": "lesson-01-ex-01",
+  "version": 1,
+  "metadata": {
+    "title": "Find Middle C",
+    "description": "Learn to locate and play Middle C on the keyboard",
+    "difficulty": 1,
+    "estimatedMinutes": 2,
+    "skills": ["right-hand", "note-finding", "middle-c"],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 60,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 60,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 60,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 60,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [70, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "Middle C is located between the two black keys in the middle of the keyboard. Place your thumb (finger 1) on it. Keep your wrist relaxed and fingers gently curved.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat. Count out loud: '1-2-3-4' while you play.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Don't wait too long between notes. Stay with the metronome—think of it like dancing to a rhythm.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Perfect! You've found Middle C. You're ready for the next lesson where you'll learn to play multiple notes."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

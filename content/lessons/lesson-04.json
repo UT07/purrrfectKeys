@@ -1,0 +1,55 @@
+{
+  "id": "lesson-04",
+  "version": 1,
+  "metadata": {
+    "title": "Both Hands Together",
+    "description": "Combine right and left hands to play complete pieces with melody and accompaniment",
+    "difficulty": 2,
+    "estimatedMinutes": 25,
+    "skills": ["both-hands", "coordination", "hand-independence", "songs", "harmony"]
+  },
+  "exercises": [
+    {
+      "id": "lesson-04-ex-01",
+      "title": "Melody and Bass Together",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-04-ex-02",
+      "title": "Mary Had a Little Lamb (Full)",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-04-ex-03",
+      "title": "Hand Independence Drill",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-04-ex-04",
+      "title": "Ode to Joy (Introduction)",
+      "order": 4,
+      "required": false
+    },
+    {
+      "id": "lesson-04-ex-05",
+      "title": "Blocked C and F Chords",
+      "order": 5,
+      "required": false
+    },
+    {
+      "id": "lesson-04-ex-06",
+      "title": "Both Hands Review",
+      "order": 6,
+      "required": false
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-03"
+  },
+  "xpReward": 300,
+  "estimatedMinutes": 28
+}

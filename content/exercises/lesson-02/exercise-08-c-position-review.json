@@ -1,0 +1,124 @@
+{
+  "id": "lesson-02-ex-08",
+  "version": 1,
+  "metadata": {
+    "title": "C Position Review",
+    "description": "Review C position with a mixed rhythm combining quarter and eighth notes",
+    "difficulty": 2,
+    "estimatedMinutes": 3,
+    "skills": ["right-hand", "c-position", "mixed-rhythms", "finger-placement"],
+    "prerequisites": ["lesson-02-ex-07"]
+  },
+  "settings": {
+    "tempo": 80,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 60,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 72,
+    "starThresholds": [72, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "This review combines everything from Lesson 2: finger placement in C position, both quarter notes and eighth notes, and ascending/descending patterns. Stay focused on accurate finger placement and consistent timing.",
+    "commonMistakes": [
+      {
+        "pattern": "rhythm-confusion",
+        "advice": "Quarter notes (1 beat) are longer than eighth notes (0.5 beats). When you see two eighth notes, they move twice as fast as one quarter note. The metronome will help you hear the difference.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 75
+        }
+      },
+      {
+        "pattern": "hand-tension",
+        "advice": "C position is comfortable and natural. If you feel tension, your hand may be too high or too low on the keys. Keep your forearm level with your hand and wrist straight."
+      }
+    ],
+    "successMessage": "Excellent review! You've mastered right hand basics. You're ready to start learning the left hand."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

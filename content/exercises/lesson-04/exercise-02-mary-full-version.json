@@ -1,0 +1,222 @@
+{
+  "id": "lesson-04-ex-02",
+  "version": 1,
+  "metadata": {
+    "title": "Mary Had a Little Lamb (Full)",
+    "description": "Play the complete song with melody and bass accompaniment",
+    "difficulty": 3,
+    "estimatedMinutes": 5,
+    "skills": ["both-hands", "coordination", "melody", "accompaniment", "song-arrangement"],
+    "prerequisites": ["lesson-04-ex-01"]
+  },
+  "settings": {
+    "tempo": 75,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 36,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 48,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 36,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 7,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 36,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 48,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 36,
+      "startBeat": 11,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 11,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 48,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 12,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 60,
+    "timingGracePeriodMs": 160,
+    "velocitySensitive": false,
+    "passingScore": 72,
+    "starThresholds": [72, 84, 94]
+  },
+  "hints": {
+    "beforeStart": "This is the complete 'Mary Had a Little Lamb' with left-hand bass accompaniment. The bass alternates C (36) and G (48) each beat. The melody descends from E with a rest in the middle. Play slowly and focus on hand independence.",
+    "commonMistakes": [
+      {
+        "pattern": "coordination-breakdown",
+        "advice": "If your hands get confused, slow the tempo down in your practice. It's better to play slowly and correctly than fast and messy. Speed comes naturally with accuracy.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 200
+        }
+      },
+      {
+        "pattern": "rushing-melody",
+        "advice": "The melody notes should align with the steady bass beat. Don't let the right hand rush ahead. Use the left hand as your anchor."
+      }
+    ],
+    "successMessage": "Outstanding! You've played your first complete song with both hands! This is a real accomplishment."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

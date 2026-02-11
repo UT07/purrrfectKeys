@@ -1,0 +1,166 @@
+{
+  "id": "lesson-02-ex-07",
+  "version": 1,
+  "metadata": {
+    "title": "Eighth Note Drill",
+    "description": "Practice playing eighth notes with consistent timing and touch",
+    "difficulty": 2,
+    "estimatedMinutes": 3,
+    "skills": ["right-hand", "eighth-notes", "rhythm-precision", "finger-dexterity"],
+    "prerequisites": ["lesson-02-ex-03"]
+  },
+  "settings": {
+    "tempo": 90,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 72,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 72,
+      "startBeat": 4,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 71,
+      "startBeat": 4.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 69,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 64,
+      "startBeat": 6.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 7,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 7.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 40,
+    "timingGracePeriodMs": 120,
+    "velocitySensitive": false,
+    "passingScore": 75,
+    "starThresholds": [75, 87, 95]
+  },
+  "hints": {
+    "beforeStart": "Eighth notes move twice as fast as quarter notes. Each note is half a beat. Keep your hand relaxed and let your fingers do the work. The metronome helps you stay steady.",
+    "commonMistakes": [
+      {
+        "pattern": "uneven-timing",
+        "advice": "Each eighth note should be exactly equal in length. Don't rush some notes and drag others. Listen to the spaces between notes and make them equal.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 50
+        }
+      },
+      {
+        "pattern": "tension",
+        "advice": "Eighth notes require quick finger movements, but your hand should stay relaxed. Tension actually slows you down. Keep your wrist still and loose."
+      }
+    ],
+    "successMessage": "Great! You're developing finger dexterity and rhythm precision. Eighth notes are essential for all music."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

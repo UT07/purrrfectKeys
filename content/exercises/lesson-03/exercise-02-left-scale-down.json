@@ -1,0 +1,117 @@
+{
+  "id": "lesson-03-ex-02",
+  "version": 1,
+  "metadata": {
+    "title": "Left Hand Scale Descending",
+    "description": "Play a descending C major scale with your left hand",
+    "difficulty": 1,
+    "estimatedMinutes": 3,
+    "skills": ["left-hand", "scales", "c-major", "finger-placement"],
+    "prerequisites": ["lesson-03-ex-01"]
+  },
+  "settings": {
+    "tempo": 60,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 59,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 4
+    },
+    {
+      "note": 57,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 56,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 2
+    },
+    {
+      "note": 55,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 1
+    },
+    {
+      "note": 53,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 2
+    },
+    {
+      "note": 52,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 50,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 4
+    },
+    {
+      "note": 48,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [70, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "Start from Middle C (pinky, 5) and descend: C-B-A-G-F-E-D-C. Use fingers 5-4-3-2-1-2-3-4-5. This is the mirror image of the right hand scale pattern.",
+    "commonMistakes": [
+      {
+        "pattern": "direction-confusion",
+        "advice": "Left hand going DOWN from C means the MIDI numbers get lower: 60→59→57→56→55... Right hand goes UP and numbers get higher. It's opposite direction but same keyboard pattern.",
+        "triggerCondition": {
+          "type": "pitch",
+          "threshold": 3
+        }
+      },
+      {
+        "pattern": "skipped-b",
+        "advice": "Between C and A, don't forget B (59). It's the white key immediately to the left of C. Same with the other notes—play every white key going down."
+      }
+    ],
+    "successMessage": "Great! You've mastered left hand descending scale. You now know both hands independently."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

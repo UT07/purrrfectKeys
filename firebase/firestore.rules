@@ -1,0 +1,202 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================================================
+    // Helper Functions
+    // ========================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdminUser() {
+      return isAuthenticated() &&
+             get(/databases/{database}/documents/admins/{request.auth.uid}).exists;
+    }
+
+    // ========================================================================
+    // User Profiles (users/{uid})
+    // ========================================================================
+
+    match /users/{userId} {
+      // Read own profile
+      allow read: if isOwner(userId);
+
+      // Create profile on signup
+      allow create: if isOwner(userId) &&
+                      request.resource.data.uid == userId &&
+                      request.resource.data.email != null &&
+                      request.resource.data.createdAt != null;
+
+      // Update own profile
+      allow update: if isOwner(userId) &&
+                       request.resource.data.uid == userId &&
+                       // Don't allow changing email directly
+                       request.resource.data.email == resource.data.email;
+
+      // Delete own profile
+      allow delete: if isOwner(userId);
+
+      // ======================================================================
+      // Progress Sub-collection (users/{uid}/progress/{lessonId})
+      // ======================================================================
+
+      match /progress/{lessonId} {
+        // Read own progress
+        allow read: if isOwner(userId);
+
+        // Create progress document
+        allow create: if isOwner(userId) &&
+                        request.resource.data.lessonId == lessonId &&
+                        request.resource.data.status in ['locked', 'available', 'in_progress', 'completed'];
+
+        // Update own progress
+        allow update: if isOwner(userId) &&
+                         request.resource.data.lessonId == lessonId;
+
+        // Delete progress (typically not done)
+        allow delete: if false;
+      }
+
+      // ======================================================================
+      // Gamification Sub-collection (users/{uid}/gamification/{doc})
+      // ======================================================================
+
+      match /gamification/{document=**} {
+        // Read own gamification data
+        allow read: if isOwner(userId);
+
+        // Create and update own gamification data
+        allow create, update: if isOwner(userId) &&
+                              request.resource.data.uid == userId;
+
+        // Prevent deletion of gamification data
+        allow delete: if false;
+      }
+
+      // ======================================================================
+      // XP Log Sub-collection (users/{uid}/xpLog/{doc})
+      // ======================================================================
+
+      match /xpLog/{document=**} {
+        // Read own XP log
+        allow read: if isOwner(userId);
+
+        // Create XP log entries (server-side only)
+        allow create: if false;
+
+        // Prevent updates and deletes
+        allow update, delete: if false;
+      }
+
+      // ======================================================================
+      // Sync Log Sub-collection (users/{uid}/syncLog/{doc})
+      // ======================================================================
+
+      match /syncLog/{document=**} {
+        // Read own sync log
+        allow read: if isOwner(userId);
+
+        // Create sync log entries
+        allow create: if isOwner(userId);
+
+        // Update (mark as synced)
+        allow update: if isOwner(userId) &&
+                         request.resource.data.id == resource.data.id;
+
+        // Prevent deletion
+        allow delete: if false;
+      }
+
+      // ======================================================================
+      // Settings Sub-collection (users/{uid}/settings/{doc})
+      // ======================================================================
+
+      match /settings/{document=**} {
+        // Read own settings
+        allow read: if isOwner(userId);
+
+        // Update own settings
+        allow update: if isOwner(userId);
+
+        // Prevent creation and deletion through client
+        allow create, delete: if false;
+      }
+    }
+
+    // ========================================================================
+    // Cache Collection (for AI responses and other cached data)
+    // ========================================================================
+
+    match /cache/{document=**} {
+      // Only authenticated users can read cache
+      allow read: if isAuthenticated();
+
+      // Only Cloud Functions can write to cache
+      allow write: if request.auth.uid == null;
+    }
+
+    // ========================================================================
+    // Analytics Events (analytics/{event})
+    // ========================================================================
+
+    match /analytics/{document=**} {
+      // Authenticated users can write analytics
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.timestamp != null;
+
+      // Only admins can read analytics
+      allow read: if isAdminUser();
+
+      // Prevent updates and deletes
+      allow update, delete: if false;
+    }
+
+    // ========================================================================
+    // Public Data (exercises, lessons - read-only for authenticated users)
+    // ========================================================================
+
+    match /exercises/{exerciseId} {
+      // All authenticated users can read exercises
+      allow read: if isAuthenticated();
+
+      // Only admins can write
+      allow write: if isAdminUser();
+    }
+
+    match /lessons/{lessonId} {
+      // All authenticated users can read lessons
+      allow read: if isAuthenticated();
+
+      // Only admins can write
+      allow write: if isAdminUser();
+    }
+
+    // ========================================================================
+    // Admin Collection (admins/{uid})
+    // ========================================================================
+
+    match /admins/{userId} {
+      // Only the user can read their own admin status
+      allow read: if isOwner(userId);
+
+      // Only admins can create/update admin records (prevent escalation)
+      allow write: if false;
+    }
+
+    // ========================================================================
+    // Default: Deny all other access
+    // ========================================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

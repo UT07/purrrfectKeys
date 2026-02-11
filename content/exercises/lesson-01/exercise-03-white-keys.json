@@ -1,0 +1,110 @@
+{
+  "id": "lesson-01-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "White Keys Pattern",
+    "description": "Learn the names of white keys using the white key pattern",
+    "difficulty": 1,
+    "estimatedMinutes": 3,
+    "skills": ["orientation", "note-names", "white-keys"],
+    "prerequisites": ["lesson-01-ex-01"]
+  },
+  "settings": {
+    "tempo": 60,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 72,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 65,
+    "starThresholds": [70, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "Play the white keys from C to C using eighth notes: C-D-E-F-G-A-B-C. Notice there are no black keys between E-F and B-C. Use fingers 1-2-3-4-5-4-3-2 to maintain good technique.",
+    "commonMistakes": [
+      {
+        "pattern": "black-key-confusion",
+        "advice": "Remember: There are 7 white keys in a C-to-C pattern. No black keys appear between E-F or between B-C. Listen carefully to the sound to confirm you're on white keys only.",
+        "triggerCondition": {
+          "type": "pitch",
+          "threshold": 2
+        }
+      },
+      {
+        "pattern": "finger-number-skip",
+        "advice": "Use your thumb (1) for C, then count up: 2 for D, 3 for E, 4 for F, 5 for G, then back down 4 for A, 3 for B, 2 for high C. This pattern prevents your hand from getting stuck."
+      }
+    ],
+    "successMessage": "Excellent! You've learned the white key pattern. This is the foundation for all white key navigation."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

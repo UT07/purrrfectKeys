@@ -1,0 +1,34 @@
+{
+  "id": "lesson-01",
+  "version": 1,
+  "metadata": {
+    "title": "Getting Started",
+    "description": "Learn the basics of the piano keyboard and locate important landmarks like Middle C",
+    "difficulty": 1,
+    "estimatedMinutes": 10,
+    "skills": ["orientation", "note-identification", "keyboard-navigation"]
+  },
+  "exercises": [
+    {
+      "id": "lesson-01-ex-01",
+      "title": "Find Middle C",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-01-ex-02",
+      "title": "Keyboard Geography",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-01-ex-03",
+      "title": "White Keys Pattern",
+      "order": 3,
+      "required": true
+    }
+  ],
+  "unlockRequirement": null,
+  "xpReward": 120,
+  "estimatedMinutes": 10
+}

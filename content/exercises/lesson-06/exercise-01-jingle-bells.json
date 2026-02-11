@@ -1,0 +1,124 @@
+{
+  "id": "lesson-06-ex-01",
+  "version": 1,
+  "metadata": {
+    "title": "Jingle Bells (Right Hand)",
+    "description": "Play the holiday classic with right hand only",
+    "difficulty": 2,
+    "estimatedMinutes": 5,
+    "skills": ["right-hand", "melody", "song", "quarter-notes", "music-history"],
+    "prerequisites": ["lesson-05-ex-04"]
+  },
+  "settings": {
+    "tempo": 100,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 67,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 11,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 3
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 55,
+    "timingGracePeriodMs": 155,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [70, 83, 94]
+  },
+  "hints": {
+    "beforeStart": "The famous melody 'Jingle Bells' starts on G and features the classic notes G-G-G (whole note), G-A-B (half notes), then C-G-A-B. The rhythm has whole notes (4 beats) and half notes (2 beats). Listen for the characteristic 'jingling' rhythm.",
+    "commonMistakes": [
+      {
+        "pattern": "note-duration",
+        "advice": "Watch the note durations carefully. G is held for 4 beats (whole note). Later, A and B are 1 beat each, and some are held 2 beats. Don't rush the long notes.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 200
+        }
+      },
+      {
+        "pattern": "c-position-error",
+        "advice": "When you jump to C (64), make sure you're on the correct C. It's the white key below your high G, between black keys. Don't play a wrong C or G instead."
+      }
+    ],
+    "successMessage": "Wonderful! You've played a beloved holiday classic. This recognizable melody is a joy to play."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

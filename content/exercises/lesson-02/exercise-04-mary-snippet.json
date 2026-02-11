@@ -1,0 +1,124 @@
+{
+  "id": "lesson-02-ex-04",
+  "version": 1,
+  "metadata": {
+    "title": "Mary Had a Little Lamb (Intro)",
+    "description": "Play the opening phrase of this classic melody using right hand",
+    "difficulty": 2,
+    "estimatedMinutes": 4,
+    "skills": ["right-hand", "melody", "c-major", "quarter-notes"],
+    "prerequisites": ["lesson-02-ex-03"]
+  },
+  "settings": {
+    "tempo": 80,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 64,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 4
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 72,
+    "starThresholds": [72, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "This is 'Mary Had a Little Lamb'! The melody starts on E (finger 3), then descends to D-C, then ascends E-E-E. The rhythm has one half note at the end (F) that lasts 2 beats.",
+    "commonMistakes": [
+      {
+        "pattern": "rhythm-error",
+        "advice": "The three E notes are quarter notes played quickly. Then there's a rest. Then D-C-D-E, and finally a longer F (half note, 2 beats). Don't rush the rests.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 150
+        }
+      },
+      {
+        "pattern": "wrong-starting-note",
+        "advice": "Start on E (3rd white key from the left), not C. This melody begins high and comes down."
+      }
+    ],
+    "successMessage": "Wonderful! You've played your first song! This is the beginning of musical expression."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

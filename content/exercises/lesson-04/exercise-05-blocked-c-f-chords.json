@@ -1,0 +1,138 @@
+{
+  "id": "lesson-04-ex-05",
+  "version": 1,
+  "metadata": {
+    "title": "Blocked C and F Chords",
+    "description": "Play C and F major chords struck together with both hands",
+    "difficulty": 3,
+    "estimatedMinutes": 3,
+    "skills": ["both-hands", "chord-playing", "harmony", "simultaneous-notes"],
+    "prerequisites": ["lesson-04-ex-01"]
+  },
+  "settings": {
+    "tempo": 80,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 41,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 1
+    },
+    {
+      "note": 53,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 60,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 36,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 41,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 1
+    },
+    {
+      "note": 53,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 60,
+    "timingGracePeriodMs": 160,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [70, 83, 94]
+  },
+  "hints": {
+    "beforeStart": "This exercise combines C and F major chords. C major is C-E-G (60-64-67), F major is F-A-C (41-45-53 in left hand bass). Both hands play at the same time for each chord. This creates a complete harmonic sound.",
+    "commonMistakes": [
+      {
+        "pattern": "timing-sync",
+        "advice": "When two hands play simultaneously, it's critical they start at exactly the same moment. Coordinate the finger movement so both hands prepare and release together.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 80
+        }
+      },
+      {
+        "pattern": "note-mix-up",
+        "advice": "C major: C(60)-E(64)-G(not in right hand). F major: F(41)-A(not shown)-C(53). Make sure you're playing the correct notes for each chord."
+      }
+    ],
+    "successMessage": "Perfect! You're playing full harmonies now. Blocked chords are essential for accompaniment and harmony."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

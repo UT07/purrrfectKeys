@@ -1,0 +1,163 @@
+{
+  "id": "lesson-02-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "C Major Scale (Octave)",
+    "description": "Play the complete C major scale up and down one octave",
+    "difficulty": 2,
+    "estimatedMinutes": 4,
+    "skills": ["right-hand", "c-major", "scale-technique", "finger-crossing"],
+    "prerequisites": ["lesson-02-ex-02"]
+  },
+  "settings": {
+    "tempo": 60,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 72,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 71,
+      "startBeat": 4,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 69,
+      "startBeat": 4.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 64,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 6.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 75,
+    "starThresholds": [75, 88, 95]
+  },
+  "hints": {
+    "beforeStart": "Play the full C major scale with eighth notes: C-D-E-F-G-A-B-C then back down. Notice how you use fingers 1-2-3-4-5-4-3-2-3-4-5-4-3-2-1. The finger pattern is symmetrical!",
+    "commonMistakes": [
+      {
+        "pattern": "uneven-tempo",
+        "advice": "Eighth notes move twice as fast as quarter notes. Keep a steady beat with the metronome. Don't rush the ascending part or drag the descending part.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 75
+        }
+      },
+      {
+        "pattern": "missing-a-b",
+        "advice": "After G (finger 5), your next two notes are A (finger 4) and B (finger 3). These are the top two notes of the scale before the final C. Don't skip them!",
+        "triggerCondition": {
+          "type": "pitch",
+          "threshold": 2
+        }
+      }
+    ],
+    "successMessage": "Outstanding! You've mastered the complete C major scale. This is a major milestone in piano technique."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

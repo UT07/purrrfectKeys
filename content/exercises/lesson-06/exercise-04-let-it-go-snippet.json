@@ -1,0 +1,194 @@
+{
+  "id": "lesson-06-ex-04",
+  "version": 1,
+  "metadata": {
+    "title": "Contemporary Melody (Let It Go Style)",
+    "description": "Play a modern melody inspired by contemporary music",
+    "difficulty": 3,
+    "estimatedMinutes": 5,
+    "skills": ["both-hands", "melody", "contemporary-music", "coordination", "mixed-rhythms"],
+    "prerequisites": ["lesson-06-ex-03"]
+  },
+  "settings": {
+    "tempo": 85,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 48,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 36,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 48,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 36,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 48,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 48,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 7,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 5
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 55,
+    "timingGracePeriodMs": 155,
+    "velocitySensitive": false,
+    "passingScore": 73,
+    "starThresholds": [73, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "This modern melody combines quarter and eighth notes in a contemporary style. The rhythm is syncopated and the melody jumps around expressively (G-F-E-D-C-D-E-F-G). Left hand provides steady C-G bass throughout. This style is common in modern music.",
+    "commonMistakes": [
+      {
+        "pattern": "rhythm-anticipation",
+        "advice": "Contemporary music often features off-beat rhythms. Don't anticipate where the melody is going. Stay locked to the metronome. The left hand is your anchor.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 150
+        }
+      },
+      {
+        "pattern": "jumpy-melody",
+        "advice": "The melody jumps up and down rather than moving step-by-step. Make sure you're reading the correct notes. The pattern G-F-E-D-C-D-E-F-G creates an interesting shape."
+      }
+    ],
+    "successMessage": "Fantastic! You can now play contemporary music styles. Your musical range has grown tremendously!"
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

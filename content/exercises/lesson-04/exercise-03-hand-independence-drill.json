@@ -1,0 +1,131 @@
+{
+  "id": "lesson-04-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "Hand Independence Drill",
+    "description": "Develop hand independence with different rhythmic patterns",
+    "difficulty": 3,
+    "estimatedMinutes": 4,
+    "skills": ["both-hands", "independence", "rhythm", "coordination"],
+    "prerequisites": ["lesson-04-ex-02"]
+  },
+  "settings": {
+    "tempo": 80,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 48,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 64,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 140,
+    "velocitySensitive": false,
+    "passingScore": 74,
+    "starThresholds": [74, 86, 95]
+  },
+  "hints": {
+    "beforeStart": "This exercise challenges your independence: left hand plays steady quarter notes on C (36) and G (48), while right hand plays a mix of quarter and eighth notes. The rhythms are different, which tests true hand independence.",
+    "commonMistakes": [
+      {
+        "pattern": "rhythm-sync",
+        "advice": "Your hands want to do the same rhythm. Resist this! The key to independence is letting each hand maintain its own pattern. Practice hands separately first, then slowly combine.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      },
+      {
+        "pattern": "left-hand-inconsistency",
+        "advice": "The left hand must be rock-solid steady. If it wavers, the whole piece falls apart. Make the left hand your metronome—it should never waver."
+      }
+    ],
+    "successMessage": "Excellent! You're developing real hand independence. This skill is crucial for playing more complex music."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

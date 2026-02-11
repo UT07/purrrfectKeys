@@ -1,0 +1,159 @@
+{
+  "id": "lesson-05-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "Scale Speed Drill",
+    "description": "Practice C major scale at increasing speeds to build finger dexterity",
+    "difficulty": 3,
+    "estimatedMinutes": 5,
+    "skills": ["scales", "finger-dexterity", "speed", "right-hand", "sixteen-notes"],
+    "prerequisites": ["lesson-05-ex-01"]
+  },
+  "settings": {
+    "tempo": 100,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 0.25,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 0.5,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 0.75,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 1,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 1.25,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 1.5,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 72,
+      "startBeat": 1.75,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 71,
+      "startBeat": 2,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 69,
+      "startBeat": 2.25,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 2.5,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 2.75,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 64,
+      "startBeat": 3,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 3.25,
+      "durationBeats": 0.25,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 40,
+    "timingGracePeriodMs": 100,
+    "velocitySensitive": false,
+    "passingScore": 76,
+    "starThresholds": [76, 88, 97]
+  },
+  "hints": {
+    "beforeStart": "This exercise uses sixteenth notes (4 per beat) to challenge your finger speed and precision. Start slowly with the metronome and only increase speed when you're comfortable. Accuracy is more important than speed.",
+    "commonMistakes": [
+      {
+        "pattern": "uneven-tempo",
+        "advice": "Sixteenth notes must be perfectly even. If some notes are faster or slower than others, your fingers aren't working together consistently. Slow down and focus on evenness.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 60
+        }
+      },
+      {
+        "pattern": "hand-tension",
+        "advice": "Speed comes from relaxation, not tension. Keep your hand loose and let your fingers move freely. Tension actually slows you down and causes mistakes."
+      }
+    ],
+    "successMessage": "Fantastic! You're developing real finger dexterity. Sixteenth-note scales are used in many advanced pieces."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

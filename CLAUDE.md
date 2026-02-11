@@ -1,0 +1,197 @@
+# KeySense - AI-Powered Piano Learning App
+
+## Project Overview
+A Duolingo-style piano learning app with real-time feedback, MIDI support, and AI coaching.
+Built with React Native (Expo) + Firebase + Gemini AI.
+
+**Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
+
+## Quick Commands
+
+```bash
+# Development
+npm run start              # Start Expo dev server
+npm run ios                # Run on iOS simulator
+npm run android            # Run on Android emulator
+npm run web                # Run web version (limited)
+
+# Quality
+npm run typecheck          # TypeScript validation
+npm run lint               # ESLint + Prettier
+npm run lint:fix           # Auto-fix linting issues
+npm run test               # Run Jest tests
+npm run test:watch         # Watch mode
+npm run test:coverage      # Coverage report
+
+# Building
+npm run build:ios          # EAS Build for iOS
+npm run build:android      # EAS Build for Android
+npm run build:preview      # Internal testing build
+
+# Utilities
+npm run generate:exercise  # Create new exercise from template
+npm run measure:latency    # Audio latency test harness
+```
+
+## Architecture Principles
+
+1. **Audio code lives in native modules** - Never process audio buffers in JS
+2. **Business logic is pure TypeScript** - No React imports in `/src/core/`
+3. **State management with Zustand** - See `/src/stores/` for patterns
+4. **Exercise definitions are JSON** - See @agent_docs/exercise-format.md
+5. **Offline-first** - Core loop must work without network
+
+## Project Structure
+
+```
+src/
+├── core/                 # Platform-agnostic business logic (NO React imports)
+│   ├── exercises/        # Exercise validation, scoring algorithms
+│   ├── music/            # Music theory utilities (notes, scales, chords)
+│   ├── progression/      # XP calculation, level unlocks
+│   └── analytics/        # Event tracking abstraction
+├── audio/                # Audio engine abstraction
+│   ├── AudioEngine.ts    # Interface definition
+│   ├── AudioEngine.native.ts  # react-native-audio-api implementation
+│   └── samples/          # Piano sample management
+├── input/                # Input handling
+│   ├── MidiInput.ts      # MIDI device handling
+│   └── PitchDetector.ts  # Microphone fallback (TurboModule wrapper)
+├── stores/               # Zustand stores
+│   ├── exerciseStore.ts  # Current exercise state
+│   ├── progressStore.ts  # User progress, XP, streaks
+│   └── settingsStore.ts  # User preferences
+├── screens/              # Screen components
+├── components/           # Reusable UI components
+│   ├── Keyboard/         # Piano keyboard component
+│   ├── PianoRoll/        # Scrolling note display
+│   └── common/           # Buttons, cards, etc.
+├── navigation/           # React Navigation setup
+├── services/             # External integrations
+│   ├── firebase/         # Auth, Firestore, Functions
+│   ├── ai/               # Gemini AI coaching
+│   └── analytics/        # PostHog
+└── utils/                # Shared utilities
+```
+
+## Key Files to Understand
+
+| File | Purpose |
+|------|---------|
+| `src/audio/AudioEngine.ts` | Audio playback abstraction (Web Audio API compatible) |
+| `src/core/exercises/ExerciseValidator.ts` | Core scoring logic - pure TS, heavily tested |
+| `src/core/exercises/types.ts` | Exercise and score type definitions |
+| `src/input/MidiInput.ts` | MIDI device connection and event handling |
+| `src/stores/exerciseStore.ts` | Exercise session state management |
+| `src/components/Keyboard/Keyboard.tsx` | Interactive piano keyboard |
+| `content/exercises/` | JSON exercise definitions |
+
+## Code Style
+
+- **TypeScript:** Strict mode, no `any` types, explicit return types on exports
+- **React:** Functional components only, hooks for logic extraction
+- **Imports:** Use ES modules, destructure where possible
+- **Naming:** camelCase for variables/functions, PascalCase for components/types
+- **Files:** One component per file, colocate styles and tests
+
+```typescript
+// ✅ Good
+import { useState, useCallback } from 'react';
+import type { Exercise, NoteEvent } from '@/core/exercises/types';
+
+export function useExercisePlayer(exercise: Exercise): ExercisePlayerState {
+  // ...
+}
+
+// ❌ Bad
+import React from 'react';  // Don't import React namespace
+const exercise: any = {};   // No any types
+```
+
+## Audio Development Rules
+
+**CRITICAL: Audio buffer processing must NEVER happen in JavaScript.**
+
+```typescript
+// ❌ NEVER DO THIS - allocates on every callback, causes glitches
+onAudioBuffer((buffer: Float32Array) => {
+  const analysis = new Float32Array(buffer.length);  // BAD!
+  processBuffer(analysis);
+});
+
+// ✅ CORRECT - pre-allocated buffers
+const analysisBuffer = new Float32Array(4096);
+onAudioBuffer((buffer: Float32Array) => {
+  analysisBuffer.set(buffer);
+  processBuffer(analysisBuffer);
+});
+```
+
+**Latency Targets:**
+- Touch → Sound: <20ms
+- MIDI → Sound: <15ms
+- Microphone → Pitch detection: <150ms (fallback only)
+
+## Testing Strategy
+
+| Layer | Tool | Location |
+|-------|------|----------|
+| Core logic | Jest | `src/core/**/__tests__/` |
+| Components | React Testing Library | `src/components/**/__tests__/` |
+| Integration | Jest + mocks | `src/__tests__/integration/` |
+| E2E | Detox | `e2e/` |
+| Audio latency | Custom harness | `scripts/measure-latency.ts` |
+
+**Run tests before committing:**
+```bash
+npm run typecheck && npm run test
+```
+
+## Reference Documentation
+
+For detailed guidance on specific topics, read these files:
+
+- @agent_docs/architecture.md - System design and data flow
+- @agent_docs/audio-pipeline.md - Audio latency budgets and patterns
+- @agent_docs/exercise-format.md - Exercise JSON schema and examples
+- @agent_docs/scoring-algorithm.md - Note validation and scoring logic
+- @agent_docs/midi-integration.md - MIDI device handling
+- @agent_docs/firebase-schema.md - Firestore data models
+- @agent_docs/ai-coaching.md - Gemini prompts and caching
+
+## Common Tasks
+
+### Adding a New Exercise
+1. Create JSON in `content/exercises/lesson-X/exercise-Y.json`
+2. Follow schema in @agent_docs/exercise-format.md
+3. Add to lesson manifest in `content/lessons/lesson-X.json`
+4. Test with `npm run validate:exercises`
+
+### Adding a New Screen
+1. Create component in `src/screens/NewScreen.tsx`
+2. Add to navigation in `src/navigation/AppNavigator.tsx`
+3. Add screen params to `src/navigation/types.ts`
+
+### Modifying Scoring Logic
+1. Update algorithm in `src/core/exercises/ExerciseValidator.ts`
+2. Update tests in `src/core/exercises/__tests__/`
+3. Document changes in @agent_docs/scoring-algorithm.md
+
+## Environment Variables
+
+```bash
+# .env.local (never commit!)
+EXPO_PUBLIC_FIREBASE_API_KEY=xxx
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=xxx
+EXPO_PUBLIC_GEMINI_API_KEY=xxx
+POSTHOG_API_KEY=xxx
+```
+
+## IMPORTANT REMINDERS
+
+1. **Always test audio changes on physical devices** - Simulators have unreliable audio
+2. **MIDI testing requires actual hardware** - Use a MIDI keyboard for integration tests
+3. **Exercise content is version-controlled** - Update version number when changing exercises
+4. **Firebase rules changes require review** - Security-critical
+5. **Run typecheck before committing** - CI will fail otherwise
+6. **Pitch detection is fallback only** - Optimize for MIDI input first

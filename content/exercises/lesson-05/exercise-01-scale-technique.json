@@ -1,0 +1,152 @@
+{
+  "id": "lesson-05-ex-01",
+  "version": 1,
+  "metadata": {
+    "title": "Scale Technique (Right Hand)",
+    "description": "Master proper finger crossing technique for scale playing",
+    "difficulty": 2,
+    "estimatedMinutes": 4,
+    "skills": ["scales", "finger-crossing", "technique", "right-hand"],
+    "prerequisites": ["lesson-04-ex-06"]
+  },
+  "settings": {
+    "tempo": 80,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 62,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 72,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 74,
+      "startBeat": 4,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 76,
+      "startBeat": 4.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 77,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 79,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 81,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 81,
+      "startBeat": 6.5,
+      "durationBeats": 1.5,
+      "hand": "right",
+      "finger": 5
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 45,
+    "timingGracePeriodMs": 130,
+    "velocitySensitive": false,
+    "passingScore": 74,
+    "starThresholds": [74, 87, 96]
+  },
+  "hints": {
+    "beforeStart": "This exercise spans two octaves with finger crossing: C to C to G. At C5 (note 72), your thumb crosses under your fingers to reach the next C (74). This crossing motion should be smooth and relaxed. Up to G uses 1-2-3-4-5-4-3-2-1-2-3-4-5 pattern.",
+    "commonMistakes": [
+      {
+        "pattern": "stiff-crossing",
+        "advice": "The thumb crossing should be smooth and natural. Avoid stiffening your wrist. The motion comes from your hand and arm working together, not from forcing the thumb under.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      },
+      {
+        "pattern": "skipped-notes",
+        "advice": "This scale covers all white notes continuously. Don't skip any. If you miss a note, you've likely miscounted your fingers or the keyboard position."
+      }
+    ],
+    "successMessage": "Great! You've mastered the finger crossing technique. This skill opens up faster scale passages."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

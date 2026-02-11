@@ -1,0 +1,152 @@
+{
+  "id": "lesson-02-ex-06",
+  "version": 1,
+  "metadata": {
+    "title": "Twinkle Twinkle Little Star",
+    "description": "Play the complete melody of this beloved lullaby",
+    "difficulty": 2,
+    "estimatedMinutes": 4,
+    "skills": ["right-hand", "melody", "c-major", "mixed-rhythms"],
+    "prerequisites": ["lesson-02-ex-04"]
+  },
+  "settings": {
+    "tempo": 75,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 60,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 69,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 67,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 65,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 64,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 11,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 62,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 62,
+      "startBeat": 13,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 60,
+      "startBeat": 14,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 72,
+    "starThresholds": [72, 86, 95]
+  },
+  "hints": {
+    "beforeStart": "This melody uses mostly quarter notes with half notes at phrase endings. The notes are C-C-G-G-A-A-G / F-F-E-E-D-D-C. Notice the shape: up to G, then step down one note at a time.",
+    "commonMistakes": [
+      {
+        "pattern": "skipped-half-notes",
+        "advice": "After the double notes, you have half notes (2 beats each) on G, then later on C. Don't rush these—hold them for a full 2 beats.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      },
+      {
+        "pattern": "hand-position-jump",
+        "advice": "From C to G is a big jump. Don't tense up—it's a comfortable stretch for a mature hand. For smaller hands, move your hand position rather than stretching."
+      }
+    ],
+    "successMessage": "Beautiful! You've played a complete, recognizable melody. You're becoming a real pianist!"
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

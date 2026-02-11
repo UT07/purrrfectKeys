@@ -1,0 +1,166 @@
+{
+  "id": "lesson-04-ex-01",
+  "version": 1,
+  "metadata": {
+    "title": "Melody and Bass Together",
+    "description": "Play right hand melody while left hand plays steady bass notes",
+    "difficulty": 2,
+    "estimatedMinutes": 4,
+    "skills": ["both-hands", "coordination", "melody", "accompaniment"],
+    "prerequisites": ["lesson-03-ex-05"]
+  },
+  "settings": {
+    "tempo": 70,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 36,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 48,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 60,
+    "timingGracePeriodMs": 160,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [70, 83, 94]
+  },
+  "hints": {
+    "beforeStart": "Both hands play simultaneously, but different notes. Left hand plays steady C bass on every beat. Right hand plays a descending melody: E-F-G-F-E-D-C-C. Focus on the steady left hand first, then add right hand.",
+    "commonMistakes": [
+      {
+        "pattern": "hand-independence",
+        "advice": "At first, both hands want to do the same thing. Practice left hand alone, then right hand alone, then very slowly together. Your hands will learn to be independent.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 200
+        }
+      },
+      {
+        "pattern": "rushing-right-hand",
+        "advice": "The right hand melody should stay with the metronome, not pull ahead. Anchor yourself to the steady left hand beat."
+      }
+    ],
+    "successMessage": "Great! You've successfully coordinated both hands. This is a huge milestone in piano playing."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

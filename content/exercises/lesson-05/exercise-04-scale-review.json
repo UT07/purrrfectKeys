@@ -1,0 +1,215 @@
+{
+  "id": "lesson-05-ex-04",
+  "version": 1,
+  "metadata": {
+    "title": "C Major Scale Mastery Review",
+    "description": "Comprehensive review of all C major scale techniques learned",
+    "difficulty": 3,
+    "estimatedMinutes": 5,
+    "skills": ["scales", "technique", "both-hands", "musical-expression"],
+    "prerequisites": ["lesson-05-ex-03"]
+  },
+  "settings": {
+    "tempo": 85,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 48,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 36,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 71,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 36,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 72,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 48,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 71,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 69,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 6.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 48,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 145,
+    "velocitySensitive": false,
+    "passingScore": 74,
+    "starThresholds": [74, 86, 95]
+  },
+  "hints": {
+    "beforeStart": "This review combines ascending and descending C major scales with left-hand bass accompaniment. The left hand plays steady alternating bass (C-G), while the right hand ascends and descends in eighth and quarter notes. Focus on smooth coordination and even technique.",
+    "commonMistakes": [
+      {
+        "pattern": "scale-hesitation",
+        "advice": "Scales should flow smoothly without pausing or hesitation between notes. If you stumble on finger crossings, you're likely tensing up. Keep a relaxed, even motion.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 120
+        }
+      },
+      {
+        "pattern": "lost-bass-pattern",
+        "advice": "The left hand can easily get disrupted by the complexity above. Practice the bass pattern alone until it's rock solid, then add the right hand slowly."
+      }
+    ],
+    "successMessage": "Perfect! You've mastered the C major scale at a high level. You're ready to explore more complex scales and keys!"
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

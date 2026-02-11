@@ -1,0 +1,110 @@
+{
+  "id": "lesson-03-ex-04",
+  "version": 1,
+  "metadata": {
+    "title": "Broken F Chord (Left Hand)",
+    "description": "Play an F major broken chord pattern with left hand",
+    "difficulty": 2,
+    "estimatedMinutes": 3,
+    "skills": ["left-hand", "arpeggios", "chord-knowledge", "accompaniment"],
+    "prerequisites": ["lesson-03-ex-03"]
+  },
+  "settings": {
+    "tempo": 75,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 41,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 1
+    },
+    {
+      "note": 45,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 53,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 53,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 45,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 41,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [70, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "The F major chord consists of F-A-C. This exercise plays them broken (arpeggio): F (41, thumb) - A (45, middle) - C (48, pinky) and back down. This left-hand pattern commonly accompanies right-hand melodies.",
+    "commonMistakes": [
+      {
+        "pattern": "wrong-notes",
+        "advice": "F major is F-A-C. Make sure you're on the white keys: F (between two black keys), A (after two white keys), C (between two black keys). No black keys in this triad.",
+        "triggerCondition": {
+          "type": "pitch",
+          "threshold": 3
+        }
+      },
+      {
+        "pattern": "hand-position",
+        "advice": "Unlike right-hand F which may require reaching up, left-hand F requires reaching down. Position your hand comfortably with thumb near the lower F note."
+      }
+    ],
+    "successMessage": "Perfect! You've learned a left-hand accompaniment pattern. This is essential for playing with both hands."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "id": "lesson-05-ex-02",
+  "version": 1,
+  "metadata": {
+    "title": "Parallel Scale Motion (Both Hands)",
+    "description": "Play matching scale patterns with both hands simultaneously",
+    "difficulty": 3,
+    "estimatedMinutes": 4,
+    "skills": ["scales", "parallel-motion", "both-hands", "coordination"],
+    "prerequisites": ["lesson-05-ex-01"]
+  },
+  "settings": {
+    "tempo": 75,
+    "timeSignature": [4, 4],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 1
+    },
+    {
+      "note": 38,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 4
+    },
+    {
+      "note": 62,
+      "startBeat": 0.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 40,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 41,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 2
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 43,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 1
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 41,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 2
+    },
+    {
+      "note": 65,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 40,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 3
+    },
+    {
+      "note": 64,
+      "startBeat": 3,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 38,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "left",
+      "finger": 4
+    },
+    {
+      "note": 62,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right",
+      "finger": 2
+    },
+    {
+      "note": 36,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 60,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 1
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 45,
+    "timingGracePeriodMs": 130,
+    "velocitySensitive": false,
+    "passingScore": 75,
+    "starThresholds": [75, 87, 96]
+  },
+  "hints": {
+    "beforeStart": "Both hands play the same pattern at the same time, ascending and descending. Left hand in lower register (C3-G3 range), right hand in higher register (C4-G4 range). Both hands use the exact same fingering and rhythm, creating perfect parallel motion.",
+    "commonMistakes": [
+      {
+        "pattern": "hand-sync",
+        "advice": "Parallel motion requires perfect synchronization. Both hands should start and end exactly together. Coordinate hand movements carefully.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 75
+        }
+      },
+      {
+        "pattern": "finger-confusion",
+        "advice": "Both hands use identical fingering: 5-4-3-2-1-2-3-4-5 ascending and descending. Don't mix up which hand should use which finger."
+      }
+    ],
+    "successMessage": "Excellent! Parallel motion creates a beautiful unified sound. This technique is used in classical and contemporary music."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

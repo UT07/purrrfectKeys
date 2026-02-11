@@ -1,0 +1,49 @@
+{
+  "id": "lesson-03",
+  "version": 1,
+  "metadata": {
+    "title": "Left Hand Basics",
+    "description": "Learn left hand placement and bass note accompaniment patterns",
+    "difficulty": 1,
+    "estimatedMinutes": 15,
+    "skills": ["left-hand", "bass-notes", "accompaniment", "independence"]
+  },
+  "exercises": [
+    {
+      "id": "lesson-03-ex-01",
+      "title": "Left Hand C Position",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-03-ex-02",
+      "title": "Left Hand Scale Descending",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-03-ex-03",
+      "title": "Bass Notes Exploration",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-03-ex-04",
+      "title": "Broken F Chord (Left Hand)",
+      "order": 4,
+      "required": false
+    },
+    {
+      "id": "lesson-03-ex-05",
+      "title": "Steady Bass Pattern",
+      "order": 5,
+      "required": false
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-02"
+  },
+  "xpReward": 200,
+  "estimatedMinutes": 18
+}

@@ -1,0 +1,43 @@
+{
+  "id": "lesson-05",
+  "version": 1,
+  "metadata": {
+    "title": "C Major Scale Mastery",
+    "description": "Master scale technique including finger crossing, speed, and parallel motion",
+    "difficulty": 2,
+    "estimatedMinutes": 20,
+    "skills": ["scales", "finger-crossing", "parallel-motion", "speed", "technique"]
+  },
+  "exercises": [
+    {
+      "id": "lesson-05-ex-01",
+      "title": "Scale Technique (Right Hand)",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-05-ex-02",
+      "title": "Parallel Scale Motion (Both Hands)",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-05-ex-03",
+      "title": "Scale Speed Drill",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-05-ex-04",
+      "title": "C Major Scale Mastery Review",
+      "order": 4,
+      "required": false
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-04"
+  },
+  "xpReward": 250,
+  "estimatedMinutes": 22
+}

@@ -1,0 +1,43 @@
+{
+  "id": "lesson-06",
+  "version": 1,
+  "metadata": {
+    "title": "Simple Songs Collection",
+    "description": "Play beloved songs from different genres and time periods",
+    "difficulty": 2,
+    "estimatedMinutes": 25,
+    "skills": ["songs", "melodies", "music-styles", "expression", "rhythm"]
+  },
+  "exercises": [
+    {
+      "id": "lesson-06-ex-01",
+      "title": "Jingle Bells (Right Hand)",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-06-ex-02",
+      "title": "Happy Birthday",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-06-ex-03",
+      "title": "Amazing Grace",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-06-ex-04",
+      "title": "Contemporary Melody (Let It Go Style)",
+      "order": 4,
+      "required": false
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-05"
+  },
+  "xpReward": 300,
+  "estimatedMinutes": 25
+}

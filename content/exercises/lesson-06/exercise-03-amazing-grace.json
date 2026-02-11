@@ -1,0 +1,152 @@
+{
+  "id": "lesson-06-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "Amazing Grace",
+    "description": "Play the beloved hymn with both hands and smooth phrasing",
+    "difficulty": 3,
+    "estimatedMinutes": 5,
+    "skills": ["both-hands", "melody", "song", "legato", "musical-expression"],
+    "prerequisites": ["lesson-06-ex-02"]
+  },
+  "settings": {
+    "tempo": 70,
+    "timeSignature": [3, 4],
+    "keySignature": "C",
+    "countIn": 3,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 48,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 1,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 69,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 48,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 5
+    },
+    {
+      "note": 36,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 64,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 3
+    },
+    {
+      "note": 48,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 65,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right",
+      "finger": 4
+    },
+    {
+      "note": 36,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "left",
+      "finger": 5
+    },
+    {
+      "note": 67,
+      "startBeat": 8,
+      "durationBeats": 2,
+      "hand": "right",
+      "finger": 5
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 60,
+    "timingGracePeriodMs": 160,
+    "velocitySensitive": false,
+    "passingScore": 72,
+    "starThresholds": [72, 85, 95]
+  },
+  "hints": {
+    "beforeStart": "Amazing Grace is in 3/4 waltz time (not 4/4). Count in threes: 1-2-3, 1-2-3. The melody is characterized by long notes that should sound smooth and connected (legato). The opening notes are G-A (ascending by step with long durations).",
+    "commonMistakes": [
+      {
+        "pattern": "time-signature-confusion",
+        "advice": "This piece is in 3/4 (waltz time), not 4/4. There are only 3 beats per measure. Count 1-2-3-1-2-3. This gives the piece its floating, hymn-like quality.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 200
+        }
+      },
+      {
+        "pattern": "rushed-long-notes",
+        "advice": "The half notes (2 beats) and whole notes (3 beats) should be held for their full duration. Don't rush to the next note. Let the notes breathe and sing."
+      }
+    ],
+    "successMessage": "Beautiful! You've mastered a hymn with smooth, connected phrasing. This shows real musical sensitivity!"
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}
