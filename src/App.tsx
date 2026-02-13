@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './navigation/AppNavigator';
 import { PersistenceManager, STORAGE_KEYS } from './stores/persistence';
 import { useProgressStore } from './stores/progressStore';
+import { levelFromXp } from './core/progression/XpSystem';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -31,16 +32,18 @@ export default function App(): React.ReactElement {
 
         if (savedProgress) {
           // Merge saved data into the store (only data fields, not actions)
-          const { totalXp, level, streakData, lessonProgress, dailyGoalData } =
+          const { totalXp, streakData, lessonProgress, dailyGoalData } =
             savedProgress as Record<string, unknown>;
+          const xp = (totalXp as number) ?? 0;
           useProgressStore.setState({
-            ...(totalXp != null ? { totalXp: totalXp as number } : {}),
-            ...(level != null ? { level: level as number } : {}),
+            ...(totalXp != null ? { totalXp: xp } : {}),
+            // Always recalculate level from XP (fixes stale persisted level)
+            level: levelFromXp(xp),
             ...(streakData ? { streakData: streakData as any } : {}),
             ...(lessonProgress ? { lessonProgress: lessonProgress as any } : {}),
             ...(dailyGoalData ? { dailyGoalData: dailyGoalData as any } : {}),
           });
-          console.log('[App] Progress state hydrated from storage');
+          console.log('[App] Progress state hydrated from storage (level', levelFromXp(xp), ')');
         }
       } catch (e) {
         console.warn('[App] Failed to hydrate progress state:', e);

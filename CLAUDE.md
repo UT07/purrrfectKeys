@@ -45,6 +45,8 @@ npm run measure:latency    # Audio latency test harness
 
 ```
 src/
+├── content/              # Exercise/lesson content loading from JSON
+│   └── ContentLoader.ts  # Static registry: getExercise(), getLessons(), etc.
 ├── core/                 # Platform-agnostic business logic (NO React imports)
 │   ├── exercises/        # Exercise validation, scoring algorithms
 │   ├── music/            # Music theory utilities (notes, scales, chords)
@@ -52,24 +54,27 @@ src/
 │   └── analytics/        # Event tracking abstraction
 ├── audio/                # Audio engine abstraction
 │   ├── AudioEngine.ts    # Interface definition
-│   ├── AudioEngine.native.ts  # react-native-audio-api implementation
+│   ├── ExpoAudioEngine.ts # expo-av implementation with sound pooling
 │   └── samples/          # Piano sample management
 ├── input/                # Input handling
 │   ├── MidiInput.ts      # MIDI device handling
 │   └── PitchDetector.ts  # Microphone fallback (TurboModule wrapper)
 ├── stores/               # Zustand stores
 │   ├── exerciseStore.ts  # Current exercise state
-│   ├── progressStore.ts  # User progress, XP, streaks
+│   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
 │   └── settingsStore.ts  # User preferences
 ├── screens/              # Screen components
+│   └── ExercisePlayer/   # Main exercise gameplay screen
 ├── components/           # Reusable UI components
-│   ├── Keyboard/         # Piano keyboard component
-│   ├── PianoRoll/        # Scrolling note display
+│   ├── Keyboard/         # Piano keyboard (dynamic range from exercise)
+│   ├── PianoRoll/        # Scrolling note display (dynamic MIDI range)
 │   └── common/           # Buttons, cards, etc.
+├── hooks/                # Custom React hooks
+│   └── useExercisePlayback.ts  # Playback timing, completion, MIDI events
 ├── navigation/           # React Navigation setup
 ├── services/             # External integrations
 │   ├── firebase/         # Auth, Firestore, Functions
-│   ├── ai/               # Gemini AI coaching
+│   ├── ai/               # Gemini AI coaching (GeminiCoach + CoachingService)
 │   └── analytics/        # PostHog
 └── utils/                # Shared utilities
 ```
@@ -78,13 +83,19 @@ src/
 
 | File | Purpose |
 |------|---------|
-| `src/audio/AudioEngine.ts` | Audio playback abstraction (Web Audio API compatible) |
+| `src/content/ContentLoader.ts` | Exercise/lesson loading from JSON (static require registry) |
+| `src/audio/ExpoAudioEngine.ts` | Audio playback with sound pooling (14 pre-loaded sounds) |
 | `src/core/exercises/ExerciseValidator.ts` | Core scoring logic - pure TS, heavily tested |
 | `src/core/exercises/types.ts` | Exercise and score type definitions |
 | `src/input/MidiInput.ts` | MIDI device connection and event handling |
 | `src/stores/exerciseStore.ts` | Exercise session state management |
-| `src/components/Keyboard/Keyboard.tsx` | Interactive piano keyboard |
-| `content/exercises/` | JSON exercise definitions |
+| `src/stores/progressStore.ts` | XP, levels, streaks, lesson progress, daily goals |
+| `src/screens/ExercisePlayer/ExercisePlayer.tsx` | Main gameplay screen with scoring + completion |
+| `src/components/Keyboard/Keyboard.tsx` | Interactive piano keyboard (dynamic range) |
+| `src/components/PianoRoll/PianoRoll.tsx` | Transform-based scrolling note display |
+| `src/services/ai/GeminiCoach.ts` | AI coaching via Gemini 2.0 Flash with fallback |
+| `src/hooks/useExercisePlayback.ts` | Playback timing, MIDI events, completion handler |
+| `content/exercises/` | JSON exercise definitions (31 exercises, 6 lessons) |
 
 ## Code Style
 
@@ -158,6 +169,8 @@ For detailed guidance on specific topics, read these files:
 - @agent_docs/midi-integration.md - MIDI device handling
 - @agent_docs/firebase-schema.md - Firestore data models
 - @agent_docs/ai-coaching.md - Gemini prompts and caching
+- @agent_docs/stabilization-report.md - Full changelog of all fixes and improvements
+- @agent_docs/feature-level-map.md - Planned Duolingo-style level map UI
 
 ## Common Tasks
 

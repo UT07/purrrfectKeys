@@ -65,25 +65,12 @@ import { ExercisePlayer } from '@/screens/ExercisePlayer';
 />
 ```
 
-### With Store Integration
+### With Route-Based Loading (Standard Usage)
 
 ```typescript
-import { ExercisePlayer } from '@/screens/ExercisePlayer';
-import { useExerciseStore } from '@/stores/exerciseStore';
-
-export function ExerciseScreen() {
-  const exercise = useExerciseStore(state => state.currentExercise);
-  const setScore = useExerciseStore(state => state.setScore);
-
-  return (
-    <ExercisePlayer
-      onExerciseComplete={(score) => {
-        setScore(score);
-      }}
-      onClose={() => navigation.goBack()}
-    />
-  );
-}
+// Exercise is loaded automatically from route params via ContentLoader
+navigation.navigate('Exercise', { exerciseId: 'lesson-01-ex-01' });
+// ExercisePlayer reads route.params.exerciseId and calls getExercise()
 ```
 
 ## Components
@@ -107,7 +94,7 @@ Full-screen countdown animation before exercise starts with haptic cues.
 Visual feedback indicator showing note accuracy and expected notes.
 
 ### CompletionModal
-Results screen with celebration, score breakdown, XP, and high score indication.
+Results screen with celebration, score breakdown, XP, high score indication, AI coach feedback, "Try Again" button (on failure), and "Next Exercise" navigation.
 
 ## Architecture
 
@@ -119,23 +106,28 @@ Results screen with celebration, score breakdown, XP, and high score indication.
 
 ### Input Handling
 - Captures keyboard note presses
-- Matches against expected notes
-- Generates immediate feedback
+- Nearest-note matching within ±1.5 beats (no dead zones)
+- Consumed-note tracking prevents double-counting
+- Generates timing feedback (Perfect/Good/Early/Late/Miss)
 - Updates combo counter
 - Triggers haptic feedback
 
 ### Scoring
 - Collects all played notes with timestamps
-- Integrates with ScoringEngine for timing/accuracy analysis
-- Calculates final score and star rating
-- Determines XP earned
+- Converts epoch timestamps to beat-relative before scoring
+- Integrates with ExerciseValidator for timing/accuracy analysis
+- Calculates final score (Accuracy 40% + Timing 35% + Completeness 15% + Precision 10%)
+- Determines XP earned and star rating (0-3)
 - Checks for new high score
+- Persists scores to lessonProgress in progressStore
 
 ### State Management
 - Uses React hooks for local state
-- Integrates with Zustand store for persistence
+- Integrates with Zustand stores (exerciseStore + progressStore) for persistence
 - Manages playback, keyboard input, and feedback state
-- All state updates properly tracked
+- Keyboard range and PianoRoll dynamically derived from exercise notes
+- Practice time tracked from playback start to completion
+- Lesson progress and completion tracked automatically
 
 ## Performance
 

@@ -94,16 +94,18 @@ import { PianoRoll } from '@/components';
 ```
 
 **Features:**
-- Scrolling horizontal visualization
+- Transform-based scrolling (not ScrollView) for reliable 60fps
 - Color-coded note states:
-  - Blue: Upcoming (far away)
-  - Green: Ready (approaching)
-  - Red: Active (now)
+  - Indigo: Upcoming
+  - Red with glow: Active (now)
+  - Green faded: Past
+- Dynamic MIDI range derived from exercise notes (not hardcoded)
+- Note name labels (C4, D4, etc.) on each block
 - Hand indicators (L/R) on notes
-- Staff lines background
-- Playback position indicator
-- Auto-scroll to current position
-- Beat counter display
+- Dark theme background for high contrast
+- Fixed playback marker at 1/3 screen width
+- Beat counter with count-in support
+- Vertical padding prevents clipping at note range extremes
 
 **Performance:**
 - Memoized note calculations

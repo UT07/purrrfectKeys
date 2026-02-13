@@ -119,8 +119,9 @@ npm run test -- stores
 ```
 
 - Exercise Store: 300+ lines of tests
-- Progress Store: 250+ lines of tests
+- Progress Store: 390+ lines of tests (XP, streaks, lessons, daily goals, level auto-calc, practice time)
 - Settings Store: 200+ lines of tests
+- Content Loader: 23 tests (exercise/lesson loading, integrity, navigation)
 - >80% code coverage
 
 **See:** `src/stores/__tests__/` for examples

@@ -19,11 +19,33 @@ export interface PianoRollProps {
   testID?: string;
 }
 
-const MIDI_MIN = 48; // C3
-const MIDI_MAX = 72; // C5
-const MIDI_RANGE = MIDI_MAX - MIDI_MIN;
 const NOTE_HEIGHT = 28;
 const PIXELS_PER_BEAT = 120;
+
+// Default MIDI range used when no notes are provided
+const DEFAULT_MIDI_MIN = 48; // C3
+const DEFAULT_MIDI_MAX = 72; // C5
+
+/**
+ * Derive MIDI display range from the exercise notes.
+ * Adds a 2-semitone margin above/below the note range
+ * for visual breathing room, with a minimum span of 12 semitones.
+ */
+function deriveMidiRange(notes: NoteEvent[]): { min: number; max: number; range: number } {
+  if (notes.length === 0) {
+    return { min: DEFAULT_MIDI_MIN, max: DEFAULT_MIDI_MAX, range: DEFAULT_MIDI_MAX - DEFAULT_MIDI_MIN };
+  }
+  const midiNotes = notes.map(n => n.note);
+  const rawMin = Math.min(...midiNotes);
+  const rawMax = Math.max(...midiNotes);
+  // Add 2-semitone margin, enforce minimum 12-semitone span
+  const margin = 2;
+  const span = Math.max(12, rawMax - rawMin + margin * 2);
+  const center = (rawMin + rawMax) / 2;
+  const min = Math.round(center - span / 2);
+  const max = min + span;
+  return { min, max, range: span };
+}
 
 const COLORS = {
   upcoming: '#5C6BC0', // Indigo
@@ -43,12 +65,21 @@ const COLORS = {
 /**
  * Calculate the visual Y position for a note based on MIDI number
  * Notes are laid out bottom-to-top (low notes at bottom, high notes at top)
+ * Adds vertical padding so notes at the extremes aren't clipped
  */
-function calculateNoteY(midiNote: number, containerHeight: number): number {
-  const noteInRange = Math.max(MIDI_MIN, Math.min(MIDI_MAX, midiNote));
-  const normalized = (noteInRange - MIDI_MIN) / MIDI_RANGE;
-  // Center the note vertically within its band
-  return containerHeight - normalized * containerHeight - NOTE_HEIGHT / 2;
+const VERTICAL_PADDING = NOTE_HEIGHT / 2 + 2; // Half a note height + small gap
+
+function calculateNoteY(
+  midiNote: number,
+  containerHeight: number,
+  midiMin: number,
+  midiRange: number,
+): number {
+  const noteInRange = Math.max(midiMin, Math.min(midiMin + midiRange, midiNote));
+  const normalized = (noteInRange - midiMin) / midiRange;
+  // Usable height excludes top and bottom padding
+  const usableHeight = containerHeight - VERTICAL_PADDING * 2;
+  return VERTICAL_PADDING + usableHeight * (1 - normalized) - NOTE_HEIGHT / 2;
 }
 
 /**
@@ -68,6 +99,9 @@ export const PianoRoll = React.memo(
   }: PianoRollProps) => {
     const screenWidth = Dimensions.get('window').width;
     const containerHeight = 200;
+
+    // Derive MIDI range from the actual notes in this exercise
+    const { min: midiMin, range: midiRange } = useMemo(() => deriveMidiRange(notes), [notes]);
 
     // The playback marker sits at 1/3 of the screen
     const markerX = screenWidth / 3;
@@ -95,7 +129,7 @@ export const PianoRoll = React.memo(
     // Calculate visual notes with color/state based on currentBeat
     const visualNotes = useMemo(() => {
       return notes.map((note, index) => {
-        const topPosition = calculateNoteY(note.note, containerHeight);
+        const topPosition = calculateNoteY(note.note, containerHeight, midiMin, midiRange);
         // Position relative to beat 0 (markerX offset added via parent transform)
         const leftPosition = markerX + note.startBeat * PIXELS_PER_BEAT;
         const width = Math.max(20, note.durationBeats * PIXELS_PER_BEAT);
@@ -130,7 +164,7 @@ export const PianoRoll = React.memo(
           noteName,
         };
       });
-    }, [notes, currentBeat, containerHeight, markerX]);
+    }, [notes, currentBeat, containerHeight, markerX, midiMin, midiRange]);
 
     return (
       <View

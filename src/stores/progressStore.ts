@@ -14,6 +14,7 @@ import { create } from 'zustand';
 import type { LessonProgress, ExerciseProgress } from '@/core/exercises/types';
 import type { ProgressStoreState, StreakData, DailyGoalData } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { levelFromXp } from '@/core/progression/XpSystem';
 
 const defaultStreakData: StreakData = {
   currentStreak: 0,
@@ -54,9 +55,13 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   ...defaultData,
 
   addXp: (amount: number) => {
-    set((state) => ({
-      totalXp: state.totalXp + amount,
-    }));
+    set((state) => {
+      const newTotalXp = state.totalXp + amount;
+      return {
+        totalXp: newTotalXp,
+        level: levelFromXp(newTotalXp),
+      };
+    });
     debouncedSave(get());
   },
 
@@ -150,9 +155,11 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         ...defaultDailyGoal,
         date: today,
       };
+      const newTotalXp = state.totalXp + xpEarned;
 
       return {
-        totalXp: state.totalXp + xpEarned,
+        totalXp: newTotalXp,
+        level: levelFromXp(newTotalXp),
         dailyGoalData: {
           ...state.dailyGoalData,
           [today]: {

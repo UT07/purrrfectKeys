@@ -2,7 +2,7 @@
  * ProfileScreen - User profile, stats, and settings
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -29,10 +29,20 @@ interface StatItem {
 
 type ProfileNavProp = NativeStackNavigationProp<RootStackParamList>;
 
+const DAILY_GOAL_OPTIONS = [5, 10, 15, 20];
+const VOLUME_OPTIONS = [
+  { label: '25%', value: 0.25 },
+  { label: '50%', value: 0.5 },
+  { label: '75%', value: 0.75 },
+  { label: '100%', value: 1.0 },
+];
+
 export function ProfileScreen() {
   const navigation = useNavigation<ProfileNavProp>();
   const { totalXp, level, streakData, lessonProgress } = useProgressStore();
-  const { dailyGoalMinutes, masterVolume } = useSettingsStore();
+  const { dailyGoalMinutes, masterVolume, setDailyGoalMinutes, setMasterVolume } = useSettingsStore();
+  const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [showVolumePicker, setShowVolumePicker] = useState(false);
 
   // Calculate total lessons completed
   const completedLessons = Object.values(lessonProgress).filter(
@@ -76,21 +86,57 @@ export function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="target" size={24} color="#666" />
               <Text style={styles.settingLabel}>Daily Goal</Text>
             </View>
-            <Text style={styles.settingValue}>{dailyGoalMinutes} min</Text>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{dailyGoalMinutes} min</Text>
+              <MaterialCommunityIcons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#999" />
+            </View>
           </TouchableOpacity>
+          {showGoalPicker && (
+            <View style={styles.pickerRow}>
+              {DAILY_GOAL_OPTIONS.map((mins) => (
+                <TouchableOpacity
+                  key={mins}
+                  style={[styles.pickerChip, dailyGoalMinutes === mins && styles.pickerChipActive]}
+                  onPress={() => { setDailyGoalMinutes(mins); setShowGoalPicker(false); }}
+                >
+                  <Text style={[styles.pickerChipText, dailyGoalMinutes === mins && styles.pickerChipTextActive]}>
+                    {mins} min
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)}>
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="volume-high" size={24} color="#666" />
               <Text style={styles.settingLabel}>Volume</Text>
             </View>
-            <Text style={styles.settingValue}>{Math.round(masterVolume * 100)}%</Text>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{Math.round(masterVolume * 100)}%</Text>
+              <MaterialCommunityIcons name={showVolumePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#999" />
+            </View>
           </TouchableOpacity>
+          {showVolumePicker && (
+            <View style={styles.pickerRow}>
+              {VOLUME_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.pickerChip, masterVolume === opt.value && styles.pickerChipActive]}
+                  onPress={() => { setMasterVolume(opt.value); setShowVolumePicker(false); }}
+                >
+                  <Text style={[styles.pickerChipText, masterVolume === opt.value && styles.pickerChipTextActive]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('MidiSetup')}>
             <View style={styles.settingLeft}>
@@ -217,6 +263,35 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 16,
     color: '#666',
+  },
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  pickerChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+  },
+  pickerChipActive: {
+    backgroundColor: '#1976D2',
+  },
+  pickerChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  pickerChipTextActive: {
+    color: '#FFFFFF',
   },
   achievementCard: {
     flexDirection: 'row',

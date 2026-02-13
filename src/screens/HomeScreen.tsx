@@ -3,7 +3,7 @@
  * Main home screen with daily practice goal, XP/streak display, and quick actions
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -20,9 +20,18 @@ import { XPBar } from '../components/Progress/XPBar';
 import { StreakDisplay } from '../components/Progress/StreakDisplay';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { getLessons, getLessonExercises } from '../content/ContentLoader';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Good Morning';
+  if (hour >= 12 && hour < 17) return 'Good Afternoon';
+  if (hour >= 17 && hour < 21) return 'Good Evening';
+  return 'Good Night';
+}
 
 export interface HomeScreenProps {
   onNavigateToExercise?: () => void;
@@ -57,12 +66,52 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const navigation = useNavigation<HomeNavProp>();
 
   // Connect to Zustand stores for real data
-  const { totalXp, level, streakData } = useProgressStore();
+  const { totalXp, level, streakData, dailyGoalData, lessonProgress } = useProgressStore();
   const { dailyGoalMinutes } = useSettingsStore();
 
-  // Calculate daily progress (would come from a session tracker in production)
-  const minutesPracticedToday = 0; // TODO: Implement session tracking
-  const dailyGoalProgress = minutesPracticedToday / dailyGoalMinutes;
+  // Get today's practice data from dailyGoalData
+  const today = new Date().toISOString().split('T')[0];
+  const todayGoal = dailyGoalData[today];
+  const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
+  const dailyGoalProgress = dailyGoalMinutes > 0 ? minutesPracticedToday / dailyGoalMinutes : 0;
+
+  // Calculate current lesson and exercise progress from real data
+  const { nextExerciseTitle, nextExerciseId, currentLessonLabel, exerciseProgress } = useMemo(() => {
+    const lessons = getLessons();
+    for (const lesson of lessons) {
+      const exercises = getLessonExercises(lesson.id);
+      if (exercises.length === 0) continue;
+
+      // Count completed exercises in this lesson
+      const lp = lessonProgress[lesson.id];
+      const completedCount = lp
+        ? Object.values(lp.exerciseScores).filter((s) => s.completedAt != null).length
+        : 0;
+      const progress = Math.round((completedCount / exercises.length) * 100);
+
+      if (completedCount < exercises.length) {
+        // This lesson is in progress — find the next uncompleted exercise
+        const nextEx = exercises.find((ex) => {
+          const score = lp?.exerciseScores[ex.id];
+          return !score || score.completedAt == null;
+        });
+        return {
+          nextExerciseTitle: nextEx?.metadata.title ?? exercises[0].metadata.title,
+          nextExerciseId: nextEx?.id ?? exercises[0].id,
+          currentLessonLabel: lesson.metadata.title,
+          exerciseProgress: progress,
+        };
+      }
+    }
+    // All lessons complete — show last lesson
+    const lastLesson = lessons[lessons.length - 1];
+    return {
+      nextExerciseTitle: 'All Complete!',
+      nextExerciseId: null as string | null,
+      currentLessonLabel: lastLesson?.metadata.title ?? 'Lessons',
+      exerciseProgress: 100,
+    };
+  }, [lessonProgress]);
 
   // Use real store data with safe defaults
   const state: HomeScreenState = {
@@ -74,8 +123,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     lastPracticeDate: streakData?.lastPracticeDate,
     dailyGoalMinutes: dailyGoalMinutes ?? 10,
     minutesPracticedToday,
-    nextExerciseTitle: 'C Major Scale - Part 2', // TODO: Get from progress
-    exerciseProgress: 40, // TODO: Calculate from completed exercises
+    nextExerciseTitle,
+    exerciseProgress,
   };
 
   return (
@@ -86,7 +135,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Good Evening</Text>
+          <Text style={styles.greeting}>{getGreeting()}</Text>
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={onNavigateToSettings ?? (() => navigation.navigate('MidiSetup'))}
@@ -146,7 +195,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.sectionTitle}>Continue Learning</Text>
           <TouchableOpacity
             style={styles.continueCard}
-            onPress={onNavigateToExercise ?? (() => navigation.navigate('Exercise', { exerciseId: 'lesson-01-ex-01' }))}
+            onPress={onNavigateToExercise ?? (() => {
+              if (nextExerciseId) {
+                navigation.navigate('Exercise', { exerciseId: nextExerciseId });
+              } else {
+                navigation.navigate('MainTabs', { screen: 'Learn' } as any);
+              }
+            })}
             activeOpacity={0.7}
           >
             <View style={styles.continueHeader}>
@@ -156,7 +211,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 color="#2196F3"
               />
               <View style={styles.continueInfo}>
-                <Text style={styles.continueLabel}>Lesson 2</Text>
+                <Text style={styles.continueLabel}>{currentLessonLabel}</Text>
                 <Text style={styles.continueTitle}>
                   {state.nextExerciseTitle}
                 </Text>
@@ -198,7 +253,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={onNavigateToExercise ?? (() => navigation.navigate('Exercise', { exerciseId: 'lesson-01-ex-01' }))}
+              onPress={onNavigateToExercise ?? (() => {
+                if (nextExerciseId) {
+                  navigation.navigate('Exercise', { exerciseId: nextExerciseId });
+                } else {
+                  navigation.navigate('MainTabs', { screen: 'Learn' } as any);
+                }
+              })}
             >
               <MaterialCommunityIcons
                 name="music-box-multiple"

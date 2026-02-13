@@ -248,6 +248,130 @@ describe('Progress Store', () => {
     });
   });
 
+  describe('Level Auto-Calculation', () => {
+    it('should recalculate level when XP is added', () => {
+      // levelFromXp: level 1 needs 0 XP, level 2 needs 100, level 3 needs 250
+      useProgressStore.getState().addXp(100);
+      expect(useProgressStore.getState().level).toBe(2);
+    });
+
+    it('should recalculate level on exercise completion', () => {
+      useProgressStore.getState().recordExerciseCompletion('ex-1', 90, 100);
+      expect(useProgressStore.getState().totalXp).toBe(100);
+      expect(useProgressStore.getState().level).toBe(2);
+    });
+
+    it('should not regress level when XP is below current level', () => {
+      // Start at level 2 with 100 XP
+      useProgressStore.getState().addXp(100);
+      expect(useProgressStore.getState().level).toBe(2);
+
+      // Adding 0 XP should keep level 2
+      useProgressStore.getState().addXp(0);
+      expect(useProgressStore.getState().level).toBe(2);
+    });
+
+    it('should level up through multiple levels at once', () => {
+      // Adding enough XP to jump straight to level 4 (475 XP threshold)
+      useProgressStore.getState().addXp(500);
+      expect(useProgressStore.getState().level).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('Practice Time Tracking', () => {
+    it('should accumulate practice time across sessions', () => {
+      const today = new Date().toISOString().split('T')[0];
+      useProgressStore.getState().recordPracticeSession(2);
+      useProgressStore.getState().recordPracticeSession(3);
+      useProgressStore.getState().recordPracticeSession(5);
+
+      const goal = useProgressStore.getState().dailyGoalData[today];
+      expect(goal.minutesPracticed).toBe(10);
+    });
+
+    it('should track practice time independently from exercise completion', () => {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Record a practice session (time)
+      useProgressStore.getState().recordPracticeSession(5);
+      // Record an exercise completion (count)
+      useProgressStore.getState().recordExerciseCompletion('ex-1', 80, 10);
+
+      const goal = useProgressStore.getState().dailyGoalData[today];
+      expect(goal.minutesPracticed).toBe(5);
+      expect(goal.exercisesCompleted).toBe(1);
+    });
+  });
+
+  describe('Lesson Completion Flow', () => {
+    it('should track exercise progress within a lesson', () => {
+      const lessonProgress = {
+        lessonId: 'lesson-01',
+        status: 'in_progress' as const,
+        exerciseScores: {},
+        bestScore: 0,
+        totalAttempts: 0,
+        totalTimeSpentSeconds: 0,
+      };
+
+      useProgressStore.getState().updateLessonProgress('lesson-01', lessonProgress);
+
+      const ex1Progress = {
+        exerciseId: 'lesson-01-ex-01',
+        highScore: 85,
+        stars: 2 as 0 | 1 | 2 | 3,
+        attempts: 1,
+        lastAttemptAt: Date.now(),
+        averageScore: 85,
+        completedAt: Date.now(),
+      };
+
+      useProgressStore.getState().updateExerciseProgress('lesson-01', 'lesson-01-ex-01', ex1Progress);
+
+      const retrieved = useProgressStore.getState().getExerciseProgress('lesson-01', 'lesson-01-ex-01');
+      expect(retrieved?.highScore).toBe(85);
+      expect(retrieved?.completedAt).toBeDefined();
+    });
+
+    it('should mark lesson completed when all exercises are done', () => {
+      // Initialize lesson
+      useProgressStore.getState().updateLessonProgress('lesson-01', {
+        lessonId: 'lesson-01',
+        status: 'in_progress',
+        exerciseScores: {},
+        bestScore: 0,
+        totalAttempts: 0,
+        totalTimeSpentSeconds: 0,
+      });
+
+      // Complete all 3 exercises
+      const now = Date.now();
+      for (const exId of ['lesson-01-ex-01', 'lesson-01-ex-02', 'lesson-01-ex-03']) {
+        useProgressStore.getState().updateExerciseProgress('lesson-01', exId, {
+          exerciseId: exId,
+          highScore: 90,
+          stars: 2,
+          attempts: 1,
+          lastAttemptAt: now,
+          averageScore: 90,
+          completedAt: now,
+        });
+      }
+
+      // Now mark the lesson completed
+      const lp = useProgressStore.getState().lessonProgress['lesson-01'];
+      useProgressStore.getState().updateLessonProgress('lesson-01', {
+        ...lp,
+        status: 'completed',
+        completedAt: now,
+      });
+
+      const final = useProgressStore.getState().getLessonProgress('lesson-01');
+      expect(final?.status).toBe('completed');
+      expect(final?.completedAt).toBeDefined();
+    });
+  });
+
   describe('Reset', () => {
     it('should reset all state', () => {
       useProgressStore.getState().addXp(100);

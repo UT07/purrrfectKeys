@@ -2,7 +2,7 @@
  * PlayScreen - Free play mode with piano keyboard
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,55 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Keyboard } from '../components/Keyboard/Keyboard';
+import { getAudioEngine } from '../audio/ExpoAudioEngine';
+import type { MidiNoteEvent } from '../core/exercises/types';
 
 export function PlayScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
+  const [highlightedNotes, setHighlightedNotes] = useState<Set<number>>(new Set());
+  const [isAudioReady, setIsAudioReady] = useState(false);
+
+  const audioEngine = getAudioEngine();
+
+  // Initialize audio engine
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      try {
+        await audioEngine.initialize();
+        if (mounted) setIsAudioReady(true);
+      } catch {
+        console.warn('[PlayScreen] Audio init failed');
+      }
+    };
+    init();
+    return () => {
+      mounted = false;
+    };
+  }, [audioEngine]);
+
+  const handleNoteOn = useCallback(
+    (midiNote: MidiNoteEvent) => {
+      setHighlightedNotes((prev) => new Set([...prev, midiNote.note]));
+      if (isAudioReady) {
+        audioEngine.playNote(midiNote.note, midiNote.velocity / 127);
+      }
+    },
+    [isAudioReady, audioEngine]
+  );
+
+  const handleNoteOff = useCallback(
+    (note: number) => {
+      setHighlightedNotes((prev) => {
+        const next = new Set(prev);
+        next.delete(note);
+        return next;
+      });
+    },
+    []
+  );
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -26,7 +71,6 @@ export function PlayScreen() {
   };
 
   const playRecording = () => {
-    // TODO: Implement playback
     console.log('Playing recording...');
   };
 
@@ -42,15 +86,22 @@ export function PlayScreen() {
         <Text style={styles.subtitle}>Practice and explore freely</Text>
       </View>
 
-      {/* Keyboard Placeholder */}
+      {/* Keyboard */}
       <View style={styles.keyboardContainer}>
-        <View style={styles.keyboardPlaceholder}>
-          <MaterialCommunityIcons name="piano" size={64} color="#BDBDBD" />
-          <Text style={styles.placeholderText}>Piano Keyboard</Text>
-          <Text style={styles.placeholderSubtext}>
-            Connect MIDI keyboard or use touch keyboard
-          </Text>
-        </View>
+        <Keyboard
+          startNote={48}
+          octaveCount={3}
+          onNoteOn={handleNoteOn}
+          onNoteOff={handleNoteOff}
+          highlightedNotes={highlightedNotes}
+          expectedNotes={new Set()}
+          enabled={true}
+          hapticEnabled={true}
+          showLabels={true}
+          scrollable={true}
+          keyHeight={160}
+          testID="freeplay-keyboard"
+        />
       </View>
 
       {/* Controls */}
@@ -118,24 +169,6 @@ export function PlayScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Info Cards */}
-      <View style={styles.infoContainer}>
-        <View style={styles.infoCard}>
-          <MaterialCommunityIcons name="information" size={24} color="#1976D2" />
-          <Text style={styles.infoText}>
-            Connect a MIDI keyboard to get started, or use the on-screen
-            keyboard for practice
-          </Text>
-        </View>
-
-        <View style={styles.infoCard}>
-          <MaterialCommunityIcons name="lightbulb" size={24} color="#FFC107" />
-          <Text style={styles.infoText}>
-            Try recording yourself and playing it back to hear your progress!
-          </Text>
-        </View>
-      </View>
     </SafeAreaView>
   );
 }
@@ -161,36 +194,15 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     flex: 1,
-    padding: 20,
-  },
-  keyboardPlaceholder: {
-    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    borderStyle: 'dashed',
-  },
-  placeholderText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#666',
-    marginTop: 16,
-  },
-  placeholderSubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
   },
   controls: {
     flexDirection: 'row',
     padding: 20,
     gap: 12,
     backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   controlButton: {
     flex: 1,
@@ -213,23 +225,5 @@ const styles = StyleSheet.create({
   },
   controlLabelDisabled: {
     color: '#999',
-  },
-  infoContainer: {
-    padding: 20,
-    gap: 12,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
-    alignItems: 'center',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
   },
 });

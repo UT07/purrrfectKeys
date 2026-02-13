@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProgressStore } from '../stores/progressStore';
-import { getLessons } from '../content/ContentLoader';
+import { getLessons, getLessonExercises } from '../content/ContentLoader';
 import type { LessonManifest } from '../content/ContentLoader';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -72,7 +72,22 @@ export function LearnScreen() {
             const isLocked = index > 0 && lessonProgress[prevLessonId!]?.status !== 'completed';
             const difficulty = lesson.metadata.difficulty;
             const icon: IconName = LESSON_ICONS[difficulty] ?? 'book-open-variant';
-            const firstExerciseId = lesson.exercises[0]?.id;
+
+            // Calculate exercise completion
+            const exercises = getLessonExercises(lesson.id);
+            const completedCount = progress
+              ? Object.values(progress.exerciseScores).filter((s) => s.completedAt != null).length
+              : 0;
+            const completionPercent = exercises.length > 0
+              ? Math.round((completedCount / exercises.length) * 100)
+              : 0;
+
+            // Navigate to next uncompleted exercise (not always the first)
+            const nextExercise = exercises.find((ex) => {
+              const score = progress?.exerciseScores[ex.id];
+              return !score || score.completedAt == null;
+            });
+            const targetExerciseId = nextExercise?.id ?? lesson.exercises[0]?.id;
 
             return (
               <TouchableOpacity
@@ -83,8 +98,8 @@ export function LearnScreen() {
                 ]}
                 disabled={isLocked}
                 onPress={() => {
-                  if (firstExerciseId) {
-                    navigation.navigate('Exercise', { exerciseId: firstExerciseId });
+                  if (targetExerciseId) {
+                    navigation.navigate('Exercise', { exerciseId: targetExerciseId });
                   }
                 }}
               >
@@ -162,18 +177,18 @@ export function LearnScreen() {
                   </View>
 
                   {/* Progress Bar */}
-                  {progress && !isCompleted && (
+                  {progress && !isCompleted && completionPercent > 0 && (
                     <View style={styles.progressContainer}>
                       <View style={styles.progressBar}>
                         <View
                           style={[
                             styles.progressFill,
-                            { width: `${progress.bestScore || 0}%` },
+                            { width: `${completionPercent}%` },
                           ]}
                         />
                       </View>
                       <Text style={styles.progressText}>
-                        {progress.bestScore || 0}%
+                        {completedCount}/{exercises.length}
                       </Text>
                     </View>
                   )}

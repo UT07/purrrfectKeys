@@ -10,7 +10,7 @@
  * - Haptic/audio feedback on note events
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,7 @@ import { PianoRoll } from '../../components/PianoRoll/PianoRoll';
 import { useExerciseStore } from '../../stores/exerciseStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useExercisePlayback } from '../../hooks/useExercisePlayback';
-import { getExercise } from '../../content/ContentLoader';
+import { getExercise, getNextExerciseId, getLessonIdForExercise, getLesson } from '../../content/ContentLoader';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import type { Exercise, ExerciseScore, MidiNoteEvent } from '../../core/exercises/types';
 import { ScoreDisplay } from './ScoreDisplay';
@@ -134,6 +134,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Exercise'>>();
   const mountedRef = useRef(true);
+  const skipPortraitResetRef = useRef(false);
+  const playbackStartTimeRef = useRef(0);
 
   // Store integration
   const exerciseStore = useExerciseStore();
@@ -144,6 +146,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     : null;
   const exercise =
     exerciseOverride || loadedExercise || exerciseStore.currentExercise || FALLBACK_EXERCISE;
+
+  // Derive keyboard range from exercise notes — round down to nearest C for clean octave display
+  const { keyboardStartNote, keyboardOctaveCount } = useMemo(() => {
+    const midiNotes = exercise.notes.map(n => n.note);
+    const minNote = Math.min(...midiNotes);
+    const maxNote = Math.max(...midiNotes);
+    // Round down to nearest C (mod 12 == 0) with 2-note margin
+    const start = Math.max(21, Math.floor((minNote - 2) / 12) * 12);
+    // Round up to fill complete octaves
+    const octaves = Math.max(2, Math.ceil((maxNote - start + 3) / 12));
+    return { keyboardStartNote: start, keyboardOctaveCount: Math.min(4, octaves) };
+  }, [exercise.notes]);
 
   // Track mount lifecycle
   useEffect(() => {
@@ -159,7 +173,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   /**
    * Handle exercise completion (called by useExercisePlayback hook)
-   * Persists score, XP, and streak to the progress store
+   * Persists score, XP, streak, and lesson progress to the progress store
    */
   const handleExerciseCompletion = useCallback((score: ExerciseScore) => {
     if (!mountedRef.current) return;
@@ -170,6 +184,68 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Persist XP and daily goal progress
     const progressStore = useProgressStore.getState();
     progressStore.recordExerciseCompletion(exercise.id, score.overall, score.xpEarned);
+
+    // Record practice time (convert elapsed ms to minutes)
+    if (playbackStartTimeRef.current > 0) {
+      const elapsedMinutes = (Date.now() - playbackStartTimeRef.current) / 60000;
+      progressStore.recordPracticeSession(Math.max(1, Math.round(elapsedMinutes)));
+    }
+
+    // Save exercise score to lesson progress
+    const exLessonId = getLessonIdForExercise(exercise.id);
+    if (exLessonId) {
+      const lesson = getLesson(exLessonId);
+      const existingLP = progressStore.lessonProgress[exLessonId];
+
+      // Initialize lesson progress if first attempt
+      if (!existingLP) {
+        progressStore.updateLessonProgress(exLessonId, {
+          lessonId: exLessonId,
+          status: 'in_progress',
+          exerciseScores: {},
+          bestScore: 0,
+          totalAttempts: 0,
+          totalTimeSpentSeconds: 0,
+        });
+      }
+
+      // Get fresh state after potential initialization
+      const currentLP = useProgressStore.getState().lessonProgress[exLessonId];
+      const existingExScore = currentLP?.exerciseScores[exercise.id];
+      const isNewHighScore = !existingExScore || score.overall > existingExScore.highScore;
+
+      // Save exercise progress
+      progressStore.updateExerciseProgress(exLessonId, exercise.id, {
+        exerciseId: exercise.id,
+        highScore: isNewHighScore ? score.overall : (existingExScore?.highScore ?? score.overall),
+        stars: isNewHighScore ? score.stars : (existingExScore?.stars ?? score.stars),
+        attempts: (existingExScore?.attempts ?? 0) + 1,
+        lastAttemptAt: Date.now(),
+        averageScore: existingExScore
+          ? (existingExScore.averageScore * existingExScore.attempts + score.overall) / (existingExScore.attempts + 1)
+          : score.overall,
+        ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}),
+      });
+
+      // Check if all exercises in the lesson are now completed
+      if (lesson && score.isPassed) {
+        const updatedLP = useProgressStore.getState().lessonProgress[exLessonId];
+        const allExerciseIds = lesson.exercises.map((e) => e.id);
+        const allComplete = allExerciseIds.every((eid) =>
+          updatedLP?.exerciseScores[eid]?.completedAt != null
+        );
+
+        if (allComplete && updatedLP?.status !== 'completed') {
+          progressStore.updateLessonProgress(exLessonId, {
+            ...updatedLP!,
+            status: 'completed',
+            completedAt: Date.now(),
+          });
+          // Award lesson completion XP bonus
+          progressStore.addXp(lesson.xpReward);
+        }
+      }
+    }
 
     // Update streak — mark today as practiced
     const today = new Date().toISOString().split('T')[0];
@@ -208,6 +284,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
     return () => {
+      // Skip portrait reset when navigating to next exercise (stays landscape)
+      if (skipPortraitResetRef.current) return;
       // Delay orientation reset so it doesn't race with navigation transition
       setTimeout(() => {
         ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
@@ -293,6 +371,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    * Start exercise playback
    */
   const handleStart = useCallback(() => {
+    playbackStartTimeRef.current = Date.now();
     startPlayback();
     setIsPaused(false);
     setComboCount(0);
@@ -485,6 +564,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     [handleManualNoteOff]
   );
 
+  // Determine if there's a next exercise in the lesson
+  const lessonId = getLessonIdForExercise(exercise.id);
+  const nextExerciseId = lessonId ? getNextExerciseId(lessonId, exercise.id) : null;
+
   /**
    * Handle completion modal close
    * Dismiss modal first, then exit after a brief delay to avoid animation races
@@ -498,6 +581,33 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }, 100);
   }, [handleExit]);
+
+  /**
+   * Retry the current exercise after failing
+   */
+  const handleRetry = useCallback(() => {
+    setShowCompletion(false);
+    setFinalScore(null);
+    handleRestart();
+  }, [handleRestart]);
+
+  /**
+   * Navigate to the next exercise in the lesson
+   */
+  const handleNextExercise = useCallback(() => {
+    if (!nextExerciseId) return;
+    setShowCompletion(false);
+    stopPlayback();
+    exerciseStore.clearSession();
+    // Prevent the unmount cleanup from resetting to portrait
+    skipPortraitResetRef.current = true;
+    // Brief delay so modal unmount and state cleanup settle
+    setTimeout(() => {
+      if (mountedRef.current) {
+        (navigation as any).replace('Exercise', { exerciseId: nextExerciseId });
+      }
+    }, 100);
+  }, [nextExerciseId, stopPlayback, exerciseStore, navigation]);
 
   // Show error if initialization failed
   if (hasError && errorMessage && !isMidiReady && !isAudioReady) {
@@ -600,8 +710,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         {/* Bottom: Full-width keyboard */}
         <View style={styles.keyboardContainer}>
           <Keyboard
-            startNote={48}
-            octaveCount={2}
+            startNote={keyboardStartNote}
+            octaveCount={keyboardOctaveCount}
             onNoteOn={handleKeyDown}
             onNoteOff={handleKeyUp}
             highlightedNotes={highlightedKeys}
@@ -622,6 +732,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           score={finalScore}
           exercise={exercise}
           onClose={handleCompletionClose}
+          onRetry={handleRetry}
+          onNextExercise={nextExerciseId ? handleNextExercise : undefined}
           testID="completion-modal"
         />
       )}

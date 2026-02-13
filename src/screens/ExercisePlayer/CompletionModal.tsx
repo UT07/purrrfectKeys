@@ -25,6 +25,8 @@ export interface CompletionModalProps {
   score: ExerciseScore;
   exercise: Exercise;
   onClose: () => void;
+  onRetry?: () => void;
+  onNextExercise?: () => void;
   testID?: string;
 }
 
@@ -36,6 +38,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   score,
   exercise,
   onClose,
+  onRetry,
+  onNextExercise,
   testID,
 }) => {
   // Animation values
@@ -197,8 +201,10 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
             {/* Score Display */}
             <View style={styles.scoreSection}>
               <View style={styles.scoreCircle}>
-                <Text style={styles.scoreNumber}>{score.overall}</Text>
-                <Text style={styles.scoreLabel}>%</Text>
+                <View style={styles.scoreRow}>
+                  <Text style={styles.scoreNumber}>{score.overall}</Text>
+                  <Text style={styles.scoreLabel}>%</Text>
+                </View>
               </View>
             </View>
 
@@ -319,12 +325,32 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
 
           {/* Action Buttons */}
           <View style={styles.actions}>
+            {onNextExercise && score.isPassed && (
+              <Button
+                title="Next Exercise"
+                onPress={onNextExercise}
+                variant="primary"
+                size="large"
+                icon={<MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" />}
+                testID="completion-next"
+              />
+            )}
+            {!score.isPassed && onRetry && (
+              <Button
+                title="Try Again"
+                onPress={onRetry}
+                variant="primary"
+                size="large"
+                icon={<MaterialCommunityIcons name="refresh" size={20} color="#FFF" />}
+                testID="completion-retry"
+              />
+            )}
             <Button
-              title="Continue"
+              title={score.isPassed && onNextExercise ? 'Back to Lessons' : (score.isPassed ? 'Continue' : 'Back to Lessons')}
               onPress={onClose}
-              variant="primary"
+              variant={score.isPassed && onNextExercise ? 'secondary' : (!score.isPassed ? 'secondary' : 'primary')}
               size="large"
-              icon={<MaterialCommunityIcons name="check" size={20} color="#FFF" />}
+              icon={<MaterialCommunityIcons name={score.isPassed && !onNextExercise ? 'check' : 'arrow-left'} size={20} color={score.isPassed && !onNextExercise ? '#FFF' : '#666'} />}
               testID="completion-continue"
             />
           </View>
@@ -394,15 +420,20 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#2196F3',
   },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
   scoreNumber: {
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: '700',
     color: '#2196F3',
   },
   scoreLabel: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#2196F3',
-    marginTop: -4,
+    marginLeft: 1,
   },
   starsResultColumn: {
     alignItems: 'center',
