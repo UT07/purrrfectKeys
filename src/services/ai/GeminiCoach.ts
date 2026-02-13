@@ -287,7 +287,8 @@ export class GeminiCoach {
 
       return text;
     } catch (error) {
-      console.error('Error calling Gemini API:', error);
+      // Use warn (not error) to avoid Expo error overlay for expected API failures
+      console.warn('[GeminiCoach] API call failed, using fallback:', (error as Error)?.message ?? error);
       return this.getFallbackFeedback(request);
     }
   }

@@ -50,6 +50,30 @@ interface FeedbackState {
   timestamp: number;
 }
 
+function getFeedbackColor(type: string | null): string {
+  switch (type) {
+    case 'perfect': return '#00E676';
+    case 'good': return '#69F0AE';
+    case 'ok': return '#FFD740';
+    case 'early': return '#40C4FF';
+    case 'late': return '#FFAB40';
+    case 'miss': return '#FF5252';
+    default: return '#757575';
+  }
+}
+
+function getFeedbackLabel(type: string | null): string {
+  switch (type) {
+    case 'perfect': return 'PERFECT!';
+    case 'good': return 'GOOD!';
+    case 'ok': return 'OK';
+    case 'early': return 'EARLY';
+    case 'late': return 'LATE';
+    case 'miss': return 'MISS';
+    default: return '';
+  }
+}
+
 // Fallback exercise used only when no exercise can be loaded from content
 const FALLBACK_EXERCISE: Exercise = {
   id: 'lesson-01-ex-01',
@@ -549,6 +573,23 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           />
         </View>
 
+        {/* Timing feedback overlay between piano roll and keyboard */}
+        {feedback.type && (
+          <View style={styles.feedbackOverlay}>
+            <Text
+              style={[
+                styles.feedbackText,
+                { color: getFeedbackColor(feedback.type) },
+              ]}
+            >
+              {getFeedbackLabel(feedback.type)}
+            </Text>
+            {comboCount > 2 && (
+              <Text style={styles.comboOverlayText}>{comboCount}x combo</Text>
+            )}
+          </View>
+        )}
+
         {/* Bottom: Full-width keyboard */}
         <View style={styles.keyboardContainer}>
           <Keyboard
@@ -622,6 +663,24 @@ const styles = StyleSheet.create({
   pianoRollContainer: {
     flex: 1,
     margin: 4,
+  },
+  feedbackOverlay: {
+    height: 36,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  feedbackText: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  comboOverlayText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFD740',
   },
   keyboardContainer: {
     height: 110,

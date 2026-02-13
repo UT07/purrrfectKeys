@@ -229,6 +229,41 @@
 
 ---
 
+### 10. PianoRoll Rewrite: Transform-Based Scrolling
+
+**Problem:** `ScrollView` with `scrollTo()` at 60fps fights iOS touch handling, causing notes to visually freeze.
+
+**`src/components/PianoRoll/PianoRoll.tsx` (rewritten):**
+- Replaced `ScrollView` with a plain `View` using `transform: [{translateX}]`
+- Notes, beat grid lines, and glow effects all live in a content layer that moves via translateX
+- Fixed playback marker stays at `screenWidth / 3`
+- Dark theme background (`#1A1A2E`) for better contrast
+- Note blocks now show note names (e.g., "C4") via `midiToNoteName()`
+- Active notes get a red glow effect behind them
+- Beat counter shows "Count: 3" during count-in, "Beat 2" during playback
+- Beat grid lines with measure accents
+
+### 11. Visual Feedback Improvements
+
+**`src/screens/ExercisePlayer/ExercisePlayer.tsx`:**
+- Added timing feedback overlay bar between PianoRoll and keyboard
+- Shows large colored text: "PERFECT!", "GOOD!", "EARLY", "LATE", "MISS"
+- Combo counter shows "3x combo" when streak > 2
+- Dark background bar for high contrast against both PianoRoll and keyboard
+
+### 12. Gemini Error Suppression
+
+**`src/services/ai/GeminiCoach.ts` + `src/services/ai/CoachingService.ts`:**
+- Changed `console.error` to `console.warn` for API failures
+- Prevents Expo error overlay from appearing on Gemini quota/network errors
+- Fallback feedback still works seamlessly
+
+#### Verification
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+- Tests: 433/433 passed (`npx jest --silent`)
+
+---
+
 ## Known Remaining Items
 
 1. ~~**Exercise loading by ID**: `ExerciseScreen` uses a hardcoded `DEFAULT_EXERCISE`~~ **RESOLVED** (Stream A)

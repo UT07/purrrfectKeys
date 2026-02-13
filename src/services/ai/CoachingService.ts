@@ -85,7 +85,7 @@ export class CoachingService {
         suggestedAction: input.score.isPassed ? 'continue' : 'retry',
       };
     } catch (error) {
-      console.error('Failed to generate coaching feedback:', error);
+      console.warn('[CoachingService] Feedback generation failed, using fallback:', (error as Error)?.message ?? error);
       return {
         feedback: 'Keep practicing! You are making progress.',
         suggestedAction: 'retry',

@@ -1,19 +1,12 @@
 /**
  * Piano Roll Component
  * Scrolling note visualization for exercises
- * Shows upcoming, active, and past notes with color coding
+ * Uses transform-based scrolling (not ScrollView) for smooth 60fps playback
  */
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Text,
-  Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from 'react-native';
+import React, { useMemo } from 'react';
+import { View, StyleSheet, Text, Dimensions } from 'react-native';
+import { midiToNoteName } from '@/core/music/MusicTheory';
 import type { NoteEvent } from '@/core/exercises/types';
 
 export interface PianoRollProps {
@@ -26,85 +19,103 @@ export interface PianoRollProps {
   testID?: string;
 }
 
-interface VisualNote {
-  index: number;
-  note: NoteEvent;
-  topPosition: number;
-  leftPosition: number;
-  width: number;
-  height: number;
-  color: string;
-  isActive: boolean;
-  isPast: boolean;
-}
-
 const MIDI_MIN = 48; // C3
 const MIDI_MAX = 72; // C5
 const MIDI_RANGE = MIDI_MAX - MIDI_MIN;
+const NOTE_HEIGHT = 28;
+const PIXELS_PER_BEAT = 120;
 
 const COLORS = {
-  upcoming: '#64B5F6', // Blue
-  active: '#EF5350', // Red
-  past: '#81C784', // Green
-  staff: '#E0E0E0',
+  upcoming: '#5C6BC0', // Indigo
+  active: '#FF5252', // Bright red
+  activeGlow: 'rgba(255, 82, 82, 0.3)',
+  past: '#66BB6A', // Green
+  pastFaded: 'rgba(102, 187, 106, 0.4)',
+  staff: '#E8E8E8',
+  staffAccent: '#D0D0D0',
+  marker: '#FF1744',
+  markerGlow: 'rgba(255, 23, 68, 0.2)',
+  background: '#1A1A2E',
+  beatLine: 'rgba(255, 255, 255, 0.08)',
+  beatLineAccent: 'rgba(255, 255, 255, 0.15)',
 };
 
 /**
  * Calculate the visual Y position for a note based on MIDI number
+ * Notes are laid out bottom-to-top (low notes at bottom, high notes at top)
  */
 function calculateNoteY(midiNote: number, containerHeight: number): number {
   const noteInRange = Math.max(MIDI_MIN, Math.min(MIDI_MAX, midiNote));
   const normalized = (noteInRange - MIDI_MIN) / MIDI_RANGE;
-  return containerHeight - normalized * containerHeight;
+  // Center the note vertically within its band
+  return containerHeight - normalized * containerHeight - NOTE_HEIGHT / 2;
 }
 
 /**
  * PianoRoll Component
- * Displays notes in a scrollable piano roll format
+ * Displays notes that scroll from right to left toward a fixed playback marker.
+ * Uses transform translateX instead of ScrollView for reliable 60fps scrolling.
  */
 export const PianoRoll = React.memo(
   ({
     notes,
     currentBeat = 0,
     tempo: _tempo = 120,
-    timeSignature: _timeSignature = [4, 4],
+    timeSignature = [4, 4],
     visibleBeats: _visibleBeats = 8,
-    onNoteHighlight,
+    onNoteHighlight: _onNoteHighlight,
     testID,
   }: PianoRollProps) => {
     const screenWidth = Dimensions.get('window').width;
     const containerHeight = 200;
 
-    // Convert beat to pixel position
-    // Assumption: 100 pixels per beat for visualization
-    const pixelsPerBeat = 100;
-    // Padding so the first note starts at the playback marker (1/3 of screen)
-    const contentPadding = screenWidth / 3;
-    const totalWidth = notes.length > 0
-      ? Math.max(
-          screenWidth,
-          (Math.max(...notes.map((n) => n.startBeat + n.durationBeats)) + 2) *
-            pixelsPerBeat + contentPadding
-        )
-      : screenWidth;
+    // The playback marker sits at 1/3 of the screen
+    const markerX = screenWidth / 3;
 
-    // Calculate visual notes
+    // Calculate the translateX offset to keep currentBeat aligned with the marker
+    const translateX = -currentBeat * PIXELS_PER_BEAT;
+
+    // Total content width based on notes
+    const maxBeat = notes.length > 0
+      ? Math.max(...notes.map((n) => n.startBeat + n.durationBeats))
+      : 4;
+
+    // Generate beat lines for visual grid
+    const beatsPerMeasure = timeSignature[0];
+    const totalBeats = Math.ceil(maxBeat) + 4;
+    const beatLines = useMemo(() => {
+      const lines = [];
+      for (let beat = 0; beat <= totalBeats; beat++) {
+        const isMeasureLine = beat % beatsPerMeasure === 0;
+        lines.push({ beat, isMeasureLine });
+      }
+      return lines;
+    }, [totalBeats, beatsPerMeasure]);
+
+    // Calculate visual notes with color/state based on currentBeat
     const visualNotes = useMemo(() => {
       return notes.map((note, index) => {
         const topPosition = calculateNoteY(note.note, containerHeight);
-        const leftPosition = contentPadding + note.startBeat * pixelsPerBeat;
-        const width = Math.max(8, note.durationBeats * pixelsPerBeat);
-        const height = 20;
+        // Position relative to beat 0 (markerX offset added via parent transform)
+        const leftPosition = markerX + note.startBeat * PIXELS_PER_BEAT;
+        const width = Math.max(20, note.durationBeats * PIXELS_PER_BEAT);
 
-        // Determine color based on position relative to current beat
         const noteEnd = note.startBeat + note.durationBeats;
         const isPast = noteEnd < currentBeat;
-        const isActive =
-          note.startBeat <= currentBeat && currentBeat < noteEnd;
+        const isActive = note.startBeat <= currentBeat && currentBeat < noteEnd;
 
         let color = COLORS.upcoming;
-        if (isPast) color = COLORS.past;
-        if (isActive) color = COLORS.active;
+        let borderColor = 'rgba(255, 255, 255, 0.2)';
+        if (isPast) {
+          color = COLORS.pastFaded;
+          borderColor = 'transparent';
+        }
+        if (isActive) {
+          color = COLORS.active;
+          borderColor = '#FFF';
+        }
+
+        const noteName = midiToNoteName(note.note);
 
         return {
           index,
@@ -112,120 +123,108 @@ export const PianoRoll = React.memo(
           topPosition,
           leftPosition,
           width,
-          height,
           color,
+          borderColor,
           isActive,
           isPast,
-        } as VisualNote;
+          noteName,
+        };
       });
-    }, [notes, currentBeat, containerHeight, pixelsPerBeat, contentPadding]);
-
-    const handleScroll = useCallback(
-      (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const scrollX = event.nativeEvent.contentOffset.x;
-
-        // Highlight notes near the current position marker
-        const markerPosition = screenWidth / 3;
-        visualNotes.forEach((visualNote) => {
-          const noteScreenPosition = visualNote.leftPosition - scrollX;
-          const isNearMarker =
-            Math.abs(noteScreenPosition - markerPosition) < 50;
-
-          if (isNearMarker && onNoteHighlight) {
-            onNoteHighlight(visualNote.index);
-          }
-        });
-      },
-      [visualNotes, screenWidth, onNoteHighlight]
-    );
-
-    // Scroll so the current beat aligns with the playback marker (1/3 of screen).
-    // With contentPadding = screenWidth/3, beat 0 is already at the marker
-    // at scrollX=0, so we simply scroll by currentBeat * pixelsPerBeat.
-    const currentScrollX = Math.max(0, currentBeat * pixelsPerBeat);
-
-    // Ref for programmatic scrolling
-    const scrollViewRef = useRef<ScrollView>(null);
-
-    // Scroll to current beat position whenever it changes
-    useEffect(() => {
-      scrollViewRef.current?.scrollTo({ x: currentScrollX, animated: false });
-    }, [currentScrollX]);
+    }, [notes, currentBeat, containerHeight, markerX]);
 
     return (
-      <View style={[styles.container, { height: containerHeight }]} testID={testID}>
-        {/* Staff lines background */}
-        <View style={styles.staffLines}>
-          {Array.from({ length: 5 }).map((_, i) => (
+      <View
+        style={[styles.container, { height: containerHeight }]}
+        testID={testID}
+      >
+        {/* Dark background with gradient feel */}
+        <View style={styles.background} />
+
+        {/* Content layer — moves via translateX */}
+        <View
+          style={[
+            styles.contentLayer,
+            { transform: [{ translateX }] },
+          ]}
+        >
+          {/* Beat grid lines */}
+          {beatLines.map(({ beat, isMeasureLine }) => (
             <View
-              key={`staff-${i}`}
+              key={`beat-${beat}`}
               style={[
-                styles.staffLine,
+                styles.beatLine,
                 {
-                  top: `${i * 25}%`,
+                  left: markerX + beat * PIXELS_PER_BEAT,
+                  backgroundColor: isMeasureLine
+                    ? COLORS.beatLineAccent
+                    : COLORS.beatLine,
+                  width: isMeasureLine ? 2 : 1,
                 },
               ]}
             />
           ))}
-        </View>
 
-        {/* Notes container */}
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          scrollEventThrottle={16}
-          onScroll={handleScroll}
-          showsHorizontalScrollIndicator={false}
-          scrollsToTop={false}
-        >
-          <View
-            style={[
-              styles.notesContainer,
-              {
-                width: totalWidth,
-                height: containerHeight,
-              },
-            ]}
-          >
-            {/* Render notes */}
-            {visualNotes.map((visualNote) => (
+          {/* Note blocks */}
+          {visualNotes.map((vn) => (
+            <View key={`note-${vn.index}`}>
+              {/* Active glow behind the note */}
+              {vn.isActive && (
+                <View
+                  style={[
+                    styles.noteGlow,
+                    {
+                      left: vn.leftPosition - 4,
+                      top: vn.topPosition - 4,
+                      width: vn.width + 8,
+                      height: NOTE_HEIGHT + 8,
+                    },
+                  ]}
+                />
+              )}
               <View
-                key={`note-${visualNote.index}`}
                 style={[
                   styles.note,
                   {
-                    left: visualNote.leftPosition,
-                    top: visualNote.topPosition,
-                    width: visualNote.width,
-                    height: visualNote.height,
-                    backgroundColor: visualNote.color,
-                    opacity: visualNote.isPast ? 0.5 : 1,
+                    left: vn.leftPosition,
+                    top: vn.topPosition,
+                    width: vn.width,
+                    height: NOTE_HEIGHT,
+                    backgroundColor: vn.color,
+                    borderColor: vn.borderColor,
+                    opacity: vn.isPast ? 0.5 : 1,
                   },
                 ]}
               >
-                {visualNote.note.hand && (
+                <Text
+                  style={[
+                    styles.noteLabel,
+                    vn.isActive && styles.noteLabelActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {vn.noteName}
+                </Text>
+                {vn.note.hand && (
                   <Text style={styles.handLabel}>
-                    {visualNote.note.hand === 'left' ? 'L' : 'R'}
+                    {vn.note.hand === 'left' ? 'L' : 'R'}
                   </Text>
                 )}
               </View>
-            ))}
-          </View>
-        </ScrollView>
+            </View>
+          ))}
+        </View>
 
-        {/* Playback position indicator (vertical line at 1/3 of screen) */}
-        <View
-          style={[
-            styles.playbackMarker,
-            {
-              left: screenWidth / 3,
-            },
-          ]}
-        />
+        {/* Fixed playback marker line */}
+        <View style={[styles.markerGlow, { left: markerX - 8 }]} />
+        <View style={[styles.playbackMarker, { left: markerX - 1 }]} />
 
         {/* Beat counter */}
         <View style={styles.beatCounter}>
-          <Text style={styles.beatText}>Beat {Math.ceil(currentBeat)}</Text>
+          <Text style={styles.beatText}>
+            {currentBeat < 0
+              ? `Count: ${Math.ceil(-currentBeat)}`
+              : `Beat ${Math.floor(currentBeat) + 1}`}
+          </Text>
         </View>
       </View>
     );
@@ -237,68 +236,78 @@ PianoRoll.displayName = 'PianoRoll';
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    backgroundColor: '#FAFAFA',
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
   },
-  staffLines: {
+  background: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.background,
+  },
+  contentLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  beatLine: {
     position: 'absolute',
-    width: '100%',
     height: '100%',
-    zIndex: 0,
   },
-  staffLine: {
-    width: '100%',
-    height: 1,
-    backgroundColor: COLORS.staff,
+  noteGlow: {
     position: 'absolute',
-  },
-  notesContainer: {
-    position: 'relative',
+    borderRadius: 8,
+    backgroundColor: COLORS.activeGlow,
   },
   note: {
     position: 'absolute',
-    borderRadius: 4,
-    justifyContent: 'center',
+    borderRadius: 6,
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+    justifyContent: 'center',
+    gap: 4,
+    borderWidth: 1,
+    paddingHorizontal: 6,
+  },
+  noteLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  noteLabelActive: {
+    color: '#FFFFFF',
+    fontSize: 13,
   },
   handLabel: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   playbackMarker: {
     position: 'absolute',
-    width: 2,
+    width: 3,
     height: '100%',
-    backgroundColor: '#F44336',
+    backgroundColor: COLORS.marker,
     zIndex: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+  },
+  markerGlow: {
+    position: 'absolute',
+    width: 16,
+    height: '100%',
+    backgroundColor: COLORS.markerGlow,
+    zIndex: 19,
   },
   beatCounter: {
     position: 'absolute',
     bottom: 8,
     right: 8,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
     zIndex: 15,
   },
   beatText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#333333',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
 
