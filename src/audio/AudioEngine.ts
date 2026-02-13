@@ -114,3 +114,17 @@ export function getAudioEngine(): AudioEngine {
 export function setAudioEngine(engine: AudioEngine): void {
   audioEngineInstance = engine;
 }
+
+/**
+ * Factory function that creates the best available IAudioEngine implementation.
+ *
+ * Selection order:
+ * 1. WebAudioEngine (react-native-audio-api oscillator synthesis) — preferred
+ *    True polyphony, no sample loading, low latency
+ * 2. ExpoAudioEngine (expo-av) — fallback for Expo Go / when react-native-audio-api is unavailable
+ *
+ * Usage:
+ *   const engine = createAudioEngine();
+ *   await engine.initialize();
+ */
+export { createAudioEngine } from './createAudioEngine';

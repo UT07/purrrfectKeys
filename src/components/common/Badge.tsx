@@ -26,20 +26,20 @@ export interface BadgeProps {
 
 const COLORS = {
   primary: {
-    background: '#E3F2FD',
-    text: '#1976D2',
+    background: 'rgba(220, 20, 60, 0.15)',
+    text: '#DC143C',
   },
   success: {
-    background: '#E8F5E9',
-    text: '#388E3C',
+    background: 'rgba(76, 175, 80, 0.15)',
+    text: '#4CAF50',
   },
   danger: {
-    background: '#FFEBEE',
-    text: '#C62828',
+    background: 'rgba(244, 67, 54, 0.15)',
+    text: '#F44336',
   },
   warning: {
-    background: '#FFF3E0',
-    text: '#F57C00',
+    background: 'rgba(255, 152, 0, 0.15)',
+    text: '#FF9800',
   },
 };
 

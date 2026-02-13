@@ -73,10 +73,10 @@ Card.displayName = 'Card';
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#2A2A2A',
   },
   elevated: {
     shadowColor: '#000000',

@@ -72,7 +72,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             testID="control-play"
             accessibilityLabel="Play exercise"
           >
-            <MaterialCommunityIcons name="play" size={20} color="#2196F3" />
+            <MaterialCommunityIcons name="play" size={20} color="#DC143C" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -84,7 +84,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             <MaterialCommunityIcons
               name={isPaused ? 'play' : 'pause'}
               size={20}
-              color="#2196F3"
+              color="#DC143C"
             />
           </TouchableOpacity>
         )}
@@ -155,7 +155,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             onPress={handleRestartPress}
             variant="outline"
             size="large"
-            icon={<MaterialCommunityIcons name="restart" size={20} color="#2196F3" />}
+            icon={<MaterialCommunityIcons name="restart" size={20} color="#DC143C" />}
             testID="control-restart"
             accessibilityLabel="Restart exercise"
             accessibilityHint="Restarts the exercise from the beginning"
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#252525',
     justifyContent: 'center',
     alignItems: 'center',
   },

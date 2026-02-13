@@ -178,28 +178,25 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    backgroundColor: '#0D0D0D',
   },
   containerAtRisk: {
-    borderBottomColor: '#FFCDD2',
-    backgroundColor: '#FFFBFB',
+    backgroundColor: 'rgba(220, 20, 60, 0.05)',
   },
   streakCard: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#FFE0B2',
+    borderColor: '#2A2A2A',
   },
   secondaryCard: {
-    backgroundColor: '#F3E5F5',
-    borderColor: '#E1BEE7',
+    backgroundColor: '#1A1A1A',
+    borderColor: '#2A2A2A',
   },
   streakInfo: {
     marginLeft: 12,
@@ -207,7 +204,7 @@ const styles = StyleSheet.create({
   },
   streakLabel: {
     fontSize: 12,
-    color: '#666666',
+    color: '#B0B0B0',
     fontWeight: '500',
   },
   streakNumber: {
@@ -217,23 +214,23 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   streakNumberAtRisk: {
-    color: '#F44336',
+    color: '#DC143C',
   },
   atRiskText: {
     fontSize: 11,
-    color: '#D32F2F',
+    color: '#DC143C',
     marginTop: 4,
     fontWeight: '500',
   },
   secondaryLabel: {
     fontSize: 11,
-    color: '#666666',
+    color: '#B0B0B0',
     fontWeight: '500',
   },
   secondaryNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#6A1B9A',
+    color: '#FFD700',
     marginTop: 2,
   },
   freezeContainer: {
@@ -241,15 +238,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: 'rgba(79, 195, 247, 0.1)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#BBDEFB',
+    borderColor: 'rgba(79, 195, 247, 0.3)',
   },
   freezeText: {
     marginLeft: 8,
     fontSize: 12,
     fontWeight: '500',
-    color: '#0277BD',
+    color: '#4FC3F7',
   },
 });

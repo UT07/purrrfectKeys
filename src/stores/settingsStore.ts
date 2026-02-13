@@ -12,11 +12,11 @@
  */
 
 import { create } from 'zustand';
-import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings } from './types';
+import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 
 /** Data-only shape of settings state (excludes actions) */
-type SettingsData = AudioSettings & DisplaySettings & NotificationSettings & MidiSettings & OnboardingSettings;
+type SettingsData = AudioSettings & DisplaySettings & NotificationSettings & MidiSettings & OnboardingSettings & ProfileSettings;
 
 const defaultSettings: SettingsData = {
   // Audio settings
@@ -50,6 +50,10 @@ const defaultSettings: SettingsData = {
   hasCompletedOnboarding: false,
   experienceLevel: null,
   learningGoal: null,
+
+  // Profile settings
+  displayName: 'Piano Student',
+  avatarEmoji: '\uD83C\uDFB9', // piano emoji
 };
 
 // Create debounced save function
@@ -167,6 +171,19 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   setLearningGoal: (goal: 'songs' | 'technique' | 'exploration') => {
     set({ learningGoal: goal });
     debouncedSave({ ...get(), learningGoal: goal });
+  },
+
+  // Profile settings
+  setDisplayName: (name: string) => {
+    const trimmed = name.trim().slice(0, 30);
+    if (trimmed.length === 0) return;
+    set({ displayName: trimmed });
+    debouncedSave({ ...get(), displayName: trimmed });
+  },
+
+  setAvatarEmoji: (emoji: string) => {
+    set({ avatarEmoji: emoji });
+    debouncedSave({ ...get(), avatarEmoji: emoji });
   },
 
   reset: () => {

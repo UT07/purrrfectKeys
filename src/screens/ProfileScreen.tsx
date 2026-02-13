@@ -1,8 +1,9 @@
 /**
  * ProfileScreen - User profile, stats, and settings
+ * Editable display name and avatar emoji
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,9 +12,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -37,12 +41,49 @@ const VOLUME_OPTIONS = [
   { label: '100%', value: 1.0 },
 ];
 
+const AVATAR_EMOJIS = [
+  '\uD83C\uDFB9', '\uD83C\uDFB5', '\uD83C\uDFB6', '\uD83C\uDFBC',
+  '\uD83E\uDDD1\u200D\uD83C\uDFA8', '\uD83D\uDE0E', '\uD83E\uDD29', '\uD83D\uDE0A',
+  '\uD83C\uDF1F', '\uD83D\uDD25', '\uD83D\uDCAA', '\uD83C\uDFC6',
+  '\uD83E\uDD8B', '\uD83C\uDF3A', '\uD83C\uDF08', '\u2B50',
+];
+
+/** Get the last 7 days of practice data for the chart */
+function useWeeklyPractice(): { day: string; minutes: number }[] {
+  const { dailyGoalData } = useProgressStore();
+
+  return useMemo(() => {
+    const days: { day: string; minutes: number }[] = [];
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const key = date.toISOString().split('T')[0];
+      const dayLabel = dayLabels[date.getDay()];
+      const minutes = dailyGoalData[key]?.minutesPracticed ?? 0;
+      days.push({ day: dayLabel, minutes });
+    }
+    return days;
+  }, [dailyGoalData]);
+}
+
 export function ProfileScreen() {
   const navigation = useNavigation<ProfileNavProp>();
   const { totalXp, level, streakData, lessonProgress } = useProgressStore();
-  const { dailyGoalMinutes, masterVolume, setDailyGoalMinutes, setMasterVolume } = useSettingsStore();
+  const {
+    dailyGoalMinutes, masterVolume, displayName, avatarEmoji,
+    setDailyGoalMinutes, setMasterVolume, setDisplayName, setAvatarEmoji,
+  } = useSettingsStore();
+  const weeklyPractice = useWeeklyPractice();
+  const totalWeekMinutes = weeklyPractice.reduce((sum, d) => sum + d.minutes, 0);
+  const maxDayMinutes = Math.max(...weeklyPractice.map(d => d.minutes), 1);
+
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showVolumePicker, setShowVolumePicker] = useState(false);
+  const [showNameEditor, setShowNameEditor] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [editingName, setEditingName] = useState(displayName);
 
   // Calculate total lessons completed
   const completedLessons = Object.values(lessonProgress).filter(
@@ -56,30 +97,95 @@ export function ProfileScreen() {
     { icon: 'book-open', label: 'Lessons Done', value: completedLessons },
   ];
 
+  const handleSaveName = () => {
+    const trimmed = editingName.trim();
+    if (trimmed.length > 0) {
+      setDisplayName(trimmed);
+    }
+    setShowNameEditor(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            <MaterialCommunityIcons name="account-circle" size={80} color="#FFFFFF" />
-          </View>
-          <Text style={styles.username}>Piano Student</Text>
-          <Text style={styles.subtitle}>Keep practicing! 🎹</Text>
-        </View>
+        {/* Gradient Header with editable profile */}
+        <LinearGradient
+          colors={['#1A1A2E', '#1A1A1A', '#0D0D0D']}
+          style={styles.header}
+        >
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            onPress={() => setShowAvatarPicker(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>{avatarEmoji}</Text>
+            </View>
+            <View style={styles.editBadge}>
+              <MaterialCommunityIcons name="pencil" size={12} color="#FFF" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => { setEditingName(displayName); setShowNameEditor(true); }}>
+            <View style={styles.nameRow}>
+              <Text style={styles.username}>{displayName}</Text>
+              <MaterialCommunityIcons name="pencil-outline" size={16} color="#666666" />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.subtitle}>Level {level} Pianist</Text>
+        </LinearGradient>
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           {stats.map((stat, index) => (
             <View key={index} style={styles.statCard}>
-              <MaterialCommunityIcons name={stat.icon} size={32} color="#1976D2" />
+              <MaterialCommunityIcons name={stat.icon} size={32} color="#DC143C" />
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </View>
           ))}
+        </View>
+
+        {/* Weekly Practice Chart */}
+        <View style={styles.section}>
+          <View style={styles.chartHeader}>
+            <Text style={styles.sectionTitle}>This Week</Text>
+            <Text style={styles.chartTotal}>{totalWeekMinutes} min total</Text>
+          </View>
+          <View style={styles.chartContainer}>
+            {weeklyPractice.map((day, index) => {
+              const barHeight = day.minutes > 0
+                ? Math.max(8, (day.minutes / maxDayMinutes) * 80)
+                : 4;
+              const isToday = index === 6;
+              return (
+                <View key={day.day} style={styles.chartColumn}>
+                  <Text style={styles.chartMinutes}>
+                    {day.minutes > 0 ? day.minutes : ''}
+                  </Text>
+                  <View style={styles.chartBarTrack}>
+                    <View
+                      style={[
+                        styles.chartBar,
+                        {
+                          height: barHeight,
+                          backgroundColor: day.minutes > 0
+                            ? (isToday ? '#DC143C' : '#DC143C99')
+                            : '#333333',
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.chartDay, isToday && styles.chartDayActive]}>
+                    {day.day}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
         </View>
 
         {/* Settings Section */}
@@ -88,12 +194,12 @@ export function ProfileScreen() {
 
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="target" size={24} color="#666" />
+              <MaterialCommunityIcons name="target" size={24} color="#B0B0B0" />
               <Text style={styles.settingLabel}>Daily Goal</Text>
             </View>
             <View style={styles.settingRight}>
               <Text style={styles.settingValue}>{dailyGoalMinutes} min</Text>
-              <MaterialCommunityIcons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#999" />
+              <MaterialCommunityIcons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
             </View>
           </TouchableOpacity>
           {showGoalPicker && (
@@ -114,12 +220,12 @@ export function ProfileScreen() {
 
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)}>
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="volume-high" size={24} color="#666" />
+              <MaterialCommunityIcons name="volume-high" size={24} color="#B0B0B0" />
               <Text style={styles.settingLabel}>Volume</Text>
             </View>
             <View style={styles.settingRight}>
               <Text style={styles.settingValue}>{Math.round(masterVolume * 100)}%</Text>
-              <MaterialCommunityIcons name={showVolumePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#999" />
+              <MaterialCommunityIcons name={showVolumePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
             </View>
           </TouchableOpacity>
           {showVolumePicker && (
@@ -140,10 +246,10 @@ export function ProfileScreen() {
 
           <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('MidiSetup')}>
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="piano" size={24} color="#666" />
+              <MaterialCommunityIcons name="piano" size={24} color="#B0B0B0" />
               <Text style={styles.settingLabel}>MIDI Setup</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -151,10 +257,10 @@ export function ProfileScreen() {
             onPress={() => Alert.alert('About KeySense', 'KeySense v1.0.0\nAI-Powered Piano Learning\n\nLearn piano with real-time feedback, MIDI support, and AI coaching.')}
           >
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="information" size={24} color="#666" />
+              <MaterialCommunityIcons name="information" size={24} color="#B0B0B0" />
               <Text style={styles.settingLabel}>About</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
         </View>
 
@@ -172,6 +278,58 @@ export function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Name Editor Modal */}
+      <Modal visible={showNameEditor} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Edit Name</Text>
+            <TextInput
+              style={styles.nameInput}
+              value={editingName}
+              onChangeText={setEditingName}
+              maxLength={30}
+              autoFocus
+              selectTextOnFocus
+              placeholder="Your name"
+              placeholderTextColor="#666"
+              returnKeyType="done"
+              onSubmitEditing={handleSaveName}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowNameEditor(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSave} onPress={handleSaveName}>
+                <Text style={styles.modalSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Avatar Emoji Picker Modal */}
+      <Modal visible={showAvatarPicker} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Choose Avatar</Text>
+            <View style={styles.emojiGrid}>
+              {AVATAR_EMOJIS.map((emoji) => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={[styles.emojiCell, avatarEmoji === emoji && styles.emojiCellActive]}
+                  onPress={() => { setAvatarEmoji(emoji); setShowAvatarPicker(false); }}
+                >
+                  <Text style={styles.emojiText}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowAvatarPicker(false)}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -179,7 +337,7 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#0D0D0D',
   },
   scrollContent: {
     paddingBottom: 40,
@@ -187,15 +345,42 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: 32,
-    backgroundColor: '#1976D2',
-    shadowColor: '#1976D2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingBottom: 28,
   },
   avatarContainer: {
     marginBottom: 16,
+    position: 'relative',
+  },
+  avatarCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(220, 20, 60, 0.4)',
+  },
+  avatarText: {
+    fontSize: 44,
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DC143C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1A1A1A',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   username: {
     fontSize: 24,
@@ -205,7 +390,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#BBDEFB',
+    color: '#B0B0B0',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -216,25 +401,22 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
   statValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: '#FFFFFF',
     marginTop: 8,
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0B0B0',
     marginTop: 4,
   },
   section: {
@@ -244,17 +426,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
   settingLeft: {
     flexDirection: 'row',
@@ -263,11 +447,11 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
-    color: '#333',
+    color: '#FFFFFF',
   },
   settingValue: {
     fontSize: 16,
-    color: '#666',
+    color: '#B0B0B0',
   },
   settingRight: {
     flexDirection: 'row',
@@ -284,27 +468,88 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#252525',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   pickerChipActive: {
-    backgroundColor: '#1976D2',
+    backgroundColor: '#DC143C',
+    borderColor: '#DC143C',
   },
   pickerChipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: '#B0B0B0',
   },
   pickerChipTextActive: {
     color: '#FFFFFF',
   },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  chartTotal: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#DC143C',
+    marginBottom: 16,
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    paddingBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    height: 140,
+  },
+  chartColumn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  chartMinutes: {
+    fontSize: 10,
+    color: '#B0B0B0',
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  chartBarTrack: {
+    width: 20,
+    height: 80,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  chartBar: {
+    width: 16,
+    borderRadius: 4,
+    minHeight: 4,
+  },
+  chartDay: {
+    fontSize: 11,
+    color: '#666666',
+    marginTop: 6,
+    fontWeight: '500',
+  },
+  chartDayActive: {
+    color: '#DC143C',
+    fontWeight: '700',
+  },
   achievementCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
     gap: 16,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
   achievementContent: {
     flex: 1,
@@ -312,11 +557,96 @@ const styles = StyleSheet.create({
   achievementTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   achievementDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0B0B0',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  modalCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  nameInput: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    backgroundColor: '#252525',
+    marginBottom: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#252525',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#B0B0B0',
+  },
+  modalSave: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#DC143C',
+    alignItems: 'center',
+  },
+  modalSaveText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  emojiGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+    justifyContent: 'center',
+  },
+  emojiCell: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#252525',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emojiCellActive: {
+    backgroundColor: 'rgba(220, 20, 60, 0.2)',
+    borderWidth: 2,
+    borderColor: '#DC143C',
+  },
+  emojiText: {
+    fontSize: 28,
   },
 });

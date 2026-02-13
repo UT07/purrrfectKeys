@@ -124,7 +124,12 @@ export interface OnboardingSettings {
   learningGoal: 'songs' | 'technique' | 'exploration' | null;
 }
 
-export interface SettingsStoreState extends AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings {
+export interface ProfileSettings {
+  displayName: string;
+  avatarEmoji: string; // Emoji used as avatar
+}
+
+export interface SettingsStoreState extends AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings {
   // Actions
   updateAudioSettings: (settings: Partial<AudioSettings>) => void;
   updateDisplaySettings: (settings: Partial<DisplaySettings>) => void;
@@ -143,6 +148,8 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   setHasCompletedOnboarding: (completed: boolean) => void;
   setExperienceLevel: (level: 'beginner' | 'intermediate' | 'returning') => void;
   setLearningGoal: (goal: 'songs' | 'technique' | 'exploration') => void;
+  setDisplayName: (name: string) => void;
+  setAvatarEmoji: (emoji: string) => void;
   reset: () => void;
 }
 

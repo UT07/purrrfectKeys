@@ -132,7 +132,7 @@ export function LearnScreen() {
                       <MaterialCommunityIcons
                         name="lock"
                         size={24}
-                        color="#999"
+                        color="#666"
                       />
                     )}
                   </View>
@@ -146,7 +146,7 @@ export function LearnScreen() {
                       <MaterialCommunityIcons
                         name="format-list-numbered"
                         size={16}
-                        color="#666"
+                        color="#888"
                       />
                       <Text style={styles.metaText}>
                         {lesson.exercises.length} exercises
@@ -157,7 +157,7 @@ export function LearnScreen() {
                       <MaterialCommunityIcons
                         name="clock-outline"
                         size={16}
-                        color="#666"
+                        color="#888"
                       />
                       <Text style={styles.metaText}>
                         {lesson.estimatedMinutes} min
@@ -199,7 +199,7 @@ export function LearnScreen() {
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={24}
-                    color="#999"
+                    color="#666"
                   />
                 )}
               </TouchableOpacity>
@@ -214,24 +214,26 @@ export function LearnScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#0D0D0D',
   },
   scrollContent: {
     paddingBottom: 40,
   },
   header: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#B0B0B0',
   },
   lessonsContainer: {
     padding: 16,
@@ -239,16 +241,13 @@ const styles = StyleSheet.create({
   },
   lessonCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
   lessonCardLocked: {
     opacity: 0.5,
@@ -272,12 +271,12 @@ const styles = StyleSheet.create({
   lessonTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     flex: 1,
   },
   lessonDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#B0B0B0',
     marginBottom: 12,
   },
   lessonMeta: {
@@ -292,7 +291,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 14,
-    color: '#666',
+    color: '#888888',
   },
   difficultyBadge: {
     paddingHorizontal: 8,
@@ -314,18 +313,18 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 6,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#333333',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#1976D2',
+    backgroundColor: '#DC143C',
   },
   progressText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: '#DC143C',
     width: 40,
     textAlign: 'right',
   },

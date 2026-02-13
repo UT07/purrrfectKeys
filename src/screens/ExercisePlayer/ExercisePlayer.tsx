@@ -37,6 +37,8 @@ import { HintDisplay } from './HintDisplay';
 import { CompletionModal } from './CompletionModal';
 import { CountInAnimation } from './CountInAnimation';
 import { ErrorDisplay } from './ErrorDisplay';
+import { AchievementToast } from '../../components/transitions/AchievementToast';
+import type { AchievementType } from '../../components/transitions/AchievementToast';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -171,6 +173,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [showCompletion, setShowCompletion] = useState(false);
   const [finalScore, setFinalScore] = useState<ExerciseScore | null>(null);
 
+  // Achievement toast state
+  const [toastData, setToastData] = useState<{ type: AchievementType; value: number | string } | null>(null);
+
   /**
    * Handle exercise completion (called by useExercisePlayback hook)
    * Persists score, XP, streak, and lesson progress to the progress store
@@ -273,6 +278,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       });
     }
 
+    // Show achievement toast for XP earned
+    if (score.xpEarned > 0) {
+      // Check if user leveled up
+      const currentLevel = useProgressStore.getState().level;
+      const previousLevel = progressStore.level; // captured before we called addXp
+      if (currentLevel > previousLevel) {
+        setToastData({ type: 'level-up', value: `Level ${currentLevel}!` });
+      } else {
+        setToastData({ type: 'xp', value: score.xpEarned });
+      }
+    }
+
     if (Platform.OS === 'web') {
       AccessibilityInfo.announceForAccessibility(
         `Exercise complete! Score: ${score.overall}%`
@@ -282,13 +299,28 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Lock to landscape orientation on mount, restore portrait on unmount
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
+    // Delay the lock slightly to let the navigation transition complete,
+    // otherwise the view controller may not be ready to accept orientation changes
+    const timer = setTimeout(() => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_LEFT)
+        .catch((err) => {
+          console.warn('[ExercisePlayer] LANDSCAPE_LEFT lock failed, trying LANDSCAPE:', err);
+          // Fallback: try either landscape direction
+          return ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        })
+        .catch((err) => {
+          console.warn('[ExercisePlayer] All landscape locks failed:', err);
+        });
+    }, 100);
+
     return () => {
+      clearTimeout(timer);
       // Skip portrait reset when navigating to next exercise (stays landscape)
       if (skipPortraitResetRef.current) return;
       // Delay orientation reset so it doesn't race with navigation transition
       setTimeout(() => {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+          .catch((err) => console.warn('[ExercisePlayer] Portrait restore failed:', err));
       }, 300);
     };
   }, []);
@@ -348,9 +380,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const countInComplete = currentBeat >= 0;
 
   /**
-   * Calculate expected notes for keyboard highlighting.
+   * Calculate expected notes for keyboard highlighting and auto-scroll focus.
    * Uses a wide window so the next note(s) to play are always highlighted.
    */
+  const focusNote = useMemo(() => {
+    // Find the nearest upcoming or current note to center the keyboard on
+    const upcoming = exercise.notes
+      .filter((note) => note.startBeat >= currentBeat - 0.5 && note.startBeat < currentBeat + 2.0)
+      .sort((a, b) => a.startBeat - b.startBeat);
+    return upcoming.length > 0 ? upcoming[0].note : undefined;
+  }, [currentBeat, exercise.notes]);
+
   useEffect(() => {
     const expectedNotesSet = new Set<number>(
       exercise.notes
@@ -720,11 +760,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             hapticEnabled={true}
             showLabels={true}
             scrollable={true}
-            keyHeight={100}
+            keyHeight={130}
+            focusNote={focusNote}
             testID="exercise-keyboard"
           />
         </View>
       </View>
+
+      {/* Achievement toast (XP, level-up) */}
+      {toastData && (
+        <AchievementToast
+          type={toastData.type}
+          value={toastData.value}
+          onDismiss={() => setToastData(null)}
+          autoDismissMs={3000}
+        />
+      )}
 
       {/* Completion modal */}
       {showCompletion && finalScore && (
@@ -746,17 +797,17 @@ ExercisePlayer.displayName = 'ExercisePlayer';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#0D0D0D',
   },
   errorBanner: {
-    backgroundColor: '#FFF3CD',
+    backgroundColor: 'rgba(255, 152, 0, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#FFE69C',
+    borderBottomColor: 'rgba(255, 152, 0, 0.3)',
   },
   errorText: {
-    color: '#856404',
+    color: '#FF9800',
     fontSize: 12,
     textAlign: 'center',
   },
@@ -769,15 +820,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#2A2A2A',
     gap: 8,
   },
   topBarDivider: {
     width: 1,
     height: 24,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#333333',
   },
   pianoRollContainer: {
     flex: 1,
@@ -802,9 +853,9 @@ const styles = StyleSheet.create({
     color: '#FFD740',
   },
   keyboardContainer: {
-    height: 110,
+    height: 140,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#2A2A2A',
     overflow: 'hidden',
   },
 });

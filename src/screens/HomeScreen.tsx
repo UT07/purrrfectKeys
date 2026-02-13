@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { XPBar } from '../components/Progress/XPBar';
 import { StreakDisplay } from '../components/Progress/StreakDisplay';
@@ -67,7 +68,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // Connect to Zustand stores for real data
   const { totalXp, level, streakData, dailyGoalData, lessonProgress } = useProgressStore();
-  const { dailyGoalMinutes } = useSettingsStore();
+  const { dailyGoalMinutes, displayName } = useSettingsStore();
 
   // Get today's practice data from dailyGoalData
   const today = new Date().toISOString().split('T')[0];
@@ -133,16 +134,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
+        {/* Gradient Header */}
+        <LinearGradient
+          colors={['#1A1A2E', '#1A1A1A', '#0D0D0D']}
+          style={styles.header}
+        >
+          <View>
+            <Text style={styles.greeting}>{getGreeting()}</Text>
+            <Text style={styles.greetingName}>{displayName}</Text>
+          </View>
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={onNavigateToSettings ?? (() => navigation.navigate('MidiSetup'))}
           >
-            <MaterialCommunityIcons name="cog" size={24} color="#FFFFFF" />
+            <MaterialCommunityIcons name="cog" size={24} color="#B0B0B0" />
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         {/* XP Bar */}
         <XPBar
@@ -208,7 +215,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <MaterialCommunityIcons
                 name="play-circle-outline"
                 size={24}
-                color="#2196F3"
+                color="#DC143C"
               />
               <View style={styles.continueInfo}>
                 <Text style={styles.continueLabel}>{currentLessonLabel}</Text>
@@ -246,7 +253,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <MaterialCommunityIcons
                 name="book-open-outline"
                 size={28}
-                color="#2196F3"
+                color="#DC143C"
               />
               <Text style={styles.actionLabel}>Learn</Text>
             </TouchableOpacity>
@@ -264,7 +271,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <MaterialCommunityIcons
                 name="music-box-multiple"
                 size={28}
-                color="#FF9800"
+                color="#DC143C"
               />
               <Text style={styles.actionLabel}>Practice</Text>
             </TouchableOpacity>
@@ -276,7 +283,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <MaterialCommunityIcons
                 name="music"
                 size={28}
-                color="#4CAF50"
+                color="#DC143C"
               />
               <Text style={styles.actionLabel}>Songs</Text>
             </TouchableOpacity>
@@ -288,7 +295,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <MaterialCommunityIcons
                 name="tune"
                 size={28}
-                color="#9C27B0"
+                color="#DC143C"
               />
               <Text style={styles.actionLabel}>Settings</Text>
             </TouchableOpacity>
@@ -318,7 +325,7 @@ HomeScreen.displayName = 'HomeScreen';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#0D0D0D',
   },
   scrollContent: {
     paddingBottom: 24,
@@ -329,17 +336,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#1976D2',
-    shadowColor: '#1976D2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingBottom: 20,
   },
   greeting: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#B0B0B0',
+  },
+  greetingName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginTop: 2,
   },
   settingsButton: {
     padding: 8,
@@ -351,15 +359,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#FFFFFF',
     marginBottom: 12,
   },
   dailyGoalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#2A2A2A',
   },
   goalHeader: {
     flexDirection: 'row',
@@ -370,23 +378,23 @@ const styles = StyleSheet.create({
   goalLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666666',
+    color: '#B0B0B0',
   },
   goalTime: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2196F3',
+    color: '#DC143C',
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#333333',
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#2196F3',
+    backgroundColor: '#DC143C',
     borderRadius: 4,
   },
   goalCompleteContainer: {
@@ -395,23 +403,23 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
     borderRadius: 4,
   },
   goalCompleteText: {
     marginLeft: 6,
     fontSize: 12,
     fontWeight: '500',
-    color: '#2E7D32',
+    color: '#4CAF50',
   },
   continueCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#BBDEFB',
+    borderColor: '#2A2A2A',
     borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
+    borderLeftColor: '#DC143C',
   },
   continueHeader: {
     flexDirection: 'row',
@@ -424,13 +432,13 @@ const styles = StyleSheet.create({
   },
   continueLabel: {
     fontSize: 12,
-    color: '#999999',
+    color: '#666666',
     fontWeight: '500',
   },
   continueTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333333',
+    color: '#FFFFFF',
     marginTop: 2,
   },
   continueProgress: {
@@ -439,19 +447,19 @@ const styles = StyleSheet.create({
   continueProgressBar: {
     width: '100%',
     height: 6,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#333333',
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 6,
   },
   continueProgressFill: {
     height: '100%',
-    backgroundColor: '#2196F3',
+    backgroundColor: '#DC143C',
     borderRadius: 3,
   },
   continueProgressText: {
     fontSize: 11,
-    color: '#999999',
+    color: '#666666',
     fontWeight: '500',
   },
   actionsGrid: {
@@ -462,30 +470,27 @@ const styles = StyleSheet.create({
   actionCard: {
     flex: 1,
     minWidth: '48%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderRadius: 12,
     paddingVertical: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
   actionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666666',
+    color: '#B0B0B0',
     marginTop: 8,
   },
   tipContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: 'rgba(220, 20, 60, 0.1)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FFE0B2',
+    borderColor: 'rgba(220, 20, 60, 0.3)',
     alignItems: 'center',
   },
   tipText: {
@@ -493,6 +498,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontWeight: '500',
-    color: '#F57F17',
+    color: '#DC143C',
   },
 });

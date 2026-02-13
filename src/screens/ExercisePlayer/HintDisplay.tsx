@@ -41,7 +41,7 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
       return {
         icon: 'lightbulb-on',
         text: hints.beforeStart,
-        color: '#2196F3',
+        color: '#DC143C',
       };
     }
 
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   compactText: {
     flex: 1,
     fontSize: 11,
-    color: '#616161',
+    color: '#B0B0B0',
     fontWeight: '500',
   },
   // Full mode styles
@@ -171,14 +171,14 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#252525',
     borderLeftWidth: 4,
     borderRadius: 6,
   },
   hintText: {
     flex: 1,
     fontSize: 13,
-    color: '#424242',
+    color: '#B0B0B0',
     fontWeight: '500',
     lineHeight: 18,
   },

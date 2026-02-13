@@ -19,8 +19,8 @@ export interface PianoRollProps {
   testID?: string;
 }
 
-const NOTE_HEIGHT = 28;
-const PIXELS_PER_BEAT = 120;
+const NOTE_HEIGHT = 36;
+const PIXELS_PER_BEAT = 140;
 
 // Default MIDI range used when no notes are provided
 const DEFAULT_MIDI_MIN = 48; // C3
@@ -301,16 +301,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   noteLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     color: 'rgba(255, 255, 255, 0.9)',
   },
   noteLabelActive: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 15,
   },
   handLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.6)',
   },

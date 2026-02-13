@@ -4,7 +4,7 @@
  * Displays score, stars, breakdown, and celebration
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,10 @@ import {
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
+import { MascotBubble } from '../../components/Mascot/MascotBubble';
+import { getTipForScore } from '../../components/Mascot/mascotTips';
+import type { MascotMood } from '../../components/Mascot/mascotTips';
+import { ConfettiEffect } from '../../components/transitions/ConfettiEffect';
 import { coachingService } from '../../services/ai/CoachingService';
 import { useProgressStore } from '../../stores/progressStore';
 import type { Exercise, ExerciseScore } from '../../core/exercises/types';
@@ -177,8 +181,27 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
 
   const resultDisplay = getResultDisplay();
 
+  // Mascot mood and tip based on score
+  const mascotData = useMemo(() => {
+    let mood: MascotMood;
+    if (score.overall >= 95) {
+      mood = 'celebrating';
+    } else if (score.overall >= 80) {
+      mood = 'happy';
+    } else if (score.overall >= 60) {
+      mood = 'encouraging';
+    } else {
+      mood = 'encouraging';
+    }
+    const tip = getTipForScore(score.overall);
+    return { mood, message: tip.text };
+  }, [score.overall]);
+
   return (
     <View style={styles.overlay} testID={testID}>
+      {/* Confetti for 3-star scores */}
+      {score.stars === 3 && <ConfettiEffect testID="completion-confetti" />}
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -204,7 +227,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 styles.scoreCircle,
                 {
                   borderColor: resultDisplay.color,
-                  backgroundColor: score.stars === 3 ? '#FFFDE7' : score.isPassed ? '#E8F5E9' : '#FFEBEE',
+                  backgroundColor: '#252525',
                 },
               ]}>
                 <View style={styles.scoreRow}>
@@ -227,7 +250,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                     key={i}
                     name={i < score.stars ? 'star' : 'star-outline'}
                     size={36}
-                    color={i < score.stars ? '#FFD700' : '#E0E0E0'}
+                    color={i < score.stars ? '#FFD700' : '#444444'}
                   />
                 ))}
               </Animated.View>
@@ -316,6 +339,15 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
             )}
           </View>
 
+          {/* Keysie Mascot */}
+          <View style={styles.mascotSection}>
+            <MascotBubble
+              mood={mascotData.mood}
+              message={mascotData.message}
+              size="small"
+            />
+          </View>
+
           {/* AI Coach Feedback */}
           <View style={styles.coachSection}>
             <View style={styles.coachHeader}>
@@ -383,16 +415,18 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 500,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 16,
     gap: 12,
-    shadowColor: '#000',
+    shadowColor: '#DC143C',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 20,
     elevation: 12,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
   },
   header: {
     alignItems: 'center',
@@ -401,11 +435,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#212121',
+    color: '#FFFFFF',
   },
   subtitle: {
     fontSize: 14,
-    color: '#757575',
+    color: '#B0B0B0',
   },
   scoreStarsRow: {
     flexDirection: 'row',
@@ -420,11 +454,11 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#252525',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#2196F3',
+    borderColor: '#DC143C',
   },
   scoreRow: {
     flexDirection: 'row',
@@ -433,12 +467,12 @@ const styles = StyleSheet.create({
   scoreNumber: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#2196F3',
+    color: '#DC143C',
   },
   scoreLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2196F3',
+    color: '#DC143C',
     marginLeft: 1,
   },
   starsResultColumn: {
@@ -461,7 +495,7 @@ const styles = StyleSheet.create({
   },
   breakdownSection: {
     gap: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#252525',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
@@ -469,7 +503,7 @@ const styles = StyleSheet.create({
   breakdownTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#212121',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   breakdownRow: {
@@ -477,12 +511,12 @@ const styles = StyleSheet.create({
   },
   breakdownLabel: {
     fontSize: 11,
-    color: '#757575',
+    color: '#B0B0B0',
     fontWeight: '600',
   },
   breakdownBar: {
     height: 6,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#333333',
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -492,7 +526,7 @@ const styles = StyleSheet.create({
   },
   breakdownValue: {
     fontSize: 11,
-    color: '#757575',
+    color: '#B0B0B0',
     textAlign: 'right',
   },
   statsSection: {
@@ -505,26 +539,32 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: 'rgba(220, 20, 60, 0.1)',
     borderRadius: 8,
     flex: 1,
   },
   statLabel: {
     fontSize: 11,
-    color: '#E65100',
+    color: '#B0B0B0',
     fontWeight: '600',
   },
   statValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FF6F00',
+    color: '#FFD700',
+  },
+  mascotSection: {
+    paddingHorizontal: 4,
+    paddingVertical: 4,
   },
   coachSection: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: 'rgba(124, 77, 255, 0.1)',
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 8,
     gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(124, 77, 255, 0.2)',
   },
   coachHeader: {
     flexDirection: 'row',
@@ -534,11 +574,11 @@ const styles = StyleSheet.create({
   coachTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#7C4DFF',
+    color: '#B39DDB',
   },
   coachText: {
     fontSize: 13,
-    color: '#4A148C',
+    color: '#D1C4E9',
     lineHeight: 18,
   },
   actions: {

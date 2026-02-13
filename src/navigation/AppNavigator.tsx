@@ -46,8 +46,12 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#1976D2',
-        tabBarInactiveTintColor: '#757575',
+        tabBarActiveTintColor: '#DC143C',
+        tabBarInactiveTintColor: '#666666',
+        tabBarStyle: {
+          backgroundColor: '#111111',
+          borderTopColor: '#222222',
+        },
         headerShown: false,
       }}
     >
@@ -118,8 +122,8 @@ export function AppNavigator() {
           name="Exercise"
           component={ExercisePlayer as unknown as React.ComponentType<Record<string, unknown>>}
           options={{
-            presentation: 'fullScreenModal',
             headerShown: false,
+            animation: 'fade',
           }}
         />
         <RootStack.Screen

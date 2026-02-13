@@ -36,14 +36,14 @@ export interface ButtonProps {
 }
 
 const COLORS = {
-  primary: '#2196F3',
-  secondary: '#757575',
+  primary: '#DC143C',
+  secondary: '#333333',
   danger: '#F44336',
-  outline: '#2196F3',
+  outline: '#DC143C',
   text: '#FFFFFF',
-  outlineText: '#2196F3',
-  disabled: '#CCCCCC',
-  disabledText: '#999999',
+  outlineText: '#DC143C',
+  disabled: '#444444',
+  disabledText: '#666666',
 };
 
 const SIZES = {

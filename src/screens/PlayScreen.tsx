@@ -116,7 +116,7 @@ export function PlayScreen() {
           <MaterialCommunityIcons
             name={isRecording ? 'stop-circle' : 'record-circle'}
             size={32}
-            color={isRecording ? '#F44336' : '#1976D2'}
+            color={isRecording ? '#DC143C' : '#B0B0B0'}
           />
           <Text style={styles.controlLabel}>
             {isRecording ? 'Stop' : 'Record'}
@@ -134,7 +134,7 @@ export function PlayScreen() {
           <MaterialCommunityIcons
             name="play-circle"
             size={32}
-            color={hasRecording ? '#1976D2' : '#BDBDBD'}
+            color={hasRecording ? '#DC143C' : '#444444'}
           />
           <Text
             style={[
@@ -157,7 +157,7 @@ export function PlayScreen() {
           <MaterialCommunityIcons
             name="delete"
             size={32}
-            color={hasRecording ? '#F44336' : '#BDBDBD'}
+            color={hasRecording ? '#EF5350' : '#444444'}
           />
           <Text
             style={[
@@ -176,43 +176,48 @@ export function PlayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#0D0D0D',
   },
   header: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#B0B0B0',
   },
   keyboardContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
   },
   controls: {
     flexDirection: 'row',
     padding: 20,
     gap: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#2A2A2A',
   },
   controlButton: {
     flex: 1,
     alignItems: 'center',
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#252525',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   controlButtonActive: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    borderColor: '#DC143C',
   },
   controlButtonDisabled: {
     opacity: 0.5,
@@ -220,10 +225,10 @@ const styles = StyleSheet.create({
   controlLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#B0B0B0',
     marginTop: 8,
   },
   controlLabelDisabled: {
-    color: '#999',
+    color: '#444444',
   },
 });

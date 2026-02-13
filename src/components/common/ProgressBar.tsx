@@ -37,8 +37,8 @@ export const ProgressBar = React.memo(
   ({
     progress,
     height = 8,
-    backgroundColor = '#E0E0E0',
-    progressColor = '#2196F3',
+    backgroundColor = '#333333',
+    progressColor = '#DC143C',
     showLabel = false,
     animated = true,
     style,

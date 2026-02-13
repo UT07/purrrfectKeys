@@ -204,23 +204,23 @@ const styles = StyleSheet.create({
   compactTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#212121',
+    color: '#FFFFFF',
     maxWidth: 140,
   },
   compactProgress: {
     flex: 1,
     height: 4,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#333333',
     borderRadius: 2,
     overflow: 'hidden',
   },
   compactProgressBar: {
     height: '100%',
-    backgroundColor: '#2196F3',
+    backgroundColor: '#DC143C',
     borderRadius: 2,
   },
   compactCombo: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   compactComboText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FF6F00',
+    color: '#DC143C',
   },
   compactFeedbackBadge: {
     paddingHorizontal: 8,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   compactPercent: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#2196F3',
+    color: '#DC143C',
     minWidth: 30,
     textAlign: 'right',
   },
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212121',
+    color: '#FFFFFF',
   },
   difficulty: {
     fontSize: 14,
@@ -270,17 +270,17 @@ const styles = StyleSheet.create({
   },
   metadata: {
     fontSize: 12,
-    color: '#757575',
+    color: '#B0B0B0',
   },
   progressContainer: {
     height: 8,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#333333',
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#2196F3',
+    backgroundColor: '#DC143C',
     borderRadius: 4,
   },
   bottomRow: {
@@ -291,20 +291,20 @@ const styles = StyleSheet.create({
   },
   comboContainer: {
     alignItems: 'center',
-    backgroundColor: '#FFF3E0',
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
   },
   comboLabel: {
     fontSize: 10,
-    color: '#E65100',
+    color: '#DC143C',
     fontWeight: '600',
   },
   comboValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FF6F00',
+    color: '#DC143C',
   },
   feedbackBadge: {
     paddingHorizontal: 12,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2196F3',
+    color: '#DC143C',
   },
 });
 

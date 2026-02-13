@@ -432,7 +432,7 @@ export function OnboardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#0D0D0D',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -448,10 +448,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#CCCCCC',
+    backgroundColor: '#444444',
   },
   progressDotActive: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#DC143C',
   },
   stepContainer: {
     width: '100%',
@@ -466,20 +466,20 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     marginBottom: 12,
     textAlign: 'center',
   },
   stepSubtitle: {
     fontSize: 16,
-    color: '#666666',
+    color: '#B0B0B0',
     marginBottom: 28,
     textAlign: 'center',
     lineHeight: 24,
   },
   stepDescription: {
     fontSize: 14,
-    color: '#666666',
+    color: '#B0B0B0',
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   featureText: {
     flex: 1,
     fontSize: 14,
-    color: '#333333',
+    color: '#B0B0B0',
     lineHeight: 20,
   },
   optionsList: {
@@ -512,11 +512,11 @@ const styles = StyleSheet.create({
   optionCard: {
     marginBottom: 0,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: '#333333',
   },
   optionCardSelected: {
-    borderColor: '#2196F3',
-    backgroundColor: '#E3F2FD',
+    borderColor: '#DC143C',
+    backgroundColor: 'rgba(220, 20, 60, 0.1)',
   },
   optionContent: {
     flexDirection: 'row',
@@ -532,12 +532,12 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   optionDescription: {
     fontSize: 12,
-    color: '#666666',
+    color: '#B0B0B0',
     lineHeight: 16,
   },
   optionCheckbox: {
@@ -545,13 +545,13 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#CCCCCC',
+    borderColor: '#444444',
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionCheckboxSelected: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: '#DC143C',
+    borderColor: '#DC143C',
   },
   checkmark: {
     fontSize: 14,

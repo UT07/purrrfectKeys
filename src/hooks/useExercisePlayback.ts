@@ -14,7 +14,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import type { Exercise, MidiNoteEvent, ExerciseScore } from '@/core/exercises/types';
 import { scoreExercise } from '@/core/exercises/ExerciseValidator';
 import { getMidiInput } from '@/input/MidiInput';
-import { getAudioEngine } from '@/audio/ExpoAudioEngine';
+import { createAudioEngine } from '@/audio/createAudioEngine';
 import { useExerciseStore } from '@/stores/exerciseStore';
 
 export interface UseExercisePlaybackOptions {
@@ -55,7 +55,7 @@ export function useExercisePlayback({
 }: UseExercisePlaybackOptions): UseExercisePlaybackReturn {
   const exerciseStore = useExerciseStore();
   const midiInput = getMidiInput();
-  const audioEngine = getAudioEngine();
+  const audioEngine = createAudioEngine();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(-exercise.settings.countIn);

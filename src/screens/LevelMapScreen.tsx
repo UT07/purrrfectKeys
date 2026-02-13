@@ -18,6 +18,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useProgressStore } from '../stores/progressStore';
 import { getLessons, getLessonExercises } from '../content/ContentLoader';
 import type { LessonManifest } from '../content/ContentLoader';
@@ -192,7 +193,7 @@ function StarDisplay({ stars, max }: { stars: number; max: number }) {
           key={i}
           name={i < stars ? 'star' : 'star-outline'}
           size={14}
-          color={i < stars ? '#FFD700' : '#BDBDBD'}
+          color={i < stars ? '#FFD700' : '#555555'}
         />
       ))}
     </View>
@@ -314,7 +315,7 @@ export function LevelMapScreen() {
       const toY = getNodeY(i + 1, nodes.length);
 
       const isCompleted = nodes[i].state === 'completed';
-      const pathColor = isCompleted ? '#4CAF50' : '#E0E0E0';
+      const pathColor = isCompleted ? '#4CAF50' : '#333333';
       const pathWidth = isCompleted ? 3 : 2;
 
       paths.push(
@@ -333,13 +334,16 @@ export function LevelMapScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header with gradient */}
+      <LinearGradient
+        colors={['#1A1A2E', '#1A1A1A', '#0D0D0D']}
+        style={styles.header}
+      >
         <Text style={styles.title}>Your Journey</Text>
         <Text style={styles.subtitle}>
           {nodes.filter((n) => n.state === 'completed').length}/{nodes.length} lessons completed
         </Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         ref={scrollRef}
@@ -381,47 +385,44 @@ const NODE_STYLES = {
       borderColor: '#388E3C',
     },
     iconColor: '#FFFFFF',
-    label: { color: '#333333' },
+    label: { color: '#B0B0B0' },
   },
   current: {
     circle: {
-      backgroundColor: '#1976D2',
-      borderColor: '#1565C0',
+      backgroundColor: '#DC143C',
+      borderColor: '#A3102E',
     },
     iconColor: '#FFFFFF',
-    label: { color: '#1976D2', fontWeight: '700' as const },
+    label: { color: '#DC143C', fontWeight: '700' as const },
   },
   locked: {
     circle: {
-      backgroundColor: '#E0E0E0',
-      borderColor: '#BDBDBD',
+      backgroundColor: '#333333',
+      borderColor: '#444444',
     },
-    iconColor: '#9E9E9E',
-    label: { color: '#9E9E9E' },
+    iconColor: '#666666',
+    label: { color: '#666666' },
   },
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#0D0D0D',
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#212121',
+    color: '#FFFFFF',
   },
   subtitle: {
     fontSize: 14,
-    color: '#757575',
+    color: '#B0B0B0',
     marginTop: 4,
   },
   scrollView: {
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
     width: NODE_SIZE + 16,
     height: NODE_SIZE + 16,
     borderRadius: (NODE_SIZE + 16) / 2,
-    backgroundColor: '#1976D2',
+    backgroundColor: '#DC143C',
     top: -8,
   },
   nodeCircle: {
@@ -468,7 +469,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#1976D2',
+    color: '#DC143C',
     marginTop: 2,
   },
 });
