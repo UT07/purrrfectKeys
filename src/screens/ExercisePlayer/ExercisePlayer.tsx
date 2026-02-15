@@ -19,6 +19,7 @@ import {
   Animated,
   Platform,
   AccessibilityInfo,
+  TouchableOpacity,
 } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as Haptics from 'expo-haptics';
@@ -47,8 +48,10 @@ import { shouldShowFunFact, getFactForExerciseType } from '../../content/funFact
 import type { FunFact } from '../../content/funFacts';
 import { syncManager } from '../../services/firebase/syncService';
 import { useAchievementStore, buildAchievementContext } from '../../stores/achievementStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { getUnlockedCats } from '../../components/Mascot/catCharacters';
 import { getAchievementById } from '../../core/achievements/achievements';
+import type { PlaybackSpeed } from '../../stores/types';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -156,8 +159,31 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const loadedExercise = route.params?.exerciseId
     ? getExercise(route.params.exerciseId)
     : null;
-  const exercise =
+  const rawExercise =
     exerciseOverride || loadedExercise || exerciseStore.currentExercise || FALLBACK_EXERCISE;
+
+  // Speed selector — adjusts exercise tempo for more comfortable playback
+  const playbackSpeed = useSettingsStore((s) => s.playbackSpeed);
+  const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
+
+  // Apply speed multiplier to create the exercise used for playback + scoring
+  const exercise = useMemo(() => {
+    if (playbackSpeed === 1.0) return rawExercise;
+    return {
+      ...rawExercise,
+      settings: {
+        ...rawExercise.settings,
+        tempo: Math.round(rawExercise.settings.tempo * playbackSpeed),
+      },
+    };
+  }, [rawExercise, playbackSpeed]);
+
+  const cycleSpeed = useCallback(() => {
+    const speeds: PlaybackSpeed[] = [0.5, 0.75, 1.0];
+    const currentIdx = speeds.indexOf(playbackSpeed);
+    const nextIdx = (currentIdx + 1) % speeds.length;
+    setPlaybackSpeed(speeds[nextIdx]);
+  }, [playbackSpeed, setPlaybackSpeed]);
 
   // Derive keyboard range from exercise notes — round down to nearest C for clean octave display
   const { keyboardStartNote, keyboardOctaveCount } = useMemo(() => {
@@ -789,6 +815,26 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
           <View style={styles.topBarDivider} />
 
+          {/* Speed selector pill — tap to cycle 0.5x → 0.75x → 1x */}
+          <TouchableOpacity
+            onPress={cycleSpeed}
+            style={[
+              styles.speedPill,
+              playbackSpeed < 1.0 && styles.speedPillActive,
+            ]}
+            testID="speed-selector"
+            accessibilityLabel={`Playback speed ${playbackSpeed}x. Tap to change.`}
+          >
+            <Text style={[
+              styles.speedPillText,
+              playbackSpeed < 1.0 && styles.speedPillTextActive,
+            ]}>
+              {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.topBarDivider} />
+
           <ExerciseControls
             isPlaying={isPlaying}
             isPaused={isPaused}
@@ -974,6 +1020,26 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
     overflow: 'hidden',
+  },
+  speedPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#252525',
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  speedPillActive: {
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    borderColor: '#DC143C',
+  },
+  speedPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#757575',
+  },
+  speedPillTextActive: {
+    color: '#DC143C',
   },
 });
 

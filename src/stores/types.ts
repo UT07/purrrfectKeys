@@ -87,6 +87,8 @@ export interface DailyGoalData {
  * ============================================================================
  */
 
+export type PlaybackSpeed = 0.5 | 0.75 | 1.0;
+
 export interface AudioSettings {
   masterVolume: number; // 0-1
   soundEnabled: boolean;
@@ -94,6 +96,7 @@ export interface AudioSettings {
   metronomeVolume: number; // 0-1
   keyboardVolume: number; // 0-1
   audioBufferSize: number;
+  playbackSpeed: PlaybackSpeed; // Exercise tempo multiplier
 }
 
 export interface DisplaySettings {
@@ -140,6 +143,7 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   setMasterVolume: (volume: number) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setHapticEnabled: (enabled: boolean) => void;
+  setPlaybackSpeed: (speed: PlaybackSpeed) => void;
   setShowFingerNumbers: (show: boolean) => void;
   setShowNoteNames: (show: boolean) => void;
   setPreferredHand: (hand: 'right' | 'left' | 'both') => void;

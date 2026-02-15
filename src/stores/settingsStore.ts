@@ -26,6 +26,7 @@ const defaultSettings: SettingsData = {
   metronomeVolume: 0.5,
   keyboardVolume: 0.8,
   audioBufferSize: 4096,
+  playbackSpeed: 0.75 as const, // Default to 75% speed — more comfortable for touch keyboard
 
   // Display settings
   showFingerNumbers: true,
@@ -115,6 +116,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   setHapticEnabled: (enabled: boolean) => {
     set({ hapticEnabled: enabled });
     debouncedSave(get());
+  },
+
+  setPlaybackSpeed: (speed: 0.5 | 0.75 | 1.0) => {
+    set({ playbackSpeed: speed });
+    debouncedSave({ ...get(), playbackSpeed: speed });
   },
 
   // Individual display settings
