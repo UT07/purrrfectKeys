@@ -14,6 +14,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Button } from '../common/Button';
+import { ScoreRing } from '../common/ScoreRing';
 import { FunFactCard } from '../FunFact/FunFactCard';
 import type { FunFact } from '../../content/funFacts';
 
@@ -132,13 +133,8 @@ export function ExerciseCard({
         <View style={styles.content}>
           {/* Score row */}
           <View style={styles.scoreRow}>
-            {/* Score circle */}
-            <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
-              <Text style={[styles.scoreNumber, { color: scoreColor }]}>
-                {Math.round(score)}
-              </Text>
-              <Text style={[styles.scorePercent, { color: scoreColor }]}>%</Text>
-            </View>
+            {/* Animated score ring */}
+            <ScoreRing score={Math.round(score)} size={80} strokeWidth={4} />
 
             {/* Stars and info */}
             <View style={styles.infoColumn}>
@@ -248,25 +244,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-  },
-  scoreCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    backgroundColor: '#252525',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  scoreNumber: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  scorePercent: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 6,
   },
   infoColumn: {
     flex: 1,

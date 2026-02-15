@@ -181,9 +181,9 @@ export function getFactForExerciseType(skills: string[]): FunFact {
 }
 
 /**
- * Determine whether a fun fact should be shown (30% probability).
- * Used by ExerciseCard to avoid fun-fact fatigue.
+ * Determine whether a fun fact should be shown.
+ * Always returns true — fun facts add delight between exercises.
  */
 export function shouldShowFunFact(): boolean {
-  return Math.random() < 0.3;
+  return true;
 }

@@ -44,7 +44,7 @@ import type { AchievementType } from '../../components/transitions/AchievementTo
 import { LessonCompleteScreen } from '../../components/transitions/LessonCompleteScreen';
 import { ExerciseCard } from '../../components/transitions/ExerciseCard';
 import { getTipForScore } from '../../components/Mascot/mascotTips';
-import { shouldShowFunFact, getFactForExerciseType } from '../../content/funFactSelector';
+import { getFactForExerciseType } from '../../content/funFactSelector';
 import type { FunFact } from '../../content/funFacts';
 import { syncManager } from '../../services/firebase/syncService';
 import { useAchievementStore, buildAchievementContext } from '../../stores/achievementStore';
@@ -400,12 +400,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       : null;
 
     if (score.isPassed && exNextId && !isLessonComplete) {
-      // Show a fun fact 30% of the time to avoid fatigue
-      if (shouldShowFunFact()) {
-        setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
-      } else {
-        setExerciseCardFunFact(null);
-      }
+      // Always show a contextual fun fact between exercises
+      setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
       setShowExerciseCard(true);
     } else {
       setShowCompletion(true);

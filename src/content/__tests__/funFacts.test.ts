@@ -231,23 +231,11 @@ describe('Fun Fact Selector', () => {
   });
 
   describe('shouldShowFunFact', () => {
-    it('should return a boolean', () => {
-      const result = shouldShowFunFact();
-      expect(typeof result).toBe('boolean');
-    });
-
-    it('should return true roughly 30% of the time (statistical)', () => {
-      let trueCount = 0;
-      const iterations = 10000;
-      for (let i = 0; i < iterations; i++) {
-        if (shouldShowFunFact()) {
-          trueCount++;
-        }
+    it('should always return true', () => {
+      // Fun facts always show between exercises now
+      for (let i = 0; i < 100; i++) {
+        expect(shouldShowFunFact()).toBe(true);
       }
-      const ratio = trueCount / iterations;
-      // Allow ±5% tolerance
-      expect(ratio).toBeGreaterThan(0.25);
-      expect(ratio).toBeLessThan(0.35);
     });
   });
 
