@@ -1,5 +1,5 @@
 /**
- * KeySense Color Theme — Concert Hall
+ * Purrrfect Keys Color Theme — Concert Hall
  * Deep black background, crimson red accents, white text
  * Premium, elegant feel like a concert stage
  */

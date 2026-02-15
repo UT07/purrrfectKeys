@@ -16,6 +16,16 @@ import { scoreExercise } from '@/core/exercises/ExerciseValidator';
 import { getMidiInput } from '@/input/MidiInput';
 import { createAudioEngine } from '@/audio/createAudioEngine';
 import { useExerciseStore } from '@/stores/exerciseStore';
+import { useProgressStore } from '@/stores/progressStore';
+import { getLessonIdForExercise } from '../content/ContentLoader';
+
+/**
+ * Touch-to-callback latency compensation (ms).
+ * React Native's gesture system adds ~15-25ms between finger contact and
+ * onPressIn callback. This constant is subtracted from played note timestamps
+ * before scoring so users aren't penalized for platform latency.
+ */
+const TOUCH_LATENCY_COMPENSATION_MS = 20;
 
 export interface UseExercisePlaybackOptions {
   exercise: Exercise;
@@ -191,7 +201,7 @@ export function useExercisePlayback({
       if (midiEvent.type === 'noteOn') {
         // Normalize timestamp to Date.now() domain (native MIDI may use a different clock)
         const normalizedEvent = { ...midiEvent, timestamp: Date.now() };
-        playedNotesRef.current = [...playedNotesRef.current, normalizedEvent];
+        playedNotesRef.current.push(normalizedEvent);
         setPlayedNotes(playedNotesRef.current);
         exerciseStore.addPlayedNote(normalizedEvent);
       }
@@ -391,10 +401,17 @@ export function useExercisePlayback({
 
     const adjustedNotes = playedNotesRef.current.map((n) => ({
       ...n,
-      timestamp: n.timestamp - beat0EpochMs,
+      timestamp: n.timestamp - beat0EpochMs - TOUCH_LATENCY_COMPENSATION_MS,
     }));
 
-    const score = scoreExercise(exercise, adjustedNotes);
+    // Look up previous high score so isNewHighScore is accurate
+    const lessonId = getLessonIdForExercise(exercise.id);
+    const progressState = useProgressStore.getState();
+    const previousHighScore = lessonId
+      ? progressState.lessonProgress[lessonId]?.exerciseScores[exercise.id]?.highScore ?? 0
+      : 0;
+
+    const score = scoreExercise(exercise, adjustedNotes, previousHighScore);
     exerciseStore.setScore(score);
 
     console.log('[useExercisePlayback] Exercise completed:', score);
@@ -433,8 +450,8 @@ export function useExercisePlayback({
         channel: 0,
       };
 
-      playedNotesRef.current = [...playedNotesRef.current, midiEvent];
-      setPlayedNotes(playedNotesRef.current);
+      playedNotesRef.current.push(midiEvent);
+      setPlayedNotes([...playedNotesRef.current]);
       exerciseStore.addPlayedNote(midiEvent);
     },
     [isPlaying, enableAudio, isAudioReady, audioEngine, exerciseStore]

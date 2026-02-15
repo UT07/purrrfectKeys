@@ -22,6 +22,24 @@ import { KeysieAvatar } from '../components/Mascot/KeysieAvatar';
 import { useAuthStore } from '../stores/authStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
+function isGoogleAuthAvailable(): boolean {
+  try {
+    const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+    return GoogleSignin != null && typeof GoogleSignin.signIn === 'function';
+  } catch {
+    return false;
+  }
+}
+
+function isAppleAuthAvailable(): boolean {
+  try {
+    const AppleAuth = require('expo-apple-authentication');
+    return AppleAuth.isAvailableAsync != null;
+  } catch {
+    return false;
+  }
+}
+
 type AccountNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function AccountScreen(): React.ReactElement {
@@ -79,6 +97,11 @@ export function AccountScreen(): React.ReactElement {
   }, [newName, authUpdateDisplayName]);
 
   const handleLinkGoogle = useCallback(async () => {
+    if (!isGoogleAuthAvailable()) {
+      Alert.alert('Coming Soon', 'Google Sign-In is not yet configured for this build.');
+      return;
+    }
+
     try {
       const { GoogleSignin } = require('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
@@ -87,14 +110,20 @@ export function AccountScreen(): React.ReactElement {
       if (idToken) {
         await useAuthStore.getState().linkWithGoogle(idToken);
       }
-    } catch (err: any) {
-      if (err.code !== 'SIGN_IN_CANCELLED') {
-        console.warn('[AccountScreen] Google link error:', err);
-      }
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj.code === 'SIGN_IN_CANCELLED') return;
+      console.warn('[AccountScreen] Google link error:', err);
+      Alert.alert('Link Failed', errObj.message ?? 'Google linking failed. Please try again.');
     }
   }, []);
 
   const handleLinkApple = useCallback(async () => {
+    if (!isAppleAuthAvailable()) {
+      Alert.alert('Coming Soon', 'Apple Sign-In is not yet configured for this build.');
+      return;
+    }
+
     try {
       const AppleAuth = require('expo-apple-authentication');
       const crypto = require('expo-crypto');
@@ -112,10 +141,11 @@ export function AccountScreen(): React.ReactElement {
       if (cred.identityToken) {
         await useAuthStore.getState().linkWithApple(cred.identityToken, nonce);
       }
-    } catch (err: any) {
-      if (err.code !== 'ERR_REQUEST_CANCELED') {
-        console.warn('[AccountScreen] Apple link error:', err);
-      }
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj.code === 'ERR_REQUEST_CANCELED') return;
+      console.warn('[AccountScreen] Apple link error:', err);
+      Alert.alert('Link Failed', errObj.message ?? 'Apple linking failed. Please try again.');
     }
   }, []);
 

@@ -1,6 +1,6 @@
 /**
  * Mascot Tips & Encouragements
- * Pool of tips, facts, and encouragements for Keysie the piano mascot
+ * Pool of tips, facts, and encouragements for Salsa the piano mascot
  */
 
 export type MascotMood = 'happy' | 'encouraging' | 'excited' | 'teaching' | 'celebrating';

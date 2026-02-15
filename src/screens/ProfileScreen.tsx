@@ -1,9 +1,9 @@
 /**
  * ProfileScreen - User profile, stats, and settings
- * Editable display name and avatar emoji
+ * Features cat character avatar system with backstories and unlock levels
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Alert,
   TextInput,
   Modal,
+  FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +22,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useAchievementStore } from '../stores/achievementStore';
+import { ACHIEVEMENTS } from '../core/achievements/achievements';
+import type { Achievement } from '../core/achievements/achievements';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
+import { CAT_CHARACTERS, getCatById, isCatUnlocked } from '../components/Mascot/catCharacters';
+import type { CatCharacter } from '../components/Mascot/catCharacters';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -39,13 +46,6 @@ const VOLUME_OPTIONS = [
   { label: '50%', value: 0.5 },
   { label: '75%', value: 0.75 },
   { label: '100%', value: 1.0 },
-];
-
-const AVATAR_EMOJIS = [
-  '\uD83C\uDFB9', '\uD83C\uDFB5', '\uD83C\uDFB6', '\uD83C\uDFBC',
-  '\uD83E\uDDD1\u200D\uD83C\uDFA8', '\uD83D\uDE0E', '\uD83E\uDD29', '\uD83D\uDE0A',
-  '\uD83C\uDF1F', '\uD83D\uDD25', '\uD83D\uDCAA', '\uD83C\uDFC6',
-  '\uD83E\uDD8B', '\uD83C\uDF3A', '\uD83C\uDF08', '\u2B50',
 ];
 
 /** Get the last 7 days of practice data for the chart */
@@ -68,12 +68,192 @@ function useWeeklyPractice(): { day: string; minutes: number }[] {
   }, [dailyGoalData]);
 }
 
-export function ProfileScreen() {
+/** Individual cat card in the picker grid */
+function CatPickerCard({
+  cat,
+  isSelected,
+  isUnlocked,
+  onSelect,
+  onShowBackstory,
+}: {
+  cat: CatCharacter;
+  isSelected: boolean;
+  isUnlocked: boolean;
+  onSelect: (id: string) => void;
+  onShowBackstory: (id: string) => void;
+}): React.ReactElement {
+  return (
+    <TouchableOpacity
+      style={[
+        catPickerStyles.card,
+        isSelected && { borderColor: '#DC143C', borderWidth: 2 },
+        !isUnlocked && catPickerStyles.cardLocked,
+      ]}
+      onPress={() => {
+        if (isUnlocked) {
+          onSelect(cat.id);
+        }
+      }}
+      onLongPress={() => onShowBackstory(cat.id)}
+      activeOpacity={isUnlocked ? 0.7 : 1.0}
+    >
+      {/* Lock overlay for locked cats */}
+      {!isUnlocked && (
+        <View style={catPickerStyles.lockOverlay}>
+          <MaterialCommunityIcons name="lock" size={20} color="#888" />
+          <Text style={catPickerStyles.lockLevel}>Level {cat.unlockLevel}</Text>
+        </View>
+      )}
+
+      {/* Cat emoji */}
+      <View
+        style={[
+          catPickerStyles.emojiContainer,
+          { backgroundColor: isUnlocked ? cat.color + '22' : '#1A1A1A' },
+        ]}
+      >
+        <Text
+          style={[
+            catPickerStyles.emojiText,
+            !isUnlocked && { opacity: 0.3 },
+          ]}
+        >
+          {cat.emoji}
+        </Text>
+      </View>
+
+      {/* Cat info */}
+      <Text
+        style={[
+          catPickerStyles.catName,
+          !isUnlocked && { color: '#555' },
+        ]}
+      >
+        {cat.name}
+      </Text>
+      <Text
+        style={[
+          catPickerStyles.catSkill,
+          !isUnlocked && { color: '#444' },
+        ]}
+      >
+        {cat.musicSkill}
+      </Text>
+
+      {/* Personality badge */}
+      {isUnlocked && (
+        <View style={[catPickerStyles.personalityBadge, { backgroundColor: cat.color + '33' }]}>
+          <Text style={[catPickerStyles.personalityText, { color: cat.color }]}>
+            {cat.personality}
+          </Text>
+        </View>
+      )}
+
+      {/* Selected check */}
+      {isSelected && (
+        <View style={catPickerStyles.selectedCheck}>
+          <MaterialCommunityIcons name="check-circle" size={20} color="#DC143C" />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+/** Achievements section with unlocked/locked badges */
+function AchievementsSection(): React.ReactElement {
+  const { unlockedIds } = useAchievementStore();
+  const unlockedSet = useMemo(() => new Set(Object.keys(unlockedIds)), [unlockedIds]);
+  const unlockedCount = unlockedSet.size;
+  const totalCount = ACHIEVEMENTS.length;
+
+  // Sort: unlocked first (newest first), then locked
+  const sortedAchievements = useMemo(() => {
+    const unlocked: Achievement[] = [];
+    const locked: Achievement[] = [];
+    for (const a of ACHIEVEMENTS) {
+      if (unlockedSet.has(a.id)) {
+        unlocked.push(a);
+      } else {
+        locked.push(a);
+      }
+    }
+    // Sort unlocked by unlock time (newest first)
+    unlocked.sort((a, b) => {
+      const timeA = unlockedIds[a.id] ?? '';
+      const timeB = unlockedIds[b.id] ?? '';
+      return timeB.localeCompare(timeA);
+    });
+    return [...unlocked, ...locked];
+  }, [unlockedSet, unlockedIds]);
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.achievementHeader}>
+        <Text style={styles.sectionTitle}>Achievements</Text>
+        <Text style={styles.achievementCounter}>
+          {unlockedCount}/{totalCount}
+        </Text>
+      </View>
+      {sortedAchievements.map((achievement) => {
+        const isUnlocked = unlockedSet.has(achievement.id);
+        return (
+          <View
+            key={achievement.id}
+            style={[
+              styles.achievementCard,
+              !isUnlocked && styles.achievementCardLocked,
+            ]}
+          >
+            <View
+              style={[
+                styles.achievementIconContainer,
+                isUnlocked
+                  ? styles.achievementIconUnlocked
+                  : styles.achievementIconLocked,
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={achievement.icon as IconName}
+                size={28}
+                color={isUnlocked ? '#FFD700' : '#555555'}
+              />
+            </View>
+            <View style={styles.achievementContent}>
+              <Text
+                style={[
+                  styles.achievementTitle,
+                  !isUnlocked && styles.achievementTitleLocked,
+                ]}
+              >
+                {achievement.title}
+              </Text>
+              <Text
+                style={[
+                  styles.achievementDescription,
+                  !isUnlocked && styles.achievementDescriptionLocked,
+                ]}
+              >
+                {achievement.description}
+              </Text>
+            </View>
+            {isUnlocked && (
+              <View style={styles.achievementXpBadge}>
+                <Text style={styles.achievementXpText}>+{achievement.xpReward}</Text>
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+export function ProfileScreen(): React.ReactElement {
   const navigation = useNavigation<ProfileNavProp>();
   const { totalXp, level, streakData, lessonProgress } = useProgressStore();
   const {
-    dailyGoalMinutes, masterVolume, displayName, avatarEmoji,
-    setDailyGoalMinutes, setMasterVolume, setDisplayName, setAvatarEmoji,
+    dailyGoalMinutes, masterVolume, displayName, selectedCatId,
+    setDailyGoalMinutes, setMasterVolume, setDisplayName, setSelectedCatId,
   } = useSettingsStore();
   const weeklyPractice = useWeeklyPractice();
   const totalWeekMinutes = weeklyPractice.reduce((sum, d) => sum + d.minutes, 0);
@@ -82,8 +262,11 @@ export function ProfileScreen() {
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showVolumePicker, setShowVolumePicker] = useState(false);
   const [showNameEditor, setShowNameEditor] = useState(false);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showCatPicker, setShowCatPicker] = useState(false);
+  const [expandedCatId, setExpandedCatId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(displayName);
+
+  const selectedCat = getCatById(selectedCatId) ?? CAT_CHARACTERS[0];
 
   // Calculate total lessons completed
   const completedLessons = Object.values(lessonProgress).filter(
@@ -97,13 +280,41 @@ export function ProfileScreen() {
     { icon: 'book-open', label: 'Lessons Done', value: completedLessons },
   ];
 
-  const handleSaveName = () => {
+  const handleSaveName = useCallback(() => {
     const trimmed = editingName.trim();
     if (trimmed.length > 0) {
       setDisplayName(trimmed);
     }
     setShowNameEditor(false);
-  };
+  }, [editingName, setDisplayName]);
+
+  const handleSelectCat = useCallback((catId: string) => {
+    setSelectedCatId(catId);
+    const cat = getCatById(catId);
+    if (cat) {
+      // Also update the avatarEmoji to the cat's emoji for backwards compatibility
+      useSettingsStore.getState().setAvatarEmoji(cat.emoji);
+    }
+  }, [setSelectedCatId]);
+
+  const handleToggleBackstory = useCallback((catId: string) => {
+    setExpandedCatId((prev) => (prev === catId ? null : catId));
+  }, []);
+
+  const renderCatItem = useCallback(({ item }: { item: CatCharacter }) => {
+    const unlocked = isCatUnlocked(item.id, level);
+    return (
+      <CatPickerCard
+        cat={item}
+        isSelected={selectedCatId === item.id}
+        isUnlocked={unlocked}
+        onSelect={handleSelectCat}
+        onShowBackstory={handleToggleBackstory}
+      />
+    );
+  }, [level, selectedCatId, handleSelectCat, handleToggleBackstory]);
+
+  const catKeyExtractor = useCallback((item: CatCharacter) => item.id, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,19 +322,17 @@ export function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Gradient Header with editable profile */}
+        {/* Gradient Header with cat avatar */}
         <LinearGradient
           colors={['#1A1A2E', '#1A1A1A', '#0D0D0D']}
           style={styles.header}
         >
           <TouchableOpacity
             style={styles.avatarContainer}
-            onPress={() => setShowAvatarPicker(true)}
+            onPress={() => setShowCatPicker(true)}
             activeOpacity={0.7}
           >
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>{avatarEmoji}</Text>
-            </View>
+            <CatAvatar catId={selectedCatId} size="large" showTooltipOnTap={false} />
             <View style={styles.editBadge}>
               <MaterialCommunityIcons name="pencil" size={12} color="#FFF" />
             </View>
@@ -135,7 +344,9 @@ export function ProfileScreen() {
               <MaterialCommunityIcons name="pencil-outline" size={16} color="#666666" />
             </View>
           </TouchableOpacity>
-          <Text style={styles.subtitle}>Level {level} Pianist</Text>
+          <Text style={styles.subtitle}>
+            Level {level} Pianist {selectedCat.personality ? `\u00B7 ${selectedCat.name}` : ''}
+          </Text>
         </LinearGradient>
 
         {/* Stats Grid */}
@@ -262,7 +473,7 @@ export function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => Alert.alert('About KeySense', 'KeySense v1.0.0\nAI-Powered Piano Learning\n\nLearn piano with real-time feedback, MIDI support, and AI coaching.')}
+            onPress={() => Alert.alert('About Purrrfect Keys', 'Purrrfect Keys v1.0.0\nAI-Powered Piano Learning\n\nLearn piano with real-time feedback, MIDI support, and AI coaching.')}
           >
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="information" size={24} color="#B0B0B0" />
@@ -272,19 +483,8 @@ export function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Achievements Preview */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Achievements</Text>
-          <View style={styles.achievementCard}>
-            <MaterialCommunityIcons name="medal" size={48} color="#FFD700" />
-            <View style={styles.achievementContent}>
-              <Text style={styles.achievementTitle}>First Steps</Text>
-              <Text style={styles.achievementDescription}>
-                Completed your first lesson
-              </Text>
-            </View>
-          </View>
-        </View>
+        {/* Achievements */}
+        <AchievementsSection />
       </ScrollView>
 
       {/* Name Editor Modal */}
@@ -316,24 +516,64 @@ export function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* Avatar Emoji Picker Modal */}
-      <Modal visible={showAvatarPicker} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Choose Avatar</Text>
-            <View style={styles.emojiGrid}>
-              {AVATAR_EMOJIS.map((emoji) => (
-                <TouchableOpacity
-                  key={emoji}
-                  style={[styles.emojiCell, avatarEmoji === emoji && styles.emojiCellActive]}
-                  onPress={() => { setAvatarEmoji(emoji); setShowAvatarPicker(false); }}
-                >
-                  <Text style={styles.emojiText}>{emoji}</Text>
-                </TouchableOpacity>
-              ))}
+      {/* Cat Character Picker Modal */}
+      <Modal visible={showCatPicker} transparent animationType="slide">
+        <View style={catPickerStyles.overlay}>
+          <View style={catPickerStyles.container}>
+            {/* Header */}
+            <View style={catPickerStyles.header}>
+              <Text style={catPickerStyles.title}>Choose Your Cat</Text>
+              <TouchableOpacity onPress={() => setShowCatPicker(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#888" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowAvatarPicker(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
+            <Text style={catPickerStyles.subtitle}>
+              Tap to select, long-press for backstory
+            </Text>
+
+            {/* Cat grid */}
+            <FlatList
+              data={CAT_CHARACTERS}
+              renderItem={renderCatItem}
+              keyExtractor={catKeyExtractor}
+              numColumns={2}
+              columnWrapperStyle={catPickerStyles.row}
+              contentContainerStyle={catPickerStyles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+
+            {/* Expanded backstory panel */}
+            {expandedCatId && (() => {
+              const expandedCat = getCatById(expandedCatId);
+              if (!expandedCat) return null;
+              return (
+                <View style={[catPickerStyles.backstoryPanel, { borderColor: expandedCat.color + '66' }]}>
+                  <View style={catPickerStyles.backstoryHeader}>
+                    <Text style={catPickerStyles.backstoryEmoji}>{expandedCat.emoji}</Text>
+                    <View style={catPickerStyles.backstoryInfo}>
+                      <Text style={catPickerStyles.backstoryName}>{expandedCat.name}</Text>
+                      <Text style={[catPickerStyles.backstorySkill, { color: expandedCat.color }]}>
+                        {expandedCat.musicSkill}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={catPickerStyles.backstoryText}>{expandedCat.backstory}</Text>
+                  <TouchableOpacity
+                    style={catPickerStyles.backstoryClose}
+                    onPress={() => setExpandedCatId(null)}
+                  >
+                    <Text style={catPickerStyles.backstoryCloseText}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })()}
+
+            {/* Done button */}
+            <TouchableOpacity
+              style={catPickerStyles.doneButton}
+              onPress={() => setShowCatPicker(false)}
+            >
+              <Text style={catPickerStyles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -341,6 +581,168 @@ export function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
+const catPickerStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'flex-end',
+  },
+  container: {
+    backgroundColor: '#0D0D0D',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+    maxHeight: '85%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 16,
+  },
+  listContent: {
+    paddingBottom: 8,
+  },
+  row: {
+    gap: 12,
+    marginBottom: 12,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    position: 'relative',
+    minHeight: 150,
+  },
+  cardLocked: {
+    opacity: 0.5,
+  },
+  lockOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  lockLevel: {
+    fontSize: 10,
+    color: '#888',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  emojiContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emojiText: {
+    fontSize: 28,
+  },
+  catName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  catSkill: {
+    fontSize: 11,
+    color: '#B0B0B0',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  personalityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  personalityText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  selectedCheck: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+  },
+  backstoryPanel: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  backstoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 12,
+  },
+  backstoryEmoji: {
+    fontSize: 36,
+  },
+  backstoryInfo: {
+    flex: 1,
+  },
+  backstoryName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  backstorySkill: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  backstoryText: {
+    fontSize: 14,
+    color: '#CCCCCC',
+    lineHeight: 20,
+  },
+  backstoryClose: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  backstoryCloseText: {
+    fontSize: 13,
+    color: '#888',
+    fontWeight: '600',
+  },
+  doneButton: {
+    backgroundColor: '#DC143C',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -358,19 +760,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     marginBottom: 16,
     position: 'relative',
-  },
-  avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(220, 20, 60, 0.4)',
-  },
-  avatarText: {
-    fontSize: 44,
   },
   editBadge: {
     position: 'absolute',
@@ -549,28 +938,73 @@ const styles = StyleSheet.create({
     color: '#DC143C',
     fontWeight: '700',
   },
+  achievementHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  achievementCounter: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#DC143C',
+    marginBottom: 16,
+  },
   achievementCard: {
     flexDirection: 'row',
     backgroundColor: '#1A1A1A',
-    padding: 20,
+    padding: 14,
     borderRadius: 12,
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
     borderWidth: 1,
     borderColor: '#2A2A2A',
+    marginBottom: 8,
+  },
+  achievementCardLocked: {
+    opacity: 0.5,
+  },
+  achievementIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  achievementIconUnlocked: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+  },
+  achievementIconLocked: {
+    backgroundColor: '#252525',
   },
   achievementContent: {
     flex: 1,
   },
   achievementTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  achievementTitleLocked: {
+    color: '#888888',
   },
   achievementDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#B0B0B0',
+  },
+  achievementDescriptionLocked: {
+    color: '#555555',
+  },
+  achievementXpBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  achievementXpText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFD700',
   },
   // Modal styles
   modalOverlay: {
@@ -633,28 +1067,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-  emojiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-    justifyContent: 'center',
-  },
-  emojiCell: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: '#252525',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emojiCellActive: {
-    backgroundColor: 'rgba(220, 20, 60, 0.2)',
-    borderWidth: 2,
-    borderColor: '#DC143C',
-  },
-  emojiText: {
-    fontSize: 28,
   },
 });

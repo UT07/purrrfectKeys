@@ -107,18 +107,23 @@ export class ExpoAudioEngine implements IAudioEngine {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
+    const totalStart = Date.now();
+
     try {
+      const audioModeStart = Date.now();
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
       });
-      console.log('[ExpoAudioEngine] Audio mode configured');
+      console.log(`[ExpoAudioEngine] Audio mode configured (${Date.now() - audioModeStart}ms)`);
 
       // Generate and write base WAV
+      const wavStart = Date.now();
       const wavBuffer = generatePianoWav();
-      console.log(`[ExpoAudioEngine] WAV generated: ${wavBuffer.byteLength} bytes`);
+      console.log(`[ExpoAudioEngine] WAV generated: ${wavBuffer.byteLength} bytes (${Date.now() - wavStart}ms)`);
 
+      const writeStart = Date.now();
       const base64 = arrayBufferToBase64(wavBuffer);
       const cacheDir = FileSystem.cacheDirectory;
       if (!cacheDir) {
@@ -130,15 +135,28 @@ export class ExpoAudioEngine implements IAudioEngine {
       });
 
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      console.log(`[ExpoAudioEngine] WAV file: ${fileUri}, exists=${fileInfo.exists}`);
+      console.log(`[ExpoAudioEngine] WAV written: ${fileUri}, exists=${fileInfo.exists} (${Date.now() - writeStart}ms)`);
 
       this.soundSource = { uri: fileUri };
 
       // Pre-create round-robin voice pools
+      const poolStart = Date.now();
       await this.preloadVoicePools();
+      const poolMs = Date.now() - poolStart;
 
       this.initialized = true;
-      console.log(`[ExpoAudioEngine] Initialized: ${this.voicePools.size} notes × ${VOICES_PER_NOTE} voices`);
+
+      // Pool health report
+      const loadedCount = this.voicePools.size;
+      const expectedCount = PRELOAD_NOTES.length;
+      const totalVoices = loadedCount * VOICES_PER_NOTE;
+      console.log(
+        `[ExpoAudioEngine] Pool health: ${loadedCount}/${expectedCount} notes loaded, ` +
+        `${totalVoices} total voices (${poolMs}ms)`
+      );
+
+      const totalMs = Date.now() - totalStart;
+      console.log(`[ExpoAudioEngine] Initialized in ${totalMs}ms (${loadedCount} notes x ${VOICES_PER_NOTE} voices)`);
 
       await this.warmUpAudio();
     } catch (error) {
@@ -148,6 +166,7 @@ export class ExpoAudioEngine implements IAudioEngine {
   }
 
   private async warmUpAudio(): Promise<void> {
+    const warmStart = Date.now();
     try {
       const pool = this.voicePools.get(60);
       if (pool) {
@@ -159,10 +178,12 @@ export class ExpoAudioEngine implements IAudioEngine {
         setTimeout(() => {
           pool.sounds[0].stopAsync().catch(() => {});
         }, 50);
-        console.log('[ExpoAudioEngine] Audio warm-up complete');
+        console.log(`[ExpoAudioEngine] Audio warm-up complete (${Date.now() - warmStart}ms)`);
+      } else {
+        console.warn('[ExpoAudioEngine] Warm-up skipped: no pool for note 60');
       }
     } catch (error) {
-      console.warn('[ExpoAudioEngine] Warm-up failed (non-critical):', error);
+      console.warn(`[ExpoAudioEngine] Warm-up failed after ${Date.now() - warmStart}ms (non-critical):`, error);
     }
   }
 
@@ -199,6 +220,16 @@ export class ExpoAudioEngine implements IAudioEngine {
     });
 
     await Promise.all(loadPromises);
+
+    const loadedCount = this.voicePools.size;
+    const expectedCount = PRELOAD_NOTES.length;
+    if (loadedCount < expectedCount) {
+      const missingNotes = PRELOAD_NOTES.filter(n => !this.voicePools.has(n));
+      console.error(
+        `[ExpoAudioEngine] WARNING: Only ${loadedCount}/${expectedCount} note pools loaded. ` +
+        `Missing notes: [${missingNotes.join(', ')}]. Audio may be unreliable on these notes.`
+      );
+    }
   }
 
   async suspend(): Promise<void> {

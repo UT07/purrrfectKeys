@@ -18,6 +18,8 @@ import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { MascotBubble } from '../../components/Mascot/MascotBubble';
+import { FunFactCard } from '../../components/FunFact/FunFactCard';
+import { getFactForExerciseType } from '../../content/funFactSelector';
 import { getTipForScore } from '../../components/Mascot/mascotTips';
 import type { MascotMood } from '../../components/Mascot/mascotTips';
 import { ConfettiEffect } from '../../components/transitions/ConfettiEffect';
@@ -197,6 +199,12 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     return { mood, message: tip.text };
   }, [score.overall]);
 
+  // Fun fact for passed exercises
+  const completionFunFact = useMemo(
+    () => (score.isPassed ? getFactForExerciseType(exercise.metadata.skills) : null),
+    [score.isPassed, exercise.metadata.skills]
+  );
+
   return (
     <View style={styles.overlay} testID={testID}>
       {/* Confetti for 3-star scores */}
@@ -360,6 +368,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               <Text style={styles.coachText}>{coachFeedback}</Text>
             )}
           </View>
+
+          {/* Fun Fact (passed exercises only) */}
+          {completionFunFact && (
+            <FunFactCard
+              fact={completionFunFact}
+              animationDelay={600}
+              compact
+              testID="completion-fun-fact"
+            />
+          )}
 
           {/* Action Buttons */}
           <View style={styles.actions}>

@@ -295,9 +295,7 @@ export function LevelMapScreen() {
         // Could show a toast — for now, do nothing
         return;
       }
-      if (data.targetExerciseId) {
-        navigation.navigate('Exercise', { exerciseId: data.targetExerciseId });
-      }
+      navigation.navigate('LessonIntro', { lessonId: data.lesson.id });
     },
     [navigation]
   );

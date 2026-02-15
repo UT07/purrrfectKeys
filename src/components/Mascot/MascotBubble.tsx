@@ -1,6 +1,6 @@
 /**
  * MascotBubble Component
- * Displays Keysie the piano mascot with a speech bubble
+ * Displays Salsa the piano mascot with a speech bubble
  * MVP uses emoji-based rendering with mood-tinted avatar
  */
 

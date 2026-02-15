@@ -22,14 +22,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Button, Card } from '../components/common';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useSettingsStore } from '../stores/settingsStore';
-
-type OnboardingScreenProps = NativeStackNavigationProp<
-  RootStackParamList,
-  'Onboarding'
->;
 
 interface OnboardingState {
   experienceLevel?: 'beginner' | 'intermediate' | 'returning';
@@ -61,7 +54,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       <View style={styles.iconContainer}>
         <Text style={styles.icon}>🎹</Text>
       </View>
-      <Text style={styles.stepTitle}>Welcome to KeySense</Text>
+      <Text style={styles.stepTitle}>Welcome to Purrrfect Keys</Text>
       <Text style={styles.stepSubtitle}>
         Learn piano in 5 minutes a day with AI-powered feedback
       </Text>
@@ -317,11 +310,7 @@ function OptionCard({
 /**
  * Main Onboarding Screen
  */
-export function OnboardingScreen({
-  navigation,
-}: {
-  navigation: OnboardingScreenProps;
-}): React.ReactElement {
+export function OnboardingScreen(): React.ReactElement {
   const [step, setStep] = useState(1);
   const [state, setState] = useState<OnboardingState>({});
 
@@ -334,12 +323,13 @@ export function OnboardingScreen({
       setExperienceLevel(state.experienceLevel);
     }
     if (step === 4) {
-      // Persist goal and completion
+      // MUST set onboarding flag FIRST — other setters use debouncedSave which
+      // captures get() state. If hasCompletedOnboarding is still false when they
+      // snapshot, the debounced write overwrites the immediate save 500ms later.
+      setHasCompletedOnboarding(true);
       if (state.goal) {
         setLearningGoal(state.goal);
       }
-      setHasCompletedOnboarding(true);
-      navigation.navigate('MainTabs');
     } else {
       setStep((prev) => prev + 1);
     }

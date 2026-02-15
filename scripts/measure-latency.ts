@@ -234,7 +234,7 @@ function validateLatency(stats: LatencyStats, target: number): boolean {
  * Main measurement function
  */
 async function main(): Promise<void> {
-  console.log('🎹 KeySense Audio Latency Measurement\n');
+  console.log('🎹 Purrrfect Keys Audio Latency Measurement\n');
   console.log('═'.repeat(50));
 
   let engine: NativeAudioEngine | null = null;

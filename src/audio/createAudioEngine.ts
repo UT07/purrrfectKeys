@@ -5,8 +5,9 @@
  *
  * Selection order:
  * 1. WebAudioEngine (react-native-audio-api oscillator synthesis) — preferred
- *    Uses JSI for low-latency audio (<10ms). Available in Dev Builds where
+ *    Uses JSI for low-latency audio (<7ms). Available in Dev Builds where
  *    react-native-audio-api's native module is loaded.
+ *    Optimized: 3-harmonic synthesis, pre-warmed pipeline, O(1) eviction.
  *
  * 2. ExpoAudioEngine (expo-av) — fallback
  *    Uses async bridge with round-robin voice pools. Higher latency (~20-30ms)
@@ -17,6 +18,7 @@
  * fall back to ExpoAudioEngine.
  */
 
+import { Platform } from 'react-native';
 import type { IAudioEngine } from './types';
 import { ExpoAudioEngine } from './ExpoAudioEngine';
 
@@ -30,13 +32,20 @@ let factoryInstance: IAudioEngine | null = null;
  * is not available (e.g., running in Expo Go without the native module).
  */
 function tryCreateWebAudioEngine(): IAudioEngine | null {
+  const start = Date.now();
   try {
     // Dynamic require so Metro includes the module only if it's in node_modules,
     // and the import doesn't crash at bundle time if the native module is missing.
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { WebAudioEngine } = require('./WebAudioEngine');
-    return new WebAudioEngine();
-  } catch {
+    const engine = new WebAudioEngine();
+    console.log(`[createAudioEngine] WebAudioEngine created in ${Date.now() - start}ms`);
+    return engine;
+  } catch (error) {
+    console.warn(
+      `[createAudioEngine] WebAudioEngine unavailable after ${Date.now() - start}ms:`,
+      (error as Error).message
+    );
     return null;
   }
 }
@@ -55,13 +64,29 @@ export function createAudioEngine(): IAudioEngine {
     return factoryInstance;
   }
 
+  const selectionStart = Date.now();
+
+  // Log device/platform info for debugging audio latency across environments
+  console.log(
+    `[createAudioEngine] Platform: ${Platform.OS} ${Platform.Version ?? 'unknown'}, ` +
+    `isTV=${Platform.isTV}`
+  );
+
   const webEngine = tryCreateWebAudioEngine();
   if (webEngine) {
     factoryInstance = webEngine;
-    console.log('[createAudioEngine] Using WebAudioEngine (react-native-audio-api, low-latency)');
+    const estimatedLatency = webEngine.getLatency();
+    console.log(
+      `[createAudioEngine] Selected WebAudioEngine (JSI, 3-harmonic, pre-warmed) ` +
+      `in ${Date.now() - selectionStart}ms — estimated latency: ${estimatedLatency}ms`
+    );
   } else {
     factoryInstance = new ExpoAudioEngine();
-    console.log('[createAudioEngine] Using ExpoAudioEngine (expo-av fallback)');
+    const estimatedLatency = factoryInstance.getLatency();
+    console.log(
+      `[createAudioEngine] Selected ExpoAudioEngine (expo-av fallback) ` +
+      `in ${Date.now() - selectionStart}ms — estimated latency: ${estimatedLatency}ms`
+    );
   }
 
   return factoryInstance;
@@ -75,5 +100,6 @@ export function resetAudioEngineFactory(): void {
   if (factoryInstance) {
     factoryInstance.dispose();
     factoryInstance = null;
+    console.log('[createAudioEngine] Factory reset — engine disposed');
   }
 }

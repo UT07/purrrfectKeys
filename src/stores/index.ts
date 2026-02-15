@@ -7,6 +7,7 @@
 export { useExerciseStore } from './exerciseStore';
 export { useProgressStore } from './progressStore';
 export { useSettingsStore } from './settingsStore';
+export { useAchievementStore } from './achievementStore';
 
 // Store types
 export type { ExerciseSessionState } from './types';
@@ -42,6 +43,10 @@ export {
   // Multi-store hooks
   useUserProfile,
 } from './hooks';
+
+// Achievement store types
+export type { AchievementStoreState, UnlockedAchievement } from './achievementStore';
+export { computeAchievementXpReward } from './achievementStore';
 
 // Persistence utilities (for advanced usage)
 export { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';

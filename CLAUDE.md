@@ -1,4 +1,4 @@
-# KeySense - AI-Powered Piano Learning App
+# Purrrfect Keys - AI-Powered Piano Learning App
 
 ## Project Overview
 A Duolingo-style piano learning app with real-time feedback, MIDI support, and AI coaching.

@@ -1,6 +1,6 @@
 /**
  * Mascot component exports
- * Keysie - the KeySense piano mascot
+ * Salsa - the Purrrfect Keys piano mascot + Cat Character Avatar System
  */
 
 export { MascotBubble } from './MascotBubble';
@@ -13,3 +13,15 @@ export {
   TIPS,
 } from './mascotTips';
 export type { MascotTip, MascotMood, TipCategory } from './mascotTips';
+
+export { CatAvatar } from './CatAvatar';
+export type { CatAvatarSize } from './CatAvatar';
+
+export {
+  CAT_CHARACTERS,
+  getCatById,
+  getDefaultCat,
+  getUnlockedCats,
+  isCatUnlocked,
+} from './catCharacters';
+export type { CatCharacter } from './catCharacters';

@@ -1,6 +1,6 @@
 /**
  * Main App component
- * Entry point for the KeySense application
+ * Entry point for the Purrrfect Keys application
  */
 
 import React, { useEffect, useState } from 'react';
@@ -14,7 +14,10 @@ import { PersistenceManager, STORAGE_KEYS } from './stores/persistence';
 import { useProgressStore } from './stores/progressStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
+import { useAchievementStore } from './stores/achievementStore';
 import { levelFromXp } from './core/progression/XpSystem';
+import { syncManager } from './services/firebase/syncService';
+import { migrateLocalToCloud } from './services/firebase/dataMigration';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -29,6 +32,12 @@ export default function App(): React.ReactElement {
       try {
         // Initialize Firebase Auth (resolves current user state)
         await useAuthStore.getState().initAuth();
+
+        // Sync Firebase display name to settingsStore if user has one
+        const authUser = useAuthStore.getState().user;
+        if (authUser?.displayName) {
+          useSettingsStore.getState().setDisplayName(authUser.displayName);
+        }
 
         // Hydrate progress state from AsyncStorage
         const savedProgress = await PersistenceManager.loadState(
@@ -57,9 +66,9 @@ export default function App(): React.ReactElement {
         if (savedSettings) {
           const {
             hasCompletedOnboarding, experienceLevel, learningGoal,
-            dailyGoalMinutes, masterVolume, displayName, avatarEmoji,
+            dailyGoalMinutes, masterVolume, displayName, avatarEmoji, selectedCatId,
             soundEnabled, hapticEnabled, metronomeVolume, keyboardVolume,
-            showFingerNumbers, showNoteNames, preferredHand, darkMode,
+            showFingerNumbers, showNoteNames, preferredHand, darkMode, showTutorials,
             lastMidiDeviceId, lastMidiDeviceName, autoConnectMidi,
           } = savedSettings as Record<string, unknown>;
           useSettingsStore.setState({
@@ -70,6 +79,7 @@ export default function App(): React.ReactElement {
             ...(masterVolume != null ? { masterVolume: masterVolume as number } : {}),
             ...(displayName ? { displayName: displayName as string } : {}),
             ...(avatarEmoji ? { avatarEmoji: avatarEmoji as string } : {}),
+            ...(selectedCatId ? { selectedCatId: selectedCatId as string } : {}),
             ...(soundEnabled != null ? { soundEnabled: soundEnabled as boolean } : {}),
             ...(hapticEnabled != null ? { hapticEnabled: hapticEnabled as boolean } : {}),
             ...(metronomeVolume != null ? { metronomeVolume: metronomeVolume as number } : {}),
@@ -78,11 +88,32 @@ export default function App(): React.ReactElement {
             ...(showNoteNames != null ? { showNoteNames: showNoteNames as boolean } : {}),
             ...(preferredHand ? { preferredHand: preferredHand as 'right' | 'left' | 'both' } : {}),
             ...(darkMode != null ? { darkMode: darkMode as boolean } : {}),
+            ...(showTutorials != null ? { showTutorials: showTutorials as boolean } : {}),
             ...(lastMidiDeviceId !== undefined ? { lastMidiDeviceId: lastMidiDeviceId as string | null } : {}),
             ...(lastMidiDeviceName !== undefined ? { lastMidiDeviceName: lastMidiDeviceName as string | null } : {}),
             ...(autoConnectMidi != null ? { autoConnectMidi: autoConnectMidi as boolean } : {}),
           });
           console.log('[App] Settings state hydrated from storage (onboarding:', hasCompletedOnboarding, ')');
+        }
+
+        // Hydrate achievement state
+        await useAchievementStore.getState().hydrate();
+        console.log('[App] Achievement state hydrated from storage');
+
+        // Start periodic cloud sync (every 5 minutes) if user is authenticated
+        const authState = useAuthStore.getState();
+        if (authState.isAuthenticated) {
+          syncManager.startPeriodicSync();
+          console.log('[App] Periodic sync started');
+        }
+
+        // Migrate local progress to cloud on first non-anonymous sign-in
+        if (authState.isAuthenticated && !authState.isAnonymous) {
+          migrateLocalToCloud().then((result) => {
+            if (result.migrated) {
+              console.log('[App] Local data migrated to cloud');
+            }
+          });
         }
       } catch (e) {
         console.warn('[App] Failed to hydrate progress state:', e);

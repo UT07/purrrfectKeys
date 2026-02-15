@@ -220,8 +220,19 @@ export function scoreExercise(
   // Assuming quarter note = 1 beat
   const msPerBeat = (60 * 1000) / exercise.settings.tempo;
 
+  // Enforce minimum tolerances for touch input — even with latency compensation,
+  // touch keyboards have inherent variability that hardware MIDI keyboards don't.
+  const adjustedExercise = {
+    ...exercise,
+    scoring: {
+      ...exercise.scoring,
+      timingToleranceMs: Math.max(exercise.scoring.timingToleranceMs, 60),
+      timingGracePeriodMs: Math.max(exercise.scoring.timingGracePeriodMs, 160),
+    },
+  };
+
   // Score all notes
-  const noteScores = scoreNotes(exercise, exercise.notes, playedNotes, msPerBeat);
+  const noteScores = scoreNotes(adjustedExercise, exercise.notes, playedNotes, msPerBeat);
 
   // Calculate breakdown
   const breakdown = calculateBreakdown(noteScores, exercise.notes.length);

@@ -7,12 +7,28 @@ import type { MascotMood, MascotSize } from './types';
 interface KeysieSvgProps {
   mood: MascotMood;
   size: MascotSize;
+  /** Override accent color (ears, headphones, nose, tail tip). Defaults to crimson. */
+  accentColor?: string;
+  /** Override pixel size directly (ignores size prop). Used by CatAvatar. */
+  pixelSize?: number;
 }
 
 const BODY_COLOR = '#3A3A3A';
+const EYE_GREEN = '#2ECC71';
 const CRIMSON = '#DC143C';
 const DARK_RED = '#8B0000';
 const GOLD = '#FFD700';
+
+/** Darken a hex color by a factor (0-1, where 0 = black) */
+function darkenColor(hex: string, factor: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const dr = Math.round(r * factor);
+  const dg = Math.round(g * factor);
+  const db = Math.round(b * factor);
+  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
+}
 
 function renderEyes(mood: MascotMood): ReactElement {
   switch (mood) {
@@ -43,12 +59,14 @@ function renderEyes(mood: MascotMood): ReactElement {
         <G>
           {/* Left eye - soft oval */}
           <Ellipse cx="38" cy="40" rx="4" ry="5" fill="#FFFFFF" />
-          <Circle cx="38" cy="40" r="2.5" fill="#1A1A1A" />
-          <Circle cx="37" cy="39" r="1" fill="#FFFFFF" />
+          <Circle cx="38" cy="40" r="2.5" fill={EYE_GREEN} />
+          <Circle cx="38" cy="40" r="1" fill="#1A1A1A" />
+          <Circle cx="37" cy="39" r="0.8" fill="#FFFFFF" />
           {/* Right eye - soft oval */}
           <Ellipse cx="62" cy="40" rx="4" ry="5" fill="#FFFFFF" />
-          <Circle cx="62" cy="40" r="2.5" fill="#1A1A1A" />
-          <Circle cx="61" cy="39" r="1" fill="#FFFFFF" />
+          <Circle cx="62" cy="40" r="2.5" fill={EYE_GREEN} />
+          <Circle cx="62" cy="40" r="1" fill="#1A1A1A" />
+          <Circle cx="61" cy="39" r="0.8" fill="#FFFFFF" />
         </G>
       );
 
@@ -57,12 +75,14 @@ function renderEyes(mood: MascotMood): ReactElement {
         <G>
           {/* Left eye - big round */}
           <Circle cx="38" cy="40" r="6" fill="#FFFFFF" />
-          <Circle cx="38" cy="40" r="3.5" fill="#1A1A1A" />
-          <Circle cx="36" cy="38" r="1.5" fill="#FFFFFF" />
+          <Circle cx="38" cy="40" r="3.5" fill={EYE_GREEN} />
+          <Circle cx="38" cy="40" r="1.5" fill="#1A1A1A" />
+          <Circle cx="36" cy="38" r="1.2" fill="#FFFFFF" />
           {/* Right eye - big round */}
           <Circle cx="62" cy="40" r="6" fill="#FFFFFF" />
-          <Circle cx="62" cy="40" r="3.5" fill="#1A1A1A" />
-          <Circle cx="60" cy="38" r="1.5" fill="#FFFFFF" />
+          <Circle cx="62" cy="40" r="3.5" fill={EYE_GREEN} />
+          <Circle cx="62" cy="40" r="1.5" fill="#1A1A1A" />
+          <Circle cx="60" cy="38" r="1.2" fill="#FFFFFF" />
         </G>
       );
 
@@ -71,12 +91,14 @@ function renderEyes(mood: MascotMood): ReactElement {
         <G>
           {/* Left eye - wide alert */}
           <Ellipse cx="38" cy="40" rx="5" ry="6" fill="#FFFFFF" />
-          <Circle cx="38" cy="41" r="3" fill="#1A1A1A" />
-          <Circle cx="37" cy="39" r="1" fill="#FFFFFF" />
+          <Circle cx="38" cy="41" r="3" fill={EYE_GREEN} />
+          <Circle cx="38" cy="41" r="1.2" fill="#1A1A1A" />
+          <Circle cx="37" cy="39" r="0.8" fill="#FFFFFF" />
           {/* Right eye - wide alert */}
           <Ellipse cx="62" cy="40" rx="5" ry="6" fill="#FFFFFF" />
-          <Circle cx="62" cy="41" r="3" fill="#1A1A1A" />
-          <Circle cx="61" cy="39" r="1" fill="#FFFFFF" />
+          <Circle cx="62" cy="41" r="3" fill={EYE_GREEN} />
+          <Circle cx="62" cy="41" r="1.2" fill="#1A1A1A" />
+          <Circle cx="61" cy="39" r="0.8" fill="#FFFFFF" />
         </G>
       );
 
@@ -98,7 +120,7 @@ function renderEyes(mood: MascotMood): ReactElement {
   }
 }
 
-function renderMouth(mood: MascotMood): ReactElement {
+function renderMouth(mood: MascotMood, darkAccent: string = DARK_RED): ReactElement {
   switch (mood) {
     case 'happy':
       return (
@@ -124,7 +146,7 @@ function renderMouth(mood: MascotMood): ReactElement {
 
     case 'excited':
       return (
-        <Ellipse cx="50" cy="55" rx="5" ry="4" fill={DARK_RED} />
+        <Ellipse cx="50" cy="55" rx="5" ry="4" fill={darkAccent} />
       );
 
     case 'teaching':
@@ -146,15 +168,17 @@ function renderMouth(mood: MascotMood): ReactElement {
           d="M 42 53 Q 50 62 58 53"
           stroke="#FFFFFF"
           strokeWidth="1.5"
-          fill={DARK_RED}
+          fill={darkAccent}
           strokeLinecap="round"
         />
       );
   }
 }
 
-export function KeysieSvg({ mood, size }: KeysieSvgProps): ReactElement {
-  const px = MASCOT_SIZES[size];
+export function KeysieSvg({ mood, size, accentColor, pixelSize }: KeysieSvgProps): ReactElement {
+  const px = pixelSize ?? MASCOT_SIZES[size];
+  const accent = accentColor ?? CRIMSON;
+  const accentDark = accentColor ? darkenColor(accentColor, 0.5) : DARK_RED;
 
   return (
     <Svg
@@ -171,7 +195,7 @@ export function KeysieSvg({ mood, size }: KeysieSvgProps): ReactElement {
         fill="none"
         strokeLinecap="round"
       />
-      <Circle cx="85" cy="33" r="4" fill={CRIMSON} />
+      <Circle cx="85" cy="33" r="4" fill={accent} />
 
       {/* Body - rounded */}
       <Ellipse cx="50" cy="65" rx="22" ry="20" fill={BODY_COLOR} />
@@ -181,27 +205,27 @@ export function KeysieSvg({ mood, size }: KeysieSvgProps): ReactElement {
 
       {/* Left ear */}
       <Path d="M 30 30 L 25 10 L 38 25 Z" fill={BODY_COLOR} />
-      <Path d="M 31 27 L 27 14 L 36 24 Z" fill={CRIMSON} />
+      <Path d="M 31 27 L 27 14 L 36 24 Z" fill={accent} />
 
       {/* Right ear */}
       <Path d="M 70 30 L 75 10 L 62 25 Z" fill={BODY_COLOR} />
-      <Path d="M 69 27 L 73 14 L 64 24 Z" fill={CRIMSON} />
+      <Path d="M 69 27 L 73 14 L 64 24 Z" fill={accent} />
 
       {/* Headphones band */}
       <Path
         d="M 28 38 Q 50 22 72 38"
-        stroke={CRIMSON}
+        stroke={accent}
         strokeWidth="3"
         fill="none"
         strokeLinecap="round"
       />
 
       {/* Left ear cup */}
-      <Circle cx="28" cy="40" r="6" fill={CRIMSON} />
+      <Circle cx="28" cy="40" r="6" fill={accent} />
       <Circle cx="28" cy="40" r="4" fill="#2A2A2A" />
 
       {/* Right ear cup */}
-      <Circle cx="72" cy="40" r="6" fill={CRIMSON} />
+      <Circle cx="72" cy="40" r="6" fill={accent} />
       <Circle cx="72" cy="40" r="4" fill="#2A2A2A" />
 
       {/* Piano-key collar */}
@@ -225,13 +249,13 @@ export function KeysieSvg({ mood, size }: KeysieSvgProps): ReactElement {
       <Line x1="67" y1="52" x2="80" y2="54" stroke="#888888" strokeWidth="1" />
 
       {/* Nose */}
-      <Ellipse cx="50" cy="49" rx="3" ry="2" fill={CRIMSON} />
+      <Ellipse cx="50" cy="49" rx="3" ry="2" fill={accent} />
 
-      {/* Eyes (mood-dependent) */}
+      {/* Eyes (mood-dependent) — use accentDark for excited mouth */}
       {renderEyes(mood)}
 
       {/* Mouth (mood-dependent) */}
-      {renderMouth(mood)}
+      {renderMouth(mood, accentDark)}
     </Svg>
   );
 }

@@ -1,12 +1,16 @@
 /**
  * Firebase configuration and initialization
  * Initializes Firebase services: Auth, Firestore, Cloud Functions
+ *
+ * Auth uses initializeAuth with getReactNativePersistence(AsyncStorage) so that
+ * the user session persists across app restarts (remember device).
  */
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================================================
 // Firebase Config
@@ -29,8 +33,12 @@ export const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize services
-export const auth = getAuth(app);
+// Initialize Auth with AsyncStorage persistence so sessions survive app restarts.
+// getReactNativePersistence is available from firebase/auth when bundled by Metro
+// (the react-native condition in @firebase/auth/package.json exports it).
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
 export const db = getFirestore(app);
 export const functions = getFunctions(app, 'us-central1');
 

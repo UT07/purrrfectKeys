@@ -14,6 +14,15 @@ import { render, waitFor, act, fireEvent } from '@testing-library/react-native';
 import { ExercisePlayer } from '../../screens/ExercisePlayer/ExercisePlayer';
 import type { Exercise, MidiNoteEvent } from '../../core/exercises/types';
 
+// Mock Firebase sync service (avoid loading firebase/config in test env)
+jest.mock('../../services/firebase/syncService', () => ({
+  syncManager: {
+    syncAfterExercise: jest.fn().mockResolvedValue(undefined),
+    startPeriodicSync: jest.fn(),
+    stopPeriodicSync: jest.fn(),
+  },
+}));
+
 // Mock expo-haptics
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),

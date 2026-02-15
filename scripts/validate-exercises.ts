@@ -238,7 +238,7 @@ function checkUniqueness(): void {
 }
 
 function main(): void {
-  console.log('\n=== KeySense Exercise Validator ===\n');
+  console.log('\n=== Purrrfect Keys Exercise Validator ===\n');
 
   loadAllExercises();
   console.log(`Loaded ${allExercises.size} exercises\n`);

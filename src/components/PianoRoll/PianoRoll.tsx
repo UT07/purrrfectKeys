@@ -19,7 +19,7 @@ export interface PianoRollProps {
   testID?: string;
 }
 
-const NOTE_HEIGHT = 36;
+const NOTE_HEIGHT = 44;
 const PIXELS_PER_BEAT = 140;
 
 // Default MIDI range used when no notes are provided

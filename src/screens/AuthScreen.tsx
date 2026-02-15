@@ -2,6 +2,10 @@
  * AuthScreen
  * First screen for unauthenticated users.
  * Offers Apple, Google, Email sign-in, and anonymous skip.
+ *
+ * - "Skip for now" calls signInAnonymously() with proper error handling
+ * - Google/Apple sign-in show an alert if native SDKs are not configured
+ * - Firebase Auth persistence ensures the session is remembered across restarts
  */
 
 import React, { useCallback } from 'react';
@@ -12,6 +16,7 @@ import {
   Platform,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +26,32 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type AuthNavProp = NativeStackNavigationProp<RootStackParamList>;
 
+/**
+ * Check whether the Apple Sign-In native module is available and functional.
+ * Returns false when expo-apple-authentication is not installed or not linked.
+ */
+function isAppleAuthAvailable(): boolean {
+  try {
+    const AppleAuth = require('expo-apple-authentication');
+    return AppleAuth.isAvailableAsync != null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check whether the Google Sign-In native module is available and functional.
+ * Returns false when @react-native-google-signin is not installed or not linked.
+ */
+function isGoogleAuthAvailable(): boolean {
+  try {
+    const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+    return GoogleSignin != null && typeof GoogleSignin.signIn === 'function';
+  } catch {
+    return false;
+  }
+}
+
 export function AuthScreen(): React.ReactElement {
   const navigation = useNavigation<AuthNavProp>();
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -29,6 +60,14 @@ export function AuthScreen(): React.ReactElement {
   const clearError = useAuthStore((s) => s.clearError);
 
   const handleAppleSignIn = useCallback(async () => {
+    if (!isAppleAuthAvailable()) {
+      Alert.alert(
+        'Coming Soon',
+        'Apple Sign-In is not yet configured for this build. Use email or skip for now.',
+      );
+      return;
+    }
+
     try {
       const AppleAuth = require('expo-apple-authentication');
       const crypto = require('expo-crypto');
@@ -49,14 +88,23 @@ export function AuthScreen(): React.ReactElement {
       if (appleCredential.identityToken) {
         await useAuthStore.getState().signInWithApple(appleCredential.identityToken, nonce);
       }
-    } catch (err: any) {
-      if (err.code !== 'ERR_REQUEST_CANCELED') {
-        console.warn('[AuthScreen] Apple sign-in error:', err);
-      }
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj.code === 'ERR_REQUEST_CANCELED') return;
+      console.warn('[AuthScreen] Apple sign-in error:', err);
+      Alert.alert('Sign-In Failed', errObj.message ?? 'Apple Sign-In failed. Please try again.');
     }
   }, []);
 
   const handleGoogleSignIn = useCallback(async () => {
+    if (!isGoogleAuthAvailable()) {
+      Alert.alert(
+        'Coming Soon',
+        'Google Sign-In is not yet configured for this build. Use email or skip for now.',
+      );
+      return;
+    }
+
     try {
       const { GoogleSignin } = require('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
@@ -65,10 +113,11 @@ export function AuthScreen(): React.ReactElement {
       if (idToken) {
         await useAuthStore.getState().signInWithGoogle(idToken);
       }
-    } catch (err: any) {
-      if (err.code !== 'SIGN_IN_CANCELLED') {
-        console.warn('[AuthScreen] Google sign-in error:', err);
-      }
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj.code === 'SIGN_IN_CANCELLED') return;
+      console.warn('[AuthScreen] Google sign-in error:', err);
+      Alert.alert('Sign-In Failed', errObj.message ?? 'Google Sign-In failed. Please try again.');
     }
   }, []);
 
@@ -76,8 +125,11 @@ export function AuthScreen(): React.ReactElement {
     navigation.navigate('EmailAuth');
   }, [navigation]);
 
-  const handleSkip = useCallback(() => {
-    signInAnonymously();
+  const handleSkip = useCallback(async () => {
+    await signInAnonymously();
+    // If sign-in failed, the error is shown via the error banner in the UI.
+    // If it succeeded, isAuthenticated becomes true and AppNavigator
+    // automatically navigates away from this screen.
   }, [signInAnonymously]);
 
   return (

@@ -165,6 +165,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await updateProfile(result.user, { displayName });
       await createUserProfile(result.user.uid, { email, displayName });
 
+      // Sync display name to settings store so ProfileScreen shows it
+      try {
+        const { useSettingsStore } = require('./settingsStore');
+        useSettingsStore.getState().setDisplayName(displayName);
+      } catch { /* settings sync is best-effort */ }
+
       set({
         user: result.user,
         isAuthenticated: true,
@@ -386,6 +392,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       await updateProfile(user, { displayName: name });
+
+      // Sync to settings store so ProfileScreen shows updated name
+      try {
+        const { useSettingsStore } = require('./settingsStore');
+        useSettingsStore.getState().setDisplayName(name);
+      } catch { /* settings sync is best-effort */ }
+
       set({ isLoading: false, error: null });
     } catch (error) {
       set({

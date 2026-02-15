@@ -103,6 +103,7 @@ export interface DisplaySettings {
   darkMode: boolean;
   showPianoRoll: boolean;
   showStaffNotation: boolean;
+  showTutorials: boolean;
 }
 
 export interface NotificationSettings {
@@ -127,6 +128,7 @@ export interface OnboardingSettings {
 export interface ProfileSettings {
   displayName: string;
   avatarEmoji: string; // Emoji used as avatar
+  selectedCatId: string; // Cat character avatar ID
 }
 
 export interface SettingsStoreState extends AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings {
@@ -145,11 +147,13 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   setDailyGoalMinutes: (minutes: number) => void;
   setLastMidiDevice: (deviceId: string | null, deviceName: string | null) => void;
   setDarkMode: (enabled: boolean) => void;
+  setShowTutorials: (show: boolean) => void;
   setHasCompletedOnboarding: (completed: boolean) => void;
   setExperienceLevel: (level: 'beginner' | 'intermediate' | 'returning') => void;
   setLearningGoal: (goal: 'songs' | 'technique' | 'exploration') => void;
   setDisplayName: (name: string) => void;
   setAvatarEmoji: (emoji: string) => void;
+  setSelectedCatId: (id: string) => void;
   reset: () => void;
 }
 

@@ -1,6 +1,6 @@
 /**
  * Main App Navigation
- * Sets up the navigation structure for KeySense
+ * Sets up the navigation structure for Purrrfect Keys
  * Auth flow → Onboarding → Main app
  */
 
@@ -21,9 +21,9 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { EmailAuthScreen } from '../screens/EmailAuthScreen';
 import { AccountScreen } from '../screens/AccountScreen';
+import { LessonIntroScreen } from '../screens/LessonIntroScreen';
 
 // Stores
-import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
 
 // Types
@@ -33,6 +33,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: undefined;
   Exercise: { exerciseId: string };
+  LessonIntro: { lessonId: string };
   MidiSetup: undefined;
   Account: undefined;
 };
@@ -109,7 +110,6 @@ function MainTabs() {
  * Conditionally shows auth, onboarding, or main app screens
  */
 export function AppNavigator() {
-  const hasCompletedOnboarding = useSettingsStore((s) => s.hasCompletedOnboarding);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
 
@@ -129,15 +129,25 @@ export function AppNavigator() {
             <RootStack.Screen name="Auth" component={AuthScreen} />
             <RootStack.Screen name="EmailAuth" component={EmailAuthScreen} />
           </>
-        ) : !hasCompletedOnboarding ? (
-          <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : (
           <>
+            {/* Authenticated users always land on MainTabs.
+                Onboarding only shows once for first-time users, never blocks. */}
             <RootStack.Screen name="MainTabs" component={MainTabs} />
+            <RootStack.Screen
+              name="Onboarding"
+              component={OnboardingScreen}
+              options={{ presentation: 'modal' }}
+            />
             <RootStack.Screen
               name="Exercise"
               component={ExercisePlayer as unknown as React.ComponentType<Record<string, unknown>>}
               options={{ animation: 'fade' }}
+            />
+            <RootStack.Screen
+              name="LessonIntro"
+              component={LessonIntroScreen}
+              options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
               name="MidiSetup"

@@ -1,7 +1,7 @@
 {
-  "name": "keysense-functions",
+  "name": "purrrfect-keys-functions",
   "version": "1.0.0",
-  "description": "KeySense Cloud Functions for Firebase",
+  "description": "Purrrfect Keys Cloud Functions for Firebase",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",

@@ -14,6 +14,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Button } from '../common/Button';
+import { FunFactCard } from '../FunFact/FunFactCard';
+import type { FunFact } from '../../content/funFacts';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.4;
@@ -26,6 +28,7 @@ export interface ExerciseCardProps {
   exerciseTitle: string;
   nextExerciseTitle?: string;
   tip?: string;
+  funFact?: FunFact | null;
   onNext: () => void;
   onRetry: () => void;
   autoDismissMs?: number;
@@ -56,6 +59,7 @@ export function ExerciseCard({
   exerciseTitle,
   nextExerciseTitle,
   tip,
+  funFact,
   onNext,
   onRetry,
   autoDismissMs = 5000,
@@ -151,10 +155,20 @@ export function ExerciseCard({
           </View>
 
           {/* Tip */}
-          {tip && (
+          {tip && !funFact && (
             <View style={styles.tipContainer}>
               <Text style={styles.tipText}>{tip}</Text>
             </View>
+          )}
+
+          {/* Fun fact (shown instead of tip when available) */}
+          {funFact && (
+            <FunFactCard
+              fact={funFact}
+              compact
+              animationDelay={400}
+              testID="exercise-card-fun-fact"
+            />
           )}
 
           {/* Action buttons */}

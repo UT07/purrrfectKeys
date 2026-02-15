@@ -34,6 +34,7 @@ const defaultSettings: SettingsData = {
   darkMode: false,
   showPianoRoll: true,
   showStaffNotation: false,
+  showTutorials: true,
 
   // Notification settings
   reminderTime: '09:00',
@@ -54,6 +55,7 @@ const defaultSettings: SettingsData = {
   // Profile settings
   displayName: 'Piano Student',
   avatarEmoji: '\uD83C\uDFB9', // piano emoji
+  selectedCatId: 'mini-meowww', // default cat character
 };
 
 // Create debounced save function
@@ -136,6 +138,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     debouncedSave(get());
   },
 
+  setShowTutorials: (show: boolean) => {
+    set({ showTutorials: show });
+    debouncedSave(get());
+  },
+
   // Individual notification settings
   setReminderTime: (time: string | null) => {
     set({ reminderTime: time });
@@ -157,10 +164,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     debouncedSave(get());
   },
 
-  // Onboarding settings
+  // Onboarding settings — saves IMMEDIATELY (not debounced) because
+  // this triggers a navigator swap and debounced save can be lost
   setHasCompletedOnboarding: (completed: boolean) => {
     set({ hasCompletedOnboarding: completed });
-    debouncedSave({ ...get(), hasCompletedOnboarding: completed });
+    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), hasCompletedOnboarding: completed });
   },
 
   setExperienceLevel: (level: 'beginner' | 'intermediate' | 'returning') => {
@@ -184,6 +192,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   setAvatarEmoji: (emoji: string) => {
     set({ avatarEmoji: emoji });
     debouncedSave({ ...get(), avatarEmoji: emoji });
+  },
+
+  setSelectedCatId: (id: string) => {
+    set({ selectedCatId: id });
+    debouncedSave({ ...get(), selectedCatId: id });
   },
 
   reset: () => {

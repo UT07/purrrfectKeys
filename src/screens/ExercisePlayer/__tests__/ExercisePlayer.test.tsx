@@ -10,6 +10,14 @@ import type { Exercise } from '../../../core/exercises/types';
 
 // Mock dependencies
 
+jest.mock('../../../services/firebase/syncService', () => ({
+  syncManager: {
+    syncAfterExercise: jest.fn().mockResolvedValue(undefined),
+    startPeriodicSync: jest.fn(),
+    stopPeriodicSync: jest.fn(),
+  },
+}));
+
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn().mockResolvedValue(undefined),
   notificationAsync: jest.fn().mockResolvedValue(undefined),

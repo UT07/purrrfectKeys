@@ -3,7 +3,7 @@
  * Main home screen with daily practice goal, XP/streak display, and quick actions
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -19,6 +19,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { XPBar } from '../components/Progress/XPBar';
 import { StreakDisplay } from '../components/Progress/StreakDisplay';
+import { KeysieAvatar } from '../components/Mascot/KeysieAvatar';
+import { getTipForScore } from '../components/Mascot/mascotTips';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { getLessons, getLessonExercises } from '../content/ContentLoader';
@@ -68,7 +70,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // Connect to Zustand stores for real data
   const { totalXp, level, streakData, dailyGoalData, lessonProgress } = useProgressStore();
-  const { dailyGoalMinutes, displayName } = useSettingsStore();
+  const { dailyGoalMinutes, displayName, hasCompletedOnboarding } = useSettingsStore();
+
+  // First-time user → show Onboarding modal once
+  // App.tsx hydrates settings before rendering, so hasCompletedOnboarding is always
+  // the correct persisted value by the time this effect runs.
+  useEffect(() => {
+    if (!hasCompletedOnboarding) {
+      navigation.navigate('Onboarding');
+    }
+  }, [hasCompletedOnboarding, navigation]);
 
   // Get today's practice data from dailyGoalData
   const today = new Date().toISOString().split('T')[0];
@@ -139,9 +150,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           colors={['#1A1A2E', '#1A1A1A', '#0D0D0D']}
           style={styles.header}
         >
-          <View>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.greetingName}>{displayName}</Text>
+          <View style={styles.headerLeft}>
+            <KeysieAvatar mood="happy" size="small" animated />
+            <View>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <Text style={styles.greetingName}>{displayName}</Text>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.settingsButton}
@@ -305,13 +319,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Motivational tip */}
         <View style={styles.section}>
           <View style={styles.tipContainer}>
-            <MaterialCommunityIcons
-              name="lightbulb-on-outline"
-              size={20}
-              color="#FF9800"
-            />
+            <KeysieAvatar mood="teaching" size="tiny" />
             <Text style={styles.tipText}>
-              Tip: Practice for just 10 minutes a day to see real progress in 2 weeks!
+              {getTipForScore(85).text}
             </Text>
           </View>
         </View>
@@ -337,6 +347,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     paddingBottom: 20,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   greeting: {
     fontSize: 14,

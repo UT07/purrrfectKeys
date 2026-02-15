@@ -43,6 +43,12 @@ import type { AchievementType } from '../../components/transitions/AchievementTo
 import { LessonCompleteScreen } from '../../components/transitions/LessonCompleteScreen';
 import { ExerciseCard } from '../../components/transitions/ExerciseCard';
 import { getTipForScore } from '../../components/Mascot/mascotTips';
+import { shouldShowFunFact, getFactForExerciseType } from '../../content/funFactSelector';
+import type { FunFact } from '../../content/funFacts';
+import { syncManager } from '../../services/firebase/syncService';
+import { useAchievementStore, buildAchievementContext } from '../../stores/achievementStore';
+import { getUnlockedCats } from '../../components/Mascot/catCharacters';
+import { getAchievementById } from '../../core/achievements/achievements';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -179,6 +185,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Quick exercise card (between exercises in a lesson)
   const [showExerciseCard, setShowExerciseCard] = useState(false);
+  const [exerciseCardFunFact, setExerciseCardFunFact] = useState<FunFact | null>(null);
 
   // Achievement toast state
   const [toastData, setToastData] = useState<{ type: AchievementType; value: number | string } | null>(null);
@@ -212,6 +219,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Persist XP and daily goal progress
     const progressStore = useProgressStore.getState();
     progressStore.recordExerciseCompletion(exercise.id, score.overall, score.xpEarned);
+
+    // Sync score to cloud (fire-and-forget, failures retry automatically)
+    syncManager.syncAfterExercise(exercise.id, {
+      overall: score.overall,
+      accuracy: score.breakdown.accuracy,
+      timing: score.breakdown.timing,
+      completeness: score.breakdown.completeness,
+      stars: score.stars,
+      xpEarned: score.xpEarned,
+    }).catch(() => {
+      // Silently caught — SyncManager handles retries internally
+    });
 
     // Record practice time (convert elapsed ms to minutes)
     if (playbackStartTimeRef.current > 0) {
@@ -298,8 +317,34 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const updatedStreak = calculateStreakUpdate(progressStore.streakData);
     progressStore.updateStreakData(updatedStreak);
 
+    // Track achievement stats: perfect scores, high scores, notes played
+    const achievementState = useAchievementStore.getState();
+    if (score.stars === 3) {
+      achievementState.recordPerfectScore();
+    }
+    if (score.overall >= 90) {
+      achievementState.recordHighScore();
+    }
+    // Count played notes from score details (excludes missed notes)
+    const playedNoteCount = score.details.filter((d) => d.played !== null).length;
+    if (playedNoteCount > 0) {
+      achievementState.incrementNotesPlayed(playedNoteCount);
+    }
+
+    // Check for newly unlocked achievements
+    const currentProgressState = useProgressStore.getState();
+    const catsUnlocked = getUnlockedCats(currentProgressState.level).length;
+    const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked);
+    const newAchievements = achievementState.checkAndUnlock(achievementContext);
+
     // Show achievement toast for XP earned
-    if (score.xpEarned > 0) {
+    if (newAchievements.length > 0) {
+      // Show the first new achievement
+      const firstAchievement = getAchievementById(newAchievements[0].id);
+      if (firstAchievement) {
+        setToastData({ type: 'star', value: firstAchievement.title });
+      }
+    } else if (score.xpEarned > 0) {
       // Check if user leveled up
       const currentLevel = useProgressStore.getState().level;
       const previousLevel = progressStore.level; // captured before we called addXp
@@ -318,6 +363,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       : null;
 
     if (score.isPassed && exNextId && !isLessonComplete) {
+      // Show a fun fact 30% of the time to avoid fatigue
+      if (shouldShowFunFact()) {
+        setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
+      } else {
+        setExerciseCardFunFact(null);
+      }
       setShowExerciseCard(true);
     } else {
       setShowCompletion(true);
@@ -412,18 +463,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Derived state
   const countInComplete = currentBeat >= 0;
-
-  /**
-   * Calculate expected notes for keyboard highlighting and auto-scroll focus.
-   * Uses a wide window so the next note(s) to play are always highlighted.
-   */
-  const focusNote = useMemo(() => {
-    // Find the nearest upcoming or current note to center the keyboard on
-    const upcoming = exercise.notes
-      .filter((note) => note.startBeat >= currentBeat - 0.5 && note.startBeat < currentBeat + 2.0)
-      .sort((a, b) => a.startBeat - b.startBeat);
-    return upcoming.length > 0 ? upcoming[0].note : undefined;
-  }, [currentBeat, exercise.notes]);
 
   useEffect(() => {
     const expectedNotesSet = new Set<number>(
@@ -802,9 +841,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             enabled={true}
             hapticEnabled={true}
             showLabels={true}
-            scrollable={true}
-            keyHeight={130}
-            focusNote={focusNote}
+            scrollable={false}
+            keyHeight={100}
             testID="exercise-keyboard"
           />
         </View>
@@ -822,6 +860,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             nextExerciseId ? getExercise(nextExerciseId)?.metadata.title : undefined
           }
           tip={getTipForScore(finalScore.overall).text}
+          funFact={exerciseCardFunFact}
           onNext={() => {
             setShowExerciseCard(false);
             handleNextExercise();
@@ -931,7 +970,7 @@ const styles = StyleSheet.create({
     color: '#FFD740',
   },
   keyboardContainer: {
-    height: 140,
+    height: 110,
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
     overflow: 'hidden',
