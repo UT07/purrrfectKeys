@@ -3,6 +3,8 @@
  * 8 unique music-themed cat characters with backstories, skills, and unlock levels
  */
 
+export type CatVariant = 'default' | 'tuxedo';
+
 export interface CatCharacter {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ export interface CatCharacter {
   personality: string;
   color: string;
   unlockLevel: number;
+  variant?: CatVariant;
 }
 
 export const CAT_CHARACTERS: CatCharacter[] = [
@@ -25,6 +28,7 @@ export const CAT_CHARACTERS: CatCharacter[] = [
     personality: 'Tiny but Mighty',
     color: '#DC143C',
     unlockLevel: 1,
+    variant: 'tuxedo',
   },
   {
     id: 'jazzy',

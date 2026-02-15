@@ -100,6 +100,7 @@ export function CatAvatar({
             size="medium"
             accentColor={cat.color}
             pixelSize={Math.round(dimension * 0.75)}
+            variant={cat.variant}
           />
         </Animated.View>
       </Pressable>

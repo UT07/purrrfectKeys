@@ -3,6 +3,7 @@ import Svg, { G, Circle, Path, Rect, Ellipse, Line } from 'react-native-svg';
 
 import { MASCOT_SIZES } from './types';
 import type { MascotMood, MascotSize } from './types';
+import type { CatVariant } from './catCharacters';
 
 interface KeysieSvgProps {
   mood: MascotMood;
@@ -11,6 +12,8 @@ interface KeysieSvgProps {
   accentColor?: string;
   /** Override pixel size directly (ignores size prop). Used by CatAvatar. */
   pixelSize?: number;
+  /** Body variant — 'tuxedo' renders black body with white chest patch. */
+  variant?: CatVariant;
 }
 
 const BODY_COLOR = '#3A3A3A';
@@ -175,10 +178,12 @@ function renderMouth(mood: MascotMood, darkAccent: string = DARK_RED): ReactElem
   }
 }
 
-export function KeysieSvg({ mood, size, accentColor, pixelSize }: KeysieSvgProps): ReactElement {
+export function KeysieSvg({ mood, size, accentColor, pixelSize, variant }: KeysieSvgProps): ReactElement {
   const px = pixelSize ?? MASCOT_SIZES[size];
   const accent = accentColor ?? CRIMSON;
   const accentDark = accentColor ? darkenColor(accentColor, 0.5) : DARK_RED;
+  const isTuxedo = variant === 'tuxedo';
+  const bodyColor = isTuxedo ? '#1A1A1A' : BODY_COLOR;
 
   return (
     <Svg
@@ -190,7 +195,7 @@ export function KeysieSvg({ mood, size, accentColor, pixelSize }: KeysieSvgProps
       {/* Tail curving up with eighth-note circle */}
       <Path
         d="M 72 70 Q 85 65 88 50 Q 90 40 85 35"
-        stroke={BODY_COLOR}
+        stroke={bodyColor}
         strokeWidth="4"
         fill="none"
         strokeLinecap="round"
@@ -198,17 +203,25 @@ export function KeysieSvg({ mood, size, accentColor, pixelSize }: KeysieSvgProps
       <Circle cx="85" cy="33" r="4" fill={accent} />
 
       {/* Body - rounded */}
-      <Ellipse cx="50" cy="65" rx="22" ry="20" fill={BODY_COLOR} />
+      <Ellipse cx="50" cy="65" rx="22" ry="20" fill={bodyColor} />
+
+      {/* Tuxedo white chest patch */}
+      {isTuxedo && (
+        <Path
+          d="M 42 58 Q 50 52 58 58 L 56 75 Q 50 78 44 75 Z"
+          fill="#F5F5F5"
+        />
+      )}
 
       {/* Head - rounded */}
-      <Circle cx="50" cy="42" r="22" fill={BODY_COLOR} />
+      <Circle cx="50" cy="42" r="22" fill={bodyColor} />
 
       {/* Left ear */}
-      <Path d="M 30 30 L 25 10 L 38 25 Z" fill={BODY_COLOR} />
+      <Path d="M 30 30 L 25 10 L 38 25 Z" fill={bodyColor} />
       <Path d="M 31 27 L 27 14 L 36 24 Z" fill={accent} />
 
       {/* Right ear */}
-      <Path d="M 70 30 L 75 10 L 62 25 Z" fill={BODY_COLOR} />
+      <Path d="M 70 30 L 75 10 L 62 25 Z" fill={bodyColor} />
       <Path d="M 69 27 L 73 14 L 64 24 Z" fill={accent} />
 
       {/* Headphones band */}
