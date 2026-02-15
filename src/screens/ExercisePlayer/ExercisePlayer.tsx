@@ -52,6 +52,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { getUnlockedCats } from '../../components/Mascot/catCharacters';
 import { getAchievementById } from '../../core/achievements/achievements';
 import type { PlaybackSpeed } from '../../stores/types';
+import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -728,6 +729,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     },
     [handleManualNoteOff]
   );
+
+  // Dev-mode: map laptop keyboard keys to MIDI notes for testing
+  const devKeyboardCallback = useCallback(
+    (note: number, velocity: number, isNoteOn: boolean) => {
+      if (isNoteOn) {
+        handleKeyDown({ type: 'noteOn', note, velocity, timestamp: Date.now(), channel: 0 });
+      } else {
+        handleKeyUp(note);
+      }
+    },
+    [handleKeyDown, handleKeyUp]
+  );
+  useDevKeyboardMidi(devKeyboardCallback);
 
   // Determine if there's a next exercise in the lesson
   const lessonId = getLessonIdForExercise(exercise.id);
