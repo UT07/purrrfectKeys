@@ -11,16 +11,17 @@
 |-------|------|--------|----------|
 | Phase 1 | Core Loop | **COMPLETE** | 100% |
 | Phase 2 | Gamification & Polish | **COMPLETE** | 100% |
-| Phase 3 | Firebase Auth + Sync | **~70% COMPLETE** | ~70% |
-| Phase 4 | Adaptive Learning | **SUPERSEDED — see Phase 4+** | — |
-| Phase 4+ | Gamification + Adaptive + UI Overhaul | **PLANNED** | 0% — see `docs/plans/2026-02-16-gamification-adaptive-implementation.md` |
-| Phase 5 | Social & Advanced Gamification | **PLANNED** | 0% |
-| Phase 6 | Music Library | **DESIGNED** | 0% |
-| Phase 7 | App Store Launch | **PLANNED** | 0% |
+| Phase 3 | Firebase Auth + Sync | **COMPLETE** | 100% |
+| Phase 4+ | Adaptive Learning + Gamification UI Overhaul | **COMPLETE** | 100% (22/22 tasks) |
+| — | Avatar Redesign + Rive System | **COMPLETE** | 100% |
+| Next | Gameplay UX Rework | **IN PROGRESS** | Design approved — vertical note flow, bigger keys, AI demo, ghost notes |
+| Phase 5 | Game Feel & Polish | **PLANNED** | 0% — fun facts, transitions, micro-interactions |
+| Phase 6 | Social & Advanced Gamification | **PLANNED** | 0% |
+| Phase 7 | Music Library | **DESIGNED** | 0% |
+| Phase 7.5 | Pre-Launch QA Sprint | **PLANNED** | 0% — AI quality, performance, gamification, content |
+| Phase 8 | App Store Launch | **PLANNED** | 0% |
 
-**Current Codebase Health:** 0 TypeScript errors, 840 tests passing, 31 suites
-
-**Strategy:** Auth first (prerequisite for user data), then deepen the 6-lesson experience with AI-powered adaptive learning, then build social engagement (leagues, friends, achievements) in parallel with Music Library content expansion, then ship.
+**Current Codebase Health:** 0 TypeScript errors, 983 tests passing, 42 suites
 
 ---
 
@@ -31,7 +32,7 @@ Everything needed for a single lesson to be fully playable end-to-end.
 | Feature | Status |
 |---------|--------|
 | Exercise Player (PianoRoll + Keyboard) | Done |
-| Scoring engine (4-dimensional: accuracy, timing, completeness, precision) | Done |
+| Scoring engine (5-dimensional: accuracy, timing, completeness, extra notes, duration) | Done |
 | Nearest-note matching (real-time visual feedback) | Done |
 | XP system with level auto-calculation | Done |
 | Streak tracking & daily goals | Done |
@@ -55,333 +56,202 @@ Everything needed for a single lesson to be fully playable end-to-end.
 - LevelMapScreen (Duolingo-style vertical map, replaces LearnScreen)
 - Concert Hall dark theme across all 20+ screens/components
 - Profile editing (daily goal picker, volume control)
-- MIDI testing documentation (`agent_docs/midi-integration.md`)
+- MIDI testing documentation
 - Keyboard auto-scroll + dark theme
-- Lessons 2-6 E2E validated — all 30 exercises across 6 lessons (MIDI ranges, scoring, unlock chain)
-- Content bug fix: lesson-03-ex-02 had wrong note (G#/Ab3 in C major scale) — corrected
+- Lessons 2-6 E2E validated — all 30 exercises across 6 lessons
+- Content bug fix: lesson-03-ex-02 had wrong note
 - Orphan file cleanup: removed 3 legacy/duplicate files
 - Onboarding persistence fix — `settingsStore` hydrated on startup
-- Audio engine rewrite — round-robin voice pools with `replayAsync()` for reliable polyphony
-- Low-latency audio engine — `react-native-audio-api@0.9.3` installed with JSI-based Web Audio API
-- 4 HIGH-severity bug fixes: MIDI noteOff double-counting, pause/resume reset, stale playedNotes closure, MIDI timestamp normalization
-- 5 MEDIUM-severity bug fixes: streak bypass, exercise progress silent drop, practice time tracking, dead code removal, etc.
-- Mascot ("Keysie") — MascotBubble component with 55 tips/facts, mood-based avatar, integrated into CompletionModal
-- **Keysie SVG avatar** — Full SVG cat character with 5 moods (happy, celebrating, encouraging, teaching, excited), 4 sizes, animated via Reanimated
-- **ScoreRing** — Animated SVG circle score indicator with color-coded thresholds
-- **PressableScale** — Spring-based press feedback component for buttons
-- Transition screens — LessonCompleteScreen (full celebration), ExerciseCard (quick mid-lesson card), AchievementToast (XP/level-up), ConfettiEffect
-- Dev Build created for physical device testing (iPhone 13 Pro)
-- Documentation updates (stabilization-report.md, CLAUDE.md, MEMORY.md)
-- Multi-touch keyboard (single-responder hit-test system)
-- Keyboard auto-scroll following exercise notes
-- Single-note green highlighting (next note only)
-- Mastery test system (test exercises per lesson)
+- Audio engine rewrite — round-robin voice pools with `replayAsync()`
+- Low-latency audio engine — `react-native-audio-api@0.9.3` with JSI
+- 4 HIGH-severity bug fixes, 5 MEDIUM-severity bug fixes
+- Mascot ("Keysie") — MascotBubble + 55 tips, KeysieSvg avatar (5 moods, 4 sizes)
+- ScoreRing, PressableScale, transition screens (LessonComplete, ExerciseCard, AchievementToast, ConfettiEffect)
+- Multi-touch keyboard, auto-scroll, single-note highlighting, mastery tests
 - Cat character system (8 cats, CatAvatar, CatPickerModal)
-- Audio sustain fix (notes play while key held)
-- react-native-screens pinned to 4.4.0
+- Audio sustain fix, react-native-screens pinned to 4.4.0
 
 ---
 
-## Phase 3: Firebase Auth + Sync (~3 days)
+## Phase 3: Firebase Auth + Sync (COMPLETE)
 
-**Why now:** Prerequisite for Adaptive Learning (student profiles), Music Library (user-specific data), and any cloud features. Must happen before Phases 4-5.
-
-> **Note:** Auth screens, session persistence, navigation guards, SyncManager, display name sync all complete. Remaining: wire sync to exercise completion, data migration, integration verification.
-
-### 3A. Firebase Authentication — DONE
-- Email/password + Google Sign-In
-- Anonymous auth for try-before-signup (convert to full account later)
-- Wire to existing Firebase config (`src/services/firebase/`)
-- Auth state persistence (stay logged in across app restarts)
-
-### 3B. Progress Cloud Sync — IN PROGRESS (SyncManager done, wiring remaining)
-- Sync `progressStore` to Firestore on changes
-- Conflict resolution: latest-write-wins with timestamp
-- Offline queue for pending changes (sync when back online)
-- Sync on app launch + periodic background sync
-- Merge strategy: local progress + cloud progress → pick higher scores
-
-### 3C. User Profile — DONE
-- Display name, avatar selection, joined date
-- Public profile with stats (optional)
-- Account deletion (GDPR/App Store requirement)
-- Wire into ProfileScreen
-
-**Key Files:**
-- `src/services/firebase/auth.ts` — new
-- `src/services/firebase/syncService.ts` — new
-- `src/stores/authStore.ts` — new Zustand store
-- `src/screens/ProfileScreen.tsx` — modify
+| Feature | Status |
+|---------|--------|
+| Firebase Auth (Email, Google, Apple, Anonymous) | Done |
+| Auth screens with session persistence | Done |
+| Navigation guards (signed-in vs anonymous) | Done |
+| SyncManager with offline queue | Done |
+| `syncAfterExercise()` wired in ExercisePlayer | Done |
+| `startPeriodicSync()` in App.tsx | Done |
+| `migrateLocalToCloud()` on first sign-in | Done |
+| Display name sync | Done |
+| User profile (AccountScreen) | Done |
 
 ---
 
-## Phase 4: Adaptive Learning System — SUPERSEDED
+## Phase 4+: Adaptive Learning + Gamification UI Overhaul (COMPLETE)
 
-> **This phase has been merged into the Gamification + Adaptive Learning + UI Overhaul sprint.** See `docs/plans/2026-02-16-gamification-adaptive-design.md` for the expanded design covering cat companions, AI exercise generation, split keyboard, Duolingo-style UI polish, and expanded achievements.
+Design: `docs/plans/2026-02-16-gamification-adaptive-design.md`
+Implementation: `docs/plans/2026-02-16-gamification-adaptive-implementation.md`
 
-**Full design:** `docs/plans/2026-02-13-adaptive-learning-design.md`
+22 tasks across 6 phases, all completed. Key deliverables:
 
-Transform KeySense from a linear exercise sequence into a personalized, AI-driven learning experience where every student gets a unique curriculum.
+### Phase A: Foundation Layer
+| Task | Feature | Status |
+|------|---------|--------|
+| 1 | Design tokens (`COLORS`, `GRADIENTS`, `GLOW`, `SPACING`) | Done |
+| 2 | Learner profile store (per-note accuracy, skills, tempo range) | Done |
+| 3 | Cat dialogue system (8 personalities x 11 triggers, ~440 messages) | Done |
+| 4 | Cat mood engine (happy/neutral/sleepy) | Done |
 
-### 4A. Challenge Infrastructure (3-4 days)
-- `ChallengeGenerator.ts` — Gemini generates fresh exercise JSON personalized to student
-- `ChallengeValidator.ts` — Safety layer rejects invalid AI output (MIDI range, scoring config, note count)
-- 3 fallback templates per lesson (18 total) for offline/failure
-- Add `"type": "challenge"` to Exercise type
-- Wire challenge generation into ExercisePlayer
-- Challenge completion tracking in progressStore
+### Phase B: Adaptive Engine
+| Task | Feature | Status |
+|------|---------|--------|
+| 5 | Gemini AI exercise generation service | Done |
+| 6 | Exercise buffer manager (FIFO, auto-refill) | Done |
+| 7 | 15 offline template exercises (5 easy/5 med/5 hard) | Done |
+| 8 | Wire adaptive engine to exercise completion | Done |
 
-### 4B. Student Skill Model (2-3 days)
-- `StudentModel.ts` — Per-skill mastery tracking (22 skills from lesson metadata)
-- `DifficultyTuner.ts` — Adaptive params (tempo, timing tolerance, passing score, hint level)
-- Mastery update rules: diminishing returns, time-based decay, confidence scoring
-- Persist to progressStore + sync to Firestore
+### Phase C: Entry Assessment & AI Flow
+| Task | Feature | Status |
+|------|---------|--------|
+| 9 | Skill assessment screen (5-round onboarding) | Done |
+| 10 | Post-curriculum AI exercise flow | Done |
 
-### 4C. Dynamic Curriculum (3-4 days)
-- `CurriculumEngine.ts` — Goal-based ordering (songs/technique/exploration paths)
-- `LessonFlowController.ts` — Orchestrates exercise → exercise → challenge → exercise sequence
-- Update LevelMapScreen to show challenge nodes
-- Unlock logic: all regular exercises + all challenges passed → next lesson
+### Phase D: UI Overhaul
+| Task | Feature | Status |
+|------|---------|--------|
+| 11 | HomeScreen redesign (gradient header, streak flame, daily challenge, cat companion) | Done |
+| 12 | LevelMap redesign (improved node styling with design tokens) | Done |
+| 13 | CompletionModal celebration (XP popup, confetti enhancements) | Done |
+| 14 | ProfileScreen redesign (level ring, stat cards, achievement showcase) | Done |
+| 15 | DailyChallengeCard (shimmer border, 2x XP, countdown) | Done |
+| 16 | StreakFlame + XpPopup animations | Done |
+| 17 | OnboardingScreen polish (animated progress bar, walking cat) | Done |
 
-**Key decisions (from brainstorming):**
-- Play-based challenges (not text quizzes)
-- Gemini generates full exercise JSON
-- Challenges sprinkled every 2 exercises
-- Full personalization: adaptive difficulty + goal paths + AI ordering
+### Phase E: Keyboard & Two-Handed Play
+| Task | Feature | Status |
+|------|---------|--------|
+| 18 | SplitKeyboard component | Done |
+| 19 | Wire SplitKeyboard to ExercisePlayer | Done |
 
----
-
-## Phase 5: Social & Advanced Gamification (~10-15 days)
-
-**Runs in parallel with Phase 6 (Music Library).** Both phases can start after Adaptive Learning is complete since they're independent.
-
-### 5A. Community & Social (5-7 days)
-- **Friends system:** Add friends via username/link, see their progress
-- **Activity feed:** "Alex just completed Lesson 4!" — social proof and motivation
-- **Challenges between friends:** "Beat my score on Fur Elise" — push notifications
-- **Share achievements:** Export achievement cards to social media (Instagram Stories, etc.)
-- **Firestore schema:** `users/{uid}/friends`, `activityFeed` collection with fan-out
-
-### 5B. Leagues & Leaderboards (3-4 days)
-- **Weekly leagues:** Bronze → Silver → Gold → Diamond (Duolingo-style promotion/demotion)
-- **League placement:** Based on weekly XP earned
-- **Leaderboard UI:** Ranked list with avatar, XP, streak
-- **Promotion/demotion:** Top 10 promote, bottom 5 demote
-- **Cloud Functions:** Weekly league reset, rank calculation
-- **Firestore schema:** `leagues/{leagueId}/members`, sorted by weeklyXp
-
-### 5C. Awards & Achievements System (2-3 days)
-- **Achievement badges:** 30+ unlockable badges (First Note, 7-Day Streak, Perfect Score, etc.)
-- **Badge categories:** Milestone, Skill, Social, Challenge, Hidden
-- **Achievement gallery:** Dedicated screen showing all badges (earned = color, locked = grey)
-- **Push notifications:** Celebrate rare achievements
-- **Firestore schema:** `users/{uid}/achievements` with timestamps
-
-### 5D. Gifts & Rewards (1-2 days)
-- **Daily login rewards:** Escalating XP bonuses for consecutive days
-- **Streak rewards:** Special badges/bonuses at 7, 30, 100, 365 day streaks
-- **Streak freeze:** Spend XP to protect streak (max 2 freezes banked)
-- **Gift system:** Send encouragement/virtual gifts to friends
-- **Premium path (future):** Cosmetic rewards, custom Keysie outfits
-
-**Key dependencies:** Requires Phase 3 (Auth) for user identity. Can run in parallel with Music Library.
+### Phase F: Achievement Expansion
+| Task | Feature | Status |
+|------|---------|--------|
+| 20 | 32 achievements across 13 condition types | Done |
+| 21 | Cat quest service (daily rotating quests, per-cat templates) | Done |
+| 22 | Final integration & verification (0 TS errors, 983 tests) | Done |
 
 ---
 
-## Phase 6: Music Library (~25 days)
+## Avatar Redesign + Rive System (COMPLETE)
 
-> Hybrid MIDI Pipeline + Community approach, layered song format, all genres, all free at launch, 100+ songs, full gamification.
+| Feature | Status |
+|---------|--------|
+| 8 unique cat visual identities (body colors, patterns, eye colors) | Done |
+| KeysieSvg rewritten with `visuals` prop + 5 pattern renderers | Done |
+| CatAvatar animations (floating idle, bounce entry, glow aura) | Done |
+| CatSwitchScreen Subway Surfers-style gallery | Done |
+| RiveCatAvatar wrapper (Rive-first, SVG fallback) | Done |
+| ExerciseBuddy (mini reactive companion during gameplay) | Done |
+| Cat avatar integrated across 9 screens | Done |
+| `rive-react-native` v9.8.0 installed | Done |
+| Actual .riv animation files (needs Rive editor) | Pending |
 
-### 6A. Data Model & Infrastructure (5 days)
+---
 
-**Song Format:** Extended Exercise JSON with layers
-```
-Song
-├── Metadata (title, artist, genre, difficulty, duration, album art)
-├── Layers
-│   ├── melody (right hand only) — Exercise JSON
-│   ├── leftHand (left hand only) — Exercise JSON
-│   └── fullArrangement (both hands) — Exercise JSON
-├── Community fields (plays, ratings, arrangements)
-└── Mastery tracking (per-layer star ratings)
-```
+## Next Up: Gameplay UX Rework
 
-**Storage Plan:**
-- Firestore: song metadata + user progress
-- Firebase Storage: exercise JSON + album art
-- Local cache: downloaded songs for offline play
+User tested on iPhone 13 Pro and identified critical UX issues with the exercise gameplay.
 
-**Key Tasks:**
-- Define `Song` TypeScript interface extending `Exercise`
-- Create `SongLoader` service (download + cache + offline)
-- Add `songProgress` to `progressStore` (per-layer mastery)
-- Create Firestore schema for songs collection
+### Changes Planned
+| Change | Rationale |
+|--------|-----------|
+| Notes flow **top-to-bottom** (not left-to-right) | Industry standard (Synthesia, Simply Piano, Piano Tiles), natural gravity feel |
+| Piano keyboard at **bottom**, zoomed to 1-2 relevant octaves | Bigger, tappable keys instead of full 88-key range |
+| **Smart octave selection** per exercise | Auto-detect needed range, only render those keys |
+| Two-hand play: combined range at bottom with left/right zone divider | Maintains real-piano spatial mapping |
 
-### 6B. MIDI Pipeline — Bootstrap 100+ Songs (10 days)
+### Why NOT left/right edge keys (discussed & rejected)
+- Breaks piano spatial mapping (keys run left-to-right on real pianos)
+- Black keys have no natural position on vertical edge strips
+- Two-hand split inverts muscle memory (thumbs wrong direction)
 
-**Source:** Public domain MIDI files (Mutopia, IMSLP, Musescore community)
+---
 
-**Pipeline:**
-1. Parse MIDI files → extract melody + left hand tracks
-2. Quantize to beat grid, normalize tempo
-3. Convert to Exercise JSON format (note, startBeat, durationBeats)
-4. Auto-generate difficulty ratings based on note density/range/rhythm complexity
-5. Create 3 layers per song: melody-only → left-hand → full arrangement
-6. Quality review (reject poorly quantized or overly complex arrangements)
+## Phase 5: Game Feel & Polish (PLANNED)
 
-**Genre Distribution (100 songs):**
-| Genre | Count | Examples |
-|-------|-------|---------|
-| Classical | 25 | Fur Elise, Moonlight Sonata, Canon in D |
-| Pop/Rock | 25 | Let It Be, Imagine, Bohemian Rhapsody |
-| Film/TV | 15 | Star Wars, Harry Potter, Game of Thrones |
-| Jazz Standards | 10 | Fly Me to the Moon, Autumn Leaves |
-| Folk/Traditional | 10 | Greensleeves, Amazing Grace |
-| Video Games | 10 | Mario, Zelda, Tetris |
-| Holiday | 5 | Jingle Bells, Silent Night |
+Separate phase, not blocking priority features. Can run in parallel with or after the gameplay UX rework.
 
-### 6C. Music Library UI (5 days)
+| Area | What | Inspiration |
+|------|------|-------------|
+| Pre-Level Screen | Fun fact + animated mascot + countdown before each exercise | Duolingo lesson intros |
+| Avatars | Actual Rive .riv animation files for all 8 cats | Subway Surfers characters |
+| Progression Feel | Animated XP bar, level-up celebrations, streak animations | Duolingo XP system |
+| Transitions | Screen transitions with personality (slide/bounce/fade) | Duolingo's smooth flow |
+| Micro-interactions | Button press animations, haptic patterns, sound effects | Subway Surfers UI |
 
-**Browse Screen (new tab or section):**
-- Genre carousel (horizontal scroll)
-- Song cards with album art, difficulty badge, play count
-- Search with filters (genre, difficulty, duration)
-- "New This Week" / "Trending" / "Staff Picks" sections
+---
 
-**Song Detail Screen:**
-- Album art hero
-- Layer selector (Melody / Left Hand / Full Arrangement)
-- Mastery progress per layer (star display)
-- Play button → ExercisePlayer with selected layer
-- Community stats (plays, average score)
+## Phase 6: Social & Advanced Gamification (PLANNED)
 
-### 6D. Music Gamification Layer (5 days)
+### 6A. Community & Social
+- Friends system, activity feed, friend challenges, share achievements
 
-**Mastery Tiers per Song:**
-| Tier | Requirement |
+### 6B. Leagues & Leaderboards
+- Weekly leagues (Bronze → Diamond), promotion/demotion, ranked list
+
+### 6C. Awards & Achievements System
+- 30+ unlockable badges, badge gallery, push notifications
+
+### 6D. Gifts & Rewards
+- Daily login rewards, streak rewards, streak freeze, gift system
+
+---
+
+## Phase 7: Music Library (DESIGNED)
+
+### 7A. Data Model & Infrastructure
+- Song format extending Exercise JSON with layers (melody, leftHand, fullArrangement)
+
+### 7B. MIDI Pipeline — 100+ Songs
+- Public domain MIDI → Exercise JSON pipeline (Classical, Pop, Film, Jazz, Folk, Games, Holiday)
+
+### 7C. Music Library UI
+- Browse screen with genre carousel, song cards, search/filters
+
+### 7D. Music Gamification
+- Mastery tiers per song (Bronze→Platinum), weekly challenges, collections
+
+---
+
+## Phase 7.5: Pre-Launch QA Sprint (PLANNED)
+
+Comprehensive testing before App Store submission. Covers all aspects of the app.
+
+| Area | Tests | Pass Criteria |
+|------|-------|---------------|
+| AI Coach Quality | 20 exercises scored, review feedback quality | 80%+ feedback rated "helpful" by tester |
+| AI Exercise Generation | Generate 50 exercises, validate musicality | No broken exercises, difficulty matches profile |
+| Performance | Profile on iPhone 13 Pro + low-end Android | <20ms touch-to-sound, 60fps PianoRoll, <2s screen load |
+| Gamification | Full lesson 1-6 playthrough + mastery tests | Progression feels fair, XP/streaks correct |
+| UI/UX | All screens walkthrough, both orientations | No broken layouts, consistent theme, accessible |
+| Content | Validate all 30+ exercises | No wrong notes, smooth difficulty curve |
+| Offline | Full session without network | Core loop works, sync resumes on reconnect |
+| Edge Cases | Kill mid-exercise, rapid navigation, etc. | No crashes, state recovery |
+| Demo Mode | Test on all 6 lessons | Demo plays correctly, ghost notes work, auto-fade triggers |
+
+---
+
+## Phase 8: App Store Launch (PLANNED)
+
+| Task | Deliverable |
 |------|-------------|
-| Bronze | Complete melody layer (any score) |
-| Silver | 3-star melody + complete left hand |
-| Gold | 3-star both layers + complete full arrangement |
-| Platinum | 3-star all three layers |
-
-**Weekly Challenges:**
-- "Play 5 Classical songs" → bonus XP
-- "Master 3 songs this week" → special badge
-- Challenge rotation via Firebase Remote Config
-
-**Collections:**
-- "80s Pop Hits" — complete 5/10 songs to earn collection badge
-- "Movie Magic" — film theme collection
-
-### 6E. Community Arrangements (Post-Launch)
-- Web-based MIDI editor for creating song arrangements
-- Submit for review → approved arrangements appear in library
-- Creator attribution + play count stats
-
----
-
-## Phase 7: App Store Launch (~5-7 days)
-
-### 7A. Development Build Finalization (1 day)
-- EAS Build configuration for production
-- Enable native MIDI module (CoreMIDI on iOS)
-- Verify react-native-audio-api works on production build
-- Configure code signing (iOS + Android)
-
-### 7B. Performance Optimization (1-2 days)
-- Profile and fix any jank (React DevTools Profiler)
-- Audio latency testing on physical devices
-- Reduce bundle size (tree-shaking, asset optimization)
-- Splash screen polish
-
-### 7C. App Store Assets (1 day)
-- App icon (1024x1024) and screenshots (6.5" + 5.5" iPhone, iPad)
-- App Store description and keywords
-- Privacy policy and terms of service
-- App Review guidelines compliance check
-
-### 7D. Beta Testing (1-2 days)
-- TestFlight (iOS) + Internal Testing (Android)
-- Gather feedback from 5-10 beta testers
-- Fix critical issues before public launch
-
-### 7E. Launch (1 day)
-- Submit to App Store and Play Store
-- Monitor crash reports (Firebase Crashlytics)
-- PostHog analytics for user behavior
-- First-week bug fix sprint
-
----
-
-## Execution Timeline
-
-```
-NOW ──────────────────────────────────────────────────────────→ LAUNCH
-
-Phase 2: Gamification & Polish ......... [██████████] COMPLETE
-
-Phase 3: Firebase Auth + Sync (~70%)
-├─ Authentication ...................... [██████████] DONE
-├─ Progress cloud sync ................. [█████░░░░░] IN PROGRESS
-└─ User profile ........................ [██████████] DONE
-
-Phase 4: Adaptive Learning (9-11 days)
-├─ Challenge infrastructure ............ [██████████] HIGH
-├─ Student skill model ................. [████████░░] HIGH
-└─ Dynamic curriculum .................. [████████░░] HIGH
-
-┌── PARALLEL TRACKS (after Phase 4) ──────────────────────────┐
-│                                                              │
-│  Phase 5: Social & Gamification (10-15 days)                │
-│  ├─ Community & social .............. [████████░░] HIGH     │
-│  ├─ Leagues & leaderboards .......... [████████░░] HIGH     │
-│  ├─ Awards & achievements ........... [████░░░░░░] MEDIUM   │
-│  └─ Gifts & rewards ................. [████░░░░░░] MEDIUM   │
-│                                                              │
-│  Phase 6: Music Library (25 days)                           │
-│  ├─ Data model + infra .............. [██████████] HIGH     │
-│  ├─ MIDI pipeline (100 songs) ....... [██████████] HIGH     │
-│  ├─ Library UI ...................... [████████░░] HIGH     │
-│  ├─ Gamification .................... [████░░░░░░] MEDIUM   │
-│  └─ Community arrangements .......... [░░░░░░░░░░] LOW     │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
-
-Phase 7: App Store Launch (5-7 days)
-├─ Build finalization .................. [██████████] CRITICAL
-├─ Performance optimization ............ [████████░░] HIGH
-├─ App Store assets .................... [████████░░] HIGH
-├─ Beta testing ........................ [██████████] HIGH
-└─ Launch .............................. [██████████] CRITICAL
-```
-
-**Total estimated effort: ~53-60 working days** (Phases 5 & 6 overlap saves ~10 days)
-
-### Launch Milestones
-
-| Milestone | What | Days from now |
-|-----------|------|--------------|
-| Phase 2 Close | All polish done, Keysie integrated | ~0.5 day |
-| Auth Ready | Users can sign in, progress syncs | ~3.5 days |
-| Adaptive MVP | AI challenges + skill model working | ~14 days |
-| Social Features | Leagues, friends, achievements | ~25 days |
-| Content Library | 100+ songs playable | ~39 days |
-| App Store | Live on iOS + Android | ~46 days |
-
-### MVP Launch Option
-
-**Ship after Phase 4** (Adaptive Learning complete): ~14 days
-- 6-lesson learning app with AI-powered adaptive challenges
-- No Music Library or Social features (add post-launch)
-- Compelling enough for App Store submission
-
-### Mid-tier Launch Option
-
-**Ship after Phase 5** (Social + Adaptive): ~25 days
-- 6-lesson app with AI challenges + leagues + friends + achievements
-- No Music Library (add post-launch)
-- Strong social hooks for retention
+| Build finalization | EAS Build, native MIDI, code signing |
+| Performance optimization | Profile, fix jank, reduce bundle size |
+| App Store assets | Icon, screenshots, description, privacy policy |
+| Beta testing | TestFlight + Internal Testing |
+| Launch | Submit to stores, monitor crashes |
 
 ---
 
@@ -390,13 +260,10 @@ Phase 7: App Store Launch (5-7 days)
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Audio engine | react-native-audio-api + ExpoAudioEngine fallback | JSI-based low latency, graceful degradation |
-| Song storage | Firebase Storage (JSON) | Cheaper than Firestore for large exercise data |
-| Song metadata | Firestore | Real-time queries, search, sorting |
-| Local caching | AsyncStorage + file system | Offline-first for downloaded songs |
-| MIDI pipeline | Node.js scripts | Same TS tooling as the app |
 | AI challenges | Gemini 2.0 Flash | Fast, cheap, sufficient for JSON generation |
-| Community arrangements | Web editor (future) | Separate from mobile app complexity |
-| Leaderboards | Firestore + Cloud Functions | Real-time updates, server-side validation |
+| Avatar animation | rive-react-native (legacy) | Rive-first with SVG fallback; new Nitro needs SDK 53+ |
+| State management | Zustand v5 with MMKV persistence | Simple, performant, TypeScript-first |
+| Scoring model | 5-factor weighted (accuracy 35%, timing 30%, duration 15%, completeness 10%, extra notes 10%) | Balanced for piano learning |
 
 ## Monthly Cost Projections
 
@@ -405,5 +272,3 @@ Phase 7: App Store Launch (5-7 days)
 | 100 DAU | ~$5 | ~$6 | ~$11/mo |
 | 1K DAU | ~$25 | ~$30 | ~$55/mo |
 | 10K DAU | ~$150 | ~$150 | ~$300/mo |
-
-All within Firebase free tier for initial launch. Gemini costs assume 80% cache hit rate.
