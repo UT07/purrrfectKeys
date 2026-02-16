@@ -21,7 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { DailyChallengeCard } from '../components/DailyChallengeCard';
-import { KeysieAvatar } from '../components/Mascot/KeysieAvatar';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { MascotBubble } from '../components/Mascot/MascotBubble';
 import { StreakFlame } from '../components/StreakFlame';
 import { getRandomCatMessage } from '../content/catDialogue';
@@ -240,7 +240,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </Svg>
                 {/* Cat avatar in center */}
                 <View style={styles.avatarInRing}>
-                  <KeysieAvatar mood={mascotMood} size="large" animated showParticles={dailyGoalProgress >= 1} />
+                  <CatAvatar
+                    catId={selectedCatId ?? 'mini-meowww'}
+                    size="large"
+                    showGlow={dailyGoalProgress >= 1}
+                  />
                 </View>
               </View>
 

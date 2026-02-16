@@ -18,7 +18,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { KeysieAvatar } from '../components/Mascot/KeysieAvatar';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
+import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -158,7 +159,7 @@ export function AccountScreen(): React.ReactElement {
         </TouchableOpacity>
 
         <View style={styles.anonHero}>
-          <KeysieAvatar mood="encouraging" size="large" animated />
+          <CatAvatar catId={useSettingsStore.getState().selectedCatId ?? 'mini-meowww'} size="large" />
           <Text style={styles.anonTitle}>Create an account to save your progress across devices!</Text>
         </View>
 

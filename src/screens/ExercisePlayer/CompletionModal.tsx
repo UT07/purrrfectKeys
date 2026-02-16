@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { MascotBubble } from '../../components/Mascot/MascotBubble';
+import { CatAvatar } from '../../components/Mascot/CatAvatar';
 import { FunFactCard } from '../../components/FunFact/FunFactCard';
 import { getFactForExerciseType } from '../../content/funFactSelector';
 import type { MascotMood } from '../../components/Mascot/mascotTips';
@@ -220,8 +221,13 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
             { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
           ]}
         >
-          {/* Header */}
+          {/* Cat Avatar + Header */}
           <View style={styles.header}>
+            <CatAvatar
+              catId={selectedCatId ?? 'mini-meowww'}
+              size="medium"
+              showGlow={score.stars >= 2}
+            />
             <Text style={styles.title}>{exercise.metadata.title}</Text>
             <Text style={styles.subtitle}>
               {isTestMode ? 'Mastery Test Complete!' : 'Exercise Complete!'}

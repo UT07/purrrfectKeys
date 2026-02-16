@@ -20,7 +20,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { KeysieAvatar } from '../components/Mascot/KeysieAvatar';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
+import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -135,7 +136,7 @@ export function AuthScreen(): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <KeysieAvatar mood="celebrating" size="large" animated showParticles />
+        <CatAvatar catId={useSettingsStore.getState().selectedCatId ?? 'mini-meowww'} size="large" showGlow />
         <Text style={styles.title}>Let's make music!</Text>
         <Text style={styles.subtitle}>Sign in to save your progress across devices</Text>
       </View>

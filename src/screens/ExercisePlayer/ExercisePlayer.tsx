@@ -53,6 +53,8 @@ import { useAchievementStore, buildAchievementContext } from '../../stores/achie
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useLearnerProfileStore } from '../../stores/learnerProfileStore';
 import { getUnlockedCats } from '../../components/Mascot/catCharacters';
+import { ExerciseBuddy } from '../../components/Mascot/ExerciseBuddy';
+import type { BuddyReaction } from '../../components/Mascot/ExerciseBuddy';
 import { getAchievementById } from '../../core/achievements/achievements';
 import type { PlaybackSpeed } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
@@ -294,6 +296,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const playbackSpeed = useSettingsStore((s) => s.playbackSpeed);
   const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
   const lastMidiDeviceId = useSettingsStore((s) => s.lastMidiDeviceId);
+  const selectedCatId = useSettingsStore((s) => s.selectedCatId);
   const hasAutoSetSpeed = useRef(false);
 
   useEffect(() => {
@@ -689,6 +692,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     timestamp: 0,
   });
   const [comboCount, setComboCount] = useState(0);
+
+  // Buddy reaction — derived from feedback type + combo
+  const buddyReaction: BuddyReaction = useMemo(() => {
+    if (!feedback.type) return 'idle';
+    if (comboCount >= 5) return 'combo';
+    if (feedback.type === 'perfect') return 'perfect';
+    if (feedback.type === 'good') return 'good';
+    if (feedback.type === 'miss') return 'miss';
+    return 'idle';
+  }, [feedback.type, comboCount]);
 
   // References
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1210,6 +1223,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             timeSignature={exercise.settings.timeSignature}
             testID="exercise-piano-roll"
           />
+          {/* Buddy cat companion — floating in top-right corner */}
+          {isPlaying && (
+            <View style={styles.buddyOverlay}>
+              <ExerciseBuddy
+                catId={selectedCatId ?? 'mini-meowww'}
+                reaction={buddyReaction}
+                comboCount={comboCount}
+              />
+            </View>
+          )}
         </View>
 
         {/* Timing feedback overlay between piano roll and keyboard */}
@@ -1376,6 +1399,12 @@ const styles = StyleSheet.create({
   pianoRollContainer: {
     flex: 1,
     margin: 4,
+  },
+  buddyOverlay: {
+    position: 'absolute',
+    top: 4,
+    right: 8,
+    zIndex: 10,
   },
   feedbackOverlay: {
     height: 36,

@@ -19,7 +19,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { KeysieAvatar } from '../components/Mascot/KeysieAvatar';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { MascotBubble } from '../components/Mascot/MascotBubble';
 import { FunFactCard } from '../components/FunFact/FunFactCard';
 import { getFactForLesson } from '../content/funFactSelector';
@@ -230,6 +230,7 @@ export function LessonIntroScreen(): React.ReactElement {
   const lessonProgress = useProgressStore((s) => s.lessonProgress);
   const showTutorials = useSettingsStore((s) => s.showTutorials);
   const setShowTutorials = useSettingsStore((s) => s.setShowTutorials);
+  const selectedCatId = useSettingsStore((s) => s.selectedCatId);
   const [tutorialDismissed, setTutorialDismissed] = useState(false);
 
   const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
@@ -400,7 +401,7 @@ export function LessonIntroScreen(): React.ReactElement {
 
         {/* Keysie mascot */}
         <View style={styles.mascotSection}>
-          <KeysieAvatar mood="teaching" size="large" animated />
+          <CatAvatar catId={selectedCatId ?? 'mini-meowww'} size="large" showGlow />
           <View style={styles.mascotBubbleWrapper}>
             <MascotBubble
               mood="teaching"
