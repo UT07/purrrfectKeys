@@ -49,6 +49,8 @@ export const STORAGE_KEYS = {
   PROGRESS: 'keysense_progress_state',
   SETTINGS: 'keysense_settings_state',
   ACHIEVEMENTS: 'purrrfect_achievements_state',
+  LEARNER_PROFILE: 'keysense_learner_profile',
+  EXERCISE_BUFFER: 'keysense_exercise_buffer',
   MIGRATION_VERSION: 'keysense_migration_version',
 } as const;
 

@@ -23,6 +23,7 @@ import { EmailAuthScreen } from '../screens/EmailAuthScreen';
 import { AccountScreen } from '../screens/AccountScreen';
 import { LessonIntroScreen } from '../screens/LessonIntroScreen';
 import { CatSwitchScreen } from '../screens/CatSwitchScreen';
+import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 
 // Stores
 import { useAuthStore } from '../stores/authStore';
@@ -33,8 +34,9 @@ export type RootStackParamList = {
   EmailAuth: undefined;
   Onboarding: undefined;
   MainTabs: undefined;
-  Exercise: { exerciseId: string; testMode?: boolean };
+  Exercise: { exerciseId: string; testMode?: boolean; aiMode?: boolean };
   LessonIntro: { lessonId: string };
+  SkillAssessment: undefined;
   MidiSetup: undefined;
   Account: undefined;
   CatSwitch: undefined;
@@ -163,6 +165,11 @@ export function AppNavigator() {
               name="Account"
               component={AccountScreen}
               options={{ presentation: 'modal' }}
+            />
+            <RootStack.Screen
+              name="SkillAssessment"
+              component={SkillAssessmentScreen}
+              options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
               name="CatSwitch"

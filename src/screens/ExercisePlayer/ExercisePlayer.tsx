@@ -25,11 +25,13 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
+import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
 import { PianoRoll } from '../../components/PianoRoll/PianoRoll';
 import { useExerciseStore } from '../../stores/exerciseStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useExercisePlayback } from '../../hooks/useExercisePlayback';
 import { getExercise, getNextExerciseId, getLessonIdForExercise, getLesson, isTestExercise, getTestExercise, getNonTestExercises } from '../../content/ContentLoader';
+import { getNextExercise as getNextAIExercise, fillBuffer, getBufferSize, BUFFER_MIN_THRESHOLD } from '../../services/exerciseBufferManager';
 import { recordPracticeSession as calculateStreakUpdate } from '../../core/progression/XpSystem';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import type { Exercise, ExerciseScore, MidiNoteEvent } from '../../core/exercises/types';
@@ -49,10 +51,12 @@ import type { FunFact } from '../../content/funFacts';
 import { syncManager } from '../../services/firebase/syncService';
 import { useAchievementStore, buildAchievementContext } from '../../stores/achievementStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useLearnerProfileStore } from '../../stores/learnerProfileStore';
 import { getUnlockedCats } from '../../components/Mascot/catCharacters';
 import { getAchievementById } from '../../core/achievements/achievements';
 import type { PlaybackSpeed } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
+import { COLORS } from '../../theme/tokens';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -150,6 +154,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Exercise'>>();
   const testMode = route.params?.testMode ?? false;
+  const aiMode = route.params?.aiMode ?? false;
   const mountedRef = useRef(true);
   const skipPortraitResetRef = useRef(false);
   const playbackStartTimeRef = useRef(0);
@@ -157,12 +162,132 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Store integration
   const exerciseStore = useExerciseStore();
 
-  // Load exercise: prop > route param > store > fallback
-  const loadedExercise = route.params?.exerciseId
+  // AI mode: exercise loaded asynchronously from buffer
+  const [aiExercise, setAiExercise] = useState<Exercise | null>(null);
+
+  useEffect(() => {
+    if (!aiMode) return;
+
+    let cancelled = false;
+
+    const loadAIExercise = async () => {
+      const buffered = await getNextAIExercise();
+
+      if (cancelled) return;
+
+      if (buffered) {
+        // Convert AIExercise to Exercise
+        const converted: Exercise = {
+          id: `ai-${Date.now()}`,
+          version: 1,
+          metadata: {
+            title: buffered.metadata?.title ?? 'AI Practice',
+            description: 'Generated exercise targeting your weak areas',
+            difficulty: (buffered.metadata?.difficulty ?? 3) as 1 | 2 | 3 | 4 | 5,
+            estimatedMinutes: 2,
+            skills: buffered.metadata?.skills ?? ['adaptive'],
+            prerequisites: [],
+          },
+          settings: {
+            tempo: buffered.settings.tempo,
+            timeSignature: buffered.settings.timeSignature,
+            keySignature: buffered.settings.keySignature ?? 'C',
+            countIn: 4,
+            metronomeEnabled: true,
+          },
+          notes: buffered.notes.map((n) => ({
+            note: n.note,
+            startBeat: n.startBeat,
+            durationBeats: n.durationBeats,
+            ...(n.hand ? { hand: n.hand as 'left' | 'right' } : {}),
+          })),
+          scoring: {
+            timingToleranceMs: buffered.scoring?.timingToleranceMs ?? 80,
+            timingGracePeriodMs: 200,
+            passingScore: buffered.scoring?.passingScore ?? 60,
+            starThresholds: (buffered.scoring?.starThresholds ?? [70, 85, 95]) as [number, number, number],
+          },
+          hints: {
+            beforeStart: 'AI-generated exercise -- play along with the metronome!',
+            commonMistakes: [],
+            successMessage: 'Great practice!',
+          },
+        };
+        setAiExercise(converted);
+      } else {
+        // Buffer empty — use a simple fallback exercise
+        const profile = useLearnerProfileStore.getState();
+        const difficulty = profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1;
+        const fallbackNotes = [60, 62, 64, 65, 67, 65, 64, 62];
+        const weakMidi = profile.weakNotes.length > 0 ? profile.weakNotes.slice(0, 4) : [];
+        const notePool = weakMidi.length >= 2 ? weakMidi : fallbackNotes;
+        setAiExercise({
+          id: `ai-fallback-${Date.now()}`,
+          version: 1,
+          metadata: {
+            title: 'Quick Practice',
+            description: 'Practice exercise while new content generates',
+            difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
+            estimatedMinutes: 2,
+            skills: ['adaptive'],
+            prerequisites: [],
+          },
+          settings: {
+            tempo: Math.round((profile.tempoRange.min + profile.tempoRange.max) / 2),
+            timeSignature: [4, 4],
+            keySignature: 'C',
+            countIn: 4,
+            metronomeEnabled: true,
+          },
+          notes: notePool.map((note, i) => ({
+            note,
+            startBeat: i,
+            durationBeats: 1,
+            hand: 'right' as const,
+          })),
+          scoring: {
+            timingToleranceMs: 80,
+            timingGracePeriodMs: 200,
+            passingScore: 60,
+            starThresholds: [70, 85, 95] as [number, number, number],
+          },
+          hints: {
+            beforeStart: 'Quick practice while new exercises generate!',
+            commonMistakes: [],
+            successMessage: 'Great practice!',
+          },
+        });
+      }
+
+      // Top up buffer in background if running low
+      const bufferSize = await getBufferSize();
+      if (bufferSize < BUFFER_MIN_THRESHOLD) {
+        const profile = useLearnerProfileStore.getState();
+        fillBuffer({
+          weakNotes: profile.weakNotes,
+          tempoRange: profile.tempoRange,
+          difficulty: profile.totalExercisesCompleted > 20 ? 4 : profile.totalExercisesCompleted > 10 ? 3 : 2,
+          noteCount: 12,
+          skills: profile.skills,
+        }).catch(() => {
+          // Silent — buffer fill is best-effort
+        });
+      }
+    };
+
+    loadAIExercise();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [aiMode]);
+
+  // Load exercise: prop > AI mode > route param > store > fallback
+  const loadedExercise = (!aiMode && route.params?.exerciseId)
     ? getExercise(route.params.exerciseId)
     : null;
   const rawExercise =
-    exerciseOverride || loadedExercise || exerciseStore.currentExercise || FALLBACK_EXERCISE;
+    exerciseOverride || (aiMode ? aiExercise : null) || loadedExercise || exerciseStore.currentExercise || FALLBACK_EXERCISE;
 
   // Speed selector — adjusts exercise tempo for more comfortable playback
   // MIDI keyboard users get 1.0x (real piano, 10 fingers), touch keyboard gets 0.75x
@@ -209,6 +334,27 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const octaves = Math.max(2, Math.ceil((maxNote - start + 3) / 12));
     return { keyboardStartNote: start, keyboardOctaveCount: Math.min(4, octaves) };
   }, [exercise.notes]);
+
+  // Auto-detect split keyboard mode for two-handed exercises
+  const { keyboardMode, splitPoint } = useMemo(() => {
+    // Explicit hands declaration
+    if (exercise.hands === 'both') {
+      return { keyboardMode: 'split' as const, splitPoint: deriveSplitPoint(exercise.notes) };
+    }
+    // Check if notes have both left and right hand annotations
+    const hasLeft = exercise.notes.some(n => n.hand === 'left');
+    const hasRight = exercise.notes.some(n => n.hand === 'right');
+    if (hasLeft && hasRight) {
+      return { keyboardMode: 'split' as const, splitPoint: deriveSplitPoint(exercise.notes) };
+    }
+    // Wide note range (>3 octaves) triggers split
+    const midiNotes = exercise.notes.map(n => n.note);
+    const noteRange = Math.max(...midiNotes) - Math.min(...midiNotes);
+    if (noteRange > 36) {
+      return { keyboardMode: 'split' as const, splitPoint: 60 };
+    }
+    return { keyboardMode: 'normal' as const, splitPoint: 60 };
+  }, [exercise]);
 
   // Track mount lifecycle
   useEffect(() => {
@@ -392,6 +538,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       // Silently caught — SyncManager handles retries internally
     });
 
+    // Feed per-note accuracy into learner profile for adaptive learning
+    const noteResults = score.details
+      .filter((d) => !d.isExtraNote)  // Exclude extra notes (not in exercise)
+      .map((d) => ({
+        midiNote: d.expected.note,
+        accuracy: d.isMissedNote ? 0 : (d.isCorrectPitch ? d.timingScore / 100 : 0),
+      }));
+
+    useLearnerProfileStore.getState().recordExerciseResult({
+      tempo: exercise.settings.tempo,
+      score: score.overall / 100,  // Convert 0-100 to 0.0-1.0
+      noteResults,
+    });
+
     // Update streak using XpSystem's proper streak logic (handles freezes, weekly tracking)
     const updatedStreak = calculateStreakUpdate(progressStore.streakData);
     progressStore.updateStreakData(updatedStreak);
@@ -435,19 +595,29 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     // Decide which transition screen to show:
-    // - Quick ExerciseCard for mid-lesson passes (fast, auto-dismisses)
+    // - Quick ExerciseCard for mid-lesson passes or AI mode (fast, auto-dismisses)
     // - Full CompletionModal for failures, end-of-lesson, mastery test gate, or lesson completion
-    const exNextId = getLessonIdForExercise(exercise.id)
-      ? getNextExerciseId(getLessonIdForExercise(exercise.id)!, exercise.id)
-      : null;
-
-    if (score.isPassed && exNextId && !isLessonComplete && !needsMasteryTest) {
-      // Always show a contextual fun fact between exercises
-      setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
-      setShowExerciseCard(true);
+    if (aiMode) {
+      // AI mode: always show quick card for passes, full modal for failures
+      if (score.isPassed) {
+        setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
+        setShowExerciseCard(true);
+      } else {
+        setShowCompletion(true);
+      }
     } else {
-      // Show full CompletionModal (handles mastery test prompt, lesson complete, retry, etc.)
-      setShowCompletion(true);
+      const exNextId = getLessonIdForExercise(exercise.id)
+        ? getNextExerciseId(getLessonIdForExercise(exercise.id)!, exercise.id)
+        : null;
+
+      if (score.isPassed && exNextId && !isLessonComplete && !needsMasteryTest) {
+        // Always show a contextual fun fact between exercises
+        setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
+        setShowExerciseCard(true);
+      } else {
+        // Show full CompletionModal (handles mastery test prompt, lesson complete, retry, etc.)
+        setShowCompletion(true);
+      }
     }
 
     if (Platform.OS === 'web') {
@@ -543,6 +713,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Track the MIDI note of the next expected note for keyboard auto-scroll
   const [nextExpectedNote, setNextExpectedNote] = useState<number | undefined>(undefined);
+  // Split-mode: per-hand focus notes for independent auto-scroll
+  const [focusNoteLeft, setFocusNoteLeft] = useState<number | undefined>(undefined);
+  const [focusNoteRight, setFocusNoteRight] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     // Find the next unconsumed note(s) at the nearest upcoming beat
@@ -557,6 +730,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (upcoming.length === 0) {
       setExpectedNotes(new Set());
       setNextExpectedNote(undefined);
+      setFocusNoteLeft(undefined);
+      setFocusNoteRight(undefined);
       return;
     }
 
@@ -569,7 +744,31 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // In testMode, suppress green highlighting but still track for auto-scroll
     setExpectedNotes(testMode ? new Set() : new Set(notesAtMinBeat.map((n) => n.note)));
     setNextExpectedNote(notesAtMinBeat[0].note);
-  }, [currentBeat, exercise.notes, testMode]);
+
+    // Split-mode: compute per-hand focus notes
+    if (keyboardMode === 'split') {
+      const leftUpcoming = upcoming.filter(
+        (n) => n.hand === 'left' || (!n.hand && n.note < splitPoint)
+      );
+      const rightUpcoming = upcoming.filter(
+        (n) => n.hand === 'right' || (!n.hand && n.note >= splitPoint)
+      );
+
+      if (leftUpcoming.length > 0) {
+        const minBeatL = Math.min(...leftUpcoming.map((n) => n.startBeat));
+        setFocusNoteLeft(leftUpcoming.find((n) => n.startBeat === minBeatL)?.note);
+      } else {
+        setFocusNoteLeft(undefined);
+      }
+
+      if (rightUpcoming.length > 0) {
+        const minBeatR = Math.min(...rightUpcoming.map((n) => n.startBeat));
+        setFocusNoteRight(rightUpcoming.find((n) => n.startBeat === minBeatR)?.note);
+      } else {
+        setFocusNoteRight(undefined);
+      }
+    }
+  }, [currentBeat, exercise.notes, testMode, keyboardMode, splitPoint]);
 
   // Playback loop is now handled by useExercisePlayback hook
 
@@ -856,6 +1055,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [nextExerciseId, stopPlayback, exerciseStore, navigation]);
 
   /**
+   * Navigate to the next AI-generated exercise (AI mode continuation)
+   */
+  const handleNextAIExercise = useCallback(() => {
+    setShowCompletion(false);
+    setShowExerciseCard(false);
+    stopPlayback();
+    exerciseStore.clearSession();
+    skipPortraitResetRef.current = true;
+    setTimeout(() => {
+      if (mountedRef.current) {
+        (navigation as any).replace('Exercise', { exerciseId: 'ai-mode', aiMode: true });
+      }
+    }, 100);
+  }, [stopPlayback, exerciseStore, navigation]);
+
+  /**
    * Navigate to the mastery test for the current lesson
    */
   const handleStartTest = useCallback(() => {
@@ -1014,28 +1229,46 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           </View>
         )}
 
-        {/* Bottom: Full-width keyboard */}
-        <View style={styles.keyboardContainer}>
-          <Keyboard
-            startNote={keyboardStartNote}
-            octaveCount={keyboardOctaveCount}
-            onNoteOn={handleKeyDown}
-            onNoteOff={handleKeyUp}
-            highlightedNotes={highlightedKeys}
-            expectedNotes={expectedNotes}
-            enabled={true}
-            hapticEnabled={true}
-            showLabels={true}
-            scrollable={true}
-            scrollEnabled={false}
-            focusNote={nextExpectedNote}
-            keyHeight={100}
-            testID="exercise-keyboard"
-          />
+        {/* Bottom: Full-width keyboard (split or normal) */}
+        <View style={keyboardMode === 'split' ? styles.splitKeyboardContainer : styles.keyboardContainer}>
+          {keyboardMode === 'split' ? (
+            <SplitKeyboard
+              notes={exercise.notes}
+              splitPoint={splitPoint}
+              onNoteOn={handleKeyDown}
+              onNoteOff={handleKeyUp}
+              highlightedNotes={highlightedKeys}
+              expectedNotes={expectedNotes}
+              enabled={true}
+              hapticEnabled={true}
+              showLabels={true}
+              keyHeight={55}
+              focusNoteLeft={focusNoteLeft}
+              focusNoteRight={focusNoteRight}
+              testID="exercise-keyboard"
+            />
+          ) : (
+            <Keyboard
+              startNote={keyboardStartNote}
+              octaveCount={keyboardOctaveCount}
+              onNoteOn={handleKeyDown}
+              onNoteOff={handleKeyUp}
+              highlightedNotes={highlightedKeys}
+              expectedNotes={expectedNotes}
+              enabled={true}
+              hapticEnabled={true}
+              showLabels={true}
+              scrollable={true}
+              scrollEnabled={false}
+              focusNote={nextExpectedNote}
+              keyHeight={100}
+              testID="exercise-keyboard"
+            />
+          )}
         </View>
       </View>
 
-      {/* Quick exercise card (between exercises in a lesson) */}
+      {/* Quick exercise card (between exercises in a lesson or AI mode) */}
       {showExerciseCard && finalScore && (
         <ExerciseCard
           score={finalScore.overall}
@@ -1044,13 +1277,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           isPassed={finalScore.isPassed}
           exerciseTitle={exercise.metadata.title}
           nextExerciseTitle={
-            nextExerciseId ? getExercise(nextExerciseId)?.metadata.title : undefined
+            aiMode ? 'Next AI Exercise' : (nextExerciseId ? getExercise(nextExerciseId)?.metadata.title : undefined)
           }
           tip={getTipForScore(finalScore.overall).text}
           funFact={exerciseCardFunFact}
           onNext={() => {
             setShowExerciseCard(false);
-            handleNextExercise();
+            if (aiMode) {
+              handleNextAIExercise();
+            } else {
+              handleNextExercise();
+            }
           }}
           onRetry={() => {
             setShowExerciseCard(false);
@@ -1088,7 +1325,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           exercise={exercise}
           onClose={handleCompletionClose}
           onRetry={handleRetry}
-          onNextExercise={nextExerciseId ? handleNextExercise : undefined}
+          onNextExercise={aiMode ? handleNextAIExercise : (nextExerciseId ? handleNextExercise : undefined)}
           onStartTest={showMasteryTestButton ? handleStartTest : undefined}
           isTestMode={testMode}
           testID="completion-modal"
@@ -1164,17 +1401,23 @@ const styles = StyleSheet.create({
     borderTopColor: '#2A2A2A',
     overflow: 'hidden',
   },
+  splitKeyboardContainer: {
+    height: 130,
+    borderTopWidth: 1,
+    borderTopColor: '#2A2A2A',
+    overflow: 'hidden',
+  },
   speedPill: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: '#252525',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: COLORS.cardBorder,
   },
   speedPillActive: {
     backgroundColor: 'rgba(220, 20, 60, 0.15)',
-    borderColor: '#DC143C',
+    borderColor: COLORS.primary,
   },
   speedPillText: {
     fontSize: 12,
@@ -1182,7 +1425,7 @@ const styles = StyleSheet.create({
     color: '#757575',
   },
   speedPillTextActive: {
-    color: '#DC143C',
+    color: COLORS.primary,
   },
 });
 

@@ -163,6 +163,49 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
 
 /**
  * ============================================================================
+ * LEARNER PROFILE STORE TYPES
+ * ============================================================================
+ */
+
+export interface NoteResult {
+  midiNote: number;
+  accuracy: number; // 0.0-1.0
+}
+
+export interface ExerciseResult {
+  tempo: number;
+  score: number; // 0.0-1.0
+  noteResults: NoteResult[];
+}
+
+export interface Skills {
+  timingAccuracy: number;    // 0.0-1.0
+  pitchAccuracy: number;     // 0.0-1.0
+  sightReadSpeed: number;    // notes per minute (normalized 0-1)
+  chordRecognition: number;  // 0.0-1.0
+}
+
+export interface LearnerProfileState {
+  noteAccuracy: Record<number, number>;  // MIDI note -> rolling avg 0.0-1.0
+  noteAttempts: Record<number, number>;  // MIDI note -> attempt count
+  skills: Skills;
+  tempoRange: { min: number; max: number }; // comfortable BPM range
+  weakNotes: number[];      // MIDI notes below 70% accuracy
+  weakSkills: string[];     // Skills below 60%
+  totalExercisesCompleted: number;
+  lastAssessmentDate: string;
+  assessmentScore: number;
+
+  // Actions
+  updateNoteAccuracy: (midiNote: number, accuracy: number) => void;
+  updateSkill: (skill: keyof Skills, value: number) => void;
+  recalculateWeakAreas: () => void;
+  recordExerciseResult: (result: ExerciseResult) => void;
+  reset: () => void;
+}
+
+/**
+ * ============================================================================
  * DERIVED STATE UTILITIES
  * ============================================================================
  */

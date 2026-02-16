@@ -8,10 +8,12 @@ export { useExerciseStore } from './exerciseStore';
 export { useProgressStore } from './progressStore';
 export { useSettingsStore } from './settingsStore';
 export { useAchievementStore } from './achievementStore';
+export { useLearnerProfileStore } from './learnerProfileStore';
 
 // Store types
 export type { ExerciseSessionState } from './types';
 export type { ProgressStoreState, StreakData, DailyGoalData } from './types';
+export type { NoteResult, ExerciseResult, Skills, LearnerProfileState } from './types';
 export type {
   SettingsStoreState,
   AudioSettings,

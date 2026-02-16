@@ -207,3 +207,13 @@ export function getNonTestExercises(lessonId: string): Exercise[] {
     .map((entry) => EXERCISE_REGISTRY[entry.id])
     .filter(Boolean);
 }
+
+/**
+ * Check if the user has completed all curriculum lessons.
+ * Returns true when every lesson has status 'completed' in the progress store.
+ */
+export function isPostCurriculum(lessonProgress: Record<string, { status: string }>): boolean {
+  return LESSON_ORDER.every(
+    (lessonId) => lessonProgress[lessonId]?.status === 'completed'
+  );
+}

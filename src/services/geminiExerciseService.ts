@@ -1,0 +1,272 @@
+/**
+ * Gemini AI Exercise Generation Service
+ *
+ * Generates piano exercises using Google Gemini 2.0 Flash based on a learner's
+ * profile. Validates AI output for playability, retries once on failure, and
+ * returns null if generation is not possible.
+ */
+
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+export interface GenerationParams {
+  weakNotes: number[];
+  tempoRange: { min: number; max: number };
+  difficulty: number;
+  noteCount: number;
+  skills: {
+    timingAccuracy: number;
+    pitchAccuracy: number;
+    sightReadSpeed: number;
+    chordRecognition: number;
+  };
+}
+
+export interface AIExercise {
+  notes: Array<{
+    note: number;
+    startBeat: number;
+    durationBeats: number;
+    hand?: string;
+  }>;
+  settings: {
+    tempo: number;
+    timeSignature: [number, number];
+    keySignature: string;
+  };
+  metadata?: {
+    title?: string;
+    difficulty?: number;
+    skills?: string[];
+  };
+  scoring?: {
+    passingScore?: number;
+    timingToleranceMs?: number;
+    starThresholds?: number[];
+  };
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const MIDI_MIN = 36;
+const MIDI_MAX = 96;
+const MAX_NOTES = 32;
+const MAX_INTERVAL_FAST_TEMPO = 24; // 2 octaves at > 120 BPM
+const MAX_INTERVAL_ANY_TEMPO = 36; // 3 octaves absolute limit
+const FAST_TEMPO_THRESHOLD = 120;
+const TEMPO_MIN = 30;
+const TEMPO_MAX = 200;
+
+/**
+ * Environment variable name built via concatenation so that Babel's
+ * inline-environment-variables transform (from babel-preset-expo) cannot
+ * statically resolve the key and replace it with a build-time literal.
+ */
+const API_KEY_ENV = ['EXPO', 'PUBLIC', 'GEMINI', 'API', 'KEY'].join('_');
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+export function validateAIExercise(exercise: unknown): exercise is AIExercise {
+  if (exercise == null || typeof exercise !== 'object') {
+    return false;
+  }
+
+  const ex = exercise as Record<string, unknown>;
+
+  // Must have notes array and settings object
+  if (!Array.isArray(ex.notes) || ex.notes.length === 0) {
+    return false;
+  }
+
+  if (ex.notes.length > MAX_NOTES) {
+    return false;
+  }
+
+  if (ex.settings == null || typeof ex.settings !== 'object') {
+    return false;
+  }
+
+  const settings = ex.settings as Record<string, unknown>;
+
+  // Validate tempo
+  if (
+    typeof settings.tempo !== 'number' ||
+    settings.tempo < TEMPO_MIN ||
+    settings.tempo > TEMPO_MAX
+  ) {
+    return false;
+  }
+
+  // Validate timeSignature
+  if (!Array.isArray(settings.timeSignature) || settings.timeSignature.length !== 2) {
+    return false;
+  }
+  const [beats, beatValue] = settings.timeSignature as unknown[];
+  if (typeof beats !== 'number' || typeof beatValue !== 'number' || beats <= 0 || beatValue <= 0) {
+    return false;
+  }
+
+  const tempo = settings.tempo;
+  const notes = ex.notes as Array<Record<string, unknown>>;
+
+  // Validate each note and check intervals
+  for (let i = 0; i < notes.length; i++) {
+    const n = notes[i];
+
+    if (typeof n.note !== 'number' || n.note < MIDI_MIN || n.note > MIDI_MAX) {
+      return false;
+    }
+
+    if (typeof n.startBeat !== 'number' || n.startBeat < 0) {
+      return false;
+    }
+
+    if (typeof n.durationBeats !== 'number' || n.durationBeats <= 0) {
+      return false;
+    }
+
+    // Check interval from previous note
+    if (i > 0) {
+      const prevNote = notes[i - 1].note as number;
+      const interval = Math.abs(n.note as number - prevNote);
+
+      if (interval > MAX_INTERVAL_ANY_TEMPO) {
+        return false;
+      }
+
+      if (tempo > FAST_TEMPO_THRESHOLD && interval > MAX_INTERVAL_FAST_TEMPO) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// ============================================================================
+// Prompt Builder
+// ============================================================================
+
+function calculateTempo(params: GenerationParams): number {
+  const midTempo = (params.tempoRange.min + params.tempoRange.max) / 2;
+  const difficultyScale = 0.6 + (params.difficulty / 5) * 0.4;
+  return Math.round(midTempo * difficultyScale);
+}
+
+function keySignatureForDifficulty(difficulty: number): string {
+  switch (difficulty) {
+    case 1:
+    case 2:
+      return 'C major';
+    case 3:
+      return 'G major';
+    case 4:
+      return 'F major';
+    default:
+      return 'mixed';
+  }
+}
+
+export function buildPrompt(params: GenerationParams): string {
+  const tempo = calculateTempo(params);
+  const keySignature = keySignatureForDifficulty(params.difficulty);
+
+  return `Generate a piano exercise as JSON for a student with this profile:
+- Weak notes (MIDI): ${JSON.stringify(params.weakNotes)} (focus extra repetitions on these)
+- Timing accuracy: ${Math.round(params.skills.timingAccuracy * 100)}%
+- Comfortable tempo: ${params.tempoRange.min}-${params.tempoRange.max} BPM
+- Difficulty: ${params.difficulty}/5
+- Target note count: ${params.noteCount}
+
+Requirements:
+- Tempo: ${tempo} BPM (middle of their range, scaled by difficulty)
+- Time signature: 4/4
+- Key signature: ${keySignature} (for difficulty 1-2), G major (3), F major (4), mixed (5)
+- All MIDI notes between 48-84 (C3 to C6)
+- Notes should flow melodically (mostly stepwise motion, occasional skips)
+- Include at least 2 repetitions of each weak note
+
+Return JSON: { notes: [{note, startBeat, durationBeats, hand}], settings: {tempo, timeSignature, keySignature}, metadata: {title, difficulty, skills}, scoring: {passingScore, timingToleranceMs, starThresholds} }`;
+}
+
+// ============================================================================
+// Exercise Generation
+// ============================================================================
+
+export async function generateExercise(params: GenerationParams): Promise<AIExercise | null> {
+  try {
+    // Dynamic access prevents Babel from inlining the env var at build time
+    const apiKey = process.env[API_KEY_ENV];
+    if (!apiKey) {
+      console.warn('[GeminiExercise] EXPO_PUBLIC_GEMINI_API_KEY is not set');
+      return null;
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.7,
+      },
+    });
+
+    const prompt = buildPrompt(params);
+
+    // First attempt
+    const exercise = await attemptGeneration(model, prompt);
+    if (exercise) {
+      return exercise;
+    }
+
+    // Retry with additional guidance
+    const retryPrompt =
+      prompt +
+      '\n\nPrevious attempt was invalid. Ensure all MIDI notes are 36-96 and intervals are reasonable.';
+    const retryExercise = await attemptGeneration(model, retryPrompt);
+    if (retryExercise) {
+      return retryExercise;
+    }
+
+    console.warn('[GeminiExercise] Both generation attempts failed validation');
+    return null;
+  } catch (error) {
+    console.warn(
+      '[GeminiExercise] Generation failed:',
+      (error as Error)?.message ?? error
+    );
+    return null;
+  }
+}
+
+// ============================================================================
+// Internal Helpers
+// ============================================================================
+
+interface GenerativeModel {
+  generateContent(prompt: string): Promise<{
+    response: { text(): string };
+  }>;
+}
+
+async function attemptGeneration(
+  model: GenerativeModel,
+  prompt: string
+): Promise<AIExercise | null> {
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+  const parsed: unknown = JSON.parse(text);
+
+  if (validateAIExercise(parsed)) {
+    return parsed;
+  }
+
+  return null;
+}

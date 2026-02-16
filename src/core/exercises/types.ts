@@ -69,6 +69,7 @@ export interface Exercise {
   scoring: ExerciseScoringConfig;
   hints: ExerciseHints;
   display?: DisplaySettings;
+  hands?: 'left' | 'right' | 'both';
 }
 
 // Scored note details
