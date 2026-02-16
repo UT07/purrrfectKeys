@@ -20,13 +20,14 @@ import {
   Platform,
   AccessibilityInfo,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
-import * as ScreenOrientation from 'expo-screen-orientation';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
 import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
-import { PianoRoll } from '../../components/PianoRoll/PianoRoll';
+import { VerticalPianoRoll } from '../../components/PianoRoll/VerticalPianoRoll';
+import { computeZoomedRange, computeStickyRange, type KeyboardRange } from '../../components/Keyboard/computeZoomedRange';
 import { useExerciseStore } from '../../stores/exerciseStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useExercisePlayback } from '../../hooks/useExercisePlayback';
@@ -58,6 +59,7 @@ import type { BuddyReaction } from '../../components/Mascot/ExerciseBuddy';
 import { getAchievementById } from '../../core/achievements/achievements';
 import type { PlaybackSpeed } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
+import { DemoPlaybackService } from '../../services/demoPlayback';
 import { COLORS } from '../../theme/tokens';
 
 export interface ExercisePlayerProps {
@@ -158,7 +160,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const testMode = route.params?.testMode ?? false;
   const aiMode = route.params?.aiMode ?? false;
   const mountedRef = useRef(true);
-  const skipPortraitResetRef = useRef(false);
   const playbackStartTimeRef = useRef(0);
 
   // Store integration
@@ -297,6 +298,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
   const lastMidiDeviceId = useSettingsStore((s) => s.lastMidiDeviceId);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
+
+  // Responsive layout — supports both portrait and landscape
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isPortrait = screenHeight > screenWidth;
+  const keyHeight = isPortrait ? 120 : 100;
+  const topBarHeight = isPortrait ? 76 : 40;
+
   const hasAutoSetSpeed = useRef(false);
 
   useEffect(() => {
@@ -326,17 +334,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setPlaybackSpeed(speeds[nextIdx]);
   }, [playbackSpeed, setPlaybackSpeed]);
 
-  // Derive keyboard range from exercise notes — round down to nearest C for clean octave display
-  const { keyboardStartNote, keyboardOctaveCount } = useMemo(() => {
-    const midiNotes = exercise.notes.map(n => n.note);
-    const minNote = Math.min(...midiNotes);
-    const maxNote = Math.max(...midiNotes);
-    // Round down to nearest C (mod 12 == 0) with 2-note margin
-    const start = Math.max(21, Math.floor((minNote - 2) / 12) * 12);
-    // Round up to fill complete octaves
-    const octaves = Math.max(2, Math.ceil((maxNote - start + 3) / 12));
-    return { keyboardStartNote: start, keyboardOctaveCount: Math.min(4, octaves) };
-  }, [exercise.notes]);
+  // Dynamic zoomed range — recomputes as playback advances
+  const [keyboardRange, setKeyboardRange] = useState<KeyboardRange>(() => {
+    const firstNotes = exercise.notes.slice(0, 8).map(n => n.note);
+    return computeZoomedRange(firstNotes);
+  });
 
   // Auto-detect split keyboard mode for two-handed exercises
   const { keyboardMode, splitPoint } = useMemo(() => {
@@ -364,6 +366,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      demoServiceRef.current.stop();
     };
   }, []);
 
@@ -399,6 +402,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const handleExerciseCompletion = useCallback((score: ExerciseScore) => {
     if (!mountedRef.current) return;
     setFinalScore(score);
+
+    // Track consecutive fails for demo prompt
+    if (score.isPassed) {
+      useExerciseStore.getState().resetFailCount();
+      if (ghostNotesEnabled) {
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+      }
+    } else {
+      useExerciseStore.getState().incrementFailCount();
+    }
+
     onExerciseComplete?.(score);
 
     // Track whether this exercise completes the entire lesson
@@ -630,34 +644,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
   }, [onExerciseComplete, exercise.id]);
 
-  // Lock to landscape orientation on mount, restore portrait on unmount
-  useEffect(() => {
-    // Delay the lock slightly to let the navigation transition complete,
-    // otherwise the view controller may not be ready to accept orientation changes
-    const timer = setTimeout(() => {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_LEFT)
-        .catch((err) => {
-          console.warn('[ExercisePlayer] LANDSCAPE_LEFT lock failed, trying LANDSCAPE:', err);
-          // Fallback: try either landscape direction
-          return ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-        })
-        .catch((err) => {
-          console.warn('[ExercisePlayer] All landscape locks failed:', err);
-        });
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      // Skip portrait reset when navigating to next exercise (stays landscape)
-      if (skipPortraitResetRef.current) return;
-      // Delay orientation reset so it doesn't race with navigation transition
-      setTimeout(() => {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-          .catch((err) => console.warn('[ExercisePlayer] Portrait restore failed:', err));
-      }, 300);
-    };
-  }, []);
-
   // Exercise playback coordination (MIDI + Audio + Scoring)
   const {
     isPlaying,
@@ -684,6 +670,37 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [highlightedKeys, setHighlightedKeys] = useState<Set<number>>(new Set());
   const [expectedNotes, setExpectedNotes] = useState<Set<number>>(new Set());
+  // Initialize with screen-based estimates so VerticalPianoRoll renders immediately;
+  // onLayout will refine these to exact container measurements.
+  const [pianoRollDims, setPianoRollDims] = useState({
+    width: screenWidth,
+    height: Math.max(200, screenHeight - keyHeight - topBarHeight),
+  });
+  const ghostNotesEnabled = useExerciseStore(s => s.ghostNotesEnabled);
+
+  // Demo mode state
+  const demoServiceRef = useRef(new DemoPlaybackService());
+  const [isDemoPlaying, setIsDemoPlaying] = useState(false);
+  const [demoActiveNotes, setDemoActiveNotes] = useState<Set<number>>(new Set());
+  const demoWatched = useExerciseStore(s => s.demoWatched);
+  const failCount = useExerciseStore(s => s.failCount);
+
+  // Update keyboard range based on active window (every beat change)
+  useEffect(() => {
+    const windowNotes = exercise.notes
+      .filter(n => n.startBeat >= currentBeat - 2 && n.startBeat <= currentBeat + 8)
+      .map(n => n.note);
+
+    if (windowNotes.length > 0) {
+      const newRange = computeStickyRange(windowNotes, keyboardRange);
+      if (newRange.startNote !== keyboardRange.startNote) {
+        setKeyboardRange(newRange);
+      }
+    }
+  }, [Math.floor(currentBeat)]); // Only recompute on whole-beat changes
+
+  const keyboardStartNote = keyboardRange.startNote;
+  const keyboardOctaveCount = keyboardRange.octaveCount;
 
   // Feedback state
   const [feedback, setFeedback] = useState<FeedbackState>({
@@ -835,6 +852,49 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [resetPlayback]);
 
   /**
+   * Start demo playback — pauses exercise, plays the exercise at 60% speed
+   */
+  const startDemo = useCallback(() => {
+    // Pause current exercise if playing
+    if (isPlaying) {
+      pausePlayback();
+      setIsPaused(true);
+    }
+
+    setIsDemoPlaying(true);
+    useExerciseStore.getState().setDemoWatched(true);
+
+    demoServiceRef.current.start(
+      exercise,
+      {
+        playNote: (note: number, velocity: number) => {
+          handleManualNoteOn(note, velocity);
+          return note as any; // NoteHandle bridge
+        },
+        releaseNote: (handle: any) => {
+          handleManualNoteOff(handle as number);
+        },
+      },
+      0.6, // 60% speed
+      (beat) => {
+        // Drive the VerticalPianoRoll during demo
+        useExerciseStore.getState().setCurrentBeat(beat);
+      },
+      (notes) => setDemoActiveNotes(notes),
+    );
+  }, [exercise, isPlaying, pausePlayback, handleManualNoteOn, handleManualNoteOff]);
+
+  /**
+   * Stop demo playback and reset to ready state
+   */
+  const stopDemo = useCallback(() => {
+    demoServiceRef.current.stop();
+    setIsDemoPlaying(false);
+    setDemoActiveNotes(new Set());
+    resetPlayback();
+  }, [resetPlayback]);
+
+  /**
    * Exit exercise without completing
    * Uses setTimeout to defer navigation, letting state updates settle
    */
@@ -862,6 +922,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    */
   const handleKeyDown = useCallback(
     (midiNote: MidiNoteEvent) => {
+      if (isDemoPlaying) return; // No user input during demo
+
       // Always play the note for audio feedback (playNote handles scoring guard internally)
       handleManualNoteOn(midiNote.note, midiNote.velocity / 127);
 
@@ -954,6 +1016,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }, 500);
     },
     [
+      isDemoPlaying,
       isPlaying,
       isPaused,
       countInComplete,
@@ -1057,8 +1120,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setShowCompletion(false);
     stopPlayback();
     exerciseStore.clearSession();
-    // Prevent the unmount cleanup from resetting to portrait
-    skipPortraitResetRef.current = true;
     // Brief delay so modal unmount and state cleanup settle
     setTimeout(() => {
       if (mountedRef.current) {
@@ -1075,7 +1136,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setShowExerciseCard(false);
     stopPlayback();
     exerciseStore.clearSession();
-    skipPortraitResetRef.current = true;
     setTimeout(() => {
       if (mountedRef.current) {
         (navigation as any).replace('Exercise', { exerciseId: 'ai-mode', aiMode: true });
@@ -1095,7 +1155,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setShowCompletion(false);
     stopPlayback();
     exerciseStore.clearSession();
-    skipPortraitResetRef.current = true;
     setTimeout(() => {
       if (mountedRef.current) {
         (navigation as any).replace('Exercise', { exerciseId: testEx.id, testMode: true });
@@ -1157,6 +1216,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
+      {/* Demo mode banner */}
+      {isDemoPlaying && (
+        <View style={styles.demoBanner} testID="demo-banner">
+          <Text style={styles.demoBannerText}>Watching Demo — 60% speed</Text>
+          <TouchableOpacity onPress={stopDemo} style={styles.tryNowButton}>
+            <Text style={styles.tryNowButtonText}>Try Now</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Landscape layout: vertical stack — top bar, piano roll, keyboard */}
       <View style={styles.mainColumn}>
         {/* Top bar: score + hint + controls in a single compact row */}
@@ -1202,6 +1271,35 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
           <View style={styles.topBarDivider} />
 
+          {/* Demo button */}
+          <TouchableOpacity
+            onPress={isDemoPlaying ? stopDemo : startDemo}
+            style={[styles.speedPill, isDemoPlaying && styles.speedPillActive]}
+            testID="demo-button"
+          >
+            <Text style={[styles.speedPillText, isDemoPlaying && styles.speedPillTextActive]}>
+              {isDemoPlaying ? 'Stop' : 'Demo'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Ghost notes toggle — visible after demo watched */}
+          {demoWatched && (
+            <>
+              <View style={styles.topBarDivider} />
+              <TouchableOpacity
+                onPress={() => useExerciseStore.getState().setGhostNotesEnabled(!ghostNotesEnabled)}
+                style={[styles.speedPill, ghostNotesEnabled && styles.speedPillActive]}
+                testID="ghost-toggle"
+              >
+                <Text style={[styles.speedPillText, ghostNotesEnabled && styles.speedPillTextActive]}>
+                  Ghost
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <View style={styles.topBarDivider} />
+
           <ExerciseControls
             isPlaying={isPlaying}
             isPaused={isPaused}
@@ -1214,16 +1312,29 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           />
         </View>
 
-        {/* Center: Piano roll fills remaining vertical space */}
-        <View style={styles.pianoRollContainer}>
-          <PianoRoll
-            notes={exercise.notes}
-            currentBeat={currentBeat}
-            tempo={exercise.settings.tempo}
-            timeSignature={exercise.settings.timeSignature}
-            testID="exercise-piano-roll"
-          />
-          {/* Buddy cat companion — floating in top-right corner */}
+        {/* Center: Vertical piano roll fills remaining vertical space */}
+        <View style={styles.pianoRollContainer} onLayout={(e) => {
+          setPianoRollDims({
+            width: e.nativeEvent.layout.width,
+            height: e.nativeEvent.layout.height,
+          });
+        }}>
+          {pianoRollDims.width > 0 && (
+            <VerticalPianoRoll
+              notes={exercise.notes}
+              currentBeat={currentBeat}
+              tempo={exercise.settings.tempo}
+              timeSignature={exercise.settings.timeSignature}
+              containerWidth={pianoRollDims.width}
+              containerHeight={pianoRollDims.height}
+              midiMin={keyboardStartNote}
+              midiMax={keyboardStartNote + keyboardOctaveCount * 12}
+              ghostNotes={ghostNotesEnabled ? exercise.notes : undefined}
+              ghostBeatOffset={2}
+              testID="exercise-piano-roll"
+            />
+          )}
+          {/* Buddy cat companion — floating in corner */}
           {isPlaying && (
             <View style={styles.buddyOverlay}>
               <ExerciseBuddy
@@ -1253,19 +1364,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         )}
 
         {/* Bottom: Full-width keyboard (split or normal) */}
-        <View style={keyboardMode === 'split' ? styles.splitKeyboardContainer : styles.keyboardContainer}>
+        <View style={[styles.keyboardContainer, { height: keyHeight }]}>
           {keyboardMode === 'split' ? (
             <SplitKeyboard
               notes={exercise.notes}
               splitPoint={splitPoint}
               onNoteOn={handleKeyDown}
               onNoteOff={handleKeyUp}
-              highlightedNotes={highlightedKeys}
+              highlightedNotes={isDemoPlaying ? demoActiveNotes : highlightedKeys}
               expectedNotes={expectedNotes}
               enabled={true}
               hapticEnabled={true}
               showLabels={true}
-              keyHeight={55}
+              keyHeight={Math.round(keyHeight * 0.6)}
               focusNoteLeft={focusNoteLeft}
               focusNoteRight={focusNoteRight}
               testID="exercise-keyboard"
@@ -1276,7 +1387,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               octaveCount={keyboardOctaveCount}
               onNoteOn={handleKeyDown}
               onNoteOff={handleKeyUp}
-              highlightedNotes={highlightedKeys}
+              highlightedNotes={isDemoPlaying ? demoActiveNotes : highlightedKeys}
               expectedNotes={expectedNotes}
               enabled={true}
               hapticEnabled={true}
@@ -1284,7 +1395,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               scrollable={true}
               scrollEnabled={false}
               focusNote={nextExpectedNote}
-              keyHeight={100}
+              keyHeight={keyHeight}
               testID="exercise-keyboard"
             />
           )}
@@ -1350,6 +1461,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           onRetry={handleRetry}
           onNextExercise={aiMode ? handleNextAIExercise : (nextExerciseId ? handleNextExercise : undefined)}
           onStartTest={showMasteryTestButton ? handleStartTest : undefined}
+          onStartDemo={failCount >= 3 && !demoWatched ? () => {
+            setShowCompletion(false);
+            setFinalScore(null);
+            startDemo();
+          } : undefined}
           isTestMode={testMode}
           testID="completion-modal"
         />
@@ -1425,13 +1541,6 @@ const styles = StyleSheet.create({
     color: '#FFD740',
   },
   keyboardContainer: {
-    height: 110,
-    borderTopWidth: 1,
-    borderTopColor: '#2A2A2A',
-    overflow: 'hidden',
-  },
-  splitKeyboardContainer: {
-    height: 130,
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
     overflow: 'hidden',
@@ -1455,6 +1564,33 @@ const styles = StyleSheet.create({
   },
   speedPillTextActive: {
     color: COLORS.primary,
+  },
+  demoBanner: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(220, 20, 60, 0.3)',
+    gap: 12,
+  },
+  demoBannerText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tryNowButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(220, 20, 60, 0.3)',
+  },
+  tryNowButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 

@@ -2,7 +2,8 @@ export type DialogueTrigger =
   | 'exercise_start' | 'exercise_mid_great' | 'exercise_mid_miss'
   | 'exercise_complete_pass' | 'exercise_complete_fail'
   | 'level_up' | 'daily_login' | 'idle'
-  | 'ai_exercise_intro' | 'achievement_unlock' | 'streak_milestone';
+  | 'ai_exercise_intro' | 'achievement_unlock' | 'streak_milestone'
+  | 'demoOffer' | 'demoComplete' | 'ghostNotesFarewell';
 
 export type DialogueCondition = 'score_high' | 'score_low' | 'streak' | 'first_try' | 'retry';
 
@@ -11,6 +12,7 @@ export const DIALOGUE_TRIGGERS: DialogueTrigger[] = [
   'exercise_complete_pass', 'exercise_complete_fail',
   'level_up', 'daily_login', 'idle',
   'ai_exercise_intro', 'achievement_unlock', 'streak_milestone',
+  'demoOffer', 'demoComplete', 'ghostNotesFarewell',
 ];
 
 type CatMessages = Record<DialogueTrigger, string[]>;
@@ -93,6 +95,27 @@ const MINI_MEOWWW: CatMessages = {
     'This streak is legendary!! Keep it alive!!',
     'I\'m SO proud of your consistency!!',
   ],
+  demoOffer: [
+    'Ooh ooh!! Let me show you how it goes!!',
+    'Want to watch me play it first?? It\'ll be SO fun!!',
+    'I can help!! Let me demo it for you!!',
+    'Hey hey!! Watch this and then you try!!',
+    'Ooh let me show you a trick!! Look look!!',
+  ],
+  demoComplete: [
+    'See?! See?! Now YOU try!! You\'re gonna nail it!!',
+    'Okay okay YOUR TURN!! I believe in you SO much!!',
+    'Now you go!! I just KNOW you\'ll be amazing!!',
+    'Your turn your turn!! Show me what you got!!',
+    'Eeeek!! Now do it even BETTER than me!!',
+  ],
+  ghostNotesFarewell: [
+    'OH WOW!! You don\'t need the helpers anymore!! AMAZING!!',
+    'Look at you!! Flying WITHOUT training wheels!! So proud!!',
+    'The guide notes are GONE and you\'re still CRUSHING it!!',
+    'You\'ve got it memorized!! That\'s incredible!!',
+    'No more hints needed!! You\'re a NATURAL!!',
+  ],
 };
 
 const JAZZY: CatMessages = {
@@ -172,6 +195,27 @@ const JAZZY: CatMessages = {
     'Consistent flow. That\'s the jazz way.',
     'Your streak\'s got rhythm of its own.',
     'Keep that groove alive, baby.',
+  ],
+  demoOffer: [
+    'Let me show you the groove, nice and easy.',
+    'Watch how I lay it down, then you try.',
+    'Here, let me demo the flow for you, baby.',
+    'Sit back and watch the master at work.',
+    'I\'ll show you the riff. Just feel the rhythm.',
+  ],
+  demoComplete: [
+    'Now you take the lead. Find your own groove.',
+    'Your turn to swing it, baby. Nice and smooth.',
+    'The stage is yours now. Let it flow.',
+    'Go ahead, make it your own. I\'m listening.',
+    'Show me your flavor. You got this.',
+  ],
+  ghostNotesFarewell: [
+    'Smooth... you don\'t need the guide notes anymore.',
+    'Look at that, playing it clean without the cheat sheet.',
+    'No training wheels, just pure groove. Beautiful.',
+    'You found the pocket all on your own. Nice.',
+    'That\'s a real musician right there. Well done.',
   ],
 };
 
@@ -253,6 +297,27 @@ const CHONKY_MONKE: CatMessages = {
     'Day after day... I\'m exhausted just watching.',
     'Your streak > my exercise streak (which is 0).',
   ],
+  demoOffer: [
+    'Want me to show you? I mean... if I have to...',
+    'Ugh, fine. Let me demo it. Hold my snacks.',
+    'I guess I could show you how it\'s done... *yawns*',
+    'Watch me play this... try not to fall asleep though.',
+    'Let me help... but only because watching you struggle is exhausting.',
+  ],
+  demoComplete: [
+    'See? Easy. Now you try while I nap.',
+    'Your turn. I did my part, that was exhausting.',
+    'Okay I showed you. Now let me rest while you play.',
+    'Go ahead, you got this. I believe in you. *snores*',
+    'Now you do it. I\'ll be on the couch cheering quietly.',
+  ],
+  ghostNotesFarewell: [
+    'Wait... you don\'t need the cheat notes anymore? Nice.',
+    'No more ghost notes? Even I\'m impressed. And I\'m never impressed.',
+    'Look at you, playing without hints! That\'s actually awesome.',
+    'Training wheels off! You\'re doing great, kid.',
+    'Wow, you outgrew the helper notes. That deserves a snack.',
+  ],
 };
 
 const LUNA: CatMessages = {
@@ -332,6 +397,27 @@ const LUNA: CatMessages = {
     'The moon witnesses your unwavering commitment.',
     'A streak as constant as the stars themselves.',
     'Your consistency rivals the phases of the moon.',
+  ],
+  demoOffer: [
+    'Let the moonlight show you the way...',
+    'Watch as the stars trace the melody for you...',
+    'Close your eyes... let me guide your fingers through the cosmos.',
+    'The night offers a vision... let me show you the path.',
+    'Allow me to illuminate the notes, like moonbeams on water.',
+  ],
+  demoComplete: [
+    'Now the melody lives within you. Play it from your soul.',
+    'The stars have shown you the way. Now walk it yourself.',
+    'You carry the moonlight inside you now. Let it flow.',
+    'The vision is yours. Let your fingers remember the dream.',
+    'The cosmos has whispered its secret. Now sing it back.',
+  ],
+  ghostNotesFarewell: [
+    'The guiding stars fade... because your own light is enough.',
+    'You no longer need the constellation map. You ARE the stars.',
+    'Beautiful... the training moonbeams dissolve. You shine alone.',
+    'The ghost notes drift away like morning mist. You\'ve got it.',
+    'Your inner light has grown bright enough to see without guides.',
   ],
 };
 
@@ -413,6 +499,27 @@ const BISCUIT: CatMessages = {
     'A streak this good deserves extra cookies!',
     'So consistent, dear! Like my cookie timer!',
   ],
+  demoOffer: [
+    'Oh sweetie, let me show you how it goes!',
+    'Watch me play it first, honey. Nice and gentle.',
+    'Here dear, let me help you with a little demo.',
+    'Don\'t worry sweetie, I\'ll show you the way!',
+    'Let grandma show you a trick, okay dear?',
+  ],
+  demoComplete: [
+    'There you go, sweetie! Now it\'s your turn!',
+    'See how it\'s done, honey? You\'ll do even better!',
+    'Now you try, dear! I\'m right here cheering for you!',
+    'Your turn, sweetie! I just know you\'ll be wonderful!',
+    'Go ahead honey, make me proud! You always do.',
+  ],
+  ghostNotesFarewell: [
+    'Oh sweetie, you don\'t need the helper notes anymore! So proud!',
+    'Look at you, honey! Playing all on your own! Beautiful!',
+    'The training wheels are off, dear! You\'re doing great!',
+    'Oh my, you\'ve learned it by heart! Wonderful, sweetie!',
+    'You\'ve outgrown the guide notes, honey! That\'s my star!',
+  ],
 };
 
 const VINYL: CatMessages = {
@@ -492,6 +599,27 @@ const VINYL: CatMessages = {
     'That streak is a box set at this point.',
     'You\'re the DJ who never stops the music.',
     'Marathon listening session energy. Love it.',
+  ],
+  demoOffer: [
+    'Let me drop the needle and show you how this track goes.',
+    'Here, watch me lay it down. Like a reference recording.',
+    'I\'ll demo the original pressing for you. Listen up.',
+    'Let me show you the master cut. Pay attention.',
+    'Time for a listening session. Watch how it\'s done.',
+  ],
+  demoComplete: [
+    'That\'s the reference track. Now record your own version.',
+    'You heard the original. Time for your cover.',
+    'Now you try. Make it your own pressing.',
+    'Your turn to lay down the track. Hit it.',
+    'Go ahead, put your own spin on it.',
+  ],
+  ghostNotesFarewell: [
+    'No more liner notes needed. You know the track by heart.',
+    'The training track fades out. You\'re the headliner now.',
+    'Smooth. Playing without the guide, like a true collector.',
+    'Ghost notes gone. That\'s an original performance. Respect.',
+    'You don\'t need the reference recording anymore. Well done.',
   ],
 };
 
@@ -573,6 +701,27 @@ const ARIA: CatMessages = {
     'The most DRAMATIC streak I have EVER seen!',
     'Your commitment RIVALS the great composers!',
   ],
+  demoOffer: [
+    'Allow me to DEMONSTRATE this MASTERPIECE for you!',
+    'WATCH as I show you how a TRUE virtuoso performs!',
+    'The GRAND DEMONSTRATION shall BEGIN! Watch closely!',
+    'Let me show you the way, darling! It will be SPECTACULAR!',
+    'Observe THIS! I shall perform it with DRAMATIC flair!',
+  ],
+  demoComplete: [
+    'NOW it is YOUR moment to SHINE! DAZZLE them!',
+    'The demonstration is COMPLETE! Now show me YOUR brilliance!',
+    'Your turn, darling! Make it even MORE MAGNIFICENT!',
+    'The stage is YOURS! EXCEED my performance!',
+    'Now YOU perform! I expect NOTHING less than GREATNESS!',
+  ],
+  ghostNotesFarewell: [
+    'BRAVO!! The guide notes VANISH and you STILL perform flawlessly!',
+    'MAGNIFICENT!! You need NO prompting! A TRUE virtuoso!',
+    'The training notes BOW and EXIT the stage! You\'re INCREDIBLE!',
+    'SPECTACULAR!! Playing from MEMORY like a GREAT maestro!',
+    'The ghost notes are GONE! Your talent stands ALONE! BRAVISSIMO!',
+  ],
 };
 
 const TEMPO: CatMessages = {
@@ -652,6 +801,27 @@ const TEMPO: CatMessages = {
     'Streak maintenance: optimal. Keep logging sessions.',
     'Your streak exceeds 92% of all users.',
     'Daily practice confirmed. Streak metric: strong.',
+  ],
+  demoOffer: [
+    'Failure count: 3. Initiating demo mode. Watch carefully.',
+    'Data suggests a visual demonstration will help. Observe.',
+    'Switching to demo playback. Study the timing patterns.',
+    'Let me show you the optimal execution path. Analyzing...',
+    'Demo mode activated. Note the timing intervals closely.',
+  ],
+  demoComplete: [
+    'Demo complete. Your turn. Apply the observed patterns.',
+    'Reference data provided. Execute with improved accuracy.',
+    'Demonstration logged. Now replicate. Target: 80%+ match.',
+    'Pattern shown. Initiate your attempt. Tracking enabled.',
+    'Demo ended. Your performance window opens now. Begin.',
+  ],
+  ghostNotesFarewell: [
+    'Ghost notes disabled. Proficiency confirmed at 95%+. Well done.',
+    'Training overlay removed. You\'ve exceeded the threshold. Good.',
+    'Guide notes: no longer needed. Accuracy self-sufficient. Nice.',
+    'Assistance layer deactivated. Muscle memory: operational. Great.',
+    'Ghost notes off. Your performance data no longer requires them. Impressive.',
   ],
 };
 

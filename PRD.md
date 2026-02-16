@@ -315,6 +315,7 @@ interface ExerciseScore {
     timing: number;          // Average timing score
     completeness: number;    // % of notes attempted
     extraNotes: number;      // Penalty for wrong notes
+    duration: number;        // Note duration accuracy
   };
   details: NoteScore[];
   xpEarned: number;
@@ -322,12 +323,13 @@ interface ExerciseScore {
   isPassed: boolean;
 }
 
-// Weighting
+// Weighting (5 dimensions)
 const SCORE_WEIGHTS = {
-  accuracy: 0.40,      // Did you play the right notes?
-  timing: 0.35,        // Did you play them at the right time?
-  completeness: 0.15,  // Did you play all the notes?
+  accuracy: 0.35,      // Did you play the right notes?
+  timing: 0.30,        // Did you play them at the right time?
+  completeness: 0.10,  // Did you play all the notes?
   extraNotes: 0.10,    // Penalty for extra notes (inverted)
+  duration: 0.15,      // Did you hold notes for the correct duration?
 };
 ```
 
@@ -719,20 +721,17 @@ interface SyncProgressResponse {
 
 **Gate:** Day-3 retention >40% in internal testing
 
-### Phase 3: Firebase Auth + Sync (Weeks 8-10) — ~70% COMPLETE
+### Phase 3: Firebase Auth + Sync (Weeks 8-10) — COMPLETE
 
 | Task | Deliverable | Success Criteria | Status |
 |------|-------------|------------------|--------|
 | Firebase Auth | Email, anonymous, Google/Apple sign-in | Session persistence, navigation guards | DONE |
 | Auth screens | Login, register, email auth flows | Smooth UX with "Skip for now" option | DONE |
 | Sync Manager | SyncManager + display name sync | Bi-directional data sync | DONE |
-| Wire sync to exercises | Sync on exercise completion | Progress persists cross-device | REMAINING |
-| Data migration | Migrate anonymous → authenticated | No data loss on account link | REMAINING |
-| Integration verification | End-to-end auth + sync testing | All flows tested | REMAINING |
 
 **Gate:** NPS >40 in beta testing
 
-> **Next:** Gamification + Adaptive Learning overhaul sprint (Phase 4+). See `docs/plans/2026-02-16-gamification-adaptive-design.md` for the comprehensive design covering cat dialogue system, adaptive difficulty, and UI overhaul.
+> **Phase 4+ (Adaptive Learning + Gamification UI Overhaul) is COMPLETE** — 22/22 tasks delivered. See `docs/plans/2026-02-16-gamification-adaptive-design.md` for details.
 
 ### Phase 4: Launch Prep (Weeks 11-12)
 
@@ -837,11 +836,11 @@ The initial curriculum includes 30 hand-crafted exercises across 6 lessons. Post
 
 ## 10. Future Roadmap (Post-MVP)
 
-### v1.1 (Month 2-3) — CURRENT SPRINT
-- Cat dialogue system with 8 unlockable cat companions (personality-driven coaching)
-- Adaptive learning engine (difficulty adjustment based on performance patterns)
-- UI overhaul with Concert Hall dark theme and gamification polish
-- Exercise loading from content library (JSON → ExerciseStore)
+### v1.1 (Month 2-3) — COMPLETE
+- ~~Cat dialogue system with 8 unlockable cat companions (personality-driven coaching)~~ DONE
+- ~~Adaptive learning engine (difficulty adjustment based on performance patterns)~~ DONE
+- ~~UI overhaul with Concert Hall dark theme and gamification polish~~ DONE
+- ~~Exercise loading from content library (JSON → ExerciseStore)~~ DONE
 - Song library expansion (10 popular songs, public domain)
 - Practice reminders with smart timing
 
@@ -896,7 +895,7 @@ The initial curriculum includes 30 hand-crafted exercises across 6 lessons. Post
 | Local storage | AsyncStorage | Expo Go compatible for dev; migrate to MMKV for prod | MMKV (requires dev build), SQLite (overkill for KV) |
 | AI model | Gemini 2.0 Flash | Cost-effective ($0.021/call), fast responses | GPT-4o-mini (higher cost), Claude Haiku (less music knowledge) |
 | Build system | Expo Development Build | Native module access + OTA updates | bare React Native (harder to maintain) |
-| Scoring weights | 40/35/15/10 | MIDI-optimized: accuracy and timing dominate | Equal weights (doesn't reflect piano learning priorities) |
+| Scoring weights | 35/30/10/10/15 | MIDI-optimized: 5 dimensions including duration | Equal weights (doesn't reflect piano learning priorities) |
 | Pitch detection | Deferred to post-MVP | MIDI provides ground truth; mic adds complexity | Ship with mic (too much scope for 12 weeks) |
 
 ### 11.5 Audio Library Comparison

@@ -19,6 +19,10 @@ describe('Exercise Store', () => {
       score: null,
       sessionStartTime: null,
       sessionEndTime: null,
+      failCount: 0,
+      ghostNotesEnabled: false,
+      ghostNotesSuccessCount: 0,
+      demoWatched: false,
     });
     PersistenceManager.deleteState(STORAGE_KEYS.EXERCISE);
   });
@@ -353,6 +357,139 @@ describe('Exercise Store', () => {
       const state = useExerciseStore.getState();
       expect(state.sessionStartTime).toBe(startTime);
       expect(state.sessionEndTime).toBeNull();
+    });
+  });
+
+  describe('Demo Mode & Ghost Notes', () => {
+    describe('initial state', () => {
+      it('should initialize demo/ghost fields with defaults', () => {
+        const state = useExerciseStore.getState();
+        expect(state.failCount).toBe(0);
+        expect(state.ghostNotesEnabled).toBe(false);
+        expect(state.ghostNotesSuccessCount).toBe(0);
+        expect(state.demoWatched).toBe(false);
+      });
+    });
+
+    describe('incrementFailCount', () => {
+      it('should increment failCount by 1', () => {
+        useExerciseStore.getState().incrementFailCount();
+        expect(useExerciseStore.getState().failCount).toBe(1);
+      });
+
+      it('should increment multiple times', () => {
+        useExerciseStore.getState().incrementFailCount();
+        useExerciseStore.getState().incrementFailCount();
+        useExerciseStore.getState().incrementFailCount();
+        expect(useExerciseStore.getState().failCount).toBe(3);
+      });
+    });
+
+    describe('resetFailCount', () => {
+      it('should reset failCount to 0', () => {
+        useExerciseStore.getState().incrementFailCount();
+        useExerciseStore.getState().incrementFailCount();
+        expect(useExerciseStore.getState().failCount).toBe(2);
+
+        useExerciseStore.getState().resetFailCount();
+        expect(useExerciseStore.getState().failCount).toBe(0);
+      });
+
+      it('should be safe to call when already 0', () => {
+        useExerciseStore.getState().resetFailCount();
+        expect(useExerciseStore.getState().failCount).toBe(0);
+      });
+    });
+
+    describe('setGhostNotesEnabled', () => {
+      it('should enable ghost notes', () => {
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        expect(useExerciseStore.getState().ghostNotesEnabled).toBe(true);
+      });
+
+      it('should disable ghost notes', () => {
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().setGhostNotesEnabled(false);
+        expect(useExerciseStore.getState().ghostNotesEnabled).toBe(false);
+      });
+    });
+
+    describe('incrementGhostNotesSuccessCount', () => {
+      it('should increment count on first call', () => {
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+        expect(useExerciseStore.getState().ghostNotesSuccessCount).toBe(1);
+        expect(useExerciseStore.getState().ghostNotesEnabled).toBe(true);
+      });
+
+      it('should auto-disable ghost notes after 2 successes', () => {
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+
+        const state = useExerciseStore.getState();
+        expect(state.ghostNotesSuccessCount).toBe(0);
+        expect(state.ghostNotesEnabled).toBe(false);
+      });
+
+      it('should reset count to 0 after auto-disable', () => {
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+
+        // Count should be reset, so incrementing again starts from 1
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+        expect(useExerciseStore.getState().ghostNotesSuccessCount).toBe(1);
+      });
+    });
+
+    describe('setDemoWatched', () => {
+      it('should set demoWatched to true', () => {
+        useExerciseStore.getState().setDemoWatched(true);
+        expect(useExerciseStore.getState().demoWatched).toBe(true);
+      });
+
+      it('should set demoWatched to false', () => {
+        useExerciseStore.getState().setDemoWatched(true);
+        useExerciseStore.getState().setDemoWatched(false);
+        expect(useExerciseStore.getState().demoWatched).toBe(false);
+      });
+    });
+
+    describe('clearSession resets demo/ghost fields', () => {
+      it('should reset all demo/ghost fields on clearSession', () => {
+        useExerciseStore.getState().incrementFailCount();
+        useExerciseStore.getState().incrementFailCount();
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+        useExerciseStore.getState().setDemoWatched(true);
+
+        useExerciseStore.getState().clearSession();
+
+        const state = useExerciseStore.getState();
+        expect(state.failCount).toBe(0);
+        expect(state.ghostNotesEnabled).toBe(false);
+        expect(state.ghostNotesSuccessCount).toBe(0);
+        expect(state.demoWatched).toBe(false);
+      });
+    });
+
+    describe('reset resets demo/ghost fields', () => {
+      it('should reset all demo/ghost fields on full reset', () => {
+        useExerciseStore.getState().incrementFailCount();
+        useExerciseStore.getState().setGhostNotesEnabled(true);
+        useExerciseStore.getState().incrementGhostNotesSuccessCount();
+        useExerciseStore.getState().setDemoWatched(true);
+
+        useExerciseStore.getState().reset();
+
+        const state = useExerciseStore.getState();
+        expect(state.failCount).toBe(0);
+        expect(state.ghostNotesEnabled).toBe(false);
+        expect(state.ghostNotesSuccessCount).toBe(0);
+        expect(state.demoWatched).toBe(false);
+      });
     });
   });
 });

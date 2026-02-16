@@ -13,6 +13,7 @@ import {
   Easing,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -38,6 +39,7 @@ export interface CompletionModalProps {
   onRetry?: () => void;
   onNextExercise?: () => void;
   onStartTest?: () => void;
+  onStartDemo?: () => void;
   isTestMode?: boolean;
   testID?: string;
 }
@@ -49,6 +51,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   onRetry,
   onNextExercise,
   onStartTest,
+  onStartDemo,
   isTestMode = false,
   testID,
 }) => {
@@ -183,6 +186,13 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     if (score.overall >= 80) return 'happy';
     return 'encouraging';
   }, [score.overall]);
+
+  // Demo offer cat message (for 3+ consecutive fails)
+  const demoOfferMessage = useMemo(() => {
+    if (!onStartDemo) return null;
+    const catId = selectedCatId ?? 'mini-meowww';
+    return getRandomCatMessage(catId, 'demoOffer');
+  }, [onStartDemo, selectedCatId]);
 
   // Fun fact
   const completionFunFact = useMemo(
@@ -338,6 +348,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               compact
               testID="completion-fun-fact"
             />
+          )}
+
+          {/* Demo offer prompt (3+ fails, demo not yet watched) */}
+          {demoOfferMessage && onStartDemo && (
+            <View style={styles.demoPrompt} testID="demo-prompt">
+              <Text style={styles.demoPromptText}>{demoOfferMessage}</Text>
+              <TouchableOpacity onPress={onStartDemo} style={styles.demoPromptButton} testID="demo-prompt-button">
+                <Text style={styles.demoPromptButtonText}>Watch Demo</Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Action Buttons */}
@@ -619,6 +639,34 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 8,
+  },
+  demoPrompt: {
+    backgroundColor: 'rgba(220, 20, 60, 0.1)',
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(220, 20, 60, 0.2)',
+  },
+  demoPromptText: {
+    fontSize: 13,
+    color: '#FF8A80',
+    lineHeight: 18,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  demoPromptButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: 'rgba(220, 20, 60, 0.3)',
+  },
+  demoPromptButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
 

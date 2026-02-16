@@ -106,8 +106,8 @@ jest.mock('../../../components/Keyboard/Keyboard', () => ({
   },
 }));
 
-jest.mock('../../../components/PianoRoll/PianoRoll', () => ({
-  PianoRoll: (props: any) => {
+jest.mock('../../../components/PianoRoll/VerticalPianoRoll', () => ({
+  VerticalPianoRoll: (props: any) => {
     const { View, Text } = require('react-native');
     return (
       <View testID={props.testID || 'mock-piano-roll'}>
@@ -115,6 +115,11 @@ jest.mock('../../../components/PianoRoll/PianoRoll', () => ({
       </View>
     );
   },
+}));
+
+jest.mock('../../../components/Keyboard/computeZoomedRange', () => ({
+  computeZoomedRange: (_notes: number[]) => ({ startNote: 48, octaveCount: 2 }),
+  computeStickyRange: (_notes: number[], range: any) => range,
 }));
 
 // Mock common Button component (uses react-native-reanimated)

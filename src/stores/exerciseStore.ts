@@ -21,6 +21,14 @@ type ExerciseSessionData = Pick<
   'currentExercise' | 'currentExerciseId' | 'playedNotes' | 'isPlaying' | 'currentBeat' | 'score' | 'sessionStartTime' | 'sessionEndTime'
 >;
 
+/** Transient demo/ghost state defaults (not persisted to MMKV) */
+const transientDefaults = {
+  failCount: 0,
+  ghostNotesEnabled: false,
+  ghostNotesSuccessCount: 0,
+  demoWatched: false,
+};
+
 const defaultData: ExerciseSessionData = {
   currentExercise: null,
   currentExerciseId: null,
@@ -37,6 +45,7 @@ const debouncedSave = createDebouncedSave(STORAGE_KEYS.EXERCISE, 500);
 
 export const useExerciseStore = create<ExerciseSessionState>((set, get) => ({
   ...defaultData,
+  ...transientDefaults,
 
   setCurrentExercise: (exercise: Exercise) => {
     const newState = {
@@ -90,9 +99,44 @@ export const useExerciseStore = create<ExerciseSessionState>((set, get) => ({
       playedNotes: [],
       score: null,
       currentBeat: 0,
+      ...transientDefaults,
     };
     set(newState);
     debouncedSave({ ...get(), ...newState });
+  },
+
+  incrementFailCount: () => {
+    set((state) => ({ failCount: state.failCount + 1 }));
+    // Transient - no persistence
+  },
+
+  resetFailCount: () => {
+    set({ failCount: 0 });
+    // Transient - no persistence
+  },
+
+  setGhostNotesEnabled: (enabled: boolean) => {
+    set({ ghostNotesEnabled: enabled });
+    // Transient - no persistence
+  },
+
+  incrementGhostNotesSuccessCount: () => {
+    set((state) => {
+      const newCount = state.ghostNotesSuccessCount + 1;
+      if (newCount >= 2) {
+        return {
+          ghostNotesSuccessCount: 0,
+          ghostNotesEnabled: false,
+        };
+      }
+      return { ghostNotesSuccessCount: newCount };
+    });
+    // Transient - no persistence
+  },
+
+  setDemoWatched: (watched: boolean) => {
+    set({ demoWatched: watched });
+    // Transient - no persistence
   },
 
   reset: () => {
@@ -105,6 +149,7 @@ export const useExerciseStore = create<ExerciseSessionState>((set, get) => ({
       score: null,
       sessionStartTime: null,
       sessionEndTime: null,
+      ...transientDefaults,
     });
     PersistenceManager.deleteState(STORAGE_KEYS.EXERCISE);
   },

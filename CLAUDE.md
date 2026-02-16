@@ -6,18 +6,9 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current Sprint: Gamification + Adaptive Learning + UI Overhaul
+## Current Sprint: Gameplay UX Rework (vertical note flow, bigger keys)
 
-Design: `docs/plans/2026-02-16-gamification-adaptive-design.md`
-Plan: `docs/plans/2026-02-16-gamification-adaptive-implementation.md`
-
-22 tasks across 6 phases. Key features:
-- Cat companion dialogue system (8 personalities)
-- Gemini AI exercise generation (100% AI after lesson 6)
-- Learner profile with per-note accuracy tracking
-- Split keyboard for two-handed play
-- Duolingo-level UI polish (celebrations, animations, design tokens)
-- 30+ achievements, daily challenges, streak system
+Previous sprint (Gamification + Adaptive Learning + UI Overhaul) is COMPLETE — all 22/22 tasks delivered. See `docs/plans/2026-02-16-gamification-adaptive-design.md` for details.
 
 ## Quick Commands
 
@@ -80,14 +71,14 @@ src/
 │   ├── exerciseStore.ts  # Current exercise state
 │   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
 │   ├── settingsStore.ts  # User preferences
-│   └── learnerProfileStore.ts  # Per-note accuracy, skills, tempo, weak areas (coming soon)
+│   └── learnerProfileStore.ts  # Adaptive learning: per-note accuracy, skills, tempo range
 ├── screens/              # Screen components
 │   └── ExercisePlayer/   # Main exercise gameplay screen
 ├── components/           # Reusable UI components
 │   ├── Keyboard/         # Piano keyboard (dynamic range from exercise)
-│   │   └── SplitKeyboard.tsx  # Two-handed split keyboard (coming soon)
+│   │   └── SplitKeyboard.tsx  # Two-handed split keyboard
 │   ├── PianoRoll/        # Scrolling note display (dynamic MIDI range)
-│   ├── Mascot/           # Keysie mascot (KeysieSvg, KeysieAvatar, MascotBubble, 55 tips)
+│   ├── Mascot/           # Cat avatars (CatAvatar, KeysieSvg, RiveCatAvatar, ExerciseBuddy, MascotBubble)
 │   ├── transitions/      # ExerciseCard, LessonCompleteScreen, AchievementToast, ConfettiEffect
 │   └── common/           # ScoreRing, PressableScale, buttons, cards
 ├── hooks/                # Custom React hooks
@@ -120,7 +111,9 @@ src/
 | `src/components/PianoRoll/PianoRoll.tsx` | Transform-based scrolling note display |
 | `src/services/ai/GeminiCoach.ts` | AI coaching via Gemini 2.0 Flash with fallback |
 | `src/hooks/useExercisePlayback.ts` | Playback timing, MIDI events, completion handler |
-| `src/components/Mascot/KeysieAvatar.tsx` | Animated SVG cat mascot (5 moods, 4 sizes) |
+| `src/components/Mascot/CatAvatar.tsx` | Animated SVG cat avatar (floating idle, bounce entry, glow aura) |
+| `src/components/Mascot/ExerciseBuddy.tsx` | In-exercise cat companion with contextual reactions |
+| `src/components/Mascot/RiveCatAvatar.tsx` | Rive-animated cat avatar (high-fidelity animations) |
 | `src/components/common/ScoreRing.tsx` | Animated SVG circle score indicator |
 | `src/components/Keyboard/keyboardHitTest.ts` | Multi-touch coordinate-to-MIDI mapping |
 | `src/content/catDialogue.ts` | Cat personality dialogue (8 cats, ~320 messages, trigger-based) |
@@ -185,7 +178,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**840 tests, 31 suites.** Run tests before committing:
+**983 tests, 42 suites.** Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```

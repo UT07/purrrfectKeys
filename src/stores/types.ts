@@ -24,6 +24,12 @@ export interface ExerciseSessionState {
   sessionStartTime: number | null;
   sessionEndTime: number | null;
 
+  // Demo mode & ghost notes (transient, not persisted)
+  failCount: number;
+  ghostNotesEnabled: boolean;
+  ghostNotesSuccessCount: number;
+  demoWatched: boolean;
+
   // Session actions
   setCurrentExercise: (exercise: Exercise) => void;
   addPlayedNote: (note: MidiNoteEvent) => void;
@@ -32,6 +38,11 @@ export interface ExerciseSessionState {
   setCurrentBeat: (beat: number) => void;
   setScore: (score: ExerciseScore) => void;
   setSessionTime: (startTime: number, endTime?: number) => void;
+  incrementFailCount: () => void;
+  resetFailCount: () => void;
+  setGhostNotesEnabled: (enabled: boolean) => void;
+  incrementGhostNotesSuccessCount: () => void;
+  setDemoWatched: (watched: boolean) => void;
   reset: () => void;
 }
 
