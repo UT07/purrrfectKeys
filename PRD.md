@@ -1,5 +1,5 @@
-# KeySense: AI-Powered Piano Learning App
-## Product Requirements Document v2.0 (Updated February 2026)
+# Purrrfect Keys: AI-Powered Piano Learning App
+## Product Requirements Document v2.1 (Updated February 16, 2026)
 
 ---
 
@@ -7,11 +7,11 @@
 
 ### 1.1 Vision Statement
 
-KeySense is a mobile-first piano learning application that combines Duolingo's habit-forming mechanics with professional-grade real-time feedback. Unlike competitors that simply detect "right or wrong notes," KeySense analyzes *how* you play—timing precision, touch dynamics, and technique patterns—delivering actionable coaching that was previously only available from human instructors.
+Purrrfect Keys is a mobile-first piano learning application that combines Duolingo's habit-forming mechanics with professional-grade real-time feedback, guided by charming cat companions that grow alongside your musical journey. Unlike competitors that simply detect "right or wrong notes," Purrrfect Keys analyzes *how* you play—timing precision, touch dynamics, and technique patterns—delivering actionable coaching through AI-generated personalized exercises that adapt to your skill level and learning pace. Post-curriculum content is 100% AI-generated via Gemini Flash, ensuring an endless supply of fresh, tailored practice material.
 
 ### 1.2 Core Value Proposition
 
-**For beginner-to-intermediate pianists** who struggle with unstructured practice and delayed feedback, **KeySense** provides **instant, technique-focused coaching** through AI-powered performance analysis, **unlike Simply Piano or Yousician** which only validate note accuracy without addressing *how* you play.
+**For beginner-to-intermediate pianists** who struggle with unstructured practice and delayed feedback, **Purrrfect Keys** provides **instant, technique-focused coaching** through AI-powered performance analysis, **unlike Simply Piano or Yousician** which only validate note accuracy without addressing *how* you play.
 
 ### 1.3 Target Users
 
@@ -41,7 +41,7 @@ KeySense is a mobile-first piano learning application that combines Duolingo's h
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        KEYSENSE APP                             │
+│                      PURRRFECT KEYS APP                         │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
 │  │   UI Layer  │  │ Game Logic  │  │    Audio Engine         │ │
@@ -77,7 +77,7 @@ KeySense is a mobile-first piano learning application that combines Duolingo's h
 | **State** | Zustand v5 | Simple, performant, TypeScript-first |
 | **Local Storage** | AsyncStorage (@react-native-async-storage) | Expo Go compatible; migrate to MMKV for production builds |
 | **Backend** | Firebase (Auth, Firestore, Functions) | Rapid development, generous free tier |
-| **AI Coaching** | Gemini 1.5 Flash | Cost-effective, fast responses |
+| **AI Coaching** | Gemini 2.0 Flash | Cost-effective, fast responses |
 | **Analytics** | PostHog | Privacy-friendly, self-hostable |
 
 ### 2.3 Platform Abstraction Strategy
@@ -140,6 +140,7 @@ src/
 | Velocity | Map touch pressure to volume (iOS) | Soft/loud distinction audible |
 | ADSR Envelope | Attack 10ms, Decay 100ms, Sustain 0.7, Release 200ms | Natural piano feel |
 | Visual Feedback | Key depression animation, note highlighting | Clear cause-effect |
+| Two-handed play | Split keyboard mode for both-hands exercises | Both hands independently tracked |
 
 #### 3.2.2 Sound Generation Strategy
 
@@ -457,7 +458,7 @@ interface CoachInput {
 
 ```
 ┌─────────────────────────────────────┐
-│           KeySense                  │
+│         Purrrfect Keys              │
 ├─────────────────────────────────────┤
 │                                     │
 │  ┌─────────────────────────────┐   │
@@ -696,15 +697,15 @@ interface SyncProgressResponse {
 |------|-------------|--------|
 | MIDI input | MidiInput + MidiDevice classes | Done |
 | Exercise player | Landscape layout with piano roll, keyboard, scoring | Done |
-| Scoring engine | ExerciseValidator + ScoringEngine (433 tests passing) | Done |
+| Scoring engine | ExerciseValidator + ScoringEngine (840 tests passing, 31 suites) | Done |
 | 10 exercises | Exercise JSON format + default exercise | Done |
 | Basic progress | Zustand stores + AsyncStorage persistence | Done |
 | Navigation | Bottom tabs + modal stack (Exercise, MidiSetup) | Done |
-| Stabilization | 0 TS errors, 433/433 tests, crash fix, layout redesign | Done |
+| Stabilization | 0 TS errors, 840/840 tests (31 suites), crash fix, layout redesign | Done |
 
 **Gate:** Complete one full exercise with accurate scoring. Passed.
 
-### Phase 2: Gamification (Weeks 6-7) — IN PROGRESS
+### Phase 2: Gamification (Weeks 6-7) — COMPLETE
 
 | Task | Deliverable | Success Criteria | Status |
 |------|-------------|------------------|--------|
@@ -718,16 +719,20 @@ interface SyncProgressResponse {
 
 **Gate:** Day-3 retention >40% in internal testing
 
-### Phase 3: Polish & Launch (Weeks 8-10)
+### Phase 3: Firebase Auth + Sync (Weeks 8-10) — ~70% COMPLETE
 
 | Task | Deliverable | Success Criteria | Status |
 |------|-------------|------------------|--------|
-| Firebase integration | Auth + sync | Cross-device progress | PLANNED |
-| Microphone fallback | Basic pitch detection | Works for single notes | PLANNED |
-| UI polish | Animations, transitions | 60fps, delightful feel | IN PROGRESS |
-| Sound design | UI sounds, celebrations | Cohesive audio identity | PLANNED |
+| Firebase Auth | Email, anonymous, Google/Apple sign-in | Session persistence, navigation guards | DONE |
+| Auth screens | Login, register, email auth flows | Smooth UX with "Skip for now" option | DONE |
+| Sync Manager | SyncManager + display name sync | Bi-directional data sync | DONE |
+| Wire sync to exercises | Sync on exercise completion | Progress persists cross-device | REMAINING |
+| Data migration | Migrate anonymous → authenticated | No data loss on account link | REMAINING |
+| Integration verification | End-to-end auth + sync testing | All flows tested | REMAINING |
 
 **Gate:** NPS >40 in beta testing
+
+> **Next:** Gamification + Adaptive Learning overhaul sprint (Phase 4+). See `docs/plans/2026-02-16-gamification-adaptive-design.md` for the comprehensive design covering cat dialogue system, adaptive difficulty, and UI overhaul.
 
 ### Phase 4: Launch Prep (Weeks 11-12)
 
@@ -818,21 +823,25 @@ const AI_SAFETY = {
 };
 ```
 
-### 9.3 Content Generation Pipeline (Future)
+### 9.3 Content Generation Pipeline
 
-For scaling beyond 30 hand-crafted exercises:
-1. AI generates exercise JSON from musical concepts
-2. Automated validation against exercise schema
-3. Difficulty scoring via algorithm (not human judgment)
-4. Human review for quality gate before publication
+The initial curriculum includes 30 hand-crafted exercises across 6 lessons. Post-curriculum, 100% of exercises are AI-generated via Gemini Flash:
+
+1. Gemini Flash generates exercise JSON from musical concepts, adapted to the user's skill level and weak areas
+2. Automated validation against exercise schema ensures structural correctness
+3. Difficulty scoring via algorithm (not human judgment) calibrates progression
+4. Exercises are generated on-demand, providing an endless supply of personalized practice material
+5. Quality gate: schema validation + playability checks run client-side before presentation
 
 ---
 
 ## 10. Future Roadmap (Post-MVP)
 
-### v1.1 (Month 2-3)
+### v1.1 (Month 2-3) — CURRENT SPRINT
+- Cat dialogue system with 8 unlockable cat companions (personality-driven coaching)
+- Adaptive learning engine (difficulty adjustment based on performance patterns)
+- UI overhaul with Concert Hall dark theme and gamification polish
 - Exercise loading from content library (JSON → ExerciseStore)
-- Improved microphone detection (pitch detection TurboModule)
 - Song library expansion (10 popular songs, public domain)
 - Practice reminders with smart timing
 
@@ -854,7 +863,7 @@ For scaling beyond 30 hand-crafted exercises:
 
 ### 11.1 Competitive Analysis Summary
 
-| Feature | KeySense | Simply Piano | Yousician | Flowkey |
+| Feature | Purrrfect Keys | Simply Piano | Yousician | Flowkey |
 |---------|----------|--------------|-----------|---------|
 | Real-time feedback | ✅ | ✅ | ✅ | ✅ |
 | Technique analysis | ✅ | ❌ | ❌ | ❌ |
@@ -885,7 +894,7 @@ For scaling beyond 30 hand-crafted exercises:
 | Audio library | react-native-audio-api | Web Audio API compatible, <10ms latency, future web portability | expo-av (too high latency), native modules (not portable) |
 | State management | Zustand v5 | Simple API, TypeScript-first, persist middleware | Redux (too much boilerplate), Jotai (less ecosystem) |
 | Local storage | AsyncStorage | Expo Go compatible for dev; migrate to MMKV for prod | MMKV (requires dev build), SQLite (overkill for KV) |
-| AI model | Gemini 1.5 Flash | Cost-effective ($0.021/call), fast responses | GPT-4o-mini (higher cost), Claude Haiku (less music knowledge) |
+| AI model | Gemini 2.0 Flash | Cost-effective ($0.021/call), fast responses | GPT-4o-mini (higher cost), Claude Haiku (less music knowledge) |
 | Build system | Expo Development Build | Native module access + OTA updates | bare React Native (harder to maintain) |
 | Scoring weights | 40/35/15/10 | MIDI-optimized: accuracy and timing dominate | Equal weights (doesn't reflect piano learning priorities) |
 | Pitch detection | Deferred to post-MVP | MIDI provides ground truth; mic adds complexity | Ship with mic (too much scope for 12 weeks) |

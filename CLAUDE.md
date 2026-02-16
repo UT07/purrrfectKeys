@@ -6,6 +6,19 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
+## Current Sprint: Gamification + Adaptive Learning + UI Overhaul
+
+Design: `docs/plans/2026-02-16-gamification-adaptive-design.md`
+Plan: `docs/plans/2026-02-16-gamification-adaptive-implementation.md`
+
+22 tasks across 6 phases. Key features:
+- Cat companion dialogue system (8 personalities)
+- Gemini AI exercise generation (100% AI after lesson 6)
+- Learner profile with per-note accuracy tracking
+- Split keyboard for two-handed play
+- Duolingo-level UI polish (celebrations, animations, design tokens)
+- 30+ achievements, daily challenges, streak system
+
 ## Quick Commands
 
 ```bash
@@ -46,12 +59,14 @@ npm run measure:latency    # Audio latency test harness
 ```
 src/
 ├── content/              # Exercise/lesson content loading from JSON
-│   └── ContentLoader.ts  # Static registry: getExercise(), getLessons(), etc.
+│   ├── ContentLoader.ts  # Static registry: getExercise(), getLessons(), etc.
+│   └── catDialogue.ts   # Cat personality dialogue system (8 cats x 40 messages)
 ├── core/                 # Platform-agnostic business logic (NO React imports)
 │   ├── exercises/        # Exercise validation, scoring algorithms
 │   ├── music/            # Music theory utilities (notes, scales, chords)
 │   ├── progression/      # XP calculation, level unlocks
-│   └── analytics/        # Event tracking abstraction
+│   ├── analytics/        # Event tracking abstraction
+│   └── catMood.ts          # Cat mood engine (happy/neutral/sleepy)
 ├── audio/                # Audio engine abstraction
 │   ├── AudioEngine.ts    # Interface definition
 │   ├── ExpoAudioEngine.ts # expo-av implementation with sound pooling
@@ -64,11 +79,13 @@ src/
 ├── stores/               # Zustand stores
 │   ├── exerciseStore.ts  # Current exercise state
 │   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
-│   └── settingsStore.ts  # User preferences
+│   ├── settingsStore.ts  # User preferences
+│   └── learnerProfileStore.ts  # Per-note accuracy, skills, tempo, weak areas (coming soon)
 ├── screens/              # Screen components
 │   └── ExercisePlayer/   # Main exercise gameplay screen
 ├── components/           # Reusable UI components
 │   ├── Keyboard/         # Piano keyboard (dynamic range from exercise)
+│   │   └── SplitKeyboard.tsx  # Two-handed split keyboard (coming soon)
 │   ├── PianoRoll/        # Scrolling note display (dynamic MIDI range)
 │   ├── Mascot/           # Keysie mascot (KeysieSvg, KeysieAvatar, MascotBubble, 55 tips)
 │   ├── transitions/      # ExerciseCard, LessonCompleteScreen, AchievementToast, ConfettiEffect
@@ -79,7 +96,10 @@ src/
 ├── services/             # External integrations
 │   ├── firebase/         # Auth, Firestore, Functions
 │   ├── ai/               # Gemini AI coaching (GeminiCoach + CoachingService)
-│   └── analytics/        # PostHog
+│   ├── analytics/        # PostHog
+│   └── geminiExerciseService.ts  # AI exercise generation via Gemini Flash
+├── theme/                # Design system
+│   └── tokens.ts  # Design tokens, colors, gradients, spacing
 └── utils/                # Shared utilities
 ```
 
@@ -102,6 +122,11 @@ src/
 | `src/hooks/useExercisePlayback.ts` | Playback timing, MIDI events, completion handler |
 | `src/components/Mascot/KeysieAvatar.tsx` | Animated SVG cat mascot (5 moods, 4 sizes) |
 | `src/components/common/ScoreRing.tsx` | Animated SVG circle score indicator |
+| `src/components/Keyboard/keyboardHitTest.ts` | Multi-touch coordinate-to-MIDI mapping |
+| `src/content/catDialogue.ts` | Cat personality dialogue (8 cats, ~320 messages, trigger-based) |
+| `src/stores/learnerProfileStore.ts` | Adaptive learning: per-note accuracy, skills, tempo range |
+| `docs/plans/2026-02-16-gamification-adaptive-design.md` | Current sprint design doc |
+| `docs/plans/2026-02-16-gamification-adaptive-implementation.md` | Current sprint implementation plan (22 tasks) |
 | `content/exercises/` | JSON exercise definitions (30 exercises, 6 lessons) |
 
 ## Code Style
@@ -160,7 +185,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**Run tests before committing:**
+**840 tests, 31 suites.** Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
@@ -215,3 +240,4 @@ POSTHOG_API_KEY=xxx
 4. **Firebase rules changes require review** - Security-critical
 5. **Run typecheck before committing** - CI will fail otherwise
 6. **Pitch detection is fallback only** - Optimize for MIDI input first
+7. **react-native-screens PINNED to 4.4.0** — versions 4.19+ have Fabric codegen bug with RN 0.76. After version changes, clean iOS build: `rm -rf ios/Pods ios/Podfile.lock ios/build && cd ios && pod install`

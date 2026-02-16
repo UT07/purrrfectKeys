@@ -1,6 +1,6 @@
 # KeySense Master Plan
 
-**Last Updated:** February 15, 2026
+**Last Updated:** February 16, 2026
 **Goal:** Production-quality piano learning app on App Store & Play Store
 
 ---
@@ -10,14 +10,15 @@
 | Phase | Name | Status | Progress |
 |-------|------|--------|----------|
 | Phase 1 | Core Loop | **COMPLETE** | 100% |
-| Phase 2 | Gamification & Polish | **NEAR COMPLETE** | ~95% |
-| Phase 3 | Firebase Auth + Sync | **PLANNED** | 0% |
-| Phase 4 | Adaptive Learning | **DESIGNED** | 0% |
+| Phase 2 | Gamification & Polish | **COMPLETE** | 100% |
+| Phase 3 | Firebase Auth + Sync | **~70% COMPLETE** | ~70% |
+| Phase 4 | Adaptive Learning | **SUPERSEDED — see Phase 4+** | — |
+| Phase 4+ | Gamification + Adaptive + UI Overhaul | **PLANNED** | 0% — see `docs/plans/2026-02-16-gamification-adaptive-implementation.md` |
 | Phase 5 | Social & Advanced Gamification | **PLANNED** | 0% |
 | Phase 6 | Music Library | **DESIGNED** | 0% |
 | Phase 7 | App Store Launch | **PLANNED** | 0% |
 
-**Current Codebase Health:** 0 TypeScript errors, 518 tests passing, 23 suites
+**Current Codebase Health:** 0 TypeScript errors, 840 tests passing, 31 suites
 
 **Strategy:** Auth first (prerequisite for user data), then deepen the 6-lesson experience with AI-powered adaptive learning, then build social engagement (leagues, friends, achievements) in parallel with Music Library content expansion, then ship.
 
@@ -47,7 +48,7 @@ Everything needed for a single lesson to be fully playable end-to-end.
 
 ---
 
-## Phase 2: Gamification & Polish (NEAR COMPLETE — ~95%)
+## Phase 2: Gamification & Polish (COMPLETE)
 
 ### Completed Items
 - Score bug fix (rounded integers)
@@ -71,24 +72,13 @@ Everything needed for a single lesson to be fully playable end-to-end.
 - Transition screens — LessonCompleteScreen (full celebration), ExerciseCard (quick mid-lesson card), AchievementToast (XP/level-up), ConfettiEffect
 - Dev Build created for physical device testing (iPhone 13 Pro)
 - Documentation updates (stabilization-report.md, CLAUDE.md, MEMORY.md)
-
-### Remaining Items (~4 hours estimated)
-
-#### 2A. Keysie Integration (Priority: HIGH)
-Replace emoji avatars with new KeysieAvatar SVG cat across all screens:
-- Refactor MascotBubble to use KeysieAvatar (replace emoji)
-- Integrate into ExerciseCard, CompletionModal, LevelMap, HomeScreen, LessonCompleteScreen
-
-#### 2B. Visual Polish (Priority: MEDIUM)
-- Card shadow standardization across HomeScreen and ProfileScreen
-- Keyboard key gradients (white + black keys)
-
-#### 2C. Onboarding Verification (Priority: HIGH)
-- Add Keysie to onboarding steps (replacing emoji)
-- E2E test: fresh install → onboarding → first exercise
-- Verify `hasCompletedOnboarding` persistence
-
-**Effort:** ~4 hours total
+- Multi-touch keyboard (single-responder hit-test system)
+- Keyboard auto-scroll following exercise notes
+- Single-note green highlighting (next note only)
+- Mastery test system (test exercises per lesson)
+- Cat character system (8 cats, CatAvatar, CatPickerModal)
+- Audio sustain fix (notes play while key held)
+- react-native-screens pinned to 4.4.0
 
 ---
 
@@ -96,20 +86,22 @@ Replace emoji avatars with new KeysieAvatar SVG cat across all screens:
 
 **Why now:** Prerequisite for Adaptive Learning (student profiles), Music Library (user-specific data), and any cloud features. Must happen before Phases 4-5.
 
-### 3A. Firebase Authentication (1 day)
+> **Note:** Auth screens, session persistence, navigation guards, SyncManager, display name sync all complete. Remaining: wire sync to exercise completion, data migration, integration verification.
+
+### 3A. Firebase Authentication — DONE
 - Email/password + Google Sign-In
 - Anonymous auth for try-before-signup (convert to full account later)
 - Wire to existing Firebase config (`src/services/firebase/`)
 - Auth state persistence (stay logged in across app restarts)
 
-### 3B. Progress Cloud Sync (1.5 days)
+### 3B. Progress Cloud Sync — IN PROGRESS (SyncManager done, wiring remaining)
 - Sync `progressStore` to Firestore on changes
 - Conflict resolution: latest-write-wins with timestamp
 - Offline queue for pending changes (sync when back online)
 - Sync on app launch + periodic background sync
 - Merge strategy: local progress + cloud progress → pick higher scores
 
-### 3C. User Profile (0.5 days)
+### 3C. User Profile — DONE
 - Display name, avatar selection, joined date
 - Public profile with stats (optional)
 - Account deletion (GDPR/App Store requirement)
@@ -123,7 +115,9 @@ Replace emoji avatars with new KeysieAvatar SVG cat across all screens:
 
 ---
 
-## Phase 4: Adaptive Learning System (~9-11 days)
+## Phase 4: Adaptive Learning System — SUPERSEDED
+
+> **This phase has been merged into the Gamification + Adaptive Learning + UI Overhaul sprint.** See `docs/plans/2026-02-16-gamification-adaptive-design.md` for the expanded design covering cat companions, AI exercise generation, split keyboard, Duolingo-style UI polish, and expanded achievements.
 
 **Full design:** `docs/plans/2026-02-13-adaptive-learning-design.md`
 
@@ -325,15 +319,12 @@ Song
 ```
 NOW ──────────────────────────────────────────────────────────→ LAUNCH
 
-Phase 2 Remaining (~4 hours)
-├─ Keysie integration (6 screens) ...... [████████░░] HIGH
-├─ Card shadows + keyboard gradients ... [████░░░░░░] MEDIUM
-└─ Onboarding E2E + Keysie ............ [████████░░] HIGH
+Phase 2: Gamification & Polish ......... [██████████] COMPLETE
 
-Phase 3: Firebase Auth + Sync (3 days)
-├─ Authentication ...................... [██████████] HIGH
-├─ Progress cloud sync ................. [████████░░] HIGH
-└─ User profile ........................ [████░░░░░░] MEDIUM
+Phase 3: Firebase Auth + Sync (~70%)
+├─ Authentication ...................... [██████████] DONE
+├─ Progress cloud sync ................. [█████░░░░░] IN PROGRESS
+└─ User profile ........................ [██████████] DONE
 
 Phase 4: Adaptive Learning (9-11 days)
 ├─ Challenge infrastructure ............ [██████████] HIGH
