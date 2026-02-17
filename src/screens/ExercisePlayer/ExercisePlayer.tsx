@@ -684,13 +684,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const demoServiceRef = useRef(new DemoPlaybackService());
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoActiveNotes, setDemoActiveNotes] = useState<Set<number>>(new Set());
+  const [demoBeat, setDemoBeat] = useState(0);
   const demoWatched = useExerciseStore(s => s.demoWatched);
   const failCount = useExerciseStore(s => s.failCount);
+
+  // Effective beat: during demo, use demo beat; otherwise use playback hook's beat
+  const effectiveBeat = isDemoPlaying ? demoBeat : currentBeat;
 
   // Update keyboard range based on active window (every beat change)
   useEffect(() => {
     const windowNotes = exercise.notes
-      .filter(n => n.startBeat >= currentBeat - 2 && n.startBeat <= currentBeat + 8)
+      .filter(n => n.startBeat >= effectiveBeat - 2 && n.startBeat <= effectiveBeat + 8)
       .map(n => n.note);
 
     if (windowNotes.length > 0) {
@@ -699,7 +703,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         setKeyboardRange(newRange);
       }
     }
-  }, [Math.floor(currentBeat), keyboardRange]); // Include keyboardRange to avoid stale closure
+  }, [Math.floor(effectiveBeat), keyboardRange]); // Include keyboardRange to avoid stale closure
 
   const keyboardStartNote = keyboardRange.startNote;
   const keyboardOctaveCount = keyboardRange.octaveCount;
@@ -756,7 +760,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       .filter(
         (note) =>
           !consumedNoteIndicesRef.current.has(note.index) &&
-          note.startBeat >= currentBeat - 0.5
+          note.startBeat >= effectiveBeat - 0.5
       );
 
     if (upcoming.length === 0) {
@@ -800,7 +804,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         setFocusNoteRight(undefined);
       }
     }
-  }, [currentBeat, exercise.notes, testMode, keyboardMode, splitPoint]);
+  }, [effectiveBeat, exercise.notes, testMode, keyboardMode, splitPoint]);
 
   // Force keyboard range update when the next expected note is outside the current range
   useEffect(() => {
@@ -889,7 +893,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       },
       0.6, // 60% speed
       (beat) => {
-        // Drive the VerticalPianoRoll during demo
+        // Drive the VerticalPianoRoll during demo via local state
+        setDemoBeat(beat);
         useExerciseStore.getState().setCurrentBeat(beat);
       },
       (notes) => setDemoActiveNotes(notes),
@@ -1261,7 +1266,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           <View style={{ flex: 1 }}>
             <ScoreDisplay
               exercise={exercise}
-              currentBeat={currentBeat}
+              currentBeat={effectiveBeat}
               combo={comboCount}
               feedback={feedback.type}
               comboAnimValue={comboScale}
@@ -1344,7 +1349,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           {pianoRollDims.width > 0 && (
             <VerticalPianoRoll
               notes={exercise.notes}
-              currentBeat={currentBeat}
+              currentBeat={effectiveBeat}
               tempo={exercise.settings.tempo}
               timeSignature={exercise.settings.timeSignature}
               containerWidth={pianoRollDims.width}
