@@ -7,8 +7,8 @@
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Test Suites | 18 (many failing) | 23 passed |
-| Tests | ~393 passing, 40+ failing | 518 passed, 0 failing |
+| Test Suites | 18 (many failing) | 68 passed |
+| Tests | ~393 passing, 40+ failing | 1,597 passed, 0 failing |
 | TypeScript Errors | 144+ | 0 |
 | Navigation Buttons Working | ~30% | 100% |
 | App Runs on Simulator | No (build issues) | Yes (iPhone 17 Pro) |
@@ -18,6 +18,10 @@
 | Audio Engine | Dropped notes, race conditions | Round-robin voice pools, atomic replay |
 | Pause/Resume | Reset exercise on resume | Properly resumes from pause point |
 | MIDI Scoring | noteOff double-counted | noteOn only, timestamp normalized |
+| Google Sign-In | Missing URL scheme, "Coming Soon" | Working (URL scheme registered, native module installed) |
+| Cross-Device Sync | Upload-only (no pull) | Bidirectional (pull + merge on startup) |
+| E2E Tests | None (Detox not configured) | 15 suites in e2e/full-coverage.e2e.js |
+| Auth Resilience | Crash on Firebase failure | Local guest fallback for offline/dev |
 
 ---
 
@@ -465,6 +469,10 @@
 11. ~~**Lessons 2-6**: Content JSON needs end-to-end testing~~ **RESOLVED** (#28 — all 30 exercises validated)
 12. **Native MIDI module**: `react-native-midi` not installed yet (needs RN 0.77+). VMPK + IAC Driver ready. See `agent_docs/midi-integration.md`
 13. ~~**Gamification transitions**: No mascot, no transition screens~~ **RESOLVED** (#32 — Keysie + ExerciseCard + LessonCompleteScreen + AchievementToast)
+14. ~~**Google Sign-In**: Missing URL scheme in built binary~~ **RESOLVED** (#37 — native rebuild with correct CFBundleURLTypes)
+15. ~~**Cross-device sync**: Upload-only, no pull mechanism~~ **RESOLVED** (#38 — pullRemoteProgress with highest-wins merge)
+16. ~~**Exercise completion delay**: 2-beat buffer caused seconds of silence~~ **RESOLVED** (#36 — 0.5-beat buffer + early completion)
+17. **Open bugs on GitHub**: ~53 remaining open issues (see `gh issue list`), including gameplay timing (#111-113), Apple Sign-In nonce (#96), AI Practice Mode (#98)
 
 ---
 
@@ -642,3 +650,77 @@
 #### Verification
 - TypeScript: 0 errors
 - Tests: 518/518 passed, 23 suites (12 new tests across 4 new test files)
+
+---
+
+### 36. Bug Fix Sprint (Feb 19-20, 2026)
+
+**SkillAssessmentScreen rewrite:**
+- Proper state machine: INTRO → COUNT_IN → PLAYING → RESULT → COMPLETE
+- Added audio engine, VerticalPianoRoll, computeZoomedRange
+- Count-in beats before assessment begins
+
+**ExercisePlayer fixes:**
+- Keyboard range computed from ALL exercise notes (not just first 8)
+- Fixed stale `ghostNotesEnabled` closure (reads from store)
+- Fixed level-up detection (captures `previousLevel` before XP mutation)
+- Faster exercise completion: 0.5-beat buffer + early completion when all notes played
+
+**Auth resilience:**
+- `shouldEnableLocalGuestMode()` for Firebase auth failures
+- `createLocalGuestUser()` stub for offline/dev mode
+- `signInAnonymously` falls back to local guest when Firebase unavailable
+- 8-second timeout on `initAuth()` with fallback to unauthenticated state
+
+**PlayScreen enhancements:**
+- Recording playback with note duration tracking
+- Stop/cancel playback functionality
+- Timer cleanup on unmount
+
+**Keyboard improvements:**
+- Delayed re-measure after screen transitions (500ms)
+- Initial scroll uses `requestAnimationFrame` without animation
+
+**useExercisePlayback improvements:**
+- Stable `audioEngineRef` (no more recreating every render)
+- `realtimeBeatRef` for 60fps scoring
+- Note duration tracking via `noteOnIndexMapRef`
+
+**Navigation types consolidated:**
+- Deleted `src/navigation/types.ts` (expo-router types in React Navigation project)
+- `RootStackParamList` now defined directly in `AppNavigator.tsx`
+
+### 37. Google Sign-In Fix
+
+**Problem:** Google Sign-In showed "missing URL scheme" error on physical device.
+
+**Root cause:** The URL scheme `com.googleusercontent.apps.619761780367-tqf3t4srqtkklkigep0clojvoailsteu` was added to `app.json` `ios.infoPlist.CFBundleURLTypes` and was present in the source `Info.plist`, but the installed app binary was stale (built before the scheme was added).
+
+**Fix:** Native rebuild via `npx expo run:ios` installed updated binary with correct `CFBundleURLTypes`. Verified with `plutil -p` on the built `.app` bundle.
+
+### 38. Cross-Device Sync
+
+**Problem:** Same account on simulator and physical iPhone showed different progress. The sync pipeline was upload-only — local changes were queued and flushed to Firestore, but nobody ever pulled remote data back.
+
+**`src/services/firebase/syncService.ts`:**
+- Added `pullRemoteProgress()` method to `SyncManager`
+- Fetches `getAllLessonProgress()` and `getGamificationData()` from Firestore
+- Merge strategy: "highest wins" — higher XP, higher scores, more attempts, more advanced lesson status
+- Per-exercise merge: adopts remote if local doesn't exist, takes higher `highScore`, preserves max `attempts`
+- Converts Firestore `Timestamp` objects to local `number` timestamps
+
+**`src/App.tsx`:**
+- Calls `syncManager.pullRemoteProgress()` on app startup for authenticated non-anonymous users
+- Runs after local hydration and data migration, so it merges on top of local state
+
+### 39. Detox E2E Test Suite
+
+**`e2e/full-coverage.e2e.js` (new, 896 lines):**
+- 15 test suites covering: onboarding (beginner + intermediate/skill assessment), auth flows, tab navigation, home screen, level map, lesson intro, exercise player (play/pause/restart/exit/completion), free play (record/playback/clear), profile, account, cat switch, edge cases (rapid taps, deep navigation, background/foreground)
+
+**`e2e/sanity.e2e.js` (fixed):**
+- Rewrote sequential try/catch with `found` flag (was double `catch` blocks)
+
+#### Verification
+- TypeScript: 0 errors
+- Tests: 1,597/1,597 passed, 68 suites

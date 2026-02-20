@@ -8,13 +8,23 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 ## Current Sprint: 16-Week Roadmap (Feb 17 → Jun 8, 2026)
 
-**Codebase Health:** 64 test suites, 1,488 tests passing, 0 TypeScript errors
+**Codebase Health:** 68 test suites, 1,597 tests passing, 0 TypeScript errors
 
 Previous sprints all COMPLETE:
 - Phase 4+ (Gamification + Adaptive Learning + UI Overhaul): 22/22 tasks
 - Avatar Redesign + Rive System: committed
 - Gameplay UX Rework: 10/10 tasks
 - QA Sprint: 18 new test suites, 6 bug fixes
+- Bug Fix Sprint (Feb 19-20): 10+ issues closed, cross-device sync, Google Sign-In, Detox E2E
+
+**Recently Completed (Feb 20, 2026):**
+- Cross-device sync: Firestore pull + merge on app startup (highest-wins strategy)
+- Google Sign-In: URL scheme registered, native module working in dev build
+- Exercise completion: faster detection (0.5-beat buffer + early completion)
+- Detox E2E test suite: 15 suites covering full app (e2e/full-coverage.e2e.js)
+- Auth resilience: local guest mode fallback when Firebase unavailable
+- SkillAssessment rewrite: proper state machine with count-in and audio
+- Keyboard: delayed re-measure for screen transitions, stable audio engine ref
 
 **Active Roadmap:**
 - Phase 5: Adaptive Learning Revamp (Weeks 1-3) — AI curriculum, voice coaching, free play
@@ -141,6 +151,9 @@ src/
 | `src/services/demoPlayback.ts` | Demo mode: visual-only note playback with cat dialogue |
 | `src/content/catDialogue.ts` | Cat personality dialogue (8 cats, ~320 messages, trigger-based) |
 | `src/stores/learnerProfileStore.ts` | Adaptive learning: per-note accuracy, skills, tempo range |
+| `src/stores/authStore.ts` | Firebase Auth: anonymous, email, Google, Apple sign-in + linking |
+| `src/services/firebase/syncService.ts` | Cross-device sync: offline queue + Firestore pull/merge |
+| `src/services/firebase/dataMigration.ts` | One-time local→cloud migration on first sign-in |
 | `docs/plans/2026-02-16-gamification-adaptive-design.md` | Current sprint design doc |
 | `docs/plans/2026-02-16-gamification-adaptive-implementation.md` | Current sprint implementation plan (22 tasks) |
 | `content/exercises/` | JSON exercise definitions (30 exercises, 6 lessons) |
@@ -201,7 +214,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**1,109 tests, 46 suites.** Run tests before committing:
+**1,597 tests, 68 suites.** Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
@@ -231,7 +244,7 @@ For detailed guidance on specific topics, read these files:
 ### Adding a New Screen
 1. Create component in `src/screens/NewScreen.tsx`
 2. Add to navigation in `src/navigation/AppNavigator.tsx`
-3. Add screen params to `src/navigation/types.ts`
+3. Add screen params to `RootStackParamList` in `src/navigation/AppNavigator.tsx`
 
 ### Modifying Scoring Logic
 1. Update algorithm in `src/core/exercises/ExerciseValidator.ts`
