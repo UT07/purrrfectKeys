@@ -29,6 +29,7 @@ import Animated, {
 
 import { CatAvatar } from './CatAvatar';
 import { getCatById, getDefaultCat } from './catCharacters';
+import { useCatEvolutionStore } from '@/stores/catEvolutionStore';
 
 export type BuddyReaction =
   | 'idle'
@@ -61,6 +62,8 @@ export function ExerciseBuddy({
   comboCount = 0,
 }: ExerciseBuddyProps): ReactElement {
   const cat = getCatById(catId) ?? getDefaultCat();
+  const evolutionData = useCatEvolutionStore((state) => state.evolutionData[catId]);
+  const evolutionStage = evolutionData?.currentStage ?? 'baby';
 
   // Animation shared values
   const bounceY = useSharedValue(0);
@@ -210,6 +213,7 @@ export function ExerciseBuddy({
           showGlow={showGlow}
           showTooltipOnTap={false}
           skipEntryAnimation
+          evolutionStage={evolutionStage}
         />
       </Animated.View>
 

@@ -18,6 +18,7 @@ import type { ReactElement } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { CatAvatar } from './CatAvatar';
 import type { CatAvatarSize } from './CatAvatar';
+import type { EvolutionStage } from '@/stores/types';
 
 // Mood mapping for Rive state machine number input
 export const RIVE_MOOD_MAP = {
@@ -50,6 +51,8 @@ interface RiveCatAvatarProps {
   showGlow?: boolean;
   onPress?: () => void;
   skipEntryAnimation?: boolean;
+  /** Evolution stage — passed to Rive state machine and SVG fallback. */
+  evolutionStage?: EvolutionStage;
 }
 
 /**
@@ -63,6 +66,14 @@ function isRiveAvailable(): boolean {
   return Platform.OS === 'ios' || Platform.OS === 'android';
 }
 
+// Evolution stage to numeric mapping for Rive state machine
+const RIVE_EVOLUTION_MAP: Record<EvolutionStage, number> = {
+  baby: 0,
+  teen: 1,
+  adult: 2,
+  master: 3,
+};
+
 export function RiveCatAvatar({
   catId,
   size = 'medium',
@@ -70,6 +81,7 @@ export function RiveCatAvatar({
   showGlow = false,
   onPress,
   skipEntryAnimation = false,
+  evolutionStage,
 }: RiveCatAvatarProps): ReactElement {
   const riveRef = useRef<any>(null);
   const [riveError, setRiveError] = useState(false);
@@ -96,6 +108,20 @@ export function RiveCatAvatar({
       // State machine input may not exist in current .riv
     }
   }, [mood, useRive]);
+
+  // Update evolution stage on Rive state machine
+  useEffect(() => {
+    if (!useRive || !riveRef.current || !evolutionStage) return;
+    try {
+      riveRef.current.setInputState(
+        'CatStateMachine',
+        'evolutionStage',
+        RIVE_EVOLUTION_MAP[evolutionStage],
+      );
+    } catch {
+      // State machine input may not exist in current .riv
+    }
+  }, [evolutionStage, useRive]);
 
   // Fire trigger animations
   const fireTrigger = useCallback(
@@ -144,6 +170,7 @@ export function RiveCatAvatar({
       showGlow={showGlow}
       onPress={onPress}
       skipEntryAnimation={skipEntryAnimation}
+      evolutionStage={evolutionStage}
     />
   );
 }

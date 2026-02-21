@@ -23,6 +23,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
 import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
@@ -31,7 +32,7 @@ import { computeZoomedRange, computeStickyRange, type KeyboardRange } from '../.
 import { useExerciseStore } from '../../stores/exerciseStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useExercisePlayback } from '../../hooks/useExercisePlayback';
-import { getExercise, getNextExerciseId, getLessonIdForExercise, getLesson, isTestExercise, getTestExercise, getNonTestExercises } from '../../content/ContentLoader';
+import { getExercise, getNextExerciseId, getLessonIdForExercise, getLesson, getLessons, isTestExercise, getTestExercise, getNonTestExercises } from '../../content/ContentLoader';
 import { getNextExercise as getNextAIExercise, fillBuffer, getBufferSize, BUFFER_MIN_THRESHOLD } from '../../services/exerciseBufferManager';
 import { recordPracticeSession as calculateStreakUpdate } from '../../core/progression/XpSystem';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
@@ -47,13 +48,14 @@ import type { AchievementType } from '../../components/transitions/AchievementTo
 import { LessonCompleteScreen } from '../../components/transitions/LessonCompleteScreen';
 import { ExerciseCard } from '../../components/transitions/ExerciseCard';
 import { getTipForScore } from '../../components/Mascot/mascotTips';
-import { getFactForExerciseType } from '../../content/funFactSelector';
 import type { FunFact } from '../../content/funFacts';
 import { syncManager } from '../../services/firebase/syncService';
 import { useAchievementStore, buildAchievementContext } from '../../stores/achievementStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useLearnerProfileStore } from '../../stores/learnerProfileStore';
-import { getUnlockedCats } from '../../components/Mascot/catCharacters';
+import { useGemStore } from '../../stores/gemStore';
+import { useCatEvolutionStore } from '../../stores/catEvolutionStore';
+import { getUnlockedCats, CAT_CHARACTERS } from '../../components/Mascot/catCharacters';
 import { ExerciseBuddy } from '../../components/Mascot/ExerciseBuddy';
 import type { BuddyReaction } from '../../components/Mascot/ExerciseBuddy';
 import { getAchievementById } from '../../core/achievements/achievements';
@@ -61,7 +63,15 @@ import type { PlaybackSpeed } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 import { DemoPlaybackService } from '../../services/demoPlayback';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
+import { getSkillsForExercise } from '../../core/curriculum/SkillTree';
+import { adjustDifficulty } from '../../core/curriculum/DifficultyEngine';
+import { detectWeakPatterns } from '../../core/curriculum/WeakSpotDetector';
+import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
+import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
+import { midiToNoteName } from '../../core/music/MusicTheory';
 import { COLORS } from '../../theme/tokens';
+import { suggestDrill } from '../../services/FreePlayAnalyzer';
+import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -193,8 +203,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Store integration
   const exerciseStore = useExerciseStore();
 
+  // Ref for exercise to avoid stale closures in handleExerciseCompletion
+  // (critical for AI mode where exercise loads asynchronously)
+  const exerciseRef = useRef<Exercise>(FALLBACK_EXERCISE);
+
   // AI mode: exercise loaded asynchronously from buffer
   const [aiExercise, setAiExercise] = useState<Exercise | null>(null);
+  const freePlayContext = route.params?.freePlayContext;
 
   useEffect(() => {
     if (!aiMode) return;
@@ -202,6 +217,69 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     let cancelled = false;
 
     const loadAIExercise = async () => {
+      // If launched from free play analysis, generate a targeted exercise
+      // instead of pulling from the generic buffer
+      if (freePlayContext) {
+        const drillParams = suggestDrill({
+          notesPlayed: freePlayContext.weakNotes.length,
+          uniqueNotes: freePlayContext.weakNotes,
+          detectedKey: freePlayContext.detectedKey,
+          commonIntervals: [],
+          suggestedDrillType: freePlayContext.suggestedDrillType,
+          summary: '',
+          noteCount: freePlayContext.weakNotes.length,
+          uniquePitches: freePlayContext.weakNotes.length,
+          durationSeconds: 0,
+          notesPerSecond: 0,
+          mostPlayedNote: null,
+        });
+
+        const generated = await generateFreePlayExercise(drillParams);
+        if (cancelled) return;
+
+        if (generated) {
+          const keyLabel = freePlayContext.detectedKey ?? 'Practice';
+          setAiExercise({
+            id: `ai-freeplay-${Date.now()}`,
+            version: 1,
+            metadata: {
+              title: `${keyLabel} Drill`,
+              description: `Drill based on your free play in ${freePlayContext.detectedKey ?? 'detected key'}`,
+              difficulty: (generated.metadata?.difficulty ?? 2) as 1 | 2 | 3 | 4 | 5,
+              estimatedMinutes: 2,
+              skills: generated.metadata?.skills ?? ['free-play'],
+              prerequisites: [],
+            },
+            settings: {
+              tempo: generated.settings.tempo,
+              timeSignature: generated.settings.timeSignature,
+              keySignature: generated.settings.keySignature ?? freePlayContext.detectedKey ?? 'C',
+              countIn: 4,
+              metronomeEnabled: true,
+            },
+            notes: generated.notes.map((n) => ({
+              note: n.note,
+              startBeat: n.startBeat,
+              durationBeats: n.durationBeats,
+              ...(n.hand ? { hand: n.hand as 'left' | 'right' } : {}),
+            })),
+            scoring: {
+              timingToleranceMs: generated.scoring?.timingToleranceMs ?? 80,
+              timingGracePeriodMs: 200,
+              passingScore: generated.scoring?.passingScore ?? 60,
+              starThresholds: (generated.scoring?.starThresholds ?? [70, 85, 95]) as [number, number, number],
+            },
+            hints: {
+              beforeStart: `Drill targeting ${freePlayContext.detectedKey ?? 'your recent notes'} -- play along!`,
+              commonMistakes: [],
+              successMessage: 'Nice drill session!',
+            },
+          });
+          return;
+        }
+        // If generation failed, fall through to buffer/fallback below
+      }
+
       const buffered = await getNextAIExercise();
 
       if (cancelled) return;
@@ -246,17 +324,29 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         };
         setAiExercise(converted);
       } else {
-        // Buffer empty — use a simple fallback exercise
+        // Buffer empty — use WeakSpotDetector to find relevant notes for fallback
         const profile = useLearnerProfileStore.getState();
         const difficulty = profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1;
-        const fallbackNotes = [60, 62, 64, 65, 67, 65, 64, 62];
-        const weakMidi = profile.weakNotes.length > 0 ? profile.weakNotes.slice(0, 4) : [];
+        const weakPatterns = detectWeakPatterns({
+          noteAccuracy: profile.noteAccuracy,
+          weakNotes: profile.weakNotes,
+          skills: profile.skills,
+          tempoRange: profile.tempoRange,
+        });
+        const weakMidi = weakPatterns.length > 0
+          ? weakPatterns[0].targetMidi
+          : profile.weakNotes.slice(0, 4);
+        // If from free play, use the detected notes and key; otherwise generic fallback
+        const fallbackNotes = freePlayContext?.weakNotes?.length
+          ? freePlayContext.weakNotes
+          : [60, 62, 64, 65, 67, 65, 64, 62];
         const notePool = weakMidi.length >= 2 ? weakMidi : fallbackNotes;
+        const fallbackKey = freePlayContext?.detectedKey ?? 'C';
         setAiExercise({
           id: `ai-fallback-${Date.now()}`,
           version: 1,
           metadata: {
-            title: 'Quick Practice',
+            title: freePlayContext?.detectedKey ? `${freePlayContext.detectedKey} Drill` : 'Quick Practice',
             description: 'Practice exercise while new content generates',
             difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
             estimatedMinutes: 2,
@@ -266,7 +356,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           settings: {
             tempo: Math.round((profile.tempoRange.min + profile.tempoRange.max) / 2),
             timeSignature: [4, 4],
-            keySignature: 'C',
+            keySignature: fallbackKey,
             countIn: 4,
             metronomeEnabled: true,
           },
@@ -311,7 +401,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [aiMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiMode, freePlayContext?.detectedKey]);
 
   // Load exercise: prop > AI mode > route param > store > fallback
   const loadedExercise = (!aiMode && route.params?.exerciseId)
@@ -326,6 +417,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
   const lastMidiDeviceId = useSettingsStore((s) => s.lastMidiDeviceId);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
+
+  // Active cat abilities — read raw data from store (NOT getActiveAbilities() which
+  // returns a new array each call, causing infinite re-renders with Zustand's Object.is check)
+  const evolutionAbilities = useCatEvolutionStore(
+    (s) => s.evolutionData[s.selectedCatId]?.abilitiesUnlocked,
+  );
+  const activeAbilityIds = evolutionAbilities ?? [];
+  const activeAbilities = useMemo(() => {
+    const cat = CAT_CHARACTERS.find((c) => c.id === (selectedCatId ?? ''));
+    if (!cat || activeAbilityIds.length === 0) return [];
+    return cat.abilities.filter((a) => activeAbilityIds.includes(a.id));
+  }, [selectedCatId, activeAbilityIds]);
 
   // Responsive layout — supports both portrait and landscape
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -343,20 +446,65 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
   }, [lastMidiDeviceId, playbackSpeed, setPlaybackSpeed]);
 
-  // Apply speed multiplier to create the exercise used for playback + scoring
+  // Compute ability-modified config from active abilities
+  const abilityConfig = useMemo((): ExerciseAbilityConfig | null => {
+    if (activeAbilityIds.length === 0) return null;
+    const defaultCfg = createDefaultConfig(
+      rawExercise.scoring.timingToleranceMs,
+      rawExercise.scoring.timingGracePeriodMs,
+      rawExercise.settings.tempo,
+    );
+    return applyAbilities(activeAbilityIds, defaultCfg);
+  }, [activeAbilityIds, rawExercise.scoring.timingToleranceMs, rawExercise.scoring.timingGracePeriodMs, rawExercise.settings.tempo]);
+
+  // Apply speed multiplier + ability modifiers to create the exercise used for playback + scoring
   const exercise = useMemo(() => {
-    if (playbackSpeed === 1.0) return rawExercise;
-    return {
-      ...rawExercise,
-      settings: {
-        ...rawExercise.settings,
-        tempo: Math.round(rawExercise.settings.tempo * playbackSpeed),
-      },
-    };
-  }, [rawExercise, playbackSpeed]);
+    let ex = rawExercise;
+
+    // Apply ability-based tempo reduction
+    if (abilityConfig && abilityConfig.tempo !== rawExercise.settings.tempo) {
+      ex = {
+        ...ex,
+        settings: { ...ex.settings, tempo: abilityConfig.tempo },
+      };
+    }
+
+    // Apply ability-based timing window changes
+    if (abilityConfig && (
+      abilityConfig.timingToleranceMs !== rawExercise.scoring.timingToleranceMs ||
+      abilityConfig.timingGracePeriodMs !== rawExercise.scoring.timingGracePeriodMs
+    )) {
+      ex = {
+        ...ex,
+        scoring: {
+          ...ex.scoring,
+          timingToleranceMs: abilityConfig.timingToleranceMs,
+          timingGracePeriodMs: abilityConfig.timingGracePeriodMs,
+        },
+      };
+    }
+
+    // Apply playback speed
+    if (playbackSpeed !== 1.0) {
+      ex = {
+        ...ex,
+        settings: {
+          ...ex.settings,
+          tempo: Math.round(ex.settings.tempo * playbackSpeed),
+        },
+      };
+    }
+
+    return ex;
+  }, [rawExercise, playbackSpeed, abilityConfig]);
+
+  // Keep exerciseRef in sync so completion callback always has current exercise
+  useEffect(() => {
+    exerciseRef.current = exercise;
+  }, [exercise]);
 
   const cycleSpeed = useCallback(() => {
-    const speeds: PlaybackSpeed[] = [0.5, 0.75, 1.0];
+    const speeds: PlaybackSpeed[] = [0.25, 0.5, 0.75, 1.0];
     const currentIdx = speeds.indexOf(playbackSpeed);
     const nextIdx = (currentIdx + 1) % speeds.length;
     setPlaybackSpeed(speeds[nextIdx]);
@@ -403,9 +551,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [showCompletion, setShowCompletion] = useState(false);
   const [finalScore, setFinalScore] = useState<ExerciseScore | null>(null);
 
-  // Quick exercise card (between exercises in a lesson)
+  // Quick exercise card (between exercises in a lesson) — CompletionModal
+  // now handles all completion scenarios for AI coaching, but ExerciseCard
+  // state is kept for the component's dismiss/retry handlers.
   const [showExerciseCard, setShowExerciseCard] = useState(false);
-  const [exerciseCardFunFact, setExerciseCardFunFact] = useState<FunFact | null>(null);
+  const [exerciseCardFunFact] = useState<FunFact | null>(null);
 
   // Achievement toast state
   const [toastData, setToastData] = useState<{ type: AchievementType; value: number | string } | null>(null);
@@ -432,6 +582,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (!mountedRef.current) return;
     setFinalScore(score);
 
+    // Read exercise from ref to avoid stale closure in AI mode
+    // (exercise loads async, but ref is always current)
+    const ex = exerciseRef.current;
+
     // Track consecutive fails for demo prompt
     // Read ghostNotesEnabled from store directly (not from closure) to avoid stale state
     const currentGhostNotes = useExerciseStore.getState().ghostNotesEnabled;
@@ -446,16 +600,27 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     onExerciseComplete?.(score);
 
-    // Track whether this exercise completes the entire lesson
-    let isLessonComplete = false;
-    let needsMasteryTest = false;
+    // Track lesson completion for celebration screen
 
     // Capture level BEFORE any XP mutations so we can detect level-ups
     const previousLevel = useProgressStore.getState().level;
 
+    // Apply ability modifiers to score and XP
+    const currentAbilityConfig = abilityConfig;
+    if (currentAbilityConfig) {
+      // Score boost (cap at 100)
+      if (currentAbilityConfig.scoreBoostPercent > 0) {
+        score.overall = Math.min(100, score.overall + currentAbilityConfig.scoreBoostPercent);
+      }
+      // XP multiplier
+      if (currentAbilityConfig.xpMultiplier > 1) {
+        score.xpEarned = Math.round(score.xpEarned * currentAbilityConfig.xpMultiplier);
+      }
+    }
+
     // Persist XP and daily goal progress
     const progressStore = useProgressStore.getState();
-    progressStore.recordExerciseCompletion(exercise.id, score.overall, score.xpEarned);
+    progressStore.recordExerciseCompletion(ex.id, score.overall, score.xpEarned);
 
     // Record practice time (convert elapsed ms to minutes)
     if (playbackStartTimeRef.current > 0) {
@@ -464,7 +629,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     // Save exercise score to lesson progress and compute sync data
-    const exLessonId = getLessonIdForExercise(exercise.id);
+    const exLessonId = getLessonIdForExercise(ex.id);
+
+    // Capture whether this exercise was previously completed BEFORE we update lesson progress
+    // (used for first-completion gem bonus below)
+    const wasPreviouslyCompleted = exLessonId
+      ? progressStore.lessonProgress[exLessonId]?.exerciseScores[ex.id]?.completedAt != null
+      : true; // AI exercises (no lesson) don't count for first-completion
+
     let lessonSyncData: {
       lessonId: string;
       status: 'in_progress' | 'completed';
@@ -491,7 +663,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
       // Get fresh state after potential initialization
       const currentLP = useProgressStore.getState().lessonProgress[exLessonId];
-      const existingExScore = currentLP?.exerciseScores[exercise.id];
+      const existingExScore = currentLP?.exerciseScores[ex.id];
       const isNewHighScore = !existingExScore || score.overall > existingExScore.highScore;
 
       const newHighScore = isNewHighScore ? score.overall : (existingExScore?.highScore ?? score.overall);
@@ -502,8 +674,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         : score.overall;
 
       // Save exercise progress
-      progressStore.updateExerciseProgress(exLessonId, exercise.id, {
-        exerciseId: exercise.id,
+      progressStore.updateExerciseProgress(exLessonId, ex.id, {
+        exerciseId: ex.id,
         highScore: newHighScore,
         stars: newStars,
         attempts: newAttempts,
@@ -516,19 +688,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       lessonSyncData = {
         lessonId: exLessonId,
         status: 'in_progress',
-        exerciseId: exercise.id,
+        exerciseId: ex.id,
         exerciseScore: { highScore: newHighScore, stars: newStars, attempts: newAttempts, averageScore: newAvgScore },
       };
 
       // Check lesson completion status
       if (lesson && score.isPassed) {
         const updatedLP = useProgressStore.getState().lessonProgress[exLessonId];
-        const currentIsTest = isTestExercise(exercise.id);
+        const currentIsTest = isTestExercise(ex.id);
 
         if (currentIsTest) {
           // Mastery test passed → mark lesson complete
           if (updatedLP?.status !== 'completed') {
-            isLessonComplete = true;
             const completedAt = Date.now();
             progressStore.updateLessonProgress(exLessonId, {
               ...updatedLP!,
@@ -547,7 +718,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               score.overall,
               ...nonTestIds.map((eid) => updatedLP?.exerciseScores[eid]?.highScore ?? 0)
             );
-            const lessonIndex = ['lesson-01','lesson-02','lesson-03','lesson-04','lesson-05','lesson-06'].indexOf(exLessonId);
+            const lessonIndex = getLessons().findIndex(l => l.id === exLessonId);
             setLessonCompleteData({
               lessonTitle: lesson.metadata.title,
               lessonNumber: lessonIndex + 1,
@@ -570,7 +741,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             // Check if test exercise exists and hasn't been completed yet
             const testEx = getTestExercise(exLessonId);
             if (testEx && !updatedLP?.exerciseScores[testEx.id]?.completedAt) {
-              needsMasteryTest = true;
+              // Mastery test available — CompletionModal will show option to take it
             }
           }
         }
@@ -578,7 +749,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     // Sync score + lesson progress to cloud (fire-and-forget, failures retry automatically)
-    syncManager.syncAfterExercise(exercise.id, {
+    syncManager.syncAfterExercise(ex.id, {
       overall: score.overall,
       accuracy: score.breakdown.accuracy,
       timing: score.breakdown.timing,
@@ -597,15 +768,48 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         accuracy: d.isMissedNote ? 0 : (d.isCorrectPitch ? d.timingScore / 100 : 0),
       }));
 
+    // Track recent exercise for dedup in CurriculumEngine
+    useLearnerProfileStore.getState().addRecentExercise(ex.id);
+
     useLearnerProfileStore.getState().recordExerciseResult({
-      tempo: exercise.settings.tempo,
+      tempo: ex.settings.tempo,
       score: score.overall / 100,  // Convert 0-100 to 0.0-1.0
       noteResults,
     });
 
+    // Mark skills as mastered when exercise score meets the skill's mastery threshold
+    const skillNodes = getSkillsForExercise(ex.id);
+    for (const node of skillNodes) {
+      if (score.overall / 100 >= node.masteryThreshold && score.isPassed) {
+        useLearnerProfileStore.getState().markSkillMastered(node.id);
+      }
+    }
+
+    // Adjust difficulty based on performance (DifficultyEngine owns tempo progression)
+    const profileForDiff = useLearnerProfileStore.getState();
+    const adjustment = adjustDifficulty(
+      {
+        tempoRange: profileForDiff.tempoRange,
+        skills: profileForDiff.skills,
+        totalExercisesCompleted: profileForDiff.totalExercisesCompleted,
+      },
+      score.overall
+    );
+    if (adjustment.tempoChange !== 0) {
+      const range = profileForDiff.tempoRange;
+      useLearnerProfileStore.setState({
+        tempoRange: {
+          min: Math.max(30, range.min + adjustment.tempoChange),
+          max: Math.min(200, range.max + adjustment.tempoChange),
+        },
+      });
+    }
+
     // Update streak using XpSystem's proper streak logic (handles freezes, weekly tracking)
-    const updatedStreak = calculateStreakUpdate(progressStore.streakData);
-    progressStore.updateStreakData(updatedStreak);
+    // Re-read from fresh state since recordExerciseCompletion may have mutated streakData
+    const freshProgressStore = useProgressStore.getState();
+    const updatedStreak = calculateStreakUpdate(freshProgressStore.streakData);
+    freshProgressStore.updateStreakData(updatedStreak);
 
     // Track achievement stats: perfect scores, high scores, notes played
     const achievementState = useAchievementStore.getState();
@@ -644,38 +848,49 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
-    // Decide which transition screen to show:
-    // - Quick ExerciseCard for mid-lesson passes or AI mode (fast, auto-dismisses)
-    // - Full CompletionModal for failures, end-of-lesson, mastery test gate, or lesson completion
-    if (aiMode) {
-      // AI mode: always show quick card for passes, full modal for failures
-      if (score.isPassed) {
-        setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
-        setShowExerciseCard(true);
-      } else {
-        setShowCompletion(true);
-      }
-    } else {
-      const exNextId = getLessonIdForExercise(exercise.id)
-        ? getNextExerciseId(getLessonIdForExercise(exercise.id)!, exercise.id)
-        : null;
+    // --- Gem earning ---
+    const gemStore = useGemStore.getState();
 
-      if (score.isPassed && exNextId && !isLessonComplete && !needsMasteryTest) {
-        // Always show a contextual fun fact between exercises
-        setExerciseCardFunFact(getFactForExerciseType(exercise.metadata.skills));
-        setShowExerciseCard(true);
-      } else {
-        // Show full CompletionModal (handles mastery test prompt, lesson complete, retry, etc.)
-        setShowCompletion(true);
+    // First-time completion bonus (captured before lesson progress update above)
+    if (score.isPassed && !wasPreviouslyCompleted) {
+      gemStore.earnGems(25, 'first-completion');
+    }
+
+    // Score-based gem rewards
+    let gemsEarned = 0;
+    if (score.overall >= 100) {
+      gemsEarned = 15;
+    } else if (score.overall >= 90) {
+      gemsEarned = 5;
+    }
+
+    // Apply gem ability bonuses (gem_magnet chance + lucky_gems multiplier)
+    if (gemsEarned > 0 && currentAbilityConfig) {
+      if (currentAbilityConfig.gemBonusMultiplier > 1 && Math.random() < currentAbilityConfig.gemBonusChance) {
+        gemsEarned = Math.round(gemsEarned * currentAbilityConfig.gemBonusMultiplier);
       }
     }
+
+    if (gemsEarned > 0) {
+      gemStore.earnGems(gemsEarned, gemsEarned >= 15 ? 'perfect-score' : 'high-score');
+    }
+
+    // --- Cat evolution XP ---
+    const catEvolutionStore = useCatEvolutionStore.getState();
+    if (catEvolutionStore.selectedCatId && score.xpEarned > 0) {
+      catEvolutionStore.addEvolutionXp(catEvolutionStore.selectedCatId, score.xpEarned);
+    }
+
+    // Always show full CompletionModal with AI coaching, score ring, cat dialogue.
+    // CompletionModal handles all scenarios: pass, fail, retry, next exercise, lesson complete.
+    setShowCompletion(true);
 
     if (Platform.OS === 'web') {
       AccessibilityInfo.announceForAccessibility(
         `Exercise complete! Score: ${score.overall}%`
       );
     }
-  }, [onExerciseComplete, exercise.id]);
+  }, [onExerciseComplete, abilityConfig]);
 
   // Exercise playback coordination (MIDI + Audio + Scoring)
   const {
@@ -748,6 +963,24 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   const keyboardStartNote = keyboardRange.startNote;
   const keyboardOctaveCount = keyboardRange.octaveCount;
+
+  // Coaching tip for count-in based on learner weaknesses
+  const coachingTip = useMemo(() => {
+    const prof = useLearnerProfileStore.getState();
+    const exerciseNotes = new Set(exercise.notes.map(n => n.note));
+    const weakInExercise = prof.weakNotes.filter(n => exerciseNotes.has(n));
+    if (weakInExercise.length > 0) {
+      return `Focus on ${weakInExercise.slice(0, 2).map(midiToNoteName).join(', ')}`;
+    }
+    if (prof.skills.timingAccuracy < 0.6) return 'Count along with the beat';
+    return exercise.hints?.beforeStart;
+  }, [exercise]);
+
+  // Skill target for the intro overlay
+  const skillTarget = useMemo(() => {
+    const skills = getSkillsForExercise(exercise.id);
+    return skills[0]?.name;
+  }, [exercise.id]);
 
   // Feedback state
   const [feedback, setFeedback] = useState<FeedbackState>({
@@ -1194,6 +1427,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setShowCompletion(false);
     // If lesson was just completed, show the celebration screen before navigating away
     if (lessonCompleteData) {
+      // Clear after capturing — prevents duplicate celebrations
+      setLessonCompleteData(null);
       setTimeout(() => {
         if (mountedRef.current) {
           setShowLessonComplete(true);
@@ -1319,6 +1554,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           countIn={exercise.settings.countIn}
           tempo={exercise.settings.tempo}
           elapsedTime={(currentBeat + exercise.settings.countIn) * (60000 / exercise.settings.tempo)}
+          coachingTip={coachingTip}
         />
       )}
 
@@ -1357,6 +1593,21 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               compact
             />
           </View>
+
+          {/* Active ability indicators */}
+          {activeAbilities.length > 0 && (
+            <View style={styles.abilityRow}>
+              {activeAbilities.map((a) => (
+                <View key={a.id} style={styles.abilityIcon} testID={`ability-${a.id}`}>
+                  <MaterialCommunityIcons
+                    name={a.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
+                    size={14}
+                    color={COLORS.evolutionGlow}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Speed pill — always visible, active styling when slowed */}
           <TouchableOpacity
@@ -1572,6 +1823,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             setShowIntro(false);
             handleStart();
           }}
+          skillTarget={skillTarget}
           testID="exercise-intro"
         />
       )}
@@ -1585,7 +1837,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           onRetry={handleRetry}
           onNextExercise={aiMode ? handleNextAIExercise : (nextExerciseId ? handleNextExercise : undefined)}
           onStartTest={showMasteryTestButton ? handleStartTest : undefined}
-          onStartDemo={failCount >= 3 && !demoWatched ? () => {
+          onStartDemo={failCount >= (abilityConfig?.ghostNotesFailThreshold ?? 3) && !demoWatched ? () => {
             setShowCompletion(false);
             setFinalScore(null);
             startDemo();
@@ -1721,6 +1973,20 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
+  },
+  // Active ability indicators
+  abilityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  abilityIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(225, 190, 231, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

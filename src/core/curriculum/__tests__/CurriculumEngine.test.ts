@@ -63,6 +63,8 @@ function makeProfile(overrides: Partial<LearnerProfileData> = {}): LearnerProfil
     lastAssessmentDate: '',
     assessmentScore: 0,
     masteredSkills: [],
+    skillMasteryData: {},
+    recentExerciseIds: [],
     ...overrides,
   };
 }

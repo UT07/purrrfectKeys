@@ -292,14 +292,18 @@ export async function addXp(uid: string, amount: number, source: string): Promis
     level: newLevel,
   });
 
-  // Log XP change
-  const logCollection = collection(db, 'users', uid, 'xpLog');
-  await setDoc(doc(logCollection), {
-    amount,
-    source,
-    newTotal: newXp,
-    timestamp: serverTimestamp(),
-  });
+  // Log XP change (best-effort — xpLog rules may block client writes)
+  try {
+    const logCollection = collection(db, 'users', uid, 'xpLog');
+    await setDoc(doc(logCollection), {
+      amount,
+      source,
+      newTotal: newXp,
+      timestamp: serverTimestamp(),
+    });
+  } catch {
+    // xpLog write failure is non-critical — gamification doc was already updated
+  }
 
   return newLevel;
 }

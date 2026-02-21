@@ -3,7 +3,7 @@
 **Created:** February 17, 2026
 **Target Launch:** June 8, 2026
 **Starting State:** 64 test suites, 1488 tests, 6 lessons (36 exercises), Phases 1-4 complete
-**Current State (Feb 20):** 75 test suites, 1,725 tests, Phase 5 complete
+**Current State (Feb 20):** 79 test suites, 1,789 tests, Phase 5 + 5.2 complete
 
 ---
 
@@ -78,6 +78,19 @@ RIVE  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓     (design a
 - [x] Free play mode with post-play analysis and drill generation
 - [x] 365-day content framework operational (skill tree + AI generation)
 - [x] ~80+ new tests (actual: ~150+ new tests)
+
+### Phase 5.2: 365-Day Curriculum Expansion (completed Feb 20)
+
+Expanded the adaptive learning system to support a full year of daily practice:
+
+- **SkillTree:** 27 → 100 nodes across 15 tiers (12 categories including black-keys, key-signatures, expression, arpeggios, sight-reading)
+- **Skill decay:** 14-day half-life linear model, 0.5 threshold triggers review sessions
+- **Multi-session mastery:** `requiredCompletions` field (1-5) — harder skills need multiple successful sessions
+- **Session types:** `selectSessionType()` returns new-material / review / challenge / mixed based on decay state and exercise count
+- **AI-only tiers 7-15:** No static JSON exercises; CurriculumEngine generates AI exercises via Gemini for all 73 new skill nodes
+- **UI updates:** DailySessionScreen session type badge + decay count indicator; LevelMap tier section headers
+- **Tests:** 31 new tests (SkillDecay, SessionTypes, yearLongProgression simulation)
+- **Docs:** stabilization-report.md trimmed from 795 → 105 lines (full archive preserved)
 
 ---
 

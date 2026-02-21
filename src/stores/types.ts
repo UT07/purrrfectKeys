@@ -98,7 +98,7 @@ export interface DailyGoalData {
  * ============================================================================
  */
 
-export type PlaybackSpeed = 0.5 | 0.75 | 1.0;
+export type PlaybackSpeed = 0.25 | 0.5 | 0.75 | 1.0;
 
 export interface AudioSettings {
   masterVolume: number; // 0-1
@@ -178,6 +178,13 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
  * ============================================================================
  */
 
+export interface SkillMasteryRecord {
+  masteredAt: number;        // epoch ms when first mastered
+  lastPracticedAt: number;   // epoch ms when last exercised
+  completionCount: number;   // successful completions toward mastery
+  decayScore: number;        // 1.0 = fresh, 0.0 = fully decayed
+}
+
 export interface NoteResult {
   midiNote: number;
   accuracy: number; // 0.0-1.0
@@ -207,6 +214,8 @@ export interface LearnerProfileState {
   lastAssessmentDate: string;
   assessmentScore: number;
   masteredSkills: string[];  // SkillTree node IDs the learner has mastered
+  skillMasteryData: Record<string, SkillMasteryRecord>;  // per-skill mastery tracking
+  recentExerciseIds: string[];  // last 10 exercise IDs (prevent same-day repeats)
 
   // Actions
   updateNoteAccuracy: (midiNote: number, accuracy: number) => void;
@@ -214,7 +223,84 @@ export interface LearnerProfileState {
   recalculateWeakAreas: () => void;
   recordExerciseResult: (result: ExerciseResult) => void;
   markSkillMastered: (skillId: string) => void;
+  recordSkillPractice: (skillId: string, passed: boolean) => void;
+  calculateDecayedSkills: () => string[];
+  addRecentExercise: (exerciseId: string) => void;
   reset: () => void;
+}
+
+/**
+ * ============================================================================
+ * EVOLUTION & GEM TYPES
+ * ============================================================================
+ */
+
+export type EvolutionStage = 'baby' | 'teen' | 'adult' | 'master';
+
+export const EVOLUTION_XP_THRESHOLDS: Record<EvolutionStage, number> = {
+  baby: 0,
+  teen: 500,
+  adult: 2000,
+  master: 5000,
+};
+
+/** Discriminated union for ability effects */
+export type AbilityEffect =
+  | { type: 'timing_window_multiplier'; multiplier: number }
+  | { type: 'tempo_reduction'; bpmReduction: number }
+  | { type: 'xp_multiplier'; multiplier: number }
+  | { type: 'combo_shield'; missesForgivenPerExercise: number }
+  | { type: 'score_boost'; percentageBoost: number }
+  | { type: 'hint_frequency_boost'; multiplier: number }
+  | { type: 'streak_saver'; freeSavesPerWeek: number }
+  | { type: 'gem_magnet'; bonusGemChance: number }
+  | { type: 'extra_retries'; extraRetries: number }
+  | { type: 'ghost_notes_extended'; extraFailsBeforeTrigger: number }
+  | { type: 'daily_xp_boost'; multiplier: number }
+  | { type: 'note_preview'; previewBeats: number }
+  | { type: 'perfect_shield'; shieldsPerExercise: number }
+  | { type: 'lucky_gems'; bonusGemMultiplier: number }
+  | { type: 'all_abilities_half'; description: string };
+
+export interface CatAbility {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // MaterialCommunityIcons name
+  effect: AbilityEffect;
+  unlockedAtStage: EvolutionStage;
+}
+
+export interface CatStageVisuals {
+  accessories: string[];   // SVG accessory identifiers to render
+  hasGlow: boolean;
+  hasParticles: boolean;
+  hasCrown: boolean;
+  auraIntensity: number;   // 0-1
+}
+
+export interface CatEvolutionData {
+  catId: string;
+  currentStage: EvolutionStage;
+  xpAccumulated: number;
+  abilitiesUnlocked: string[];
+  evolvedAt: Record<EvolutionStage, number | null>; // epoch ms or null
+}
+
+export interface GemTransaction {
+  amount: number;
+  source: string;
+  timestamp: number;
+  balance: number;
+}
+
+export interface DailyRewardDay {
+  day: number; // 1-7
+  reward: {
+    type: 'gems' | 'xp_boost' | 'streak_freeze' | 'chest';
+    amount: number;
+  };
+  claimed: boolean;
 }
 
 /**

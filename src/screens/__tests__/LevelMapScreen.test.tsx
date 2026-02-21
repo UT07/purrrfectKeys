@@ -1,9 +1,9 @@
 /**
  * LevelMapScreen UI Tests
  *
- * Tests the Duolingo-style vertical level map: lesson node rendering,
+ * Tests the Duolingo-style vertical level map: tier node rendering,
  * state-driven styling (completed / current / locked), navigation on tap,
- * header stats display, and auto-scroll to current node.
+ * header stats display, back button, and tier progression from SkillTree.
  */
 
 import React from 'react';
@@ -14,9 +14,10 @@ import { render, fireEvent } from '@testing-library/react-native';
 // ---------------------------------------------------------------------------
 
 const mockNavigate = jest.fn();
+const mockGoBack = jest.fn();
 const mockNavigation = {
   navigate: mockNavigate,
-  goBack: jest.fn(),
+  goBack: mockGoBack,
   dispatch: jest.fn(),
   setOptions: jest.fn(),
   addListener: jest.fn(() => jest.fn()),
@@ -89,8 +90,20 @@ jest.mock('../../stores/progressStore', () => ({
   ),
 }));
 
+let mockMasteredSkills: string[] = [];
+
+jest.mock('../../stores/learnerProfileStore', () => ({
+  useLearnerProfileStore: Object.assign(
+    (sel?: any) => {
+      const state = { masteredSkills: mockMasteredSkills };
+      return sel ? sel(state) : state;
+    },
+    { getState: () => ({ masteredSkills: mockMasteredSkills }) },
+  ),
+}));
+
 // ---------------------------------------------------------------------------
-// ContentLoader mock — 3 lessons with exercises
+// ContentLoader mock — 3 lessons (for tiers 1-3)
 // ---------------------------------------------------------------------------
 
 const MOCK_LESSONS = [
@@ -112,8 +125,6 @@ const MOCK_LESSONS = [
     metadata: { title: 'C Major Scale', description: 'Scales intro', difficulty: 2, estimatedMinutes: 15, skills: ['scales'] },
     exercises: [
       { id: 'lesson-02-ex-01', title: 'CDE Simple', order: 1, required: true },
-      { id: 'lesson-02-ex-02', title: 'CDEFG', order: 2, required: true },
-      { id: 'lesson-02-ex-03', title: 'Full Scale', order: 3, required: true },
     ],
     unlockRequirement: { type: 'lesson', lessonId: 'lesson-01' },
     xpReward: 75,
@@ -132,15 +143,16 @@ const MOCK_LESSONS = [
   },
 ];
 
-const MOCK_EXERCISES: Record<string, any[]> = {
-  'lesson-01': MOCK_LESSONS[0].exercises,
-  'lesson-02': MOCK_LESSONS[1].exercises,
-  'lesson-03': MOCK_LESSONS[2].exercises,
-};
-
 jest.mock('../../content/ContentLoader', () => ({
   getLessons: () => MOCK_LESSONS,
-  getLessonExercises: (id: string) => MOCK_EXERCISES[id] ?? [],
+  getLessonExercises: (id: string) => {
+    const map: Record<string, any[]> = {
+      'lesson-01': MOCK_LESSONS[0].exercises,
+      'lesson-02': MOCK_LESSONS[1].exercises,
+      'lesson-03': MOCK_LESSONS[2].exercises,
+    };
+    return map[id] ?? [];
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -155,10 +167,12 @@ import { LevelMapScreen } from '../LevelMapScreen';
 
 function resetMocks() {
   mockNavigate.mockClear();
+  mockGoBack.mockClear();
   mockProgressState = {
     ...mockProgressState,
     lessonProgress: {},
   };
+  mockMasteredSkills = [];
 }
 
 // ---------------------------------------------------------------------------
@@ -177,16 +191,42 @@ describe('LevelMapScreen', () => {
     expect(getByText('Your Journey')).toBeTruthy();
   });
 
-  it('renders all lesson nodes with their titles', () => {
+  it('renders tier node titles', () => {
     const { getByText } = render(<LevelMapScreen />);
-    expect(getByText('Hello Piano')).toBeTruthy();
-    expect(getByText('C Major Scale')).toBeTruthy();
-    expect(getByText('Simple Melodies')).toBeTruthy();
+    // Tier 1 and some later tiers should be present
+    expect(getByText('Note Finding')).toBeTruthy();
+    expect(getByText('Black Keys')).toBeTruthy();
+    expect(getByText('Performance')).toBeTruthy();
   });
 
   it('renders gradient header', () => {
     const { getByTestId } = render(<LevelMapScreen />);
     expect(getByTestId('linear-gradient')).toBeTruthy();
+  });
+
+  it('renders 15 tier nodes', () => {
+    const { getByText } = render(<LevelMapScreen />);
+    // Spot-check several tiers
+    expect(getByText('Note Finding')).toBeTruthy();
+    expect(getByText('Right Hand Melodies')).toBeTruthy();
+    expect(getByText('Left Hand Basics')).toBeTruthy();
+    expect(getByText('Chord Progressions')).toBeTruthy();
+    expect(getByText('Sight Reading')).toBeTruthy();
+  });
+
+  // =========================================================================
+  // Back button
+  // =========================================================================
+
+  it('renders back button', () => {
+    const { getByTestId } = render(<LevelMapScreen />);
+    expect(getByTestId('level-map-back')).toBeTruthy();
+  });
+
+  it('back button calls goBack', () => {
+    const { getByTestId } = render(<LevelMapScreen />);
+    fireEvent.press(getByTestId('level-map-back'));
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
   // =========================================================================
@@ -196,39 +236,26 @@ describe('LevelMapScreen', () => {
   describe('fresh user (no progress)', () => {
     beforeEach(() => {
       mockProgressState.lessonProgress = {};
+      mockMasteredSkills = [];
     });
 
-    it('shows lesson 1 as current (play icon + START chip)', () => {
-      const { getByText, getAllByText } = render(<LevelMapScreen />);
+    it('shows tier 1 as current (START chip)', () => {
+      const { getByText } = render(<LevelMapScreen />);
       expect(getByText('START')).toBeTruthy();
-      // The play icon is rendered as text "play" by our icon mock
-      expect(getAllByText('play').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('shows lessons 2 and 3 as locked', () => {
-      const { getAllByText } = render(<LevelMapScreen />);
-      // Lock icons rendered as "lock" text by mock
-      const locks = getAllByText('lock');
-      expect(locks).toHaveLength(2);
-    });
-
-    it('shows "Complete previous" hint on locked lessons', () => {
+    it('shows locked hints on later tiers', () => {
       const { getAllByText } = render(<LevelMapScreen />);
       const hints = getAllByText('Complete previous');
-      expect(hints).toHaveLength(2);
-    });
-
-    it('header shows 0/3 completed count', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      expect(getByText('0/3')).toBeTruthy();
+      expect(hints.length).toBeGreaterThanOrEqual(1);
     });
   });
 
   // =========================================================================
-  // Node states — lesson 1 completed
+  // Node states — tier 1 completed via lesson progress
   // =========================================================================
 
-  describe('lesson 1 completed', () => {
+  describe('tier 1 completed via lesson progress', () => {
     beforeEach(() => {
       mockProgressState.lessonProgress = {
         'lesson-01': {
@@ -239,109 +266,17 @@ describe('LevelMapScreen', () => {
           },
         },
       };
+      mockMasteredSkills = ['find-middle-c', 'keyboard-geography', 'white-keys'];
     });
 
-    it('shows lesson 1 with check icon (completed)', () => {
+    it('shows tier 1 as completed (check icon)', () => {
       const { getAllByText } = render(<LevelMapScreen />);
       expect(getAllByText('check-bold').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('shows stars for completed lesson', () => {
-      const { getAllByText } = render(<LevelMapScreen />);
-      // Stars are rendered as "star" or "star-outline" by the icon mock
-      const stars = getAllByText('star');
-      expect(stars.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('shows lesson 2 as current', () => {
+    it('shows tier 2 as current', () => {
       const { getByText } = render(<LevelMapScreen />);
       expect(getByText('START')).toBeTruthy();
-    });
-
-    it('shows lesson 3 still locked', () => {
-      const { getAllByText } = render(<LevelMapScreen />);
-      const locks = getAllByText('lock');
-      expect(locks).toHaveLength(1);
-    });
-
-    it('header shows 1/3 completed count', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      expect(getByText('1/3')).toBeTruthy();
-    });
-  });
-
-  // =========================================================================
-  // Node states — all completed
-  // =========================================================================
-
-  describe('all lessons completed', () => {
-    beforeEach(() => {
-      mockProgressState.lessonProgress = {
-        'lesson-01': {
-          status: 'completed',
-          exerciseScores: {
-            'lesson-01-ex-01': { completedAt: '2026-02-15', stars: 3 },
-            'lesson-01-ex-02': { completedAt: '2026-02-15', stars: 3 },
-          },
-        },
-        'lesson-02': {
-          status: 'completed',
-          exerciseScores: {
-            'lesson-02-ex-01': { completedAt: '2026-02-16', stars: 3 },
-            'lesson-02-ex-02': { completedAt: '2026-02-16', stars: 2 },
-            'lesson-02-ex-03': { completedAt: '2026-02-16', stars: 3 },
-          },
-        },
-        'lesson-03': {
-          status: 'completed',
-          exerciseScores: {
-            'lesson-03-ex-01': { completedAt: '2026-02-16', stars: 3 },
-          },
-        },
-      };
-    });
-
-    it('shows all 3 check icons', () => {
-      const { getAllByText } = render(<LevelMapScreen />);
-      expect(getAllByText('check-bold')).toHaveLength(3);
-    });
-
-    it('shows no locked nodes', () => {
-      const { queryAllByText } = render(<LevelMapScreen />);
-      expect(queryAllByText('lock')).toHaveLength(0);
-    });
-
-    it('shows no START chip', () => {
-      const { queryByText } = render(<LevelMapScreen />);
-      expect(queryByText('START')).toBeNull();
-    });
-
-    it('header shows 3/3 completed count', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      expect(getByText('3/3')).toBeTruthy();
-    });
-  });
-
-  // =========================================================================
-  // Current lesson with partial progress
-  // =========================================================================
-
-  describe('current lesson with partial progress', () => {
-    beforeEach(() => {
-      mockProgressState.lessonProgress = {
-        'lesson-01': {
-          status: 'in_progress',
-          exerciseScores: {
-            'lesson-01-ex-01': { completedAt: '2026-02-15', stars: 2 },
-            // ex-02 not yet completed
-          },
-        },
-      };
-    });
-
-    it('shows progress count on current lesson (1/2)', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      expect(getByText('1/2')).toBeTruthy();
     });
   });
 
@@ -350,30 +285,15 @@ describe('LevelMapScreen', () => {
   // =========================================================================
 
   describe('navigation', () => {
-    it('navigates to LessonIntro when tapping current lesson', () => {
+    it('navigates to LessonIntro for tier 1-6 nodes', () => {
       const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('Hello Piano'));
+      fireEvent.press(getByText('Note Finding'));
       expect(mockNavigate).toHaveBeenCalledWith('LessonIntro', { lessonId: 'lesson-01' });
     });
 
-    it('navigates to LessonIntro when tapping completed lesson', () => {
-      mockProgressState.lessonProgress = {
-        'lesson-01': {
-          status: 'completed',
-          exerciseScores: {
-            'lesson-01-ex-01': { completedAt: '2026-02-15', stars: 3 },
-            'lesson-01-ex-02': { completedAt: '2026-02-15', stars: 3 },
-          },
-        },
-      };
+    it('does NOT navigate when tapping a locked tier', () => {
       const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('Hello Piano'));
-      expect(mockNavigate).toHaveBeenCalledWith('LessonIntro', { lessonId: 'lesson-01' });
-    });
-
-    it('does NOT navigate when tapping a locked lesson', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('C Major Scale'));
+      fireEvent.press(getByText('Black Keys'));
       expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
@@ -384,26 +304,17 @@ describe('LevelMapScreen', () => {
 
   it('renders SVG connector paths between nodes', () => {
     const { getByTestId } = render(<LevelMapScreen />);
-    // SVG container is present
     expect(getByTestId('svg-container')).toBeTruthy();
   });
 
   // =========================================================================
-  // Header star total
+  // Header stats
   // =========================================================================
 
-  it('displays total stars across all completed lessons', () => {
-    mockProgressState.lessonProgress = {
-      'lesson-01': {
-        status: 'completed',
-        exerciseScores: {
-          'lesson-01-ex-01': { completedAt: '2026-02-15', stars: 3 },
-          'lesson-01-ex-02': { completedAt: '2026-02-15', stars: 2 },
-        },
-      },
-    };
+  it('displays completed tier count and total skills in header', () => {
     const { getByText } = render(<LevelMapScreen />);
-    // Total stars: 3 + 2 = 5 displayed in header badge
-    expect(getByText('5')).toBeTruthy();
+    // Fresh user: 0/15 tiers, 0 skills
+    expect(getByText('0/15')).toBeTruthy();
+    expect(getByText('0 skills')).toBeTruthy();
   });
 });

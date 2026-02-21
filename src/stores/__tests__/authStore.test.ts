@@ -619,7 +619,7 @@ describe('Auth Store', () => {
       expect(state.isLoading).toBe(false);
     });
 
-    it('should handle auth/requires-recent-login error', async () => {
+    it('should return REQUIRES_REAUTH sentinel on auth/requires-recent-login error', async () => {
       const mockUser = createMockUser();
       const error = { code: 'auth/requires-recent-login', message: 'Recent login required' };
       mockDeleteUserData.mockResolvedValue(undefined);
@@ -630,10 +630,11 @@ describe('Auth Store', () => {
         isAuthenticated: true,
       });
 
-      await useAuthStore.getState().deleteAccount();
+      const result = await useAuthStore.getState().deleteAccount();
 
       const state = useAuthStore.getState();
-      expect(state.error).toBeTruthy();
+      expect(result).toBe('REQUIRES_REAUTH');
+      expect(state.error).toBeNull();
       expect(state.isLoading).toBe(false);
     });
 

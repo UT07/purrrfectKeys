@@ -21,6 +21,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
+import { GoogleAuthProvider, OAuthProvider, EmailAuthProvider } from 'firebase/auth';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 function isGoogleAuthAvailable(): boolean {
@@ -74,6 +75,75 @@ export function AccountScreen(): React.ReactElement {
     );
   }, [authSignOut]);
 
+  const handleReauthAndDelete = useCallback(async () => {
+    const reauthAndDelete = useAuthStore.getState().reauthenticateAndDelete;
+
+    // Determine provider
+    const providers = user?.providerData?.map(p => p.providerId) ?? [];
+
+    if (providers.includes('google.com')) {
+      try {
+        if (!isGoogleAuthAvailable()) {
+          Alert.alert('Error', 'Google Sign-In is not available.');
+          return;
+        }
+        const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        if (response.type === 'cancelled') return;
+        const idToken = response.data?.idToken;
+        if (!idToken) return;
+        const credential = GoogleAuthProvider.credential(idToken);
+        await reauthAndDelete(credential);
+      } catch (err) {
+        console.warn('[AccountScreen] Google re-auth failed:', err);
+        Alert.alert('Re-authentication Failed', 'Please try again.');
+      }
+    } else if (providers.includes('apple.com')) {
+      try {
+        if (!isAppleAuthAvailable()) {
+          Alert.alert('Error', 'Apple Sign-In is not available.');
+          return;
+        }
+        const AppleAuth = require('expo-apple-authentication');
+        const crypto = require('expo-crypto');
+        const rawNonce = Math.random().toString(36).substring(2, 18) + Math.random().toString(36).substring(2, 18);
+        const hashedNonce = await crypto.digestStringAsync(
+          crypto.CryptoDigestAlgorithm.SHA256,
+          rawNonce
+        );
+        const cred = await AppleAuth.signInAsync({
+          requestedScopes: [AppleAuth.AppleAuthenticationScope.EMAIL],
+          nonce: hashedNonce,
+        });
+        if (cred.identityToken) {
+          const provider = new OAuthProvider('apple.com');
+          const credential = provider.credential({
+            idToken: cred.identityToken,
+            rawNonce,
+          });
+          await reauthAndDelete(credential);
+        }
+      } catch (err) {
+        console.warn('[AccountScreen] Apple re-auth failed:', err);
+        Alert.alert('Re-authentication Failed', 'Please try again.');
+      }
+    } else if (providers.includes('password')) {
+      Alert.prompt(
+        'Re-authenticate',
+        'Enter your password to confirm account deletion.',
+        async (password) => {
+          if (!password || !user?.email) return;
+          const credential = EmailAuthProvider.credential(user.email, password);
+          await reauthAndDelete(credential);
+        },
+        'secure-text'
+      );
+    } else {
+      Alert.alert('Error', 'Unable to determine sign-in method for re-authentication.');
+    }
+  }, [user]);
+
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
       'Delete Account',
@@ -84,12 +154,22 @@ export function AccountScreen(): React.ReactElement {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await authDeleteAccount();
+            const result = await authDeleteAccount();
+            if (result === 'REQUIRES_REAUTH') {
+              Alert.alert(
+                'Re-authentication Required',
+                'For security, please sign in again to delete your account.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Continue', onPress: handleReauthAndDelete },
+                ]
+              );
+            }
           },
         },
       ]
     );
-  }, [authDeleteAccount]);
+  }, [authDeleteAccount, handleReauthAndDelete]);
 
   const handleSaveName = useCallback(async () => {
     if (newName.trim().length < 2) return;
@@ -157,6 +237,8 @@ export function AccountScreen(): React.ReactElement {
     }
   }, []);
 
+  const selectedCatId = useSettingsStore((s) => s.selectedCatId);
+
   // Anonymous user → show account linking CTA
   if (isAnonymous) {
     return (
@@ -166,7 +248,7 @@ export function AccountScreen(): React.ReactElement {
         </TouchableOpacity>
 
         <View style={styles.anonHero}>
-          <CatAvatar catId={useSettingsStore.getState().selectedCatId ?? 'mini-meowww'} size="large" />
+          <CatAvatar catId={selectedCatId ?? 'mini-meowww'} size="large" />
           <Text style={styles.anonTitle}>Create an account to save your progress across devices!</Text>
         </View>
 

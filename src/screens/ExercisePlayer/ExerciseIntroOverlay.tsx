@@ -14,28 +14,40 @@ import { COLORS } from '@/theme/tokens';
 interface ExerciseIntroOverlayProps {
   exercise: Exercise;
   onReady: () => void;
+  skillTarget?: string;
   testID?: string;
 }
 
 export function ExerciseIntroOverlay({
   exercise,
   onReady,
+  skillTarget,
   testID,
 }: ExerciseIntroOverlayProps): React.ReactElement {
   const { title, description, difficulty } = exercise.metadata;
   const { tempo, keySignature, timeSignature } = exercise.settings;
   const difficultyStars = '★'.repeat(difficulty) + '☆'.repeat(5 - difficulty);
-  const hand = exercise.notes.some(n => n.hand === 'left') && exercise.notes.some(n => n.hand === 'right')
+  const hasLeft = exercise.notes.some(n => n.hand === 'left');
+  const hasRight = exercise.notes.some(n => n.hand === 'right');
+  const hand = hasLeft && hasRight
     ? 'Both hands'
-    : exercise.notes.some(n => n.hand === 'left')
+    : hasLeft
       ? 'Left hand'
-      : 'Right hand';
+      : hasRight
+        ? 'Right hand'
+        : 'Both hands';
   const noteCount = exercise.notes.length;
 
   return (
     <View style={styles.overlay} testID={testID}>
       <View style={styles.card}>
         <Text style={styles.title}>{title}</Text>
+        {skillTarget && (
+          <View style={styles.skillBadge}>
+            <Text style={styles.skillBadgeLabel}>SKILL</Text>
+            <Text style={styles.skillBadgeText}>{skillTarget}</Text>
+          </View>
+        )}
         <Text style={styles.description}>{description}</Text>
 
         <View style={styles.infoGrid}>
@@ -106,6 +118,27 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
+  },
+  skillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(220, 20, 60, 0.12)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  skillBadgeLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: COLORS.primary,
+    letterSpacing: 1,
+  },
+  skillBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#CCC',
   },
   description: {
     fontSize: 14,

@@ -4,7 +4,7 @@
  * daily goal arc, streak flame, stats pills, and continue learning card
  */
 
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -21,6 +21,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { DailyChallengeCard } from '../components/DailyChallengeCard';
+import { DailyRewardCalendar } from '../components/DailyRewardCalendar';
+import { GemEarnPopup } from '../components/GemEarnPopup';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { MascotBubble } from '../components/Mascot/MascotBubble';
 import { StreakFlame } from '../components/StreakFlame';
@@ -28,7 +30,13 @@ import { getRandomCatMessage } from '../content/catDialogue';
 import { calculateCatMood } from '../core/catMood';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { getLessons, getLessonExercises, isPostCurriculum } from '../content/ContentLoader';
+import { useGemStore } from '../stores/gemStore';
+import { useCatEvolutionStore, xpToNextStage } from '../stores/catEvolutionStore';
+import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
+import { getLessons } from '../content/ContentLoader';
+import { getNextSkillToLearn } from '../core/curriculum/CurriculumEngine';
+import { SKILL_TREE } from '../core/curriculum/SkillTree';
+import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -82,14 +90,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
   const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(1, minutesPracticedToday / dailyGoalMinutes) : 0;
 
-  // Next exercise computation
-  const { nextExerciseTitle, nextExerciseId, currentLessonLabel, exerciseProgress, totalCompleted } = useMemo(() => {
+  // Curriculum-driven progress
+  const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
+  const totalSkills = SKILL_TREE.length;
+  const skillProgress = Math.round((masteredSkills.length / totalSkills) * 100);
+
+  const { nextExerciseTitle, currentLessonLabel, totalCompleted } = useMemo(() => {
+    const nextSkill = getNextSkillToLearn(masteredSkills);
     const lessons = getLessons();
     let totalDone = 0;
-    let totalEx = 0;
     for (const lesson of lessons) {
-      const exercises = getLessonExercises(lesson.id);
-      totalEx += exercises.length;
       const lp = lessonProgress[lesson.id];
       const completedCount = lp
         ? Object.values(lp.exerciseScores).filter((s) => s.completedAt != null).length
@@ -97,39 +107,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       totalDone += completedCount;
     }
 
-    for (const lesson of lessons) {
-      const exercises = getLessonExercises(lesson.id);
-      if (exercises.length === 0) continue;
-      const lp = lessonProgress[lesson.id];
-      const completedCount = lp
-        ? Object.values(lp.exerciseScores).filter((s) => s.completedAt != null).length
-        : 0;
-      const progress = Math.round((completedCount / exercises.length) * 100);
-      if (completedCount < exercises.length) {
-        const nextEx = exercises.find((ex) => {
-          const score = lp?.exerciseScores[ex.id];
-          return !score || score.completedAt == null;
-        });
-        return {
-          nextExerciseTitle: nextEx?.metadata.title ?? exercises[0].metadata.title,
-          nextExerciseId: nextEx?.id ?? exercises[0].id,
-          currentLessonLabel: lesson.metadata.title,
-          exerciseProgress: progress,
-          totalCompleted: totalDone,
-          totalExercises: totalEx,
-        };
-      }
-    }
-    const allComplete = isPostCurriculum(lessonProgress);
     return {
-      nextExerciseTitle: allComplete ? 'AI Practice' : 'All Complete!',
-      nextExerciseId: null as string | null,
-      currentLessonLabel: allComplete ? 'Adaptive Practice' : (lessons[lessons.length - 1]?.metadata.title ?? 'Lessons'),
-      exerciseProgress: 100,
+      nextExerciseTitle: nextSkill?.name ?? "Today's Practice",
+      currentLessonLabel: `${masteredSkills.length} skills mastered`,
       totalCompleted: totalDone,
-      totalExercises: totalEx,
     };
-  }, [lessonProgress]);
+  }, [lessonProgress, masteredSkills]);
 
   // Cat mood & dialogue
   const catMood = useMemo(() => calculateCatMood({
@@ -145,12 +128,50 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const mascotMood = catMood === 'happy' ? 'happy' : catMood === 'sleepy' ? 'encouraging' : 'teaching';
 
+  // Gem store
+  const gems = useGemStore((s) => s.gems);
+  const earnGems = useGemStore((s) => s.earnGems);
+
+  // Cat evolution store
+  const dailyRewards = useCatEvolutionStore((s) => s.dailyRewards);
+  const claimDailyReward = useCatEvolutionStore((s) => s.claimDailyReward);
+  const evolutionData = useCatEvolutionStore((s) => s.evolutionData);
+  const activeCatId = selectedCatId ?? 'mini-meowww';
+  const activeCatEvolution = evolutionData[activeCatId];
+  const evolutionNext = useMemo(
+    () => (activeCatEvolution ? xpToNextStage(activeCatEvolution.xpAccumulated) : null),
+    [activeCatEvolution],
+  );
+  const evolutionProgressPct = useMemo(() => {
+    if (!activeCatEvolution) return 0;
+    const currentXp = activeCatEvolution.xpAccumulated;
+    const stage = activeCatEvolution.currentStage;
+    const stageStart = EVOLUTION_XP_THRESHOLDS[stage];
+    if (!evolutionNext) return 100; // at master
+    const stageEnd = stageStart + evolutionNext.xpNeeded + (currentXp - stageStart);
+    const range = stageEnd - stageStart;
+    if (range <= 0) return 100;
+    return Math.round(((currentXp - stageStart) / range) * 100);
+  }, [activeCatEvolution, evolutionNext]);
+
+  // Gem earn popup state
+  const [gemPopup, setGemPopup] = useState<{ amount: number; key: number } | null>(null);
+
+  const handleClaimReward = useCallback((day: number) => {
+    const reward = claimDailyReward(day);
+    if (!reward) return;
+    if (reward.type === 'gems' || reward.type === 'chest') {
+      earnGems(reward.amount, 'daily-reward');
+      setGemPopup({ amount: reward.amount, key: Date.now() });
+    }
+  }, [claimDailyReward, earnGems]);
+
   // Stagger animation
   const fadeAnims = useRef(
-    Array.from({ length: 6 }, () => new Animated.Value(0))
+    Array.from({ length: 8 }, () => new Animated.Value(0))
   ).current;
   const slideAnims = useRef(
-    Array.from({ length: 6 }, () => new Animated.Value(30))
+    Array.from({ length: 8 }, () => new Animated.Value(30))
   ).current;
 
   useEffect(() => {
@@ -174,8 +195,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   }, [fadeAnims, slideAnims]);
 
   const staggerStyle = (index: number) => ({
-    opacity: fadeAnims[Math.min(index, 5)],
-    transform: [{ translateY: slideAnims[Math.min(index, 5)] }],
+    opacity: fadeAnims[Math.min(index, 7)],
+    transform: [{ translateY: slideAnims[Math.min(index, 7)] }],
   });
 
   // Goal arc offset
@@ -195,18 +216,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             colors={[GRADIENTS.header[0], GRADIENTS.header[1], COLORS.background]}
             style={styles.hero}
           >
-            {/* Top bar: greeting + settings */}
+            {/* Top bar: greeting + gem counter + settings */}
             <View style={styles.topBar}>
               <View>
                 <Text style={styles.greeting}>{getGreeting()}</Text>
                 <Text style={styles.greetingName}>{displayName}</Text>
               </View>
-              <TouchableOpacity
-                style={styles.settingsBtn}
-                onPress={onNavigateToSettings ?? (() => navigation.navigate('MidiSetup'))}
-              >
-                <MaterialCommunityIcons name="cog-outline" size={24} color={COLORS.textSecondary} />
-              </TouchableOpacity>
+              <View style={styles.topBarRight}>
+                <View style={styles.gemCounter} testID="gem-counter">
+                  <MaterialCommunityIcons name="diamond-stone" size={18} color={COLORS.gemGold} />
+                  <Text style={styles.gemCountText}>{gems}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.settingsBtn}
+                  onPress={onNavigateToSettings ?? (() => navigation.navigate('MidiSetup'))}
+                >
+                  <MaterialCommunityIcons name="cog-outline" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Center: Cat avatar with goal arc + streak */}
@@ -260,6 +287,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={styles.xpText}>{totalXp} XP</Text>
                 </View>
               </View>
+
+              {/* Evolution XP progress bar */}
+              {activeCatEvolution && (
+                <View style={styles.evolutionBar} testID="evolution-progress">
+                  <MaterialCommunityIcons name="paw" size={14} color={COLORS.evolutionGlow} />
+                  <View style={styles.evolutionTrack}>
+                    <View style={[styles.evolutionFill, { width: `${evolutionProgressPct}%` }]} />
+                  </View>
+                  <Text style={styles.evolutionLabel}>
+                    {activeCatEvolution.currentStage === 'master'
+                      ? 'MAX'
+                      : evolutionNext
+                        ? `${evolutionNext.xpNeeded} to ${evolutionNext.nextStage}`
+                        : ''}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Goal progress text */}
@@ -287,28 +331,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         </Animated.View>
 
-        {/* Daily Challenge Card */}
+        {/* Daily Reward Calendar */}
         <Animated.View style={[styles.section, staggerStyle(2)]}>
+          <View style={styles.dailyRewardWrapper}>
+            <DailyRewardCalendar
+              days={dailyRewards.days}
+              currentDay={dailyRewards.currentDay}
+              onClaim={handleClaimReward}
+            />
+            {gemPopup && (
+              <GemEarnPopup
+                key={gemPopup.key}
+                amount={gemPopup.amount}
+                onComplete={() => setGemPopup(null)}
+                offsetY={-10}
+              />
+            )}
+          </View>
+        </Animated.View>
+
+        {/* Daily Challenge Card */}
+        <Animated.View style={[styles.section, staggerStyle(3)]}>
           <DailyChallengeCard onPress={() => {
-            if (nextExerciseId) {
-              navigation.navigate('Exercise', { exerciseId: nextExerciseId });
-            }
+            navigation.navigate('MainTabs', { screen: 'Learn' } as any);
           }} />
         </Animated.View>
 
         {/* Continue Learning Card */}
-        <Animated.View style={[styles.section, staggerStyle(3)]}>
+        <Animated.View style={[styles.section, staggerStyle(4)]}>
           <Text style={styles.sectionTitle}>Continue Learning</Text>
           <TouchableOpacity
             style={styles.continueCard}
             onPress={onNavigateToExercise ?? (() => {
-              if (nextExerciseId) {
-                navigation.navigate('Exercise', { exerciseId: nextExerciseId });
-              } else if (isPostCurriculum(lessonProgress)) {
-                navigation.navigate('Exercise', { exerciseId: 'ai-mode', aiMode: true });
-              } else {
-                navigation.navigate('MainTabs', { screen: 'Learn' } as any);
-              }
+              navigation.navigate('MainTabs', { screen: 'Learn' } as any);
             })}
             activeOpacity={0.7}
             testID="home-continue-learning"
@@ -329,16 +384,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
               <View style={styles.continueProgressRow}>
                 <View style={styles.continueProgressTrack}>
-                  <View style={[styles.continueProgressFill, { width: `${exerciseProgress}%` }]} />
+                  <View style={[styles.continueProgressFill, { width: `${skillProgress}%` }]} />
                 </View>
-                <Text style={styles.continueProgressText}>{exerciseProgress}%</Text>
+                <Text style={styles.continueProgressText}>{skillProgress}%</Text>
               </View>
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
 
         {/* Quick Stats Row */}
-        <Animated.View style={[styles.section, staggerStyle(4)]}>
+        <Animated.View style={[styles.section, staggerStyle(5)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
             <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
@@ -348,7 +403,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Animated.View>
 
         {/* Quick Actions Grid */}
-        <Animated.View style={[styles.section, staggerStyle(5)]}>
+        <Animated.View style={[styles.section, staggerStyle(6)]}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
             <ActionCard
@@ -362,13 +417,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               label="Practice"
               gradient={['#0A1A2E', '#1B2D4E']}
               onPress={onNavigateToExercise ?? (() => {
-                if (nextExerciseId) {
-                  navigation.navigate('Exercise', { exerciseId: nextExerciseId });
-                } else if (isPostCurriculum(lessonProgress)) {
-                  navigation.navigate('Exercise', { exerciseId: 'ai-mode', aiMode: true });
-                } else {
-                  navigation.navigate('MainTabs', { screen: 'Learn' } as any);
-                }
+                navigation.navigate('MainTabs', { screen: 'Learn' } as any);
               })}
             />
             <ActionCard
@@ -378,10 +427,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               onPress={onNavigateToSongs ?? (() => navigation.navigate('FreePlay'))}
             />
             <ActionCard
-              icon="tune-variant"
-              label="Settings"
+              icon="cat"
+              label="Collection"
               gradient={['#2E1A0A', '#4E2D1B']}
-              onPress={onNavigateToSettings ?? (() => navigation.navigate('MidiSetup'))}
+              onPress={() => navigation.navigate('CatCollection')}
             />
           </View>
         </Animated.View>
@@ -447,6 +496,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginTop: 2,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  gemCounter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.25)',
+  },
+  gemCountText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.gemGold,
   },
   settingsBtn: {
     padding: SPACING.sm,
@@ -535,6 +605,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.success,
+  },
+  // Evolution XP bar
+  evolutionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    width: GOAL_ARC_SIZE + 40,
+  },
+  evolutionTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: 'rgba(225, 190, 231, 0.15)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  evolutionFill: {
+    height: '100%',
+    backgroundColor: COLORS.evolutionGlow,
+    borderRadius: 2,
+  },
+  evolutionLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: COLORS.evolutionGlow,
+    minWidth: 50,
+  },
+  // Daily reward wrapper
+  dailyRewardWrapper: {
+    position: 'relative' as const,
   },
   // Sections
   section: {

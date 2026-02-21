@@ -652,6 +652,19 @@ export function SkillAssessmentScreen(): React.ReactElement {
         }
       }
 
+      // Seed mastered skills based on assessment performance.
+      // 80%+ average → mark foundational skills as mastered so
+      // DailySession starts at an appropriate difficulty.
+      if (avgScore >= 0.8) {
+        const earlySkills = ['find-middle-c', 'keyboard-geography', 'white-keys'];
+        for (const skillId of earlySkills) {
+          profileStore.markSkillMastered(skillId);
+        }
+      }
+      if (avgScore >= 0.6) {
+        profileStore.markSkillMastered('find-middle-c');
+      }
+
       setPhase('complete');
     } else {
       setCurrentRoundIndex((prev) => prev + 1);
@@ -663,11 +676,6 @@ export function SkillAssessmentScreen(): React.ReactElement {
   const handleContinue = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
-
-  const expectedNoteSet = useMemo(() => {
-    if (!currentRound) return new Set<number>();
-    return new Set(currentRound.notes.map((n) => n.note));
-  }, [currentRound]);
 
   const focusNote = useMemo(() => {
     if (!currentRound || currentRound.notes.length === 0) return undefined;
@@ -775,7 +783,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
             octaveCount={keyboardRange.octaveCount}
             onNoteOn={handleNoteOn}
             onNoteOff={handleNoteOff}
-            expectedNotes={expectedNoteSet}
+            expectedNotes={undefined}
             enabled={true}
             showLabels={true}
             scrollable={!fitsOnScreen}

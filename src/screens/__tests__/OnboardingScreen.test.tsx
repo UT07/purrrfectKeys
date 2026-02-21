@@ -1,10 +1,11 @@
 /**
  * OnboardingScreen Tests
- * Comprehensive UI tests for the 4-step onboarding flow:
+ * Comprehensive UI tests for the 5-step onboarding flow:
  * 1. Welcome
  * 2. Experience Level
  * 3. Equipment Check
  * 4. Goal Setting
+ * 5. Choose Your Cat Companion
  *
  * Covers rendering, navigation, step progression, settings persistence,
  * progress bar, cat avatar, and edge cases.
@@ -31,6 +32,7 @@ let mockSettingsState: any = {
   setHasCompletedOnboarding: jest.fn(),
   setPlaybackSpeed: jest.fn(),
   updateMidiSettings: jest.fn(),
+  setSelectedCatId: jest.fn(),
 };
 
 jest.mock('../../stores/settingsStore', () => ({
@@ -44,6 +46,19 @@ jest.mock('../../stores/settingsStore', () => ({
           typeof s === 'function' ? s(mockSettingsState) : s,
         );
       },
+    },
+  ),
+}));
+
+// Mock catEvolutionStore
+const mockInitializeStarterCat = jest.fn();
+jest.mock('../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: Object.assign(
+    (selector: any) => selector({ selectedCatId: '', ownedCats: [] }),
+    {
+      getState: () => ({
+        initializeStarterCat: mockInitializeStarterCat,
+      }),
     },
   ),
 }));
@@ -122,6 +137,53 @@ jest.mock('../../components/Mascot/catCharacters', () => ({
       pattern: 'tuxedo',
     },
   }),
+  getStarterCats: () => [
+    {
+      id: 'mini-meowww',
+      name: 'Mini Meowww',
+      personality: 'Tiny but Mighty',
+      musicSkill: 'Precision & Expression',
+      color: '#DC143C',
+      visuals: {
+        bodyColor: '#1A1A1A',
+        bellyColor: '#F5F5F5',
+        earInnerColor: '#DC143C',
+        eyeColor: '#2ECC71',
+        noseColor: '#DC143C',
+        pattern: 'tuxedo',
+      },
+    },
+    {
+      id: 'jazzy',
+      name: 'Jazzy',
+      personality: 'Cool & Smooth',
+      musicSkill: 'Jazz Improvisation',
+      color: '#9B59B6',
+      visuals: {
+        bodyColor: '#4A4A6A',
+        bellyColor: '#6B6B8A',
+        earInnerColor: '#9B59B6',
+        eyeColor: '#D4A5FF',
+        noseColor: '#9B59B6',
+        pattern: 'solid',
+      },
+    },
+    {
+      id: 'luna',
+      name: 'Luna',
+      personality: 'Mysterious',
+      musicSkill: 'Moonlight Compositions',
+      color: '#5B6EAE',
+      visuals: {
+        bodyColor: '#1C1C3A',
+        bellyColor: '#2A2A52',
+        earInnerColor: '#5B6EAE',
+        eyeColor: '#7EB8FF',
+        noseColor: '#3D4F8A',
+        pattern: 'solid',
+      },
+    },
+  ],
 }));
 
 // Mock expo-linear-gradient as plain View
@@ -196,6 +258,7 @@ function resetSettingsState(overrides: Partial<typeof mockSettingsState> = {}) {
     setHasCompletedOnboarding: jest.fn(),
     setPlaybackSpeed: jest.fn(),
     updateMidiSettings: jest.fn(),
+    setSelectedCatId: jest.fn(),
     ...overrides,
   };
 }
@@ -208,6 +271,7 @@ describe('OnboardingScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetSettingsState();
+    mockInitializeStarterCat.mockClear();
   });
 
   // -----------------------------------------------------------------------
@@ -329,6 +393,20 @@ describe('OnboardingScreen', () => {
 
       expect(getByText("What's Your Goal?")).toBeTruthy();
     });
+
+    it('advances from Goal Setting (step 4) to Cat Selection (step 5)', () => {
+      const { getByText } = render(<OnboardingScreen />);
+
+      fireEvent.press(getByText('Get Started'));
+      fireEvent.press(getByText('Complete Beginner'));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+
+      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -370,12 +448,28 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Back'));
       expect(getByText('Do You Have a MIDI Keyboard?')).toBeTruthy();
     });
+
+    it('goes back from step 5 to step 4', () => {
+      const { getByText } = render(<OnboardingScreen />);
+
+      fireEvent.press(getByText('Get Started'));
+      fireEvent.press(getByText('Complete Beginner'));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+
+      fireEvent.press(getByText('Back'));
+      expect(getByText("What's Your Goal?")).toBeTruthy();
+    });
   });
 
   // -----------------------------------------------------------------------
-  // 5. All 4 steps render
+  // 5. All 5 steps render
   // -----------------------------------------------------------------------
-  describe('All 4 steps render', () => {
+  describe('All 5 steps render', () => {
     it('step 1: Welcome renders title', () => {
       const { getByText } = render(<OnboardingScreen />);
       expect(getByText('Welcome to Purrrfect Keys')).toBeTruthy();
@@ -417,6 +511,24 @@ describe('OnboardingScreen', () => {
       expect(getByText('Learn Proper Technique')).toBeTruthy();
       expect(getByText('Just Explore & Have Fun')).toBeTruthy();
     });
+
+    it('step 5: Cat Selection renders title and 3 starter cats', () => {
+      const { getByText } = render(<OnboardingScreen />);
+
+      fireEvent.press(getByText('Get Started'));
+      fireEvent.press(getByText('Complete Beginner'));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+
+      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+      expect(getByText('Mini Meowww')).toBeTruthy();
+      expect(getByText('Jazzy')).toBeTruthy();
+      expect(getByText('Luna')).toBeTruthy();
+      expect(getByText('Earn gems to unlock the others!')).toBeTruthy();
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -456,6 +568,9 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+      // Step 5: Choose cat
+      fireEvent.press(getByText('Choose Mini Meowww'));
       fireEvent.press(getByText("Let's Get Started!"));
 
       expect(mockSettingsState.setHasCompletedOnboarding).toHaveBeenCalledWith(
@@ -472,6 +587,9 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Learn Proper Technique'));
+      fireEvent.press(getByText('Next'));
+      // Step 5: Choose cat
+      fireEvent.press(getByText('Choose Mini Meowww'));
       fireEvent.press(getByText("Let's Get Started!"));
 
       expect(mockSettingsState.setLearningGoal).toHaveBeenCalledWith(
@@ -488,11 +606,32 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Just Explore & Have Fun'));
+      fireEvent.press(getByText('Next'));
+      // Step 5: Choose cat
+      fireEvent.press(getByText('Choose Mini Meowww'));
       fireEvent.press(getByText("Let's Get Started!"));
 
       expect(mockSettingsState.setLearningGoal).toHaveBeenCalledWith(
         'exploration',
       );
+    });
+
+    it('calls initializeStarterCat and setSelectedCatId on final step', () => {
+      const { getByText } = render(<OnboardingScreen />);
+
+      fireEvent.press(getByText('Get Started'));
+      fireEvent.press(getByText('Complete Beginner'));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+      // Step 5: Choose Jazzy
+      fireEvent.press(getByText('Choose Jazzy'));
+      fireEvent.press(getByText("Let's Get Started!"));
+
+      expect(mockInitializeStarterCat).toHaveBeenCalledWith('jazzy');
+      expect(mockSettingsState.setSelectedCatId).toHaveBeenCalledWith('jazzy');
     });
   });
 
@@ -605,6 +744,9 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+      // Step 5: Choose cat
+      fireEvent.press(getByText('Choose Mini Meowww'));
       fireEvent.press(getByText("Let's Get Started!"));
 
       expect(mockGoBack).toHaveBeenCalled();
@@ -627,6 +769,9 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+      // Step 5: Choose cat
+      fireEvent.press(getByText('Choose Mini Meowww'));
       fireEvent.press(getByText("Let's Get Started!"));
 
       expect(callOrder).toEqual([
@@ -695,8 +840,8 @@ describe('OnboardingScreen', () => {
       expect(getByText('Do You Have a MIDI Keyboard?')).toBeTruthy();
     });
 
-    it('Lets Get Started button is disabled on step 4 when no goal selected', () => {
-      const { getByText } = render(<OnboardingScreen />);
+    it('Next button is disabled on step 4 when no goal selected', () => {
+      const { getByText, getAllByText } = render(<OnboardingScreen />);
 
       fireEvent.press(getByText('Get Started'));
       fireEvent.press(getByText('Complete Beginner'));
@@ -704,10 +849,29 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
       fireEvent.press(getByText('Next'));
 
-      // Pressing Let's Get Started without a goal should NOT complete
-      fireEvent.press(getByText("Let's Get Started!"));
+      // Pressing Next without a goal should NOT advance to step 5
+      // There are multiple "Next" buttons (step content + back area); use the first
+      const nextButtons = getAllByText('Next');
+      fireEvent.press(nextButtons[0]);
       // Still on step 4
       expect(getByText("What's Your Goal?")).toBeTruthy();
+    });
+
+    it('Lets Get Started button is disabled on step 5 when no cat selected', () => {
+      const { getByText } = render(<OnboardingScreen />);
+
+      fireEvent.press(getByText('Get Started'));
+      fireEvent.press(getByText('Complete Beginner'));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText("No, I'll Use Screen Keyboard"));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+
+      // Pressing Let's Get Started without a cat should NOT complete
+      fireEvent.press(getByText("Let's Get Started!"));
+      // Still on step 5
+      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
     });
   });
 
@@ -743,7 +907,7 @@ describe('OnboardingScreen', () => {
   // Full end-to-end flow
   // -----------------------------------------------------------------------
   describe('Full flow end-to-end', () => {
-    it('completes entire onboarding flow with all steps', () => {
+    it('completes entire onboarding flow with all 5 steps', () => {
       const { getByText } = render(<OnboardingScreen />);
 
       // Step 1: Welcome
@@ -763,6 +927,11 @@ describe('OnboardingScreen', () => {
       // Step 4: Goal Setting
       expect(getByText("What's Your Goal?")).toBeTruthy();
       fireEvent.press(getByText('Just Explore & Have Fun'));
+      fireEvent.press(getByText('Next'));
+
+      // Step 5: Choose Cat Companion
+      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+      fireEvent.press(getByText('Choose Luna'));
       fireEvent.press(getByText("Let's Get Started!"));
 
       // Verify all stores were called correctly
@@ -775,6 +944,8 @@ describe('OnboardingScreen', () => {
       expect(mockSettingsState.setLearningGoal).toHaveBeenCalledWith(
         'exploration',
       );
+      expect(mockInitializeStarterCat).toHaveBeenCalledWith('luna');
+      expect(mockSettingsState.setSelectedCatId).toHaveBeenCalledWith('luna');
       expect(mockGoBack).toHaveBeenCalled();
     });
   });

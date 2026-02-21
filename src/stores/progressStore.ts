@@ -15,6 +15,7 @@ import type { LessonProgress, ExerciseProgress } from '@/core/exercises/types';
 import type { ProgressStoreState, StreakData, DailyGoalData } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 import { levelFromXp } from '@/core/progression/XpSystem';
+import { useGemStore } from './gemStore';
 
 const defaultStreakData: StreakData = {
   currentStreak: 0,
@@ -154,12 +155,23 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
 
   recordExerciseCompletion: (_exerciseId: string, _score: number, xpEarned: number) => {
     const today = new Date().toISOString().split('T')[0];
+    const prevState = get();
+    const prevDailyGoal = prevState.dailyGoalData[today] || {
+      ...defaultDailyGoal,
+      date: today,
+    };
+    const wasDailyGoalComplete = prevDailyGoal.isComplete;
+
     set((state) => {
       const dailyGoal = state.dailyGoalData[today] || {
         ...defaultDailyGoal,
         date: today,
       };
       const newTotalXp = state.totalXp + xpEarned;
+      const newExercisesCompleted = dailyGoal.exercisesCompleted + 1;
+      const nowComplete =
+        dailyGoal.minutesPracticed >= dailyGoal.minutesTarget &&
+        newExercisesCompleted >= dailyGoal.exercisesTarget;
 
       return {
         totalXp: newTotalXp,
@@ -168,14 +180,27 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
           ...state.dailyGoalData,
           [today]: {
             ...dailyGoal,
-            exercisesCompleted: dailyGoal.exercisesCompleted + 1,
-            isComplete:
-              dailyGoal.minutesPracticed >= dailyGoal.minutesTarget &&
-              dailyGoal.exercisesCompleted + 1 >= dailyGoal.exercisesTarget,
+            exercisesCompleted: newExercisesCompleted,
+            isComplete: nowComplete,
           },
         },
       };
     });
+
+    // Gem reward: daily goal just completed (transition from incomplete to complete)
+    const updatedDailyGoal = get().dailyGoalData[today];
+    if (updatedDailyGoal?.isComplete && !wasDailyGoalComplete) {
+      useGemStore.getState().earnGems(10, 'daily-goal');
+    }
+
+    // Gem rewards: streak milestones
+    const streak = get().streakData.currentStreak;
+    if (streak === 7) {
+      useGemStore.getState().earnGems(50, '7-day-streak');
+    } else if (streak === 30) {
+      useGemStore.getState().earnGems(200, '30-day-streak');
+    }
+
     debouncedSave(get());
   },
 

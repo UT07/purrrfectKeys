@@ -75,6 +75,8 @@ export class SyncManager {
     }
     this.syncTimer = setInterval(() => {
       this.flushQueue();
+      // Also pull remote changes so cross-device updates are picked up
+      this.pullRemoteProgress().catch(() => {});
     }, intervalMs);
   }
 
@@ -258,7 +260,8 @@ export class SyncManager {
       const changesUploaded = validItems.length;
 
       if (changesUploaded === 0) {
-        // Nothing to sync, but still report success
+        // No local changes to upload, but still pull remote updates
+        await this.pullRemoteProgress().catch(() => {});
         return {
           success: true,
           changesUploaded: 0,

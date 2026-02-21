@@ -8,12 +8,15 @@
  */
 
 import { create } from 'zustand';
-import type { ExerciseResult, Skills, LearnerProfileState } from './types';
+import type { ExerciseResult, Skills, LearnerProfileState, SkillMasteryRecord } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { getSkillById, DECAY_HALF_LIFE_DAYS, DECAY_THRESHOLD } from '../core/curriculum/SkillTree';
+import { useGemStore } from './gemStore';
 
 const WEAK_NOTE_THRESHOLD = 0.7;
 const WEAK_SKILL_THRESHOLD = 0.6;
 const ROLLING_WINDOW = 20;
+const MAX_RECENT_EXERCISES = 10;
 
 const INITIAL_SKILLS: Skills = {
   timingAccuracy: 0.5,
@@ -35,6 +38,8 @@ export type LearnerProfileData = Pick<
   | 'lastAssessmentDate'
   | 'assessmentScore'
   | 'masteredSkills'
+  | 'skillMasteryData'
+  | 'recentExerciseIds'
 >;
 
 const defaultData: LearnerProfileData = {
@@ -48,6 +53,8 @@ const defaultData: LearnerProfileData = {
   lastAssessmentDate: '',
   assessmentScore: 0,
   masteredSkills: [],
+  skillMasteryData: {},
+  recentExerciseIds: [],
 };
 
 // Create debounced save function
@@ -100,21 +107,8 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
       state.updateNoteAccuracy(nr.midiNote, nr.accuracy);
     }
 
-    // 2. Adjust tempo range based on performance
-    const { tempoRange } = get();
-    let newMax = tempoRange.max;
-    let newMin = tempoRange.min;
-
-    if (result.score > 0.85 && result.tempo >= tempoRange.max - 10) {
-      newMax = Math.min(200, tempoRange.max + 5);
-    }
-    if (result.score < 0.6 && result.tempo <= tempoRange.min + 10) {
-      newMin = Math.max(30, tempoRange.min - 5);
-    }
-
-    // 3. Increment exercises completed and update tempo range
+    // 2. Increment exercises completed (tempo adjustment is handled by DifficultyEngine)
     set({
-      tempoRange: { min: newMin, max: newMax },
       totalExercisesCompleted: get().totalExercisesCompleted + 1,
     });
 
@@ -123,9 +117,76 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
   },
 
   markSkillMastered: (skillId: string) => {
-    const { masteredSkills } = get();
+    const { masteredSkills, skillMasteryData } = get();
     if (masteredSkills.includes(skillId)) return;
-    set({ masteredSkills: [...masteredSkills, skillId] });
+    const now = Date.now();
+    const existing = skillMasteryData[skillId];
+    set({
+      masteredSkills: [...masteredSkills, skillId],
+      skillMasteryData: {
+        ...skillMasteryData,
+        [skillId]: {
+          masteredAt: now,
+          lastPracticedAt: now,
+          completionCount: existing?.completionCount ?? 1,
+          decayScore: 1.0,
+        },
+      },
+    });
+
+    // Gem reward for mastering a skill
+    useGemStore.getState().earnGems(15, 'skill-mastered');
+
+    debouncedSave(get());
+  },
+
+  recordSkillPractice: (skillId: string, passed: boolean) => {
+    const { skillMasteryData } = get();
+    const now = Date.now();
+    const existing = skillMasteryData[skillId];
+    const newCount = (existing?.completionCount ?? 0) + (passed ? 1 : 0);
+
+    const updatedRecord: SkillMasteryRecord = {
+      masteredAt: existing?.masteredAt ?? 0,
+      lastPracticedAt: now,
+      completionCount: newCount,
+      decayScore: 1.0, // refreshed by practice
+    };
+
+    set({
+      skillMasteryData: { ...skillMasteryData, [skillId]: updatedRecord },
+    });
+
+    // Auto-master if completionCount meets the node's requiredCompletions
+    if (passed) {
+      const node = getSkillById(skillId);
+      if (node && newCount >= node.requiredCompletions) {
+        get().markSkillMastered(skillId);
+      }
+    }
+
+    debouncedSave(get());
+  },
+
+  calculateDecayedSkills: (): string[] => {
+    const { masteredSkills, skillMasteryData } = get();
+    const now = Date.now();
+    const msPerDay = 86400000;
+
+    return masteredSkills.filter((id) => {
+      const record = skillMasteryData[id];
+      if (!record) return false;
+      const daysSince = (now - record.lastPracticedAt) / msPerDay;
+      const decay = Math.max(0, 1 - daysSince / DECAY_HALF_LIFE_DAYS);
+      return decay < DECAY_THRESHOLD;
+    });
+  },
+
+  addRecentExercise: (exerciseId: string) => {
+    const { recentExerciseIds } = get();
+    const updated = [exerciseId, ...recentExerciseIds.filter((id) => id !== exerciseId)]
+      .slice(0, MAX_RECENT_EXERCISES);
+    set({ recentExerciseIds: updated });
     debouncedSave(get());
   },
 
@@ -141,6 +202,8 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
       lastAssessmentDate: '',
       assessmentScore: 0,
       masteredSkills: [],
+      skillMasteryData: {},
+      recentExerciseIds: [],
     });
     PersistenceManager.deleteState(STORAGE_KEYS.LEARNER_PROFILE);
   },

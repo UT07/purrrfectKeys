@@ -118,7 +118,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     debouncedSave(get());
   },
 
-  setPlaybackSpeed: (speed: 0.5 | 0.75 | 1.0) => {
+  setPlaybackSpeed: (speed: 0.25 | 0.5 | 0.75 | 1.0) => {
     set({ playbackSpeed: speed });
     debouncedSave({ ...get(), playbackSpeed: speed });
   },
@@ -187,12 +187,13 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     debouncedSave({ ...get(), learningGoal: goal });
   },
 
-  // Profile settings
+  // Profile settings — saves IMMEDIATELY (not debounced) because the user
+  // expects the name to persist even if they close the app right after saving
   setDisplayName: (name: string) => {
-    const trimmed = name.trim().slice(0, 30);
+    const trimmed = name.trim().slice(0, 30).trim();
     if (trimmed.length === 0) return;
     set({ displayName: trimmed });
-    debouncedSave({ ...get(), displayName: trimmed });
+    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), displayName: trimmed });
   },
 
   setAvatarEmoji: (emoji: string) => {

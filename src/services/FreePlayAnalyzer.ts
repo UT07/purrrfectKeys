@@ -317,5 +317,6 @@ export function suggestDrill(analysis: FreePlayAnalysis): GenerationParams {
     },
     exerciseType: 'lesson',
     skillContext,
+    keySignature: analysis.detectedKey ?? undefined,
   };
 }

@@ -26,6 +26,8 @@ export interface GenerationParams {
   targetSkillId?: string;
   skillContext?: string;
   exerciseType?: 'warmup' | 'lesson' | 'challenge';
+  /** Explicit key signature override (e.g. from free play analysis). When set, takes priority over difficulty-based key selection. */
+  keySignature?: string;
 }
 
 export interface AIExercise {
@@ -179,7 +181,7 @@ function keySignatureForDifficulty(difficulty: number): string {
 
 export function buildPrompt(params: GenerationParams): string {
   const tempo = calculateTempo(params);
-  const keySignature = keySignatureForDifficulty(params.difficulty);
+  const keySignature = params.keySignature ?? keySignatureForDifficulty(params.difficulty);
 
   let prompt = `Generate a piano exercise as JSON for a student with this profile:
 - Weak notes (MIDI): ${JSON.stringify(params.weakNotes)} (focus extra repetitions on these)
@@ -207,7 +209,7 @@ export function buildPrompt(params: GenerationParams): string {
 Requirements:
 - Tempo: ${tempo} BPM (middle of their range, scaled by difficulty)
 - Time signature: 4/4
-- Key signature: ${keySignature} (for difficulty 1-2), G major (3), F major (4), mixed (5)
+- Key signature: ${keySignature}
 - All MIDI notes between 48-84 (C3 to C6)
 - Notes should flow melodically (mostly stepwise motion, occasional skips)
 - Include at least 2 repetitions of each weak note

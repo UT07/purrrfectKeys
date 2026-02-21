@@ -52,6 +52,9 @@ export const STORAGE_KEYS = {
   LEARNER_PROFILE: 'keysense_learner_profile',
   EXERCISE_BUFFER: 'keysense_exercise_buffer',
   MIGRATION_VERSION: 'keysense_migration_version',
+  CLOUD_MIGRATION: 'purrrfect_keys_migrated',
+  GEMS: 'purrrfect_gems_state',
+  CAT_EVOLUTION: 'purrrfect_cat_evolution_state',
 } as const;
 
 /**

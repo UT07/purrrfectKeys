@@ -1,9 +1,10 @@
 import type { ReactElement } from 'react';
-import Svg, { G, Circle, Path, Rect, Ellipse, Line, Defs, ClipPath } from 'react-native-svg';
+import Svg, { G, Circle, Path, Rect, Ellipse, Line, Defs, ClipPath, RadialGradient, Stop } from 'react-native-svg';
 
 import { MASCOT_SIZES } from './types';
 import type { MascotMood, MascotSize } from './types';
 import type { CatPattern, CatVisuals } from './catCharacters';
+import type { EvolutionStage } from '@/stores/types';
 
 interface KeysieSvgProps {
   mood: MascotMood;
@@ -14,6 +15,8 @@ interface KeysieSvgProps {
   pixelSize?: number;
   /** Full visual identity from CatCharacter. When provided, overrides accentColor. */
   visuals?: CatVisuals;
+  /** Evolution stage — adds visual accessories/effects per stage. Defaults to 'baby'. */
+  evolutionStage?: EvolutionStage;
 }
 
 const DEFAULT_BODY = '#3A3A3A';
@@ -260,7 +263,132 @@ function renderPattern(pattern: CatPattern, bodyColor: string, bellyColor: strin
   }
 }
 
-export function KeysieSvg({ mood, size, accentColor, pixelSize, visuals }: KeysieSvgProps): ReactElement {
+/** Render evolution-stage accessories behind the cat (background layers) */
+function renderEvolutionBackground(stage: EvolutionStage, accent: string): ReactElement | null {
+  switch (stage) {
+    case 'baby':
+      return null;
+
+    case 'teen':
+      return null;
+
+    case 'adult':
+      // Glow ring behind the head
+      return (
+        <Circle cx="50" cy="42" r="28" fill={accent} opacity={0.12} />
+      );
+
+    case 'master':
+      // Radial aura + sparkle dots behind the cat
+      return (
+        <G>
+          <Defs>
+            <RadialGradient id="masterAura" cx="50%" cy="40%" r="50%">
+              <Stop offset="0%" stopColor={accent} stopOpacity={0.25} />
+              <Stop offset="70%" stopColor={accent} stopOpacity={0.08} />
+              <Stop offset="100%" stopColor={accent} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          {/* Large radial aura */}
+          <Circle cx="50" cy="50" r="48" fill="url(#masterAura)" />
+          {/* Sparkle dots at various positions */}
+          <Circle cx="14" cy="20" r="1.2" fill={accent} opacity={0.7} />
+          <Circle cx="86" cy="25" r="1" fill={accent} opacity={0.6} />
+          <Circle cx="10" cy="55" r="0.9" fill={accent} opacity={0.5} />
+          <Circle cx="90" cy="60" r="1.1" fill={accent} opacity={0.65} />
+          <Circle cx="20" cy="85" r="1" fill={accent} opacity={0.55} />
+          <Circle cx="80" cy="88" r="1.2" fill={accent} opacity={0.6} />
+          <Circle cx="50" cy="6" r="1.3" fill={accent} opacity={0.7} />
+          <Circle cx="30" cy="10" r="0.8" fill={accent} opacity={0.5} />
+          <Circle cx="70" cy="12" r="1" fill={accent} opacity={0.6} />
+        </G>
+      );
+  }
+}
+
+/** Render evolution-stage accessories on top of the cat (foreground layers) */
+function renderEvolutionForeground(stage: EvolutionStage, accent: string): ReactElement | null {
+  switch (stage) {
+    case 'baby':
+      return null;
+
+    case 'teen':
+      // Small bow/collar accessory near the neck area
+      return (
+        <G>
+          {/* Bow tie at neck */}
+          <Path
+            d="M 44 58 L 48 55 L 50 58 L 52 55 L 56 58 L 52 61 L 50 58 L 48 61 Z"
+            fill={accent}
+            opacity={0.85}
+          />
+          {/* Bow center knot */}
+          <Circle cx="50" cy="58" r="1.5" fill={lightenColor(accent, 0.3)} />
+        </G>
+      );
+
+    case 'adult':
+      // Bow tie + gem pendant accessory
+      return (
+        <G>
+          {/* Bow tie at neck */}
+          <Path
+            d="M 44 58 L 48 55 L 50 58 L 52 55 L 56 58 L 52 61 L 50 58 L 48 61 Z"
+            fill={accent}
+            opacity={0.85}
+          />
+          <Circle cx="50" cy="58" r="1.5" fill={lightenColor(accent, 0.3)} />
+          {/* Gem pendant hanging below collar */}
+          <Line x1="50" y1="59.5" x2="50" y2="63" stroke={accent} strokeWidth="0.8" opacity={0.7} />
+          <Path
+            d="M 47.5 63 L 50 60.5 L 52.5 63 L 50 66 Z"
+            fill={lightenColor(accent, 0.4)}
+            stroke={accent}
+            strokeWidth="0.5"
+            opacity={0.9}
+          />
+        </G>
+      );
+
+    case 'master':
+      // Bow tie + gem pendant + crown above head
+      return (
+        <G>
+          {/* Bow tie at neck */}
+          <Path
+            d="M 44 58 L 48 55 L 50 58 L 52 55 L 56 58 L 52 61 L 50 58 L 48 61 Z"
+            fill={accent}
+            opacity={0.85}
+          />
+          <Circle cx="50" cy="58" r="1.5" fill={lightenColor(accent, 0.3)} />
+          {/* Gem pendant */}
+          <Line x1="50" y1="59.5" x2="50" y2="63" stroke={accent} strokeWidth="0.8" opacity={0.7} />
+          <Path
+            d="M 47.5 63 L 50 60.5 L 52.5 63 L 50 66 Z"
+            fill={lightenColor(accent, 0.4)}
+            stroke={accent}
+            strokeWidth="0.5"
+            opacity={0.9}
+          />
+          {/* Crown above head */}
+          <Path
+            d="M 38 18 L 40 12 L 44 16 L 50 9 L 56 16 L 60 12 L 62 18 Z"
+            fill={GOLD}
+            stroke={darkenColor(GOLD, 0.7)}
+            strokeWidth="0.8"
+          />
+          {/* Crown jewels */}
+          <Circle cx="44" cy="15" r="1.2" fill={accent} />
+          <Circle cx="50" cy="12" r="1.5" fill={lightenColor(accent, 0.3)} />
+          <Circle cx="56" cy="15" r="1.2" fill={accent} />
+          {/* Crown base band */}
+          <Rect x="38" y="17" width="24" height="2.5" rx="0.5" fill={GOLD} opacity={0.9} />
+        </G>
+      );
+  }
+}
+
+export function KeysieSvg({ mood, size, accentColor, pixelSize, visuals, evolutionStage = 'baby' }: KeysieSvgProps): ReactElement {
   const px = pixelSize ?? MASCOT_SIZES[size];
 
   // Derive colors from visuals (new system) or fallback to legacy props
@@ -289,6 +417,9 @@ export function KeysieSvg({ mood, size, accentColor, pixelSize, visuals }: Keysi
           <Ellipse cx="50" cy="65" rx="22" ry="20" />
         </ClipPath>
       </Defs>
+
+      {/* Evolution background layers (glow, aura) */}
+      {renderEvolutionBackground(evolutionStage, accent)}
 
       {/* Tail curving up with eighth-note circle */}
       <Path
@@ -364,6 +495,9 @@ export function KeysieSvg({ mood, size, accentColor, pixelSize, visuals }: Keysi
 
       {/* Mouth (mood-dependent) */}
       {renderMouth(mood, accentDark)}
+
+      {/* Evolution foreground layers (accessories, crown) */}
+      {renderEvolutionForeground(evolutionStage, accent)}
     </Svg>
   );
 }

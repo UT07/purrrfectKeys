@@ -16,6 +16,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithCredential,
+  reauthenticateWithCredential,
   signOut as firebaseSignOut,
   deleteUser,
   updateProfile,
@@ -25,7 +26,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
 } from 'firebase/auth';
-import type { User } from 'firebase/auth';
+import type { User, AuthCredential } from 'firebase/auth';
 import { auth } from '../services/firebase/config';
 import { createUserProfile, deleteUserData } from '../services/firebase/firestore';
 import { PersistenceManager } from './persistence';
@@ -51,7 +52,8 @@ export interface AuthState {
   linkWithApple: (identityToken: string, nonce: string) => Promise<void>;
   linkWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
+  deleteAccount: () => Promise<string | void>;
+  reauthenticateAndDelete: (credential: AuthCredential) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
   clearError: () => void;
@@ -140,9 +142,33 @@ function createLocalGuestUser(): User {
   } as unknown as User;
 }
 
+/**
+ * Trigger migration + remote pull after a non-anonymous sign-in.
+ * Uses dynamic imports to avoid circular dependency (authStore → syncService → progressStore).
+ * Runs asynchronously — errors are logged but don't block the UI.
+ */
+async function triggerPostSignInSync(): Promise<void> {
+  try {
+    const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
+    await migrateLocalToCloud();
+  } catch (err) {
+    console.warn('[Auth] Post-sign-in migration failed:', err);
+  }
+  try {
+    const { syncManager } = require('../services/firebase/syncService');
+    await syncManager.pullRemoteProgress();
+    syncManager.startPeriodicSync();
+  } catch (err) {
+    console.warn('[Auth] Post-sign-in pull failed:', err);
+  }
+}
+
 // ============================================================================
 // Store
 // ============================================================================
+
+// Track the onAuthStateChanged unsubscribe function to prevent listener leaks
+let authUnsubscribe: (() => void) | null = null;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -154,8 +180,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initAuth: async () => {
     set({ isLoading: true, error: null });
 
+    // Unsubscribe previous listener to prevent duplicates
+    if (authUnsubscribe) {
+      authUnsubscribe();
+      authUnsubscribe = null;
+    }
+
     return new Promise<void>((resolve) => {
-      onAuthStateChanged(auth, (user) => {
+      authUnsubscribe = onAuthStateChanged(auth, (user) => {
         set({
           user,
           isAuthenticated: user !== null,
@@ -216,6 +248,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -245,6 +278,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -267,6 +301,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -290,6 +325,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -318,6 +354,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -347,6 +384,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -375,6 +413,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync();
     } catch (error) {
       set({
         isLoading: false,
@@ -405,7 +444,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  deleteAccount: async () => {
+  deleteAccount: async (): Promise<string | void> => {
     set({ isLoading: true, error: null });
 
     try {
@@ -415,6 +454,41 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
+      await deleteUserData(user.uid);
+      await deleteUser(user);
+      await PersistenceManager.clearAll();
+
+      set({
+        user: null,
+        isAuthenticated: false,
+        isAnonymous: false,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      const firebaseError = error as { code?: string };
+      if (firebaseError.code === 'auth/requires-recent-login') {
+        set({ isLoading: false, error: null });
+        return 'REQUIRES_REAUTH';
+      }
+      set({
+        isLoading: false,
+        error: handleAuthError(error),
+      });
+    }
+  },
+
+  reauthenticateAndDelete: async (credential: AuthCredential) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const { user } = get();
+      if (!user) {
+        set({ isLoading: false, error: 'No user is currently signed in.' });
+        return;
+      }
+
+      await reauthenticateWithCredential(user, credential);
       await deleteUserData(user.uid);
       await deleteUser(user);
       await PersistenceManager.clearAll();

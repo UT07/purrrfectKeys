@@ -19,7 +19,7 @@ const BASE_MIDI_NOTE = 60;
 const BASE_FREQUENCY = 261.63;
 const SAMPLE_RATE = 44100;
 const DURATION = 5.0; // seconds — long enough for sustained key holds
-const VOICES_PER_NOTE = 2; // Round-robin voices per note
+const VOICES_PER_NOTE = 3; // Round-robin voices per note (3 prevents clicks from rapid re-triggers)
 
 /**
  * Generate a WAV file buffer containing a piano-like tone
@@ -292,7 +292,10 @@ export class ExpoAudioEngine implements IAudioEngine {
 
     const clampedVelocity = Math.max(0.1, Math.min(1.0, velocity));
     const startTime = Date.now() / 1000;
-    const vol = clampedVelocity * this.volume;
+    // Scale volume down when many notes are active to prevent digital clipping
+    const activeCount = this.activeNotes.size;
+    const polyphonyScale = activeCount >= 4 ? 0.6 : activeCount >= 2 ? 0.8 : 1.0;
+    const vol = clampedVelocity * this.volume * polyphonyScale;
 
     const pool = this.voicePools.get(note);
     if (pool) {

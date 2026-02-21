@@ -23,6 +23,27 @@ function defaultContext(overrides: Partial<AchievementContext> = {}): Achievemen
     exercisesWithSameCat: 0,
     isEarlyPractice: false,
     isLatePractice: false,
+    // Evolution
+    hasCatSelected: false,
+    anyCatEvolvedTeen: false,
+    anyCatEvolvedAdult: false,
+    anyCatEvolvedMaster: false,
+    abilitiesUnlocked: 0,
+    catsOwned: 0,
+    hasChonky: false,
+    isChonkyMaster: false,
+    // Gems
+    totalGemsEarned: 0,
+    totalGemsSpent: 0,
+    hasCheckedLockedCat: false,
+    // Daily rewards
+    dailyRewardStreak: 0,
+    dailyRewardsTotal: 0,
+    // Time
+    fastestExerciseSeconds: 0,
+    isLateNightPractice: false,
+    isEarlyMorningPractice: false,
+    sessionMinutes: 0,
     ...overrides,
   };
 }

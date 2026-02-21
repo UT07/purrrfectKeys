@@ -242,6 +242,56 @@ jest.mock('../../components/Mascot/catCharacters', () => ({
   isCatUnlocked: jest.fn(() => true),
 }));
 
+jest.mock('../../stores/gemStore', () => ({
+  useGemStore: Object.assign(
+    (sel?: any) => (sel ? sel({ gems: 250 }) : { gems: 250 }),
+    { getState: () => ({ gems: 250 }) }
+  ),
+}));
+
+jest.mock('../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: Object.assign(
+    (sel?: any) => {
+      const state = {
+        selectedCatId: 'mini-meowww',
+        ownedCats: ['mini-meowww'],
+        evolutionData: {
+          'mini-meowww': {
+            catId: 'mini-meowww',
+            currentStage: 'baby',
+            xpAccumulated: 100,
+            abilitiesUnlocked: [],
+            evolvedAt: { baby: Date.now(), teen: null, adult: null, master: null },
+          },
+        },
+        dailyRewards: { weekStartDate: '', days: [], currentDay: 1 },
+        getActiveAbilities: () => [],
+      };
+      return sel ? sel(state) : state;
+    },
+    { getState: () => ({
+        selectedCatId: 'mini-meowww',
+        ownedCats: ['mini-meowww'],
+        evolutionData: {
+          'mini-meowww': {
+            catId: 'mini-meowww',
+            currentStage: 'baby',
+            xpAccumulated: 100,
+            abilitiesUnlocked: [],
+            evolvedAt: { baby: Date.now(), teen: null, adult: null, master: null },
+          },
+        },
+        getActiveAbilities: () => [],
+      }),
+    }
+  ),
+  xpToNextStage: jest.fn(() => ({ nextStage: 'teen', xpNeeded: 400 })),
+}));
+
+jest.mock('../../stores/types', () => ({
+  EVOLUTION_XP_THRESHOLDS: { baby: 0, teen: 500, adult: 2000, master: 5000 },
+}));
+
 jest.mock('../../core/progression/XpSystem', () => ({
   getLevelProgress: jest.fn(() => ({
     level: 3,
@@ -365,11 +415,11 @@ describe('ProfileScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Account');
   });
 
-  it('Cat avatar press navigates to CatSwitchScreen', () => {
+  it('Cat avatar press navigates to CatCollectionScreen', () => {
     const { getByTestId } = render(<ProfileScreen />);
     const avatar = getByTestId('cat-avatar');
     fireEvent.press(avatar);
-    expect(mockNavigate).toHaveBeenCalledWith('CatSwitch');
+    expect(mockNavigate).toHaveBeenCalledWith('CatCollection');
   });
 
   it('shows achievements section with count', () => {
@@ -421,7 +471,7 @@ describe('ProfileScreen', () => {
   });
 
   it('shows cat personality in subtitle', () => {
-    const { getByText } = render(<ProfileScreen />);
-    expect(getByText(/Mini Meowww/)).toBeTruthy();
+    const { getAllByText } = render(<ProfileScreen />);
+    expect(getAllByText(/Mini Meowww/).length).toBeGreaterThanOrEqual(1);
   });
 });

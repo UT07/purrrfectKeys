@@ -25,6 +25,9 @@ import Svg, { Circle } from 'react-native-svg';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAchievementStore } from '../stores/achievementStore';
+import { useGemStore } from '../stores/gemStore';
+import { useCatEvolutionStore, xpToNextStage } from '../stores/catEvolutionStore';
+import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import { ACHIEVEMENTS } from '../core/achievements/achievements';
 import type { Achievement } from '../core/achievements/achievements';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
@@ -32,6 +35,7 @@ import { CAT_CHARACTERS, getCatById } from '../components/Mascot/catCharacters';
 import { StreakFlame } from '../components/StreakFlame';
 import { getLevelProgress } from '../core/progression/XpSystem';
 import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { useAuthStore } from '../stores/authStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -329,6 +333,15 @@ export function ProfileScreen(): React.ReactElement {
   const selectedCat = getCatById(selectedCatId) ?? CAT_CHARACTERS[0];
   const catColor = selectedCat.color;
 
+  // Gem balance
+  const gems = useGemStore((s) => s.gems);
+
+  // Cat evolution
+  const evolutionData = useCatEvolutionStore((s) => s.evolutionData[selectedCatId]);
+  const evolutionStage = evolutionData?.currentStage ?? 'baby';
+  const evolutionXp = evolutionData?.xpAccumulated ?? 0;
+  const nextStageInfo = xpToNextStage(evolutionXp);
+
   // Level progress
   const levelProgress = getLevelProgress(totalXp);
 
@@ -353,6 +366,11 @@ export function ProfileScreen(): React.ReactElement {
     const trimmed = editingName.trim();
     if (trimmed.length > 0) {
       setDisplayName(trimmed);
+      // Also push to Firebase Auth so it syncs across devices
+      const { updateDisplayName, user } = useAuthStore.getState();
+      if (user && !user.isAnonymous) {
+        updateDisplayName(trimmed).catch(() => {});
+      }
     }
     setShowNameEditor(false);
   }, [editingName, setDisplayName]);
@@ -371,7 +389,7 @@ export function ProfileScreen(): React.ReactElement {
         >
           <TouchableOpacity
             style={styles.avatarContainer}
-            onPress={() => navigation.navigate('CatSwitch')}
+            onPress={() => navigation.navigate('CatCollection')}
             activeOpacity={0.7}
             testID="profile-open-cat-switch"
           >
@@ -428,6 +446,51 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.statLabel}>{stat.label}</Text>
             </LinearGradient>
           ))}
+          {/* Gem balance card */}
+          <LinearGradient
+            colors={['#1E1E32', '#1A1A2E']}
+            style={[styles.statCard, { borderColor: 'rgba(255, 215, 0, 0.3)' }]}
+          >
+            <View style={[styles.statAccentOverlay, { backgroundColor: 'rgba(255, 215, 0, 0.15)' }]} />
+            <MaterialCommunityIcons name="diamond-stone" size={32} color={COLORS.gemGold} />
+            <AnimatedStatValue value={gems} color={COLORS.textPrimary} />
+            <Text style={styles.statLabel}>Gems</Text>
+          </LinearGradient>
+        </View>
+
+        {/* Evolution Progress */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Evolution Progress</Text>
+          <View style={styles.evolutionCard}>
+            <View style={styles.evolutionHeader}>
+              <MaterialCommunityIcons name="paw" size={20} color={COLORS.evolutionGlow} />
+              <Text style={styles.evolutionStageName}>
+                {selectedCat.name} — {evolutionStage.charAt(0).toUpperCase() + evolutionStage.slice(1)}
+              </Text>
+            </View>
+            {nextStageInfo ? (
+              <>
+                <View style={styles.evolutionBarTrack}>
+                  <View
+                    style={[
+                      styles.evolutionBarFill,
+                      {
+                        width: `${Math.min(100, Math.round(
+                          ((evolutionXp - EVOLUTION_XP_THRESHOLDS[evolutionStage]) /
+                            (EVOLUTION_XP_THRESHOLDS[nextStageInfo.nextStage] - EVOLUTION_XP_THRESHOLDS[evolutionStage])) * 100
+                        ))}%`,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.evolutionXpText}>
+                  {nextStageInfo.xpNeeded} XP to {nextStageInfo.nextStage}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.evolutionXpText}>Max stage reached!</Text>
+            )}
+          </View>
         </View>
 
         {/* Weekly Practice Chart */}
@@ -548,7 +611,7 @@ export function ProfileScreen(): React.ReactElement {
 
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => navigation.navigate('CatSwitch')}
+            onPress={() => navigation.navigate('CatCollection')}
             testID="profile-open-cat-switch-row"
           >
             <View style={styles.settingLeft}>
@@ -982,5 +1045,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.textPrimary,
+  },
+  // Evolution progress
+  evolutionCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(225, 190, 231, 0.2)',
+  },
+  evolutionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  evolutionStageName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  evolutionBarTrack: {
+    height: 6,
+    backgroundColor: COLORS.cardBorder,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: SPACING.xs,
+  },
+  evolutionBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.evolutionGlow,
+    borderRadius: 3,
+  },
+  evolutionXpText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
 });

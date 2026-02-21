@@ -19,6 +19,11 @@ export const COLORS = {
 
   starGold: '#FFD700',
   starEmpty: '#444444',
+
+  gemGold: '#FFD700',
+  gemDiamond: '#4FC3F7',
+  evolutionGlow: '#E1BEE7',
+  evolutionFlash: '#FFFFFF',
 } as const;
 
 export const GRADIENTS = {
@@ -27,6 +32,8 @@ export const GRADIENTS = {
   success: ['#4CAF50', '#2E7D32'] as const,
   crimson: ['#DC143C', '#8B0000'] as const,
   header: ['#1A0A2E', '#0D0D0D'] as const,
+  gem: ['#FFD700', '#FF8C00'] as const,
+  evolution: ['#E1BEE7', '#CE93D8'] as const,
 } as const;
 
 export const GLOW = {

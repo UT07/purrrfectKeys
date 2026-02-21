@@ -1,12 +1,12 @@
 /**
  * DailySessionScreen — "Today's Practice"
  *
- * AI-picked session: warm-up → lesson → challenge, with explanations
- * of WHY each exercise was chosen. Replaces the static lesson list
- * as the primary learning entry point.
+ * AI-picked session: warm-up -> lesson -> challenge, with explanations
+ * of WHY each exercise was chosen. Primary learning entry point (Learn tab).
+ * Recomputes the session plan when returning from exercises via useFocusEffect.
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -15,12 +15,16 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { generateSessionPlan, type SessionPlan, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
+import { generateSessionPlan, getNextSkillToLearn, type SessionPlan, type SessionType, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
+import { getSkillsNeedingReview } from '../core/curriculum/SkillTree';
+import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
+import { midiToNoteName } from '../core/music/MusicTheory';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
+import { useGemStore } from '../stores/gemStore';
 import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -45,11 +49,36 @@ const SECTION_LABELS = {
   challenge: 'Challenge',
 };
 
+/** Replace MIDI numbers in reasoning strings with note names */
+function humanizeReasoning(text: string): string {
+  return text.replace(/MIDI (\d+)/g, (_match, num) => {
+    const midi = parseInt(num, 10);
+    if (isNaN(midi) || midi < 21 || midi > 108) return _match;
+    return midiToNoteName(midi);
+  });
+}
+
 export function DailySessionScreen() {
   const navigation = useNavigation<NavProp>();
-  const profile = useLearnerProfileStore();
+
+  // Subscribe only to fields needed for rendering (avoids re-renders on every note accuracy update)
+  const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
+  const totalExercisesCompleted = useLearnerProfileStore((s) => s.totalExercisesCompleted);
+
+  // Gem balance
+  const gems = useGemStore((s) => s.gems);
+
+  // Recompute session plan on focus (picks up newly mastered skills after exercises)
+  const [focusCounter, setFocusCounter] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      setFocusCounter((c) => c + 1);
+    }, [])
+  );
 
   const plan: SessionPlan = useMemo(() => {
+    // Read full profile snapshot inside useMemo — only triggered by focusCounter
+    const profile = useLearnerProfileStore.getState();
     return generateSessionPlan(
       {
         noteAccuracy: profile.noteAccuracy,
@@ -62,17 +91,38 @@ export function DailySessionScreen() {
         lastAssessmentDate: profile.lastAssessmentDate,
         assessmentScore: profile.assessmentScore,
         masteredSkills: profile.masteredSkills,
+        skillMasteryData: profile.skillMasteryData,
+        recentExerciseIds: profile.recentExerciseIds,
       },
       profile.masteredSkills
     );
-  }, [profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusCounter]);
 
   const totalExercises = plan.warmUp.length + plan.lesson.length + plan.challenge.length;
+  const masteredCount = masteredSkills.length;
+  const totalSkills = SKILL_TREE.length;
+  const isNewUser = masteredCount === 0 && totalExercisesCompleted === 0;
+
+  const nextSkill = useMemo(
+    () => getNextSkillToLearn(masteredSkills),
+    [masteredSkills]
+  );
+
+  const skillMasteryData = useLearnerProfileStore((s) => s.skillMasteryData);
+  const decayedSkillCount = useMemo(
+    () => getSkillsNeedingReview(masteredSkills, skillMasteryData ?? {}).length,
+    [masteredSkills, skillMasteryData]
+  );
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
       if (ref.source === 'ai') {
-        navigation.navigate('Exercise', { exerciseId: 'ai-mode', aiMode: true });
+        navigation.navigate('Exercise', {
+          exerciseId: 'ai-mode',
+          aiMode: true,
+          skillId: ref.skillNodeId,
+        });
       } else {
         navigation.navigate('Exercise', { exerciseId: ref.exerciseId });
       }
@@ -81,7 +131,11 @@ export function DailySessionScreen() {
   );
 
   const handleBrowseLessons = useCallback(() => {
-    navigation.navigate('MainTabs', { screen: 'Learn' } as any);
+    navigation.navigate('LevelMap');
+  }, [navigation]);
+
+  const handleAssessment = useCallback(() => {
+    navigation.navigate('SkillAssessment');
   }, [navigation]);
 
   return (
@@ -90,21 +144,64 @@ export function DailySessionScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
+        {/* Header — no back button since this is a tab */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => navigation.goBack()}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
           <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Today's Practice</Text>
+            <View style={styles.headerTitleRow}>
+              <Text style={styles.headerTitle}>Today's Practice</Text>
+              <SessionTypeBadge type={plan.sessionType} />
+              <View style={{ flex: 1 }} />
+              <View style={styles.gemCounter}>
+                <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
+                <Text style={styles.gemCounterText}>{gems}</Text>
+              </View>
+            </View>
             <Text style={styles.headerSubtitle}>
               {totalExercises} exercise{totalExercises !== 1 ? 's' : ''} picked for you
+              {decayedSkillCount > 0 ? ` \u2022 ${decayedSkillCount} skill${decayedSkillCount > 1 ? 's' : ''} need review` : ''}
             </Text>
           </View>
         </View>
+
+        {/* Skill Progress Card */}
+        <View style={styles.skillProgressCard}>
+          <View style={styles.skillProgressRow}>
+            <MaterialCommunityIcons name="chart-timeline-variant" size={18} color={COLORS.primary} />
+            <Text style={styles.skillProgressText}>
+              {masteredCount}/{totalSkills} skills
+              {nextSkill ? ` \u2022 Next: ${nextSkill.name}` : ' \u2022 All mastered!'}
+            </Text>
+          </View>
+          <View style={styles.skillProgressBarTrack}>
+            <View
+              style={[
+                styles.skillProgressBarFill,
+                { width: `${Math.round((masteredCount / totalSkills) * 100)}%` },
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* New User Welcome Card */}
+        {isNewUser && (
+          <View style={styles.welcomeCard}>
+            <MaterialCommunityIcons name="hand-wave" size={28} color={COLORS.starGold} />
+            <Text style={styles.welcomeTitle}>Welcome to Purrrfect Keys!</Text>
+            <Text style={styles.welcomeBody}>
+              Your practice is personalized based on your skills and performance.
+              Take a quick assessment so we can find the right starting point.
+            </Text>
+            <TouchableOpacity
+              style={styles.assessmentBtn}
+              onPress={handleAssessment}
+              activeOpacity={0.7}
+              testID="daily-session-assessment-cta"
+            >
+              <MaterialCommunityIcons name="clipboard-check-outline" size={18} color="#FFFFFF" />
+              <Text style={styles.assessmentBtnText}>Quick Assessment</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Warm Up Section */}
         <SessionSection
@@ -136,7 +233,7 @@ export function DailySessionScreen() {
             </View>
             {plan.reasoning.map((reason, i) => (
               <Text key={i} style={styles.reasoningText}>
-                {reason}
+                {humanizeReasoning(reason)}
               </Text>
             ))}
           </View>
@@ -146,6 +243,7 @@ export function DailySessionScreen() {
         <TouchableOpacity
           style={styles.browseLessonsBtn}
           onPress={handleBrowseLessons}
+          testID="daily-session-browse-lessons"
         >
           <MaterialCommunityIcons name="view-grid-outline" size={18} color={COLORS.textSecondary} />
           <Text style={styles.browseLessonsText}>Browse All Lessons</Text>
@@ -154,6 +252,27 @@ export function DailySessionScreen() {
         <View style={{ height: SPACING.xl }} />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// ============================================================================
+// Session Type Badge
+// ============================================================================
+
+const SESSION_TYPE_CONFIG: Record<SessionType, { label: string; color: string; icon: 'school' | 'refresh' | 'lightning-bolt' | 'shuffle-variant' }> = {
+  'new-material': { label: 'New Material', color: '#4CAF50', icon: 'school' },
+  review: { label: 'Review Day', color: '#FF9800', icon: 'refresh' },
+  challenge: { label: 'Challenge Day', color: '#E91E63', icon: 'lightning-bolt' },
+  mixed: { label: 'Mixed', color: '#2196F3', icon: 'shuffle-variant' },
+};
+
+function SessionTypeBadge({ type }: { type: SessionType }) {
+  const config = SESSION_TYPE_CONFIG[type];
+  return (
+    <View style={[styles.sessionTypeBadge, { backgroundColor: `${config.color}18` }]}>
+      <MaterialCommunityIcons name={config.icon} size={14} color={config.color} />
+      <Text style={[styles.sessionTypeBadgeText, { color: config.color }]}>{config.label}</Text>
+    </View>
   );
 }
 
@@ -186,7 +305,7 @@ function SessionSection({
       </View>
 
       {exercises.map((ref, i) => (
-        <ExerciseCard
+        <SessionExerciseCard
           key={`${ref.exerciseId}-${i}`}
           exerciseRef={ref}
           colors={colors}
@@ -198,10 +317,10 @@ function SessionSection({
 }
 
 // ============================================================================
-// Exercise Card Component
+// Exercise Card Component (renamed to avoid conflict with transitions/ExerciseCard)
 // ============================================================================
 
-function ExerciseCard({
+function SessionExerciseCard({
   exerciseRef,
   colors,
   onPress,
@@ -223,7 +342,7 @@ function ExerciseCard({
       <View style={styles.exerciseCardContent}>
         <View style={styles.exerciseInfo}>
           <Text style={styles.exerciseTitle}>{title}</Text>
-          <Text style={styles.exerciseReason}>{exerciseRef.reason}</Text>
+          <Text style={styles.exerciseReason}>{humanizeReasoning(exerciseRef.reason)}</Text>
           <View style={styles.exerciseMeta}>
             {exerciseRef.source === 'ai' && (
               <View style={styles.aiTag}>
@@ -241,6 +360,10 @@ function ExerciseCard({
                   ]}
                 />
               ))}
+            </View>
+            <View style={styles.gemRewardHint}>
+              <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemGold} />
+              <Text style={styles.gemRewardHintText}>5 for 90%+, 15 for perfect</Text>
             </View>
           </View>
         </View>
@@ -266,18 +389,29 @@ const styles = StyleSheet.create({
   },
   // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
   },
-  backBtn: {
-    padding: SPACING.sm,
-    marginRight: SPACING.sm,
-  },
   headerTextContainer: {
     flex: 1,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  sessionTypeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  sessionTypeBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 24,
@@ -288,6 +422,78 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     marginTop: 2,
+  },
+  // Skill Progress
+  skillProgressCard: {
+    marginHorizontal: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    marginBottom: SPACING.lg,
+  },
+  skillProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  skillProgressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  skillProgressBarTrack: {
+    height: 6,
+    backgroundColor: COLORS.cardBorder,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  skillProgressBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
+  },
+  // Welcome card
+  welcomeCard: {
+    marginHorizontal: SPACING.md,
+    padding: SPACING.lg,
+    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.15)',
+    marginBottom: SPACING.lg,
+    alignItems: 'center',
+  },
+  welcomeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+  },
+  welcomeBody: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+    lineHeight: 20,
+  },
+  assessmentBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: BORDER_RADIUS.md,
+    marginTop: SPACING.md,
+  },
+  assessmentBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   // Sections
   section: {
@@ -418,5 +624,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.textSecondary,
+  },
+  // Gem counter
+  gemCounter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  gemCounterText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.gemGold,
+  },
+  // Gem reward hint on exercise cards
+  gemRewardHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  gemRewardHintText: {
+    fontSize: 10,
+    color: COLORS.textMuted,
   },
 });

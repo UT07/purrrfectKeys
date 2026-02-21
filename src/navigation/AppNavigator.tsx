@@ -24,6 +24,7 @@ import { EmailAuthScreen } from '../screens/EmailAuthScreen';
 import { AccountScreen } from '../screens/AccountScreen';
 import { LessonIntroScreen } from '../screens/LessonIntroScreen';
 import { CatSwitchScreen } from '../screens/CatSwitchScreen';
+import { CatCollectionScreen } from '../screens/CatCollectionScreen';
 import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 import { DailySessionScreen } from '../screens/DailySessionScreen';
 
@@ -36,14 +37,26 @@ export type RootStackParamList = {
   EmailAuth: { isLinking?: boolean } | undefined;
   Onboarding: undefined;
   MainTabs: undefined;
-  Exercise: { exerciseId: string; testMode?: boolean; aiMode?: boolean };
+  Exercise: {
+    exerciseId: string;
+    testMode?: boolean;
+    aiMode?: boolean;
+    skillId?: string;
+    freePlayContext?: {
+      detectedKey: string | null;
+      suggestedDrillType: string;
+      weakNotes: number[];
+    };
+  };
   LessonIntro: { lessonId: string };
   SkillAssessment: undefined;
   DailySession: undefined;
+  LevelMap: undefined;
   FreePlay: undefined;
   MidiSetup: undefined;
   Account: undefined;
   CatSwitch: undefined;
+  CatCollection: undefined;
 };
 
 export type MainTabParamList = {
@@ -89,11 +102,11 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Learn"
-        component={LevelMapScreen}
+        component={DailySessionScreen}
         options={{
           tabBarButtonTestID: 'tab-learn',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="school" size={size} color={color} />
+            <MaterialCommunityIcons name="lightning-bolt" size={size} color={color} />
           ),
         }}
       />
@@ -201,6 +214,11 @@ export function AppNavigator() {
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
+              name="LevelMap"
+              component={LevelMapScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
               name="FreePlay"
               component={PlayScreen}
               options={{ animation: 'fade' }}
@@ -208,6 +226,11 @@ export function AppNavigator() {
             <RootStack.Screen
               name="CatSwitch"
               component={CatSwitchScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="CatCollection"
+              component={CatCollectionScreen}
               options={{ animation: 'slide_from_right' }}
             />
           </>

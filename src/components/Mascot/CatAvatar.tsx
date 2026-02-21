@@ -21,6 +21,7 @@ import Animated, {
 import { getCatById, getDefaultCat } from './catCharacters';
 import type { CatCharacter } from './catCharacters';
 import { KeysieSvg } from './KeysieSvg';
+import type { EvolutionStage } from '@/stores/types';
 
 export type CatAvatarSize = 'small' | 'medium' | 'large';
 
@@ -39,6 +40,8 @@ interface CatAvatarProps {
   skipEntryAnimation?: boolean;
   /** Show the pulsing glow aura */
   showGlow?: boolean;
+  /** Evolution stage — adds visual accessories/effects. Defaults to 'baby'. */
+  evolutionStage?: EvolutionStage;
 }
 
 /** Floating idle: gentle up-down bob + slight scale pulse */
@@ -123,6 +126,7 @@ export function CatAvatar({
   onPress,
   skipEntryAnimation = false,
   showGlow = false,
+  evolutionStage,
 }: CatAvatarProps): ReactElement {
   const cat: CatCharacter = getCatById(catId) ?? getDefaultCat();
   const [showTooltip, setShowTooltip] = useState(false);
@@ -132,6 +136,9 @@ export function CatAvatar({
 
   const dimension = SIZE_MAP[size];
   const glowSize = dimension + 16;
+
+  // Master stage automatically enables glow aura
+  const effectiveShowGlow = showGlow || evolutionStage === 'master';
 
   const handlePress = useCallback(() => {
     if (onPress) {
@@ -148,7 +155,7 @@ export function CatAvatar({
     <View style={styles.wrapper}>
       <Pressable onPress={handlePress}>
         {/* Glow aura behind the avatar */}
-        {showGlow && (
+        {effectiveShowGlow && (
           <Animated.View
             style={[
               styles.glow,
@@ -186,6 +193,7 @@ export function CatAvatar({
               accentColor={cat.color}
               pixelSize={Math.round(dimension * 0.75)}
               visuals={cat.visuals}
+              evolutionStage={evolutionStage}
             />
           </Animated.View>
         </Animated.View>

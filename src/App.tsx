@@ -19,6 +19,8 @@ import { useLearnerProfileStore } from './stores/learnerProfileStore';
 import { levelFromXp } from './core/progression/XpSystem';
 import { syncManager } from './services/firebase/syncService';
 import { migrateLocalToCloud } from './services/firebase/dataMigration';
+import { hydrateGemStore } from './stores/gemStore';
+import { hydrateCatEvolutionStore } from './stores/catEvolutionStore';
 
 // Configure Google Sign-In at module level (synchronous, must run before any signIn call)
 // iosClientId is passed explicitly so the native module doesn't need GoogleService-Info.plist
@@ -73,46 +75,11 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     async function prepare(): Promise<void> {
       try {
-        // Initialize Firebase Auth (resolves current user state)
-        try {
-          await withTimeout(useAuthStore.getState().initAuth(), 8000, 'initAuth');
-        } catch (authInitError) {
-          console.warn(
-            '[App] Auth initialization did not resolve in time. Continuing with unauthenticated fallback.',
-            authInitError,
-          );
-          useAuthStore.setState({
-            user: null,
-            isAnonymous: false,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-          });
-        }
+        // ── Phase 1: Local hydration (fast, AsyncStorage only) ──────────
+        // Runs BEFORE auth to ensure hasCompletedOnboarding, progress, and
+        // learner profile are in the stores before any screen renders.
 
-        // Hydrate progress state from AsyncStorage
-        const savedProgress = await PersistenceManager.loadState(
-          STORAGE_KEYS.PROGRESS,
-          null
-        );
-
-        if (savedProgress) {
-          // Merge saved data into the store (only data fields, not actions)
-          const { totalXp, streakData, lessonProgress, dailyGoalData } =
-            savedProgress as Record<string, unknown>;
-          const xp = (totalXp as number) ?? 0;
-          useProgressStore.setState({
-            ...(totalXp != null ? { totalXp: xp } : {}),
-            // Always recalculate level from XP (fixes stale persisted level)
-            level: levelFromXp(xp),
-            ...(streakData ? { streakData: streakData as any } : {}),
-            ...(lessonProgress ? { lessonProgress: lessonProgress as any } : {}),
-            ...(dailyGoalData ? { dailyGoalData: dailyGoalData as any } : {}),
-          });
-          console.log('[App] Progress state hydrated from storage (level', levelFromXp(xp), ')');
-        }
-
-        // Hydrate settings state (onboarding, preferences, profile)
+        // Hydrate settings state (onboarding flag, preferences, profile)
         const savedSettings = await PersistenceManager.loadState(STORAGE_KEYS.SETTINGS, null);
         if (savedSettings) {
           const {
@@ -147,13 +114,24 @@ export default function App(): React.ReactElement {
           console.log('[App] Settings state hydrated from storage (onboarding:', hasCompletedOnboarding, ')');
         }
 
-        // Sync Firebase display name to settingsStore AFTER hydration.
-        // MUST happen after settings hydration — otherwise setDisplayName's
-        // debounced save captures default state (hasCompletedOnboarding: false)
-        // and overwrites the hydrated value 500ms later.
-        const authUser = useAuthStore.getState().user;
-        if (authUser?.displayName) {
-          useSettingsStore.getState().setDisplayName(authUser.displayName);
+        // Hydrate progress state from AsyncStorage
+        const savedProgress = await PersistenceManager.loadState(
+          STORAGE_KEYS.PROGRESS,
+          null
+        );
+
+        if (savedProgress) {
+          const { totalXp, streakData, lessonProgress, dailyGoalData } =
+            savedProgress as Record<string, unknown>;
+          const xp = (totalXp as number) ?? 0;
+          useProgressStore.setState({
+            ...(totalXp != null ? { totalXp: xp } : {}),
+            level: levelFromXp(xp),
+            ...(streakData ? { streakData: streakData as any } : {}),
+            ...(lessonProgress ? { lessonProgress: lessonProgress as any } : {}),
+            ...(dailyGoalData ? { dailyGoalData: dailyGoalData as any } : {}),
+          });
+          console.log('[App] Progress state hydrated from storage (level', levelFromXp(xp), ')');
         }
 
         // Hydrate achievement state
@@ -169,16 +147,52 @@ export default function App(): React.ReactElement {
           console.log('[App] Learner profile hydrated (masteredSkills:', ((learnerData as Record<string, unknown>).masteredSkills as string[]).length, ')');
         }
 
-        // Start periodic cloud sync (every 5 minutes) if user is authenticated
+        // Hydrate gem store (gem balance, transactions)
+        await hydrateGemStore();
+        console.log('[App] Gem store hydrated');
+
+        // Hydrate cat evolution store (owned cats, evolution data, daily rewards)
+        await hydrateCatEvolutionStore();
+        console.log('[App] Cat evolution store hydrated');
+
+        // ── Phase 2: Firebase Auth (network, may be slow) ──────────────
+        try {
+          await withTimeout(useAuthStore.getState().initAuth(), 8000, 'initAuth');
+        } catch (authInitError) {
+          console.warn(
+            '[App] Auth initialization did not resolve in time. Continuing with unauthenticated fallback.',
+            authInitError,
+          );
+          useAuthStore.setState({
+            user: null,
+            isAnonymous: false,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
+        }
+
+        // Sync Firebase display name to settingsStore AFTER both hydration and auth.
+        const authUser = useAuthStore.getState().user;
+        if (authUser?.displayName) {
+          useSettingsStore.getState().setDisplayName(authUser.displayName);
+        }
+      } catch (e) {
+        console.warn('[App] Failed during app preparation:', e);
+      } finally {
+        // App is ready to render — local state is hydrated, auth resolved.
+        setAppIsReady(true);
+      }
+
+      // ── Phase 3: Cloud sync (background, non-blocking) ──────────────
+      // Runs AFTER setAppIsReady so it doesn't delay the splash screen.
+      try {
         const authState = useAuthStore.getState();
         if (authState.isAuthenticated) {
           syncManager.startPeriodicSync();
           console.log('[App] Periodic sync started');
         }
 
-        // Migrate local progress to cloud on first non-anonymous sign-in,
-        // then pull remote progress. Sequential order prevents the race where
-        // pull reads stale/empty Firestore data before migration writes complete.
         if (authState.isAuthenticated && !authState.isAnonymous) {
           try {
             const migrationResult = await migrateLocalToCloud();
@@ -189,9 +203,6 @@ export default function App(): React.ReactElement {
             console.warn('[App] Migration failed:', err);
           }
 
-          // Pull remote progress from Firestore and merge with local state.
-          // This enables cross-device sync: when the same account is used on
-          // simulator and physical device, both get the latest progress.
           try {
             const pullResult = await syncManager.pullRemoteProgress();
             if (pullResult.merged) {
@@ -204,13 +215,11 @@ export default function App(): React.ReactElement {
           }
         }
       } catch (e) {
-        console.warn('[App] Failed to hydrate progress state:', e);
-      } finally {
-        setAppIsReady(true);
+        console.warn('[App] Cloud sync error (non-blocking):', e);
       }
     }
 
-    // Failsafe: Force app ready after 5s if hydration hangs
+    // Failsafe: Force app ready after 5s if auth/hydration hangs
     const failsafeTimeout = setTimeout(() => {
       console.warn('[App] Hydration took too long, forcing app ready');
       setAppIsReady(true);

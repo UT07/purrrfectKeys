@@ -1,10 +1,11 @@
 /**
  * Onboarding Screen
- * First-time user experience with 4-step flow
+ * First-time user experience with 5-step flow
  * 1. Welcome
  * 2. Experience Level
  * 3. Equipment Check
  * 4. Goal Setting
+ * 5. Choose Your Cat Companion
  *
  * Features animated progress bar with walking cat avatar,
  * per-step cat characters, and slide transitions.
@@ -18,6 +19,7 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Pressable,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -32,8 +34,10 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 import { Button, Card } from '../components/common';
 import { CatAvatar } from '../components/Mascot';
 import { KeysieSvg } from '../components/Mascot/KeysieSvg';
-import { getCatById, getDefaultCat } from '../components/Mascot/catCharacters';
+import { getCatById, getDefaultCat, getStarterCats } from '../components/Mascot/catCharacters';
+import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
 
 // ---------------------------------------------------------------------------
@@ -48,10 +52,13 @@ const CAT_SIZE = 28;
 const SLIDE_DURATION = 300;
 const SLIDE_OFFSET = 50;
 
+const TOTAL_STEPS = 5;
+
 interface OnboardingState {
   experienceLevel?: 'beginner' | 'intermediate' | 'returning';
   hasMidi?: boolean;
   goal?: 'songs' | 'technique' | 'exploration';
+  selectedCatId?: string;
   completedAt?: Date;
 }
 
@@ -71,6 +78,7 @@ const STEP_CATS: Record<number, StepCatInfo> = {
   2: { catId: 'jazzy', subtitle: 'Jazzy wants to know your level' },
   3: { catId: 'chonky-monke', subtitle: 'Chonky Monk\u00E9 checks your setup' },
   4: { catId: 'luna', subtitle: 'Luna helps you set goals' },
+  5: { catId: 'mini-meowww', subtitle: 'Choose your companion!' },
 };
 
 // ---------------------------------------------------------------------------
@@ -340,14 +348,121 @@ function GoalSettingStep({
       </View>
 
       <Button
-        title="Let's Get Started!"
+        title="Next"
         onPress={onNext}
         disabled={!value}
+        size="large"
+        style={styles.button}
+        testID="onboarding-goal-next"
+      />
+    </AnimatedStepWrapper>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 5: Choose Your Cat Companion
+// ---------------------------------------------------------------------------
+
+function CatSelectionStep({
+  onSelect,
+  onNext,
+  selectedCatId,
+  direction,
+}: {
+  onSelect: (catId: string) => void;
+  onNext: () => void;
+  selectedCatId?: string;
+  direction: SlideDirection;
+}): React.ReactElement {
+  const starterCats = getStarterCats();
+
+  return (
+    <AnimatedStepWrapper direction={direction} testID="onboarding-step-5">
+      <Text style={styles.stepTitle}>Choose Your Cat Companion</Text>
+      <Text style={styles.stepDescription}>
+        Each cat has a unique personality and musical specialty
+      </Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.catCardsContainer}
+      >
+        {starterCats.map((cat) => (
+          <CatSelectionCard
+            key={cat.id}
+            cat={cat}
+            selected={selectedCatId === cat.id}
+            onSelect={() => onSelect(cat.id)}
+          />
+        ))}
+      </ScrollView>
+
+      <Text style={styles.catUnlockHint}>
+        Earn gems to unlock the others!
+      </Text>
+
+      <Button
+        title="Let's Get Started!"
+        onPress={onNext}
+        disabled={!selectedCatId}
         size="large"
         style={styles.button}
         testID="onboarding-finish"
       />
     </AnimatedStepWrapper>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cat Selection Card
+// ---------------------------------------------------------------------------
+
+function CatSelectionCard({
+  cat,
+  selected,
+  onSelect,
+}: {
+  cat: CatCharacter;
+  selected: boolean;
+  onSelect: () => void;
+}): React.ReactElement {
+  return (
+    <View
+      style={[
+        styles.catCard,
+        { borderColor: selected ? cat.color : COLORS.cardBorder },
+        selected && { backgroundColor: `${cat.color}15` },
+      ]}
+      testID={`onboarding-cat-${cat.id}`}
+    >
+      <View style={styles.catCardAvatar}>
+        <CatAvatar catId={cat.id} size="large" showTooltipOnTap={false} skipEntryAnimation />
+      </View>
+
+      <Text style={styles.catCardName}>{cat.name}</Text>
+      <Text style={styles.catCardPersonality}>{cat.personality}</Text>
+
+      <View style={[styles.catCardBadge, { backgroundColor: `${cat.color}30` }]}>
+        <Text style={[styles.catCardBadgeText, { color: cat.color }]}>
+          {cat.musicSkill}
+        </Text>
+      </View>
+
+      <Pressable
+        onPress={onSelect}
+        style={({ pressed }) => [
+          styles.catChooseButton,
+          { backgroundColor: cat.color, opacity: pressed ? 0.8 : 1 },
+          selected && styles.catChooseButtonSelected,
+        ]}
+        testID={`onboarding-choose-${cat.id}`}
+      >
+        <Text style={styles.catChooseButtonText}>
+          {selected ? `${cat.name} Chosen!` : `Choose ${cat.name}`}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -415,12 +530,12 @@ function OptionCard({
 // ---------------------------------------------------------------------------
 
 function ProgressBar({ step }: { step: number }): React.ReactElement {
-  const fillFraction = useSharedValue(step / 4);
+  const fillFraction = useSharedValue(step / TOTAL_STEPS);
   const catInfo = STEP_CATS[step] ?? STEP_CATS[1];
   const cat = getCatById(catInfo.catId) ?? getDefaultCat();
 
   React.useEffect(() => {
-    fillFraction.value = withTiming(step / 4, {
+    fillFraction.value = withTiming(step / TOTAL_STEPS, {
       duration: SLIDE_DURATION,
       easing: Easing.out(Easing.cubic),
     });
@@ -507,7 +622,7 @@ export function OnboardingScreen(): React.ReactElement {
         return;
       }
     }
-    if (step === 4) {
+    if (step === TOTAL_STEPS) {
       // MUST set onboarding flag FIRST -- other setters use debouncedSave which
       // captures get() state. If hasCompletedOnboarding is still false when they
       // snapshot, the debounced write overwrites the immediate save 500ms later.
@@ -519,6 +634,11 @@ export function OnboardingScreen(): React.ReactElement {
       if (state.hasMidi != null) {
         useSettingsStore.getState().updateMidiSettings({ autoConnectMidi: state.hasMidi });
       }
+      // Persist cat selection from step 5
+      if (state.selectedCatId) {
+        useCatEvolutionStore.getState().initializeStarterCat(state.selectedCatId);
+        useSettingsStore.getState().setSelectedCatId(state.selectedCatId);
+      }
       // Dismiss the onboarding modal and return to MainTabs
       navigation.goBack();
     } else {
@@ -529,6 +649,7 @@ export function OnboardingScreen(): React.ReactElement {
     step,
     state.experienceLevel,
     state.goal,
+    state.selectedCatId,
     setExperienceLevel,
     setHasCompletedOnboarding,
     setLearningGoal,
@@ -581,6 +702,17 @@ export function OnboardingScreen(): React.ReactElement {
             direction={direction}
           />
         );
+      case 5:
+        return (
+          <CatSelectionStep
+            selectedCatId={state.selectedCatId}
+            onSelect={(catId) => {
+              setState((prev) => ({ ...prev, selectedCatId: catId }));
+            }}
+            onNext={handleNext}
+            direction={direction}
+          />
+        );
       default:
         return null;
     }
@@ -599,7 +731,7 @@ export function OnboardingScreen(): React.ReactElement {
         {renderStep()}
       </ScrollView>
 
-      {/* Back button for steps 2-4 */}
+      {/* Back button for steps 2-5 */}
       {step > 1 && (
         <View style={styles.backButtonContainer}>
           <Button
@@ -791,6 +923,68 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.md,
     flexDirection: 'row',
     gap: SPACING.sm + 4,
+  },
+
+  // Cat selection cards
+  catCardsContainer: {
+    paddingVertical: SPACING.sm,
+    gap: SPACING.md,
+  },
+  catCard: {
+    width: SCREEN_WIDTH * 0.6,
+    backgroundColor: COLORS.cardSurface,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 2,
+    padding: SPACING.md,
+    alignItems: 'center',
+  },
+  catCardAvatar: {
+    marginBottom: SPACING.sm,
+  },
+  catCardName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  catCardPersonality: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  catCardBadge: {
+    paddingHorizontal: SPACING.sm + 4,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+    marginBottom: SPACING.md,
+  },
+  catCardBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  catChooseButton: {
+    width: '100%',
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+  },
+  catChooseButtonSelected: {
+    opacity: 0.9,
+  },
+  catChooseButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  catUnlockHint: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginTop: SPACING.md,
+    fontStyle: 'italic',
   },
 });
 

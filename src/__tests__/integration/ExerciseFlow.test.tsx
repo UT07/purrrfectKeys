@@ -70,21 +70,33 @@ jest.mock('../../stores/exerciseStore', () => {
 });
 
 // Mock progress store
+const mockProgressState: Record<string, any> = {
+  totalXp: 100,
+  level: 1,
+  lessonProgress: {},
+  exerciseHighScores: {},
+  dailyGoalData: {},
+  recordExerciseCompletion: jest.fn(),
+  addXp: jest.fn(),
+  setLevel: jest.fn(),
+  updateStreakData: jest.fn(),
+  updateLessonProgress: jest.fn(),
+  updateExerciseProgress: jest.fn(),
+  recordPracticeSession: jest.fn(),
+  streakData: {
+    currentStreak: 0,
+    longestStreak: 0,
+    lastPracticeDate: '2026-01-01',
+    freezesAvailable: 1,
+    freezesUsed: 0,
+    weeklyPractice: [false, false, false, false, false, false, false],
+  },
+};
 jest.mock('../../stores/progressStore', () => ({
-  useProgressStore: Object.assign(jest.fn(() => ({})), {
-    getState: jest.fn(() => ({
-      recordExerciseCompletion: jest.fn(),
-      updateStreakData: jest.fn(),
-      streakData: {
-        currentStreak: 0,
-        longestStreak: 0,
-        lastPracticeDate: '2026-01-01',
-        freezesAvailable: 1,
-        freezesUsed: 0,
-        weeklyPractice: [false, false, false, false, false, false, false],
-      },
-    })),
-  }),
+  useProgressStore: Object.assign(
+    (sel?: any) => sel ? sel(mockProgressState) : mockProgressState,
+    { getState: () => mockProgressState }
+  ),
 }));
 
 // Mock useExercisePlayback hook
@@ -166,6 +178,176 @@ jest.mock('../../components/PianoRoll/VerticalPianoRoll', () => ({
 jest.mock('../../components/Keyboard/computeZoomedRange', () => ({
   computeZoomedRange: (_notes: number[]) => ({ startNote: 48, octaveCount: 2 }),
   computeStickyRange: (_notes: number[], range: any) => range,
+}));
+
+// Mock gemStore
+const mockGemState = { gems: 100, transactions: [], earnGems: jest.fn(), spendGems: jest.fn(), canAfford: jest.fn(() => true) };
+jest.mock('../../stores/gemStore', () => ({
+  useGemStore: Object.assign(
+    (sel?: any) => sel ? sel(mockGemState) : mockGemState,
+    { getState: () => mockGemState }
+  ),
+}));
+
+// Mock catEvolutionStore
+const mockCatEvolutionState = {
+  selectedCatId: 'mini-meowww',
+  ownedCats: ['mini-meowww'],
+  evolutionData: { 'mini-meowww': { catId: 'mini-meowww', currentStage: 'baby', xpAccumulated: 0, abilitiesUnlocked: [], evolvedAt: { baby: Date.now(), teen: null, adult: null, master: null } } },
+  addEvolutionXp: jest.fn(),
+  getActiveAbilities: () => [],
+};
+jest.mock('../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: Object.assign(
+    (sel?: any) => sel ? sel(mockCatEvolutionState) : mockCatEvolutionState,
+    { getState: () => mockCatEvolutionState }
+  ),
+}));
+
+// Mock AbilityEngine
+jest.mock('../../core/abilities/AbilityEngine', () => ({
+  applyAbilities: jest.fn((_ids: string[], config: any) => config),
+  createDefaultConfig: jest.fn((timing: number, grace: number, tempo: number) => ({
+    timingToleranceMs: timing, timingGracePeriodMs: grace, tempo,
+    ghostNotesFailThreshold: 3, comboShield: false, scoreBoostPercent: 0,
+    xpMultiplier: 1, gemBonusChance: 0, gemBonusMultiplier: 1, extraRetries: 0,
+  })),
+}));
+
+// Mock achievementStore
+const mockAchievementState = {
+  unlockedIds: {}, totalNotesPlayed: 0, perfectScoreCount: 0, highScoreCount: 0,
+  checkAndUnlock: jest.fn(() => []), incrementNotesPlayed: jest.fn(),
+  recordPerfectScore: jest.fn(), recordHighScore: jest.fn(),
+  isUnlocked: jest.fn(() => false), getUnlockedAchievements: jest.fn(() => []),
+  getUnlockedCount: jest.fn(() => 0), getTotalCount: jest.fn(() => 0),
+  hydrate: jest.fn(), reset: jest.fn(),
+};
+jest.mock('../../stores/achievementStore', () => ({
+  useAchievementStore: Object.assign(
+    (sel?: any) => sel ? sel(mockAchievementState) : mockAchievementState,
+    { getState: () => mockAchievementState }
+  ),
+  buildAchievementContext: jest.fn(() => ({
+    totalNotesPlayed: 0, perfectScoreCount: 0, highScoreCount: 0,
+    currentStreak: 0, longestStreak: 0, totalExercisesCompleted: 0,
+  })),
+}));
+
+// Mock settingsStore
+const mockSettingsState = {
+  selectedCatId: 'mini-meowww', soundEnabled: true, hapticEnabled: true,
+  showFingerNumbers: true, showNoteNames: true, masterVolume: 0.8,
+  dailyGoalMinutes: 15, playbackSpeed: 0.75 as const, setPlaybackSpeed: jest.fn(),
+  lastMidiDeviceId: null, preferredHand: 'right',
+};
+jest.mock('../../stores/settingsStore', () => ({
+  useSettingsStore: Object.assign(
+    (sel?: any) => sel ? sel(mockSettingsState) : mockSettingsState,
+    { getState: () => mockSettingsState }
+  ),
+}));
+
+// Mock learnerProfileStore
+const mockLearnerProfileState = {
+  noteAccuracy: {}, noteAttempts: {},
+  skills: { timingAccuracy: 0.5, pitchAccuracy: 0.5, sightReadSpeed: 0.5, chordRecognition: 0.5 },
+  tempoRange: { min: 40, max: 80 }, weakNotes: [], weakSkills: [],
+  totalExercisesCompleted: 0, lastAssessmentDate: '', assessmentScore: 0,
+  masteredSkills: [], skillCompletions: {},
+  recordExerciseResult: jest.fn(), updateNoteAccuracy: jest.fn(),
+  recalculateWeakAreas: jest.fn(), updateSkill: jest.fn(),
+  addRecentExercise: jest.fn(), markSkillMastered: jest.fn(), reset: jest.fn(),
+};
+jest.mock('../../stores/learnerProfileStore', () => ({
+  useLearnerProfileStore: Object.assign(
+    (sel?: any) => sel ? sel(mockLearnerProfileState) : mockLearnerProfileState,
+    { getState: () => mockLearnerProfileState }
+  ),
+}));
+
+// Mock catCharacters
+jest.mock('../../components/Mascot/catCharacters', () => ({
+  CAT_CHARACTERS: [{ id: 'mini-meowww', name: 'Mini Meowww', abilities: [] }],
+  getCatById: jest.fn(() => ({ id: 'mini-meowww', name: 'Mini Meowww', abilities: [] })),
+  getUnlockedCats: jest.fn(() => []),
+}));
+
+// Mock ExerciseBuddy
+jest.mock('../../components/Mascot/ExerciseBuddy', () => ({ ExerciseBuddy: () => null }));
+jest.mock('../../components/Mascot/mascotTips', () => ({ getTipForScore: jest.fn(() => 'Great job!') }));
+jest.mock('../../components/transitions/AchievementToast', () => ({ AchievementToast: () => null }));
+jest.mock('../../components/transitions/LessonCompleteScreen', () => ({ LessonCompleteScreen: () => null }));
+jest.mock('../../components/transitions/ExerciseCard', () => ({ ExerciseCard: () => null }));
+jest.mock('../../core/achievements/achievements', () => ({ ACHIEVEMENTS: [], getAchievementById: jest.fn() }));
+jest.mock('../../content/ContentLoader', () => ({
+  getExercise: jest.fn(), getNextExerciseId: jest.fn(), getLessonIdForExercise: jest.fn(),
+  getLesson: jest.fn(), getLessons: jest.fn(() => []), isTestExercise: jest.fn(() => false),
+  getTestExercise: jest.fn(), getNonTestExercises: jest.fn(() => []),
+}));
+jest.mock('../../services/exerciseBufferManager', () => ({
+  getNextExercise: jest.fn(), fillBuffer: jest.fn(), getBufferSize: jest.fn(() => 0), BUFFER_MIN_THRESHOLD: 2,
+}));
+jest.mock('../../core/progression/XpSystem', () => ({ recordPracticeSession: jest.fn() }));
+jest.mock('../../core/curriculum/SkillTree', () => ({ getSkillsForExercise: jest.fn(() => []) }));
+jest.mock('../../core/curriculum/DifficultyEngine', () => ({ adjustDifficulty: jest.fn((e: any) => e) }));
+jest.mock('../../core/curriculum/WeakSpotDetector', () => ({ detectWeakPatterns: jest.fn(() => []) }));
+jest.mock('../../core/music/MusicTheory', () => ({ midiToNoteName: jest.fn((n: number) => `Note${n}`) }));
+jest.mock('../../services/FreePlayAnalyzer', () => ({ suggestDrill: jest.fn() }));
+jest.mock('../../services/geminiExerciseService', () => ({ generateExercise: jest.fn() }));
+jest.mock('../../content/funFacts', () => ({ getRandomFunFact: jest.fn() }));
+jest.mock('../../components/Keyboard/SplitKeyboard', () => ({ SplitKeyboard: () => null, deriveSplitPoint: jest.fn(() => 60) }));
+jest.mock('../../screens/ExercisePlayer/CompletionModal', () => ({ CompletionModal: () => null }));
+jest.mock('../../screens/ExercisePlayer/CountInAnimation', () => ({ CountInAnimation: () => null }));
+jest.mock('../../input/DevKeyboardMidi', () => ({ useDevKeyboardMidi: jest.fn() }));
+
+jest.mock('expo-linear-gradient', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return { LinearGradient: (props: any) => React.createElement(View, props, props.children) };
+});
+
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: any) => React.createElement(View, props, props.children),
+    Svg: (props: any) => React.createElement(View, props, props.children),
+    Circle: (props: any) => React.createElement(View, props),
+    Rect: (props: any) => React.createElement(View, props),
+    Path: (props: any) => React.createElement(View, props),
+    G: (props: any) => React.createElement(View, props, props.children),
+    Defs: (props: any) => React.createElement(View, props, props.children),
+    RadialGradient: (props: any) => React.createElement(View, props, props.children),
+    Stop: (props: any) => React.createElement(View, props),
+  };
+});
+
+jest.mock('../../theme/tokens', () => ({
+  COLORS: { background: '#0D0D0D', surface: '#1A1A2E', text: '#FFFFFF', textSecondary: '#AAAAAA', primary: '#DC143C', success: '#4CAF50', warning: '#FF9800', error: '#F44336', accent: '#FFD700' },
+  SPACING: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 },
+  BORDER_RADIUS: { sm: 4, md: 8, lg: 16, xl: 24 },
+}));
+
+const mockNavigate = jest.fn();
+const mockGoBack = jest.fn();
+const mockReplace = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useNavigation: () => ({
+    navigate: mockNavigate, goBack: mockGoBack, replace: mockReplace,
+    getParent: () => ({ navigate: mockNavigate }),
+    dispatch: jest.fn(), setOptions: jest.fn(), addListener: jest.fn(() => jest.fn()),
+  }),
+  useRoute: () => ({ params: { exerciseId: 'test-exercise-1' } }),
+}));
+
+// Mock DemoPlaybackService
+jest.mock('../../services/demoPlayback', () => ({
+  DemoPlaybackService: jest.fn().mockImplementation(() => ({
+    start: jest.fn(), stop: jest.fn(), isPlaying: false,
+  })),
 }));
 
 // Test exercise - simple C major scale

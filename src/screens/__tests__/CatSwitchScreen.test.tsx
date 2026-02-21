@@ -3,6 +3,9 @@
  *
  * Tests the Subway Surfers-style horizontal cat gallery: rendering cat cards,
  * select/lock states, navigation, header info, and selection behavior.
+ *
+ * NOTE: All 12 cats now have unlockLevel=1 (gated by gems, not levels).
+ * CatSwitchScreen will be replaced by CatCollectionScreen with gem-based locking.
  */
 
 import React from 'react';
@@ -63,7 +66,7 @@ const mockSetAvatarEmoji = jest.fn();
 
 let mockProgressState: any = {
   totalXp: 500,
-  level: 5, // unlocks first several cats
+  level: 5,
   streakData: { currentStreak: 3, longestStreak: 10, lastPracticeDate: '2026-02-16' },
   lessonProgress: {},
   dailyGoalData: {},
@@ -123,7 +126,7 @@ describe('CatSwitchScreen', () => {
 
   it('shows unlock count in header subtitle', () => {
     const { getByText } = render(<CatSwitchScreen />);
-    // Level 5 unlocks cats with unlockLevel <= 5
+    // All cats have unlockLevel=1, so at level 5 all 12 are "unlocked" by level
     const unlockedCount = CAT_CHARACTERS.filter((c) => c.unlockLevel <= 5).length;
     expect(getByText(`${unlockedCount} of ${CAT_CHARACTERS.length} unlocked`)).toBeTruthy();
   });
@@ -135,7 +138,6 @@ describe('CatSwitchScreen', () => {
 
   it('renders personality badge for visible cat', () => {
     const { getByText } = render(<CatSwitchScreen />);
-    // Mini Meowww's personality
     expect(getByText('Tiny but Mighty')).toBeTruthy();
   });
 
@@ -144,13 +146,29 @@ describe('CatSwitchScreen', () => {
     expect(getByText('Precision & Expression')).toBeTruthy();
   });
 
+  it('renders all 12 cat characters', () => {
+    expect(CAT_CHARACTERS.length).toBe(12);
+  });
+
+  it('has exactly 3 starter cats', () => {
+    const starters = CAT_CHARACTERS.filter(c => c.starterCat);
+    expect(starters.length).toBe(3);
+    expect(starters.map(c => c.id)).toEqual(['mini-meowww', 'jazzy', 'luna']);
+  });
+
+  it('has Chonky Monké as legendary (no gem cost)', () => {
+    const chonky = CAT_CHARACTERS.find(c => c.id === 'chonky-monke');
+    expect(chonky).toBeDefined();
+    expect(chonky!.legendary).toBe(true);
+    expect(chonky!.gemCost).toBeNull();
+  });
+
   // =========================================================================
   // Selected state
   // =========================================================================
 
   it('shows "Selected" button for the currently selected cat', () => {
     const { getByText } = render(<CatSwitchScreen />);
-    // Mini Meowww is selectedCatId
     expect(getByText('Selected')).toBeTruthy();
   });
 
@@ -160,40 +178,17 @@ describe('CatSwitchScreen', () => {
   });
 
   // =========================================================================
-  // Locked state
-  // =========================================================================
-
-  it('shows "Locked" button for cats above current level', () => {
-    mockProgressState.level = 1; // Only unlocks level 1 cats
-    const { getAllByText } = render(<CatSwitchScreen />);
-    const locked = getAllByText('Locked');
-    // All cats except Mini Meowww (unlockLevel 1) should show Locked
-    expect(locked.length).toBe(CAT_CHARACTERS.length - 1);
-  });
-
-  it('shows unlock level badge for locked cats', () => {
-    mockProgressState.level = 1;
-    const { getAllByText } = render(<CatSwitchScreen />);
-    // Jazzy is level 2
-    const level2Badges = getAllByText('Level 2');
-    expect(level2Badges.length).toBeGreaterThanOrEqual(1);
-  });
-
-  // =========================================================================
   // Selection behavior
   // =========================================================================
 
   it('calls setSelectedCatId when tapping "Select" on an unlocked cat', () => {
-    // Set selectedCatId to something else so the 2nd cat shows "Select"
     mockSettingsState.selectedCatId = 'jazzy';
     mockProgressState.level = 5;
     const { getAllByText } = render(<CatSwitchScreen />);
 
-    // Find "Select" buttons (non-selected, unlocked cats)
     const selectButtons = getAllByText('Select');
     expect(selectButtons.length).toBeGreaterThanOrEqual(1);
 
-    // Tap the first "Select" button
     fireEvent.press(selectButtons[0]);
     expect(mockSetSelectedCatId).toHaveBeenCalled();
   });
@@ -204,7 +199,6 @@ describe('CatSwitchScreen', () => {
 
   it('calls goBack when pressing back button', () => {
     const { getByText } = render(<CatSwitchScreen />);
-    // Back button renders arrow-left icon, which our mock renders as text
     const backIcon = getByText('arrow-left');
     fireEvent.press(backIcon);
     expect(mockGoBack).toHaveBeenCalledTimes(1);
@@ -215,20 +209,33 @@ describe('CatSwitchScreen', () => {
   // =========================================================================
 
   it('renders pagination dots (component renders without crash)', () => {
-    // Pagination dots are purely visual — verify component renders successfully
     const { getByText } = render(<CatSwitchScreen />);
     expect(getByText('Choose Your Cat')).toBeTruthy();
   });
 
   // =========================================================================
-  // Level changes
+  // Cat data integrity
   // =========================================================================
 
-  it('unlocks more cats at higher levels', () => {
-    mockProgressState.level = 10; // Should unlock most cats
-    const { queryAllByText } = render(<CatSwitchScreen />);
-    const lockedButtons = queryAllByText('Locked');
-    const highLevelUnlocked = CAT_CHARACTERS.filter((c) => c.unlockLevel <= 10).length;
-    expect(lockedButtons.length).toBe(CAT_CHARACTERS.length - highLevelUnlocked);
+  it('every cat has 4 abilities', () => {
+    for (const cat of CAT_CHARACTERS) {
+      expect(cat.abilities.length).toBe(4);
+    }
+  });
+
+  it('every cat has evolution visuals for all 4 stages', () => {
+    const stages = ['baby', 'teen', 'adult', 'master'] as const;
+    for (const cat of CAT_CHARACTERS) {
+      for (const stage of stages) {
+        expect(cat.evolutionVisuals[stage]).toBeDefined();
+      }
+    }
+  });
+
+  it('gem costs are valid for non-starter, non-legendary cats', () => {
+    const gemCats = CAT_CHARACTERS.filter(c => !c.starterCat && !c.legendary);
+    for (const cat of gemCats) {
+      expect(cat.gemCost).toBeGreaterThan(0);
+    }
   });
 });

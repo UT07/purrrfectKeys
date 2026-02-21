@@ -499,7 +499,15 @@ export function PlayScreen(): React.JSX.Element {
           <TouchableOpacity
             style={styles.generateDrillBtn}
             onPress={() => {
-              navigation.navigate('Exercise', { exerciseId: 'ai-mode', aiMode: true });
+              navigation.navigate('Exercise', {
+                exerciseId: 'ai-mode',
+                aiMode: true,
+                freePlayContext: {
+                  detectedKey: analysis.detectedKey,
+                  suggestedDrillType: analysis.suggestedDrillType,
+                  weakNotes: analysis.uniqueNotes.slice(0, 6),
+                },
+              });
               setAnalysis(null);
             }}
             testID="freeplay-generate-drill"

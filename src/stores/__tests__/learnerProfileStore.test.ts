@@ -82,40 +82,39 @@ describe('Learner Profile Store', () => {
     expect(useLearnerProfileStore.getState().skills.sightReadSpeed).toBe(0);
   });
 
-  it('adjusts tempo range on exercise completion with high score', () => {
+  it('does not adjust tempo range in recordExerciseResult (DifficultyEngine owns tempo)', () => {
     const { recordExerciseResult } = useLearnerProfileStore.getState();
 
-    // Score > 0.85 and tempo (75) >= max (80) - 10 => max increases by 5
+    // High score should NOT change tempo — DifficultyEngine handles that externally
     recordExerciseResult({ tempo: 75, score: 0.9, noteResults: [] });
     const { tempoRange } = useLearnerProfileStore.getState();
-    expect(tempoRange.max).toBe(85);
-    expect(tempoRange.min).toBe(40); // min unchanged
+    expect(tempoRange.max).toBe(80); // unchanged
+    expect(tempoRange.min).toBe(40); // unchanged
   });
 
-  it('adjusts tempo range on exercise completion with low score', () => {
+  it('does not adjust tempo range even with low score (DifficultyEngine owns tempo)', () => {
     const { recordExerciseResult } = useLearnerProfileStore.getState();
 
-    // Score < 0.6 and tempo (45) <= min (40) + 10 => min decreases by 5
+    // Low score should NOT change tempo — DifficultyEngine handles that externally
     recordExerciseResult({ tempo: 45, score: 0.4, noteResults: [] });
     const { tempoRange } = useLearnerProfileStore.getState();
-    expect(tempoRange.min).toBe(35);
-    expect(tempoRange.max).toBe(80); // max unchanged
+    expect(tempoRange.min).toBe(40); // unchanged
+    expect(tempoRange.max).toBe(80); // unchanged
   });
 
-  it('caps tempo range at boundaries (max 200, min 30)', () => {
-    // Set tempo range near boundaries
+  it('preserves tempo range at custom boundaries after recordExerciseResult', () => {
+    // Set custom tempo range
     useLearnerProfileStore.setState({ tempoRange: { min: 30, max: 198 } });
 
     const { recordExerciseResult } = useLearnerProfileStore.getState();
 
-    // Push max beyond 200
+    // recordExerciseResult should NOT touch tempoRange
     recordExerciseResult({ tempo: 195, score: 0.95, noteResults: [] });
-    expect(useLearnerProfileStore.getState().tempoRange.max).toBe(200);
+    expect(useLearnerProfileStore.getState().tempoRange.max).toBe(198); // unchanged
 
-    // Reset and push min below 30
     useLearnerProfileStore.setState({ tempoRange: { min: 32, max: 80 } });
     recordExerciseResult({ tempo: 35, score: 0.3, noteResults: [] });
-    expect(useLearnerProfileStore.getState().tempoRange.min).toBe(30);
+    expect(useLearnerProfileStore.getState().tempoRange.min).toBe(32); // unchanged
   });
 
   it('increments totalExercisesCompleted', () => {

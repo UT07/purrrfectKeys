@@ -221,8 +221,10 @@ function CatCard({ cat, isSelected, isUnlocked, onSelect, index }: {
               <MaterialCommunityIcons name="lock-outline" size={48} color={COLORS.textMuted} />
             </View>
             <View style={[styles.unlockBadge, { backgroundColor: cat.color + '30' }]}>
-              <MaterialCommunityIcons name="star" size={12} color={cat.color} />
-              <Text style={[styles.unlockBadgeText, { color: cat.color }]}>Level {cat.unlockLevel}</Text>
+              <MaterialCommunityIcons name="diamond-stone" size={12} color={cat.color} />
+              <Text style={[styles.unlockBadgeText, { color: cat.color }]}>
+                {cat.legendary ? 'Legendary' : cat.gemCost ? `${cat.gemCost} gems` : `Level ${cat.unlockLevel}`}
+              </Text>
             </View>
           </View>
         )}

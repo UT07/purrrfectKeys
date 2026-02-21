@@ -210,6 +210,25 @@ export function buildAchievementContext(progress: {
 }, catsUnlocked: number, extras?: {
   sessionExercises?: number;
   exercisesWithSameCat?: number;
+  // Evolution extras
+  hasCatSelected?: boolean;
+  anyCatEvolvedTeen?: boolean;
+  anyCatEvolvedAdult?: boolean;
+  anyCatEvolvedMaster?: boolean;
+  abilitiesUnlocked?: number;
+  catsOwned?: number;
+  hasChonky?: boolean;
+  isChonkyMaster?: boolean;
+  // Gem extras
+  totalGemsEarned?: number;
+  totalGemsSpent?: number;
+  hasCheckedLockedCat?: boolean;
+  // Daily reward extras
+  dailyRewardStreak?: number;
+  dailyRewardsTotal?: number;
+  // Time extras
+  fastestExerciseSeconds?: number;
+  sessionMinutes?: number;
 }): AchievementContext {
   const achievementState = useAchievementStore.getState();
 
@@ -241,5 +260,30 @@ export function buildAchievementContext(progress: {
     exercisesWithSameCat: extras?.exercisesWithSameCat ?? 0,
     isEarlyPractice: hour < 8,
     isLatePractice: hour >= 22,
+
+    // Evolution context
+    hasCatSelected: extras?.hasCatSelected ?? false,
+    anyCatEvolvedTeen: extras?.anyCatEvolvedTeen ?? false,
+    anyCatEvolvedAdult: extras?.anyCatEvolvedAdult ?? false,
+    anyCatEvolvedMaster: extras?.anyCatEvolvedMaster ?? false,
+    abilitiesUnlocked: extras?.abilitiesUnlocked ?? 0,
+    catsOwned: extras?.catsOwned ?? 0,
+    hasChonky: extras?.hasChonky ?? false,
+    isChonkyMaster: extras?.isChonkyMaster ?? false,
+
+    // Gem context
+    totalGemsEarned: extras?.totalGemsEarned ?? 0,
+    totalGemsSpent: extras?.totalGemsSpent ?? 0,
+    hasCheckedLockedCat: extras?.hasCheckedLockedCat ?? false,
+
+    // Daily reward context
+    dailyRewardStreak: extras?.dailyRewardStreak ?? 0,
+    dailyRewardsTotal: extras?.dailyRewardsTotal ?? 0,
+
+    // Time context
+    fastestExerciseSeconds: extras?.fastestExerciseSeconds ?? 0,
+    isLateNightPractice: hour >= 23,
+    isEarlyMorningPractice: hour < 7,
+    sessionMinutes: extras?.sessionMinutes ?? 0,
   };
 }

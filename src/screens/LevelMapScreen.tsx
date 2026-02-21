@@ -1,7 +1,10 @@
 /**
  * LevelMapScreen - Duolingo-style vertical scrolling level map
  * Winding path with 80px nodes, gold/crimson/grey states,
- * Bezier curve connectors, decorative elements, parallax scroll
+ * Bezier curve connectors, decorative elements, parallax scroll.
+ *
+ * Shows 15 tier nodes: tiers 1-6 map to static lessons, tiers 7-15
+ * are AI-generated skill groups from the SkillTree.
  */
 
 import React, { useRef, useEffect, useMemo, useCallback } from 'react';
@@ -20,8 +23,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProgressStore } from '../stores/progressStore';
-import { getLessons, getLessonExercises } from '../content/ContentLoader';
-import type { LessonManifest } from '../content/ContentLoader';
+import { useLearnerProfileStore } from '../stores/learnerProfileStore';
+import { useGemStore } from '../stores/gemStore';
+import { getLessons } from '../content/ContentLoader';
+import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -30,65 +35,136 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const NODE_SIZE = 80;
-const NODE_SPACING_Y = 150;
+const NODE_SPACING_Y = 140;
 const ZIGZAG_OFFSET = SCREEN_WIDTH * 0.2;
+
+/** Metadata for each tier — title and icon shown on the level map */
+const TIER_META: Record<number, { title: string; icon: string }> = {
+  1: { title: 'Note Finding', icon: 'music-note' },
+  2: { title: 'Right Hand Melodies', icon: 'hand-pointing-right' },
+  3: { title: 'Left Hand Basics', icon: 'hand-pointing-left' },
+  4: { title: 'Both Hands', icon: 'hand-clap' },
+  5: { title: 'Scales & Technique', icon: 'stairs' },
+  6: { title: 'Popular Songs', icon: 'music' },
+  7: { title: 'Black Keys', icon: 'piano' },
+  8: { title: 'G & F Major', icon: 'key-variant' },
+  9: { title: 'Minor Keys', icon: 'music-accidental-flat' },
+  10: { title: 'Chord Progressions', icon: 'cards' },
+  11: { title: 'Advanced Rhythm', icon: 'metronome' },
+  12: { title: 'Arpeggios', icon: 'wave' },
+  13: { title: 'Expression', icon: 'volume-high' },
+  14: { title: 'Sight Reading', icon: 'eye' },
+  15: { title: 'Performance', icon: 'trophy' },
+};
+
+/** Section divider labels between groups of tiers */
+const TIER_SECTIONS: Record<number, string> = {
+  0: 'Beginner',
+  4: 'Fundamentals',
+  6: 'Intermediate',
+  10: 'Advanced',
+  14: 'Mastery',
+};
 
 type NodeState = 'completed' | 'current' | 'locked';
 
-interface LessonNodeData {
-  lesson: LessonManifest;
+interface TierNodeData {
+  tier: number;
+  title: string;
+  icon: string;
   state: NodeState;
-  stars: number;
-  completedCount: number;
-  totalExercises: number;
-  targetExerciseId: string | null;
+  masteredCount: number;
+  totalSkills: number;
+  /** For tiers 1-6: the lesson ID to navigate to */
+  lessonId: string | null;
+  /** For tiers 7-15: the first unmastered skill ID for AI exercise */
+  firstUnmasteredSkillId: string | null;
 }
 
-function useLessonNodes(): LessonNodeData[] {
+/**
+ * Build tier nodes by combining static lesson data (tiers 1-6) with
+ * SkillTree tier groups (tiers 7-15). Completion state is derived from
+ * masteredSkills in the learnerProfileStore.
+ */
+function useTierNodes(): TierNodeData[] {
   const { lessonProgress } = useProgressStore();
+  const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
   const lessons = useMemo(() => getLessons(), []);
 
   return useMemo(() => {
+    const masteredSet = new Set(masteredSkills);
+
+    // Group skills by tier
+    const skillsByTier = new Map<number, typeof SKILL_TREE>();
+    for (const skill of SKILL_TREE) {
+      const list = skillsByTier.get(skill.tier) ?? [];
+      list.push(skill);
+      skillsByTier.set(skill.tier, list);
+    }
+
+    // Get all unique tiers sorted
+    const tiers = Array.from(skillsByTier.keys()).sort((a, b) => a - b);
+
     let foundCurrent = false;
+    const nodes: TierNodeData[] = [];
 
-    return lessons.map((lesson, index) => {
-      const progress = lessonProgress[lesson.id];
-      const isCompleted = progress?.status === 'completed';
-      const prevLessonId = index > 0 ? lessons[index - 1].id : null;
-      const isPrevCompleted = index === 0 || lessonProgress[prevLessonId!]?.status === 'completed';
+    for (const tier of tiers) {
+      const skills = skillsByTier.get(tier) ?? [];
+      const masteredCount = skills.filter((s) => masteredSet.has(s.id)).length;
+      const totalSkills = skills.length;
+      const isComplete = masteredCount === totalSkills;
 
-      const exercises = getLessonExercises(lesson.id);
-      const exerciseScores = progress?.exerciseScores ?? {};
-      const completedCount = Object.values(exerciseScores).filter((s) => s.completedAt != null).length;
-      const totalStars = Object.values(exerciseScores).reduce(
-        (sum, s) => sum + (s.stars ?? 0),
-        0
-      );
+      const meta = TIER_META[tier] ?? { title: `Tier ${tier}`, icon: 'star' };
 
-      const nextExercise = exercises.find((ex) => {
-        const score = exerciseScores[ex.id];
-        return !score || score.completedAt == null;
-      });
-      const targetExerciseId = nextExercise?.id ?? exercises[0]?.id ?? null;
+      // Explicit tier-to-lesson mapping (not index-based, safe if lessons reorder)
+      const TIER_TO_LESSON: Record<number, string> = {
+        1: 'lesson-01', 2: 'lesson-02', 3: 'lesson-03',
+        4: 'lesson-04', 5: 'lesson-05', 6: 'lesson-06',
+      };
+      const lessonId = TIER_TO_LESSON[tier] ?? null;
+      const lesson = lessonId ? lessons.find((l) => l.id === lessonId) ?? null : null;
+
+      // For tiers 1-6, also consider lesson progress for completion
+      let tierComplete = isComplete;
+      if (lesson && lessonProgress[lesson.id]?.status === 'completed') {
+        tierComplete = true;
+      }
+
+      // Check if previous tier is complete
+      const prevTier = nodes.length > 0 ? nodes[nodes.length - 1] : null;
+      const prevComplete = !prevTier || prevTier.state === 'completed';
 
       let state: NodeState;
-      if (isCompleted) {
+      if (tierComplete) {
         state = 'completed';
-      } else if (isPrevCompleted && !foundCurrent) {
+      } else if (prevComplete && !foundCurrent) {
         state = 'current';
         foundCurrent = true;
       } else {
         state = 'locked';
       }
 
-      return { lesson, state, stars: totalStars, completedCount, totalExercises: exercises.length, targetExerciseId };
-    });
-  }, [lessons, lessonProgress]);
+      // Find first unmastered skill in this tier (for AI navigation)
+      const firstUnmastered = skills.find((s) => !masteredSet.has(s.id));
+
+      nodes.push({
+        tier,
+        title: meta.title,
+        icon: meta.icon,
+        state,
+        masteredCount,
+        totalSkills,
+        lessonId,
+        firstUnmasteredSkillId: firstUnmastered?.id ?? null,
+      });
+    }
+
+    return nodes;
+  }, [lessons, lessonProgress, masteredSkills]);
 }
 
 function getNodeX(index: number): number {
   const center = SCREEN_WIDTH / 2;
-  // S-curve pattern for more visual interest
   const offset = ZIGZAG_OFFSET * Math.sin((index * Math.PI) / 2);
   return center + offset;
 }
@@ -147,33 +223,14 @@ function PulsingGlow() {
   );
 }
 
-/** Star display with gold/empty stars */
-function StarRow({ earned, max }: { earned: number; max: number }) {
-  const display = Math.min(3, max);
-  // Normalize: if max exercises is 5 and you earned 12 stars, cap display at 3
-  const filled = Math.min(display, Math.ceil(earned / Math.max(1, max / 3)));
-  return (
-    <View style={styles.starRow}>
-      {Array.from({ length: display }).map((_, i) => (
-        <MaterialCommunityIcons
-          key={i}
-          name={i < filled ? 'star' : 'star-outline'}
-          size={16}
-          color={i < filled ? COLORS.starGold : COLORS.starEmpty}
-        />
-      ))}
-    </View>
-  );
-}
-
-/** Individual lesson node */
-function LessonNode({
+/** Individual tier node */
+function TierNode({
   data,
   x,
   y,
   onPress,
 }: {
-  data: LessonNodeData;
+  data: TierNodeData;
   x: number;
   y: number;
   onPress: () => void;
@@ -181,7 +238,7 @@ function LessonNode({
   const config = NODE_CONFIGS[data.state];
   const nodeTestID = data.state === 'current'
     ? 'lesson-node-current'
-    : `lesson-node-${data.lesson.id}`;
+    : `tier-node-${data.tier}`;
 
   return (
     <TouchableOpacity
@@ -193,7 +250,6 @@ function LessonNode({
       {data.state === 'current' && <PulsingGlow />}
 
       <View style={[styles.nodeCircle, config.circleStyle]}>
-        {/* Inner content */}
         {data.state === 'completed' && (
           <MaterialCommunityIcons name="check-bold" size={32} color="#FFFFFF" />
         )}
@@ -209,12 +265,14 @@ function LessonNode({
 
       {/* Label below node */}
       <Text style={[styles.nodeLabel, config.labelStyle]} numberOfLines={2}>
-        {data.lesson.metadata.title}
+        {data.title}
       </Text>
 
-      {/* Stars for completed */}
-      {data.state === 'completed' && (
-        <StarRow earned={data.stars} max={data.totalExercises} />
+      {/* Progress for completed or current */}
+      {(data.state === 'completed' || data.state === 'current') && (
+        <Text style={[styles.nodeProgress, data.state === 'completed' ? { color: COLORS.starGold } : null]}>
+          {data.masteredCount}/{data.totalSkills} skills
+        </Text>
       )}
 
       {/* "START" text for current */}
@@ -222,13 +280,6 @@ function LessonNode({
         <View style={styles.startChip} testID="lesson-node-start-chip">
           <Text style={styles.startChipText}>START</Text>
         </View>
-      )}
-
-      {/* Progress count for current with progress */}
-      {data.state === 'current' && data.completedCount > 0 && (
-        <Text style={styles.nodeProgress}>
-          {data.completedCount}/{data.totalExercises}
-        </Text>
       )}
 
       {/* Level requirement for locked */}
@@ -241,17 +292,29 @@ function LessonNode({
 
 /** Decorative floating music notes on the path */
 function DecorationLayer({ count, height }: { count: number; height: number }) {
+  // Use a seeded hash to generate stable positions (avoids jumps on height changes)
+  const decorationsRef = useRef<{ x: number; y: number; char: string; opacity: number }[]>([]);
   const decorations = useMemo(() => {
+    // Only regenerate if count changed; height changes just re-use existing positions
+    if (decorationsRef.current.length === count && height > 0) {
+      return decorationsRef.current;
+    }
     const items: { x: number; y: number; char: string; opacity: number }[] = [];
     const chars = ['\u266A', '\u266B', '\u2669', '\u{1F3B5}'];
+    // Simple seeded pseudo-random (deterministic per index)
+    const seeded = (i: number, salt: number) => {
+      const x = Math.sin(i * 9301 + salt * 49297) * 49979;
+      return x - Math.floor(x);
+    };
     for (let i = 0; i < count; i++) {
       items.push({
-        x: 20 + Math.random() * (SCREEN_WIDTH - 40),
-        y: 80 + Math.random() * (height - 160),
+        x: 20 + seeded(i, 1) * (SCREEN_WIDTH - 40),
+        y: 80 + seeded(i, 2) * Math.max(1, height - 160),
         char: chars[i % chars.length],
-        opacity: 0.06 + Math.random() * 0.06,
+        opacity: 0.06 + seeded(i, 3) * 0.06,
       });
     }
+    decorationsRef.current = items;
     return items;
   }, [count, height]);
 
@@ -274,8 +337,9 @@ function DecorationLayer({ count, height }: { count: number; height: number }) {
 
 export function LevelMapScreen() {
   const navigation = useNavigation<NavProp>();
-  const nodes = useLessonNodes();
+  const nodes = useTierNodes();
   const scrollRef = useRef<ScrollView>(null);
+  const gems = useGemStore((s) => s.gems);
 
   useEffect(() => {
     const currentIndex = nodes.findIndex((n) => n.state === 'current');
@@ -289,12 +353,30 @@ export function LevelMapScreen() {
   }, [nodes]);
 
   const handleNodePress = useCallback(
-    (data: LessonNodeData) => {
+    (data: TierNodeData) => {
       if (data.state === 'locked') return;
-      navigation.navigate('LessonIntro', { lessonId: data.lesson.id });
+
+      // Tiers 1-6 with static lessons: navigate to LessonIntro
+      if (data.lessonId) {
+        navigation.navigate('LessonIntro', { lessonId: data.lessonId });
+        return;
+      }
+
+      // Tiers 7-15: navigate to AI exercise for the first unmastered skill
+      if (data.firstUnmasteredSkillId) {
+        navigation.navigate('Exercise', {
+          exerciseId: 'ai-mode',
+          aiMode: true,
+          skillId: data.firstUnmasteredSkillId,
+        });
+      }
     },
     [navigation]
   );
+
+  const handleGoBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
 
   const contentHeight = 100 + nodes.length * NODE_SPACING_Y + 80;
 
@@ -350,7 +432,17 @@ export function LevelMapScreen() {
         colors={[GRADIENTS.header[0], GRADIENTS.header[1], COLORS.background]}
         style={styles.header}
       >
-        <Text style={styles.title}>Your Journey</Text>
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity
+            onPress={handleGoBack}
+            style={styles.backButton}
+            testID="level-map-back"
+          >
+            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Your Journey</Text>
+          <View style={styles.backButton} />
+        </View>
         <View style={styles.headerStats}>
           <View style={styles.headerBadge}>
             <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
@@ -359,8 +451,12 @@ export function LevelMapScreen() {
           <View style={styles.headerBadge}>
             <MaterialCommunityIcons name="star" size={16} color={COLORS.starGold} />
             <Text style={styles.headerBadgeText}>
-              {nodes.reduce((s, n) => s + n.stars, 0)}
+              {nodes.reduce((s, n) => s + n.masteredCount, 0)} skills
             </Text>
+          </View>
+          <View style={styles.headerBadge}>
+            <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
+            <Text style={styles.headerBadgeText}>{gems}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -384,10 +480,24 @@ export function LevelMapScreen() {
           {connectors}
         </Svg>
 
+        {/* Tier section headers */}
+        {Object.entries(TIER_SECTIONS).map(([indexStr, label]) => {
+          const idx = Number(indexStr);
+          if (idx >= nodes.length) return null;
+          const y = getNodeY(idx, nodes.length) - NODE_SPACING_Y / 2 - 10;
+          return (
+            <View key={`tier-${idx}`} style={[styles.tierHeader, { top: y }]}>
+              <View style={styles.tierLine} />
+              <Text style={styles.tierLabel}>{label}</Text>
+              <View style={styles.tierLine} />
+            </View>
+          );
+        })}
+
         {/* Nodes */}
         {nodes.map((data, index) => (
-          <LessonNode
-            key={data.lesson.id}
+          <TierNode
+            key={`tier-${data.tier}`}
             data={data}
             x={getNodeX(index)}
             y={getNodeY(index, nodes.length)}
@@ -439,6 +549,19 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: SPACING.lg,
   },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
@@ -448,6 +571,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.md,
     marginTop: SPACING.sm,
+    justifyContent: 'center',
   },
   headerBadge: {
     flexDirection: 'row',
@@ -505,10 +629,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: NODE_SIZE + 60,
   },
-  starRow: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
+  nodeProgress: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginTop: 2,
   },
   startChip: {
     marginTop: 4,
@@ -523,17 +648,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 1,
   },
-  nodeProgress: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.primary,
-    marginTop: 2,
-  },
   lockedHint: {
     fontSize: 10,
     fontWeight: '500',
     color: COLORS.textMuted,
     marginTop: 2,
+  },
+  // Tier headers
+  tierHeader: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    gap: SPACING.sm,
+  },
+  tierLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.cardBorder,
+  },
+  tierLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   // Decorations
   decoration: {

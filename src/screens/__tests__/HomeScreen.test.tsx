@@ -175,6 +175,116 @@ jest.mock('../../content/ContentLoader', () => ({
   isPostCurriculum: jest.fn(() => false),
 }));
 
+let mockLearnerProfileState: any = {
+  masteredSkills: [],
+  weakNotes: [],
+  skills: { timingAccuracy: 0.5, pitchAccuracy: 0.5, sightReadSpeed: 0.5, chordRecognition: 0.5 },
+  tempoRange: { min: 40, max: 80 },
+  noteAccuracy: {},
+  noteAttempts: {},
+  weakSkills: [],
+  totalExercisesCompleted: 0,
+  lastAssessmentDate: '',
+  assessmentScore: 0,
+};
+jest.mock('../../stores/learnerProfileStore', () => ({
+  useLearnerProfileStore: Object.assign(
+    (sel?: any) => (sel ? sel(mockLearnerProfileState) : mockLearnerProfileState),
+    { getState: () => mockLearnerProfileState }
+  ),
+}));
+
+jest.mock('../../core/curriculum/CurriculumEngine', () => ({
+  getNextSkillToLearn: jest.fn(() => ({ id: 'find-middle-c', name: 'Find Middle C', category: 'note-finding' })),
+}));
+
+jest.mock('../../core/curriculum/SkillTree', () => ({
+  SKILL_TREE: Array.from({ length: 27 }, (_, i) => ({ id: `skill-${i}`, name: `Skill ${i}` })),
+}));
+
+// Gem store mock
+const mockGemState: any = {
+  gems: 100,
+  totalGemsEarned: 200,
+  totalGemsSpent: 100,
+  transactions: [],
+  earnGems: jest.fn(),
+  spendGems: jest.fn(),
+  canAfford: jest.fn(() => true),
+  reset: jest.fn(),
+};
+jest.mock('../../stores/gemStore', () => ({
+  useGemStore: Object.assign(
+    (sel?: any) => (sel ? sel(mockGemState) : mockGemState),
+    { getState: () => mockGemState }
+  ),
+}));
+
+// Cat evolution store mock
+const mockEvolutionState: any = {
+  selectedCatId: 'mini-meowww',
+  ownedCats: ['mini-meowww'],
+  evolutionData: {
+    'mini-meowww': {
+      catId: 'mini-meowww',
+      currentStage: 'baby',
+      xpAccumulated: 0,
+      abilitiesUnlocked: [],
+      evolvedAt: { baby: Date.now(), teen: null, adult: null, master: null },
+    },
+  },
+  dailyRewards: {
+    weekStartDate: '2026-02-21',
+    days: [
+      { day: 1, reward: { type: 'gems', amount: 10 }, claimed: false },
+      { day: 2, reward: { type: 'gems', amount: 15 }, claimed: false },
+    ],
+    currentDay: 1,
+  },
+  chonkyUnlockProgress: { daysStreakReached: false, skillsMasteredReached: false },
+  selectCat: jest.fn(),
+  unlockCat: jest.fn(),
+  addEvolutionXp: jest.fn(),
+  getActiveAbilities: jest.fn(() => []),
+  claimDailyReward: jest.fn(),
+  resetDailyRewards: jest.fn(),
+  checkChonkyEligibility: jest.fn(() => false),
+  unlockChonky: jest.fn(),
+  initializeStarterCat: jest.fn(),
+  reset: jest.fn(),
+};
+jest.mock('../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: Object.assign(
+    (sel?: any) => (sel ? sel(mockEvolutionState) : mockEvolutionState),
+    { getState: () => mockEvolutionState }
+  ),
+  xpToNextStage: jest.fn(() => ({ nextStage: 'teen', xpNeeded: 500 })),
+}));
+
+jest.mock('../../stores/types', () => ({
+  EVOLUTION_XP_THRESHOLDS: { baby: 0, teen: 500, adult: 2000, master: 5000 },
+}));
+
+jest.mock('../../components/DailyRewardCalendar', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    DailyRewardCalendar: (props: any) =>
+      React.createElement(View, { testID: 'daily-reward-calendar', ...props },
+        React.createElement(Text, null, 'Daily Rewards')
+      ),
+  };
+});
+
+jest.mock('../../components/GemEarnPopup', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    GemEarnPopup: (props: any) =>
+      React.createElement(View, { testID: 'gem-earn-popup', ...props }),
+  };
+});
+
 // ---------------------------------------------------------------------------
 // Import component AFTER mocks
 // ---------------------------------------------------------------------------
@@ -229,11 +339,11 @@ describe('HomeScreen', () => {
     expect(getByText('streak:5')).toBeTruthy();
   });
 
-  it('shows continue/start learning button with exercise title', () => {
+  it('shows continue learning card with skill-based progress', () => {
     const { getByText } = render(<HomeScreen />);
     expect(getByText('Continue Learning')).toBeTruthy();
-    expect(getByText('First Exercise')).toBeTruthy();
-    expect(getByText('Lesson 1')).toBeTruthy();
+    expect(getByText('Find Middle C')).toBeTruthy();
+    expect(getByText('0 skills mastered')).toBeTruthy();
   });
 
   it('shows daily challenge card', () => {
@@ -241,10 +351,10 @@ describe('HomeScreen', () => {
     expect(getByText('Daily Challenge')).toBeTruthy();
   });
 
-  it('navigates to Exercise screen when continue card is pressed', () => {
+  it('navigates to Learn tab when continue card is pressed', () => {
     const { getByText } = render(<HomeScreen />);
-    fireEvent.press(getByText('First Exercise'));
-    expect(mockNavigate).toHaveBeenCalledWith('Exercise', { exerciseId: 'ex-01' });
+    fireEvent.press(getByText('Find Middle C'));
+    expect(mockNavigate).toHaveBeenCalledWith('MainTabs', { screen: 'Learn' });
   });
 
   it('shows XP progress info', () => {
@@ -276,7 +386,7 @@ describe('HomeScreen', () => {
     expect(getByText('Learn')).toBeTruthy();
     expect(getByText('Practice')).toBeTruthy();
     expect(getByText('Free Play')).toBeTruthy();
-    expect(getByText('Settings')).toBeTruthy();
+    expect(getByText('Collection')).toBeTruthy();
   });
 
   it('navigates to DailySession when Learn action card is pressed', () => {
@@ -319,8 +429,29 @@ describe('HomeScreen', () => {
   it('uses onNavigateToExercise callback prop when provided', () => {
     const onNav = jest.fn();
     const { getByText } = render(<HomeScreen onNavigateToExercise={onNav} />);
-    fireEvent.press(getByText('First Exercise'));
+    fireEvent.press(getByText('Find Middle C'));
     expect(onNav).toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalledWith('Exercise', expect.anything());
+    expect(mockNavigate).not.toHaveBeenCalledWith('MainTabs', expect.anything());
+  });
+
+  it('shows gem counter with current balance', () => {
+    const { getByTestId, getByText } = render(<HomeScreen />);
+    expect(getByTestId('gem-counter')).toBeTruthy();
+    expect(getByText('100')).toBeTruthy();
+  });
+
+  it('shows daily reward calendar', () => {
+    const { getByTestId } = render(<HomeScreen />);
+    expect(getByTestId('daily-reward-calendar')).toBeTruthy();
+  });
+
+  it('shows evolution progress bar when cat has evolution data', () => {
+    const { getByTestId } = render(<HomeScreen />);
+    expect(getByTestId('evolution-progress')).toBeTruthy();
+  });
+
+  it('shows evolution XP to next stage', () => {
+    const { getByText } = render(<HomeScreen />);
+    expect(getByText('500 to teen')).toBeTruthy();
   });
 });

@@ -8,7 +8,7 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 ## Current Sprint: 16-Week Roadmap (Feb 17 → Jun 8, 2026)
 
-**Codebase Health:** 75 test suites, 1,725 tests passing, 0 TypeScript errors
+**Codebase Health:** 79 test suites, 1,789 tests passing, 0 TypeScript errors
 
 Previous sprints all COMPLETE:
 - Phase 4+ (Gamification + Adaptive Learning + UI Overhaul): 22/22 tasks
@@ -17,22 +17,29 @@ Previous sprints all COMPLETE:
 - QA Sprint: 18 new test suites, 6 bug fixes
 - Bug Fix Sprint (Feb 19-20): 10+ issues closed, cross-device sync, Google Sign-In, Detox E2E
 - Phase 5 (Adaptive Learning Revamp): 18/18 tasks, ~150+ new tests
+- Phase 5.2 (365-Day Curriculum Expansion): SkillTree to 100 nodes, session variety, skill decay
 
 **Recently Completed (Feb 20, 2026):**
+- Phase 5.2 365-Day Curriculum Expansion:
+  - SkillTree expanded: 100 skill nodes across 15 tiers (was 27 nodes, 6 tiers)
+  - New categories: black-keys, key-signatures, expression, arpeggios, sight-reading
+  - Skill decay: 14-day half-life, automatic review session triggering
+  - Multi-session mastery: harder skills require 3-5 successful completions
+  - Session type variety: new-material, review, challenge, mixed
+  - AI-only exercises for tiers 7-15 (no static JSON; Gemini generates per-skill)
+  - LevelMap tier section headers for 24-lesson journey
+  - DailySessionScreen session type badge + review count indicator
 - Phase 5 Adaptive Learning Revamp: all 18 tasks (5.1-5.18) across 7 batches complete
-- SkillTree data model: DAG of ~30 skill nodes with categories and prerequisites
-- CurriculumEngine: AI session planner (warm-up + lesson + challenge) using learner profile
-- AI exercise generation upgrade: skill-aware generation with warm-up/challenge convenience methods
-- DailySessionScreen: "Today's Practice" with AI-picked sessions, replaces static lesson list on Home
+- SkillTree data model: DAG of 100 skill nodes with categories, tiers, prerequisites
+- CurriculumEngine: AI session planner with 4 session types using learner profile
+- AI exercise generation: skill-aware generation for all 100 nodes via Gemini Flash
+- DailySessionScreen: "Today's Practice" with session type badge + skill progress
 - Voice coaching pipeline: VoiceCoachingService + TTSService (expo-speech) + per-cat voice configs
 - Offline coaching templates: 50+ pre-generated coaching strings for Gemini fallback
 - WeakSpotDetector: pattern-based detection (note/transition/timing/hand weaknesses)
 - DifficultyEngine: progressive difficulty adjustment (5 BPM per mastered exercise)
 - FreePlayAnalyzer: key/scale detection + drill generation from free play sessions
-- PlayScreen analysis card: post-play feedback after 2s silence with "Generate Drill" button
-- Cross-device sync improvements: sequential migration/pull, XP sync, createGamificationData guard
-- Piano roll Tetris cascade: notes fall from top during count-in (removed effectiveBeat clamp)
-- TTSService lazy loading: prevents crashes when expo-speech native module unavailable
+- Piano roll Tetris cascade: notes fall from top during count-in
 
 **Active Roadmap:**
 - ~~Phase 5: Adaptive Learning Revamp (Weeks 1-3)~~ COMPLETE
@@ -161,8 +168,8 @@ src/
 | `src/components/PianoRoll/VerticalPianoRoll.tsx` | Falling-note display (top-to-bottom, Synthesia-style) |
 | `src/services/demoPlayback.ts` | Demo mode: visual-only note playback with cat dialogue |
 | `src/content/catDialogue.ts` | Cat personality dialogue (8 cats, ~320 messages, trigger-based) |
-| `src/core/curriculum/SkillTree.ts` | DAG of ~30 skill nodes: note-finding, intervals, scales, chords, rhythm, hand-independence, songs |
-| `src/core/curriculum/CurriculumEngine.ts` | AI session planner: generateSessionPlan() -> warm-up + lesson + challenge |
+| `src/core/curriculum/SkillTree.ts` | DAG of 100 skill nodes across 15 tiers, 12 categories, skill decay + review functions |
+| `src/core/curriculum/CurriculumEngine.ts` | AI session planner: 4 session types (new-material/review/challenge/mixed) + decay-aware scheduling |
 | `src/core/curriculum/WeakSpotDetector.ts` | Pattern-based weak spot detection (note/transition/timing/hand) |
 | `src/core/curriculum/DifficultyEngine.ts` | Progressive difficulty adjustment (5 BPM per mastered exercise) |
 | `src/screens/DailySessionScreen.tsx` | "Today's Practice" screen with AI-picked warm-up/lesson/challenge sections |
@@ -171,13 +178,13 @@ src/
 | `src/services/tts/catVoiceConfig.ts` | Per-cat voice parameters (8 cats x pitch/rate/language) |
 | `src/services/FreePlayAnalyzer.ts` | Free play analysis: key/scale detection, drill generation |
 | `src/content/offlineCoachingTemplates.ts` | 50+ pre-generated coaching strings for offline fallback |
-| `src/stores/learnerProfileStore.ts` | Adaptive learning: per-note accuracy, skills, tempo range, mastered skills |
+| `src/stores/learnerProfileStore.ts` | Adaptive learning: per-note accuracy, skills, tempo range, mastered skills, skill decay, multi-session mastery |
 | `src/stores/authStore.ts` | Firebase Auth: anonymous, email, Google, Apple sign-in + linking |
 | `src/services/firebase/syncService.ts` | Cross-device sync: offline queue + Firestore pull/merge |
 | `src/services/firebase/dataMigration.ts` | One-time local→cloud migration on first sign-in |
 | `docs/plans/2026-02-16-gamification-adaptive-design.md` | Current sprint design doc |
 | `docs/plans/2026-02-16-gamification-adaptive-implementation.md` | Current sprint implementation plan (22 tasks) |
-| `content/exercises/` | JSON exercise definitions (30 exercises, 6 lessons) |
+| `content/exercises/` | JSON exercise definitions (30 static exercises, 6 lessons; tiers 7-15 use AI generation) |
 
 ## Code Style
 
