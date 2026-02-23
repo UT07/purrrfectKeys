@@ -491,7 +491,7 @@ describe('CompletionModal', () => {
   });
 
   it('renders breakdown bars with correct values', () => {
-    const { getByText } = render(
+    const { getByText, getAllByText } = render(
       <CompletionModal
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
@@ -502,7 +502,10 @@ describe('CompletionModal', () => {
     expect(getByText('Accuracy')).toBeTruthy();
     expect(getByText('Timing')).toBeTruthy();
     expect(getByText('Completeness')).toBeTruthy();
-    expect(getByText('90%')).toBeTruthy();
+    expect(getByText('Duration')).toBeTruthy();
+    expect(getByText('Extra Notes')).toBeTruthy();
+    // 90% appears twice (accuracy + duration), so use getAllByText
+    expect(getAllByText('90%').length).toBeGreaterThanOrEqual(1);
     expect(getByText('80%')).toBeTruthy();
     expect(getByText('85%')).toBeTruthy();
   });

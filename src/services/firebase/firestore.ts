@@ -489,6 +489,57 @@ export async function batchUpdateLessonProgress(
   await batch.commit();
 }
 
+// ============================================================================
+// Cat Evolution & Gem Sync Operations
+// ============================================================================
+
+export interface CatEvolutionSyncData {
+  selectedCatId: string;
+  ownedCats: string[];
+  evolutionData: Record<string, {
+    catId: string;
+    currentStage: string;
+    xpAccumulated: number;
+    abilitiesUnlocked: string[];
+  }>;
+  updatedAt: FieldValue | Timestamp;
+}
+
+export interface GemSyncData {
+  gems: number;
+  totalGemsEarned: number;
+  totalGemsSpent: number;
+  updatedAt: FieldValue | Timestamp;
+}
+
+export async function getCatEvolutionData(uid: string): Promise<CatEvolutionSyncData | null> {
+  const catDoc = doc(db, 'users', uid, 'gamification', 'catEvolution');
+  const docSnap = await getDoc(catDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data() as CatEvolutionSyncData;
+}
+
+export async function saveCatEvolutionData(uid: string, data: Omit<CatEvolutionSyncData, 'updatedAt'>): Promise<void> {
+  const catDoc = doc(db, 'users', uid, 'gamification', 'catEvolution');
+  await setDoc(catDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+export async function getGemSyncData(uid: string): Promise<GemSyncData | null> {
+  const gemDoc = doc(db, 'users', uid, 'gamification', 'gems');
+  const docSnap = await getDoc(gemDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data() as GemSyncData;
+}
+
+export async function saveGemSyncData(uid: string, data: Omit<GemSyncData, 'updatedAt'>): Promise<void> {
+  const gemDoc = doc(db, 'users', uid, 'gamification', 'gems');
+  await setDoc(gemDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+// ============================================================================
+// Data Deletion
+// ============================================================================
+
 /**
  * Delete user data (GDPR compliance)
  */

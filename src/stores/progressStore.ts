@@ -16,6 +16,7 @@ import type { ProgressStoreState, StreakData, DailyGoalData } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 import { levelFromXp } from '@/core/progression/XpSystem';
 import { useGemStore } from './gemStore';
+import { useCatEvolutionStore } from './catEvolutionStore';
 
 const defaultStreakData: StreakData = {
   currentStreak: 0,
@@ -155,23 +156,25 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
 
   recordExerciseCompletion: (_exerciseId: string, _score: number, xpEarned: number) => {
     const today = new Date().toISOString().split('T')[0];
-    const prevState = get();
-    const prevDailyGoal = prevState.dailyGoalData[today] || {
-      ...defaultDailyGoal,
-      date: today,
-    };
-    const wasDailyGoalComplete = prevDailyGoal.isComplete;
+
+    // Capture pre-update state inside set() to avoid race conditions.
+    // The previous approach read state before set() and after set() separately,
+    // which could miss or double-count the daily goal transition.
+    let dailyGoalJustCompleted = false;
 
     set((state) => {
       const dailyGoal = state.dailyGoalData[today] || {
         ...defaultDailyGoal,
         date: today,
       };
+      const wasDailyGoalComplete = dailyGoal.isComplete;
       const newTotalXp = state.totalXp + xpEarned;
       const newExercisesCompleted = dailyGoal.exercisesCompleted + 1;
       const nowComplete =
         dailyGoal.minutesPracticed >= dailyGoal.minutesTarget &&
         newExercisesCompleted >= dailyGoal.exercisesTarget;
+
+      dailyGoalJustCompleted = nowComplete && !wasDailyGoalComplete;
 
       return {
         totalXp: newTotalXp,
@@ -187,9 +190,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       };
     });
 
-    // Gem reward: daily goal just completed (transition from incomplete to complete)
-    const updatedDailyGoal = get().dailyGoalData[today];
-    if (updatedDailyGoal?.isComplete && !wasDailyGoalComplete) {
+    // Gem reward + daily challenge: only when daily goal transitions to complete
+    if (dailyGoalJustCompleted) {
+      useCatEvolutionStore.getState().completeDailyChallenge();
       useGemStore.getState().earnGems(10, 'daily-goal');
     }
 

@@ -145,8 +145,47 @@ describe('ExerciseValidator', () => {
         { type: 'noteOn', note: 64, velocity: 100, timestamp: 1000, channel: 0 },
       ];
       const score = scoreExercise(mockExercise, playedNotes);
-      // Neutral score for tap-only is 70
-      expect(score.breakdown.duration).toBe(70);
+      // No penalty for tap-only (touch keyboard) — duration not measurable
+      expect(score.breakdown.duration).toBe(100);
+    });
+
+    it('should populate missedNotes and extraNotes counts', () => {
+      // Play no notes → all 3 expected notes are missed
+      const score = scoreExercise(mockExercise, []);
+      expect(score.missedNotes).toBe(3);
+      expect(score.extraNotes).toBe(0);
+    });
+
+    it('should populate perfectNotes for well-timed notes', () => {
+      const playedNotes: MidiNoteEvent[] = [
+        { type: 'noteOn', note: 60, velocity: 100, timestamp: 0, channel: 0 },
+        { type: 'noteOn', note: 62, velocity: 100, timestamp: 500, channel: 0 },
+        { type: 'noteOn', note: 64, velocity: 100, timestamp: 1000, channel: 0 },
+      ];
+      const score = scoreExercise(mockExercise, playedNotes);
+      // All notes are correct pitch — at least some should have high timing scores
+      expect(score.perfectNotes).toBeDefined();
+      expect(typeof score.perfectNotes).toBe('number');
+      expect(score.goodNotes).toBeDefined();
+      expect(typeof score.goodNotes).toBe('number');
+      expect(score.okNotes).toBeDefined();
+      expect(typeof score.okNotes).toBe('number');
+      // Total of perfect+good+ok+missed should equal expected note count
+      const categorized = (score.perfectNotes ?? 0) + (score.goodNotes ?? 0)
+        + (score.okNotes ?? 0) + (score.missedNotes ?? 0);
+      expect(categorized).toBeLessThanOrEqual(mockExercise.notes.length + (score.extraNotes ?? 0));
+    });
+
+    it('should count extra notes when playing unmatched notes', () => {
+      const playedNotes: MidiNoteEvent[] = [
+        { type: 'noteOn', note: 60, velocity: 100, timestamp: 0, channel: 0 },
+        { type: 'noteOn', note: 62, velocity: 100, timestamp: 500, channel: 0 },
+        { type: 'noteOn', note: 64, velocity: 100, timestamp: 1000, channel: 0 },
+        // Extra note not in the exercise
+        { type: 'noteOn', note: 70, velocity: 100, timestamp: 1500, channel: 0 },
+      ];
+      const score = scoreExercise(mockExercise, playedNotes);
+      expect(score.extraNotes).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -166,9 +205,9 @@ describe('ExerciseValidator', () => {
       expect(score).toBeLessThan(100);
     });
 
-    it('should return 70 for no duration data (tap-only)', () => {
-      expect(calculateDurationScore(undefined, 500)).toBe(70);
-      expect(calculateDurationScore(0, 500)).toBe(70);
+    it('should return 100 for no duration data (tap-only)', () => {
+      expect(calculateDurationScore(undefined, 500)).toBe(100);
+      expect(calculateDurationScore(0, 500)).toBe(100);
     });
 
     it('should return 0 for extremely long hold (3x)', () => {

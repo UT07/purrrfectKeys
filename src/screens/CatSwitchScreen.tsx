@@ -32,10 +32,10 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { KeysieSvg } from '../components/Mascot/KeysieSvg';
-import { CAT_CHARACTERS, isCatUnlocked, getCatById } from '../components/Mascot/catCharacters';
+import { CAT_CHARACTERS, isCatOwned, getCatById } from '../components/Mascot/catCharacters';
 import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
-import { useProgressStore } from '../stores/progressStore';
+import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -295,9 +295,9 @@ function PaginationDots({ total, currentIndex, cats }: {
 
 export function CatSwitchScreen(): React.ReactElement {
   const navigation = useNavigation();
-  const level = useProgressStore((s) => s.level);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
   const setSelectedCatId = useSettingsStore((s) => s.setSelectedCatId);
+  const ownedCats = useCatEvolutionStore((s) => s.ownedCats);
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
@@ -311,14 +311,16 @@ export function CatSwitchScreen(): React.ReactElement {
   }, [initialIndex]);
 
   const handleSelect = useCallback((catId: string) => {
-    if (!isCatUnlocked(catId, level)) return;
+    if (!isCatOwned(catId, ownedCats)) return;
     setSelectedCatId(catId);
+    // Sync catEvolutionStore to keep selectedCatId in both stores aligned
+    useCatEvolutionStore.getState().selectCat(catId);
     const cat = getCatById(catId);
     if (cat) {
       useSettingsStore.getState().setAvatarEmoji(cat.emoji);
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, [level, setSelectedCatId]);
+  }, [ownedCats, setSelectedCatId]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ index: number | null }> }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
@@ -332,11 +334,11 @@ export function CatSwitchScreen(): React.ReactElement {
     <CatCard
       cat={item}
       isSelected={selectedCatId === item.id}
-      isUnlocked={isCatUnlocked(item.id, level)}
+      isUnlocked={isCatOwned(item.id, ownedCats)}
       onSelect={handleSelect}
       index={index}
     />
-  ), [selectedCatId, level, handleSelect]);
+  ), [selectedCatId, ownedCats, handleSelect]);
 
   const keyExtractor = useCallback((item: CatCharacter) => item.id, []);
 
@@ -366,7 +368,7 @@ export function CatSwitchScreen(): React.ReactElement {
           <View>
             <Text style={styles.headerTitle}>Choose Your Cat</Text>
             <Text style={styles.headerSubtitle}>
-              {CAT_CHARACTERS.filter((c) => isCatUnlocked(c.id, level)).length} of {CAT_CHARACTERS.length} unlocked
+              {CAT_CHARACTERS.filter((c) => isCatOwned(c.id, ownedCats)).length} of {CAT_CHARACTERS.length} unlocked
             </Text>
           </View>
           <View style={styles.headerSpacer} />

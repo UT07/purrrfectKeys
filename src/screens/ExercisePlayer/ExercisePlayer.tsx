@@ -33,7 +33,7 @@ import { useExerciseStore } from '../../stores/exerciseStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useExercisePlayback } from '../../hooks/useExercisePlayback';
 import { getExercise, getNextExerciseId, getLessonIdForExercise, getLesson, getLessons, isTestExercise, getTestExercise, getNonTestExercises } from '../../content/ContentLoader';
-import { getNextExercise as getNextAIExercise, fillBuffer, getBufferSize, BUFFER_MIN_THRESHOLD } from '../../services/exerciseBufferManager';
+import { getNextExerciseForSkill, getNextExercise as getNextAIExercise, fillBuffer, fillBufferForSkills, getBufferSize, BUFFER_MIN_THRESHOLD } from '../../services/exerciseBufferManager';
 import { recordPracticeSession as calculateStreakUpdate } from '../../core/progression/XpSystem';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import type { Exercise, ExerciseScore, MidiNoteEvent } from '../../core/exercises/types';
@@ -47,6 +47,7 @@ import { AchievementToast } from '../../components/transitions/AchievementToast'
 import type { AchievementType } from '../../components/transitions/AchievementToast';
 import { LessonCompleteScreen } from '../../components/transitions/LessonCompleteScreen';
 import { ExerciseCard } from '../../components/transitions/ExerciseCard';
+import { EvolutionReveal } from '../../components/transitions/EvolutionReveal';
 import { getTipForScore } from '../../components/Mascot/mascotTips';
 import type { FunFact } from '../../content/funFacts';
 import { syncManager } from '../../services/firebase/syncService';
@@ -55,7 +56,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useLearnerProfileStore } from '../../stores/learnerProfileStore';
 import { useGemStore } from '../../stores/gemStore';
 import { useCatEvolutionStore } from '../../stores/catEvolutionStore';
-import { getUnlockedCats, CAT_CHARACTERS } from '../../components/Mascot/catCharacters';
+import { getOwnedCats, CAT_CHARACTERS } from '../../components/Mascot/catCharacters';
 import { ExerciseBuddy } from '../../components/Mascot/ExerciseBuddy';
 import type { BuddyReaction } from '../../components/Mascot/ExerciseBuddy';
 import { getAchievementById } from '../../core/achievements/achievements';
@@ -63,15 +64,18 @@ import type { PlaybackSpeed } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 import { DemoPlaybackService } from '../../services/demoPlayback';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
-import { getSkillsForExercise } from '../../core/curriculum/SkillTree';
+import { ExerciseLoadingScreen } from './ExerciseLoadingScreen';
+import { getSkillsForExercise, getSkillById, getGenerationHints } from '../../core/curriculum/SkillTree';
 import { adjustDifficulty } from '../../core/curriculum/DifficultyEngine';
-import { detectWeakPatterns } from '../../core/curriculum/WeakSpotDetector';
+// detectWeakPatterns: kept available for future use but not imported to avoid unused-import errors
+// import { detectWeakPatterns } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
 import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
 import { midiToNoteName } from '../../core/music/MusicTheory';
 import { COLORS } from '../../theme/tokens';
 import { suggestDrill } from '../../services/FreePlayAnalyzer';
 import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
+import { getTemplateForSkill, getTemplateExercise } from '../../content/templateExercises';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -87,13 +91,13 @@ interface FeedbackState {
 
 function getFeedbackColor(type: string | null): string {
   switch (type) {
-    case 'perfect': return '#00E676';
-    case 'good': return '#69F0AE';
-    case 'ok': return '#FFD740';
-    case 'early': return '#40C4FF';
-    case 'late': return '#FFAB40';
-    case 'miss': return '#FF5252';
-    default: return '#757575';
+    case 'perfect': return COLORS.feedbackPerfect;
+    case 'good': return COLORS.feedbackGood;
+    case 'ok': return COLORS.feedbackOk;
+    case 'early': return COLORS.feedbackEarly;
+    case 'late': return COLORS.feedbackLate;
+    case 'miss': return COLORS.feedbackMiss;
+    default: return COLORS.feedbackDefault;
   }
 }
 
@@ -197,6 +201,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const route = useRoute<RouteProp<RootStackParamList, 'Exercise'>>();
   const testMode = route.params?.testMode ?? false;
   const aiMode = route.params?.aiMode ?? false;
+  const skillIdParam = route.params?.skillId ?? null;
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
@@ -206,6 +211,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Ref for exercise to avoid stale closures in handleExerciseCompletion
   // (critical for AI mode where exercise loads asynchronously)
   const exerciseRef = useRef<Exercise>(FALLBACK_EXERCISE);
+
+  // Loading screen state — shown while AI exercise loads
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
 
   // AI mode: exercise loaded asynchronously from buffer
   const [aiExercise, setAiExercise] = useState<Exercise | null>(null);
@@ -280,7 +288,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // If generation failed, fall through to buffer/fallback below
       }
 
-      const buffered = await getNextAIExercise();
+      const buffered = skillIdParam
+        ? await getNextExerciseForSkill(skillIdParam)
+        : await getNextAIExercise();
 
       if (cancelled) return;
 
@@ -324,82 +334,83 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         };
         setAiExercise(converted);
       } else {
-        // Buffer empty — use WeakSpotDetector to find relevant notes for fallback
+        // Buffer empty — use offline template fallback chain
         const profile = useLearnerProfileStore.getState();
-        const difficulty = profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1;
-        const weakPatterns = detectWeakPatterns({
-          noteAccuracy: profile.noteAccuracy,
-          weakNotes: profile.weakNotes,
-          skills: profile.skills,
-          tempoRange: profile.tempoRange,
-        });
-        const weakMidi = weakPatterns.length > 0
-          ? weakPatterns[0].targetMidi
-          : profile.weakNotes.slice(0, 4);
-        // If from free play, use the detected notes and key; otherwise generic fallback
-        const fallbackNotes = freePlayContext?.weakNotes?.length
-          ? freePlayContext.weakNotes
-          : [60, 62, 64, 65, 67, 65, 64, 62];
-        const notePool = weakMidi.length >= 2 ? weakMidi : fallbackNotes;
-        const fallbackKey = freePlayContext?.detectedKey ?? 'C';
-        setAiExercise({
-          id: `ai-fallback-${Date.now()}`,
-          version: 1,
-          metadata: {
-            title: freePlayContext?.detectedKey ? `${freePlayContext.detectedKey} Drill` : 'Quick Practice',
-            description: 'Practice exercise while new content generates',
-            difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
-            estimatedMinutes: 2,
-            skills: ['adaptive'],
-            prerequisites: [],
-          },
-          settings: {
-            tempo: Math.round((profile.tempoRange.min + profile.tempoRange.max) / 2),
-            timeSignature: [4, 4],
-            keySignature: fallbackKey,
-            countIn: 4,
-            metronomeEnabled: true,
-          },
-          notes: notePool.map((note, i) => ({
-            note,
-            startBeat: i,
-            durationBeats: 1,
-            hand: 'right' as const,
-          })),
-          scoring: {
-            timingToleranceMs: 80,
-            timingGracePeriodMs: 200,
-            passingScore: 60,
-            starThresholds: [70, 85, 95] as [number, number, number],
-          },
-          hints: {
-            beforeStart: 'Quick practice while new exercises generate!',
-            commonMistakes: [],
-            successMessage: 'Great practice!',
-          },
-        });
+
+        // 1. Skill-targeted template (best match)
+        if (skillIdParam) {
+          const template = getTemplateForSkill(skillIdParam, profile.weakNotes);
+          setAiExercise({ ...template, id: `tmpl-${skillIdParam}-${Date.now()}` });
+        }
+        // 2. Static exercise fallback (original JSON)
+        else if (route.params?.exerciseId && route.params.exerciseId !== 'ai-mode') {
+          const staticEx = getExercise(route.params.exerciseId);
+          if (staticEx) {
+            setAiExercise(staticEx);
+          } else {
+            // 3. Generic difficulty-based template
+            const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
+            setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-generic-${Date.now()}` });
+          }
+        }
+        // 4. Generic difficulty-based template (no exerciseId param)
+        else {
+          const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
+          setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-generic-${Date.now()}` });
+        }
       }
 
       // Top up buffer in background if running low
       const bufferSize = await getBufferSize();
       if (bufferSize < BUFFER_MIN_THRESHOLD) {
         const profile = useLearnerProfileStore.getState();
-        fillBuffer({
-          weakNotes: profile.weakNotes,
-          tempoRange: profile.tempoRange,
-          difficulty: profile.totalExercisesCompleted > 20 ? 4 : profile.totalExercisesCompleted > 10 ? 3 : 2,
-          noteCount: 12,
-          skills: profile.skills,
-        }).catch(() => {
-          // Silent — buffer fill is best-effort
-        });
+        const difficulty = profile.totalExercisesCompleted > 20 ? 4 : profile.totalExercisesCompleted > 10 ? 3 : 2;
+        const hints = skillIdParam ? getGenerationHints(skillIdParam) : null;
+        if (skillIdParam && hints) {
+          // Skill-aware fill: pre-generate for this skill
+          fillBufferForSkills([{
+            skillId: skillIdParam,
+            params: {
+              weakNotes: profile.weakNotes,
+              tempoRange: profile.tempoRange,
+              difficulty,
+              noteCount: 12,
+              skills: profile.skills,
+              targetSkillId: skillIdParam,
+              generationHints: hints,
+            },
+            count: BUFFER_MIN_THRESHOLD,
+          }]).catch(() => {
+            // Silent — buffer fill is best-effort
+          });
+        } else {
+          fillBuffer({
+            weakNotes: profile.weakNotes,
+            tempoRange: profile.tempoRange,
+            difficulty,
+            noteCount: 12,
+            skills: profile.skills,
+          }).catch(() => {
+            // Silent — buffer fill is best-effort
+          });
+        }
       }
     };
 
-    loadAIExercise();
+    // Safety timeout: if AI exercise doesn't load within 15s, fall back to template
+    const loadTimeout = setTimeout(() => {
+      if (cancelled) return;
+      console.warn('[ExercisePlayer] AI exercise load timed out after 15s — using template fallback');
+      const profile = useLearnerProfileStore.getState();
+      const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
+      setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-timeout-${Date.now()}` });
+    }, 15000);
+
+    loadAIExercise().finally(() => clearTimeout(loadTimeout));
 
     return () => {
       cancelled = true;
+      clearTimeout(loadTimeout);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiMode, freePlayContext?.detectedKey]);
@@ -410,6 +421,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     : null;
   const rawExercise =
     exerciseOverride || (aiMode ? aiExercise : null) || loadedExercise || exerciseStore.currentExercise || FALLBACK_EXERCISE;
+
+  // Exercise is ready when we have a real exercise (not the fallback)
+  const exerciseReady = rawExercise !== FALLBACK_EXERCISE || !aiMode;
 
   // Speed selector — adjusts exercise tempo for more comfortable playback
   // MIDI keyboard users get 1.0x (real piano, 10 fingers), touch keyboard gets 0.75x
@@ -559,6 +573,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Achievement toast state
   const [toastData, setToastData] = useState<{ type: AchievementType; value: number | string } | null>(null);
+
+  // Gamification state — evolution reveal + gem tracking for CompletionModal
+  const [evolutionRevealData, setEvolutionRevealData] = useState<{
+    catId: string;
+    newStage: import('../../stores/types').EvolutionStage;
+  } | null>(null);
+  const [gemsEarnedForModal, setGemsEarnedForModal] = useState(0);
+  const [tempoChangeForModal, setTempoChangeForModal] = useState(0);
+  const [sessionStartTime] = useState(() => Date.now());
 
   // Lesson completion celebration state
   const [showLessonComplete, setShowLessonComplete] = useState(false);
@@ -778,9 +801,27 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     });
 
     // Mark skills as mastered when exercise score meets the skill's mastery threshold
-    const skillNodes = getSkillsForExercise(ex.id);
+    let skillNodes = getSkillsForExercise(ex.id);
+    // AI exercises have runtime IDs that won't match any skill's targetExerciseIds,
+    // so fall back to the skillId route param (passed by CurriculumEngine / LevelMap)
+    if (skillNodes.length === 0 && skillIdParam) {
+      const paramSkill = getSkillById(skillIdParam);
+      if (paramSkill) skillNodes = [paramSkill];
+    }
+    console.log('[ExercisePlayer] Skill mastery check:', {
+      exerciseId: ex.id,
+      skillIdParam,
+      skillNodesFound: skillNodes.length,
+      scoreOverall: score.overall,
+      isPassed: score.isPassed,
+      nodeIds: skillNodes.map(n => n.id),
+    });
     for (const node of skillNodes) {
+      // Record practice attempt (accumulates completionCount for multi-completion skills)
+      useLearnerProfileStore.getState().recordSkillPractice(node.id, score.isPassed);
+      // Direct mastery when score meets threshold
       if (score.overall / 100 >= node.masteryThreshold && score.isPassed) {
+        console.log('[ExercisePlayer] Mastering skill:', node.id, `(${score.overall}% >= ${node.masteryThreshold * 100}%)`);
         useLearnerProfileStore.getState().markSkillMastered(node.id);
       }
     }
@@ -803,6 +844,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           max: Math.min(200, range.max + adjustment.tempoChange),
         },
       });
+      setTempoChangeForModal(adjustment.tempoChange);
+    } else {
+      setTempoChangeForModal(0);
     }
 
     // Update streak using XpSystem's proper streak logic (handles freezes, weekly tracking)
@@ -827,7 +871,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Check for newly unlocked achievements
     const currentProgressState = useProgressStore.getState();
-    const catsUnlocked = getUnlockedCats(currentProgressState.level).length;
+    const ownedCatIds = useCatEvolutionStore.getState().ownedCats;
+    const catsUnlocked = getOwnedCats(ownedCatIds).length;
     const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked);
     const newAchievements = achievementState.checkAndUnlock(achievementContext);
 
@@ -875,10 +920,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       gemStore.earnGems(gemsEarned, gemsEarned >= 15 ? 'perfect-score' : 'high-score');
     }
 
-    // --- Cat evolution XP ---
+    // Track total gems earned (first-completion + score-based) for CompletionModal
+    let totalGemsForModal = gemsEarned;
+    if (score.isPassed && !wasPreviouslyCompleted) totalGemsForModal += 25;
+    setGemsEarnedForModal(totalGemsForModal);
+
+    // --- Cat evolution XP (with evolution detection) ---
+    // Use settingsStore.selectedCatId as canonical source (catEvolutionStore may be stale)
     const catEvolutionStore = useCatEvolutionStore.getState();
-    if (catEvolutionStore.selectedCatId && score.xpEarned > 0) {
-      catEvolutionStore.addEvolutionXp(catEvolutionStore.selectedCatId, score.xpEarned);
+    const activeCatId = useSettingsStore.getState().selectedCatId || catEvolutionStore.selectedCatId;
+    if (activeCatId && score.xpEarned > 0) {
+      const prevStage = catEvolutionStore.evolutionData[activeCatId]?.currentStage;
+      catEvolutionStore.addEvolutionXp(activeCatId, score.xpEarned);
+      const newStage = useCatEvolutionStore.getState().evolutionData[activeCatId]?.currentStage;
+      if (newStage && prevStage && newStage !== prevStage) {
+        setEvolutionRevealData({ catId: activeCatId, newStage });
+      }
     }
 
     // Always show full CompletionModal with AI coaching, score ring, cat dialogue.
@@ -979,8 +1036,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Skill target for the intro overlay
   const skillTarget = useMemo(() => {
     const skills = getSkillsForExercise(exercise.id);
-    return skills[0]?.name;
-  }, [exercise.id]);
+    if (skills.length > 0) return skills[0].name;
+    // AI exercises: use skillId from route params
+    if (skillIdParam) {
+      const paramSkill = getSkillById(skillIdParam);
+      if (paramSkill) return paramSkill.name;
+    }
+    return undefined;
+  }, [exercise.id, skillIdParam]);
 
   // Feedback state
   const [feedback, setFeedback] = useState<FeedbackState>({
@@ -1815,8 +1878,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
+      {/* Exercise loading screen — shows while AI exercise loads */}
+      {showLoadingScreen && (
+        <ExerciseLoadingScreen
+          visible={showLoadingScreen}
+          exerciseReady={exerciseReady}
+          onReady={() => setShowLoadingScreen(false)}
+        />
+      )}
+
       {/* Exercise intro overlay — shows objectives before starting */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && (
+      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && (
         <ExerciseIntroOverlay
           exercise={exercise}
           onReady={() => {
@@ -1844,6 +1916,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           } : undefined}
           isTestMode={testMode}
           testID="completion-modal"
+          gemsEarned={gemsEarnedForModal}
+          sessionMinutes={Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))}
+          tempoChange={tempoChangeForModal}
+        />
+      )}
+
+      {/* Evolution reveal overlay — shown when cat evolves from XP earned */}
+      {evolutionRevealData && (
+        <EvolutionReveal
+          catId={evolutionRevealData.catId}
+          newStage={evolutionRevealData.newStage}
+          onDismiss={() => setEvolutionRevealData(null)}
         />
       )}
     </SafeAreaView>
@@ -1855,7 +1939,7 @@ ExercisePlayer.displayName = 'ExercisePlayer';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: COLORS.background,
   },
   errorBanner: {
     backgroundColor: 'rgba(255, 152, 0, 0.15)',
@@ -1865,7 +1949,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 152, 0, 0.3)',
   },
   errorText: {
-    color: '#FF9800',
+    color: COLORS.warning,
     fontSize: 12,
     textAlign: 'center',
   },
@@ -1878,9 +1962,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: COLORS.cardBorder,
     gap: 8,
   },
   secondaryBar: {
@@ -1888,9 +1972,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: '#151515',
+    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
+    borderBottomColor: COLORS.cardBorder,
     gap: 8,
   },
   pianoRollContainer: {
@@ -1920,11 +2004,11 @@ const styles = StyleSheet.create({
   comboOverlayText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFD740',
+    color: COLORS.comboGold,
   },
   keyboardContainer: {
     borderTopWidth: 1,
-    borderTopColor: '#2A2A2A',
+    borderTopColor: COLORS.cardBorder,
     overflow: 'hidden',
   },
   speedPill: {
@@ -1942,7 +2026,7 @@ const styles = StyleSheet.create({
   speedPillText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#757575',
+    color: COLORS.textMuted,
   },
   speedPillTextActive: {
     color: COLORS.primary,
@@ -1959,7 +2043,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   demoBannerText: {
-    color: '#FF6B6B',
+    color: COLORS.primaryLight,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1970,7 +2054,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(220, 20, 60, 0.3)',
   },
   tryNowButtonText: {
-    color: '#FFF',
+    color: COLORS.textPrimary,
     fontSize: 12,
     fontWeight: '700',
   },

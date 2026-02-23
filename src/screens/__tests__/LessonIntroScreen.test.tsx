@@ -123,6 +123,20 @@ jest.mock('../../content/lessonTutorials', () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// SkillTree mock — returns skill node lookups for AI navigation
+// ---------------------------------------------------------------------------
+
+const SKILL_LOOKUP: Record<string, { id: string }[]> = {
+  'lesson-01-ex-01': [{ id: 'find-middle-c' }],
+  'lesson-01-ex-02': [{ id: 'keyboard-geography' }],
+  'lesson-01-ex-03': [],
+};
+
+jest.mock('../../core/curriculum/SkillTree', () => ({
+  getSkillsForExercise: (exId: string) => SKILL_LOOKUP[exId] ?? [],
+}));
+
+// ---------------------------------------------------------------------------
 // Zustand store mocks
 // ---------------------------------------------------------------------------
 
@@ -358,15 +372,17 @@ describe('LessonIntroScreen', () => {
     expect(getByText('Replay Lesson')).toBeTruthy();
   });
 
-  it('navigates to first uncompleted exercise on Start', () => {
+  it('navigates to first uncompleted exercise with aiMode on Start', () => {
     const { getByText } = render(<LessonIntroScreen />);
     fireEvent.press(getByText('Start Lesson'));
     expect(mockNavigate).toHaveBeenCalledWith('Exercise', {
       exerciseId: 'lesson-01-ex-01',
+      aiMode: true,
+      skillId: 'find-middle-c',
     });
   });
 
-  it('navigates to second exercise when first is completed', () => {
+  it('navigates to second exercise with aiMode when first is completed', () => {
     mockProgressState.lessonProgress = {
       'lesson-01': {
         status: 'in_progress',
@@ -379,6 +395,8 @@ describe('LessonIntroScreen', () => {
     fireEvent.press(getByText('Start Lesson'));
     expect(mockNavigate).toHaveBeenCalledWith('Exercise', {
       exerciseId: 'lesson-01-ex-02',
+      aiMode: true,
+      skillId: 'keyboard-geography',
     });
   });
 

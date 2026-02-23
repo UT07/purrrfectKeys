@@ -97,6 +97,20 @@ jest.mock('../../stores/settingsStore', () => ({
   ),
 }));
 
+let mockEvolutionState: any = {
+  selectedCatId: 'mini-meowww',
+  ownedCats: ['mini-meowww', 'jazzy', 'luna'],
+  evolutionData: {},
+  selectCat: jest.fn(),
+};
+
+jest.mock('../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: Object.assign(
+    (sel?: any) => (sel ? sel(mockEvolutionState) : mockEvolutionState),
+    { getState: () => mockEvolutionState },
+  ),
+}));
+
 // ---------------------------------------------------------------------------
 // Import AFTER mocks
 // ---------------------------------------------------------------------------
@@ -113,6 +127,7 @@ describe('CatSwitchScreen', () => {
     jest.clearAllMocks();
     mockProgressState.level = 5;
     mockSettingsState.selectedCatId = 'mini-meowww';
+    mockEvolutionState.ownedCats = ['mini-meowww', 'jazzy', 'luna'];
   });
 
   // =========================================================================
@@ -126,9 +141,9 @@ describe('CatSwitchScreen', () => {
 
   it('shows unlock count in header subtitle', () => {
     const { getByText } = render(<CatSwitchScreen />);
-    // All cats have unlockLevel=1, so at level 5 all 12 are "unlocked" by level
-    const unlockedCount = CAT_CHARACTERS.filter((c) => c.unlockLevel <= 5).length;
-    expect(getByText(`${unlockedCount} of ${CAT_CHARACTERS.length} unlocked`)).toBeTruthy();
+    // Only owned cats (from catEvolutionStore mock) count as unlocked
+    const ownedCount = mockEvolutionState.ownedCats.length;
+    expect(getByText(`${ownedCount} of ${CAT_CHARACTERS.length} unlocked`)).toBeTruthy();
   });
 
   it('renders the first cat card name (Mini Meowww)', () => {
@@ -181,9 +196,9 @@ describe('CatSwitchScreen', () => {
   // Selection behavior
   // =========================================================================
 
-  it('calls setSelectedCatId when tapping "Select" on an unlocked cat', () => {
+  it('calls setSelectedCatId when tapping "Select" on an owned cat', () => {
     mockSettingsState.selectedCatId = 'jazzy';
-    mockProgressState.level = 5;
+    mockEvolutionState.ownedCats = ['mini-meowww', 'jazzy', 'luna'];
     const { getAllByText } = render(<CatSwitchScreen />);
 
     const selectButtons = getAllByText('Select');

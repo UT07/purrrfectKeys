@@ -106,6 +106,14 @@ jest.mock('react-native-svg', () => {
   };
 });
 
+jest.mock('../../components/common/AnimatedGradientBackground', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    AnimatedGradientBackground: (props: any) => React.createElement(View, props, props.children),
+  };
+});
+
 jest.mock('../../components/DailyChallengeCard', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -132,6 +140,17 @@ jest.mock('../../components/Mascot/MascotBubble', () => {
     MascotBubble: (props: any) =>
       React.createElement(View, { testID: 'mascot-bubble', ...props },
         React.createElement(Text, null, props.message || 'bubble')
+      ),
+  };
+});
+
+jest.mock('../../components/Mascot/SalsaCoach', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    SalsaCoach: (props: any) =>
+      React.createElement(View, { testID: 'salsa-coach', ...props },
+        React.createElement(Text, null, props.catchphrase || 'Salsa says hi')
       ),
   };
 });
@@ -248,6 +267,9 @@ const mockEvolutionState: any = {
   getActiveAbilities: jest.fn(() => []),
   claimDailyReward: jest.fn(),
   resetDailyRewards: jest.fn(),
+  advanceDailyRewardDate: jest.fn(),
+  completeDailyChallenge: jest.fn(),
+  isDailyChallengeCompleted: jest.fn(() => false),
   checkChonkyEligibility: jest.fn(() => false),
   unlockChonky: jest.fn(),
   initializeStarterCat: jest.fn(),
@@ -411,9 +433,9 @@ describe('HomeScreen', () => {
     expect(getByTestId('cat-avatar')).toBeTruthy();
   });
 
-  it('shows mascot speech bubble', () => {
+  it('shows Salsa coach greeting', () => {
     const { getByTestId, getByText } = render(<HomeScreen />);
-    expect(getByTestId('mascot-bubble')).toBeTruthy();
+    expect(getByTestId('salsa-coach')).toBeTruthy();
     expect(getByText('Hello from your cat!')).toBeTruthy();
   });
 

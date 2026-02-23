@@ -229,7 +229,7 @@ describe('Year-Long Progression Simulation', () => {
       // Count AI vs static exercises
       const allRefs = [...plan.warmUp, ...plan.lesson, ...plan.challenge];
       for (const ref of allRefs) {
-        if (ref.source === 'ai') {
+        if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
           aiExerciseCount++;
         } else {
           staticExerciseCount++;
@@ -254,9 +254,10 @@ describe('Year-Long Progression Simulation', () => {
 
     // Over 365 days, we should have mastered many skills
     expect(masteredSkills.length).toBeGreaterThan(0);
-    // We should see a mix of AI and static exercises
-    expect(staticExerciseCount).toBeGreaterThan(0);
+    // All exercises should be AI-generated (ai or ai-with-fallback)
     expect(aiExerciseCount).toBeGreaterThan(0);
+    // Total exercises should be substantial over 365 days
+    expect(aiExerciseCount + staticExerciseCount).toBeGreaterThan(100);
   });
 
   it('should eventually master all 100 skills', () => {
@@ -305,14 +306,13 @@ describe('Year-Long Progression Simulation', () => {
 
     const plan = generateSessionPlan(profile, [...tier1to6]);
 
-    // The lesson section should target a tier 7+ skill. Since tier 7+
-    // exercises don't exist in the mock ContentLoader, they must be AI.
-    const lessonAiRefs = plan.lesson.filter((r) => r.source === 'ai');
+    // The lesson section should target a tier 7+ skill via AI exercises.
+    // All tiers now use ai-with-fallback source.
+    const lessonAiRefs = plan.lesson.filter((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
     expect(lessonAiRefs.length).toBeGreaterThan(0);
 
     // Verify the AI exercise targets a tier 7+ skill
     for (const ref of lessonAiRefs) {
-      // AI-generated refs have skillNodeId that should be a real skill or 'review'
       if (ref.skillNodeId !== 'review') {
         const skill = getSkillById(ref.skillNodeId);
         if (skill) {

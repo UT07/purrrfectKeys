@@ -94,10 +94,10 @@ describe('gemStore', () => {
 
     it('creates negative transaction for spend', () => {
       useGemStore.getState().earnGems(100, 'test');
-      useGemStore.getState().spendGems(40, 'unlock-vinyl');
+      useGemStore.getState().spendGems(40, 'unlock-ballymakawww');
       const spendTx = useGemStore.getState().transactions[0]; // Most recent
       expect(spendTx.amount).toBe(-40);
-      expect(spendTx.source).toBe('unlock-vinyl');
+      expect(spendTx.source).toBe('unlock-ballymakawww');
       expect(spendTx.balance).toBe(60);
     });
 

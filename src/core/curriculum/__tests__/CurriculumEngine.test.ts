@@ -102,8 +102,22 @@ describe('CurriculumEngine', () => {
     it('should include AI exercises when all skills are mastered', () => {
       const allMastered = SKILL_TREE.map((n) => n.id);
       const plan = generateSessionPlan(makeProfile(), allMastered);
-      const hasAI = plan.lesson.some((r) => r.source === 'ai');
+      const hasAI = plan.lesson.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
       expect(hasAI).toBe(true);
+    });
+
+    it('should use ai-with-fallback source for all tiers', () => {
+      // Even tier-1 skills (find-middle-c) should get AI exercises with static fallback
+      const plan = generateSessionPlan(makeProfile(), []);
+      const lessonSources = plan.lesson.map((r) => r.source);
+      expect(lessonSources).toContain('ai-with-fallback');
+    });
+
+    it('should attach fallbackExerciseId when static exercises exist', () => {
+      const plan = generateSessionPlan(makeProfile(), []);
+      const refsWithFallback = plan.lesson.filter((r) => r.fallbackExerciseId);
+      // Tier-1 skills have static exercises, so at least one ref should have a fallback
+      expect(refsWithFallback.length).toBeGreaterThan(0);
     });
 
     it('should produce different plans for different profiles', () => {

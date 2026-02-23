@@ -28,7 +28,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { createAudioEngine, ensureAudioModeConfigured } from '../audio/createAudioEngine';
 import type { NoteHandle } from '../audio/types';
 import { getRandomCatMessage } from '../content/catDialogue';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme/tokens';
 import type { NoteEvent, MidiNoteEvent } from '../core/exercises/types';
 
 // ---------------------------------------------------------------------------
@@ -364,6 +364,10 @@ export function SkillAssessmentScreen(): React.ReactElement {
   const beatZeroEpochRef = useRef(0);
   const beatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Prevents double-fire of finishRound from both interval and timeout */
+  const roundFinishedRef = useRef(false);
+  /** Prevents state updates on unmounted component */
+  const mountedRef = useRef(true);
 
   const audioEngineRef = useRef(createAudioEngine());
   const audioReadyRef = useRef(false);
@@ -376,9 +380,19 @@ export function SkillAssessmentScreen(): React.ReactElement {
     ? Math.round(currentRound.tempo * playbackSpeed)
     : 60;
 
+  // Sync phaseRef immediately on state change (useEffect runs after render,
+  // which is too late for interval callbacks that check phaseRef.current)
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  // Helper that updates both state and ref synchronously to prevent stale reads
+  const setPhaseSync = useCallback((newPhase: AssessmentPhase) => {
+    phaseRef.current = newPhase;
+    if (mountedRef.current) {
+      setPhase(newPhase);
+    }
+  }, []);
 
   const clearRoundTimers = useCallback(() => {
     if (beatIntervalRef.current) {
@@ -449,6 +463,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
 
     return () => {
       mounted = false;
+      mountedRef.current = false;
       clearRoundTimers();
       closeAllCapturedNotes(Date.now());
       releaseAllAudioNotes();
@@ -486,10 +501,13 @@ export function SkillAssessmentScreen(): React.ReactElement {
   }, []);
 
   const finishRound = useCallback(() => {
+    // Guard: only finish once per round (prevents double-fire from interval + timeout)
+    if (roundFinishedRef.current) return;
     if (phaseRef.current !== 'countIn' && phaseRef.current !== 'playing') {
       return;
     }
 
+    roundFinishedRef.current = true;
     clearRoundTimers();
     closeAllCapturedNotes(Date.now());
     releaseAllAudioNotes();
@@ -508,16 +526,21 @@ export function SkillAssessmentScreen(): React.ReactElement {
       },
     );
 
-    setCurrentScore(score);
-    setRoundScores((prev) => [...prev, score]);
-    setPhase('result');
-  }, [clearRoundTimers, closeAllCapturedNotes, releaseAllAudioNotes, currentRoundIndex, effectiveTempo]);
+    if (mountedRef.current) {
+      setCurrentScore(score);
+      setRoundScores((prev) => [...prev, score]);
+      setPhaseSync('result');
+    }
+  }, [clearRoundTimers, closeAllCapturedNotes, releaseAllAudioNotes, currentRoundIndex, effectiveTempo, setPhaseSync]);
 
   const startRound = useCallback(() => {
     if (!currentRound) return;
 
     clearRoundTimers();
     releaseAllAudioNotes();
+
+    // Reset the double-fire guard for the new round
+    roundFinishedRef.current = false;
 
     capturedNotesRef.current = [];
     activeCapturedByNoteRef.current.clear();
@@ -529,15 +552,24 @@ export function SkillAssessmentScreen(): React.ReactElement {
     beatZeroEpochRef.current = roundStartEpochRef.current + ASSESSMENT_COUNT_IN_BEATS * msPerBeat;
 
     setCurrentBeat(-ASSESSMENT_COUNT_IN_BEATS);
-    setPhase('countIn');
+    setPhaseSync('countIn');
 
     beatIntervalRef.current = setInterval(() => {
+      // Guard: stop processing if round already finished or component unmounted
+      if (roundFinishedRef.current || !mountedRef.current) {
+        return;
+      }
+      // Guard: only update during active phases
+      if (phaseRef.current !== 'countIn' && phaseRef.current !== 'playing') {
+        return;
+      }
+
       const elapsed = Date.now() - roundStartEpochRef.current;
       const beat = elapsed / msPerBeat - ASSESSMENT_COUNT_IN_BEATS;
       setCurrentBeat(beat);
 
       if (beat >= 0 && phaseRef.current === 'countIn') {
-        setPhase('playing');
+        setPhaseSync('playing');
       }
 
       if (beat >= maxBeat + 2) {
@@ -549,7 +581,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
     timeoutRef.current = setTimeout(() => {
       finishRound();
     }, totalDurationMs + 500);
-  }, [currentRound, effectiveTempo, clearRoundTimers, finishRound, releaseAllAudioNotes]);
+  }, [currentRound, effectiveTempo, clearRoundTimers, finishRound, releaseAllAudioNotes, setPhaseSync]);
 
   const handleNoteOn = useCallback((event: MidiNoteEvent) => {
     playAudioNote(event.note, event.velocity / 127);
@@ -665,13 +697,13 @@ export function SkillAssessmentScreen(): React.ReactElement {
         profileStore.markSkillMastered('find-middle-c');
       }
 
-      setPhase('complete');
+      setPhaseSync('complete');
     } else {
       setCurrentRoundIndex((prev) => prev + 1);
       setCurrentBeat(0);
-      setPhase('intro');
+      setPhaseSync('intro');
     }
-  }, [currentRoundIndex, roundScores, currentScore, playbackSpeed]);
+  }, [currentRoundIndex, roundScores, currentScore, playbackSpeed, setPhaseSync]);
 
   const handleContinue = useCallback(() => {
     navigation.goBack();
@@ -947,7 +979,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.sm,
   },
   progressTitle: {
-    fontSize: 18,
+    ...TYPOGRAPHY.heading.md,
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
@@ -990,19 +1022,18 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   roundBadgeText: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...TYPOGRAPHY.display.md,
     color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
     textAlign: 'center',
   },
   description: {
-    fontSize: 16,
+    ...TYPOGRAPHY.body.lg,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
     textAlign: 'center',
@@ -1015,23 +1046,22 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   tempoLabel: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '500',
+    color: COLORS.textSecondary,
   },
   roundHeader: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
   roundHeaderText: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   roundTitle: {
+    ...TYPOGRAPHY.heading.lg,
     color: COLORS.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
     marginTop: SPACING.xs,
   },
   pianoRollContainer: {
@@ -1049,15 +1079,14 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.sm,
   },
   countInLabel: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.heading.lg,
+    color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   countInValue: {
     fontSize: 64,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     lineHeight: 72,
   },
   keyboardContainer: {
@@ -1082,39 +1111,39 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(244, 67, 54, 0.1)',
   },
   scoreText: {
+    ...TYPOGRAPHY.display.lg,
     fontSize: 36,
-    fontWeight: '700',
     color: COLORS.textPrimary,
   },
   resultLabel: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...TYPOGRAPHY.heading.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
   },
   completeTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...TYPOGRAPHY.display.md,
     color: COLORS.textPrimary,
     marginBottom: SPACING.lg,
     textAlign: 'center',
   },
   summaryCard: {
+    ...SHADOWS.md,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
     width: SCREEN_WIDTH - SPACING.lg * 2,
     alignItems: 'center',
     marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
   summaryLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
   },
   summaryScore: {
-    fontSize: 48,
-    fontWeight: '700',
+    ...TYPOGRAPHY.special.score,
     color: COLORS.textPrimary,
     marginBottom: SPACING.md,
   },
@@ -1127,9 +1156,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   roundScoreLabel: {
-    fontSize: 12,
-    color: COLORS.textMuted,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '600',
+    color: COLORS.textMuted,
   },
   roundScoreDot: {
     width: 40,
@@ -1145,7 +1174,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(244, 67, 54, 0.2)',
   },
   roundScoreDotText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
@@ -1160,13 +1189,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary + '40',
   },
   startingAtLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
   },
   startingAtValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.lg,
     color: COLORS.primary,
   },
   actionButton: {

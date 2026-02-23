@@ -172,7 +172,8 @@ describe('Free Play Analysis Flow', () => {
 
       expect(drill).toBeDefined();
       expect(drill.weakNotes.length).toBeGreaterThan(0);
-      expect(drill.weakNotes.length).toBeLessThanOrEqual(6);
+      // weakNotes now includes all unique notes (not capped at 6)
+      expect(drill.weakNotes.length).toBeLessThanOrEqual(20);
       expect(drill.tempoRange.min).toBeGreaterThanOrEqual(40);
       expect(drill.tempoRange.max).toBeGreaterThan(drill.tempoRange.min);
       expect(drill.difficulty).toBeGreaterThanOrEqual(1);

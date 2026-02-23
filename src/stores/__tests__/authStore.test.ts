@@ -47,13 +47,23 @@ jest.mock('../../services/firebase/firestore', () => ({
 jest.mock('../persistence', () => ({
   PersistenceManager: {
     clearAll: jest.fn(),
+    deleteState: jest.fn(),
+    saveState: jest.fn(),
+    loadState: jest.fn().mockResolvedValue(null),
+    load: jest.fn().mockResolvedValue(null),
   },
   STORAGE_KEYS: {
     EXERCISE: 'keysense_exercise_state',
     PROGRESS: 'keysense_progress_state',
     SETTINGS: 'keysense_settings_state',
     MIGRATION_VERSION: 'keysense_migration_version',
+    LEARNER_PROFILE: 'keysense_learner_profile',
+    ACHIEVEMENTS: 'keysense_achievements',
+    GEMS: 'keysense_gems',
+    CAT_EVOLUTION: 'keysense_cat_evolution',
   },
+  createDebouncedSave: () => jest.fn(),
+  cancelAllPendingSaves: jest.fn(),
 }));
 
 // ============================================================================

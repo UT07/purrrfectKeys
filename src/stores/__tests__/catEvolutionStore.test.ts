@@ -247,60 +247,140 @@ describe('catEvolutionStore', () => {
   });
 
   describe('claimDailyReward', () => {
-    it('claims the current day reward', () => {
+    it('claims the current day reward after completing daily challenge', () => {
+      useCatEvolutionStore.getState().completeDailyChallenge();
       const reward = useCatEvolutionStore.getState().claimDailyReward(1);
       expect(reward).toEqual({ type: 'gems', amount: 10 });
     });
 
     it('marks day as claimed', () => {
+      useCatEvolutionStore.getState().completeDailyChallenge();
       useCatEvolutionStore.getState().claimDailyReward(1);
       const day1 = useCatEvolutionStore.getState().dailyRewards.days.find(d => d.day === 1);
       expect(day1?.claimed).toBe(true);
     });
 
-    it('advances current day after claiming', () => {
-      useCatEvolutionStore.getState().claimDailyReward(1);
-      expect(useCatEvolutionStore.getState().dailyRewards.currentDay).toBe(2);
+    it('returns null without completing daily challenge for today', () => {
+      // Set weekStartDate to today so day 1 IS today (requires challenge)
+      const today = new Date().toISOString().split('T')[0];
+      useCatEvolutionStore.setState({
+        dailyRewards: {
+          weekStartDate: today,
+          days: useCatEvolutionStore.getState().dailyRewards.days.map(d => ({ ...d, claimed: false })),
+          currentDay: 1,
+        },
+      });
+      const reward = useCatEvolutionStore.getState().claimDailyReward(1);
+      expect(reward).toBeNull();
+    });
+
+    it('blocks claiming past unclaimed days without daily challenge', () => {
+      // Set weekStartDate to 3 days ago so today is day 4
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const weekStart = threeDaysAgo.toISOString().split('T')[0];
+      useCatEvolutionStore.setState({
+        dailyRewards: {
+          weekStartDate: weekStart,
+          days: useCatEvolutionStore.getState().dailyRewards.days.map(d => ({ ...d, claimed: false })),
+          currentDay: 4,
+        },
+      });
+      // Past day 2 should NOT be claimable without completing today's challenge
+      const reward = useCatEvolutionStore.getState().claimDailyReward(2);
+      expect(reward).toBeNull();
+    });
+
+    it('allows claiming past unclaimed days after completing daily challenge', () => {
+      // Set weekStartDate to 3 days ago so today is day 4
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const weekStart = threeDaysAgo.toISOString().split('T')[0];
+      useCatEvolutionStore.setState({
+        dailyRewards: {
+          weekStartDate: weekStart,
+          days: useCatEvolutionStore.getState().dailyRewards.days.map(d => ({ ...d, claimed: false })),
+          currentDay: 4,
+        },
+      });
+      // Complete today's challenge first
+      useCatEvolutionStore.getState().completeDailyChallenge();
+      // Now past day 2 is claimable
+      const reward = useCatEvolutionStore.getState().claimDailyReward(2);
+      expect(reward).toEqual({ type: 'gems', amount: 15 });
     });
 
     it('returns null for already claimed day', () => {
+      useCatEvolutionStore.getState().completeDailyChallenge();
       useCatEvolutionStore.getState().claimDailyReward(1);
       const result = useCatEvolutionStore.getState().claimDailyReward(1);
       expect(result).toBeNull();
     });
 
-    it('returns null for wrong day (not current day)', () => {
+    it('returns null for future day', () => {
+      // Set weekStartDate to today so today is day 1; day 3 is future
+      const today = new Date().toISOString().split('T')[0];
+      useCatEvolutionStore.setState({
+        dailyRewards: {
+          weekStartDate: today,
+          days: useCatEvolutionStore.getState().dailyRewards.days.map(d => ({ ...d, claimed: false })),
+          currentDay: 1,
+        },
+      });
+      useCatEvolutionStore.getState().completeDailyChallenge();
       const result = useCatEvolutionStore.getState().claimDailyReward(3);
       expect(result).toBeNull();
     });
 
-    it('completes full 7-day calendar', () => {
-      for (let day = 1; day <= 7; day++) {
-        const reward = useCatEvolutionStore.getState().claimDailyReward(day);
-        expect(reward).not.toBeNull();
-      }
-      // After day 7, currentDay should be 8 (week complete)
-      expect(useCatEvolutionStore.getState().dailyRewards.currentDay).toBe(8);
+    it('daily rewards default to 7 days with correct reward types', () => {
+      const days = useCatEvolutionStore.getState().dailyRewards.days;
+      expect(days).toHaveLength(7);
+      expect(days[0].reward).toEqual({ type: 'gems', amount: 10 });
+      expect(days[6].reward).toEqual({ type: 'chest', amount: 50 });
     });
 
-    it('day 7 reward is a chest', () => {
-      // Claim days 1-6 first
-      for (let day = 1; day <= 6; day++) {
-        useCatEvolutionStore.getState().claimDailyReward(day);
-      }
-      const reward = useCatEvolutionStore.getState().claimDailyReward(7);
-      expect(reward).toEqual({ type: 'chest', amount: 50 });
+    it('day 7 reward is a chest (data check)', () => {
+      const day7 = useCatEvolutionStore.getState().dailyRewards.days.find(d => d.day === 7);
+      expect(day7?.reward).toEqual({ type: 'chest', amount: 50 });
+      expect(day7?.claimed).toBe(false);
     });
   });
 
   describe('resetDailyRewards', () => {
-    it('resets all days to unclaimed', () => {
+    it('resets all days to unclaimed with Monday-aligned currentDay', () => {
+      useCatEvolutionStore.getState().completeDailyChallenge();
       useCatEvolutionStore.getState().claimDailyReward(1);
-      useCatEvolutionStore.getState().claimDailyReward(2);
       useCatEvolutionStore.getState().resetDailyRewards();
 
       const state = useCatEvolutionStore.getState();
-      expect(state.dailyRewards.currentDay).toBe(1);
+      // currentDay is now computed from Monday alignment (1=Mon...7=Sun)
+      expect(state.dailyRewards.currentDay).toBeGreaterThanOrEqual(1);
+      expect(state.dailyRewards.currentDay).toBeLessThanOrEqual(7);
+      expect(state.dailyRewards.days.every(d => !d.claimed)).toBe(true);
+    });
+  });
+
+  describe('daily challenge tracking', () => {
+    it('completeDailyChallenge marks today as done', () => {
+      expect(useCatEvolutionStore.getState().isDailyChallengeCompleted()).toBe(false);
+      useCatEvolutionStore.getState().completeDailyChallenge();
+      expect(useCatEvolutionStore.getState().isDailyChallengeCompleted()).toBe(true);
+    });
+
+    it('advanceDailyRewardDate resets expired week', () => {
+      // Set weekStartDate to a long-expired date to simulate expired week
+      useCatEvolutionStore.setState({
+        dailyRewards: {
+          weekStartDate: '2020-01-01',
+          days: useCatEvolutionStore.getState().dailyRewards.days,
+          currentDay: 5,
+        },
+      });
+      useCatEvolutionStore.getState().advanceDailyRewardDate();
+      const state = useCatEvolutionStore.getState();
+      // After reset, currentDay is computed from Monday alignment (1-7)
+      expect(state.dailyRewards.currentDay).toBeGreaterThanOrEqual(1);
+      expect(state.dailyRewards.currentDay).toBeLessThanOrEqual(7);
       expect(state.dailyRewards.days.every(d => !d.claimed)).toBe(true);
     });
   });
@@ -353,6 +433,7 @@ describe('catEvolutionStore', () => {
     it('clears all evolution data', () => {
       useCatEvolutionStore.getState().initializeStarterCat('mini-meowww');
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 1000);
+      useCatEvolutionStore.getState().completeDailyChallenge();
       useCatEvolutionStore.getState().claimDailyReward(1);
       useCatEvolutionStore.getState().reset();
 

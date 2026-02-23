@@ -30,6 +30,7 @@ import Animated, {
 import { CatAvatar } from './CatAvatar';
 import { getCatById, getDefaultCat } from './catCharacters';
 import { useCatEvolutionStore } from '@/stores/catEvolutionStore';
+import { reactionToMood, reactionToPose } from './animations/catAnimations';
 
 export type BuddyReaction =
   | 'idle'
@@ -205,11 +206,13 @@ export function ExerciseBuddy({
         </Text>
       </Animated.View>
 
-      {/* Cat avatar */}
+      {/* Cat avatar with pose-driven mood + animation */}
       <Animated.View style={buddyStyle}>
         <CatAvatar
           catId={catId}
           size="small"
+          mood={reactionToMood(reaction)}
+          pose={reactionToPose(reaction)}
           showGlow={showGlow}
           showTooltipOnTap={false}
           skipEntryAnimation

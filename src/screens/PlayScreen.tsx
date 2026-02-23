@@ -24,8 +24,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Keyboard } from '../components/Keyboard/Keyboard';
 import { createAudioEngine } from '../audio/createAudioEngine';
 import type { NoteHandle } from '../audio/types';
+import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import type { MidiNoteEvent } from '../core/exercises/types';
 import { analyzeSession, type FreePlayAnalysis } from '../services/FreePlayAnalyzer';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 // ============================================================================
@@ -85,15 +87,32 @@ export function PlayScreen(): React.JSX.Element {
   // Now a full-screen stack screen (not a tab), so useEffect cleanup is reliable.
   // --------------------------------------------------------------------------
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_LEFT)
+    // Use lockPlatformAsync for iOS to force landscape even when device rotation
+    // lock is enabled. On iOS, this calls requestGeometryUpdate which overrides
+    // the system orientation lock at the view-controller level.
+    ScreenOrientation.lockPlatformAsync({
+      screenOrientationArrayIOS: [
+        ScreenOrientation.Orientation.LANDSCAPE_LEFT,
+        ScreenOrientation.Orientation.LANDSCAPE_RIGHT,
+      ],
+      screenOrientationConstantAndroid: 6, // ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    })
       .catch(() => {
+        // Fallback to the simpler lockAsync if platform-specific call fails
         return ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
       })
       .catch((err) => console.warn('[PlayScreen] Landscape lock failed:', err));
 
     return () => {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-        .catch(() => {});
+      ScreenOrientation.lockPlatformAsync({
+        screenOrientationArrayIOS: [
+          ScreenOrientation.Orientation.PORTRAIT_UP,
+        ],
+        screenOrientationConstantAndroid: 1, // ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+      }).catch(() => {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+          .catch(() => {});
+      });
     };
   }, []);
 
@@ -371,10 +390,13 @@ export function PlayScreen(): React.JSX.Element {
       {/* Top controls bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton} testID="freeplay-back">
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
 
         <Text style={styles.title}>Free Play</Text>
+
+        {/* Salsa mini avatar */}
+        <SalsaCoach mood="happy" size="small" />
 
         {/* Live note display */}
         <View style={styles.noteDisplay} testID="freeplay-note-display-container">
@@ -396,7 +418,7 @@ export function PlayScreen(): React.JSX.Element {
             style={styles.helpButton}
             testID="freeplay-help"
           >
-            <MaterialCommunityIcons name="help-circle-outline" size={22} color="#B0B0B0" />
+            <MaterialCommunityIcons name="help-circle-outline" size={22} color={COLORS.textSecondary} />
           </TouchableOpacity>
         )}
 
@@ -404,26 +426,26 @@ export function PlayScreen(): React.JSX.Element {
         <View style={styles.recordControls}>
           {!isRecording ? (
             <TouchableOpacity onPress={startRecording} style={styles.controlTouchable} testID="freeplay-record-start">
-              <MaterialCommunityIcons name="record-circle" size={22} color="#DC143C" />
+              <MaterialCommunityIcons name="record-circle" size={22} color={COLORS.primary} />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={stopRecording} style={styles.controlTouchable} testID="freeplay-record-stop">
-              <MaterialCommunityIcons name="stop-circle" size={22} color="#FF4444" />
+              <MaterialCommunityIcons name="stop-circle" size={22} color={COLORS.error} />
             </TouchableOpacity>
           )}
           {recordedNotes.length > 0 && !isRecording && (
             <>
               {isPlayingBack ? (
                 <TouchableOpacity onPress={stopPlayback} style={styles.controlTouchable} testID="freeplay-record-stop-playback">
-                  <MaterialCommunityIcons name="stop-circle" size={22} color="#FFA726" />
+                  <MaterialCommunityIcons name="stop-circle" size={22} color={COLORS.warning} />
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity onPress={playRecording} style={styles.controlTouchable} testID="freeplay-record-playback">
-                  <MaterialCommunityIcons name="play-circle" size={22} color="#00E676" />
+                  <MaterialCommunityIcons name="play-circle" size={22} color={COLORS.success} />
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={clearRecording} style={styles.controlTouchable} testID="freeplay-record-clear">
-                <MaterialCommunityIcons name="delete" size={22} color="#EF5350" />
+                <MaterialCommunityIcons name="delete" size={22} color={COLORS.error} />
               </TouchableOpacity>
             </>
           )}
@@ -434,7 +456,7 @@ export function PlayScreen(): React.JSX.Element {
       {showInstructions && (
         <View style={styles.instructionsBanner} testID="freeplay-instructions">
           <View style={styles.instructionsContent}>
-            <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color="#FFD700" />
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={COLORS.starGold} />
             <View style={styles.instructionsTextWrap}>
               <Text style={styles.instructionsTitle}>Welcome to Free Play!</Text>
               <Text style={styles.instructionsText}>
@@ -447,7 +469,7 @@ export function PlayScreen(): React.JSX.Element {
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               testID="freeplay-instructions-close"
             >
-              <MaterialCommunityIcons name="close" size={18} color="#666" />
+              <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -486,10 +508,10 @@ export function PlayScreen(): React.JSX.Element {
       {analysis && (
         <View style={styles.analysisCard} testID="freeplay-analysis-card">
           <View style={styles.analysisHeader}>
-            <MaterialCommunityIcons name="music-note-eighth" size={18} color="#2196F3" />
+            <MaterialCommunityIcons name="music-note-eighth" size={18} color={COLORS.info} />
             <Text style={styles.analysisTitle}>Free Play Analysis</Text>
             <TouchableOpacity onPress={() => setAnalysis(null)}>
-              <MaterialCommunityIcons name="close" size={18} color="#666" />
+              <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           </View>
           <Text style={styles.analysisSummary}>{analysis.summary}</Text>
@@ -512,7 +534,7 @@ export function PlayScreen(): React.JSX.Element {
             }}
             testID="freeplay-generate-drill"
           >
-            <MaterialCommunityIcons name="lightning-bolt" size={16} color="#FFF" />
+            <MaterialCommunityIcons name="lightning-bolt" size={16} color={COLORS.textPrimary} />
             <Text style={styles.generateDrillText}>Generate Drill</Text>
           </TouchableOpacity>
         </View>
@@ -528,50 +550,48 @@ export function PlayScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: COLORS.background,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#1A1A1A',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
-    gap: 12,
+    borderBottomColor: COLORS.cardBorder,
+    gap: SPACING.sm,
   },
   backButton: {
     padding: 4,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.heading.sm,
+    color: COLORS.textPrimary,
   },
   noteDisplay: {
-    backgroundColor: '#252525',
-    borderRadius: 10,
+    backgroundColor: COLORS.cardSurface,
+    borderRadius: BORDER_RADIUS.sm,
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
     borderWidth: 2,
-    borderColor: '#DC143C',
+    borderColor: COLORS.primary,
     minWidth: 80,
     alignItems: 'center',
   },
   noteText: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#DC143C',
+    ...TYPOGRAPHY.display.md,
+    color: COLORS.primary,
     fontFamily: 'monospace',
   },
   statsContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
     flex: 1,
   },
   statsText: {
-    fontSize: 12,
-    color: '#888',
+    ...TYPOGRAPHY.caption.lg,
+    color: COLORS.textMuted,
   },
   helpButton: {
     padding: 4,
@@ -579,56 +599,56 @@ const styles = StyleSheet.create({
   recordControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
   controlTouchable: {
     padding: 4,
   },
   instructionsBanner: {
-    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    backgroundColor: glowColor(COLORS.starGold, 0.06),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.12)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderBottomColor: glowColor(COLORS.starGold, 0.12),
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   instructionsContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: SPACING.sm,
   },
   instructionsTextWrap: {
     flex: 1,
   },
   instructionsTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFD700',
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
+    color: COLORS.starGold,
     marginBottom: 2,
   },
   instructionsText: {
-    fontSize: 12,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.caption.lg,
+    color: COLORS.textSecondary,
     lineHeight: 17,
   },
   noteRefStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 4,
-    backgroundColor: '#141414',
+    backgroundColor: COLORS.background,
     borderTopWidth: 1,
-    borderTopColor: '#2A2A2A',
+    borderTopColor: COLORS.cardBorder,
   },
   noteRefLabel: {
-    fontSize: 10,
-    color: '#666',
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.sm,
+    color: COLORS.textMuted,
+    fontWeight: '600' as const,
     fontFamily: 'monospace',
   },
   noteRefMiddleC: {
-    color: '#DC143C',
-    fontSize: 11,
-    fontWeight: '700',
+    color: COLORS.primary,
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '700' as const,
   },
   noteRefSpacer: {
     flex: 1,
@@ -636,53 +656,53 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
     borderTopWidth: 1,
-    borderTopColor: '#2A2A2A',
+    borderTopColor: COLORS.cardBorder,
   },
   analysisCard: {
+    ...SHADOWS.md,
     position: 'absolute',
     bottom: 120,
-    left: 16,
-    right: 16,
-    backgroundColor: '#1A1A2E',
-    borderRadius: 12,
-    padding: 16,
+    left: SPACING.md,
+    right: SPACING.md,
+    backgroundColor: COLORS.cardSurface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     borderWidth: 1,
-    borderColor: 'rgba(33, 150, 243, 0.3)',
+    borderColor: glowColor(COLORS.info, 0.3),
   },
   analysisHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   analysisTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.heading.sm,
+    color: COLORS.textPrimary,
     flex: 1,
   },
   analysisSummary: {
-    fontSize: 13,
-    color: '#AAAAAA',
-    marginBottom: 8,
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.sm,
   },
   analysisDetail: {
-    fontSize: 12,
-    color: '#2196F3',
-    marginBottom: 8,
+    ...TYPOGRAPHY.caption.lg,
+    color: COLORS.info,
+    marginBottom: SPACING.sm,
   },
   generateDrillBtn: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#2196F3',
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: COLORS.info,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
   },
   generateDrillText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.button.md,
+    color: COLORS.textPrimary,
   },
 });

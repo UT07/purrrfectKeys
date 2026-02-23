@@ -48,9 +48,9 @@ const STAGE_LABELS: Record<EvolutionStage, string> = {
 
 const STAGE_COLORS: Record<EvolutionStage, string> = {
   baby: '#81D4FA',
-  teen: '#4CAF50',
-  adult: '#FFD700',
-  master: '#E040FB',
+  teen: COLORS.success,
+  adult: COLORS.starGold,
+  master: COLORS.starGold,
 };
 
 /** Active Cat Showcase — top section with large avatar and evolution info */
@@ -87,7 +87,7 @@ function ActiveCatShowcase({
 
       {/* Large Cat Avatar */}
       <View style={styles.showcaseAvatar}>
-        <CatAvatar catId={cat.id} size="large" showGlow />
+        <CatAvatar catId={cat.id} size="large" showGlow evolutionStage={stage} />
       </View>
 
       {/* Name and personality */}
@@ -177,50 +177,42 @@ function CatGridCell({
       activeOpacity={0.7}
       testID={`cat-collection-cell-${cat.id}`}
     >
-      {isOwned ? (
-        <>
-          <CatAvatar catId={cat.id} size="small" skipEntryAnimation />
-          <Text style={styles.gridCellName} numberOfLines={1}>
-            {cat.name}
-          </Text>
-          {stage && (
-            <View style={[styles.stageBadge, { backgroundColor: STAGE_COLORS[stage] + '30' }]}>
-              <Text style={[styles.stageBadgeSmall, { color: STAGE_COLORS[stage] }]}>
-                {STAGE_LABELS[stage]}
-              </Text>
-            </View>
-          )}
-          {isSelected && (
-            <View style={[styles.selectedDot, { backgroundColor: cat.color }]} />
-          )}
-        </>
-      ) : (
-        <>
-          <View style={styles.lockedAvatarContainer}>
-            <MaterialCommunityIcons name="lock" size={24} color={COLORS.textMuted} />
+      {/* Always show cat avatar — locked cats are dimmed with lock overlay */}
+      <View style={!isOwned ? styles.lockedAvatarWrapper : undefined}>
+        <CatAvatar catId={cat.id} size="small" skipEntryAnimation evolutionStage={stage ?? undefined} />
+        {!isOwned && (
+          <View style={styles.lockOverlay}>
+            <MaterialCommunityIcons name="lock" size={16} color={COLORS.textPrimary} />
           </View>
-          <Text style={[styles.gridCellName, { color: COLORS.textMuted }]} numberOfLines={1}>
-            {cat.name}
+        )}
+      </View>
+      <Text style={[styles.gridCellName, !isOwned && { color: COLORS.textMuted }]} numberOfLines={1}>
+        {cat.name}
+      </Text>
+      {isOwned && stage && (
+        <View style={[styles.stageBadge, { backgroundColor: STAGE_COLORS[stage] + '30' }]}>
+          <Text style={[styles.stageBadgeSmall, { color: STAGE_COLORS[stage] }]}>
+            {STAGE_LABELS[stage]}
           </Text>
-          {cat.legendary ? (
-            <View style={[styles.costBadge, { backgroundColor: '#FF8C00' + '30' }]}>
-              <MaterialCommunityIcons name="star-four-points" size={10} color="#FF8C00" />
-              <Text style={[styles.costBadgeText, { color: '#FF8C00' }]}>Legendary</Text>
-            </View>
-          ) : cat.gemCost ? (
-            <View style={[styles.costBadge, { backgroundColor: COLORS.gemDiamond + '20' }]}>
-              <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemDiamond} />
-              <Text style={[styles.costBadgeText, { color: COLORS.gemDiamond }]}>
-                {cat.gemCost}
-              </Text>
-            </View>
-          ) : (
-            <View style={[styles.costBadge, { backgroundColor: COLORS.gemDiamond + '20' }]}>
-              <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemDiamond} />
-              <Text style={[styles.costBadgeText, { color: COLORS.gemDiamond }]}>500</Text>
-            </View>
-          )}
-        </>
+        </View>
+      )}
+      {isOwned && isSelected && (
+        <View style={[styles.selectedDot, { backgroundColor: cat.color }]} />
+      )}
+      {!isOwned && (
+        cat.legendary ? (
+          <View style={[styles.costBadge, { backgroundColor: COLORS.warning + '30' }]}>
+            <MaterialCommunityIcons name="star-four-points" size={10} color={COLORS.warning} />
+            <Text style={[styles.costBadgeText, { color: COLORS.warning }]}>Legendary</Text>
+          </View>
+        ) : (
+          <View style={[styles.costBadge, { backgroundColor: COLORS.gemDiamond + '20' }]}>
+            <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemDiamond} />
+            <Text style={[styles.costBadgeText, { color: COLORS.gemDiamond }]}>
+              {cat.gemCost ?? 500}
+            </Text>
+          </View>
+        )
       )}
     </TouchableOpacity>
   );
@@ -621,11 +613,19 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginTop: 3,
   },
-  lockedAvatarContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.cardBorder + '40',
+  lockedAvatarWrapper: {
+    opacity: 0.5,
+  },
+  lockOverlay: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
     justifyContent: 'center',
     alignItems: 'center',
   },

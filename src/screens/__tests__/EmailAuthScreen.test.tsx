@@ -90,8 +90,8 @@ describe('EmailAuthScreen', () => {
   // =========================================================================
 
   it('renders back button', () => {
-    const { getByText } = render(<EmailAuthScreen />);
-    expect(getByText('← Back')).toBeTruthy();
+    const { getByTestId } = render(<EmailAuthScreen />);
+    expect(getByTestId('email-auth-back')).toBeTruthy();
   });
 
   it('renders Sign In tab (active by default)', () => {
@@ -253,8 +253,8 @@ describe('EmailAuthScreen', () => {
   // =========================================================================
 
   it('calls goBack when pressing back button', () => {
-    const { getByText } = render(<EmailAuthScreen />);
-    fireEvent.press(getByText('← Back'));
+    const { getByTestId } = render(<EmailAuthScreen />);
+    fireEvent.press(getByTestId('email-auth-back'));
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 });

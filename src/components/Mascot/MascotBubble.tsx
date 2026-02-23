@@ -22,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { KeysieSvg } from './KeysieSvg';
+import { getCatById } from './catCharacters';
 import type { MascotMood } from './mascotTips';
 
 export interface MascotBubbleProps {
@@ -30,6 +31,8 @@ export interface MascotBubbleProps {
   size?: 'small' | 'medium' | 'large';
   showBubble?: boolean;
   onDismiss?: () => void;
+  /** When provided, renders the specific cat's visuals instead of generic Keysie */
+  catId?: string;
 }
 
 const MOOD_COLORS: Record<MascotMood, string> = {
@@ -72,7 +75,9 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
   size = 'medium',
   showBubble = true,
   onDismiss,
+  catId,
 }) => {
+  const catVisuals = catId ? getCatById(catId) : undefined;
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
@@ -140,7 +145,14 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
         ]}
         testID="mascot-avatar"
       >
-        <KeysieSvg mood={mood} size="small" pixelSize={Math.round(avatarSize * 0.8)} />
+        <KeysieSvg
+          mood={mood}
+          size="small"
+          pixelSize={Math.round(avatarSize * 0.8)}
+          accentColor={catVisuals?.color}
+          visuals={catVisuals?.visuals}
+          catId={catId}
+        />
       </View>
 
       {/* Speech Bubble */}

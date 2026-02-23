@@ -15,16 +15,19 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { PressableScale } from '../components/common/PressableScale';
+import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AnimatedGradientBackground } from '../components/common/AnimatedGradientBackground';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { DailyChallengeCard } from '../components/DailyChallengeCard';
 import { DailyRewardCalendar } from '../components/DailyRewardCalendar';
 import { GemEarnPopup } from '../components/GemEarnPopup';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
-import { MascotBubble } from '../components/Mascot/MascotBubble';
+import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import { StreakFlame } from '../components/StreakFlame';
 import { getRandomCatMessage } from '../content/catDialogue';
 import { calculateCatMood } from '../core/catMood';
@@ -37,7 +40,7 @@ import { getLessons } from '../content/ContentLoader';
 import { getNextSkillToLearn } from '../core/curriculum/CurriculumEngine';
 import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -135,6 +138,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // Cat evolution store
   const dailyRewards = useCatEvolutionStore((s) => s.dailyRewards);
   const claimDailyReward = useCatEvolutionStore((s) => s.claimDailyReward);
+  const advanceDailyRewardDate = useCatEvolutionStore((s) => s.advanceDailyRewardDate);
+  const isDailyChallengeCompleted = useCatEvolutionStore((s) => s.isDailyChallengeCompleted);
   const evolutionData = useCatEvolutionStore((s) => s.evolutionData);
   const activeCatId = selectedCatId ?? 'mini-meowww';
   const activeCatEvolution = evolutionData[activeCatId];
@@ -148,11 +153,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const stage = activeCatEvolution.currentStage;
     const stageStart = EVOLUTION_XP_THRESHOLDS[stage];
     if (!evolutionNext) return 100; // at master
-    const stageEnd = stageStart + evolutionNext.xpNeeded + (currentXp - stageStart);
-    const range = stageEnd - stageStart;
+    const nextThreshold = stageStart + evolutionNext.xpNeeded + (currentXp - stageStart);
+    const range = nextThreshold - stageStart;
     if (range <= 0) return 100;
-    return Math.round(((currentXp - stageStart) / range) * 100);
+    return Math.min(100, Math.round(((currentXp - stageStart) / range) * 100));
   }, [activeCatEvolution, evolutionNext]);
+
+  // Advance daily reward calendar to match actual date on each HomeScreen visit
+  useEffect(() => {
+    advanceDailyRewardDate();
+  }, [advanceDailyRewardDate]);
+
+  const dailyChallengeCompleted = isDailyChallengeCompleted();
 
   // Gem earn popup state
   const [gemPopup, setGemPopup] = useState<{ amount: number; key: number } | null>(null);
@@ -210,10 +222,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Hero Section with gradient */}
+        {/* Hero Section with lava lamp gradient */}
         <Animated.View style={staggerStyle(0)}>
-          <LinearGradient
-            colors={[GRADIENTS.header[0], GRADIENTS.header[1], COLORS.background]}
+          <AnimatedGradientBackground
             style={styles.hero}
           >
             {/* Top bar: greeting + gem counter + settings */}
@@ -270,7 +281,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <CatAvatar
                     catId={selectedCatId ?? 'mini-meowww'}
                     size="large"
+                    mood={mascotMood}
                     showGlow={dailyGoalProgress >= 1}
+                    evolutionStage={activeCatEvolution?.currentStage}
                   />
                 </View>
               </View>
@@ -319,15 +332,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Text style={styles.goalCompleteText}>Goal complete!</Text>
               </View>
             )}
-          </LinearGradient>
+          </AnimatedGradientBackground>
         </Animated.View>
 
-        {/* Cat speech bubble */}
+        {/* Salsa coach greeting */}
         <Animated.View style={[styles.section, staggerStyle(1)]}>
-          <MascotBubble
+          <SalsaCoach
             mood={mascotMood}
-            message={catMessage}
             size="small"
+            showCatchphrase
+            catchphrase={catMessage}
           />
         </Animated.View>
 
@@ -338,6 +352,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               days={dailyRewards.days}
               currentDay={dailyRewards.currentDay}
               onClaim={handleClaimReward}
+              dailyChallengeCompleted={dailyChallengeCompleted}
             />
             {gemPopup && (
               <GemEarnPopup
@@ -360,36 +375,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Continue Learning Card */}
         <Animated.View style={[styles.section, staggerStyle(4)]}>
           <Text style={styles.sectionTitle}>Continue Learning</Text>
-          <TouchableOpacity
-            style={styles.continueCard}
+          <PressableScale
+            haptic
             onPress={onNavigateToExercise ?? (() => {
               navigation.navigate('MainTabs', { screen: 'Learn' } as any);
             })}
-            activeOpacity={0.7}
             testID="home-continue-learning"
           >
-            <LinearGradient
-              colors={[COLORS.cardHighlight, COLORS.cardSurface]}
-              style={styles.continueCardInner}
-            >
-              <View style={styles.continueTop}>
-                <View style={styles.continuePlayIcon}>
-                  <MaterialCommunityIcons name="play" size={24} color="#FFFFFF" />
+            <View style={styles.continueCard}>
+              <LinearGradient
+                colors={[COLORS.cardHighlight, COLORS.cardSurface]}
+                style={styles.continueCardInner}
+              >
+                <View style={styles.continueTop}>
+                  <View style={styles.continuePlayIcon}>
+                    <MaterialCommunityIcons name="play" size={24} color={COLORS.textPrimary} />
+                  </View>
+                  <View style={styles.continueInfo}>
+                    <Text style={styles.continueLabel}>{currentLessonLabel}</Text>
+                    <Text style={styles.continueTitle}>{nextExerciseTitle}</Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
                 </View>
-                <View style={styles.continueInfo}>
-                  <Text style={styles.continueLabel}>{currentLessonLabel}</Text>
-                  <Text style={styles.continueTitle}>{nextExerciseTitle}</Text>
+                <View style={styles.continueProgressRow}>
+                  <AnimatedProgressBar
+                    progress={skillProgress / 100}
+                    color={COLORS.primary}
+                    height={6}
+                    style={styles.continueProgressBar}
+                  />
+                  <Text style={styles.continueProgressText}>{skillProgress}%</Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
-              </View>
-              <View style={styles.continueProgressRow}>
-                <View style={styles.continueProgressTrack}>
-                  <View style={[styles.continueProgressFill, { width: `${skillProgress}%` }]} />
-                </View>
-                <Text style={styles.continueProgressText}>{skillProgress}%</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+              </LinearGradient>
+            </View>
+          </PressableScale>
         </Animated.View>
 
         {/* Quick Stats Row */}
@@ -397,7 +416,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
             <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
-            <StatPill icon="fire" label="Streak" value={streak} color="#FF6B00" />
+            <StatPill icon="fire" label="Streak" value={streak} color={COLORS.streakFlame} />
             <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>
         </Animated.View>
@@ -409,13 +428,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <ActionCard
               icon="book-open-outline"
               label="Learn"
-              gradient={['#1A0A2E', '#2D1B4E']}
+              gradient={[COLORS.primaryDark, COLORS.cardSurface]}
               onPress={onNavigateToLesson ?? (() => navigation.navigate('DailySession'))}
             />
             <ActionCard
               icon="music-box-multiple"
               label="Practice"
-              gradient={['#0A1A2E', '#1B2D4E']}
+              gradient={[COLORS.cardHighlight, COLORS.cardSurface]}
               onPress={onNavigateToExercise ?? (() => {
                 navigation.navigate('MainTabs', { screen: 'Learn' } as any);
               })}
@@ -423,13 +442,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <ActionCard
               icon="piano"
               label="Free Play"
-              gradient={['#1A2E0A', '#2D4E1B']}
+              gradient={[COLORS.cardHighlight, COLORS.cardSurface]}
               onPress={onNavigateToSongs ?? (() => navigation.navigate('FreePlay'))}
             />
             <ActionCard
               icon="cat"
               label="Collection"
-              gradient={['#2E1A0A', '#4E2D1B']}
+              gradient={[COLORS.cardHighlight, COLORS.cardSurface]}
               onPress={() => navigation.navigate('CatCollection')}
             />
           </View>
@@ -457,12 +476,14 @@ function StatPill({ icon, label, value, color }: { icon: string; label: string; 
 /** Action card with gradient background */
 function ActionCard({ icon, label, gradient, onPress }: { icon: string; label: string; gradient: readonly [string, string] | string[]; onPress: () => void }) {
   return (
-    <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.7}>
-      <LinearGradient colors={gradient as [string, string]} style={styles.actionCardGradient}>
-        <MaterialCommunityIcons name={icon as any} size={28} color={COLORS.textPrimary} />
-        <Text style={styles.actionLabel}>{label}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
+    <PressableScale haptic onPress={onPress} style={styles.actionCardWrapper}>
+      <View style={styles.actionCard}>
+        <LinearGradient colors={gradient as [string, string]} style={styles.actionCardGradient}>
+          <MaterialCommunityIcons name={icon as any} size={28} color={COLORS.textPrimary} />
+          <Text style={styles.actionLabel}>{label}</Text>
+        </LinearGradient>
+      </View>
+    </PressableScale>
   );
 }
 
@@ -487,13 +508,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   greeting: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '500' as const,
     color: COLORS.textSecondary,
   },
   greetingName: {
+    ...TYPOGRAPHY.heading.lg,
+    fontWeight: '700' as const,
     fontSize: 22,
-    fontWeight: '700',
     color: COLORS.textPrimary,
     marginTop: 2,
   },
@@ -506,22 +528,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.25)',
+    borderColor: glowColor(COLORS.starGold, 0.25),
   },
   gemCountText: {
-    fontSize: 14,
-    fontWeight: '800',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '800' as const,
     color: COLORS.gemGold,
   },
   settingsBtn: {
     padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.05),
   },
   heroCenter: {
     alignItems: 'center',
@@ -546,32 +568,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: glowColor(COLORS.starGold, 0.2),
   },
   levelText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
     color: COLORS.starGold,
   },
   xpPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: glowColor(COLORS.starGold, 0.2),
   },
   xpText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
     color: COLORS.starGold,
   },
   goalTextRow: {
@@ -581,13 +603,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
   },
   goalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
     color: COLORS.textSecondary,
   },
   goalValue: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '700' as const,
     color: COLORS.primary,
   },
   goalCompleteChip: {
@@ -598,12 +620,12 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    backgroundColor: glowColor(COLORS.success, 0.15),
     borderRadius: BORDER_RADIUS.full,
   },
   goalCompleteText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '600' as const,
     color: COLORS.success,
   },
   // Evolution XP bar
@@ -617,19 +639,21 @@ const styles = StyleSheet.create({
   },
   evolutionTrack: {
     flex: 1,
-    height: 4,
-    backgroundColor: 'rgba(225, 190, 231, 0.15)',
-    borderRadius: 2,
+    height: 6,
+    backgroundColor: glowColor(COLORS.evolutionGlow, 0.25),
+    borderRadius: 3,
     overflow: 'hidden',
   },
   evolutionFill: {
     height: '100%',
     backgroundColor: COLORS.evolutionGlow,
-    borderRadius: 2,
+    borderRadius: 3,
+    minWidth: 4,
   },
   evolutionLabel: {
+    ...TYPOGRAPHY.caption.sm,
+    fontWeight: '600' as const,
     fontSize: 9,
-    fontWeight: '600',
     color: COLORS.evolutionGlow,
     minWidth: 50,
   },
@@ -643,13 +667,14 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.md,
+    fontWeight: '700' as const,
     color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   // Continue Card
   continueCard: {
+    ...SHADOWS.sm,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -680,13 +705,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   continueLabel: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '500' as const,
     color: COLORS.textMuted,
-    fontWeight: '500',
   },
   continueTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '700' as const,
     color: COLORS.textPrimary,
     marginTop: 2,
   },
@@ -695,21 +720,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
   },
-  continueProgressTrack: {
+  continueProgressBar: {
     flex: 1,
-    height: 6,
-    backgroundColor: COLORS.cardBorder,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  continueProgressFill: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
-    borderRadius: 3,
   },
   continueProgressText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '600' as const,
     color: COLORS.textMuted,
     minWidth: 32,
     textAlign: 'right',
@@ -720,6 +736,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   statPill: {
+    ...SHADOWS.sm,
     flex: 1,
     alignItems: 'center',
     backgroundColor: COLORS.surface,
@@ -730,14 +747,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   statPillValue: {
-    fontSize: 18,
-    fontWeight: '800',
+    ...TYPOGRAPHY.heading.md,
+    fontWeight: '800' as const,
   },
   statPillLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    ...TYPOGRAPHY.special.badge,
     color: COLORS.textMuted,
-    textTransform: 'uppercase',
+    fontSize: 10,
   },
   // Actions grid
   actionsGrid: {
@@ -745,8 +761,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: SPACING.sm,
   },
-  actionCard: {
+  actionCardWrapper: {
     width: (SCREEN_WIDTH - SPACING.md * 2 - SPACING.sm) / 2,
+  },
+  actionCard: {
+    ...SHADOWS.sm,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -758,8 +777,8 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   actionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
     color: COLORS.textPrimary,
   },
 });

@@ -21,6 +21,7 @@ export interface TTSOptions {
   pitch?: number;
   rate?: number;
   language?: string;
+  voice?: string;
   onDone?: () => void;
   onStopped?: () => void;
   onError?: (error: Error) => void;
@@ -47,11 +48,14 @@ class TTSServiceImpl {
 
     this._isSpeaking = true;
 
+    const voiceId = options.voice ?? catVoice.voice;
+
     return new Promise<void>((resolve) => {
       Speech!.speak(text, {
         pitch: options.pitch ?? catVoice.pitch,
         rate: options.rate ?? catVoice.rate,
         language: options.language ?? catVoice.language,
+        ...(voiceId ? { voice: voiceId } : {}),
         onDone: () => {
           this._isSpeaking = false;
           options.onDone?.();

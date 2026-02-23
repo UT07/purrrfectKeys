@@ -165,6 +165,24 @@ export class PersistenceManager {
 }
 
 /**
+ * Registry of all active debounced save timers.
+ * Used by cancelAllPendingSaves() to prevent ghost writes after account deletion.
+ */
+const pendingSaveTimers: Set<NodeJS.Timeout> = new Set();
+
+/**
+ * Cancel all pending debounced saves across all stores.
+ * MUST be called before clearAll() during account deletion / sign-out
+ * to prevent race conditions where old data is re-written after clearing.
+ */
+export function cancelAllPendingSaves(): void {
+  for (const timerId of pendingSaveTimers) {
+    clearTimeout(timerId);
+  }
+  pendingSaveTimers.clear();
+}
+
+/**
  * Debounced save helper
  * Prevents excessive writes to storage
  */
@@ -177,15 +195,18 @@ export function createDebouncedSave<T>(
   return (state: T) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
+      pendingSaveTimers.delete(timeoutId);
     }
 
     timeoutId = setTimeout(() => {
+      pendingSaveTimers.delete(timeoutId!);
       // Fire and forget - async save
       PersistenceManager.saveState(key, state).catch(err =>
         console.error('[PERSIST] Debounced save failed:', err)
       );
       timeoutId = null;
     }, delayMs);
+    pendingSaveTimers.add(timeoutId);
   };
 }
 

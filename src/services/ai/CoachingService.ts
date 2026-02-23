@@ -20,23 +20,26 @@ export interface CoachingInput {
   userLevel: number;
   attemptNumber: number;
   recentScores: number[];
+  sessionMinutes?: number;
 }
 
 /**
  * Convert a CoachingInput to the CoachRequest format used by GeminiCoach
  */
 function toCoachRequest(input: CoachingInput): CoachRequest {
-  // Extract timing and pitch errors from score details
-  const pitchErrors = (input.score.details ?? [])
-    .filter((d) => !d.isCorrectPitch && !d.isExtraNote && !d.isMissedNote)
+  const details = input.score.details ?? [];
+
+  // Missed notes = player didn't play the expected note (pitch error from the learner's perspective)
+  const pitchErrors = details
+    .filter((d) => d.isMissedNote)
     .slice(0, 3)
     .map((d) => ({
       expected: `MIDI ${d.expected.note}`,
-      played: d.played ? `MIDI ${d.played.note}` : 'none',
+      played: 'missed',
       beatPosition: d.expected.startBeat,
     }));
 
-  const timingErrors = (input.score.details ?? [])
+  const timingErrors = details
     .filter((d) => d.isCorrectPitch && Math.abs(d.timingOffsetMs) > 50)
     .sort((a, b) => Math.abs(b.timingOffsetMs) - Math.abs(a.timingOffsetMs))
     .slice(0, 3)
@@ -45,6 +48,10 @@ function toCoachRequest(input: CoachingInput): CoachRequest {
       offsetMs: d.timingOffsetMs,
       beatPosition: d.expected.startBeat,
     }));
+
+  // Derive counts from details (the optional top-level fields may not be populated on old scores)
+  const missedCount = details.filter((d) => d.isMissedNote).length;
+  const extraCount = details.filter((d) => d.isExtraNote).length;
 
   return {
     exerciseId: input.exerciseId,
@@ -59,8 +66,8 @@ function toCoachRequest(input: CoachingInput): CoachRequest {
     issues: {
       pitchErrors,
       timingErrors,
-      missedCount: input.score.missedNotes ?? 0,
-      extraCount: input.score.extraNotes ?? 0,
+      missedCount,
+      extraCount,
     },
     context: {
       attemptNumber: input.attemptNumber,
@@ -69,7 +76,7 @@ function toCoachRequest(input: CoachingInput): CoachRequest {
           ? input.recentScores[input.recentScores.length - 1]
           : null,
       userLevel: input.userLevel,
-      sessionMinutes: 0,
+      sessionMinutes: input.sessionMinutes ?? Math.max(1, Math.round((details.length * 0.5) / 60)),
     },
   };
 }

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { COLORS, BORDER_RADIUS, SPACING } from '../../theme/tokens';
 
 export interface ErrorDisplayProps {
   title: string;
@@ -61,53 +62,55 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
+    backgroundColor: COLORS.surfaceOverlay,
+    padding: SPACING.lg,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 24,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
     maxWidth: 400,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
   icon: {
     fontSize: 48,
-    marginBottom: 12,
+    marginBottom: SPACING.sm + 4,
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#D32F2F',
-    marginBottom: 8,
+    color: COLORS.error,
+    marginBottom: SPACING.sm,
     textAlign: 'center',
   },
   message: {
     fontSize: 16,
-    color: '#666666',
-    marginBottom: 24,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.lg,
     textAlign: 'center',
     lineHeight: 24,
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.sm + 4,
   },
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: SPACING.sm + 4,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.sm,
     minWidth: 100,
   },
   retryButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORS.info,
   },
   closeButton: {
-    backgroundColor: '#757575',
+    backgroundColor: COLORS.feedbackDefault,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',

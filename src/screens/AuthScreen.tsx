@@ -20,9 +20,12 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CatAvatar } from '../components/Mascot/CatAvatar';
-import { useSettingsStore } from '../stores/settingsStore';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SalsaCoach } from '../components/Mascot/SalsaCoach';
+import { AnimatedGradientBackground } from '../components/common/AnimatedGradientBackground';
+import { PressableScale } from '../components/common/PressableScale';
 import { useAuthStore } from '../stores/authStore';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type AuthNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -146,9 +149,9 @@ export function AuthScreen(): React.ReactElement {
   }, [signInAnonymously]);
 
   return (
-    <View style={styles.container} testID="auth-screen">
+    <AnimatedGradientBackground style={styles.container} testID="auth-screen">
       <View style={styles.hero}>
-        <CatAvatar catId={useSettingsStore.getState().selectedCatId ?? 'mini-meowww'} size="large" showGlow />
+        <SalsaCoach mood="excited" size="large" />
         <Text style={styles.title}>Let's make music!</Text>
         <Text style={styles.subtitle}>Sign in to save your progress across devices</Text>
       </View>
@@ -162,103 +165,118 @@ export function AuthScreen(): React.ReactElement {
 
       <View style={styles.buttons}>
         {Platform.OS === 'ios' && (
-          <TouchableOpacity
-            style={[styles.button, styles.appleButton]}
+          <PressableScale
+            haptic
             onPress={handleAppleSignIn}
             disabled={isLoading}
             testID="apple-signin"
           >
-            <Text style={[styles.buttonText, styles.appleButtonText]}>
-              Continue with Apple
-            </Text>
-          </TouchableOpacity>
+            <View style={[styles.button, styles.appleButton]}>
+              <MaterialCommunityIcons name="apple" size={20} color="#000000" style={styles.buttonIcon} />
+              <Text style={[styles.buttonText, styles.appleButtonText]}>
+                Continue with Apple
+              </Text>
+            </View>
+          </PressableScale>
         )}
 
-        <TouchableOpacity
-          style={[styles.button, styles.googleButton]}
+        <PressableScale
+          haptic
           onPress={handleGoogleSignIn}
           disabled={isLoading}
           testID="google-signin"
         >
-          <Text style={[styles.buttonText, styles.googleButtonText]}>
-            Continue with Google
-          </Text>
-        </TouchableOpacity>
+          <View style={[styles.button, styles.googleButton]}>
+            <MaterialCommunityIcons name="google" size={20} color={COLORS.textPrimary} style={styles.buttonIcon} />
+            <Text style={[styles.buttonText, styles.googleButtonText]}>
+              Continue with Google
+            </Text>
+          </View>
+        </PressableScale>
 
-        <TouchableOpacity
-          style={[styles.button, styles.emailButton]}
+        <PressableScale
+          haptic
           onPress={handleEmailNav}
           disabled={isLoading}
           testID="email-signin"
         >
-          <Text style={styles.buttonText}>Continue with Email</Text>
-        </TouchableOpacity>
+          <View style={[styles.button, styles.emailButton]}>
+            <MaterialCommunityIcons name="email-outline" size={20} color={COLORS.textPrimary} style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>Continue with Email</Text>
+          </View>
+        </PressableScale>
       </View>
 
-      <TouchableOpacity
-        style={styles.skipButton}
+      <PressableScale
         onPress={handleSkip}
         disabled={isLoading}
         testID="skip-signin"
       >
-        {isLoading ? (
-          <ActivityIndicator color="#999" />
-        ) : (
-          <Text style={styles.skipText}>Skip for now</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+        <View style={styles.skipButton}>
+          {isLoading ? (
+            <ActivityIndicator color={COLORS.textMuted} />
+          ) : (
+            <Text style={styles.skipText}>Skip for now</Text>
+          )}
+        </View>
+      </PressableScale>
+    </AnimatedGradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: SPACING.xl,
   },
   hero: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: SPACING.xxl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginTop: 16,
+    ...TYPOGRAPHY.display.md,
+    color: COLORS.textPrimary,
+    marginTop: SPACING.md,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#999',
-    marginTop: 8,
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
   errorBanner: {
-    backgroundColor: '#3D1111',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: 'rgba(244, 67, 54, 0.12)',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.25)',
   },
   errorText: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    fontWeight: '500',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '500' as const,
+    color: COLORS.error,
   },
   errorDismiss: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 4,
+    ...TYPOGRAPHY.caption.lg,
+    color: COLORS.textMuted,
+    marginTop: SPACING.xs,
   },
   buttons: {
-    gap: 12,
+    gap: SPACING.md,
   },
   button: {
+    ...SHADOWS.sm,
     height: 52,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.md,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonIcon: {
+    marginRight: SPACING.sm,
   },
   appleButton: {
     backgroundColor: '#FFFFFF',
@@ -267,28 +285,27 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   googleButton: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: COLORS.cardBorder,
   },
   googleButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
   emailButton: {
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.button.lg,
+    color: COLORS.textPrimary,
   },
   skipButton: {
-    marginTop: 24,
+    marginTop: SPACING.lg,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: SPACING.md,
   },
   skipText: {
-    color: '#666',
-    fontSize: 15,
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textMuted,
   },
 });

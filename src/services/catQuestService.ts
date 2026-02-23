@@ -25,7 +25,7 @@ export interface CatQuest {
 /** Signature exercises per cat — short themed pieces */
 export interface SignatureExercise {
   catId: string;
-  exerciseId: string;
+  exerciseId: string; // placeholder for future content — sig-* exercises are not yet in ContentLoader
   title: string;
   description: string;
 }
@@ -33,49 +33,49 @@ export interface SignatureExercise {
 const SIGNATURE_EXERCISES: SignatureExercise[] = [
   {
     catId: 'mini-meowww',
-    exerciseId: 'sig-mini-meowww',
+    exerciseId: 'sig-mini-meowww', // placeholder for future content
     title: 'Tiny Serenade',
     description: 'A delicate melody played one note at a time — Mini Meowww style.',
   },
   {
     catId: 'jazzy',
-    exerciseId: 'sig-jazzy',
+    exerciseId: 'sig-jazzy', // placeholder for future content
     title: 'Midnight Jazz',
     description: 'A smooth jazz riff from the rooftops of New Orleans.',
   },
   {
     catId: 'chonky-monke',
-    exerciseId: 'sig-chonky',
+    exerciseId: 'sig-chonky', // placeholder for future content
     title: 'Belly Slam Fortissimo',
     description: 'Big notes, big energy. Chonky\'s signature power chords.',
   },
   {
     catId: 'luna',
-    exerciseId: 'sig-luna',
+    exerciseId: 'sig-luna', // placeholder for future content
     title: 'Moonlight Whisper',
     description: 'A haunting melody that Luna plays only under the full moon.',
   },
   {
     catId: 'biscuit',
-    exerciseId: 'sig-biscuit',
+    exerciseId: 'sig-biscuit', // placeholder for future content
     title: 'Cookie Crumble Waltz',
     description: 'A warm C major waltz — cozy as fresh cookies.',
   },
   {
-    catId: 'vinyl',
-    exerciseId: 'sig-vinyl',
-    title: 'Analog Groove',
-    description: 'An underground beat that\'s definitely not "basic meow-sic."',
+    catId: 'ballymakawww',
+    exerciseId: 'sig-ballymakawww', // placeholder for future content
+    title: 'The Cork Reel',
+    description: 'A rollicking Irish jig learned in a Cork pub — played at twice the speed anyone thinks possible.',
   },
   {
     catId: 'aria',
-    exerciseId: 'sig-aria',
+    exerciseId: 'sig-aria', // placeholder for future content
     title: 'La Scala Cadenza',
     description: 'An elegant run that Aria perfected at the Milan opera house.',
   },
   {
     catId: 'tempo',
-    exerciseId: 'sig-tempo',
+    exerciseId: 'sig-tempo', // placeholder for future content
     title: 'Speed Demon Sprint',
     description: 'Can you keep up? Tempo plays everything at double speed.',
   },
@@ -129,10 +129,10 @@ const QUEST_TEMPLATES: Record<string, {
     weakSkill: (s) => ({ title: `Warm ${s}`, description: `Your ${s} will improve with a gentle, cozy practice session!` }),
     general: () => ({ title: 'Snack Break Scales', description: 'Play a few warm C major scales between cookie bites!' }),
   },
-  'vinyl': {
-    weakNote: (n) => ({ title: `B-Side ${n}`, description: `Most people ignore ${n}. That's why the real ones practice it.` }),
-    weakSkill: (s) => ({ title: `Underground ${s}`, description: `Your ${s} is too mainstream. Let me show you the deep cuts.` }),
-    general: () => ({ title: 'Analog Session', description: 'Forget digital perfection. Play from the soul today.' }),
+  'ballymakawww': {
+    weakNote: (n) => ({ title: `Celtic ${n}`, description: `${n} needs the Irish treatment! Let's work it into a wee reel, so.` }),
+    weakSkill: (s) => ({ title: `Trad ${s}`, description: `Your ${s} wouldn't survive a session in Cork! Let me show you how it's done.` }),
+    general: () => ({ title: 'Pub Session', description: 'Play a jig, play a reel — just play from the heart and stomp your feet!' }),
   },
   'aria': {
     weakNote: (n) => ({ title: `Operatic ${n}`, description: `Darling, your ${n} needs the elegance of La Scala. Let me help.` }),

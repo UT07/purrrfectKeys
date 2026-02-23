@@ -16,6 +16,7 @@ import Animated, {
 import { Button } from '../common/Button';
 import { ScoreRing } from '../common/ScoreRing';
 import { FunFactCard } from '../FunFact/FunFactCard';
+import { COLORS, glowColor } from '../../theme/tokens';
 import type { FunFact } from '../../content/funFacts';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -271,16 +272,16 @@ const styles = StyleSheet.create({
     color: '#FFD700',
   },
   tipContainer: {
-    backgroundColor: 'rgba(124, 77, 255, 0.1)',
+    backgroundColor: glowColor(COLORS.primary, 0.1),
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: 'rgba(124, 77, 255, 0.2)',
+    borderColor: glowColor(COLORS.primary, 0.2),
   },
   tipText: {
     fontSize: 13,
-    color: '#D1C4E9',
+    color: COLORS.textPrimary,
     lineHeight: 18,
   },
   actions: {

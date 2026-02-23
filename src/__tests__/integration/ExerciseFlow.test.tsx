@@ -286,17 +286,22 @@ jest.mock('../../content/ContentLoader', () => ({
   getTestExercise: jest.fn(), getNonTestExercises: jest.fn(() => []),
 }));
 jest.mock('../../services/exerciseBufferManager', () => ({
-  getNextExercise: jest.fn(), fillBuffer: jest.fn(), getBufferSize: jest.fn(() => 0), BUFFER_MIN_THRESHOLD: 2,
+  getNextExercise: jest.fn(), getNextExerciseForSkill: jest.fn(), fillBuffer: jest.fn(), fillBufferForSkills: jest.fn(), prefillOnboardingBuffer: jest.fn(), getBufferSize: jest.fn(() => 0), BUFFER_MIN_THRESHOLD: 2,
 }));
 jest.mock('../../core/progression/XpSystem', () => ({ recordPracticeSession: jest.fn() }));
-jest.mock('../../core/curriculum/SkillTree', () => ({ getSkillsForExercise: jest.fn(() => []) }));
+jest.mock('../../core/curriculum/SkillTree', () => ({ getSkillsForExercise: jest.fn(() => []), getSkillById: jest.fn(() => null), getGenerationHints: jest.fn(() => null) }));
 jest.mock('../../core/curriculum/DifficultyEngine', () => ({ adjustDifficulty: jest.fn((e: any) => e) }));
 jest.mock('../../core/curriculum/WeakSpotDetector', () => ({ detectWeakPatterns: jest.fn(() => []) }));
 jest.mock('../../core/music/MusicTheory', () => ({ midiToNoteName: jest.fn((n: number) => `Note${n}`) }));
 jest.mock('../../services/FreePlayAnalyzer', () => ({ suggestDrill: jest.fn() }));
 jest.mock('../../services/geminiExerciseService', () => ({ generateExercise: jest.fn() }));
 jest.mock('../../content/funFacts', () => ({ getRandomFunFact: jest.fn() }));
+jest.mock('../../content/templateExercises', () => ({
+  getTemplateForSkill: jest.fn(() => ({ id: 'tmpl-test', version: 1, metadata: { title: 'Template', description: '', difficulty: 1, estimatedMinutes: 2, skills: [], prerequisites: [] }, settings: { tempo: 60, timeSignature: [4, 4], keySignature: 'C', countIn: 4, metronomeEnabled: true }, notes: [{ note: 60, startBeat: 0, durationBeats: 1 }], scoring: { timingToleranceMs: 80, timingGracePeriodMs: 200, passingScore: 60, starThresholds: [70, 85, 95] }, hints: { beforeStart: '', commonMistakes: [], successMessage: '' } })),
+  getTemplateExercise: jest.fn(() => ({ id: 'tmpl-generic', version: 1, metadata: { title: 'Generic', description: '', difficulty: 1, estimatedMinutes: 2, skills: [], prerequisites: [] }, settings: { tempo: 60, timeSignature: [4, 4], keySignature: 'C', countIn: 4, metronomeEnabled: true }, notes: [{ note: 60, startBeat: 0, durationBeats: 1 }], scoring: { timingToleranceMs: 80, timingGracePeriodMs: 200, passingScore: 60, starThresholds: [70, 85, 95] }, hints: { beforeStart: '', commonMistakes: [], successMessage: '' } })),
+}));
 jest.mock('../../components/Keyboard/SplitKeyboard', () => ({ SplitKeyboard: () => null, deriveSplitPoint: jest.fn(() => 60) }));
+jest.mock('../../screens/ExercisePlayer/ExerciseLoadingScreen', () => ({ ExerciseLoadingScreen: () => null }));
 jest.mock('../../screens/ExercisePlayer/CompletionModal', () => ({ CompletionModal: () => null }));
 jest.mock('../../screens/ExercisePlayer/CountInAnimation', () => ({ CountInAnimation: () => null }));
 jest.mock('../../input/DevKeyboardMidi', () => ({ useDevKeyboardMidi: jest.fn() }));
@@ -325,9 +330,35 @@ jest.mock('react-native-svg', () => {
 });
 
 jest.mock('../../theme/tokens', () => ({
-  COLORS: { background: '#0D0D0D', surface: '#1A1A2E', text: '#FFFFFF', textSecondary: '#AAAAAA', primary: '#DC143C', success: '#4CAF50', warning: '#FF9800', error: '#F44336', accent: '#FFD700' },
-  SPACING: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 },
-  BORDER_RADIUS: { sm: 4, md: 8, lg: 16, xl: 24 },
+  COLORS: {
+    background: '#0A0A0A', surface: '#141414', surfaceElevated: '#1C1C1C',
+    surfaceOverlay: 'rgba(0, 0, 0, 0.85)', primary: '#DC143C', primaryLight: '#FF2D55',
+    primaryDark: '#8B0000', cardSurface: '#181818', cardBorder: '#2A2A2A', cardHighlight: '#222222',
+    textPrimary: '#FFFFFF', textSecondary: '#A0A0A0', textMuted: '#666666', textAccent: '#DC143C',
+    success: '#4CAF50', warning: '#FF9800', error: '#F44336', info: '#2196F3',
+    starGold: '#FFD700', starEmpty: '#444444', gemGold: '#FFD700', gemDiamond: '#4FC3F7',
+    evolutionGlow: '#FFD54F', evolutionFlash: '#FFFFFF',
+    streakFlame: '#FF6B35', streakFlameWarm: '#FF9800', streakFlameMedium: '#FF6B00', streakFlameHot: '#FF4500',
+    feedbackPerfect: '#00E676', feedbackGood: '#69F0AE', feedbackOk: '#FFD740',
+    feedbackEarly: '#40C4FF', feedbackLate: '#FFAB40', feedbackMiss: '#FF5252', feedbackDefault: '#757575',
+    comboGold: '#FFD700',
+  },
+  GRADIENTS: { dark: ['#141414', '#0A0A0A'], gold: ['#FFD700', '#FFA500'], heroGlow: ['#2A0A0A', '#1A0A0A', '#0A0A0A'], cardWarm: ['#1C1C1C', '#181818'], header: ['#1C1C1C', '#0A0A0A'], crimson: ['#DC143C', '#8B0000'], lavaLamp: { duration: 8000, palettes: [['#1A0000', '#0A0A0A', '#0A0A0A']] } },
+  GLOW: { crimson: 'rgba(220, 20, 60, 0.3)', gold: 'rgba(255, 215, 0, 0.3)', dark: 'rgba(28, 28, 28, 0.3)', success: 'rgba(76, 175, 80, 0.3)' },
+  glowColor: (_hex: string, opacity = 0.3) => `rgba(0, 0, 0, ${opacity})`,
+  TYPOGRAPHY: {
+    display: { lg: { fontSize: 36, lineHeight: 44, fontWeight: '800' }, md: { fontSize: 28, lineHeight: 36, fontWeight: '700' }, sm: { fontSize: 24, lineHeight: 32, fontWeight: '700' } },
+    heading: { lg: { fontSize: 20, lineHeight: 28, fontWeight: '700' }, md: { fontSize: 18, lineHeight: 26, fontWeight: '600' }, sm: { fontSize: 16, lineHeight: 24, fontWeight: '600' } },
+    body: { lg: { fontSize: 16, lineHeight: 24, fontWeight: '400' }, md: { fontSize: 14, lineHeight: 22, fontWeight: '400' }, sm: { fontSize: 13, lineHeight: 20, fontWeight: '400' } },
+    caption: { lg: { fontSize: 12, lineHeight: 18, fontWeight: '400' }, md: { fontSize: 11, lineHeight: 16, fontWeight: '400' }, sm: { fontSize: 10, lineHeight: 14, fontWeight: '400' } },
+    button: { lg: { fontSize: 16, lineHeight: 24, fontWeight: '600' }, md: { fontSize: 14, lineHeight: 22, fontWeight: '600' }, sm: { fontSize: 12, lineHeight: 18, fontWeight: '600' } },
+    special: { score: { fontSize: 48, lineHeight: 56, fontWeight: '800' }, badge: { fontSize: 11, lineHeight: 14, fontWeight: '700', textTransform: 'uppercase' } },
+  },
+  SHADOWS: { sm: {}, md: {}, lg: {} },
+  shadowGlow: () => ({}),
+  SPACING: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
+  BORDER_RADIUS: { sm: 8, md: 12, lg: 16, xl: 24, full: 9999 },
+  ANIMATION_CONFIG: { spring: { damping: 15, stiffness: 150 }, duration: { instant: 100, fast: 200, normal: 300, slow: 500 } },
 }));
 
 const mockNavigate = jest.fn();

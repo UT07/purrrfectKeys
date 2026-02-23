@@ -25,9 +25,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useProgressStore } from '../stores/progressStore';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { useGemStore } from '../stores/gemStore';
-import { getLessons } from '../content/ContentLoader';
-import { SKILL_TREE } from '../core/curriculum/SkillTree';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { getLessons, getExercise } from '../content/ContentLoader';
+import { SKILL_TREE, getSkillById } from '../core/curriculum/SkillTree';
+import { SalsaCoach } from '../components/Mascot/SalsaCoach';
+import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -66,7 +67,7 @@ const TIER_SECTIONS: Record<number, string> = {
   14: 'Mastery',
 };
 
-type NodeState = 'completed' | 'current' | 'locked';
+type NodeState = 'completed' | 'passed' | 'current' | 'locked';
 
 interface TierNodeData {
   tier: number;
@@ -105,59 +106,94 @@ function useTierNodes(): TierNodeData[] {
     // Get all unique tiers sorted
     const tiers = Array.from(skillsByTier.keys()).sort((a, b) => a - b);
 
-    let foundCurrent = false;
-    const nodes: TierNodeData[] = [];
+    // Explicit tier-to-lesson mapping
+    const TIER_TO_LESSON: Record<number, string> = {
+      1: 'lesson-01', 2: 'lesson-02', 3: 'lesson-03',
+      4: 'lesson-04', 5: 'lesson-05', 6: 'lesson-06',
+    };
 
-    for (const tier of tiers) {
+    // Pass 1: compute raw data with passable/complete status per tier
+    interface RawTier {
+      tier: number;
+      title: string;
+      icon: string;
+      masteredCount: number;
+      totalSkills: number;
+      isComplete: boolean;
+      /** Passable = unlocks the next tier (all skills mastered OR lesson completed) */
+      isPassable: boolean;
+      lessonId: string | null;
+      firstUnmasteredSkillId: string | null;
+    }
+
+    const rawTiers: RawTier[] = tiers.map((tier) => {
       const skills = skillsByTier.get(tier) ?? [];
       const masteredCount = skills.filter((s) => masteredSet.has(s.id)).length;
       const totalSkills = skills.length;
-      const isComplete = masteredCount === totalSkills;
+      const isComplete = totalSkills > 0 && masteredCount === totalSkills;
 
       const meta = TIER_META[tier] ?? { title: `Tier ${tier}`, icon: 'star' };
-
-      // Explicit tier-to-lesson mapping (not index-based, safe if lessons reorder)
-      const TIER_TO_LESSON: Record<number, string> = {
-        1: 'lesson-01', 2: 'lesson-02', 3: 'lesson-03',
-        4: 'lesson-04', 5: 'lesson-05', 6: 'lesson-06',
-      };
       const lessonId = TIER_TO_LESSON[tier] ?? null;
       const lesson = lessonId ? lessons.find((l) => l.id === lessonId) ?? null : null;
 
-      // For tiers 1-6, also consider lesson progress for completion
-      let tierComplete = isComplete;
-      if (lesson && lessonProgress[lesson.id]?.status === 'completed') {
-        tierComplete = true;
+      // A tier is "passable" (unlocks next) if ALL skills mastered OR lesson completed
+      const isPassable = isComplete || (lesson != null && lessonProgress[lesson.id]?.status === 'completed');
+
+      const firstUnmastered = skills.find((s) => !masteredSet.has(s.id));
+
+      return {
+        tier,
+        title: meta.title,
+        icon: meta.icon,
+        masteredCount,
+        totalSkills,
+        isComplete,
+        isPassable,
+        lessonId,
+        firstUnmasteredSkillId: firstUnmastered?.id ?? null,
+      };
+    });
+
+    // Pass 2: determine accessibility — each tier is accessible if it's the first
+    // or the previous tier is passable
+    const accessible: boolean[] = rawTiers.map((_, i) =>
+      i === 0 || rawTiers[i - 1].isPassable,
+    );
+
+    // Find the highest accessible non-completed tier → that's "current"
+    let currentIndex = -1;
+    for (let i = rawTiers.length - 1; i >= 0; i--) {
+      if (accessible[i] && !rawTiers[i].isComplete) {
+        currentIndex = i;
+        break;
       }
+    }
 
-      // Check if previous tier is complete
-      const prevTier = nodes.length > 0 ? nodes[nodes.length - 1] : null;
-      const prevComplete = !prevTier || prevTier.state === 'completed';
-
+    // Pass 3: assign node states
+    const nodes: TierNodeData[] = rawTiers.map((raw, i) => {
       let state: NodeState;
-      if (tierComplete) {
+      if (raw.isComplete) {
         state = 'completed';
-      } else if (prevComplete && !foundCurrent) {
+      } else if (accessible[i] && i === currentIndex) {
         state = 'current';
-        foundCurrent = true;
+      } else if (accessible[i]) {
+        // Accessible but not the highest — lesson done, skills not all mastered
+        state = 'passed';
       } else {
         state = 'locked';
       }
 
-      // Find first unmastered skill in this tier (for AI navigation)
-      const firstUnmastered = skills.find((s) => !masteredSet.has(s.id));
-
-      nodes.push({
-        tier,
-        title: meta.title,
-        icon: meta.icon,
+      return {
+        tier: raw.tier,
+        title: raw.title,
+        icon: raw.icon,
         state,
-        masteredCount,
-        totalSkills,
-        lessonId,
-        firstUnmasteredSkillId: firstUnmastered?.id ?? null,
-      });
-    }
+        masteredCount: raw.masteredCount,
+        totalSkills: raw.totalSkills,
+        lessonId: raw.lessonId,
+        firstUnmasteredSkillId: raw.firstUnmasteredSkillId,
+      };
+    });
 
     return nodes;
   }, [lessons, lessonProgress, masteredSkills]);
@@ -251,11 +287,14 @@ function TierNode({
 
       <View style={[styles.nodeCircle, config.circleStyle]}>
         {data.state === 'completed' && (
-          <MaterialCommunityIcons name="check-bold" size={32} color="#FFFFFF" />
+          <MaterialCommunityIcons name="check-bold" size={32} color={COLORS.textPrimary} />
+        )}
+        {data.state === 'passed' && (
+          <MaterialCommunityIcons name="check" size={28} color={COLORS.textPrimary} />
         )}
         {data.state === 'current' && (
           <View style={styles.startBtnInner}>
-            <MaterialCommunityIcons name="play" size={28} color="#FFFFFF" />
+            <MaterialCommunityIcons name="play" size={28} color={COLORS.textPrimary} />
           </View>
         )}
         {data.state === 'locked' && (
@@ -268,9 +307,13 @@ function TierNode({
         {data.title}
       </Text>
 
-      {/* Progress for completed or current */}
-      {(data.state === 'completed' || data.state === 'current') && (
-        <Text style={[styles.nodeProgress, data.state === 'completed' ? { color: COLORS.starGold } : null]}>
+      {/* Progress for completed, passed, or current */}
+      {(data.state === 'completed' || data.state === 'passed' || data.state === 'current') && (
+        <Text style={[
+          styles.nodeProgress,
+          data.state === 'completed' ? { color: COLORS.starGold } : null,
+          data.state === 'passed' ? { color: COLORS.success } : null,
+        ]}>
           {data.masteredCount}/{data.totalSkills} skills
         </Text>
       )}
@@ -356,19 +399,21 @@ export function LevelMapScreen() {
     (data: TierNodeData) => {
       if (data.state === 'locked') return;
 
-      // Tiers 1-6 with static lessons: navigate to LessonIntro
-      if (data.lessonId) {
-        navigation.navigate('LessonIntro', { lessonId: data.lessonId });
-        return;
-      }
-
-      // Tiers 7-15: navigate to AI exercise for the first unmastered skill
+      // All tiers with unmastered skills: navigate directly to AI exercise
       if (data.firstUnmasteredSkillId) {
+        const skill = getSkillById(data.firstUnmasteredSkillId);
+        const fallback = skill?.targetExerciseIds.find((id) => getExercise(id));
         navigation.navigate('Exercise', {
-          exerciseId: 'ai-mode',
+          exerciseId: fallback ?? 'ai-mode',
           aiMode: true,
           skillId: data.firstUnmasteredSkillId,
         });
+        return;
+      }
+
+      // Completed tiers with static lessons: LessonIntro for review
+      if (data.lessonId) {
+        navigation.navigate('LessonIntro', { lessonId: data.lessonId });
       }
     },
     [navigation]
@@ -388,20 +433,26 @@ export function LevelMapScreen() {
       const toX = getNodeX(i + 1);
       const toY = getNodeY(i + 1, nodes.length);
 
-      const isFromCompleted = nodes[i].state === 'completed';
-      const isToAvailable = nodes[i + 1].state !== 'locked';
+      const fromState = nodes[i].state;
+      const toState = nodes[i + 1].state;
+      const isFromDone = fromState === 'completed' || fromState === 'passed';
+      const isToAvailable = toState !== 'locked';
 
       let pathColor: string;
       let pathWidth: number;
       let dashArray: string | undefined;
 
-      if (isFromCompleted && isToAvailable) {
+      if (fromState === 'completed' && isToAvailable) {
         pathColor = COLORS.starGold;
         pathWidth = 3;
         dashArray = undefined;
-      } else if (isFromCompleted) {
+      } else if (isFromDone && isToAvailable) {
         pathColor = COLORS.success;
         pathWidth = 3;
+        dashArray = undefined;
+      } else if (isFromDone) {
+        pathColor = COLORS.success;
+        pathWidth = 2;
         dashArray = undefined;
       } else {
         pathColor = COLORS.cardBorder;
@@ -504,6 +555,11 @@ export function LevelMapScreen() {
             onPress={() => handleNodePress(data)}
           />
         ))}
+
+        {/* Salsa cheering at journey start (bottom) */}
+        <View style={styles.salsaFooter}>
+          <SalsaCoach mood="encouraging" size="small" showCatchphrase />
+        </View>
       </ScrollView>
     </View>
   );
@@ -513,20 +569,27 @@ const NODE_CONFIGS = {
   completed: {
     circleStyle: {
       backgroundColor: COLORS.starGold,
-      borderColor: '#D4A800',
+      borderColor: COLORS.starGold,
+      ...SHADOWS.md,
       shadowColor: COLORS.starGold,
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
     } as const,
     labelStyle: { color: COLORS.textSecondary } as const,
+  },
+  passed: {
+    circleStyle: {
+      backgroundColor: COLORS.success,
+      borderColor: COLORS.success,
+      ...SHADOWS.sm,
+      shadowColor: COLORS.success,
+    } as const,
+    labelStyle: { color: COLORS.success } as const,
   },
   current: {
     circleStyle: {
       backgroundColor: COLORS.primary,
-      borderColor: '#A3102E',
+      borderColor: COLORS.primaryDark,
+      ...SHADOWS.lg,
       shadowColor: COLORS.primary,
-      shadowOpacity: 0.4,
-      shadowRadius: 12,
     } as const,
     labelStyle: { color: COLORS.primary, fontWeight: '700' as const } as const,
   },
@@ -543,6 +606,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  salsaFooter: {
+    position: 'absolute',
+    bottom: SPACING.lg,
+    left: SPACING.md,
+    right: SPACING.md,
   },
   header: {
     paddingTop: 60,
@@ -563,8 +632,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...TYPOGRAPHY.display.md,
     color: COLORS.textPrimary,
   },
   headerStats: {
@@ -583,7 +651,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full,
   },
   headerBadgeText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '700',
     color: COLORS.textSecondary,
   },
@@ -624,13 +692,13 @@ const styles = StyleSheet.create({
   },
   nodeLabel: {
     marginTop: 8,
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '600',
     textAlign: 'center',
     maxWidth: NODE_SIZE + 60,
   },
   nodeProgress: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     fontWeight: '700',
     color: COLORS.primary,
     marginTop: 2,
@@ -643,13 +711,13 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full,
   },
   startChipText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.special.badge,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     letterSpacing: 1,
   },
   lockedHint: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     fontWeight: '500',
     color: COLORS.textMuted,
     marginTop: 2,
@@ -670,7 +738,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBorder,
   },
   tierLabel: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '600',
     color: COLORS.textMuted,
     textTransform: 'uppercase',

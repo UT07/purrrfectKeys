@@ -6,6 +6,7 @@ import {
   getSkillsByCategory,
   validateSkillTree,
   getSkillDepth,
+  getGenerationHints,
 } from '../SkillTree';
 
 describe('SkillTree', () => {
@@ -184,6 +185,55 @@ describe('SkillTree', () => {
       for (const node of SKILL_TREE) {
         expect(node.name.length).toBeGreaterThan(0);
         expect(node.description.length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe('GenerationHints', () => {
+    it('should have a promptHint for every skill node', () => {
+      for (const node of SKILL_TREE) {
+        const hints = getGenerationHints(node.id);
+        expect(hints).not.toBeNull();
+        expect(hints!.promptHint.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should return null for unknown skill', () => {
+      expect(getGenerationHints('nonexistent')).toBeNull();
+    });
+
+    it('should have valid hand values', () => {
+      for (const node of SKILL_TREE) {
+        const hints = getGenerationHints(node.id);
+        if (hints?.hand) {
+          expect(['left', 'right', 'both']).toContain(hints.hand);
+        }
+      }
+    });
+
+    it('should have valid difficulty ranges', () => {
+      for (const node of SKILL_TREE) {
+        const hints = getGenerationHints(node.id);
+        if (hints?.minDifficulty) {
+          expect(hints.minDifficulty).toBeGreaterThanOrEqual(1);
+          expect(hints.minDifficulty).toBeLessThanOrEqual(3);
+        }
+        if (hints?.maxDifficulty) {
+          expect(hints.maxDifficulty).toBeGreaterThanOrEqual(1);
+          expect(hints.maxDifficulty).toBeLessThanOrEqual(3);
+        }
+      }
+    });
+
+    it('should have targetMidi notes in valid piano range', () => {
+      for (const node of SKILL_TREE) {
+        const hints = getGenerationHints(node.id);
+        if (hints?.targetMidi) {
+          for (const midi of hints.targetMidi) {
+            expect(midi).toBeGreaterThanOrEqual(21);
+            expect(midi).toBeLessThanOrEqual(108);
+          }
+        }
       }
     });
   });

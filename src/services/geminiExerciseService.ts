@@ -7,6 +7,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { GenerationHints } from '../core/curriculum/SkillTree';
 
 // ============================================================================
 // Type Definitions
@@ -28,6 +29,8 @@ export interface GenerationParams {
   exerciseType?: 'warmup' | 'lesson' | 'challenge';
   /** Explicit key signature override (e.g. from free play analysis). When set, takes priority over difficulty-based key selection. */
   keySignature?: string;
+  /** Skill-specific generation hints from the SkillTree. When provided, these drive targeted exercise content. */
+  generationHints?: GenerationHints;
 }
 
 export interface AIExercise {
@@ -180,15 +183,31 @@ function keySignatureForDifficulty(difficulty: number): string {
 }
 
 export function buildPrompt(params: GenerationParams): string {
+  const hints = params.generationHints;
   const tempo = calculateTempo(params);
-  const keySignature = params.keySignature ?? keySignatureForDifficulty(params.difficulty);
+  const keySignature =
+    hints?.keySignature ?? params.keySignature ?? keySignatureForDifficulty(params.difficulty);
+  const difficulty = hints?.minDifficulty ?? params.difficulty;
+  const hand = hints?.hand ?? 'right';
 
   let prompt = `Generate a piano exercise as JSON for a student with this profile:
 - Weak notes (MIDI): ${JSON.stringify(params.weakNotes)} (focus extra repetitions on these)
 - Timing accuracy: ${Math.round(params.skills.timingAccuracy * 100)}%
 - Comfortable tempo: ${params.tempoRange.min}-${params.tempoRange.max} BPM
-- Difficulty: ${params.difficulty}/5
+- Difficulty: ${difficulty}/5
 - Target note count: ${params.noteCount}`;
+
+  // Inject skill-specific generation hints (highest priority context)
+  if (hints) {
+    prompt += `\n- SKILL OBJECTIVE: ${hints.promptHint}`;
+    if (hints.targetMidi && hints.targetMidi.length > 0) {
+      prompt += `\n- Use ONLY these MIDI notes: ${JSON.stringify(hints.targetMidi)}`;
+    }
+    prompt += `\n- Hand: ${hand}`;
+    if (hints.exerciseTypes && hints.exerciseTypes.length > 0) {
+      prompt += `\n- Exercise style: ${hints.exerciseTypes.join(' or ')}`;
+    }
+  }
 
   // Add skill context if provided (from CurriculumEngine)
   if (params.skillContext) {
@@ -213,6 +232,7 @@ Requirements:
 - All MIDI notes between 48-84 (C3 to C6)
 - Notes should flow melodically (mostly stepwise motion, occasional skips)
 - Include at least 2 repetitions of each weak note
+- All notes should use hand: "${hand}"
 
 Return JSON: { notes: [{note, startBeat, durationBeats, hand}], settings: {tempo, timeSignature, keySignature}, metadata: {title, difficulty, skills}, scoring: {passingScore, timingToleranceMs, starThresholds} }`;
 

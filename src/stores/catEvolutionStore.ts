@@ -64,8 +64,11 @@ export interface CatEvolutionStoreState {
   dailyRewards: {
     weekStartDate: string; // ISO date of week start
     days: DailyRewardDay[];
-    currentDay: number; // 1-7
+    currentDay: number; // 1-7 (derived from date, kept for compat)
   };
+
+  /** ISO date when the daily challenge was last completed */
+  lastDailyChallengeDate: string;
 
   // Chonky Monké unlock tracking
   chonkyUnlockProgress: {
@@ -80,6 +83,12 @@ export interface CatEvolutionStoreState {
   getActiveAbilities: () => string[];
   claimDailyReward: (day: number) => DailyRewardDay['reward'] | null;
   resetDailyRewards: () => void;
+  /** Advance the daily reward calendar based on the current date */
+  advanceDailyRewardDate: () => void;
+  /** Mark today's daily challenge as completed */
+  completeDailyChallenge: () => void;
+  /** Check if today's daily challenge has been completed */
+  isDailyChallengeCompleted: () => boolean;
   checkChonkyEligibility: (streakDays: number, skillsMastered: number) => boolean;
   unlockChonky: () => void;
   initializeStarterCat: (catId: string) => void;
@@ -88,7 +97,7 @@ export interface CatEvolutionStoreState {
 
 type EvolutionData = Pick<
   CatEvolutionStoreState,
-  'selectedCatId' | 'ownedCats' | 'evolutionData' | 'dailyRewards' | 'chonkyUnlockProgress'
+  'selectedCatId' | 'ownedCats' | 'evolutionData' | 'dailyRewards' | 'chonkyUnlockProgress' | 'lastDailyChallengeDate'
 >;
 
 const defaultData: EvolutionData = {
@@ -96,10 +105,11 @@ const defaultData: EvolutionData = {
   ownedCats: [],
   evolutionData: {},
   dailyRewards: {
-    weekStartDate: new Date().toISOString().split('T')[0],
+    weekStartDate: getMondayOfWeek(),
     days: DEFAULT_DAILY_REWARDS.map(d => ({ ...d })),
     currentDay: 1,
   },
+  lastDailyChallengeDate: '',
   chonkyUnlockProgress: {
     daysStreakReached: false,
     skillsMasteredReached: false,
@@ -107,6 +117,32 @@ const defaultData: EvolutionData = {
 };
 
 const debouncedSave = createDebouncedSave<EvolutionData>(STORAGE_KEYS.CAT_EVOLUTION, 500);
+
+/** Get today's ISO date string */
+function todayISO(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+/** Get the Monday of the current week as ISO date string.
+ *  This ensures day labels (Mon-Sun) always match real weekdays. */
+function getMondayOfWeek(): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  return monday.toISOString().split('T')[0];
+}
+
+/** Calculate which day of the reward week it is (1=Mon ... 7=Sun), or 0 if week has expired */
+function calcCurrentDay(weekStartDate: string): number {
+  const start = new Date(weekStartDate + 'T00:00:00');
+  const now = new Date();
+  const diffMs = now.getTime() - start.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 0 || diffDays >= 7) return 0; // week expired or future
+  return diffDays + 1; // 1-indexed (Mon=1 when weekStartDate is Monday)
+}
 
 export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) => ({
   ...defaultData,
@@ -133,8 +169,15 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
 
   addEvolutionXp: (catId: string, amount: number) => {
     const state = get();
-    const data = state.evolutionData[catId];
-    if (!data) return null;
+    let data = state.evolutionData[catId];
+    // Auto-create evolution data if cat is owned but entry is missing
+    if (!data) {
+      if (!state.ownedCats.includes(catId)) return null;
+      data = createDefaultEvolutionData(catId);
+      set((prev) => ({
+        evolutionData: { ...prev.evolutionData, [catId]: data! },
+      }));
+    }
 
     const oldStage = data.currentStage;
     const newXp = data.xpAccumulated + amount;
@@ -173,9 +216,18 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
 
   claimDailyReward: (day: number) => {
     const state = get();
+
+    // Calculate which day it actually is based on the calendar
+    const actualDay = calcCurrentDay(state.dailyRewards.weekStartDate);
+    if (actualDay === 0) return null; // week expired — need reset first
+    if (day > actualDay) return null; // can't claim future days
+
+    // Claiming ANY reward (today or past catch-up) requires completing
+    // today's daily challenge first — prevents free-tapping the whole week
+    if (state.lastDailyChallengeDate !== todayISO()) return null;
+
     const dayData = state.dailyRewards.days.find(d => d.day === day);
     if (!dayData || dayData.claimed) return null;
-    if (day !== state.dailyRewards.currentDay) return null;
 
     set((prev) => ({
       dailyRewards: {
@@ -183,7 +235,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
         days: prev.dailyRewards.days.map(d =>
           d.day === day ? { ...d, claimed: true } : d,
         ),
-        currentDay: Math.min(prev.dailyRewards.currentDay + 1, 8), // 8 = week complete
+        currentDay: actualDay,
       },
     }));
     debouncedSave(get());
@@ -191,14 +243,69 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
   },
 
   resetDailyRewards: () => {
+    const monday = getMondayOfWeek();
+    const actualDay = calcCurrentDay(monday);
     set({
       dailyRewards: {
-        weekStartDate: new Date().toISOString().split('T')[0],
+        weekStartDate: monday,
         days: DEFAULT_DAILY_REWARDS.map(d => ({ ...d })),
-        currentDay: 1,
+        currentDay: actualDay || 1,
       },
     });
     debouncedSave(get());
+  },
+
+  advanceDailyRewardDate: () => {
+    const state = get();
+    const monday = getMondayOfWeek();
+    const storedStart = state.dailyRewards.weekStartDate;
+
+    // If the stored weekStartDate isn't the current week's Monday, reset
+    if (storedStart !== monday) {
+      const actualDay = calcCurrentDay(monday);
+      set({
+        dailyRewards: {
+          weekStartDate: monday,
+          days: DEFAULT_DAILY_REWARDS.map(d => ({ ...d })),
+          currentDay: actualDay || 1,
+        },
+      });
+      debouncedSave(get());
+      return;
+    }
+
+    const actualDay = calcCurrentDay(storedStart);
+    if (actualDay === 0) {
+      // Week has expired — auto-reset to current Monday
+      set({
+        dailyRewards: {
+          weekStartDate: monday,
+          days: DEFAULT_DAILY_REWARDS.map(d => ({ ...d })),
+          currentDay: 1,
+        },
+      });
+    } else if (actualDay !== state.dailyRewards.currentDay) {
+      // Advance currentDay + sanitize stale future claims
+      set((prev) => ({
+        dailyRewards: {
+          ...prev.dailyRewards,
+          currentDay: actualDay,
+          days: prev.dailyRewards.days.map(d =>
+            d.day > actualDay ? { ...d, claimed: false } : d,
+          ),
+        },
+      }));
+    }
+    debouncedSave(get());
+  },
+
+  completeDailyChallenge: () => {
+    set({ lastDailyChallengeDate: todayISO() });
+    debouncedSave(get());
+  },
+
+  isDailyChallengeCompleted: () => {
+    return get().lastDailyChallengeDate === todayISO();
   },
 
   checkChonkyEligibility: (streakDays: number, skillsMastered: number) => {
@@ -270,11 +377,52 @@ function unlockAbilitiesForStage(
   return Array.from(merged);
 }
 
+/** Validate persisted cat ownership — strip legendary cats without valid unlock */
+function validateOwnedCats(data: EvolutionData): EvolutionData {
+  const validCatIds = new Set(CAT_CHARACTERS.map(c => c.id));
+  const legendaryIds = new Set(
+    CAT_CHARACTERS.filter(c => c.legendary).map(c => c.id),
+  );
+
+  const validOwned = data.ownedCats.filter(catId => {
+    // Remove cats that no longer exist in the roster
+    if (!validCatIds.has(catId)) return false;
+
+    // Legendary cats require proof of unlock (chonkyUnlockProgress flags)
+    if (legendaryIds.has(catId)) {
+      const progress = data.chonkyUnlockProgress;
+      return progress.daysStreakReached || progress.skillsMasteredReached;
+    }
+
+    return true;
+  });
+
+  // If selected cat was removed, fall back to first owned cat
+  const selectedValid = validOwned.includes(data.selectedCatId);
+  const selectedCatId = selectedValid
+    ? data.selectedCatId
+    : (validOwned[0] ?? '');
+
+  // Ensure every owned cat has evolution data (auto-create if missing)
+  const cleanedEvolution: Record<string, CatEvolutionData> = {};
+  for (const catId of validOwned) {
+    cleanedEvolution[catId] = data.evolutionData[catId] ?? createDefaultEvolutionData(catId);
+  }
+
+  return {
+    ...data,
+    ownedCats: validOwned,
+    selectedCatId,
+    evolutionData: cleanedEvolution,
+  };
+}
+
 /** Hydrate evolution store from AsyncStorage on app launch */
 export async function hydrateCatEvolutionStore(): Promise<void> {
   const data = await PersistenceManager.loadState<EvolutionData>(
     STORAGE_KEYS.CAT_EVOLUTION,
     defaultData,
   );
-  useCatEvolutionStore.setState(data);
+  const validated = validateOwnedCats(data);
+  useCatEvolutionStore.setState(validated);
 }

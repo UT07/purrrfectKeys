@@ -29,9 +29,10 @@ export type SessionType = 'new-material' | 'review' | 'challenge' | 'mixed';
 
 export interface ExerciseRef {
   exerciseId: string;
-  source: 'static' | 'ai';
+  source: 'static' | 'ai' | 'ai-with-fallback';
   skillNodeId: string;
   reason: string;
+  fallbackExerciseId?: string;  // Static exercise ID for offline fallback
 }
 
 export interface SessionPlan {
@@ -251,43 +252,44 @@ function generateWarmUp(
 ): ExerciseRef[] {
   const refs: ExerciseRef[] = [];
 
-  // Strategy 1: Target weak notes with exercises from mastered skills
-  if (profile.weakNotes.length > 0) {
-    const weakNoteExercise = findExerciseForWeakNotes(profile.weakNotes, masteredSkills);
-    if (weakNoteExercise) {
-      refs.push(weakNoteExercise);
-      reasoning.push(
-        `Warm-up targets weak notes: ${profile.weakNotes.slice(0, 3).map(midiToNoteName).join(', ')}`
-      );
-    }
-  }
-
-  // Strategy 2: Review a recently mastered skill
-  if (refs.length < 2 && masteredSkills.length > 0) {
-    const recentSkillId = masteredSkills[masteredSkills.length - 1];
-    const recentSkill = getSkillById(recentSkillId);
-    if (recentSkill && recentSkill.targetExerciseIds.length > 0) {
-      const exerciseId = recentSkill.targetExerciseIds.find((id) => !recentSet.has(id)) ?? recentSkill.targetExerciseIds[0];
-      if (getExercise(exerciseId) && !refs.some((r) => r.exerciseId === exerciseId)) {
-        refs.push({
-          exerciseId,
-          source: 'static',
-          skillNodeId: recentSkillId,
-          reason: `Review recently learned: ${recentSkill.name}`,
-        });
-        reasoning.push(`Warm-up reviews recent skill: ${recentSkill.name}`);
+  // Strategy 1: AI warm-up targeting weak notes from a mastered skill
+  if (profile.weakNotes.length > 0 && masteredSkills.length > 0) {
+    // Find the mastered skill whose notes overlap with weak notes
+    for (const skillId of [...masteredSkills].reverse()) {
+      const skill = getSkillById(skillId);
+      if (skill) {
+        refs.push(makeAIRef(skill, `Warm-up targets weak notes: ${profile.weakNotes.slice(0, 3).map(midiToNoteName).join(', ')}`, recentSet));
+        reasoning.push(
+          `Warm-up targets weak notes: ${profile.weakNotes.slice(0, 3).map(midiToNoteName).join(', ')}`
+        );
+        break;
       }
     }
   }
 
-  // Fallback: use first exercise if nothing else
+  // Strategy 2: AI review of a recently mastered skill
+  if (refs.length < 2 && masteredSkills.length > 0) {
+    const recentSkillId = masteredSkills[masteredSkills.length - 1];
+    const recentSkill = getSkillById(recentSkillId);
+    if (recentSkill && !refs.some((r) => r.skillNodeId === recentSkillId)) {
+      refs.push(makeAIRef(recentSkill, `Review recently learned: ${recentSkill.name}`, recentSet));
+      reasoning.push(`Warm-up reviews recent skill: ${recentSkill.name}`);
+    }
+  }
+
+  // Fallback: AI exercise for the root skill (find-middle-c)
   if (refs.length === 0) {
-    refs.push({
-      exerciseId: 'lesson-01-ex-01',
-      source: 'static',
-      skillNodeId: 'find-middle-c',
-      reason: 'Basic warm-up: Find Middle C',
-    });
+    const rootSkill = getSkillById('find-middle-c');
+    if (rootSkill) {
+      refs.push(makeAIRef(rootSkill, 'Basic warm-up: Find Middle C', recentSet));
+    } else {
+      refs.push({
+        exerciseId: 'lesson-01-ex-01',
+        source: 'static',
+        skillNodeId: 'find-middle-c',
+        reason: 'Basic warm-up: Find Middle C',
+      });
+    }
     reasoning.push('Warm-up fallback: Find Middle C');
   }
 
@@ -304,66 +306,38 @@ function generateLesson(
   const nextSkill = getNextSkillToLearn(masteredSkills);
 
   if (!nextSkill) {
-    reasoning.push('All skills mastered — lesson uses AI-generated exercises');
-    refs.push({
-      exerciseId: 'ai-generated',
-      source: 'ai',
-      skillNodeId: 'review',
-      reason: 'All skills mastered, generating review exercise',
-    });
+    reasoning.push('All skills mastered — lesson uses AI-generated review');
+    // Pick the deepest mastered skill for a varied review
+    const deepest = [...masteredSkills]
+      .map((id) => getSkillById(id))
+      .filter(Boolean)
+      .sort((a, b) => getSkillDepth(b!.id) - getSkillDepth(a!.id))[0];
+    if (deepest) {
+      refs.push(makeAIRef(deepest, 'All skills mastered, generating review exercise', _recentSet));
+    } else {
+      refs.push({
+        exerciseId: 'ai-generated',
+        source: 'ai',
+        skillNodeId: 'review',
+        reason: 'All skills mastered, generating review exercise',
+      });
+    }
     return refs;
   }
 
   reasoning.push(`Lesson focuses on: ${nextSkill.name} (${nextSkill.category})`);
 
-  // Add static exercises for this skill, preferring non-recent ones first
-  const sortedExercises = [...nextSkill.targetExerciseIds].sort((a, b) => {
-    const aRecent = _recentSet.has(a) ? 1 : 0;
-    const bRecent = _recentSet.has(b) ? 1 : 0;
-    return aRecent - bRecent;
-  });
+  // AI-first: generate exercise for this skill, with static fallback
+  refs.push(makeAIRef(nextSkill, `Learn: ${nextSkill.name}`, _recentSet));
 
-  for (const exerciseId of sortedExercises) {
-    if (getExercise(exerciseId)) {
-      refs.push({
-        exerciseId,
-        source: 'static',
-        skillNodeId: nextSkill.id,
-        reason: `Learn: ${nextSkill.name}`,
-      });
-    }
-  }
-
-  // If the skill has few exercises, also add from parallel available skills
+  // Add a parallel skill's AI exercise if available
   if (refs.length < 2) {
     const available = getAvailableSkills(masteredSkills);
-    const parallel = available.find(
-      (s) => s.id !== nextSkill.id && s.targetExerciseIds.length > 0
-    );
+    const parallel = available.find((s) => s.id !== nextSkill.id);
     if (parallel) {
-      const exerciseId = parallel.targetExerciseIds.find((id) => !_recentSet.has(id))
-        ?? parallel.targetExerciseIds[0];
-      if (getExercise(exerciseId)) {
-        refs.push({
-          exerciseId,
-          source: 'static',
-          skillNodeId: parallel.id,
-          reason: `Also working on: ${parallel.name}`,
-        });
-        reasoning.push(`Parallel skill added: ${parallel.name}`);
-      }
+      refs.push(makeAIRef(parallel, `Also working on: ${parallel.name}`, _recentSet));
+      reasoning.push(`Parallel skill added: ${parallel.name}`);
     }
-  }
-
-  // If still no exercises, request AI generation
-  if (refs.length === 0) {
-    refs.push({
-      exerciseId: 'ai-generated',
-      source: 'ai',
-      skillNodeId: nextSkill.id,
-      reason: `AI exercise for: ${nextSkill.name}`,
-    });
-    reasoning.push(`No static exercises for ${nextSkill.name} — requesting AI generation`);
   }
 
   return refs;
@@ -379,26 +353,8 @@ function generateReviewLesson(
   const decayed = getSkillsNeedingReview(masteredSkills, profile.skillMasteryData ?? {});
 
   for (const skill of decayed.slice(0, 3)) {
-    // Find a static exercise for this skill, preferring non-recent ones
-    const staticId = skill.targetExerciseIds.find((id) => !recentSet.has(id) && getExercise(id))
-      ?? skill.targetExerciseIds.find((id) => getExercise(id));
-
-    if (staticId && !refs.some((r) => r.exerciseId === staticId)) {
-      refs.push({
-        exerciseId: staticId,
-        source: 'static',
-        skillNodeId: skill.id,
-        reason: `Review: ${skill.name} (skill needs refreshing)`,
-      });
-    } else {
-      // No static exercise available — use AI generation for review
-      refs.push({
-        exerciseId: `ai-review-${skill.id}`,
-        source: 'ai',
-        skillNodeId: skill.id,
-        reason: `Review: ${skill.name} (AI-generated review)`,
-      });
-    }
+    // AI-first review: generate fresh exercise for the decayed skill
+    refs.push(makeAIRef(skill, `Review: ${skill.name} (skill needs refreshing)`, recentSet));
   }
 
   if (refs.length > 0) {
@@ -416,36 +372,34 @@ function generateChallenge(
 ): ExerciseRef[] {
   const refs: ExerciseRef[] = [];
 
-  // Find a skill slightly above current level
+  // Find the deepest available skill for a challenge
   const available = getAvailableSkills(masteredSkills);
   const deeper = available
-    .filter((s) => s.targetExerciseIds.length > 0)
     .sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
 
   if (deeper.length > 0) {
     const challengeSkill = deeper[0];
-    const exerciseId = challengeSkill.targetExerciseIds.find((id) => !_recentSet.has(id))
-      ?? challengeSkill.targetExerciseIds[0];
-    if (getExercise(exerciseId)) {
-      refs.push({
-        exerciseId,
-        source: 'static',
-        skillNodeId: challengeSkill.id,
-        reason: `Challenge: ${challengeSkill.name}`,
-      });
-      reasoning.push(`Challenge targets advanced skill: ${challengeSkill.name}`);
-    }
+    refs.push(makeAIRef(challengeSkill, `Challenge: ${challengeSkill.name}`, _recentSet));
+    reasoning.push(`Challenge targets advanced skill: ${challengeSkill.name}`);
   }
 
-  // Fallback: AI-generated challenge at higher tempo
+  // Fallback: AI-generated challenge at higher tempo using the most recently mastered skill
   if (refs.length === 0) {
     const tempoStr = `${profile.tempoRange.max + 10} BPM`;
-    refs.push({
-      exerciseId: 'ai-generated',
-      source: 'ai',
-      skillNodeId: 'tempo-challenge',
-      reason: `Tempo challenge at ${tempoStr}`,
-    });
+    const deepestMastered = [...masteredSkills]
+      .map((id) => getSkillById(id))
+      .filter(Boolean)
+      .sort((a, b) => getSkillDepth(b!.id) - getSkillDepth(a!.id))[0];
+    if (deepestMastered) {
+      refs.push(makeAIRef(deepestMastered, `Tempo challenge at ${tempoStr}`, _recentSet));
+    } else {
+      refs.push({
+        exerciseId: 'ai-generated',
+        source: 'ai',
+        skillNodeId: 'tempo-challenge',
+        reason: `Tempo challenge at ${tempoStr}`,
+      });
+    }
     reasoning.push(`Challenge: AI exercise at elevated tempo (${tempoStr})`);
   }
 
@@ -456,30 +410,23 @@ function generateChallenge(
 // Helpers
 // ============================================================================
 
-function findExerciseForWeakNotes(
-  weakNotes: number[],
-  masteredSkills: string[]
-): ExerciseRef | null {
-  // Look for exercises from mastered skills that contain weak notes
-  for (const skillId of [...masteredSkills].reverse()) {
-    const skill = getSkillById(skillId);
-    if (!skill) continue;
-
-    for (const exerciseId of skill.targetExerciseIds) {
-      const exercise = getExercise(exerciseId);
-      if (!exercise) continue;
-
-      const exerciseNotes = new Set(exercise.notes.map((n) => n.note));
-      const hasWeakNote = weakNotes.some((wn) => exerciseNotes.has(wn));
-      if (hasWeakNote) {
-        return {
-          exerciseId,
-          source: 'static',
-          skillNodeId: skillId,
-          reason: `Strengthens weak notes in ${skill.name}`,
-        };
-      }
-    }
-  }
-  return null;
+/**
+ * Build an AI-first exercise reference for a skill node.
+ * Attaches the best static exercise ID as fallback for offline use.
+ */
+function makeAIRef(
+  skill: SkillNode,
+  reason: string,
+  recentSet: Set<string> = new Set()
+): ExerciseRef {
+  const fallback = skill.targetExerciseIds.find((id) => !recentSet.has(id) && getExercise(id))
+    ?? skill.targetExerciseIds.find((id) => getExercise(id));
+  return {
+    exerciseId: `ai-skill-${skill.id}`,
+    source: 'ai-with-fallback',
+    skillNodeId: skill.id,
+    reason,
+    fallbackExerciseId: fallback ?? undefined,
+  };
 }
+

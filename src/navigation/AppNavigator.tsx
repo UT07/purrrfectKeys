@@ -9,8 +9,6 @@ import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-
 // Screens
 import { HomeScreen } from '../screens/HomeScreen';
 import { ExercisePlayer } from '../screens/ExercisePlayer/ExercisePlayer';
@@ -28,8 +26,12 @@ import { CatCollectionScreen } from '../screens/CatCollectionScreen';
 import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 import { DailySessionScreen } from '../screens/DailySessionScreen';
 
+// Navigation
+import { CustomTabBar } from './CustomTabBar';
+
 // Stores
 import { useAuthStore } from '../stores/authStore';
+import { COLORS } from '../theme/tokens';
 
 // Types
 export type RootStackParamList = {
@@ -71,7 +73,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 /** Placeholder for the Play tab — never actually rendered because tabPress is intercepted */
 function FreePlayPlaceholder() {
-  return <View style={{ flex: 1, backgroundColor: '#0D0D0D' }} />;
+  return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
 }
 
 /**
@@ -80,45 +82,25 @@ function FreePlayPlaceholder() {
 function MainTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: '#DC143C',
-        tabBarInactiveTintColor: '#666666',
-        tabBarStyle: {
-          backgroundColor: '#111111',
-          borderTopColor: '#222222',
-        },
         headerShown: false,
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{
-          tabBarButtonTestID: 'tab-home',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarButtonTestID: 'tab-home' }}
       />
       <Tab.Screen
         name="Learn"
         component={DailySessionScreen}
-        options={{
-          tabBarButtonTestID: 'tab-learn',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="lightning-bolt" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarButtonTestID: 'tab-learn' }}
       />
       <Tab.Screen
         name="Play"
         component={FreePlayPlaceholder}
-        options={{
-          tabBarButtonTestID: 'tab-play',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="piano" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarButtonTestID: 'tab-play' }}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             // Prevent default tab behavior — navigate to full-screen FreePlay
@@ -134,12 +116,7 @@ function MainTabs() {
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
-          tabBarButtonTestID: 'tab-profile',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarButtonTestID: 'tab-profile' }}
       />
     </Tab.Navigator>
   );
@@ -186,7 +163,7 @@ export function AppNavigator() {
             <RootStack.Screen
               name="Exercise"
               component={ExercisePlayer as unknown as React.ComponentType<Record<string, unknown>>}
-              options={{ animation: 'fade' }}
+              options={{ animation: 'slide_from_bottom' }}
             />
             <RootStack.Screen
               name="LessonIntro"

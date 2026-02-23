@@ -60,6 +60,15 @@ jest.mock('expo-linear-gradient', () => {
   };
 });
 
+jest.mock('../../components/Mascot/SalsaCoach', () => {
+  const mockReact = require('react');
+  const RN = require('react-native');
+  return {
+    SalsaCoach: (props: any) =>
+      mockReact.createElement(RN.View, { testID: 'salsa-coach', ...props }),
+  };
+});
+
 // ---------------------------------------------------------------------------
 // Zustand store mocks
 // ---------------------------------------------------------------------------
@@ -152,6 +161,15 @@ jest.mock('../../content/ContentLoader', () => ({
       'lesson-03': MOCK_LESSONS[2].exercises,
     };
     return map[id] ?? [];
+  },
+  getExercise: (id: string) => {
+    // Return a truthy stub for known static exercise IDs so fallback resolution works
+    const knownIds = [
+      'lesson-01-ex-01', 'lesson-01-ex-02',
+      'lesson-02-ex-01',
+      'lesson-03-ex-01',
+    ];
+    return knownIds.includes(id) ? { id } : null;
   },
 }));
 
@@ -285,7 +303,38 @@ describe('LevelMapScreen', () => {
   // =========================================================================
 
   describe('navigation', () => {
-    it('navigates to LessonIntro for tier 1-6 nodes', () => {
+    it('navigates to Exercise with aiMode for tier with unmastered skills', () => {
+      // Fresh user: tier 1 has unmastered skills → AI exercise
+      const { getByText } = render(<LevelMapScreen />);
+      fireEvent.press(getByText('Note Finding'));
+      expect(mockNavigate).toHaveBeenCalledWith('Exercise', expect.objectContaining({
+        aiMode: true,
+        skillId: expect.any(String),
+      }));
+    });
+
+    it('uses static exercise ID as fallback when available', () => {
+      const { getByText } = render(<LevelMapScreen />);
+      fireEvent.press(getByText('Note Finding'));
+      // find-middle-c has targetExerciseIds: ['lesson-01-ex-01'] which exists in mock
+      expect(mockNavigate).toHaveBeenCalledWith('Exercise', expect.objectContaining({
+        exerciseId: 'lesson-01-ex-01',
+        aiMode: true,
+      }));
+    });
+
+    it('navigates to LessonIntro for completed tier (review)', () => {
+      // Tier 1 completed (all skills mastered) → LessonIntro for review
+      mockMasteredSkills = ['find-middle-c', 'keyboard-geography', 'white-keys'];
+      mockProgressState.lessonProgress = {
+        'lesson-01': {
+          status: 'completed',
+          exerciseScores: {
+            'lesson-01-ex-01': { completedAt: '2026-02-15', stars: 3 },
+            'lesson-01-ex-02': { completedAt: '2026-02-15', stars: 2 },
+          },
+        },
+      };
       const { getByText } = render(<LevelMapScreen />);
       fireEvent.press(getByText('Note Finding'));
       expect(mockNavigate).toHaveBeenCalledWith('LessonIntro', { lessonId: 'lesson-01' });

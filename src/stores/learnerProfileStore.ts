@@ -102,17 +102,28 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
   recordExerciseResult: (result: ExerciseResult) => {
     const state = get();
 
-    // 1. Update note accuracy for each note result
+    // Batch all note accuracy updates into a single set() call
+    // (previously called set() per note + 2 more, causing N+2 re-renders)
+    const updatedNoteAccuracy = { ...state.noteAccuracy };
+    const updatedNoteAttempts = { ...state.noteAttempts };
+
     for (const nr of result.noteResults) {
-      state.updateNoteAccuracy(nr.midiNote, nr.accuracy);
+      const prevAccuracy = updatedNoteAccuracy[nr.midiNote] ?? nr.accuracy;
+      const attempts = (updatedNoteAttempts[nr.midiNote] ?? 0) + 1;
+      const weight = Math.min(attempts, ROLLING_WINDOW);
+      const newAccuracy = prevAccuracy + (nr.accuracy - prevAccuracy) / weight;
+      updatedNoteAccuracy[nr.midiNote] = newAccuracy;
+      updatedNoteAttempts[nr.midiNote] = attempts;
     }
 
-    // 2. Increment exercises completed (tempo adjustment is handled by DifficultyEngine)
+    // Single atomic state update
     set({
-      totalExercisesCompleted: get().totalExercisesCompleted + 1,
+      noteAccuracy: updatedNoteAccuracy,
+      noteAttempts: updatedNoteAttempts,
+      totalExercisesCompleted: state.totalExercisesCompleted + 1,
     });
 
-    // 4. Recalculate weak areas
+    // Recalculate weak areas based on updated accuracy
     get().recalculateWeakAreas();
   },
 

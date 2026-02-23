@@ -15,26 +15,29 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { PressableScale } from '../components/common/PressableScale';
+import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { generateSessionPlan, getNextSkillToLearn, type SessionPlan, type SessionType, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
-import { getSkillsNeedingReview } from '../core/curriculum/SkillTree';
+import { getSkillsNeedingReview, getSkillById } from '../core/curriculum/SkillTree';
 import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
 import { midiToNoteName } from '../core/music/MusicTheory';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { useGemStore } from '../stores/gemStore';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { SalsaCoach } from '../components/Mascot/SalsaCoach';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Section colors
 const SECTION_COLORS = {
-  warmUp: { accent: '#FF9800', bg: 'rgba(255, 152, 0, 0.08)', border: 'rgba(255, 152, 0, 0.2)' },
-  lesson: { accent: '#2196F3', bg: 'rgba(33, 150, 243, 0.08)', border: 'rgba(33, 150, 243, 0.2)' },
-  challenge: { accent: '#9C27B0', bg: 'rgba(156, 39, 176, 0.08)', border: 'rgba(156, 39, 176, 0.2)' },
+  warmUp: { accent: COLORS.warning, bg: glowColor(COLORS.warning, 0.08), border: glowColor(COLORS.warning, 0.2) },
+  lesson: { accent: COLORS.info, bg: glowColor(COLORS.info, 0.08), border: glowColor(COLORS.info, 0.2) },
+  challenge: { accent: COLORS.primaryLight, bg: glowColor(COLORS.primaryLight, 0.08), border: glowColor(COLORS.primaryLight, 0.2) },
 } as const;
 
 const SECTION_ICONS = {
@@ -117,9 +120,9 @@ export function DailySessionScreen() {
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
-      if (ref.source === 'ai') {
+      if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
         navigation.navigate('Exercise', {
-          exerciseId: 'ai-mode',
+          exerciseId: ref.fallbackExerciseId ?? 'ai-mode',
           aiMode: true,
           skillId: ref.skillNodeId,
         });
@@ -163,6 +166,11 @@ export function DailySessionScreen() {
           </View>
         </View>
 
+        {/* Salsa coach motivation */}
+        <View style={styles.salsaRow}>
+          <SalsaCoach mood="teaching" size="small" showCatchphrase />
+        </View>
+
         {/* Skill Progress Card */}
         <View style={styles.skillProgressCard}>
           <View style={styles.skillProgressRow}>
@@ -172,14 +180,11 @@ export function DailySessionScreen() {
               {nextSkill ? ` \u2022 Next: ${nextSkill.name}` : ' \u2022 All mastered!'}
             </Text>
           </View>
-          <View style={styles.skillProgressBarTrack}>
-            <View
-              style={[
-                styles.skillProgressBarFill,
-                { width: `${Math.round((masteredCount / totalSkills) * 100)}%` },
-              ]}
-            />
-          </View>
+          <AnimatedProgressBar
+            progress={masteredCount / totalSkills}
+            color={COLORS.primary}
+            height={6}
+          />
         </View>
 
         {/* New User Welcome Card */}
@@ -197,7 +202,7 @@ export function DailySessionScreen() {
               activeOpacity={0.7}
               testID="daily-session-assessment-cta"
             >
-              <MaterialCommunityIcons name="clipboard-check-outline" size={18} color="#FFFFFF" />
+              <MaterialCommunityIcons name="clipboard-check-outline" size={18} color={COLORS.textPrimary} />
               <Text style={styles.assessmentBtnText}>Quick Assessment</Text>
             </TouchableOpacity>
           </View>
@@ -260,16 +265,16 @@ export function DailySessionScreen() {
 // ============================================================================
 
 const SESSION_TYPE_CONFIG: Record<SessionType, { label: string; color: string; icon: 'school' | 'refresh' | 'lightning-bolt' | 'shuffle-variant' }> = {
-  'new-material': { label: 'New Material', color: '#4CAF50', icon: 'school' },
-  review: { label: 'Review Day', color: '#FF9800', icon: 'refresh' },
-  challenge: { label: 'Challenge Day', color: '#E91E63', icon: 'lightning-bolt' },
-  mixed: { label: 'Mixed', color: '#2196F3', icon: 'shuffle-variant' },
+  'new-material': { label: 'New Material', color: COLORS.success, icon: 'school' },
+  review: { label: 'Review Day', color: COLORS.warning, icon: 'refresh' },
+  challenge: { label: 'Challenge Day', color: COLORS.primaryLight, icon: 'lightning-bolt' },
+  mixed: { label: 'Mixed', color: COLORS.info, icon: 'shuffle-variant' },
 };
 
 function SessionTypeBadge({ type }: { type: SessionType }) {
   const config = SESSION_TYPE_CONFIG[type];
   return (
-    <View style={[styles.sessionTypeBadge, { backgroundColor: `${config.color}18` }]}>
+    <View style={[styles.sessionTypeBadge, { backgroundColor: glowColor(config.color, 0.1) }]}>
       <MaterialCommunityIcons name={config.icon} size={14} color={config.color} />
       <Text style={[styles.sessionTypeBadgeText, { color: config.color }]}>{config.label}</Text>
     </View>
@@ -330,48 +335,50 @@ function SessionExerciseCard({
   onPress: () => void;
 }) {
   const exercise = exerciseRef.source === 'static' ? getExercise(exerciseRef.exerciseId) : null;
-  const title = exercise?.metadata.title ?? (exerciseRef.source === 'ai' ? 'AI-Generated Exercise' : exerciseRef.exerciseId);
+  const isAI = exerciseRef.source === 'ai' || exerciseRef.source === 'ai-with-fallback';
+  const skillNode = isAI ? getSkillById(exerciseRef.skillNodeId) : null;
+  const title = exercise?.metadata.title ?? skillNode?.name ?? (isAI ? 'AI-Generated Exercise' : exerciseRef.exerciseId);
   const difficulty = exercise?.metadata.difficulty ?? 1;
 
   return (
-    <TouchableOpacity
-      style={[styles.exerciseCard, { borderColor: colors.border, backgroundColor: colors.bg }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.exerciseCardContent}>
-        <View style={styles.exerciseInfo}>
-          <Text style={styles.exerciseTitle}>{title}</Text>
-          <Text style={styles.exerciseReason}>{humanizeReasoning(exerciseRef.reason)}</Text>
-          <View style={styles.exerciseMeta}>
-            {exerciseRef.source === 'ai' && (
-              <View style={styles.aiTag}>
-                <MaterialCommunityIcons name="robot" size={12} color={COLORS.info} />
-                <Text style={styles.aiTagText}>AI</Text>
+    <PressableScale haptic onPress={onPress}>
+      <View
+        style={[styles.exerciseCard, { borderColor: colors.border, backgroundColor: colors.bg }]}
+      >
+        <View style={styles.exerciseCardContent}>
+          <View style={styles.exerciseInfo}>
+            <Text style={styles.exerciseTitle}>{title}</Text>
+            <Text style={styles.exerciseReason}>{humanizeReasoning(exerciseRef.reason)}</Text>
+            <View style={styles.exerciseMeta}>
+              {isAI && (
+                <View style={styles.aiTag}>
+                  <MaterialCommunityIcons name="robot" size={12} color={COLORS.info} />
+                  <Text style={styles.aiTagText}>AI</Text>
+                </View>
+              )}
+              <View style={styles.difficultyDots}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.difficultyDot,
+                      i < difficulty && { backgroundColor: colors.accent },
+                    ]}
+                  />
+                ))}
               </View>
-            )}
-            <View style={styles.difficultyDots}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.difficultyDot,
-                    i < difficulty && { backgroundColor: colors.accent },
-                  ]}
-                />
-              ))}
-            </View>
-            <View style={styles.gemRewardHint}>
-              <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemGold} />
-              <Text style={styles.gemRewardHintText}>5 for 90%+, 15 for perfect</Text>
+              <View style={styles.gemRewardHint}>
+                <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemGold} />
+                <Text style={styles.gemRewardHintText}>5 for 90%+, 15 for perfect</Text>
+              </View>
             </View>
           </View>
-        </View>
-        <View style={[styles.playIconBg, { backgroundColor: colors.accent }]}>
-          <MaterialCommunityIcons name="play" size={20} color="#FFFFFF" />
+          <View style={[styles.playIconBg, { backgroundColor: colors.accent }]}>
+            <MaterialCommunityIcons name="play" size={20} color={COLORS.textPrimary} />
+          </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -386,6 +393,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: SPACING.lg,
+  },
+  salsaRow: {
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   // Header
   header: {
@@ -410,21 +421,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   sessionTypeBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '600' as const,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...TYPOGRAPHY.display.sm,
     color: COLORS.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
   // Skill Progress
   skillProgressCard: {
+    ...SHADOWS.sm,
     marginHorizontal: SPACING.md,
     padding: SPACING.md,
     backgroundColor: COLORS.surface,
@@ -440,45 +451,34 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   skillProgressText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
     color: COLORS.textPrimary,
   },
-  skillProgressBarTrack: {
-    height: 6,
-    backgroundColor: COLORS.cardBorder,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  skillProgressBarFill: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
-    borderRadius: 3,
-  },
+  // skillProgressBar uses AnimatedProgressBar component
   // Welcome card
   welcomeCard: {
     marginHorizontal: SPACING.md,
     padding: SPACING.lg,
-    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    backgroundColor: glowColor(COLORS.starGold, 0.06),
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.15)',
+    borderColor: glowColor(COLORS.starGold, 0.15),
     marginBottom: SPACING.lg,
     alignItems: 'center',
   },
   welcomeTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.md,
+    fontWeight: '700' as const,
     color: COLORS.textPrimary,
     marginTop: SPACING.sm,
     textAlign: 'center',
   },
   welcomeBody: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: SPACING.sm,
-    lineHeight: 20,
   },
   assessmentBtn: {
     flexDirection: 'row',
@@ -491,9 +491,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   assessmentBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.button.lg,
+    fontWeight: '700' as const,
+    color: COLORS.textPrimary,
   },
   // Sections
   section: {
@@ -514,11 +514,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionLabel: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '700' as const,
   },
   // Exercise Cards
   exerciseCard: {
+    ...SHADOWS.sm,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     marginBottom: SPACING.sm,
@@ -533,12 +534,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exerciseTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.heading.sm,
     color: COLORS.textPrimary,
   },
   exerciseReason: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
@@ -552,14 +552,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(33, 150, 243, 0.15)',
+    backgroundColor: glowColor(COLORS.info, 0.15),
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   aiTagText: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '600' as const,
     color: COLORS.info,
   },
   difficultyDots: {
@@ -597,12 +597,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   reasoningTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
     color: COLORS.textSecondary,
   },
   reasoningText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     color: COLORS.textMuted,
     marginBottom: 4,
     paddingLeft: SPACING.lg + SPACING.sm,
@@ -621,8 +621,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   browseLessonsText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
     color: COLORS.textSecondary,
   },
   // Gem counter
@@ -630,14 +630,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
   },
   gemCounterText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
     color: COLORS.gemGold,
   },
   // Gem reward hint on exercise cards
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   gemRewardHintText: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     color: COLORS.textMuted,
   },
 });

@@ -20,3 +20,5 @@ export type { ScoreRingProps } from './ScoreRing';
 
 export { PressableScale } from './PressableScale';
 export type { PressableScaleProps } from './PressableScale';
+
+export { AnimatedGradientBackground } from './AnimatedGradientBackground';

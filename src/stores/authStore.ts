@@ -28,8 +28,15 @@ import {
 } from 'firebase/auth';
 import type { User, AuthCredential } from 'firebase/auth';
 import { auth } from '../services/firebase/config';
-import { createUserProfile, deleteUserData } from '../services/firebase/firestore';
-import { PersistenceManager } from './persistence';
+import { createUserProfile, getUserProfile, updateUserProfile, deleteUserData } from '../services/firebase/firestore';
+import { PersistenceManager, cancelAllPendingSaves } from './persistence';
+import { useProgressStore } from './progressStore';
+import { useSettingsStore } from './settingsStore';
+import { useExerciseStore } from './exerciseStore';
+import { useCatEvolutionStore } from './catEvolutionStore';
+import { useGemStore } from './gemStore';
+import { useAchievementStore } from './achievementStore';
+import { useLearnerProfileStore } from './learnerProfileStore';
 
 // ============================================================================
 // Types
@@ -62,6 +69,29 @@ export interface AuthState {
 // ============================================================================
 // Error Mapping
 // ============================================================================
+
+/** Reset all in-memory stores to their initial state.
+ * Called on sign-out and account deletion to ensure no stale data survives.
+ * Each reset is wrapped in try-catch so one store's failure doesn't block the rest. */
+function resetAllStores(): void {
+  const stores = [
+    { name: 'progress', reset: () => useProgressStore.getState().reset() },
+    { name: 'settings', reset: () => useSettingsStore.getState().reset() },
+    { name: 'exercise', reset: () => useExerciseStore.getState().reset() },
+    { name: 'catEvolution', reset: () => useCatEvolutionStore.getState().reset() },
+    { name: 'gems', reset: () => useGemStore.getState().reset() },
+    { name: 'achievements', reset: () => useAchievementStore.getState().reset() },
+    { name: 'learnerProfile', reset: () => useLearnerProfileStore.getState().reset() },
+  ];
+
+  for (const { name, reset } of stores) {
+    try {
+      reset();
+    } catch (err) {
+      console.warn(`[Auth] Failed to reset ${name} store:`, err);
+    }
+  }
+}
 
 function handleAuthError(error: unknown): string {
   const firebaseError = error as { code?: string; message?: string };
@@ -294,6 +324,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const credential = GoogleAuthProvider.credential(idToken);
       const result = await signInWithCredential(auth, credential);
 
+      // Preserve custom display name: if user had a custom name in Firestore,
+      // restore it (Google sign-in overwrites Auth displayName with Google's name)
+      try {
+        const profile = await getUserProfile(result.user.uid);
+        if (profile?.displayName && profile.displayName !== result.user.displayName) {
+          await updateProfile(result.user, { displayName: profile.displayName });
+        } else if (!profile) {
+          // First-time Google sign-in: create Firestore profile
+          await createUserProfile(result.user.uid, {
+            email: result.user.email ?? '',
+            displayName: result.user.displayName ?? 'Learner',
+          });
+        }
+      } catch {
+        // Non-critical: display name restoration failure doesn't block sign-in
+      }
+
       set({
         user: result.user,
         isAuthenticated: true,
@@ -425,9 +472,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ isLoading: true, error: null });
 
+    let signOutSucceeded = false;
     try {
       await firebaseSignOut(auth);
+      signOutSucceeded = true;
+
+      cancelAllPendingSaves();
       await PersistenceManager.clearAll();
+      resetAllStores();
 
       set({
         user: null,
@@ -437,16 +489,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null,
       });
     } catch (error) {
-      set({
-        isLoading: false,
-        error: handleAuthError(error),
-      });
+      if (signOutSucceeded) {
+        // Firebase sign-out worked but cleanup threw — force-clear state.
+        // Leaving a stale user reference after sign-out is worse than the cleanup error.
+        console.warn('[Auth] Post-signout cleanup failed, forcing state clear:', error);
+        cancelAllPendingSaves();
+        await PersistenceManager.clearAll().catch(() => {});
+        resetAllStores();
+        set({
+          user: null,
+          isAuthenticated: false,
+          isAnonymous: false,
+          isLoading: false,
+          error: null,
+        });
+      } else {
+        set({
+          isLoading: false,
+          error: handleAuthError(error),
+        });
+      }
     }
   },
 
   deleteAccount: async (): Promise<string | void> => {
     set({ isLoading: true, error: null });
 
+    let authUserDeleted = false;
     try {
       const { user } = get();
       if (!user) {
@@ -454,9 +523,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
-      await deleteUserData(user.uid);
+      // 1. Delete Firestore data FIRST (while still authenticated).
+      //    Security rules require a valid auth token, so this must happen
+      //    before deleteUser() invalidates the token.
+      try {
+        await deleteUserData(user.uid);
+      } catch (err) {
+        console.warn('[Auth] Firestore cleanup failed (non-blocking):', err);
+      }
+
+      // 2. Delete the Firebase Auth user.
+      //    If this throws auth/requires-recent-login, we return the sentinel.
       await deleteUser(user);
+      authUserDeleted = true;
+
+      // 3. Local cleanup
+      cancelAllPendingSaves();
       await PersistenceManager.clearAll();
+      resetAllStores();
 
       set({
         user: null,
@@ -471,6 +555,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isLoading: false, error: null });
         return 'REQUIRES_REAUTH';
       }
+
+      if (authUserDeleted) {
+        // Auth user is gone but cleanup threw — force-clear state
+        console.warn('[Auth] Post-delete cleanup failed, forcing state clear:', error);
+        cancelAllPendingSaves();
+        await PersistenceManager.clearAll().catch(() => {});
+        resetAllStores();
+        set({
+          user: null,
+          isAuthenticated: false,
+          isAnonymous: false,
+          isLoading: false,
+          error: null,
+        });
+        return;
+      }
+
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -481,6 +582,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   reauthenticateAndDelete: async (credential: AuthCredential) => {
     set({ isLoading: true, error: null });
 
+    let authUserDeleted = false;
     try {
       const { user } = get();
       if (!user) {
@@ -489,9 +591,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       await reauthenticateWithCredential(user, credential);
-      await deleteUserData(user.uid);
+
+      // Delete Firestore data first (while re-authenticated), then auth user
+      try {
+        await deleteUserData(user.uid);
+      } catch (err) {
+        console.warn('[Auth] Firestore cleanup failed (non-blocking):', err);
+      }
+
       await deleteUser(user);
+      authUserDeleted = true;
+
+      cancelAllPendingSaves();
       await PersistenceManager.clearAll();
+      resetAllStores();
 
       set({
         user: null,
@@ -501,6 +614,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null,
       });
     } catch (error) {
+      if (authUserDeleted) {
+        console.warn('[Auth] Post-delete cleanup failed, forcing state clear:', error);
+        cancelAllPendingSaves();
+        await PersistenceManager.clearAll().catch(() => {});
+        resetAllStores();
+        set({
+          user: null,
+          isAuthenticated: false,
+          isAnonymous: false,
+          isLoading: false,
+          error: null,
+        });
+        return;
+      }
+
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -533,6 +661,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       await updateProfile(user, { displayName: name });
+
+      // Persist to Firestore so it survives Google sign-in re-auth
+      try {
+        await updateUserProfile(user.uid, { displayName: name });
+      } catch { /* Firestore sync is best-effort */ }
 
       // Sync to settings store so ProfileScreen shows updated name
       try {

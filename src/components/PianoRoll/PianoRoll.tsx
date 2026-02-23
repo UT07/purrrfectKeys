@@ -63,7 +63,7 @@ const COLORS = {
   markerGlow: 'rgba(255, 23, 68, 0.2)',
   pressLine: '#FF1744',
   releaseLine: '#40C4FF',
-  background: '#1A1A2E',
+  background: '#141414',
   beatLine: 'rgba(255, 255, 255, 0.08)',
   beatLineAccent: 'rgba(255, 255, 255, 0.15)',
 };

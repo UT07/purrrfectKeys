@@ -15,6 +15,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS, glowColor } from '../theme/tokens';
 
 interface StreakFlameProps {
   streak: number;
@@ -27,18 +28,18 @@ function getFlameConfig(streak: number, sizeOverride?: 'small' | 'medium' | 'lar
     const sizes = { small: 24, medium: 36, large: 48 };
     return {
       iconSize: sizes[sizeOverride],
-      color: streak >= 30 ? '#FF4500' : streak >= 7 ? '#FF6B00' : '#FF9800',
-      glowColor: streak >= 30 ? 'rgba(255, 69, 0, 0.4)' : streak >= 7 ? 'rgba(255, 107, 0, 0.3)' : 'rgba(255, 152, 0, 0.2)',
+      color: streak >= 30 ? COLORS.streakFlameHot : streak >= 7 ? COLORS.streakFlameMedium : COLORS.streakFlameWarm,
+      glowColor: streak >= 30 ? glowColor(COLORS.streakFlameHot, 0.4) : streak >= 7 ? glowColor(COLORS.streakFlameMedium, 0.3) : glowColor(COLORS.streakFlameWarm, 0.2),
       intensity: streak >= 30 ? 1.15 : streak >= 7 ? 1.1 : 1.05,
     };
   }
   if (streak >= 30) {
-    return { iconSize: 48, color: '#FF4500', glowColor: 'rgba(255, 69, 0, 0.4)', intensity: 1.15 };
+    return { iconSize: 48, color: COLORS.streakFlameHot, glowColor: glowColor(COLORS.streakFlameHot, 0.4), intensity: 1.15 };
   }
   if (streak >= 7) {
-    return { iconSize: 36, color: '#FF6B00', glowColor: 'rgba(255, 107, 0, 0.3)', intensity: 1.1 };
+    return { iconSize: 36, color: COLORS.streakFlameMedium, glowColor: glowColor(COLORS.streakFlameMedium, 0.3), intensity: 1.1 };
   }
-  return { iconSize: 24, color: '#FF9800', glowColor: 'rgba(255, 152, 0, 0.2)', intensity: 1.05 };
+  return { iconSize: 24, color: COLORS.streakFlameWarm, glowColor: glowColor(COLORS.streakFlameWarm, 0.2), intensity: 1.05 };
 }
 
 export function StreakFlame({ streak, showCount = true, size }: StreakFlameProps): React.ReactElement | null {

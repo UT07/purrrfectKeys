@@ -13,6 +13,7 @@ interface ExerciseTemplate {
   tempo: number;
   keySignature: string;
   hand: 'left' | 'right' | 'both';
+  skillId?: string;
   buildNotes: () => NoteEvent[];
 }
 
@@ -138,6 +139,67 @@ const templates: ExerciseTemplate[] = [
       qn(69, 3, 'right'), qn(52, 4, 'left'), qn(71, 5, 'right'),
     ],
   },
+
+  // ── Skill-targeted (no difficulty tier, used by getTemplateForSkill) ──
+  {
+    id: 'tmpl-skill-middle-c', title: 'Middle C Repeat', difficulty: 1,
+    baseNotes: [60], tempo: 50, keySignature: 'C', hand: 'right',
+    skillId: 'find-middle-c',
+    buildNotes: () => [qn(60, 0), qn(60, 1), qn(60, 2), qn(60, 3), hn(60, 4)],
+  },
+  {
+    id: 'tmpl-skill-keyboard-geo', title: 'Keyboard Explorer', difficulty: 1,
+    baseNotes: [60, 62, 64], tempo: 50, keySignature: 'C', hand: 'right',
+    skillId: 'keyboard-geography',
+    buildNotes: () => [qn(60, 0), qn(62, 1), qn(64, 2), qn(62, 3), qn(60, 4)],
+  },
+  {
+    id: 'tmpl-skill-white-keys', title: 'White Key Walk', difficulty: 1,
+    baseNotes: [60, 62, 64, 65, 67, 69, 71, 72], tempo: 50, keySignature: 'C', hand: 'right',
+    skillId: 'white-keys',
+    buildNotes: () => [qn(60, 0), qn(62, 1), qn(64, 2), qn(65, 3), qn(67, 4), qn(69, 5), qn(71, 6), qn(72, 7)],
+  },
+  {
+    id: 'tmpl-skill-rh-cde', title: 'C-D-E Steps', difficulty: 1,
+    baseNotes: [60, 62, 64], tempo: 55, keySignature: 'C', hand: 'right',
+    skillId: 'rh-cde',
+    buildNotes: () => [qn(60, 0), qn(62, 1), qn(64, 2), qn(60, 3), qn(62, 4), qn(64, 5), hn(64, 6)],
+  },
+  {
+    id: 'tmpl-skill-melodies', title: 'Simple Melody', difficulty: 1,
+    baseNotes: [60, 62, 64, 65, 67], tempo: 55, keySignature: 'C', hand: 'right',
+    skillId: 'simple-melodies',
+    buildNotes: () => [qn(64, 0), qn(64, 1), qn(65, 2), qn(67, 3), qn(65, 4), qn(64, 5), qn(62, 6), hn(60, 7)],
+  },
+  {
+    id: 'tmpl-skill-c-review', title: 'C Position Review', difficulty: 2,
+    baseNotes: [60, 62, 64, 65, 67], tempo: 65, keySignature: 'C', hand: 'right',
+    skillId: 'c-position-review',
+    buildNotes: () => [
+      qn(60, 0), qn(62, 1), qn(64, 2), qn(65, 3),
+      qn(67, 4), qn(65, 5), qn(64, 6), qn(62, 7),
+      hn(60, 8),
+    ],
+  },
+  {
+    id: 'tmpl-skill-lh-descending', title: 'Left Hand Descend', difficulty: 2,
+    baseNotes: [60, 59, 57, 55, 53, 52, 50, 48], tempo: 60, keySignature: 'C', hand: 'left',
+    skillId: 'lh-scale-descending',
+    buildNotes: () => [
+      qn(60, 0, 'left'), qn(59, 1, 'left'), qn(57, 2, 'left'), qn(55, 3, 'left'),
+      qn(53, 4, 'left'), qn(52, 5, 'left'), qn(50, 6, 'left'), hn(48, 7, 'left'),
+    ],
+  },
+  {
+    id: 'tmpl-skill-lh-broken', title: 'Left Hand Broken Chord', difficulty: 2,
+    baseNotes: [48, 53, 57], tempo: 65, keySignature: 'C', hand: 'left',
+    skillId: 'lh-broken-chords',
+    buildNotes: () => [
+      qn(48, 0, 'left'), qn(53, 1, 'left'), qn(57, 2, 'left'),
+      qn(53, 3, 'left'), qn(48, 4, 'left'), qn(53, 5, 'left'),
+      hn(57, 6, 'left'),
+    ],
+  },
 ];
 
 // --- Note swapping ---
@@ -221,7 +283,8 @@ export function getTemplateExercise(
   difficulty: 1 | 2 | 3,
   weakNotes: number[] = [],
 ): Exercise {
-  const tier = templates.filter((t) => t.difficulty === difficulty);
+  // Filter to generic templates (no skillId) to keep tempo ranges predictable
+  const tier = templates.filter((t) => t.difficulty === difficulty && !t.skillId);
 
   // Rank by overlap with weak notes (descending)
   const ranked = tier
@@ -242,6 +305,36 @@ export function getTemplateExercise(
     chosen = tier[Math.floor(Math.random() * tier.length)];
   }
 
+  const rawNotes = chosen.buildNotes();
+  const swappedNotes = swapNotes(rawNotes, chosen.baseNotes, weakNotes);
+  return templateToExercise(chosen, swappedNotes);
+}
+
+/**
+ * Get a template exercise targeting a specific skill.
+ * Falls back to `getTemplateExercise()` if no skill-specific template exists.
+ */
+export function getTemplateForSkill(
+  skillId: string,
+  weakNotes: number[] = [],
+): Exercise {
+  // Find templates matching this skill
+  const matches = templates.filter((t) => t.skillId === skillId);
+
+  if (matches.length === 0) {
+    // No skill-specific template — fall back to difficulty-based selection
+    return getTemplateExercise(1, weakNotes);
+  }
+
+  // Pick the best match based on weak note overlap
+  const ranked = matches
+    .map((t) => ({
+      template: t,
+      overlap: t.baseNotes.filter((n) => weakNotes.includes(n)).length,
+    }))
+    .sort((a, b) => b.overlap - a.overlap);
+
+  const chosen = ranked[0].template;
   const rawNotes = chosen.buildNotes();
   const swappedNotes = swapNotes(rawNotes, chosen.baseNotes, weakNotes);
   return templateToExercise(chosen, swappedNotes);

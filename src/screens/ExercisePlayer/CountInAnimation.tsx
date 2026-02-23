@@ -12,6 +12,7 @@ import {
   Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { COLORS } from '../../theme/tokens';
 
 export interface CountInAnimationProps {
   countIn: number; // Number of beats in count-in
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -138,14 +139,14 @@ const styles = StyleSheet.create({
   beatNumber: {
     fontSize: 56,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
   coachingTip: {
     position: 'absolute',
     bottom: 140,
     fontSize: 15,
     fontWeight: '500',
-    color: '#CCCCCC',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 32,
     maxWidth: 320,
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     bottom: 100,
     fontSize: 24,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
 });
 

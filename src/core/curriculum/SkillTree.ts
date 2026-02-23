@@ -44,6 +44,161 @@ export interface SkillNode {
   requiredCompletions: number;   // default 1, harder skills need 3-5
 }
 
+/**
+ * Hints passed to the AI exercise generator so it produces skill-appropriate content.
+ * Each skill node has an entry in GENERATION_HINTS keyed by skill ID.
+ */
+export interface GenerationHints {
+  keySignature?: string;
+  targetMidi?: number[];
+  hand?: 'left' | 'right' | 'both';
+  exerciseTypes?: ('scale' | 'melody' | 'chord' | 'rhythm' | 'arpeggio')[];
+  minDifficulty?: number;
+  maxDifficulty?: number;
+  promptHint: string;  // Goes directly into the Gemini prompt
+}
+
+/** Look up generation hints for a skill node. */
+export function getGenerationHints(skillId: string): GenerationHints | null {
+  return GENERATION_HINTS[skillId] ?? null;
+}
+
+// ============================================================================
+// Generation Hints (per skill node — drives AI exercise content)
+// ============================================================================
+
+const GENERATION_HINTS: Record<string, GenerationHints> = {
+  // ── Tier 1 ──
+  'find-middle-c': { targetMidi: [60], hand: 'right', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 1, promptHint: 'Play Middle C repeatedly with right hand thumb, 4-8 notes, very slow tempo 50-55 BPM' },
+  'keyboard-geography': { targetMidi: [60, 62, 64, 65, 67], hand: 'right', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 1, promptHint: 'Navigate white keys C4-G4 in simple patterns, quarter notes, tempo 50-55' },
+  'white-keys': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', exerciseTypes: ['scale', 'melody'], minDifficulty: 1, maxDifficulty: 1, promptHint: 'Play all white keys in one octave C4-C5, ascending and descending, tempo 50-55' },
+
+  // ── Tier 2 ──
+  'rh-cde': { targetMidi: [60, 62, 64], hand: 'right', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Ascending and descending C-D-E patterns, quarter notes, tempo 55-65' },
+  'rh-cdefg': { targetMidi: [60, 62, 64, 65, 67], hand: 'right', keySignature: 'C major', exerciseTypes: ['melody', 'scale'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Five-finger C position (C-G) patterns and simple melodies, tempo 55-65' },
+  'c-major-octave': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Full C major scale ascending one octave, quarter notes, tempo 55-65' },
+  'simple-melodies': { targetMidi: [60, 62, 64, 65, 67], hand: 'right', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Simple recognizable melody using C-D-E-F-G, quarter and half notes, tempo 60-70' },
+  'eighth-notes': { targetMidi: [60, 62, 64, 65, 67], hand: 'right', keySignature: 'C major', exerciseTypes: ['rhythm'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Eighth-note rhythms on C-D-E-F-G, mix of quarters and eighths, tempo 60-70' },
+  'broken-chords-rh': { targetMidi: [60, 64, 67], hand: 'right', keySignature: 'C major', exerciseTypes: ['chord'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Broken C major chord (C-E-G) ascending/descending, quarter notes, tempo 55-65' },
+  'c-position-review': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', exerciseTypes: ['melody', 'scale'], minDifficulty: 2, maxDifficulty: 2, promptHint: 'Review exercise combining scale passages and melodic patterns in C, tempo 65-75' },
+
+  // ── Tier 3 ──
+  'lh-c-position': { targetMidi: [48, 50, 52, 53, 55], hand: 'left', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Left hand C position (C3-G3) simple patterns, quarter notes, tempo 50-60' },
+  'lh-scale-descending': { targetMidi: [48, 50, 52, 53, 55, 57, 59, 60], hand: 'left', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Descending C major scale with left hand from C4 to C3, tempo 50-60' },
+  'bass-notes': { targetMidi: [36, 38, 40, 41, 43, 45, 47, 48], hand: 'left', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Bass register notes C2-C3 with left hand, simple patterns, tempo 50-55' },
+  'broken-chords-lh': { targetMidi: [48, 52, 55, 53, 57, 60], hand: 'left', keySignature: 'C major', exerciseTypes: ['chord'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Broken F chord (F-A-C) and C chord with left hand, tempo 55-65' },
+  'steady-bass': { targetMidi: [48, 52, 55], hand: 'left', keySignature: 'C major', exerciseTypes: ['rhythm'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Steady bass rhythm pattern with quarter notes on C3, E3, G3, tempo 60-70' },
+
+  // ── Tier 4 ──
+  'hands-together-basic': { targetMidi: [48, 52, 55, 60, 62, 64], hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Simple melody in right hand (C-D-E) with bass notes in left (C3, G3), tempo 55-65' },
+  'hands-melody-full': { targetMidi: [48, 52, 55, 60, 62, 64, 65, 67], hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Full two-hand melody like Mary Had a Little Lamb, simple bass accompaniment, tempo 60-70' },
+  'hand-independence-drill': { targetMidi: [48, 50, 52, 60, 62, 64], hand: 'both', keySignature: 'C major', exerciseTypes: ['rhythm'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Different rhythms in each hand: right hand eighths while left plays quarters, tempo 60-70' },
+  'blocked-chords': { targetMidi: [48, 52, 55, 53, 57, 60], hand: 'both', keySignature: 'C major', exerciseTypes: ['chord'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Blocked C and F major chords, both hands, half notes, tempo 55-65' },
+
+  // ── Tier 5 ──
+  'two-hand-songs': { targetMidi: [48, 52, 55, 60, 62, 64, 65, 67], hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Arranged song with melody in right hand and simple chord accompaniment in left, tempo 65-75' },
+  'both-hands-review': { targetMidi: [48, 52, 55, 60, 62, 64, 65, 67], hand: 'both', keySignature: 'C major', exerciseTypes: ['melody', 'chord'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Comprehensive both-hands review combining melody, chords, and rhythm, tempo 65-75' },
+  'scale-technique': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'C major scale with proper thumb-under technique, 2 octaves, tempo 65-80' },
+  'parallel-scales': { targetMidi: [48, 50, 52, 53, 55, 60, 62, 64, 65, 67], hand: 'both', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'C major scale in parallel motion both hands, tempo 65-80' },
+
+  // ── Tier 6 ──
+  'scale-speed': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Fast C major scale with eighth notes, focus on evenness and speed, tempo 80-100' },
+  'scale-review': { targetMidi: [48, 50, 52, 60, 62, 64, 65, 67, 69, 71, 72], hand: 'both', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Comprehensive scale review: ascending/descending, both hands, varied rhythms, tempo 75-90' },
+  'beginner-songs': { hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Well-known beginner song arrangement (Jingle Bells style) with both hands, tempo 70-85' },
+  'intermediate-songs': { hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Intermediate song arrangement with melody, chords, and some passing tones, tempo 75-90' },
+
+  // ── Tier 7 ──
+  'find-black-keys': { targetMidi: [61, 63, 66, 68, 70], hand: 'right', exerciseTypes: ['melody'], minDifficulty: 1, maxDifficulty: 2, promptHint: 'Locate and play groups of 2 and 3 black keys, simple patterns, tempo 50-60' },
+  'sharp-notes-rh': { targetMidi: [61, 63, 66, 68, 70], hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Play F#, C#, G# in melodic patterns with right hand, tempo 60-70' },
+  'flat-notes-lh': { targetMidi: [46, 49, 51, 54, 56], hand: 'left', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Play Bb, Eb with left hand in simple patterns, tempo 55-65' },
+  'chromatic-scale': { targetMidi: [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72], hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Chromatic scale one octave C4-C5 ascending and descending, tempo 60-70' },
+  'half-steps-whole-steps': { targetMidi: [60, 61, 62, 64], hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 2, promptHint: 'Patterns alternating half steps and whole steps to develop interval awareness, tempo 55-65' },
+  'black-key-melodies': { targetMidi: [61, 63, 66, 68, 70], hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Pentatonic-style melody using only black keys, tempo 60-75' },
+
+  // ── Tier 8 ──
+  'g-major-scale-rh': { keySignature: 'G major', targetMidi: [67, 69, 71, 72, 74, 76, 78, 79], hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'G major scale right hand with F#, one octave, tempo 65-80' },
+  'g-major-scale-lh': { keySignature: 'G major', targetMidi: [55, 57, 59, 60, 62, 64, 66, 67], hand: 'left', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'G major scale left hand, one octave, tempo 60-75' },
+  'g-major-hands': { keySignature: 'G major', hand: 'both', exerciseTypes: ['scale'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'G major scale both hands in parallel, tempo 65-80' },
+  'g-major-melodies': { keySignature: 'G major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Simple melody in G major with F# accidental, tempo 65-80' },
+  'f-major-scale-rh': { keySignature: 'F major', targetMidi: [65, 67, 69, 70, 72, 74, 76, 77], hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'F major scale right hand with Bb, one octave, tempo 65-80' },
+  'f-major-scale-lh': { keySignature: 'F major', hand: 'left', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'F major scale left hand, one octave, tempo 60-75' },
+  'f-major-hands': { keySignature: 'F major', hand: 'both', exerciseTypes: ['scale'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'F major scale both hands together, tempo 65-80' },
+  'key-signature-reading': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Melody that modulates between C, G, and F major to practice key signature reading, tempo 65-75' },
+
+  // ── Tier 9 ──
+  'a-minor-natural': { keySignature: 'A minor', targetMidi: [57, 59, 60, 62, 64, 65, 67, 69], hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'A natural minor scale (all white keys), one octave, tempo 60-75' },
+  'a-minor-melodies': { keySignature: 'A minor', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Melody in A minor with expressive phrasing, tempo 65-75' },
+  'd-minor-scale': { keySignature: 'D minor', hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'D natural minor scale with Bb, one octave, tempo 60-75' },
+  'd-minor-melodies': { keySignature: 'D minor', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Melody in D minor, quarter and eighth notes, tempo 65-75' },
+  'e-minor-scale': { keySignature: 'E minor', hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'E natural minor scale with F#, one octave, tempo 60-75' },
+  'minor-vs-major': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 2, promptHint: 'Exercise comparing C major and A minor phrases side by side, tempo 60-70' },
+  'harmonic-minor': { keySignature: 'A minor', targetMidi: [57, 59, 60, 62, 64, 65, 68, 69], hand: 'right', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'A harmonic minor scale with raised G#, one octave, tempo 60-75' },
+  'minor-songs': { keySignature: 'A minor', hand: 'both', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Song in a minor key with simple left hand accompaniment, tempo 65-80' },
+
+  // ── Tier 10 ──
+  'major-triads-root': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'C, F, G root position major triads, blocked and broken, tempo 60-75' },
+  'minor-triads': { keySignature: 'A minor', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Am, Dm, Em minor triads, blocked and broken, tempo 60-75' },
+  'chord-inversions-intro': { keySignature: 'C major', hand: 'right', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'First and second inversions of C, F, G triads, tempo 55-70' },
+  'progression-i-iv-v': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'I-IV-V chord progression in C major (C-F-G), whole notes then half notes, tempo 60-75' },
+  'progression-i-vi-iv-v': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'I-vi-IV-V progression (C-Am-F-G) with smooth voice leading, tempo 65-80' },
+  'progression-i-v-vi-iv': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Axis of Awesome progression (C-G-Am-F) with bass in left hand, tempo 70-85' },
+  'bass-chord-pattern': { keySignature: 'C major', hand: 'left', exerciseTypes: ['chord', 'rhythm'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Left hand broken chord accompaniment (bass-chord-chord pattern), tempo 65-80' },
+  'alberti-bass': { keySignature: 'C major', hand: 'left', exerciseTypes: ['arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Alberti bass pattern C-G-E-G in eighth notes, tempo 70-85' },
+  'chord-songs': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Song with melody in right hand and chord accompaniment in left, tempo 70-85' },
+  'chord-transitions': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Smooth voice-leading transitions between inversions of C, F, G, Am, tempo 60-75' },
+
+  // ── Tier 11 ──
+  'dotted-quarter-notes': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Dotted quarter note rhythms (1.5 beats) mixed with eighths, tempo 65-80' },
+  'syncopation-intro': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Off-beat accents and syncopated rhythms, tempo 70-85' },
+  'triplet-rhythm': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Triplet eighth note groups mixed with regular eighths, tempo 65-80' },
+  '3-4-time': { keySignature: 'C major', hand: 'both', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Waltz-time melody in 3/4, quarter notes with left hand on beat 1, tempo 80-100' },
+  '6-8-time': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Compound meter 6/8, two groups of three eighth notes per bar, tempo 45-55 (dotted quarter)' },
+  'ties-across-barline': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Notes tied across bar lines creating held notes, tempo 65-80' },
+  'swing-rhythm': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Swing eighth notes (long-short feel) in a bluesy melody, tempo 80-100' },
+  'rhythm-reading': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Mixed rhythm patterns: quarters, eighths, dotted notes on simple melodies, tempo 70-85' },
+  'mixed-rhythms': { keySignature: 'C major', hand: 'both', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Combined rhythm types: syncopation, triplets, dotted notes in one exercise, tempo 75-90' },
+
+  // ── Tier 12 ──
+  'c-major-arpeggio': { keySignature: 'C major', hand: 'right', exerciseTypes: ['arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'C major arpeggio across 2 octaves, ascending and descending, tempo 65-85' },
+  'g-major-arpeggio': { keySignature: 'G major', hand: 'right', exerciseTypes: ['arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'G major arpeggio across 2 octaves, tempo 65-85' },
+  'minor-arpeggios': { keySignature: 'A minor', hand: 'right', exerciseTypes: ['arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Am and Dm arpeggios across 2 octaves, tempo 65-80' },
+  'arpeggio-patterns': { keySignature: 'C major', hand: 'right', exerciseTypes: ['arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Accompaniment arpeggio patterns (1-3-5-8 and variations), tempo 70-85' },
+  'broken-chord-patterns': { keySignature: 'C major', hand: 'left', exerciseTypes: ['arpeggio', 'chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Waltz bass and stride patterns in left hand, tempo 75-90' },
+  'hands-arpeggio': { keySignature: 'C major', hand: 'both', exerciseTypes: ['arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Arpeggios both hands in parallel motion across 2 octaves, tempo 65-85' },
+  'arpeggio-songs': { keySignature: 'C major', hand: 'both', exerciseTypes: ['arpeggio', 'melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Song using arpeggio patterns for accompaniment with melody on top, tempo 70-85' },
+
+  // ── Tier 13 ──
+  'dynamics-p-f': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Melody alternating between piano (soft) and forte (loud) sections, tempo 65-80' },
+  'crescendo-diminuendo': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody', 'scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Scale passage with crescendo up and diminuendo down, tempo 65-80' },
+  'staccato-technique': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Short detached staccato notes in a bouncy melody, tempo 70-85' },
+  'legato-technique': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Smooth connected legato melody requiring finger overlap, tempo 60-75' },
+  'accents-emphasis': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Melody with accented notes on specific beats, tempo 70-85' },
+  'pedal-intro': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord', 'melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Simple chord changes requiring sustain pedal for smooth transitions, tempo 60-75' },
+  'phrasing': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Musical phrase with breathing points, dynamics shaping, and direction, tempo 65-80' },
+  'expressive-songs': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Expressive song with dynamic markings, legato phrases, and pedal, tempo 65-80' },
+
+  // ── Tier 14 ──
+  'd-major-scale': { keySignature: 'D major', hand: 'both', exerciseTypes: ['scale'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'D major scale with F# and C#, both hands, tempo 65-85' },
+  'bb-major-scale': { keySignature: 'Bb major', hand: 'both', exerciseTypes: ['scale'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Bb major scale with Bb and Eb, both hands, tempo 65-85' },
+  'relative-minor': { keySignature: 'A minor', hand: 'right', exerciseTypes: ['scale', 'melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Exercise switching between C major and its relative A minor, tempo 65-75' },
+  'sight-reading-c': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'New melody in C major for sight reading practice, simple rhythm, tempo 55-70' },
+  'sight-reading-g': { keySignature: 'G major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'New melody in G major for sight reading, remember F#, tempo 55-70' },
+  'sight-reading-mixed': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Sight reading exercise that switches between C, G, and F major sections, tempo 55-70' },
+  'interval-recognition': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Melodic intervals: 2nds, 3rds, 5ths, octaves in sequence, tempo 55-70' },
+  'key-fluency': { hand: 'both', exerciseTypes: ['scale', 'melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Quick key changes between D major, Bb major, and their relative minors, tempo 70-85' },
+
+  // ── Tier 15 ──
+  'performance-prep': { hand: 'both', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Complete piece to play through without stopping, mixed dynamics and rhythms, tempo 70-90' },
+  'rubato-intro': { hand: 'right', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Expressive melody with rubato markings — flexible timing within phrases, tempo 60-75' },
+  'intermediate-classical': { hand: 'both', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Classical-style piece (minuet or sonatina), both hands, with ornamentation, tempo 75-95' },
+  'intermediate-pop': { hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Pop song arrangement with melody, chord patterns, and pedal, tempo 75-95' },
+  'blues-scale': { keySignature: 'C major', hand: 'right', exerciseTypes: ['scale', 'melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'C blues scale (C-Eb-F-Gb-G-Bb) with swing feel, tempo 80-100' },
+  'full-piece-classical': { hand: 'both', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Complete classical piece performance with dynamics, phrasing, and pedal, tempo 75-100' },
+  'full-piece-pop': { hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Complete pop song with verse/chorus structure, chord patterns, tempo 80-100' },
+  'repertoire-building': { hand: 'both', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Mixed-style piece combining classical and pop elements, tempo 75-95' },
+  'year-one-mastery': { hand: 'both', exerciseTypes: ['melody', 'scale', 'chord', 'arpeggio'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Comprehensive review piece testing scales, chords, arpeggios, dynamics, and both hands, tempo 80-100' },
+};
+
 // ============================================================================
 // Skill Tree Definition
 // ============================================================================

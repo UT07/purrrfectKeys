@@ -16,6 +16,7 @@ import Animated, {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CATEGORY_COLORS } from '../../content/funFacts';
 import type { FunFact } from '../../content/funFacts';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../theme/tokens';
 
 export interface FunFactCardProps {
   fact: FunFact;
@@ -80,7 +81,7 @@ export function FunFactCard({
         <MaterialCommunityIcons
           name="lightbulb-on-outline"
           size={compact ? 14 : 16}
-          color="#FFD700"
+          color={COLORS.starGold}
         />
         <Text style={[styles.headerText, compact && styles.headerTextCompact]}>
           Did You Know?
@@ -115,15 +116,15 @@ FunFactCard.displayName = 'FunFactCard';
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
-    gap: 8,
+    borderColor: COLORS.cardBorder,
+    gap: SPACING.sm,
   },
   containerCompact: {
-    padding: 10,
+    padding: SPACING.sm,
     gap: 6,
   },
   header: {
@@ -132,20 +133,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '700',
-    color: '#FFD700',
+    color: COLORS.starGold,
   },
   headerTextCompact: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
   },
   factText: {
-    fontSize: 13,
-    color: '#E0E0E0',
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textSecondary,
     lineHeight: 19,
   },
   factTextCompact: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     lineHeight: 17,
   },
   footer: {
@@ -153,12 +154,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryChip: {
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: BORDER_RADIUS.full,
   },
   categoryText: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     fontWeight: '600',
   },
 });

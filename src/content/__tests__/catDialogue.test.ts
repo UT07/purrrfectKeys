@@ -9,7 +9,7 @@ describe('catDialogue', () => {
   it('returns messages for every cat × trigger combination', () => {
     const catIds = [
       'mini-meowww', 'jazzy', 'chonky-monke', 'luna',
-      'biscuit', 'vinyl', 'aria', 'tempo',
+      'biscuit', 'ballymakawww', 'aria', 'tempo',
     ];
     const triggers: DialogueTrigger[] = [
       'exercise_start', 'exercise_complete_pass', 'exercise_complete_fail',

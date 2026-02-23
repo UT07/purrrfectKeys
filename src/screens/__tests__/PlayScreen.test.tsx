@@ -39,10 +39,16 @@ jest.mock('@react-navigation/native', () => {
 // Mock expo-screen-orientation
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn().mockResolvedValue(undefined),
+  lockPlatformAsync: jest.fn().mockResolvedValue(undefined),
   OrientationLock: {
     LANDSCAPE_LEFT: 'LANDSCAPE_LEFT',
     LANDSCAPE: 'LANDSCAPE',
     PORTRAIT_UP: 'PORTRAIT_UP',
+  },
+  Orientation: {
+    LANDSCAPE_LEFT: 3,
+    LANDSCAPE_RIGHT: 4,
+    PORTRAIT_UP: 1,
   },
 }));
 
@@ -323,12 +329,19 @@ describe('PlayScreen', () => {
   // -----------------------------------------------------------------------
 
   describe('Landscape orientation', () => {
-    it('locks to landscape on mount', () => {
+    it('locks to landscape on mount via lockPlatformAsync', () => {
       const ScreenOrientation = require('expo-screen-orientation');
       render(<PlayScreen />);
 
-      // useFocusEffect fires immediately in our mock, which calls lockAsync
-      expect(ScreenOrientation.lockAsync).toHaveBeenCalled();
+      // Uses lockPlatformAsync with iOS-specific orientations to override device rotation lock
+      expect(ScreenOrientation.lockPlatformAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          screenOrientationArrayIOS: [
+            ScreenOrientation.Orientation.LANDSCAPE_LEFT,
+            ScreenOrientation.Orientation.LANDSCAPE_RIGHT,
+          ],
+        }),
+      );
     });
   });
 });

@@ -17,7 +17,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../stores/authStore';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Mode = 'signIn' | 'signUp';
@@ -101,18 +104,27 @@ export function EmailAuthScreen(): React.ReactElement {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        testID="email-auth-screen"
+      <LinearGradient
+        colors={GRADIENTS.heroGlow}
+        style={styles.headerGradient}
       >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
           testID="email-auth-back"
         >
-          <Text style={styles.backText}>← Back</Text>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {isLinking ? 'Link Account' : 'Welcome Back'}
+        </Text>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        testID="email-auth-screen"
+      >
 
         <View style={styles.tabs}>
           <TouchableOpacity
@@ -133,7 +145,7 @@ export function EmailAuthScreen(): React.ReactElement {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#666"
+            placeholderTextColor={COLORS.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -144,7 +156,7 @@ export function EmailAuthScreen(): React.ReactElement {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#666"
+            placeholderTextColor={COLORS.textMuted}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -154,7 +166,7 @@ export function EmailAuthScreen(): React.ReactElement {
             <TextInput
               style={styles.input}
               placeholder="Display Name"
-              placeholderTextColor="#666"
+              placeholderTextColor={COLORS.textMuted}
               autoCapitalize="words"
               value={displayName}
               onChangeText={setDisplayName}
@@ -195,77 +207,89 @@ export function EmailAuthScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: COLORS.background,
+  },
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.display.sm,
+    color: COLORS.textPrimary,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.lg,
   },
   backButton: {
-    marginBottom: 24,
-  },
-  backText: {
-    color: '#DC143C',
-    fontSize: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabs: {
     flexDirection: 'row',
-    marginBottom: 32,
-    gap: 16,
+    marginBottom: SPACING.xl,
+    gap: SPACING.md,
   },
   tab: {
-    paddingBottom: 8,
+    paddingBottom: SPACING.sm,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#DC143C',
+    borderBottomColor: COLORS.primary,
   },
   tabText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
+    ...TYPOGRAPHY.heading.md,
+    color: COLORS.textMuted,
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
   form: {
-    gap: 16,
+    gap: SPACING.md,
   },
   input: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#FFFFFF',
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    ...TYPOGRAPHY.body.lg,
+    color: COLORS.textPrimary,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: COLORS.cardBorder,
   },
   errorText: {
-    color: '#FF6B6B',
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.error,
     marginTop: -4,
   },
   submitButton: {
-    backgroundColor: '#DC143C',
-    borderRadius: 12,
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   submitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.button.lg,
+    color: COLORS.textPrimary,
   },
   forgotButton: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
   },
   forgotText: {
-    color: '#999',
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
   },
 });

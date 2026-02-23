@@ -28,7 +28,7 @@ export interface FunFact {
 export const CATEGORY_COLORS: Record<FunFactCategory, { bg: string; text: string; label: string }> = {
   history: { bg: 'rgba(255, 152, 0, 0.15)', text: '#FFB74D', label: 'History' },
   theory: { bg: 'rgba(33, 150, 243, 0.15)', text: '#64B5F6', label: 'Theory' },
-  composer: { bg: 'rgba(156, 39, 176, 0.15)', text: '#CE93D8', label: 'Composer' },
+  composer: { bg: 'rgba(220, 20, 60, 0.15)', text: '#FF6B8A', label: 'Composer' },
   instrument: { bg: 'rgba(76, 175, 80, 0.15)', text: '#81C784', label: 'Instrument' },
   science: { bg: 'rgba(0, 188, 212, 0.15)', text: '#4DD0E1', label: 'Science' },
   culture: { bg: 'rgba(233, 30, 99, 0.15)', text: '#F48FB1', label: 'Culture' },

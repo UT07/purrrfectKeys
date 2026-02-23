@@ -1,6 +1,6 @@
 /**
  * Gemini AI Coach Service
- * Provides personalized coaching feedback using Google Gemini 1.5 Flash
+ * Provides personalized coaching feedback using Google Gemini 2.0 Flash
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -80,7 +80,7 @@ EXAMPLES OF BAD RESPONSES:
 // ============================================================================
 
 const CACHE_PREFIX = 'coach-cache:';
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours — shorter TTL for more response variety
 
 interface CacheEntry {
   response: string;
@@ -201,11 +201,18 @@ export class GeminiCoach {
   }
 
   /**
-   * Simple hash function for issues
+   * Hash function for issues — includes actual error content for cache key entropy.
+   * Without content in the hash, every attempt with the same score bucket
+   * hits the same cache entry regardless of which notes were missed.
    */
   private static hashIssues(issues: CoachRequest['issues']): string {
-    const key =
-      `${issues.pitchErrors.length}:${issues.timingErrors.length}:${issues.missedCount}`;
+    const parts = [
+      issues.pitchErrors.map((e) => `${e.expected}@${e.beatPosition}`).join(','),
+      issues.timingErrors.map((e) => `${e.note}:${e.offsetMs}@${e.beatPosition}`).join(','),
+      `m${issues.missedCount}`,
+      `x${issues.extraCount}`,
+    ];
+    const key = parts.join('|');
     return Math.abs(
       key.split('').reduce((hash, char) => hash * 31 + char.charCodeAt(0), 0)
     )
@@ -266,7 +273,7 @@ export class GeminiCoach {
         systemInstruction: COACH_SYSTEM_PROMPT,
         generationConfig: {
           maxOutputTokens: 150,
-          temperature: 0.7,
+          temperature: 0.85,
         },
       });
 

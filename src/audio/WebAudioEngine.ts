@@ -68,6 +68,8 @@ interface ActiveNote {
 export class WebAudioEngine implements IAudioEngine {
   private context: RNAudioContext | null = null;
   private masterGain: RNGainNode | null = null;
+  /** Limiter gain node — dynamically adjusted to prevent clipping with multiple notes */
+  private limiterGain: RNGainNode | null = null;
   private volume: number = DEFAULT_VOLUME;
   private activeNotes: Map<number, ActiveNote> = new Map();
   /** Track oldest active note for O(1) polyphony eviction */
@@ -77,6 +79,9 @@ export class WebAudioEngine implements IAudioEngine {
    * Initialize the AudioContext and master gain chain.
    * Uses react-native-audio-api's AudioContext which communicates
    * with native audio via JSI (synchronous, sub-millisecond overhead).
+   *
+   * Signal chain: [per-note envelopes] → masterGain → limiterGain → destination
+   * The limiterGain dynamically adjusts based on active polyphony to prevent clipping.
    */
   async initialize(): Promise<void> {
     if (this.context) {
@@ -91,10 +96,15 @@ export class WebAudioEngine implements IAudioEngine {
         sampleRate: 44100,
       });
 
-      // Create master gain for volume control
+      // Create limiter gain (auto-adjusted by polyphony count) → destination
+      this.limiterGain = this.context.createGain();
+      this.limiterGain.gain.value = 1.0;
+      this.limiterGain.connect(this.context.destination);
+
+      // Create master gain for user volume control → limiter
       this.masterGain = this.context.createGain();
       this.masterGain.gain.value = this.volume;
-      this.masterGain.connect(this.context.destination);
+      this.masterGain.connect(this.limiterGain);
 
       const initMs = Date.now() - initStart;
       console.log(`[WebAudioEngine] Context created in ${initMs}ms (sampleRate=${this.context.sampleRate})`);
@@ -201,6 +211,7 @@ export class WebAudioEngine implements IAudioEngine {
     }
 
     this.masterGain = null;
+    this.limiterGain = null;
     this.activeNotes.clear();
     this.oldestNoteKey = -1;
     console.log('[WebAudioEngine] Disposed');
@@ -264,18 +275,15 @@ export class WebAudioEngine implements IAudioEngine {
     const envelope = this.context.createGain();
     const attackEnd = now + ADSR.attack;
 
-    // Scale velocity based on current polyphony to prevent clipping.
-    // Web Audio sums all signals linearly — without this, 2 notes at full velocity
-    // produce amplitude > 1.0 causing hard digital clipping (crackling/distortion).
-    // Using 1/sqrt(n) approximates equal-loudness scaling for concurrent notes.
-    const polyScale = Math.min(1.0, 1.0 / Math.sqrt(Math.max(1, this.activeNotes.size)));
-    const scaledVelocity = normalizedVelocity * polyScale;
-    const sustainLevel = Math.max(0.001, scaledVelocity * ADSR.sustain);
+    // No per-note polyphony scaling — the limiterGain node handles this globally.
+    // This ensures ALL active notes are attenuated equally when polyphony changes,
+    // preventing the asymmetric clipping that occurred when only new notes were scaled.
+    const sustainLevel = Math.max(0.001, normalizedVelocity * ADSR.sustain);
     const decayEnd = attackEnd + ADSR.decay;
 
     // Attack: near-silent -> peak velocity
     envelope.gain.setValueAtTime(0.001, now);
-    envelope.gain.linearRampToValueAtTime(scaledVelocity, attackEnd);
+    envelope.gain.linearRampToValueAtTime(normalizedVelocity, attackEnd);
 
     // Decay: peak -> sustain level (natural piano decay with slight hold)
     envelope.gain.exponentialRampToValueAtTime(sustainLevel, decayEnd);
@@ -346,6 +354,8 @@ export class WebAudioEngine implements IAudioEngine {
 
     // Update oldest note tracking for O(1) eviction
     this.updateOldestNoteKey();
+    // Adjust limiter gain for new polyphony count
+    this.updateLimiterGain();
 
     // Auto-cleanup: disconnect all nodes and remove from map after max duration.
     // This is the safety net for notes that never get explicitly released.
@@ -441,6 +451,7 @@ export class WebAudioEngine implements IAudioEngine {
       if (current && current.startTime === startTime) {
         this.activeNotes.delete(note);
         this.updateOldestNoteKey();
+        this.updateLimiterGain();
       }
     }, disconnectDelayMs);
   }
@@ -493,6 +504,41 @@ export class WebAudioEngine implements IAudioEngine {
 
     this.activeNotes.delete(note);
     this.updateOldestNoteKey();
+    this.updateLimiterGain();
+  }
+
+  /**
+   * Dynamically adjust the limiter gain based on active polyphony count.
+   *
+   * Without a DynamicsCompressorNode (not available in react-native-audio-api),
+   * we prevent clipping by scaling the limiter gain inversely with note count.
+   * Formula: gain = 1 / sqrt(max(1, n)) where n = active notes.
+   *
+   * This ensures all concurrent notes are attenuated equally (unlike per-note
+   * scaling which only affected newly-created notes, leaving old ones at full volume).
+   *
+   * Uses a 10ms ramp to prevent clicks from abrupt gain changes.
+   */
+  private updateLimiterGain(): void {
+    if (!this.limiterGain || !this.context) return;
+
+    const n = this.activeNotes.size;
+    // 1/sqrt(n) keeps perceived loudness roughly constant as polyphony increases.
+    // With harmonic content (~1.25x per note), this prevents digital clipping.
+    const targetGain = n > 0 ? Math.min(1.0, 1.0 / Math.sqrt(n)) : 1.0;
+    const now = this.context.currentTime;
+
+    try {
+      this.limiterGain.gain.cancelScheduledValues(now);
+      this.limiterGain.gain.setValueAtTime(
+        Math.max(0.001, this.limiterGain.gain.value),
+        now
+      );
+      this.limiterGain.gain.linearRampToValueAtTime(targetGain, now + 0.01);
+    } catch {
+      // Fallback: set immediately if ramp fails
+      this.limiterGain.gain.value = targetGain;
+    }
   }
 
   /**
@@ -542,6 +588,7 @@ export class WebAudioEngine implements IAudioEngine {
     }
     this.activeNotes.clear();
     this.oldestNoteKey = -1;
+    this.updateLimiterGain();
   }
 
   /**

@@ -7,9 +7,14 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from './config';
-import { syncProgress, getAllLessonProgress, getGamificationData, addXp, createGamificationData } from './firestore';
+import {
+  syncProgress, getAllLessonProgress, getGamificationData, addXp, createGamificationData,
+  getCatEvolutionData, saveCatEvolutionData, getGemSyncData, saveGemSyncData,
+} from './firestore';
 import type { ProgressChange, LessonProgress as FirestoreLessonProgress } from './firestore';
 import { useProgressStore } from '../../stores/progressStore';
+import { useCatEvolutionStore } from '../../stores/catEvolutionStore';
+import { useGemStore } from '../../stores/gemStore';
 import { levelFromXp } from '../../core/progression/XpSystem';
 import type { LessonProgress, ExerciseProgress } from '../../core/exercises/types';
 
@@ -182,6 +187,9 @@ export class SyncManager {
       } catch {
         // Non-critical: XP sync failure doesn't block queue flush
       }
+
+      // Sync cat evolution + gem data to Firestore
+      await this.pushCatAndGemData(uid);
     } catch {
       // Failure: increment retryCount on valid items
       const updatedQueue = validItems.map((item) => ({
@@ -344,12 +352,14 @@ export class SyncManager {
 
     try {
       // Fetch remote data in parallel
-      const [remoteLessons, remoteGamification] = await Promise.all([
+      const [remoteLessons, remoteGamification, remoteCats, remoteGems] = await Promise.all([
         getAllLessonProgress(uid),
         getGamificationData(uid),
+        getCatEvolutionData(uid).catch(() => null),
+        getGemSyncData(uid).catch(() => null),
       ]);
 
-      if (!remoteLessons.length && !remoteGamification) {
+      if (!remoteLessons.length && !remoteGamification && !remoteCats && !remoteGems) {
         console.log('[Sync] No remote data found — nothing to pull');
         return { pulled: true, merged: false };
       }
@@ -479,6 +489,51 @@ export class SyncManager {
         }
       }
 
+      // Merge cat evolution: union of owned cats, higher XP per cat
+      if (remoteCats && remoteCats.ownedCats.length > 0) {
+        const localCats = useCatEvolutionStore.getState();
+        const mergedOwned = new Set([...localCats.ownedCats, ...remoteCats.ownedCats]);
+
+        if (mergedOwned.size > localCats.ownedCats.length) {
+          // Remote has cats we don't have locally — adopt them
+          for (const catId of remoteCats.ownedCats) {
+            if (!localCats.ownedCats.includes(catId)) {
+              useCatEvolutionStore.getState().unlockCat(catId);
+            }
+          }
+          didMerge = true;
+        }
+
+        // Merge per-cat XP: take higher XP
+        for (const [catId, remoteCat] of Object.entries(remoteCats.evolutionData)) {
+          const localCat = localCats.evolutionData[catId];
+          if (localCat && remoteCat.xpAccumulated > localCat.xpAccumulated) {
+            const diff = remoteCat.xpAccumulated - localCat.xpAccumulated;
+            useCatEvolutionStore.getState().addEvolutionXp(catId, diff);
+            didMerge = true;
+          }
+        }
+
+        // If remote has a selected cat and local doesn't, adopt it
+        if (remoteCats.selectedCatId && !localCats.selectedCatId) {
+          useCatEvolutionStore.getState().selectCat(remoteCats.selectedCatId);
+          didMerge = true;
+        }
+
+        console.log(`[Sync] Cat evolution merged: ${mergedOwned.size} total cats`);
+      }
+
+      // Merge gems: take higher balance
+      if (remoteGems) {
+        const localGems = useGemStore.getState();
+        if (remoteGems.gems > localGems.gems) {
+          const diff = remoteGems.gems - localGems.gems;
+          useGemStore.getState().earnGems(diff, 'cloud-sync');
+          didMerge = true;
+          console.log(`[Sync] Merged remote gems: ${remoteGems.gems} (local was ${localGems.gems})`);
+        }
+      }
+
       if (didMerge) {
         console.log('[Sync] Remote progress merged into local state');
       }
@@ -488,6 +543,90 @@ export class SyncManager {
       const msg = (error as Error)?.message ?? 'Unknown error';
       console.warn('[Sync] Failed to pull remote progress:', msg);
       return { pulled: false, merged: false, error: msg };
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Cat Evolution & Gem Sync
+  // --------------------------------------------------------------------------
+
+  /**
+   * Push local cat evolution + gem data to Firestore.
+   * Uses "highest wins" for gems: only pushes if local balance exceeds remote.
+   * For cats: merges owned cats (union), takes higher XP per cat.
+   */
+  async pushCatAndGemData(uid?: string): Promise<void> {
+    const resolvedUid = uid ?? auth.currentUser?.uid;
+    if (!resolvedUid) return;
+
+    try {
+      // Push cat evolution data
+      const catState = useCatEvolutionStore.getState();
+      if (catState.ownedCats.length > 0) {
+        const evolutionData: Record<string, {
+          catId: string;
+          currentStage: string;
+          xpAccumulated: number;
+          abilitiesUnlocked: string[];
+        }> = {};
+
+        for (const catId of catState.ownedCats) {
+          const data = catState.evolutionData[catId];
+          if (data) {
+            evolutionData[catId] = {
+              catId: data.catId,
+              currentStage: data.currentStage,
+              xpAccumulated: data.xpAccumulated,
+              abilitiesUnlocked: data.abilitiesUnlocked,
+            };
+          }
+        }
+
+        const remoteCats = await getCatEvolutionData(resolvedUid);
+
+        // Merge: take higher XP per cat, union of owned cats
+        if (remoteCats) {
+          const mergedOwned = new Set([...catState.ownedCats, ...remoteCats.ownedCats]);
+          const mergedEvolution = { ...evolutionData };
+          for (const [catId, remoteCat] of Object.entries(remoteCats.evolutionData)) {
+            if (!mergedEvolution[catId]) {
+              mergedEvolution[catId] = remoteCat;
+            } else if (remoteCat.xpAccumulated > mergedEvolution[catId].xpAccumulated) {
+              mergedEvolution[catId] = remoteCat;
+            }
+          }
+
+          await saveCatEvolutionData(resolvedUid, {
+            selectedCatId: catState.selectedCatId,
+            ownedCats: Array.from(mergedOwned),
+            evolutionData: mergedEvolution,
+          });
+        } else {
+          await saveCatEvolutionData(resolvedUid, {
+            selectedCatId: catState.selectedCatId,
+            ownedCats: catState.ownedCats,
+            evolutionData,
+          });
+        }
+      }
+    } catch {
+      // Non-critical: cat sync failure doesn't block
+    }
+
+    try {
+      // Push gem data
+      const gemState = useGemStore.getState();
+      const remoteGems = await getGemSyncData(resolvedUid);
+
+      if (!remoteGems || gemState.gems > remoteGems.gems || gemState.totalGemsEarned > remoteGems.totalGemsEarned) {
+        await saveGemSyncData(resolvedUid, {
+          gems: Math.max(gemState.gems, remoteGems?.gems ?? 0),
+          totalGemsEarned: Math.max(gemState.totalGemsEarned, remoteGems?.totalGemsEarned ?? 0),
+          totalGemsSpent: Math.max(gemState.totalGemsSpent, remoteGems?.totalGemsSpent ?? 0),
+        });
+      }
+    } catch {
+      // Non-critical: gem sync failure doesn't block
     }
   }
 

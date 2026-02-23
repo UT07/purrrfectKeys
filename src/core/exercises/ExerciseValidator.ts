@@ -50,14 +50,14 @@ export function calculateTimingScore(
 
 /**
  * Calculate duration score based on how close the held duration is to expected
- * Returns 0-100. Touch users (no durationMs) get a neutral 70.
+ * Returns 0-100. Touch users (no durationMs) get a neutral 100 (no penalty).
  */
 export function calculateDurationScore(
   actualMs: number | undefined,
   expectedMs: number
 ): number {
   if (actualMs == null || actualMs <= 0 || expectedMs <= 0) {
-    return 70; // Neutral score for tap-only (touch keyboard)
+    return 100; // No penalty for tap-only (touch keyboard) — duration not measurable
   }
   const ratio = actualMs / expectedMs;
   // Perfect zone: 0.7x - 1.3x of expected
@@ -230,7 +230,7 @@ function calculateBreakdown(
   // Duration: average duration score of correctly pitched notes
   const duration =
     correctNoteScores.length > 0
-      ? correctNoteScores.reduce((sum, n) => sum + (n.durationScore ?? 70), 0) / correctNoteScores.length
+      ? correctNoteScores.reduce((sum, n) => sum + (n.durationScore ?? 100), 0) / correctNoteScores.length
       : 0;
 
   return {
@@ -303,6 +303,11 @@ export function scoreExercise(
     stars,
     breakdown,
     details: noteScores,
+    missedNotes: noteScores.filter((n) => n.isMissedNote).length,
+    extraNotes: noteScores.filter((n) => n.isExtraNote).length,
+    perfectNotes: noteScores.filter((n) => n.isCorrectPitch && !n.isExtraNote && n.timingScore >= 90).length,
+    goodNotes: noteScores.filter((n) => n.isCorrectPitch && !n.isExtraNote && n.timingScore >= 50 && n.timingScore < 90).length,
+    okNotes: noteScores.filter((n) => n.isCorrectPitch && !n.isExtraNote && n.timingScore > 0 && n.timingScore < 50).length,
     xpEarned,
     isPassed,
     isNewHighScore,

@@ -60,16 +60,27 @@ function midiToNoteName(midi: number): string {
 }
 
 /**
- * Scale definitions: pitch classes (0-11) for each key.
- * Covers the most common beginner keys.
+ * Scale definitions: all 12 major and 12 natural minor keys (24 total).
+ * Generated programmatically from interval patterns to avoid the bias
+ * caused by only having a handful of overlapping white-key scales.
  */
-const SCALE_DEFINITIONS: Array<{ name: string; pitchClasses: Set<number> }> = [
-  { name: 'C major',  pitchClasses: new Set([0, 2, 4, 5, 7, 9, 11]) },
-  { name: 'G major',  pitchClasses: new Set([7, 9, 11, 0, 2, 4, 6]) },
-  { name: 'F major',  pitchClasses: new Set([5, 7, 9, 10, 0, 2, 4]) },
-  { name: 'D minor',  pitchClasses: new Set([2, 4, 5, 7, 9, 10, 0]) },
-  { name: 'A minor',  pitchClasses: new Set([9, 11, 0, 2, 4, 5, 7]) },
-];
+const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
+const MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 10]; // natural minor
+
+const SCALE_DEFINITIONS: Array<{ name: string; root: number; pitchClasses: Set<number> }> = [];
+
+for (let root = 0; root < 12; root++) {
+  SCALE_DEFINITIONS.push({
+    name: `${NOTE_NAMES[root]} major`,
+    root,
+    pitchClasses: new Set(MAJOR_INTERVALS.map((i) => (root + i) % 12)),
+  });
+  SCALE_DEFINITIONS.push({
+    name: `${NOTE_NAMES[root]} minor`,
+    root,
+    pitchClasses: new Set(MINOR_INTERVALS.map((i) => (root + i) % 12)),
+  });
+}
 
 const INTERVAL_NAMES: Record<number, string> = {
   1: 'minor seconds',
@@ -86,7 +97,7 @@ const INTERVAL_NAMES: Record<number, string> = {
 // ============================================================================
 
 function detectKeySignature(notes: PlayedNote[]): string | null {
-  if (notes.length < 3) return null;
+  if (notes.length < 4) return null;
 
   // Count occurrences of each pitch class (0-11)
   const pitchClassCounts = new Array<number>(12).fill(0);
@@ -94,23 +105,44 @@ function detectKeySignature(notes: PlayedNote[]): string | null {
     pitchClassCounts[n.note % 12]++;
   }
 
+  // Weight first and last notes as likely tonic — beginners tend to
+  // start and end on the root of the key they're playing in.
+  const firstPc = notes[0].note % 12;
+  const lastPc = notes[notes.length - 1].note % 12;
+  pitchClassCounts[firstPc] += 2;
+  pitchClassCounts[lastPc] += 2;
+
   let bestScale: string | null = null;
-  let bestScore = -1;
+  let bestScore = -Infinity;
 
   for (const scale of SCALE_DEFINITIONS) {
     let score = 0;
+
+    // Positive score for notes IN the scale (root gets bonus)
     for (const pc of scale.pitchClasses) {
       score += pitchClassCounts[pc];
+      if (pc === scale.root) {
+        score += pitchClassCounts[pc] * 0.5; // root bonus
+      }
     }
+
+    // Penalty for notes NOT in the scale
+    for (let i = 0; i < 12; i++) {
+      if (!scale.pitchClasses.has(i)) {
+        score -= pitchClassCounts[i] * 0.5;
+      }
+    }
+
     if (score > bestScore) {
       bestScore = score;
       bestScale = scale.name;
     }
   }
 
-  // Only return if at least 60% of notes fit the detected key
-  const fitRatio = bestScore / notes.length;
-  if (fitRatio < 0.6) return null;
+  // Only return if fit ratio is reasonable (accounting for the 4 bonus tonic weights)
+  const totalWeighted = notes.length + 4;
+  const fitRatio = bestScore / totalWeighted;
+  if (fitRatio < 0.5) return null;
 
   return bestScale;
 }
@@ -282,11 +314,21 @@ export function analyzeSession(notes: PlayedNote[]): FreePlayAnalysis {
 
 /**
  * Convert a FreePlayAnalysis into GenerationParams for AI exercise generation.
+ * Adapts tempo, difficulty, and note count based on what was actually played.
  */
 export function suggestDrill(analysis: FreePlayAnalysis): GenerationParams {
-  const weakNotes = analysis.uniqueNotes.slice(0, 6);
+  // Use all unique notes the player explored, not just first 6
+  const weakNotes = analysis.uniqueNotes;
 
-  const baseTempo = 60;
+  // Derive tempo from playing speed — cap between 50 and 80 BPM for drills
+  const baseTempo = Math.min(80, Math.max(50, Math.round(analysis.notesPerSecond * 30)));
+
+  // Scale difficulty with how many notes the player explored
+  const difficulty: 1 | 2 | 3 =
+    analysis.uniqueNotes.length > 8 ? 3 : analysis.uniqueNotes.length > 5 ? 2 : 1;
+
+  // More notes explored → longer drill
+  const noteCount = Math.min(20, Math.max(8, analysis.uniqueNotes.length * 2));
 
   let skillContext: string;
   switch (analysis.suggestedDrillType) {
@@ -307,13 +349,13 @@ export function suggestDrill(analysis: FreePlayAnalysis): GenerationParams {
   return {
     weakNotes,
     tempoRange: { min: baseTempo - 10, max: baseTempo + 20 },
-    difficulty: 2,
-    noteCount: 12,
+    difficulty,
+    noteCount,
     skills: {
       timingAccuracy: 0.5,
       pitchAccuracy: 0.5,
       sightReadSpeed: 0.5,
-      chordRecognition: 0.5,
+      chordRecognition: analysis.suggestedDrillType === 'chord-practice' ? 0.8 : 0.5,
     },
     exerciseType: 'lesson',
     skillContext,

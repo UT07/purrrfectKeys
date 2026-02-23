@@ -45,8 +45,8 @@ jest.mock('../../components/Mascot/catCharacters', () => ({
       abilities: [],
     },
     {
-      id: 'vinyl',
-      name: 'Vinyl',
+      id: 'ballymakawww',
+      name: 'Ballymakawww',
       starterCat: false,
       gemCost: 1000,
       legendary: false,
@@ -391,7 +391,7 @@ describe('Gem Economy Integration', () => {
       // Unlock multiple cats
       const catsToUnlock = [
         { id: 'biscuit', cost: 750 },
-        { id: 'vinyl', cost: 1000 },
+        { id: 'ballymakawww', cost: 1000 },
       ];
 
       for (const cat of catsToUnlock) {
@@ -408,7 +408,7 @@ describe('Gem Economy Integration', () => {
       const owned = useCatEvolutionStore.getState().ownedCats;
       expect(owned).toContain('mini-meowww');
       expect(owned).toContain('biscuit');
-      expect(owned).toContain('vinyl');
+      expect(owned).toContain('ballymakawww');
       expect(owned.length).toBe(3);
 
       // Verify remaining balance insufficient for coda (3000)

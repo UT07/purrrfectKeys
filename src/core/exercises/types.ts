@@ -123,6 +123,7 @@ export interface MidiNoteEvent {
   timestamp: number; // High-resolution timestamp
   channel: number; // MIDI channel (usually 0)
   durationMs?: number; // Time held (noteOff - noteOn), only for noteOn events used in scoring
+  inputSource?: 'touch' | 'midi'; // Origin of the event — used for latency compensation
 }
 
 // Progress tracking

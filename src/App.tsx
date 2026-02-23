@@ -138,13 +138,27 @@ export default function App(): React.ReactElement {
         await useAchievementStore.getState().hydrate();
         console.log('[App] Achievement state hydrated from storage');
 
-        // Hydrate learner profile state (masteredSkills for adaptive curriculum)
+        // Hydrate full learner profile state (adaptive learning, note accuracy, skills, weak areas)
         const learnerData = await PersistenceManager.loadState(STORAGE_KEYS.LEARNER_PROFILE, null);
-        if (learnerData && (learnerData as Record<string, unknown>).masteredSkills) {
+        if (learnerData) {
+          const ld = learnerData as Record<string, unknown>;
           useLearnerProfileStore.setState({
-            masteredSkills: (learnerData as Record<string, unknown>).masteredSkills as string[],
+            ...(ld.noteAccuracy ? { noteAccuracy: ld.noteAccuracy as Record<number, number> } : {}),
+            ...(ld.noteAttempts ? { noteAttempts: ld.noteAttempts as Record<number, number> } : {}),
+            ...(ld.skills ? { skills: ld.skills as any } : {}),
+            ...(ld.tempoRange ? { tempoRange: ld.tempoRange as any } : {}),
+            ...(ld.weakNotes ? { weakNotes: ld.weakNotes as number[] } : {}),
+            ...(ld.weakSkills ? { weakSkills: ld.weakSkills as string[] } : {}),
+            ...(ld.totalExercisesCompleted != null ? { totalExercisesCompleted: ld.totalExercisesCompleted as number } : {}),
+            ...(ld.lastAssessmentDate ? { lastAssessmentDate: ld.lastAssessmentDate as string } : {}),
+            ...(ld.assessmentScore != null ? { assessmentScore: ld.assessmentScore as number } : {}),
+            ...(ld.masteredSkills ? { masteredSkills: ld.masteredSkills as string[] } : {}),
+            ...(ld.skillMasteryData ? { skillMasteryData: ld.skillMasteryData as any } : {}),
+            ...(ld.recentExerciseIds ? { recentExerciseIds: ld.recentExerciseIds as string[] } : {}),
           });
-          console.log('[App] Learner profile hydrated (masteredSkills:', ((learnerData as Record<string, unknown>).masteredSkills as string[]).length, ')');
+          const masteredCount = (ld.masteredSkills as string[] | undefined)?.length ?? 0;
+          const noteCount = Object.keys(ld.noteAccuracy ?? {}).length;
+          console.log(`[App] Learner profile fully hydrated (${masteredCount} mastered skills, ${noteCount} note records)`);
         }
 
         // Hydrate gem store (gem balance, transactions)

@@ -1,16 +1,25 @@
 /**
  * PressableScale Component
  * A drop-in replacement for TouchableOpacity that scales down on press
- * with spring animation.
+ * with spring animation. Supports optional haptic feedback and glow effect.
  */
 
-import React from 'react';
-import { Pressable, ViewStyle, StyleProp } from 'react-native';
+import React, { useCallback } from 'react';
+import { Pressable, ViewStyle, StyleProp, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { COLORS } from '../../theme/tokens';
+
+let Haptics: typeof import('expo-haptics') | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Haptics = require('expo-haptics');
+} catch {
+  Haptics = null;
+}
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -19,6 +28,10 @@ export interface PressableScaleProps {
   onLongPress?: () => void;
   disabled?: boolean;
   scaleDown?: number;
+  /** Trigger a light haptic impact on press (default: false) */
+  haptic?: boolean;
+  /** Show a subtle crimson glow when pressed (default: false) */
+  glowOnPress?: boolean;
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
   testID?: string;
@@ -31,13 +44,37 @@ export function PressableScale({
   onPress,
   onLongPress,
   disabled,
+  haptic = false,
+  glowOnPress = false,
   testID,
 }: PressableScaleProps): React.JSX.Element {
   const scale = useSharedValue(1);
+  const glowOpacity = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const glowAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(scaleDown, { damping: 15, stiffness: 200 });
+    if (glowOnPress) {
+      glowOpacity.value = withSpring(1, { damping: 20, stiffness: 300 });
+    }
+    if (haptic && Haptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+  }, [scale, scaleDown, glowOnPress, glowOpacity, haptic]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 12, stiffness: 180 });
+    if (glowOnPress) {
+      glowOpacity.value = withSpring(0, { damping: 20, stiffness: 300 });
+    }
+  }, [scale, glowOnPress, glowOpacity]);
 
   return (
     <AnimatedPressable
@@ -46,13 +83,37 @@ export function PressableScale({
       disabled={disabled}
       testID={testID}
       style={[animatedStyle, style]}
-      onPressIn={() => {
-        scale.value = withSpring(scaleDown, { damping: 15, stiffness: 200 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 12, stiffness: 180 });
-      }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
+      {glowOnPress && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              top: -2,
+              left: -2,
+              right: -2,
+              bottom: -2,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: COLORS.primary,
+              ...Platform.select({
+                ios: {
+                  shadowColor: COLORS.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 8,
+                },
+                android: {},
+                default: {},
+              }),
+            },
+            glowAnimatedStyle,
+          ]}
+        />
+      )}
       {children}
     </AnimatedPressable>
   );

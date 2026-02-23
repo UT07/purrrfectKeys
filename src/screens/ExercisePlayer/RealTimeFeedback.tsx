@@ -11,6 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS, glowColor } from '../../theme/tokens';
 
 export interface RealTimeFeedbackProps {
   feedback: {
@@ -39,8 +40,8 @@ export const RealTimeFeedback: React.FC<RealTimeFeedbackProps> = ({
       return {
         icon: 'music-note',
         label: 'Ready to play',
-        color: '#2196F3',
-        backgroundColor: '#E3F2FD',
+        color: COLORS.info,
+        backgroundColor: glowColor(COLORS.info, 0.15),
       };
     }
 
@@ -49,50 +50,50 @@ export const RealTimeFeedback: React.FC<RealTimeFeedbackProps> = ({
         return {
           icon: 'check-circle',
           label: 'Perfect!',
-          color: '#4CAF50',
-          backgroundColor: '#E8F5E9',
+          color: COLORS.feedbackPerfect,
+          backgroundColor: glowColor(COLORS.feedbackPerfect, 0.15),
         };
       case 'good':
         return {
           icon: 'check',
           label: 'Good',
-          color: '#8BC34A',
-          backgroundColor: '#F1F8E9',
+          color: COLORS.feedbackGood,
+          backgroundColor: glowColor(COLORS.feedbackGood, 0.15),
         };
       case 'ok':
         return {
           icon: 'minus-circle',
           label: 'OK',
-          color: '#FFC107',
-          backgroundColor: '#FFF9C4',
+          color: COLORS.feedbackOk,
+          backgroundColor: glowColor(COLORS.feedbackOk, 0.15),
         };
       case 'miss':
         return {
           icon: 'close-circle',
           label: 'Missed',
-          color: '#F44336',
-          backgroundColor: '#FFEBEE',
+          color: COLORS.feedbackMiss,
+          backgroundColor: glowColor(COLORS.feedbackMiss, 0.15),
         };
       case 'early':
         return {
           icon: 'fast-forward',
           label: 'Too early',
-          color: '#FF9800',
-          backgroundColor: '#FFF3E0',
+          color: COLORS.feedbackEarly,
+          backgroundColor: glowColor(COLORS.feedbackEarly, 0.15),
         };
       case 'late':
         return {
           icon: 'rewind',
           label: 'Too late',
-          color: '#FF9800',
-          backgroundColor: '#FFF3E0',
+          color: COLORS.feedbackLate,
+          backgroundColor: glowColor(COLORS.feedbackLate, 0.15),
         };
       default:
         return {
           icon: 'information-outline',
           label: 'Waiting',
-          color: '#9E9E9E',
-          backgroundColor: '#F5F5F5',
+          color: COLORS.feedbackDefault,
+          backgroundColor: glowColor(COLORS.feedbackDefault, 0.15),
         };
     }
   }, [feedback.type]);
@@ -141,8 +142,8 @@ export const RealTimeFeedback: React.FC<RealTimeFeedbackProps> = ({
                   styles.noteIndicator,
                   {
                     backgroundColor: highlightedKeys.has(note)
-                      ? '#4CAF50'
-                      : '#E0E0E0',
+                      ? COLORS.success
+                      : COLORS.cardBorder,
                   },
                 ]}
               >
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   },
   feedbackSubtitle: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORS.feedbackDefault,
     marginTop: 2,
   },
   notesIndicator: {
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
   },
   notesLabel: {
     fontSize: 11,
-    color: '#757575',
+    color: COLORS.feedbackDefault,
     marginBottom: 6,
     fontWeight: '600',
   },
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   noteText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
 });
 

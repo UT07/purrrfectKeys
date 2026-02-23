@@ -26,7 +26,9 @@ import { getFactForLesson } from '../content/funFactSelector';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { getLesson } from '../content/ContentLoader';
+import { getSkillsForExercise } from '../core/curriculum/SkillTree';
 import { getLessonTutorial } from '../content/lessonTutorials';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -35,7 +37,7 @@ type LessonIntroRouteProp = RouteProp<RootStackParamList, 'LessonIntro'>;
 // Skill chip colors - semi-transparent crimson variants
 const SKILL_COLORS = [
   { bg: 'rgba(220, 20, 60, 0.15)', text: '#FF6B8A' },
-  { bg: 'rgba(106, 27, 154, 0.15)', text: '#CE93D8' },
+  { bg: 'rgba(255, 107, 53, 0.15)', text: '#FF8A65' },
   { bg: 'rgba(21, 101, 192, 0.15)', text: '#64B5F6' },
   { bg: 'rgba(46, 125, 50, 0.15)', text: '#81C784' },
   { bg: 'rgba(249, 168, 37, 0.15)', text: '#FFD54F' },
@@ -135,7 +137,7 @@ function ExerciseListItem({
           ]}
         >
           {isCompleted ? (
-            <MaterialCommunityIcons name="check" size={14} color="#FFFFFF" />
+            <MaterialCommunityIcons name="check" size={14} color={COLORS.textPrimary} />
           ) : (
             <Text style={styles.exerciseNumberText}>{index + 1}</Text>
           )}
@@ -160,13 +162,13 @@ function ExerciseListItem({
           <MaterialCommunityIcons
             name="check-circle"
             size={20}
-            color="#4CAF50"
+            color={COLORS.success}
           />
         ) : (
           <MaterialCommunityIcons
             name="circle-outline"
             size={20}
-            color="#555555"
+            color={COLORS.textMuted}
           />
         )}
       </View>
@@ -190,13 +192,13 @@ function TutorialSection({
   return (
     <View style={styles.tutorialSection}>
       <View style={styles.tutorialHeader}>
-        <MaterialCommunityIcons name="school" size={18} color="#FFD700" />
+        <MaterialCommunityIcons name="school" size={18} color={COLORS.starGold} />
         <Text style={styles.tutorialTitle}>{tutorial.title}</Text>
         <TouchableOpacity
           onPress={onDismiss}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <MaterialCommunityIcons name="close" size={18} color="#666" />
+          <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
         </TouchableOpacity>
       </View>
       {tutorial.steps.map((step, index) => (
@@ -205,14 +207,14 @@ function TutorialSection({
             <MaterialCommunityIcons
               name={step.icon as any}
               size={18}
-              color="#DC143C"
+              color={COLORS.primary}
             />
           </View>
           <Text style={styles.tutorialStepText}>{step.text}</Text>
         </View>
       ))}
       <View style={styles.tutorialTip}>
-        <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color="#FFD700" />
+        <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={COLORS.starGold} />
         <Text style={styles.tutorialTipText}>{tutorial.tip}</Text>
       </View>
     </View>
@@ -283,9 +285,20 @@ export function LessonIntroScreen(): React.ReactElement {
 
   const handleStartLesson = useCallback(() => {
     if (firstUncompletedExerciseId) {
-      navigation.navigate('Exercise', {
-        exerciseId: firstUncompletedExerciseId,
-      });
+      // Find the skill this exercise targets for AI-first navigation
+      const skills = getSkillsForExercise(firstUncompletedExerciseId);
+      if (skills.length > 0) {
+        navigation.navigate('Exercise', {
+          exerciseId: firstUncompletedExerciseId,
+          aiMode: true,
+          skillId: skills[0].id,
+        });
+      } else {
+        // No skill mapping — navigate with static exercise directly
+        navigation.navigate('Exercise', {
+          exerciseId: firstUncompletedExerciseId,
+        });
+      }
     }
   }, [navigation, firstUncompletedExerciseId]);
 
@@ -308,7 +321,7 @@ export function LessonIntroScreen(): React.ReactElement {
     <View style={styles.container} testID="lesson-intro-screen">
       {/* Header gradient */}
       <LinearGradient
-        colors={['#1A1A2E', '#1A1A1A', '#0D0D0D']}
+        colors={GRADIENTS.heroGlow}
         style={styles.header}
       >
         <SafeAreaView>
@@ -323,7 +336,7 @@ export function LessonIntroScreen(): React.ReactElement {
               <MaterialCommunityIcons
                 name="arrow-left"
                 size={24}
-                color="#FFFFFF"
+                color={COLORS.textPrimary}
               />
             </TouchableOpacity>
 
@@ -342,7 +355,7 @@ export function LessonIntroScreen(): React.ReactElement {
               <MaterialCommunityIcons
                 name="star-four-points"
                 size={16}
-                color="#FFD700"
+                color={COLORS.starGold}
               />
               <Text style={styles.xpBadgeText}>{lesson.xpReward} XP</Text>
             </View>
@@ -365,7 +378,7 @@ export function LessonIntroScreen(): React.ReactElement {
             <MaterialCommunityIcons
               name="clock-outline"
               size={16}
-              color="#B0B0B0"
+              color={COLORS.textSecondary}
             />
             <Text style={styles.timeText}>
               ~{lesson.metadata.estimatedMinutes ?? lesson.estimatedMinutes} min
@@ -375,7 +388,7 @@ export function LessonIntroScreen(): React.ReactElement {
             <MaterialCommunityIcons
               name="check-circle-outline"
               size={16}
-              color={isAllCompleted ? '#4CAF50' : '#B0B0B0'}
+              color={isAllCompleted ? COLORS.success : COLORS.textSecondary}
             />
             <Text
               style={[
@@ -437,7 +450,7 @@ export function LessonIntroScreen(): React.ReactElement {
           <MaterialCommunityIcons
             name={showTutorials ? 'eye' : 'eye-off'}
             size={16}
-            color="#888"
+            color={COLORS.textMuted}
           />
           <Text style={styles.tutorialToggleText}>
             {showTutorials ? 'Hide tutorials' : 'Show tutorials'}
@@ -479,7 +492,7 @@ export function LessonIntroScreen(): React.ReactElement {
           testID="lesson-intro-start"
         >
           <LinearGradient
-            colors={['#DC143C', '#A3102E']}
+            colors={GRADIENTS.crimson}
             style={styles.startButtonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -487,7 +500,7 @@ export function LessonIntroScreen(): React.ReactElement {
             <MaterialCommunityIcons
               name={isAllCompleted ? 'replay' : 'play'}
               size={22}
-              color="#FFFFFF"
+              color={COLORS.textPrimary}
             />
             <Text style={styles.startButtonText}>
               {isAllCompleted ? 'Replay Lesson' : 'Start Lesson'}
@@ -502,17 +515,17 @@ export function LessonIntroScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: COLORS.background,
   },
   // Header
   header: {
-    paddingBottom: 20,
+    paddingBottom: SPACING.lg,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
   },
   backButton: {
     width: 40,
@@ -521,74 +534,73 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: SPACING.sm,
     marginTop: 2,
   },
   headerTitleArea: {
     flex: 1,
   },
   lessonNumber: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
-    color: '#DC143C',
+    color: COLORS.primary,
     letterSpacing: 2,
     marginBottom: 4,
   },
   lessonTitle: {
+    ...TYPOGRAPHY.display.md,
     fontSize: 26,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    lineHeight: 32,
+    color: COLORS.textPrimary,
   },
   xpBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 215, 0, 0.12)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     gap: 4,
-    marginLeft: 8,
+    marginLeft: SPACING.sm,
     marginTop: 4,
   },
   xpBadgeText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '700',
-    color: '#FFD700',
+    color: COLORS.starGold,
   },
   // Scroll content
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
   },
   description: {
+    ...TYPOGRAPHY.body.lg,
     fontSize: 15,
-    color: '#B0B0B0',
-    lineHeight: 22,
-    marginBottom: 16,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.md,
   },
   // Info row
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
-    marginBottom: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
+    gap: SPACING.lg,
+    marginBottom: SPACING.xl,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
   },
   difficultyContainer: {
     alignItems: 'center',
     gap: 4,
   },
   difficultyLabel: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     fontWeight: '600',
-    color: '#888888',
+    color: COLORS.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -602,10 +614,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   difficultyBarFilled: {
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
   },
   difficultyBarEmpty: {
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.cardBorder,
   },
   timeContainer: {
     flexDirection: 'row',
@@ -613,8 +625,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   timeText: {
-    fontSize: 13,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textSecondary,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -623,184 +635,185 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   progressText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '600',
-    color: '#B0B0B0',
+    color: COLORS.textSecondary,
   },
   progressTextComplete: {
-    color: '#4CAF50',
+    color: COLORS.success,
   },
   // Skills
   skillsSection: {
-    marginBottom: 24,
+    marginBottom: SPACING.xl,
   },
   sectionTitle: {
-    fontSize: 16,
+    ...TYPOGRAPHY.heading.sm,
     fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 10,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
   },
   skillChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: SPACING.sm,
   },
   skillChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
   },
   skillChipText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '600',
   },
   // Mascot
   mascotSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
-    gap: 8,
+    marginBottom: SPACING.xl,
+    gap: SPACING.sm,
   },
   mascotBubbleWrapper: {
     flex: 1,
   },
   // Fun fact
   funFactSection: {
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
   },
   // Tutorial
   tutorialSection: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.15)',
   },
   tutorialHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   tutorialTitle: {
+    ...TYPOGRAPHY.body.lg,
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFD700',
+    color: COLORS.starGold,
     flex: 1,
   },
   tutorialStep: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 10,
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   tutorialStepIcon: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(220, 20, 60, 0.12)',
+    backgroundColor: COLORS.primary + '1F',
     alignItems: 'center',
     justifyContent: 'center',
   },
   tutorialStepText: {
-    fontSize: 13,
-    color: '#E0E0E0',
-    lineHeight: 20,
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textPrimary,
     flex: 1,
   },
   tutorialTip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.xs,
     marginTop: 4,
-    paddingTop: 10,
+    paddingTop: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: '#252525',
+    borderTopColor: COLORS.cardBorder,
   },
   tutorialTipText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '600',
-    color: '#FFD700',
+    color: COLORS.starGold,
     fontStyle: 'italic',
     flex: 1,
   },
   tutorialToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.xs,
     alignSelf: 'flex-start',
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
     paddingVertical: 4,
   },
   tutorialToggleText: {
-    fontSize: 12,
-    color: '#888',
+    ...TYPOGRAPHY.caption.lg,
+    color: COLORS.textMuted,
   },
   // Exercise list
   exerciseSection: {
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   exerciseList: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
   },
   exerciseItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#252525',
+    borderBottomColor: COLORS.cardBorder,
   },
   exerciseItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 12,
+    gap: SPACING.sm,
   },
   exerciseNumber: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   exerciseNumberCompleted: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.success,
   },
   exerciseNumberText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
-    color: '#B0B0B0',
+    color: COLORS.textSecondary,
   },
   exerciseTitle: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '500',
-    color: '#E0E0E0',
+    color: COLORS.textPrimary,
     flex: 1,
   },
   exerciseTitleCompleted: {
-    color: '#888888',
+    color: COLORS.textMuted,
   },
   exerciseItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
   bonusBadge: {
     backgroundColor: 'rgba(249, 168, 37, 0.15)',
-    borderRadius: 6,
-    paddingHorizontal: 6,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
   },
   bonusBadgeText: {
+    ...TYPOGRAPHY.caption.sm,
     fontSize: 9,
     fontWeight: '700',
-    color: '#F9A825',
+    color: COLORS.starGold,
     letterSpacing: 0.5,
   },
   // Bottom bar
@@ -809,55 +822,53 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(13, 13, 13, 0.95)',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    backgroundColor: COLORS.background + 'F2',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: '#1A1A1A',
+    borderTopColor: COLORS.surface,
   },
   startButton: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
-    shadowColor: '#DC143C',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    ...SHADOWS.md,
+    shadowColor: COLORS.primary,
   },
   startButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
   },
   startButtonText: {
+    ...TYPOGRAPHY.button.lg,
     fontSize: 17,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
   // Error state
   errorContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
+    gap: SPACING.md,
   },
   errorText: {
-    fontSize: 16,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.body.lg,
+    color: COLORS.textSecondary,
   },
   errorButton: {
-    backgroundColor: '#DC143C',
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.sm,
   },
   errorButtonText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.button.md,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
 });
 

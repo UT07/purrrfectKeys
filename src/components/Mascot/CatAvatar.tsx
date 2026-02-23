@@ -1,7 +1,11 @@
 /**
  * CatAvatar - Animated cat character avatar component
- * Renders the cat SVG with per-cat colors, floating idle animation,
+ * Renders the cat SVG with per-cat colors, pose-driven animations,
  * pulsing glow aura, and bounce entry animation.
+ *
+ * When a `pose` prop is provided, it drives both the container animation
+ * (translate, scale, rotate) and the SVG facial expression (mood).
+ * Without a pose, falls back to the default floating idle animation.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -21,7 +25,11 @@ import Animated, {
 import { getCatById, getDefaultCat } from './catCharacters';
 import type { CatCharacter } from './catCharacters';
 import { KeysieSvg } from './KeysieSvg';
+import type { MascotMood } from './types';
 import type { EvolutionStage } from '@/stores/types';
+import { useCatPose } from './animations/useCatPose';
+import { POSE_CONFIGS } from './animations/catAnimations';
+import type { CatPose } from './animations/catAnimations';
 
 export type CatAvatarSize = 'small' | 'medium' | 'large';
 
@@ -34,6 +42,10 @@ const SIZE_MAP: Record<CatAvatarSize, number> = {
 interface CatAvatarProps {
   catId: string;
   size?: CatAvatarSize;
+  /** Mood expression for the cat face. Defaults to 'happy'. */
+  mood?: MascotMood;
+  /** Pose-driven animation. Overrides mood and idle animation when set. */
+  pose?: CatPose;
   showTooltipOnTap?: boolean;
   onPress?: () => void;
   /** Skip entry animation (e.g. in lists) */
@@ -122,6 +134,8 @@ function useGlowPulse() {
 export function CatAvatar({
   catId,
   size = 'medium',
+  mood = 'happy',
+  pose,
   showTooltipOnTap = true,
   onPress,
   skipEntryAnimation = false,
@@ -131,14 +145,21 @@ export function CatAvatar({
   const cat: CatCharacter = getCatById(catId) ?? getDefaultCat();
   const [showTooltip, setShowTooltip] = useState(false);
   const floatingStyle = useFloatingIdle();
+  const poseStyle = useCatPose(pose ?? 'idle');
   const entryStyle = useBounceEntry(skipEntryAnimation);
   const glowStyle = useGlowPulse();
 
   const dimension = SIZE_MAP[size];
   const glowSize = dimension + 16;
 
+  // When pose is provided, it drives the mood for facial expression
+  const effectiveMood: MascotMood = pose ? POSE_CONFIGS[pose].mood : mood;
+
   // Master stage automatically enables glow aura
   const effectiveShowGlow = showGlow || evolutionStage === 'master';
+
+  // Use pose animation when pose is set, otherwise default floating idle
+  const innerStyle = pose ? poseStyle : floatingStyle;
 
   const handlePress = useCallback(() => {
     if (onPress) {
@@ -186,14 +207,15 @@ export function CatAvatar({
           ]}
           testID="cat-avatar"
         >
-          <Animated.View style={floatingStyle}>
+          <Animated.View style={innerStyle}>
             <KeysieSvg
-              mood="encouraging"
+              mood={effectiveMood}
               size="medium"
               accentColor={cat.color}
               pixelSize={Math.round(dimension * 0.75)}
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
+              catId={catId}
             />
           </Animated.View>
         </Animated.View>

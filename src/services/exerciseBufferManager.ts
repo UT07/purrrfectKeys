@@ -1,7 +1,11 @@
 /**
  * Exercise Buffer Manager
  *
- * Manages a FIFO queue of pre-generated AI exercises stored in AsyncStorage.
+ * Manages a skill-aware FIFO queue of pre-generated AI exercises stored in
+ * AsyncStorage. Each buffered exercise is tagged with a `targetSkillId` so the
+ * ExercisePlayer can request an exercise for a specific skill. Falls back to
+ * any-skill dequeue when no skill match is found.
+ *
  * After each exercise completion, the app checks the buffer and triggers
  * background generation if it's running low. This decouples AI generation
  * latency from the user experience.
@@ -10,6 +14,24 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AIExercise, GenerationParams } from './geminiExerciseService';
 import { generateExercise } from './geminiExerciseService';
+import { getGenerationHints } from '../core/curriculum/SkillTree';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+/** A buffered exercise with its target skill context. */
+export interface BufferedExercise {
+  exercise: AIExercise;
+  targetSkillId: string;
+}
+
+/** Request to pre-generate exercises for a specific skill. */
+export interface SkillBufferRequest {
+  skillId: string;
+  params: GenerationParams;
+  count?: number; // defaults to 1
+}
 
 // ============================================================================
 // Constants
@@ -30,23 +52,62 @@ const STORAGE_KEY = 'keysense_exercise_buffer';
 // Internal Helpers
 // ============================================================================
 
-async function loadBuffer(): Promise<AIExercise[]> {
+async function loadBuffer(): Promise<BufferedExercise[]> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+
+    // Migrate legacy format: plain AIExercise[] → BufferedExercise[]
+    if (Array.isArray(parsed) && parsed.length > 0 && !('exercise' in (parsed[0] as object))) {
+      return (parsed as AIExercise[]).map((ex) => ({
+        exercise: ex,
+        targetSkillId: 'unknown',
+      }));
+    }
+
+    return parsed as BufferedExercise[];
   } catch {
     console.warn('[ExerciseBuffer] Failed to load buffer from storage');
     return [];
   }
 }
 
-async function saveBuffer(buffer: AIExercise[]): Promise<void> {
+async function saveBuffer(buffer: BufferedExercise[]): Promise<void> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(buffer));
 }
 
 // ============================================================================
 // Public API
 // ============================================================================
+
+/**
+ * Get the next exercise targeting a specific skill.
+ * Scans the buffer for the first match and removes it. Falls back to
+ * `getNextExercise()` (any skill) if no match is found.
+ */
+export async function getNextExerciseForSkill(
+  skillId: string
+): Promise<AIExercise | null> {
+  try {
+    const buffer = await loadBuffer();
+    const index = buffer.findIndex((b) => b.targetSkillId === skillId);
+    if (index === -1) {
+      // No skill match — fall back to any
+      return getNextExercise();
+    }
+
+    const [entry] = buffer.splice(index, 1);
+    await saveBuffer(buffer);
+    return entry.exercise;
+  } catch (error) {
+    console.warn(
+      '[ExerciseBuffer] Failed to get exercise for skill:',
+      (error as Error)?.message ?? error
+    );
+    return null;
+  }
+}
 
 /**
  * Get next exercise from buffer (FIFO — dequeue from front).
@@ -59,9 +120,9 @@ export async function getNextExercise(): Promise<AIExercise | null> {
       return null;
     }
 
-    const exercise = buffer.shift()!;
+    const entry = buffer.shift()!;
     await saveBuffer(buffer);
-    return exercise;
+    return entry.exercise;
   } catch (error) {
     console.warn(
       '[ExerciseBuffer] Failed to get next exercise:',
@@ -75,10 +136,13 @@ export async function getNextExercise(): Promise<AIExercise | null> {
  * Add an exercise to the back of the buffer.
  * If the buffer exceeds BUFFER_MAX_SIZE, the oldest exercises are evicted.
  */
-export async function addExercise(exercise: AIExercise): Promise<void> {
+export async function addExercise(
+  exercise: AIExercise,
+  targetSkillId: string = 'unknown'
+): Promise<void> {
   try {
     const buffer = await loadBuffer();
-    buffer.push(exercise);
+    buffer.push({ exercise, targetSkillId });
 
     // Trim from front if we exceed the max
     while (buffer.length > BUFFER_MAX_SIZE) {
@@ -110,12 +174,13 @@ export async function fillBuffer(params: GenerationParams): Promise<void> {
   try {
     const buffer = await loadBuffer();
     let currentSize = buffer.length;
+    const skillId = params.targetSkillId ?? 'unknown';
 
     while (currentSize < BUFFER_TARGET) {
       try {
         const exercise = await generateExercise(params);
         if (exercise) {
-          buffer.push(exercise);
+          buffer.push({ exercise, targetSkillId: skillId });
           currentSize++;
         } else {
           // Generation returned null — skip but keep trying
@@ -133,6 +198,77 @@ export async function fillBuffer(params: GenerationParams): Promise<void> {
       '[ExerciseBuffer] Failed to fill buffer:',
       (error as Error)?.message ?? error
     );
+  }
+}
+
+/**
+ * Fill the buffer with exercises for specific skills. Used to pre-generate
+ * exercises targeting the learner's next 2-3 skills so they're ready when
+ * the CurriculumEngine assigns them.
+ */
+export async function fillBufferForSkills(
+  requests: SkillBufferRequest[]
+): Promise<void> {
+  try {
+    const buffer = await loadBuffer();
+
+    for (const req of requests) {
+      const count = req.count ?? 1;
+      for (let i = 0; i < count; i++) {
+        if (buffer.length >= BUFFER_MAX_SIZE) break;
+
+        try {
+          const exercise = await generateExercise(req.params);
+          if (exercise) {
+            buffer.push({ exercise, targetSkillId: req.skillId });
+          }
+        } catch {
+          console.warn(
+            `[ExerciseBuffer] Failed to generate for skill ${req.skillId}, skipping`
+          );
+        }
+      }
+    }
+
+    await saveBuffer(buffer);
+  } catch (error) {
+    console.warn(
+      '[ExerciseBuffer] Failed to fill buffer for skills:',
+      (error as Error)?.message ?? error
+    );
+  }
+}
+
+/**
+ * Pre-fill buffer with exercises for the first 3 skill nodes (tier 1).
+ * Called once after onboarding to ensure first-time users have exercises
+ * ready even if Gemini generation is slow.
+ */
+export async function prefillOnboardingBuffer(): Promise<void> {
+  const ONBOARDING_SKILLS = ['find-middle-c', 'keyboard-geography', 'white-keys'];
+
+  const requests: SkillBufferRequest[] = ONBOARDING_SKILLS
+    .map((skillId): SkillBufferRequest | null => {
+      const hints = getGenerationHints(skillId);
+      if (!hints) return null;
+      return {
+        skillId,
+        params: {
+          weakNotes: [] as number[],
+          tempoRange: { min: 50, max: 65 },
+          difficulty: 1,
+          noteCount: 8,
+          skills: { timingAccuracy: 0.5, pitchAccuracy: 0.5, sightReadSpeed: 0.5, chordRecognition: 0.5 },
+          targetSkillId: skillId,
+          generationHints: hints,
+        },
+        count: 1,
+      };
+    })
+    .filter((r): r is SkillBufferRequest => r !== null);
+
+  if (requests.length > 0) {
+    await fillBufferForSkills(requests);
   }
 }
 

@@ -132,11 +132,20 @@ export function getLessonExercises(lessonId: string): Exercise[] {
   const lesson = LESSON_REGISTRY[lessonId];
   if (!lesson) return [];
 
-  return lesson.exercises
+  const nonTestExercises = lesson.exercises
     .filter((e) => !e.test)
-    .sort((a, b) => a.order - b.order)
-    .map((entry) => EXERCISE_REGISTRY[entry.id])
-    .filter(Boolean);
+    .sort((a, b) => a.order - b.order);
+
+  const exercises: Exercise[] = [];
+  for (const entry of nonTestExercises) {
+    const exercise = EXERCISE_REGISTRY[entry.id];
+    if (exercise) {
+      exercises.push(exercise);
+    } else {
+      console.warn(`[ContentLoader] Missing exercise "${entry.id}" in lesson "${lessonId}" — not found in registry`);
+    }
+  }
+  return exercises;
 }
 
 /**
@@ -198,14 +207,8 @@ export function isTestExercise(exerciseId: string): boolean {
  * Get non-test exercises for a lesson (the regular practice exercises).
  */
 export function getNonTestExercises(lessonId: string): Exercise[] {
-  const lesson = LESSON_REGISTRY[lessonId];
-  if (!lesson) return [];
-
-  return lesson.exercises
-    .filter((e) => !e.test)
-    .sort((a, b) => a.order - b.order)
-    .map((entry) => EXERCISE_REGISTRY[entry.id])
-    .filter(Boolean);
+  // Delegates to getLessonExercises (same logic, with missing-exercise warnings)
+  return getLessonExercises(lessonId);
 }
 
 /**

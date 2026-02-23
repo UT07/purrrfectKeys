@@ -25,13 +25,16 @@ import { generateExercise } from '../geminiExerciseService';
 import type { AIExercise } from '../geminiExerciseService';
 import {
   getNextExercise,
+  getNextExerciseForSkill,
   addExercise,
   getBufferSize,
   fillBuffer,
+  fillBufferForSkills,
   clearBuffer,
   BUFFER_TARGET,
   BUFFER_MAX_SIZE,
 } from '../exerciseBufferManager';
+import type { BufferedExercise } from '../exerciseBufferManager';
 
 // ============================================================================
 // Helpers
@@ -40,6 +43,11 @@ import {
 const makeExercise = (id: number): AIExercise => ({
   notes: [{ note: 60 + id, startBeat: 0, durationBeats: 1 }],
   settings: { tempo: 80, timeSignature: [4, 4] as [number, number], keySignature: 'C' },
+});
+
+const makeBuffered = (id: number, skillId: string = 'unknown'): BufferedExercise => ({
+  exercise: makeExercise(id),
+  targetSkillId: skillId,
 });
 
 const STORAGE_KEY = 'keysense_exercise_buffer';
@@ -74,16 +82,58 @@ describe('exerciseBufferManager', () => {
     });
 
     it('returns first exercise and removes it from buffer', async () => {
-      const exercises = [makeExercise(1), makeExercise(2), makeExercise(3)];
-      mockGetItem.mockResolvedValue(JSON.stringify(exercises));
+      const entries = [makeBuffered(1), makeBuffered(2), makeBuffered(3)];
+      mockGetItem.mockResolvedValue(JSON.stringify(entries));
 
       const result = await getNextExercise();
 
       expect(result).toEqual(makeExercise(1));
       expect(mockSetItem).toHaveBeenCalledWith(
         STORAGE_KEY,
-        JSON.stringify([makeExercise(2), makeExercise(3)])
+        JSON.stringify([makeBuffered(2), makeBuffered(3)])
       );
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // getNextExerciseForSkill
+  // --------------------------------------------------------------------------
+
+  describe('getNextExerciseForSkill', () => {
+    it('returns exercise matching the skill', async () => {
+      const entries = [
+        makeBuffered(1, 'rh-cde'),
+        makeBuffered(2, 'white-keys'),
+        makeBuffered(3, 'rh-cde'),
+      ];
+      mockGetItem.mockResolvedValue(JSON.stringify(entries));
+
+      const result = await getNextExerciseForSkill('white-keys');
+
+      expect(result).toEqual(makeExercise(2));
+      // Buffer should have entries 1 and 3 remaining
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(2);
+      expect(saved[0].targetSkillId).toBe('rh-cde');
+      expect(saved[1].targetSkillId).toBe('rh-cde');
+    });
+
+    it('falls back to any exercise when no skill match', async () => {
+      const entries = [makeBuffered(1, 'rh-cde'), makeBuffered(2, 'rh-cde')];
+      mockGetItem.mockResolvedValue(JSON.stringify(entries));
+
+      const result = await getNextExerciseForSkill('white-keys');
+
+      // Should fall back to FIFO (first exercise)
+      expect(result).toEqual(makeExercise(1));
+    });
+
+    it('returns null when buffer is empty', async () => {
+      mockGetItem.mockResolvedValue(null);
+
+      const result = await getNextExerciseForSkill('rh-cde');
+
+      expect(result).toBeNull();
     });
   });
 
@@ -92,31 +142,42 @@ describe('exerciseBufferManager', () => {
   // --------------------------------------------------------------------------
 
   describe('addExercise', () => {
-    it('adds exercise to end of buffer', async () => {
-      const existing = [makeExercise(1), makeExercise(2)];
+    it('adds exercise to end of buffer with skillId', async () => {
+      const existing = [makeBuffered(1, 'rh-cde')];
       mockGetItem.mockResolvedValue(JSON.stringify(existing));
-      const newExercise = makeExercise(3);
+      const newExercise = makeExercise(2);
 
-      await addExercise(newExercise);
+      await addExercise(newExercise, 'white-keys');
 
-      expect(mockSetItem).toHaveBeenCalledWith(
-        STORAGE_KEY,
-        JSON.stringify([makeExercise(1), makeExercise(2), makeExercise(3)])
-      );
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(2);
+      expect(saved[1].targetSkillId).toBe('white-keys');
+      expect(saved[1].exercise).toEqual(makeExercise(2));
+    });
+
+    it('defaults to unknown skillId when not provided', async () => {
+      mockGetItem.mockResolvedValue(JSON.stringify([]));
+
+      await addExercise(makeExercise(1));
+
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved[0].targetSkillId).toBe('unknown');
     });
 
     it('trims oldest when buffer exceeds max size', async () => {
-      const exercises = Array.from({ length: BUFFER_MAX_SIZE }, (_, i) => makeExercise(i));
+      const exercises = Array.from({ length: BUFFER_MAX_SIZE }, (_, i) =>
+        makeBuffered(i, `skill-${i}`)
+      );
       mockGetItem.mockResolvedValue(JSON.stringify(exercises));
 
-      await addExercise(makeExercise(99));
+      await addExercise(makeExercise(99), 'new-skill');
 
-      const savedBuffer = JSON.parse(mockSetItem.mock.calls[0][1]);
-      expect(savedBuffer).toHaveLength(BUFFER_MAX_SIZE);
-      // First exercise (id 0) should be evicted, second exercise (id 1) is now first
-      expect(savedBuffer[0]).toEqual(makeExercise(1));
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(BUFFER_MAX_SIZE);
+      // First exercise (id 0) should be evicted
+      expect(saved[0].targetSkillId).toBe('skill-1');
       // Last exercise should be the newly added one
-      expect(savedBuffer[savedBuffer.length - 1]).toEqual(makeExercise(99));
+      expect(saved[saved.length - 1].targetSkillId).toBe('new-skill');
     });
   });
 
@@ -126,8 +187,8 @@ describe('exerciseBufferManager', () => {
 
   describe('getBufferSize', () => {
     it('returns current count', async () => {
-      const exercises = [makeExercise(1), makeExercise(2), makeExercise(3), makeExercise(4)];
-      mockGetItem.mockResolvedValue(JSON.stringify(exercises));
+      const entries = [makeBuffered(1), makeBuffered(2), makeBuffered(3), makeBuffered(4)];
+      mockGetItem.mockResolvedValue(JSON.stringify(entries));
 
       const size = await getBufferSize();
 
@@ -159,10 +220,11 @@ describe('exerciseBufferManager', () => {
         sightReadSpeed: 0.6,
         chordRecognition: 0.5,
       },
+      targetSkillId: 'rh-cde',
     };
 
     it('generates exercises up to target', async () => {
-      const existing = [makeExercise(0)];
+      const existing = [makeBuffered(0, 'rh-cde')];
       mockGetItem.mockResolvedValue(JSON.stringify(existing));
 
       // Need BUFFER_TARGET - 1 = 4 more exercises
@@ -175,12 +237,14 @@ describe('exerciseBufferManager', () => {
       await fillBuffer(params);
 
       expect(mockGenerateExercise).toHaveBeenCalledTimes(BUFFER_TARGET - 1);
-      const savedBuffer = JSON.parse(mockSetItem.mock.calls[0][1]);
-      expect(savedBuffer).toHaveLength(BUFFER_TARGET);
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(BUFFER_TARGET);
+      // All new entries should have the skillId from params
+      expect(saved[1].targetSkillId).toBe('rh-cde');
     });
 
     it('handles generation failures gracefully', async () => {
-      const existing = [makeExercise(0)];
+      const existing = [makeBuffered(0)];
       mockGetItem.mockResolvedValue(JSON.stringify(existing));
 
       // Two nulls, then successes — nulls don't add to buffer but loop continues
@@ -195,20 +259,127 @@ describe('exerciseBufferManager', () => {
       // Called 4 times (BUFFER_TARGET - 1 iterations)
       expect(mockGenerateExercise).toHaveBeenCalledTimes(BUFFER_TARGET - 1);
       // Only successful ones get added: original + 2 successes = 3
-      const savedBuffer = JSON.parse(mockSetItem.mock.calls[0][1]);
-      expect(savedBuffer).toHaveLength(3);
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(3);
     });
 
     it('does nothing when buffer is already at target', async () => {
-      const exercises = Array.from({ length: BUFFER_TARGET }, (_, i) => makeExercise(i));
-      mockGetItem.mockResolvedValue(JSON.stringify(exercises));
+      const entries = Array.from({ length: BUFFER_TARGET }, (_, i) => makeBuffered(i));
+      mockGetItem.mockResolvedValue(JSON.stringify(entries));
 
       await fillBuffer(params);
 
       expect(mockGenerateExercise).not.toHaveBeenCalled();
-      // Buffer is saved as-is (no changes)
-      const savedBuffer = JSON.parse(mockSetItem.mock.calls[0][1]);
-      expect(savedBuffer).toHaveLength(BUFFER_TARGET);
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(BUFFER_TARGET);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // fillBufferForSkills
+  // --------------------------------------------------------------------------
+
+  describe('fillBufferForSkills', () => {
+    it('generates exercises for multiple skills', async () => {
+      mockGetItem.mockResolvedValue(JSON.stringify([]));
+
+      const baseParams = {
+        weakNotes: [],
+        tempoRange: { min: 60, max: 100 },
+        difficulty: 2,
+        noteCount: 8,
+        skills: { timingAccuracy: 0.7, pitchAccuracy: 0.8, sightReadSpeed: 0.6, chordRecognition: 0.5 },
+      };
+
+      mockGenerateExercise
+        .mockResolvedValueOnce(makeExercise(1))
+        .mockResolvedValueOnce(makeExercise(2))
+        .mockResolvedValueOnce(makeExercise(3));
+
+      await fillBufferForSkills([
+        { skillId: 'rh-cde', params: { ...baseParams, targetSkillId: 'rh-cde' }, count: 2 },
+        { skillId: 'white-keys', params: { ...baseParams, targetSkillId: 'white-keys' }, count: 1 },
+      ]);
+
+      expect(mockGenerateExercise).toHaveBeenCalledTimes(3);
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(3);
+      expect(saved[0].targetSkillId).toBe('rh-cde');
+      expect(saved[1].targetSkillId).toBe('rh-cde');
+      expect(saved[2].targetSkillId).toBe('white-keys');
+    });
+
+    it('stops when buffer reaches max size', async () => {
+      const existing = Array.from({ length: BUFFER_MAX_SIZE - 1 }, (_, i) => makeBuffered(i));
+      mockGetItem.mockResolvedValue(JSON.stringify(existing));
+
+      mockGenerateExercise
+        .mockResolvedValueOnce(makeExercise(50))
+        .mockResolvedValueOnce(makeExercise(51));
+
+      const baseParams = {
+        weakNotes: [],
+        tempoRange: { min: 60, max: 100 },
+        difficulty: 2,
+        noteCount: 8,
+        skills: { timingAccuracy: 0.7, pitchAccuracy: 0.8, sightReadSpeed: 0.6, chordRecognition: 0.5 },
+      };
+
+      await fillBufferForSkills([
+        { skillId: 'rh-cde', params: baseParams, count: 5 },
+      ]);
+
+      // Only 1 slot available, so only 1 generation call
+      expect(mockGenerateExercise).toHaveBeenCalledTimes(1);
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(BUFFER_MAX_SIZE);
+    });
+
+    it('handles generation failures gracefully', async () => {
+      mockGetItem.mockResolvedValue(JSON.stringify([]));
+
+      mockGenerateExercise
+        .mockRejectedValueOnce(new Error('API error'))
+        .mockResolvedValueOnce(makeExercise(1));
+
+      const baseParams = {
+        weakNotes: [],
+        tempoRange: { min: 60, max: 100 },
+        difficulty: 2,
+        noteCount: 8,
+        skills: { timingAccuracy: 0.7, pitchAccuracy: 0.8, sightReadSpeed: 0.6, chordRecognition: 0.5 },
+      };
+
+      await fillBufferForSkills([
+        { skillId: 'rh-cde', params: baseParams, count: 2 },
+      ]);
+
+      // Both attempts called, one failed
+      expect(mockGenerateExercise).toHaveBeenCalledTimes(2);
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(1);
+      expect(saved[0].targetSkillId).toBe('rh-cde');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Legacy format migration
+  // --------------------------------------------------------------------------
+
+  describe('legacy format migration', () => {
+    it('migrates plain AIExercise[] to BufferedExercise[]', async () => {
+      // Old format: raw AIExercise array without wrapper
+      const legacyBuffer = [makeExercise(1), makeExercise(2)];
+      mockGetItem.mockResolvedValue(JSON.stringify(legacyBuffer));
+
+      const result = await getNextExercise();
+
+      expect(result).toEqual(makeExercise(1));
+      // Remaining buffer should be in new format
+      const saved = JSON.parse(mockSetItem.mock.calls[0][1]);
+      expect(saved).toHaveLength(1);
+      expect(saved[0].exercise).toEqual(makeExercise(2));
+      expect(saved[0].targetSkillId).toBe('unknown');
     });
   });
 

@@ -38,7 +38,8 @@ import { getCatById, getDefaultCat, getStarterCats } from '../components/Mascot/
 import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -573,7 +574,7 @@ function ProgressBar({ step }: { step: number }): React.ReactElement {
         {/* Fill */}
         <Animated.View style={[styles.progressFillWrapper, fillStyle]}>
           <LinearGradient
-            colors={['#DC143C', '#FF6B6B']}
+            colors={[COLORS.primary, COLORS.primaryLight]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.progressFillGradient}
@@ -639,6 +640,8 @@ export function OnboardingScreen(): React.ReactElement {
         useCatEvolutionStore.getState().initializeStarterCat(state.selectedCatId);
         useSettingsStore.getState().setSelectedCatId(state.selectedCatId);
       }
+      // Pre-fill buffer with tier-1 exercises for immediate play (fire-and-forget)
+      prefillOnboardingBuffer().catch(() => {});
       // Dismiss the onboarding modal and return to MainTabs
       navigation.goBack();
     } else {
@@ -802,8 +805,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   stepTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...TYPOGRAPHY.display.sm,
     color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
     textAlign: 'center',
@@ -816,20 +818,19 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   catIntro: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '600',
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
   stepSubtitle: {
-    fontSize: 16,
+    ...TYPOGRAPHY.body.lg,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg + 4,
     textAlign: 'center',
-    lineHeight: 24,
   },
   stepDescription: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
     textAlign: 'center',
@@ -850,9 +851,8 @@ const styles = StyleSheet.create({
   },
   featureText: {
     flex: 1,
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
-    lineHeight: 20,
   },
 
   // Option cards
@@ -885,15 +885,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '600',
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
   },
   optionDescription: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     color: COLORS.textSecondary,
-    lineHeight: 16,
   },
   optionCheckbox: {
     width: 24,
@@ -909,7 +908,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   checkmark: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
   },
@@ -942,14 +941,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   catCardName: {
-    fontSize: 18,
+    ...TYPOGRAPHY.heading.md,
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
     textAlign: 'center',
   },
   catCardPersonality: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
     textAlign: 'center',
@@ -961,7 +960,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   catCardBadgeText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -975,12 +974,12 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   catChooseButtonText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.button.md,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
   catUnlockHint: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: SPACING.md,

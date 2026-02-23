@@ -34,7 +34,7 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { CAT_CHARACTERS, getCatById } from '../components/Mascot/catCharacters';
 import { StreakFlame } from '../components/StreakFlame';
 import { getLevelProgress } from '../core/progression/XpSystem';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import { useAuthStore } from '../stores/authStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -52,24 +52,24 @@ const VOLUME_OPTIONS = [
 
 /** Stat card accent colors for gradient overlays */
 const STAT_ACCENTS = {
-  level: 'rgba(220, 20, 60, 0.15)',    // crimson
-  xp: 'rgba(255, 215, 0, 0.15)',       // gold
-  streak: 'rgba(255, 152, 0, 0.15)',    // orange
-  lessons: 'rgba(76, 175, 80, 0.15)',   // green
+  level: glowColor(COLORS.primary, 0.15),
+  xp: glowColor(COLORS.starGold, 0.15),
+  streak: glowColor(COLORS.warning, 0.15),
+  lessons: glowColor(COLORS.success, 0.15),
 } as const;
 
 const STAT_ACCENT_BORDERS = {
-  level: 'rgba(220, 20, 60, 0.3)',
-  xp: 'rgba(255, 215, 0, 0.3)',
-  streak: 'rgba(255, 152, 0, 0.3)',
-  lessons: 'rgba(76, 175, 80, 0.3)',
+  level: glowColor(COLORS.primary, 0.3),
+  xp: glowColor(COLORS.starGold, 0.3),
+  streak: glowColor(COLORS.warning, 0.3),
+  lessons: glowColor(COLORS.success, 0.3),
 } as const;
 
 const STAT_ICON_COLORS = {
-  level: '#DC143C',
-  xp: '#FFD700',
-  streak: '#FF9800',
-  lessons: '#4CAF50',
+  level: COLORS.primary,
+  xp: COLORS.starGold,
+  streak: COLORS.warning,
+  lessons: COLORS.success,
 } as const;
 
 type StatAccentKey = keyof typeof STAT_ACCENTS;
@@ -233,13 +233,13 @@ function AchievementsSection(): React.ReactElement {
                   <MaterialCommunityIcons
                     name={achievement.icon as IconName}
                     size={32}
-                    color="#FFD700"
+                    color={COLORS.starGold}
                   />
                 ) : (
                   <MaterialCommunityIcons
                     name="lock"
                     size={24}
-                    color="#555555"
+                    color={COLORS.textMuted}
                   />
                 )}
               </View>
@@ -286,7 +286,7 @@ function LevelProgressRing({
           cx={center}
           cy={center}
           r={radius}
-          stroke="#333333"
+          stroke={COLORS.cardBorder}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -384,7 +384,7 @@ export function ProfileScreen(): React.ReactElement {
       >
         {/* Gradient Header with cat avatar and level progress ring */}
         <LinearGradient
-          colors={[catColor + '22', '#1A1A2E', COLORS.background]}
+          colors={[catColor + '22', COLORS.surface, COLORS.background]}
           style={styles.header}
         >
           <TouchableOpacity
@@ -393,9 +393,9 @@ export function ProfileScreen(): React.ReactElement {
             activeOpacity={0.7}
             testID="profile-open-cat-switch"
           >
-            <CatAvatar catId={selectedCatId} size="large" showTooltipOnTap={false} />
+            <CatAvatar catId={selectedCatId} size="large" showTooltipOnTap={false} evolutionStage={evolutionStage} />
             <View style={styles.editBadge}>
-              <MaterialCommunityIcons name="pencil" size={12} color="#FFF" />
+              <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
             </View>
           </TouchableOpacity>
 
@@ -413,7 +413,7 @@ export function ProfileScreen(): React.ReactElement {
           <TouchableOpacity onPress={() => { setEditingName(displayName); setShowNameEditor(true); }}>
             <View style={styles.nameRow}>
               <Text style={styles.username}>{displayName}</Text>
-              <MaterialCommunityIcons name="pencil-outline" size={16} color="#666666" />
+              <MaterialCommunityIcons name="pencil-outline" size={16} color={COLORS.textMuted} />
             </View>
           </TouchableOpacity>
           <Text style={styles.subtitle}>
@@ -426,7 +426,7 @@ export function ProfileScreen(): React.ReactElement {
           {stats.map((stat) => (
             <LinearGradient
               key={stat.label}
-              colors={['#1E1E32', '#1A1A2E']}
+              colors={[...GRADIENTS.cardWarm]}
               style={[
                 styles.statCard,
                 { borderColor: STAT_ACCENT_BORDERS[stat.accentKey] },
@@ -448,10 +448,10 @@ export function ProfileScreen(): React.ReactElement {
           ))}
           {/* Gem balance card */}
           <LinearGradient
-            colors={['#1E1E32', '#1A1A2E']}
-            style={[styles.statCard, { borderColor: 'rgba(255, 215, 0, 0.3)' }]}
+            colors={[...GRADIENTS.cardWarm]}
+            style={[styles.statCard, { borderColor: glowColor(COLORS.starGold, 0.3) }]}
           >
-            <View style={[styles.statAccentOverlay, { backgroundColor: 'rgba(255, 215, 0, 0.15)' }]} />
+            <View style={[styles.statAccentOverlay, { backgroundColor: glowColor(COLORS.starGold, 0.15) }]} />
             <MaterialCommunityIcons name="diamond-stone" size={32} color={COLORS.gemGold} />
             <AnimatedStatValue value={gems} color={COLORS.textPrimary} />
             <Text style={styles.statLabel}>Gems</Text>
@@ -463,10 +463,19 @@ export function ProfileScreen(): React.ReactElement {
           <Text style={styles.sectionTitle}>Evolution Progress</Text>
           <View style={styles.evolutionCard}>
             <View style={styles.evolutionHeader}>
-              <MaterialCommunityIcons name="paw" size={20} color={COLORS.evolutionGlow} />
-              <Text style={styles.evolutionStageName}>
-                {selectedCat.name} — {evolutionStage.charAt(0).toUpperCase() + evolutionStage.slice(1)}
-              </Text>
+              <MaterialCommunityIcons name="paw" size={32} color={COLORS.evolutionGlow} />
+              <View style={styles.evolutionHeaderText}>
+                <Text style={styles.evolutionStageName}>
+                  {selectedCat.name}
+                </Text>
+                <Text style={styles.evolutionStageLabel}>
+                  {evolutionStage.charAt(0).toUpperCase() + evolutionStage.slice(1)} Stage
+                </Text>
+              </View>
+              <View style={styles.evolutionXpBadge}>
+                <MaterialCommunityIcons name="star-four-points" size={14} color={COLORS.evolutionGlow} />
+                <Text style={styles.evolutionXpBadgeText}>{evolutionXp} XP</Text>
+              </View>
             </View>
             {nextStageInfo ? (
               <>
@@ -475,20 +484,28 @@ export function ProfileScreen(): React.ReactElement {
                     style={[
                       styles.evolutionBarFill,
                       {
-                        width: `${Math.min(100, Math.round(
+                        width: `${Math.max(3, Math.min(100, Math.round(
                           ((evolutionXp - EVOLUTION_XP_THRESHOLDS[evolutionStage]) /
                             (EVOLUTION_XP_THRESHOLDS[nextStageInfo.nextStage] - EVOLUTION_XP_THRESHOLDS[evolutionStage])) * 100
-                        ))}%`,
+                        )))}%`,
                       },
                     ]}
                   />
                 </View>
-                <Text style={styles.evolutionXpText}>
-                  {nextStageInfo.xpNeeded} XP to {nextStageInfo.nextStage}
-                </Text>
+                <View style={styles.evolutionFooter}>
+                  <Text style={styles.evolutionXpText}>
+                    {evolutionXp - EVOLUTION_XP_THRESHOLDS[evolutionStage]} / {EVOLUTION_XP_THRESHOLDS[nextStageInfo.nextStage] - EVOLUTION_XP_THRESHOLDS[evolutionStage]} XP
+                  </Text>
+                  <Text style={styles.evolutionNextLabel}>
+                    Next: {nextStageInfo.nextStage.charAt(0).toUpperCase() + nextStageInfo.nextStage.slice(1)}
+                  </Text>
+                </View>
               </>
             ) : (
-              <Text style={styles.evolutionXpText}>Max stage reached!</Text>
+              <View style={styles.evolutionMaxBadge}>
+                <MaterialCommunityIcons name="crown" size={16} color={COLORS.starGold} />
+                <Text style={styles.evolutionMaxText}>Max stage reached!</Text>
+              </View>
             )}
           </View>
         </View>
@@ -536,7 +553,7 @@ export function ProfileScreen(): React.ReactElement {
                           borderBottomRightRadius: 2,
                           backgroundColor: day.minutes > 0
                             ? (isToday ? COLORS.primary : COLORS.primary + '88')
-                            : '#333333',
+                            : COLORS.cardBorder,
                         },
                       ]}
                     />
@@ -559,12 +576,12 @@ export function ProfileScreen(): React.ReactElement {
 
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="target" size={24} color="#B0B0B0" />
+              <MaterialCommunityIcons name="target" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Daily Goal</Text>
             </View>
             <View style={styles.settingRight}>
               <Text style={styles.settingValue}>{dailyGoalMinutes} min</Text>
-              <MaterialCommunityIcons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+              <MaterialCommunityIcons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
             </View>
           </TouchableOpacity>
           {showGoalPicker && (
@@ -585,12 +602,12 @@ export function ProfileScreen(): React.ReactElement {
 
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)}>
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="volume-high" size={24} color="#B0B0B0" />
+              <MaterialCommunityIcons name="volume-high" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Volume</Text>
             </View>
             <View style={styles.settingRight}>
               <Text style={styles.settingValue}>{Math.round(masterVolume * 100)}%</Text>
-              <MaterialCommunityIcons name={showVolumePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+              <MaterialCommunityIcons name={showVolumePicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
             </View>
           </TouchableOpacity>
           {showVolumePicker && (
@@ -615,10 +632,10 @@ export function ProfileScreen(): React.ReactElement {
             testID="profile-open-cat-switch-row"
           >
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="cat" size={24} color="#B0B0B0" />
+              <MaterialCommunityIcons name="cat" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Change Cat</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -627,10 +644,10 @@ export function ProfileScreen(): React.ReactElement {
             testID="profile-open-midi-setup"
           >
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="piano" size={24} color="#B0B0B0" />
+              <MaterialCommunityIcons name="piano" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>MIDI Setup</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -639,10 +656,10 @@ export function ProfileScreen(): React.ReactElement {
             testID="profile-open-account"
           >
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="account-cog" size={24} color="#B0B0B0" />
+              <MaterialCommunityIcons name="account-cog" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Account</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -650,10 +667,10 @@ export function ProfileScreen(): React.ReactElement {
             onPress={() => Alert.alert('About Purrrfect Keys', 'Purrrfect Keys v1.0.0\nAI-Powered Piano Learning\n\nLearn piano with real-time feedback, MIDI support, and AI coaching.')}
           >
             <View style={styles.settingLeft}>
-              <MaterialCommunityIcons name="information" size={24} color="#B0B0B0" />
+              <MaterialCommunityIcons name="information" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>About</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -671,7 +688,7 @@ export function ProfileScreen(): React.ReactElement {
               autoFocus
               selectTextOnFocus
               placeholder="Your name"
-              placeholderTextColor="#666"
+              placeholderTextColor={COLORS.textMuted}
               returnKeyType="done"
               onSubmitEditing={handleSaveName}
             />
@@ -719,7 +736,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#1A1A2E',
+    borderColor: COLORS.surface,
   },
   nameRow: {
     flexDirection: 'row',
@@ -728,29 +745,31 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   username: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.display.sm,
+    fontWeight: '800' as const,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '400' as const,
+    color: COLORS.textSecondary,
   },
   // Level progress ring
   levelRingLabel: {
-    fontSize: 11,
-    color: '#B0B0B0',
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '600' as const,
+    color: COLORS.textSecondary,
   },
   levelRingValue: {
+    ...TYPOGRAPHY.display.sm,
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800' as const,
   },
   xpToNextText: {
-    fontSize: 12,
-    color: '#888',
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '600' as const,
+    color: COLORS.textMuted,
     marginTop: SPACING.xs,
   },
   // Stats grid
@@ -761,9 +780,10 @@ const styles = StyleSheet.create({
     gap: SPACING.md - 4,
   },
   statCard: {
+    ...SHADOWS.sm,
     flex: 1,
     minWidth: '45%',
-    padding: 20,
+    padding: SPACING.lg - 4,
     borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
     borderWidth: 1,
@@ -774,13 +794,13 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   statValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.display.md,
+    fontWeight: '800' as const,
     marginTop: SPACING.sm,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
   // Sections
@@ -789,8 +809,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.heading.lg,
+    fontWeight: '800' as const,
     color: COLORS.textPrimary,
     marginBottom: SPACING.md,
   },
@@ -804,7 +824,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -812,12 +832,14 @@ const styles = StyleSheet.create({
     gap: SPACING.md - 4,
   },
   settingLabel: {
-    fontSize: 16,
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '400' as const,
     color: COLORS.textPrimary,
   },
   settingValue: {
-    fontSize: 16,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '400' as const,
+    color: COLORS.textSecondary,
   },
   settingRight: {
     flexDirection: 'row',
@@ -834,19 +856,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: '#252525',
+    backgroundColor: COLORS.cardSurface,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: COLORS.cardBorder,
   },
   pickerChipActive: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
   pickerChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
+    color: COLORS.textSecondary,
   },
   pickerChipTextActive: {
     color: COLORS.textPrimary,
@@ -859,8 +881,8 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   chartTotal: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
     color: COLORS.primary,
     marginBottom: SPACING.md,
   },
@@ -873,7 +895,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     paddingBottom: SPACING.md - 4,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
     height: 140,
     position: 'relative',
   },
@@ -884,10 +906,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   chartMinutes: {
-    fontSize: 10,
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.caption.sm,
+    fontWeight: '600' as const,
+    color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
-    fontWeight: '600',
   },
   chartBarTrack: {
     width: 24,
@@ -899,10 +921,10 @@ const styles = StyleSheet.create({
     minHeight: 4,
   },
   chartDay: {
-    fontSize: 11,
-    color: '#666666',
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '500' as const,
+    color: COLORS.textMuted,
     marginTop: 6,
-    fontWeight: '500',
   },
   chartDayActive: {
     color: COLORS.primary,
@@ -922,12 +944,13 @@ const styles = StyleSheet.create({
     height: 1,
     borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: glowColor('#FFFFFF', 0.2),
   },
   goalLineLabel: {
+    ...TYPOGRAPHY.caption.sm,
     fontSize: 9,
-    color: 'rgba(255, 255, 255, 0.3)',
-    fontWeight: '600',
+    fontWeight: '600' as const,
+    color: glowColor('#FFFFFF', 0.3),
     marginLeft: SPACING.xs,
   },
   // Achievement badges (horizontal scroll)
@@ -937,8 +960,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   achievementCounter: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
     color: COLORS.primary,
     marginBottom: SPACING.md,
   },
@@ -959,30 +982,30 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   achievementBadgeUnlocked: {
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    backgroundColor: glowColor(COLORS.starGold, 0.15),
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: glowColor(COLORS.starGold, 0.3),
   },
   achievementBadgeLocked: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
   },
   achievementBadgeRecent: {
-    shadowColor: '#FFD700',
+    shadowColor: COLORS.starGold,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 12,
     elevation: 8,
   },
   achievementBadgeLabel: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '500' as const,
     color: COLORS.textPrimary,
     textAlign: 'center',
-    fontWeight: '500',
   },
   achievementBadgeLabelLocked: {
-    color: '#555555',
+    color: COLORS.textMuted,
   },
   // Modal styles
   modalOverlay: {
@@ -993,29 +1016,31 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   modalCard: {
+    ...SHADOWS.lg,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
     width: '100%',
     maxWidth: 340,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: COLORS.cardBorder,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.heading.lg,
+    fontWeight: '800' as const,
     color: COLORS.textPrimary,
     marginBottom: SPACING.md,
     textAlign: 'center',
   },
   nameInput: {
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: COLORS.cardBorder,
     borderRadius: BORDER_RADIUS.sm,
     padding: SPACING.md - 4,
-    fontSize: 16,
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '400' as const,
     color: COLORS.textPrimary,
-    backgroundColor: '#252525',
+    backgroundColor: COLORS.cardSurface,
     marginBottom: SPACING.md,
   },
   modalActions: {
@@ -1026,13 +1051,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: SPACING.md - 4,
     borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: '#252525',
+    backgroundColor: COLORS.cardSurface,
     alignItems: 'center',
   },
   modalCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#B0B0B0',
+    ...TYPOGRAPHY.button.lg,
+    color: COLORS.textSecondary,
   },
   modalSave: {
     flex: 1,
@@ -1042,44 +1066,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalSaveText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.button.lg,
     color: COLORS.textPrimary,
   },
   // Evolution progress
   evolutionCard: {
+    ...SHADOWS.sm,
     backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: 'rgba(225, 190, 231, 0.2)',
+    borderColor: glowColor(COLORS.evolutionGlow, 0.25),
   },
   evolutionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  evolutionHeaderText: {
+    flex: 1,
   },
   evolutionStageName: {
-    fontSize: 15,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '700' as const,
     color: COLORS.textPrimary,
   },
+  evolutionStageLabel: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.evolutionGlow,
+    fontWeight: '600' as const,
+    marginTop: 1,
+  },
+  evolutionXpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: glowColor(COLORS.evolutionGlow, 0.12),
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  evolutionXpBadgeText: {
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '700' as const,
+    color: COLORS.evolutionGlow,
+  },
   evolutionBarTrack: {
-    height: 6,
+    height: 10,
     backgroundColor: COLORS.cardBorder,
-    borderRadius: 3,
+    borderRadius: 5,
     overflow: 'hidden',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   evolutionBarFill: {
     height: '100%',
     backgroundColor: COLORS.evolutionGlow,
-    borderRadius: 3,
+    borderRadius: 5,
+  },
+  evolutionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   evolutionXpText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '600' as const,
     color: COLORS.textSecondary,
+  },
+  evolutionNextLabel: {
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '600' as const,
+    color: COLORS.evolutionGlow,
+  },
+  evolutionMaxBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: SPACING.sm,
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  evolutionMaxText: {
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '700' as const,
+    color: COLORS.starGold,
   },
 });

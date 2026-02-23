@@ -1,254 +1,296 @@
-# KeySense Master Plan
+# Purrrfect Keys — Master Plan
 
-**Last Updated:** February 17, 2026
+**Last Updated:** February 22, 2026
 **Goal:** Production-quality piano learning app on App Store & Play Store
-**Target Launch:** June 8, 2026 (16-week roadmap)
+**Target Launch:** June 8, 2026 (16-week roadmap from Feb 17)
+**Codebase Health:** 0 TypeScript errors, 2,099 tests passing, 90 suites
+
+> **This is the single source of truth.** All other plan files in `docs/plans/` are historical archives. Do not reference them for current status.
 
 ---
 
 ## Status Overview
 
-| Phase | Name | Status | Progress |
-|-------|------|--------|----------|
-| Phase 1 | Core Loop | **COMPLETE** | 100% |
-| Phase 2 | Gamification & Polish | **COMPLETE** | 100% |
-| Phase 3 | Firebase Auth + Sync | **COMPLETE** | 100% |
-| Phase 4+ | Adaptive Learning + Gamification UI Overhaul | **COMPLETE** | 100% (22/22 tasks) |
-| — | Avatar Redesign + Rive System | **COMPLETE** | 100% |
-| — | Gameplay UX Rework | **COMPLETE** | 10/10 tasks |
-| — | QA Sprint | **COMPLETE** | 18 new test suites, 6 bug fixes, 1488 tests |
-| Phase 5 | Adaptive Learning Revamp | **NEXT** | 0% — Weeks 1-3: AI curriculum, voice coaching, free play |
-| Phase 6 | Avatar Evolution & Gamification | **PLANNED** | 0% — Weeks 4-6: Pokemon evolution, gems, abilities |
-| Phase 7 | Game Feel & Polish | **PLANNED** | 0% — Weeks 7-8: micro-interactions, Rive, transitions |
-| Phase 8 | Audio Input System | **PLANNED** | 0% — R&D Weeks 1-8, sole priority Weeks 9-10 |
-| — | Music Library | **PARALLEL** | 0% — Pipeline Weeks 1-10, UI Weeks 11-12 |
-| Phase 9 | Social & Leaderboards | **PLANNED** | 0% — Weeks 11-12 |
-| Phase 10 | QA + Launch | **PLANNED** | 0% — Weeks 13-16 |
-
-**Current Codebase Health:** 0 TypeScript errors, 1,488 tests passing, 64 suites
-
-**Full Roadmap:** `docs/plans/2026-02-17-16-week-roadmap.md`
+| Phase | Name | Status | Key Deliverables |
+|-------|------|--------|-----------------|
+| Phase 1 | Core Loop | **COMPLETE** | Exercise Player, scoring, XP, streaks, AI coach, 30 exercises |
+| Phase 2 | Gamification & Polish | **COMPLETE** | LevelMap, theme, audio rewrite, mascot system, transitions |
+| Phase 3 | Firebase Auth + Sync | **COMPLETE** | Auth (4 providers), cloud sync, offline queue, cross-device |
+| Phase 4+ | Adaptive Learning + UI Overhaul | **COMPLETE** | Design tokens, learner profile, Gemini generation, SplitKeyboard, 32 achievements |
+| Phase 5 | Adaptive Learning Revamp | **OPEN** (~90%) | SkillTree (100 nodes), CurriculumEngine, voice coaching, weak spots, difficulty engine. Gaps: see below |
+| Phase 5.2 | 365-Day Curriculum | **COMPLETE** | 15 tiers, skill decay, multi-session mastery, session types |
+| Phase 6 | Avatar Evolution & Gamification | **COMPLETE** | 4-stage evolution, gems, 12 abilities, cat collection, EvolutionReveal |
+| Phase 6.5 | AI Coach Fix + Wiring | **COMPLETE** | 10 coach bugs, FreePlay key detection, gamification wiring |
+| Phase 7 | UI Revamp + Game Feel | **COMPLETE** | Concert Hall palette, composable SVG cats, Salsa NPC, custom tab bar, micro-interactions |
+| Phase 7.5 | All-AI Exercise Generation | **IN PROGRESS** | Batches 1-2, 4 done; Batches 3, 5, 6 remaining |
+| Phase 8 | Audio Input (Mic) | **UP NEXT** | Ship-blocker: pitch detection for 95%+ of users without MIDI |
+| — | Sound Design | **PLANNED** | UI sounds, celebrations, cat audio |
+| — | Rive Animations | **PLANNED** | .riv files (needs Rive editor guidance) |
+| — | Music Library | **PLANNED** | 30+ songs, browse UI, section-based practice |
+| Phase 9 | Social & Leaderboards | **PLANNED** | Friends, leagues, challenges, push notifications |
+| Phase 10 | QA + Launch | **PLANNED** | Beta testing, App Store submission, monitoring |
 
 ---
 
-## Phase 1: Core Loop (COMPLETE)
+## Completed Phases (Summary)
 
-Everything needed for a single lesson to be fully playable end-to-end.
+### Phase 1: Core Loop
+Exercise Player with PianoRoll + Keyboard, 5-dimensional scoring engine, nearest-note matching, XP/levels/streaks, AI Coach (Gemini 2.0 Flash), ContentLoader for 30 JSON exercises across 6 lessons, ExpoAudioEngine with round-robin voice pools, MIDI input architecture.
 
-| Feature | Status |
-|---------|--------|
-| Exercise Player (PianoRoll + Keyboard) | Done |
-| Scoring engine (5-dimensional: accuracy, timing, completeness, extra notes, duration) | Done |
-| Nearest-note matching (real-time visual feedback) | Done |
-| XP system with level auto-calculation | Done |
-| Streak tracking & daily goals | Done |
-| AI Coach (Gemini 2.0 Flash with 5-tier fallback) | Done |
-| Content loading from JSON (31 exercises, 6 lessons) | Done |
-| Practice time tracking | Done |
-| Next exercise navigation + try again on failure | Done |
-| Dynamic Keyboard/PianoRoll range per exercise | Done |
-| ExpoAudioEngine with sound pooling (14 pre-loaded notes) | Done |
-| MIDI input architecture (NoOp fallback for Expo Go) | Done |
-| Concert Hall dark theme (#0D0D0D + #DC143C crimson) | Done |
-| Keyboard auto-scroll to follow exercise notes | Done |
-| Landscape orientation lock for gameplay | Done |
+### Phase 2: Gamification & Polish
+LevelMapScreen (Duolingo-style), Concert Hall dark theme, profile editing, all 30 exercises validated, audio engine rewrite (JSI WebAudio + Expo fallback), mascot system (12 cats), ScoreRing, PressableScale, transition screens, multi-touch keyboard.
 
----
+### Phase 3: Firebase Auth + Sync
+Firebase Auth (Email, Google, Apple, Anonymous), SyncManager with offline queue + Firestore pull/merge, cross-device sync ("highest wins"), local-to-cloud migration, auth resilience (guest fallback, 8s timeout).
 
-## Phase 2: Gamification & Polish (COMPLETE)
+### Phase 4+: Adaptive Learning + UI Overhaul
+22 tasks: design tokens, learner profile store, cat dialogue engine (12 cats x 14 triggers), Gemini exercise generation + buffer manager, skill assessment screen, screen redesigns, SplitKeyboard, 32 achievements, cat quest service.
 
-### Completed Items
-- Score bug fix (rounded integers)
-- LevelMapScreen (Duolingo-style vertical map, replaces LearnScreen)
-- Concert Hall dark theme across all 20+ screens/components
-- Profile editing (daily goal picker, volume control)
-- MIDI testing documentation
-- Keyboard auto-scroll + dark theme
-- Lessons 2-6 E2E validated — all 30 exercises across 6 lessons
-- Content bug fix: lesson-03-ex-02 had wrong note
-- Orphan file cleanup: removed 3 legacy/duplicate files
-- Onboarding persistence fix — `settingsStore` hydrated on startup
-- Audio engine rewrite — round-robin voice pools with `replayAsync()`
-- Low-latency audio engine — `react-native-audio-api@0.9.3` with JSI
-- 4 HIGH-severity bug fixes, 5 MEDIUM-severity bug fixes
-- Mascot ("Keysie") — MascotBubble + 55 tips, KeysieSvg avatar (5 moods, 4 sizes)
-- ScoreRing, PressableScale, transition screens (LessonComplete, ExerciseCard, AchievementToast, ConfettiEffect)
-- Multi-touch keyboard, auto-scroll, single-note highlighting, mastery tests
-- Cat character system (8 cats, CatAvatar, CatPickerModal)
-- Audio sustain fix, react-native-screens pinned to 4.4.0
+### Phase 5 + 5.2: Adaptive Learning Revamp + 365-Day Curriculum (~90% + 100%)
+SkillTree DAG (100 nodes, 15 tiers, 12 categories), CurriculumEngine (4 session types), skill decay (14-day half-life), AI generation for tiers 7-15, DailySessionScreen, VoiceCoachingService + TTSService, WeakSpotDetector, DifficultyEngine, FreePlayAnalyzer, 150+ new tests.
+
+**Phase 5 Known Gaps (to be addressed alongside Phase 7.5):**
+- Free play coaching UI not fully wired (post-play feedback card + "Generate drill" CTA)
+- Voice coaching (TTS) not consistently triggered on all exercise completions
+- Pre-exercise coaching tips ("Focus on your left hand") not surfaced in ExercisePlayer UI
+- DifficultyEngine tempo progression not visible to user (no UI indicator)
+
+### Phase 6 + 6.5: Avatar Evolution & Gamification + AI Coach Fix
+4-stage evolution (Baby/Teen/Adult/Master), gem currency, 12 abilities via AbilityEngine, CatCollectionScreen, EvolutionReveal animation, GemEarnPopup, onboarding cat selection. AI Coach: 10 bugs fixed (pitchErrors, missedCount, cache, temperature), FreePlay expanded to 48 scales, gamification fully wired.
+
+### Phase 7: UI Revamp + Game Feel & Polish
+Concert Hall palette (black + crimson), typography/shadow/animation/glow token systems, composable SVG cat system (12 profiles), Reanimated pose system (7 poses), SalsaCoach NPC, high-impact screen redesigns (Home, CompletionModal, DailySession, Profile), custom tab bar, ExerciseLoadingScreen, hardcoded hex tokenization, cat character renames (Vinyl→Ballymakawww, Noodle→Shibu, Pixel→Bella).
 
 ---
 
-## Phase 3: Firebase Auth + Sync (COMPLETE)
+## Phase 7.5: All-AI Exercise Generation (IN PROGRESS)
 
-| Feature | Status |
-|---------|--------|
-| Firebase Auth (Email, Google, Apple, Anonymous) | Done |
-| Auth screens with session persistence | Done |
-| Navigation guards (signed-in vs anonymous) | Done |
-| SyncManager with offline queue | Done |
-| `syncAfterExercise()` wired in ExercisePlayer | Done |
-| `startPeriodicSync()` in App.tsx | Done |
-| `migrateLocalToCloud()` on first sign-in | Done |
-| Display name sync | Done |
-| User profile (AccountScreen) | Done |
+**Problem:** Only 36 static exercises (~45 min of gameplay). Daily players exhaust content in 2-3 days. Tiers 1-6 are hardwired to static JSON; only tiers 7-15 use AI.
 
----
+**Goal:** Every exercise from tier 1 onward is AI-generated. Static JSON becomes offline fallback only.
 
-## Phase 4+: Adaptive Learning + Gamification UI Overhaul (COMPLETE)
+**Core bugs being fixed:**
+1. AI exercises never award skill mastery (runtime IDs don't match SkillTree lookups)
+2. CurriculumEngine has a static-first gate blocking AI for tiers 1-6
+3. Exercise buffer is not skill-aware (pre-generates generic exercises)
 
-Design: `docs/plans/2026-02-16-gamification-adaptive-design.md`
-Implementation: `docs/plans/2026-02-16-gamification-adaptive-implementation.md`
+### Batch Status
 
-22 tasks across 6 phases, all completed. Key deliverables:
+| Batch | Description | Status |
+|-------|-------------|--------|
+| 1 | Fix skill mastery for AI exercises (skillId route param fallback) | **DONE** |
+| 2 | Add GenerationHints to SkillTree (100 nodes with promptHint, targetMidi, hand) | **DONE** |
+| 3 | Skill-aware buffer + generation pipeline (geminiExerciseService + buffer) | **TODO** |
+| 4 | CurriculumEngine AI-first for all tiers (invert static-first gate) | **DONE** |
+| 5 | LevelMap + LessonIntro AI integration (navigate with aiMode) | **TODO** |
+| 6 | Offline bootstrap + template integration (first-time experience) | **TODO** |
 
-### Phase A: Foundation Layer
-| Task | Feature | Status |
-|------|---------|--------|
-| 1 | Design tokens (`COLORS`, `GRADIENTS`, `GLOW`, `SPACING`) | Done |
-| 2 | Learner profile store (per-note accuracy, skills, tempo range) | Done |
-| 3 | Cat dialogue system (8 personalities x 11 triggers, ~440 messages) | Done |
-| 4 | Cat mood engine (happy/neutral/sleepy) | Done |
+### Files Modified So Far
+- `ExercisePlayer.tsx` — skillIdParam extraction + fallback mastery logic
+- `ExercisePlayer.test.tsx` — updated mocks + AI mastery test
+- `SkillTree.ts` — GenerationHints interface + GENERATION_HINTS for all 100 nodes + getGenerationHints()
+- `SkillTree.test.ts` — 5 new GenerationHints validation tests
+- `CurriculumEngine.ts` — ExerciseRef gains `'ai-with-fallback'` source + `fallbackExerciseId` + `makeAIRef()` helper (generator inversion in progress)
 
-### Phase B: Adaptive Engine
-| Task | Feature | Status |
-|------|---------|--------|
-| 5 | Gemini AI exercise generation service | Done |
-| 6 | Exercise buffer manager (FIFO, auto-refill) | Done |
-| 7 | 15 offline template exercises (5 easy/5 med/5 hard) | Done |
-| 8 | Wire adaptive engine to exercise completion | Done |
-
-### Phase C: Entry Assessment & AI Flow
-| Task | Feature | Status |
-|------|---------|--------|
-| 9 | Skill assessment screen (5-round onboarding) | Done |
-| 10 | Post-curriculum AI exercise flow | Done |
-
-### Phase D: UI Overhaul
-| Task | Feature | Status |
-|------|---------|--------|
-| 11 | HomeScreen redesign (gradient header, streak flame, daily challenge, cat companion) | Done |
-| 12 | LevelMap redesign (improved node styling with design tokens) | Done |
-| 13 | CompletionModal celebration (XP popup, confetti enhancements) | Done |
-| 14 | ProfileScreen redesign (level ring, stat cards, achievement showcase) | Done |
-| 15 | DailyChallengeCard (shimmer border, 2x XP, countdown) | Done |
-| 16 | StreakFlame + XpPopup animations | Done |
-| 17 | OnboardingScreen polish (animated progress bar, walking cat) | Done |
-
-### Phase E: Keyboard & Two-Handed Play
-| Task | Feature | Status |
-|------|---------|--------|
-| 18 | SplitKeyboard component | Done |
-| 19 | Wire SplitKeyboard to ExercisePlayer | Done |
-
-### Phase F: Achievement Expansion
-| Task | Feature | Status |
-|------|---------|--------|
-| 20 | 32 achievements across 13 condition types | Done |
-| 21 | Cat quest service (daily rotating quests, per-cat templates) | Done |
-| 22 | Final integration & verification (0 TS errors, 983 tests) | Done |
+### Remaining Work (Batches 3-6)
+- **Batch 3:** `geminiExerciseService.ts` accepts GenerationHints in prompt, `exerciseBufferManager.ts` stores targetSkillId per exercise + `getNextExerciseForSkill()` + `fillBufferForSkills()`
+- **Batch 4 (in progress):** Invert `generateLesson()`, `generateWarmUp()`, `generateReviewLesson()`, `generateChallenge()` to AI-first. Update `DailySessionScreen.tsx` to handle `'ai-with-fallback'`. Update CurriculumEngine tests.
+- **Batch 5:** LevelMapScreen + LessonIntroScreen navigate with `aiMode: true` + skillId for all tiers
+- **Batch 6:** templateExercises.ts gains skillId + `getTemplateForSkill()`. Fallback chain: skill template → static JSON → generic template → hardcoded C-major. OnboardingScreen calls `prefillOnboardingBuffer()`.
 
 ---
 
-## Avatar Redesign + Rive System (COMPLETE)
+## Phase 8: Audio Input — Microphone Pitch Detection (SHIP-BLOCKER)
 
-| Feature | Status |
-|---------|--------|
-| 8 unique cat visual identities (body colors, patterns, eye colors) | Done |
-| KeysieSvg rewritten with `visuals` prop + 5 pattern renderers | Done |
-| CatAvatar animations (floating idle, bounce entry, glow aura) | Done |
-| CatSwitchScreen Subway Surfers-style gallery | Done |
-| RiveCatAvatar wrapper (Rive-first, SVG fallback) | Done |
-| ExerciseBuddy (mini reactive companion during gameplay) | Done |
-| Cat avatar integrated across 9 screens | Done |
-| `rive-react-native` v9.8.0 installed | Done |
-| Actual .riv animation files (needs Rive editor) | Pending |
+**Problem:** 95%+ of target users don't own MIDI keyboards. Without mic input, the app is a screen-tap trainer.
 
----
+**Goal:** Low-latency single-note pitch detection via device microphone. Target: <150ms.
 
-## Gameplay UX Rework (COMPLETE)
+### Current State
+- `PitchDetector.ts` — interface exists, C++ TurboModule NOT built
+- `AudioEngine` architecture ready (WebAudioEngine JSI + ExpoAudioEngine)
+- Scoring engine already handles pitch matching — just needs real input events
+- `audio-pipeline.md` documents YIN algorithm spec
 
-User tested on iPhone 13 Pro, identified critical UX issues. All 10 tasks delivered across 2 commits.
+### Implementation Options
+| Option | Pros | Cons |
+|--------|------|------|
+| A: C++ TurboModule (YIN) | Lowest latency, spec'd | Most native code work |
+| B: expo-av + JS pitch detection | Easy to ship | Higher latency |
+| C: Platform native APIs (AVAudioEngine/Oboe) | Best quality | Platform-specific work |
 
-### What Was Built
-| Feature | Details |
-|---------|---------|
-| **VerticalPianoRoll** | Top-to-bottom falling notes (Synthesia-style), replacing horizontal scroll |
-| **Smart Keyboard** | `computeZoomedRange` — 1-2 octaves auto-selected from exercise notes |
-| **Demo Mode** | Visual-only note demonstration via `DemoPlaybackService` |
-| **Ghost Notes** | Semi-transparent note overlays after 3 failed attempts |
-| **Speed Selector** | 0.5x / 0.75x / 1.0x playback speed control |
-| **ExerciseBuddy Dialogue** | Cat companion triggers contextual tips during demo/ghost |
-| **Portrait Layout** | Full ExercisePlayer rewrite for portrait orientation |
-| **exerciseStore** | New fields: ghostNotes, demoWatched, failCount, playbackSpeed |
-| **44 ExercisePlayer Tests** | Comprehensive test coverage for all new features |
-| **Integration Tests** | Updated ExerciseFlow tests with Zustand-compatible mocks |
+### Key Tasks
+1. Choose implementation path
+2. Monophonic detection first (polyphonic = research problem)
+3. Feed detected pitches as MidiNoteEvent (same interface)
+4. Handle sustained notes + ambient noise rejection
+5. Calibration flow (mic permission + sensitivity)
+6. Input method selector (MIDI / Mic / On-screen)
+7. Adaptive timing windows per input method
+8. Measure latency on real devices
 
-### Architecture Decision: Why NOT edge keys (discussed & rejected)
-- Breaks piano spatial mapping (keys run left-to-right on real pianos)
-- Black keys have no natural position on vertical edge strips
-- Two-hand split inverts muscle memory (thumbs wrong direction)
+### Exit Criteria
+- Monophonic: >95% accuracy, <200ms latency
+- Input method selector in onboarding + settings
+- Adaptive timing windows per input type
+- Mic calibration flow
+- Free play works with mic
 
 ---
 
-## 16-Week Roadmap (Feb 17 → Jun 8, 2026)
+## Sound Design (PLANNED)
 
-**Detailed plan:** `docs/plans/2026-02-17-16-week-roadmap.md`
+**Problem:** App is silent outside piano note playback. No button sounds, celebrations, feedback, or cat sounds.
 
-### Phase 5: Adaptive Learning Revamp (Weeks 1-3)
-- AI curriculum engine replacing static lesson order
-- Voice coaching via TTS (Gemini → Expo Speech)
-- Free play analysis + drill generation
-- Weak spot detection + progressive difficulty
+### Scope (~20-30 audio assets)
+- Button press sounds (tap, toggle, select)
+- Celebration sounds (star earned, combo hit, exercise complete, level up)
+- Feedback sounds (correct/wrong note, miss)
+- Cat sounds (meow greeting, purr reward)
+- Countdown ticks
 
-### Phase 6: Avatar Evolution & Gamification (Weeks 4-6)
-- Pokemon-style cat evolution (Baby → Teen → Adult → Master)
-- Pick 1 of 3 starters, unlock others with Gems
-- Dual currency: XP (evolution) + Gems (purchasing)
-- 12+ gameplay-enhancing cat abilities
-- 50+ achievements, daily rewards
+### Design Direction
+Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mascot interactions.
 
-### Phase 7: Game Feel & Polish (Weeks 7-8)
-- Rive animations, screen transitions, haptics
-- Sound design, skeleton loading states
-- Performance audit, accessibility pass
-
-### Phase 8: Audio Input System (R&D Weeks 1-8, sole priority Weeks 9-10)
-- Microphone polyphonic detection for non-MIDI keyboards
-- Input method selector (MIDI / Mic / On-screen)
-- Adaptive timing windows + speed defaults per input
-- ML model for chord detection (TFLite/CoreML)
-
-### Music Library (parallel pipeline Weeks 1-10, UI Weeks 11-12)
-- 30+ songs across 5 genres (public domain)
-- MIDI → Exercise JSON pipeline
-- Browse/search/filter UI, section-based practice
-- AI coaching per song section, mastery tiers
-
-### Phase 9: Social & Leaderboards (Weeks 11-12)
-- Friends, weekly leagues (Bronze → Diamond), challenges
-- Push notifications, activity feed
-
-### Phase 10: QA + Launch (Weeks 13-16)
-- Comprehensive QA sprint, beta testing, App Store submission
-- Launch 100% FREE — 3-tier freemium model post-launch
+### Implementation
+1. Source/create short .wav assets (<1s each)
+2. Create `SoundManager` service (preload + play pattern)
+3. Wire into PressableScale, CompletionModal, AchievementToast, ExerciseBuddy, CountInAnimation
+4. Separate volume control in settings
+5. Respect device silent mode
 
 ---
 
-## Architecture Decisions
+## Rive Animations (PLANNED — Needs Guidance)
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Audio engine | react-native-audio-api + ExpoAudioEngine fallback | JSI-based low latency, graceful degradation |
-| AI challenges | Gemini 2.0 Flash | Fast, cheap, sufficient for JSON generation |
-| Avatar animation | rive-react-native (legacy) | Rive-first with SVG fallback; new Nitro needs SDK 53+ |
-| State management | Zustand v5 with MMKV persistence | Simple, performant, TypeScript-first |
-| Scoring model | 5-factor weighted (accuracy 35%, timing 30%, duration 15%, completeness 10%, extra notes 10%) | Balanced for piano learning |
+**Current state:** SVG composable system with Reanimated poses is functional. `RiveCatAvatar.tsx` placeholder exists but no .riv files.
 
-## Monthly Cost Projections
+**What's needed:**
+- Rive editor workflow guidance (user has no experience)
+- Design + animate 3 cat states minimum: idle, celebrate, teach
+- Decision: animate all 12 cats individually vs parameterized rig
+- `rive-react-native` integration
 
-| Scale | Firebase | Gemini AI | Total |
-|-------|----------|-----------|-------|
-| 100 DAU | ~$5 | ~$6 | ~$11/mo |
-| 1K DAU | ~$25 | ~$30 | ~$55/mo |
-| 10K DAU | ~$150 | ~$150 | ~$300/mo |
+**Not a blocker** — current SVG animations work well. This is a quality multiplier.
+
+---
+
+## Music Library (PLANNED)
+
+### Content Pipeline (background work)
+- Extend Exercise JSON for songs: layers, sections, difficulty per section, attribution
+- MIDI → Exercise JSON conversion script
+- 30+ songs: classical (public domain), simplified pop, film/TV, folk, games
+
+### UI Integration
+- Browse screen with genre carousel, search, difficulty filter
+- Song player: section markers, loop section, skip to chorus
+- Song mastery tiers (Bronze → Platinum)
+- AI song coaching (trouble spot drills)
+
+---
+
+## Phase 9: Social & Leaderboards (PLANNED)
+
+- Friends system (add via code/link, activity feed)
+- Weekly leagues (Bronze → Diamond, 30-person, promotion/demotion)
+- Leaderboard UI with animated rank changes
+- Friend challenges (beat my score)
+- Share achievements to social media
+- Firebase backend (Firestore + Cloud Functions for league rotation)
+- Push notifications (FCM: reminders, challenges, streak-at-risk)
+
+---
+
+## Phase 10: QA + Launch (PLANNED)
+
+### Weeks 13-14: QA Sprint
+- AI quality audit (100 exercises, 20+ coaching scenarios)
+- Mic input testing (5+ environments)
+- Performance profiling (every screen, target devices)
+- Full 30-day simulated journey
+- Gamification balance (XP curve, gem rates, evolution milestones)
+- Edge cases (kill mid-exercise, airplane mode, background/foreground)
+- Accessibility (VoiceOver, dynamic type, color contrast, reduced motion)
+- Security (Firebase rules, API keys, input sanitization)
+
+### Week 15: Beta Release
+- App Store assets (icon, screenshots, description, privacy policy)
+- EAS production builds (iOS + Android)
+- TestFlight + internal testing (5-10 testers, 5-day window)
+- Critical bug fixes from beta feedback
+
+### Week 16: Launch
+- Final fixes
+- App Store + Play Store submission
+- Launch monitoring (Crashlytics, analytics)
+- Post-launch hotfix plan
+
+**Launch is 100% free** — monetization (3-tier freemium) designed post-launch.
+
+---
+
+## Execution Priority
+
+```
+[NOW]      Phase 7.5: All-AI Exercises     ← biggest content gap, in progress
+[NEXT]     Phase 8: Audio Input (Mic)      ← core ship-blocker, needs R&D
+[NEXT]     Sound Design                    ← can prototype alongside audio work
+[LATER]    Music Library                   ← content pipeline can run in parallel
+[LATER]    Rive Animations                 ← nice-to-have, SVG system is functional
+[LATER]    Phase 9: Social & Leaderboards
+[LATER]    Phase 10: QA + Launch
+```
+
+---
+
+## Timeline (Weeks from Feb 17)
+
+```
+WEEK  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16
+      ├──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┤
+PH5   ████████████                 DONE
+PH6            ████████████        DONE
+PH7                     ████████   DONE
+PH7.5                      ██     ← NOW (Week 5)
+PH8                        ████████     Audio Input
+SOUND                         ████      Sound Design
+MUSIC ░░░░░░░░░░░░░░░░░░░░░░░░░░░░████  Pipeline → UI
+PH9                                  ████████  Social
+PH10                                       ████████  Launch
+```
+
+We are currently in **Week 5** (Feb 22). Phase 7.5 is partially done (Batches 1-2 complete, Batch 4 in progress).
+
+---
+
+## Known Technical Constraints
+
+1. **react-native-screens** pinned to 4.4.0 (Fabric codegen bug with RN 0.76)
+2. **Native MIDI module** not installed (needs RN 0.77+). VMPK + IAC Driver ready for testing
+3. **Native audio engine** (react-native-audio-api) requires RN 0.77+ for codegen. ExpoAudioEngine is primary
+4. **Jest worker teardown warning** — timer leak, non-blocking
+5. **~53 open GitHub issues** — to be triaged during QA sprint
+
+---
+
+## Archived Plan Files
+
+The following files are **historical archives only** — do not use for current status:
+
+| File | Original Purpose | Date |
+|------|-----------------|------|
+| `2026-02-13-adaptive-learning-design.md` | Phase 5 design (superseded by Phase 5 implementation) | Feb 13 |
+| `2026-02-13-phase2-completion-design.md` | Phase 2 completion design | Feb 13 |
+| `2026-02-13-phase2-implementation.md` | Phase 2 implementation tasks | Feb 13 |
+| `2026-02-15-phase2-polish-design.md` | Keysie avatar + polish design | Feb 15 |
+| `2026-02-15-phase2-polish-implementation.md` | Keysie avatar implementation | Feb 15 |
+| `2026-02-15-firebase-auth-sync-design.md` | Phase 3 auth design | Feb 15 |
+| `2026-02-15-firebase-auth-sync-implementation.md` | Phase 3 auth implementation | Feb 15 |
+| `2026-02-15-gamification-polish-sprint.md` | Gamification sprint tasks | Feb 15 |
+| `2026-02-16-gamification-adaptive-design.md` | Phase 4+ design | Feb 16 |
+| `2026-02-16-gamification-adaptive-implementation.md` | Phase 4+ implementation | Feb 16 |
+| `2026-02-16-gameplay-ux-rework-design.md` | Vertical PianoRoll design | Feb 16 |
+| `2026-02-16-gameplay-ux-rework-implementation.md` | Vertical PianoRoll implementation | Feb 16 |
+| `2026-02-17-16-week-roadmap.md` | Original 16-week roadmap (task details still useful for Phases 8-10) | Feb 17 |
+| `2026-02-22-next-priorities.md` | Priority analysis (merged into this plan) | Feb 22 |

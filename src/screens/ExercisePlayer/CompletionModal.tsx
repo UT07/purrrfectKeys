@@ -20,6 +20,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { MascotBubble } from '../../components/Mascot/MascotBubble';
 import { CatAvatar } from '../../components/Mascot/CatAvatar';
+import { SalsaCoach } from '../../components/Mascot/SalsaCoach';
+import { useCatEvolutionStore } from '../../stores/catEvolutionStore';
 import { FunFactCard } from '../../components/FunFact/FunFactCard';
 import { getFactForExerciseType } from '../../content/funFactSelector';
 import type { MascotMood } from '../../components/Mascot/mascotTips';
@@ -31,8 +33,12 @@ import { ttsService } from '../../services/tts/TTSService';
 import { useProgressStore } from '../../stores/progressStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { getLessonIdForExercise } from '../../content/ContentLoader';
-import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GLOW, glowColor } from '../../theme/tokens';
 import type { Exercise, ExerciseScore } from '../../core/exercises/types';
+
+/** Star tier colors (no token equivalent — intentional silver/bronze palette) */
+const STAR_SILVER = '#C0C0C0';
+const STAR_BRONZE = '#CD7F32';
 
 export interface CompletionModalProps {
   score: ExerciseScore;
@@ -44,6 +50,9 @@ export interface CompletionModalProps {
   onStartDemo?: () => void;
   isTestMode?: boolean;
   testID?: string;
+  gemsEarned?: number;
+  sessionMinutes?: number;
+  tempoChange?: number;
 }
 
 export const CompletionModal: React.FC<CompletionModalProps> = ({
@@ -56,6 +65,9 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   onStartDemo,
   isTestMode = false,
   testID,
+  gemsEarned = 0,
+  sessionMinutes,
+  tempoChange = 0,
 }) => {
   // Animation values
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -74,9 +86,14 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   // AI Coach feedback
   const [coachFeedback, setCoachFeedback] = useState<string | null>(null);
   const [coachLoading, setCoachLoading] = useState(true);
+  const hasAutoPlayed = useRef(false);
 
-  // Cat dialogue
+  // Cat dialogue & evolution
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
+  const activeCatId = selectedCatId ?? 'mini-meowww';
+  const evolutionStage = useCatEvolutionStore(
+    (s) => s.evolutionData[activeCatId]?.currentStage ?? 'baby'
+  );
   const catDialogue = useMemo(() => {
     const catId = selectedCatId ?? 'mini-meowww';
     const trigger = score.isPassed ? 'exercise_complete_pass' : 'exercise_complete_fail';
@@ -91,9 +108,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       try {
         const { level, lessonProgress } = useProgressStore.getState();
         const exLessonId = getLessonIdForExercise(exercise.id);
-        const attemptNumber = exLessonId
-          ? (lessonProgress[exLessonId]?.exerciseScores[exercise.id]?.attempts ?? 1)
-          : 1;
+        const exProgress = exLessonId
+          ? lessonProgress[exLessonId]?.exerciseScores[exercise.id]
+          : undefined;
+        const attemptNumber = exProgress?.attempts ?? 1;
+        const recentScores = exProgress?.averageScore != null ? [exProgress.averageScore] : [];
         const feedbackPromise = coachingService.generateFeedback({
           exerciseId: exercise.id,
           exerciseTitle: exercise.metadata.title,
@@ -101,7 +120,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
           score,
           userLevel: level,
           attemptNumber,
-          recentScores: [],
+          recentScores,
+          sessionMinutes,
         });
         // 10s timeout — don't let a hung network block the completion screen
         const result = await Promise.race([
@@ -121,6 +141,18 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     fetchFeedback();
     return () => { cancelled = true; };
   }, [exercise.id, exercise.metadata.title, exercise.metadata.difficulty, score]);
+
+  // Auto-play coach feedback via TTS when it arrives
+  useEffect(() => {
+    if (!coachFeedback || coachLoading || hasAutoPlayed.current) return;
+    hasAutoPlayed.current = true;
+    const catId = selectedCatId ?? 'mini-meowww';
+    // Small delay to let the score animation finish
+    const timer = setTimeout(() => {
+      ttsService.speak(coachFeedback, { catId });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [coachFeedback, coachLoading, selectedCatId]);
 
   // Main animation sequence
   useEffect(() => {
@@ -187,8 +219,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   // Result display
   const resultDisplay = useMemo(() => {
     if (score.stars === 3) return { text: 'Outstanding!', color: COLORS.starGold, icon: 'crown' as const };
-    if (score.stars === 2) return { text: 'Great Job!', color: '#C0C0C0', icon: 'star' as const };
-    if (score.stars === 1) return { text: 'Good Effort!', color: '#CD7F32', icon: 'star-half-full' as const };
+    if (score.stars === 2) return { text: 'Great Job!', color: STAR_SILVER, icon: 'star' as const };
+    if (score.stars === 1) return { text: 'Good Effort!', color: STAR_BRONZE, icon: 'star-half-full' as const };
     if (score.isPassed) return { text: 'Keep Going!', color: COLORS.success, icon: 'check-circle' as const };
     return { text: 'Try Again!', color: COLORS.error, icon: 'refresh' as const };
   }, [score.stars, score.isPassed]);
@@ -247,9 +279,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
           {/* Cat Avatar + Header */}
           <View style={styles.header}>
             <CatAvatar
-              catId={selectedCatId ?? 'mini-meowww'}
-              size="medium"
+              catId={activeCatId}
+              size="large"
+              mood={mascotMood}
               showGlow={score.stars >= 2}
+              evolutionStage={evolutionStage}
             />
             <Text style={styles.title}>{exercise.metadata.title}</Text>
             <Text style={styles.subtitle}>
@@ -285,7 +319,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                     >
                       <MaterialCommunityIcons
                         name={isEarned ? 'star' : 'star-outline'}
-                        size={38}
+                        size={44}
                         color={isEarned ? COLORS.starGold : COLORS.starEmpty}
                       />
                     </Animated.View>
@@ -313,6 +347,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
             <BreakdownBar label="Accuracy" value={score.breakdown.accuracy} color={COLORS.success} />
             <BreakdownBar label="Timing" value={score.breakdown.timing} color={COLORS.info} />
             <BreakdownBar label="Completeness" value={score.breakdown.completeness} color={COLORS.warning} />
+            <BreakdownBar label="Duration" value={score.breakdown.duration} color={COLORS.primary} />
+            <BreakdownBar label="Extra Notes" value={score.breakdown.extraNotes} color={COLORS.textMuted} />
           </View>
 
           {/* XP and Stats */}
@@ -322,6 +358,13 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               <Text style={styles.statLabel}>XP Earned</Text>
               <Text style={styles.statValue}>+{score.xpEarned}</Text>
             </View>
+            {gemsEarned > 0 && (
+              <View style={styles.statItem}>
+                <MaterialCommunityIcons name="diamond-stone" size={20} color={COLORS.gemGold} />
+                <Text style={styles.statLabel}>Gems</Text>
+                <Text style={styles.statValue}>+{gemsEarned}</Text>
+              </View>
+            )}
             {score.isNewHighScore && (
               <View style={styles.statItem}>
                 <MaterialCommunityIcons name="trophy" size={20} color={COLORS.starGold} />
@@ -331,20 +374,35 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
             )}
           </View>
 
+          {/* Difficulty adjustment indicator */}
+          {tempoChange !== 0 && (
+            <View style={styles.tempoChangeRow}>
+              <MaterialCommunityIcons
+                name={tempoChange > 0 ? 'chevron-double-up' : 'chevron-double-down'}
+                size={16}
+                color={tempoChange > 0 ? COLORS.success : COLORS.warning}
+              />
+              <Text style={[styles.tempoChangeText, { color: tempoChange > 0 ? COLORS.success : COLORS.warning }]}>
+                Tempo {tempoChange > 0 ? '+' : ''}{tempoChange} BPM for next exercises
+              </Text>
+            </View>
+          )}
+
           {/* Cat Dialogue (replaces generic tips) */}
           <View style={styles.catDialogueSection}>
             <MascotBubble
               mood={mascotMood}
               message={catDialogue}
               size="small"
+              catId={activeCatId}
             />
           </View>
 
-          {/* AI Coach Feedback */}
+          {/* AI Coach Feedback — Salsa delivers it */}
           <View style={styles.coachSection}>
             <View style={styles.coachHeader}>
-              <MaterialCommunityIcons name="robot-outline" size={18} color="#7C4DFF" />
-              <Text style={styles.coachTitle}>Coach Feedback</Text>
+              <SalsaCoach size="tiny" mood="teaching" />
+              <Text style={styles.coachTitle}>Salsa Says</Text>
               {coachFeedback && !coachLoading && (
                 <TouchableOpacity
                   style={styles.speakerBtn}
@@ -354,12 +412,12 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <MaterialCommunityIcons name="volume-high" size={18} color="#7C4DFF" />
+                  <MaterialCommunityIcons name="volume-high" size={18} color={COLORS.primary} />
                 </TouchableOpacity>
               )}
             </View>
             {coachLoading ? (
-              <ActivityIndicator size="small" color="#7C4DFF" />
+              <ActivityIndicator size="small" color={COLORS.primary} />
             ) : (
               <Text style={styles.coachText}>{coachFeedback}</Text>
             )}
@@ -393,7 +451,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 onPress={onStartTest}
                 variant="primary"
                 size="large"
-                icon={<MaterialCommunityIcons name="trophy-outline" size={20} color="#FFF" />}
+                icon={<MaterialCommunityIcons name="trophy-outline" size={20} color={COLORS.textPrimary} />}
                 testID="completion-start-test"
               />
             )}
@@ -403,7 +461,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 onPress={onNextExercise}
                 variant="primary"
                 size="large"
-                icon={<MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" />}
+                icon={<MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.textPrimary} />}
                 testID="completion-next"
               />
             )}
@@ -413,7 +471,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 onPress={onRetry}
                 variant="primary"
                 size="large"
-                icon={<MaterialCommunityIcons name="refresh" size={20} color="#FFF" />}
+                icon={<MaterialCommunityIcons name="refresh" size={20} color={COLORS.textPrimary} />}
                 testID="completion-retry"
               />
             )}
@@ -423,7 +481,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 onPress={onClose}
                 variant={score.isPassed && (onNextExercise || onStartTest) ? 'secondary' : (!score.isPassed ? 'secondary' : 'primary')}
                 size="large"
-                icon={<MaterialCommunityIcons name={score.isPassed && !onNextExercise && !onStartTest ? 'check' : 'arrow-left'} size={20} color={score.isPassed && !onNextExercise && !onStartTest ? '#FFF' : '#666'} />}
+                icon={<MaterialCommunityIcons name={score.isPassed && !onNextExercise && !onStartTest ? 'check' : 'arrow-left'} size={20} color={score.isPassed && !onNextExercise && !onStartTest ? COLORS.textPrimary : COLORS.textMuted} />}
                 testID="completion-continue"
               />
             )}
@@ -475,7 +533,7 @@ CompletionModal.displayName = 'CompletionModal';
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: COLORS.surfaceOverlay,
     zIndex: 1000,
   },
   xpPopupContainer: {
@@ -495,35 +553,30 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.md - 4,
+    ...SHADOWS.lg,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
   },
   header: {
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.lg,
     color: COLORS.textPrimary,
   },
   subtitle: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
   },
   scoreStarsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
+    gap: SPACING.lg,
   },
   scoreSection: {
     alignItems: 'center',
@@ -542,17 +595,15 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   scoreNumber: {
-    fontSize: 36,
-    fontWeight: '800',
+    ...TYPOGRAPHY.display.lg,
   },
   scorePercent: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.sm,
     marginLeft: 1,
   },
   starsResultColumn: {
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
   starsContainer: {
     flexDirection: 'row',
@@ -565,31 +616,31 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   resultText: {
-    fontSize: 18,
+    ...TYPOGRAPHY.heading.md,
     fontWeight: '700',
   },
   breakdownSection: {
-    gap: 8,
+    gap: SPACING.sm,
     backgroundColor: COLORS.cardSurface,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: SPACING.md - 4,
+    paddingVertical: SPACING.sm + 2,
     borderRadius: BORDER_RADIUS.sm,
   },
   breakdownTitle: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   breakdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
   breakdownLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '600',
+    color: COLORS.textSecondary,
     width: 90,
   },
   breakdownBar: {
@@ -604,100 +655,109 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   breakdownValue: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
+    color: COLORS.textSecondary,
     width: 36,
     textAlign: 'right',
   },
   statsSection: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.md - 4,
     justifyContent: 'center',
   },
   statItem: {
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md - 4,
     paddingVertical: 6,
-    backgroundColor: 'rgba(220, 20, 60, 0.08)',
+    backgroundColor: glowColor(COLORS.primary, 0.08),
     borderRadius: BORDER_RADIUS.sm,
     flex: 1,
   },
   statLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.caption.md,
     fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   statValue: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '700',
     color: COLORS.starGold,
   },
-  catDialogueSection: {
-    paddingHorizontal: 4,
+  tempoChangeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
     paddingVertical: 4,
   },
+  tempoChangeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  catDialogueSection: {
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
+  },
   coachSection: {
-    backgroundColor: 'rgba(124, 77, 255, 0.08)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: BORDER_RADIUS.sm,
-    gap: 6,
+    backgroundColor: glowColor(COLORS.primary, 0.1),
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md - 2,
+    borderRadius: BORDER_RADIUS.md,
+    gap: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(124, 77, 255, 0.15)',
+    borderColor: glowColor(COLORS.primary, 0.2),
   },
   coachHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.sm,
   },
   coachTitle: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
-    color: '#B39DDB',
+    color: COLORS.textSecondary,
     flex: 1,
   },
   speakerBtn: {
-    padding: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(124, 77, 255, 0.15)',
+    padding: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: glowColor(COLORS.primary, 0.15),
   },
   coachText: {
-    fontSize: 13,
-    color: '#D1C4E9',
-    lineHeight: 18,
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textPrimary,
   },
   actions: {
-    gap: 8,
+    gap: SPACING.sm,
   },
   demoPrompt: {
-    backgroundColor: 'rgba(220, 20, 60, 0.1)',
+    backgroundColor: glowColor(COLORS.primary, 0.1),
     borderRadius: BORDER_RADIUS.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
+    paddingHorizontal: SPACING.md - 2,
+    paddingVertical: SPACING.md - 4,
+    gap: SPACING.sm + 2,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(220, 20, 60, 0.2)',
+    borderColor: glowColor(COLORS.primary, 0.2),
   },
   demoPromptText: {
-    fontSize: 13,
-    color: '#FF8A80',
-    lineHeight: 18,
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.primaryLight,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   demoPromptButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: 'rgba(220, 20, 60, 0.3)',
+    paddingHorizontal: SPACING.lg - 4,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: GLOW.crimson,
   },
   demoPromptButtonText: {
-    color: '#FFF',
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '700',
+    color: COLORS.textPrimary,
   },
 });
 

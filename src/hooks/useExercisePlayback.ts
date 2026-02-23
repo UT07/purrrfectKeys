@@ -244,7 +244,7 @@ export function useExercisePlayback({
       // Only record noteOn events for scoring (noteOff would double-count notes)
       if (midiEvent.type === 'noteOn') {
         // Normalize timestamp to Date.now() domain (native MIDI may use a different clock)
-        const normalizedEvent = { ...midiEvent, timestamp: Date.now() };
+        const normalizedEvent = { ...midiEvent, timestamp: Date.now(), inputSource: 'midi' as const };
         const noteIndex = playedNotesRef.current.length;
         playedNotesRef.current.push(normalizedEvent);
         trackNoteOnIndex(normalizedEvent.note, noteIndex);
@@ -492,7 +492,7 @@ export function useExercisePlayback({
 
     const adjustedNotes = playedNotesRef.current.map((n) => ({
       ...n,
-      timestamp: n.timestamp - beat0EpochMs - TOUCH_LATENCY_COMPENSATION_MS,
+      timestamp: n.timestamp - beat0EpochMs - (n.inputSource === 'midi' ? 0 : TOUCH_LATENCY_COMPENSATION_MS),
     }));
 
     // Look up previous high score so isNewHighScore is accurate
@@ -541,6 +541,7 @@ export function useExercisePlayback({
         velocity: Math.floor(velocity * 127),
         timestamp: Date.now(),
         channel: 0,
+        inputSource: 'touch',
       };
 
       const noteIndex = playedNotesRef.current.length;

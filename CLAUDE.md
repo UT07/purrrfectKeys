@@ -1,56 +1,30 @@
 # Purrrfect Keys - AI-Powered Piano Learning App
 
 ## Project Overview
-A Duolingo-style piano learning app with real-time feedback, MIDI support, and AI coaching.
+A Duolingo-style piano learning app with real-time feedback, MIDI support, AI coaching, and collectible cat companions that evolve as you learn.
 Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current Sprint: 16-Week Roadmap (Feb 17 → Jun 8, 2026)
+## Current Sprint (Feb 23, 2026)
 
-**Codebase Health:** 79 test suites, 1,789 tests passing, 0 TypeScript errors
+**Codebase Health:** 90 test suites, 2,129 tests passing, 0 TypeScript errors
 
-Previous sprints all COMPLETE:
-- Phase 4+ (Gamification + Adaptive Learning + UI Overhaul): 22/22 tasks
-- Avatar Redesign + Rive System: committed
-- Gameplay UX Rework: 10/10 tasks
-- QA Sprint: 18 new test suites, 6 bug fixes
-- Bug Fix Sprint (Feb 19-20): 10+ issues closed, cross-device sync, Google Sign-In, Detox E2E
-- Phase 5 (Adaptive Learning Revamp): 18/18 tasks, ~150+ new tests
-- Phase 5.2 (365-Day Curriculum Expansion): SkillTree to 100 nodes, session variety, skill decay
+**Phases 1-7.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises)
 
-**Recently Completed (Feb 20, 2026):**
-- Phase 5.2 365-Day Curriculum Expansion:
-  - SkillTree expanded: 100 skill nodes across 15 tiers (was 27 nodes, 6 tiers)
-  - New categories: black-keys, key-signatures, expression, arpeggios, sight-reading
-  - Skill decay: 14-day half-life, automatic review session triggering
-  - Multi-session mastery: harder skills require 3-5 successful completions
-  - Session type variety: new-material, review, challenge, mixed
-  - AI-only exercises for tiers 7-15 (no static JSON; Gemini generates per-skill)
-  - LevelMap tier section headers for 24-lesson journey
-  - DailySessionScreen session type badge + review count indicator
-- Phase 5 Adaptive Learning Revamp: all 18 tasks (5.1-5.18) across 7 batches complete
-- SkillTree data model: DAG of 100 skill nodes with categories, tiers, prerequisites
-- CurriculumEngine: AI session planner with 4 session types using learner profile
-- AI exercise generation: skill-aware generation for all 100 nodes via Gemini Flash
-- DailySessionScreen: "Today's Practice" with session type badge + skill progress
-- Voice coaching pipeline: VoiceCoachingService + TTSService (expo-speech) + per-cat voice configs
-- Offline coaching templates: 50+ pre-generated coaching strings for Gemini fallback
-- WeakSpotDetector: pattern-based detection (note/transition/timing/hand weaknesses)
-- DifficultyEngine: progressive difficulty adjustment (5 BPM per mastered exercise)
-- FreePlayAnalyzer: key/scale detection + drill generation from free play sessions
-- Piano roll Tetris cascade: notes fall from top during count-in
+**Currently Active:** Phase 8 — Audio Input (Mic)
 
 **Active Roadmap:**
-- ~~Phase 5: Adaptive Learning Revamp (Weeks 1-3)~~ COMPLETE
-- Phase 6: Avatar Evolution & Gamification (Weeks 4-6) — Pokemon evolution, gems, abilities
-- Phase 7: Game Feel & Polish (Weeks 7-8) — micro-interactions, Rive, transitions
-- Phase 8: Audio Input (Weeks 9-10) — mic polyphonic detection (R&D parallel from Week 1)
-- Music Library (parallel pipeline, UI integration Weeks 11-12)
-- Phase 9: Social & Leaderboards (Weeks 11-12)
-- Phase 10: QA + Launch (Weeks 13-16)
+- **Phase 7.5: All-AI Exercises** — COMPLETE (all 6 batches done)
+- **Phase 8: Audio Input (Mic)** — UP NEXT (ship-blocker: pitch detection for users without MIDI)
+- Sound Design — PLANNED
+- Music Library — PLANNED (parallel pipeline)
+- Phase 9: Social & Leaderboards — PLANNED
+- Phase 10: QA + Launch — PLANNED
 
-See `docs/plans/2026-02-17-16-week-roadmap.md` for full details.
+See `docs/plans/2026-02-13-master-plan.md` for the **single source of truth** on all phases.
+See `docs/PRD.md` for product requirements.
+See `docs/design-system.md` for design system.
 
 ## Quick Commands
 
@@ -110,11 +84,15 @@ src/
 ├── input/                # Input handling
 │   ├── MidiInput.ts      # MIDI device handling
 │   └── PitchDetector.ts  # Microphone fallback (TurboModule wrapper)
-├── stores/               # Zustand stores
+├── stores/               # Zustand stores (12 stores)
 │   ├── exerciseStore.ts  # Current exercise state
 │   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
-│   ├── settingsStore.ts  # User preferences
-│   └── learnerProfileStore.ts  # Adaptive learning: per-note accuracy, skills, tempo range
+│   ├── settingsStore.ts  # User preferences, selected cat
+│   ├── learnerProfileStore.ts  # Adaptive learning: per-note accuracy, skills, tempo range
+│   ├── catEvolutionStore.ts  # Cat evolution stages, XP per cat, abilities
+│   ├── gemStore.ts       # Gem balance, earn/spend transactions
+│   ├── achievementStore.ts  # Achievement tracking, unlock checking
+│   └── authStore.ts      # Firebase auth state
 ├── screens/              # Screen components
 │   └── ExercisePlayer/   # Main exercise gameplay screen
 ├── components/           # Reusable UI components
@@ -122,7 +100,7 @@ src/
 │   │   ├── SplitKeyboard.tsx  # Two-handed split keyboard
 │   │   └── computeZoomedRange.ts  # Smart octave selection from exercise notes
 │   ├── PianoRoll/        # VerticalPianoRoll (falling notes) + legacy PianoRoll
-│   ├── Mascot/           # Cat avatars (CatAvatar, KeysieSvg, RiveCatAvatar, ExerciseBuddy, MascotBubble)
+│   ├── Mascot/           # Cat avatars (CatAvatar, KeysieSvg, SalsaCoach, ExerciseBuddy, MascotBubble, svg/CatParts, svg/catProfiles)
 │   ├── transitions/      # ExerciseCard, LessonCompleteScreen, AchievementToast, ConfettiEffect
 │   └── common/           # ScoreRing, PressableScale, buttons, cards
 ├── hooks/                # Custom React hooks
@@ -138,7 +116,7 @@ src/
 │   ├── FreePlayAnalyzer.ts  # Free play analysis with key/scale detection
 │   └── geminiExerciseService.ts  # AI exercise generation via Gemini Flash (skill-aware)
 ├── theme/                # Design system
-│   └── tokens.ts  # Design tokens, colors, gradients, spacing
+│   └── tokens.ts  # Design tokens: COLORS, TYPOGRAPHY, SHADOWS, GRADIENTS, GLOW, SPACING, BORDER_RADIUS, ANIMATION_CONFIG
 └── utils/                # Shared utilities
 ```
 
@@ -159,7 +137,11 @@ src/
 | `src/components/PianoRoll/PianoRoll.tsx` | Transform-based scrolling note display |
 | `src/services/ai/GeminiCoach.ts` | AI coaching via Gemini 2.0 Flash with fallback |
 | `src/hooks/useExercisePlayback.ts` | Playback timing, MIDI events, completion handler |
-| `src/components/Mascot/CatAvatar.tsx` | Animated SVG cat avatar (floating idle, bounce entry, glow aura) |
+| `src/components/Mascot/CatAvatar.tsx` | Composable SVG cat avatar (8 moods, 4 sizes, per-cat profiles, Reanimated poses) |
+| `src/components/Mascot/SalsaCoach.tsx` | NPC coach (grey cat, green eyes) — teaching pose + catchphrase bubble |
+| `src/components/Mascot/svg/CatParts.tsx` | Composable SVG body/ears/eyes/tail/mouth components |
+| `src/components/Mascot/svg/catProfiles.ts` | Per-cat visual profiles (body shape, eyes, ears, blush, etc.) |
+| `src/components/Mascot/animations/catAnimations.ts` | Reanimated pose configs (idle/celebrate/teach/sleep/play) |
 | `src/components/Mascot/ExerciseBuddy.tsx` | In-exercise cat companion with contextual reactions |
 | `src/components/Mascot/RiveCatAvatar.tsx` | Rive-animated cat avatar (high-fidelity animations) |
 | `src/components/common/ScoreRing.tsx` | Animated SVG circle score indicator |
@@ -167,7 +149,7 @@ src/
 | `src/components/Keyboard/computeZoomedRange.ts` | Smart octave selection (1-2 octaves from exercise notes) |
 | `src/components/PianoRoll/VerticalPianoRoll.tsx` | Falling-note display (top-to-bottom, Synthesia-style) |
 | `src/services/demoPlayback.ts` | Demo mode: visual-only note playback with cat dialogue |
-| `src/content/catDialogue.ts` | Cat personality dialogue (8 cats, ~320 messages, trigger-based) |
+| `src/content/catDialogue.ts` | Cat personality dialogue (12 cats, ~600+ messages, 14 trigger types) |
 | `src/core/curriculum/SkillTree.ts` | DAG of 100 skill nodes across 15 tiers, 12 categories, skill decay + review functions |
 | `src/core/curriculum/CurriculumEngine.ts` | AI session planner: 4 session types (new-material/review/challenge/mixed) + decay-aware scheduling |
 | `src/core/curriculum/WeakSpotDetector.ts` | Pattern-based weak spot detection (note/transition/timing/hand) |
@@ -179,11 +161,23 @@ src/
 | `src/services/FreePlayAnalyzer.ts` | Free play analysis: key/scale detection, drill generation |
 | `src/content/offlineCoachingTemplates.ts` | 50+ pre-generated coaching strings for offline fallback |
 | `src/stores/learnerProfileStore.ts` | Adaptive learning: per-note accuracy, skills, tempo range, mastered skills, skill decay, multi-session mastery |
+| `src/stores/catEvolutionStore.ts` | Cat evolution stages, XP per cat, stage computation, ability unlocks |
+| `src/stores/gemStore.ts` | Gem balance, earn/spend transactions, earning sources with multipliers |
+| `src/stores/achievementStore.ts` | Achievement tracking, unlock checking, context builder |
 | `src/stores/authStore.ts` | Firebase Auth: anonymous, email, Google, Apple sign-in + linking |
 | `src/services/firebase/syncService.ts` | Cross-device sync: offline queue + Firestore pull/merge |
 | `src/services/firebase/dataMigration.ts` | One-time local→cloud migration on first sign-in |
-| `docs/plans/2026-02-16-gamification-adaptive-design.md` | Current sprint design doc |
-| `docs/plans/2026-02-16-gamification-adaptive-implementation.md` | Current sprint implementation plan (22 tasks) |
+| `src/components/transitions/EvolutionReveal.tsx` | Full-screen Pokemon-style cat evolution animation |
+| `src/components/GemEarnPopup.tsx` | Gem reward animation popup |
+| `src/screens/CatCollectionScreen.tsx` | Cat gallery with evolution progress, ability codex, gem unlocking |
+| `src/screens/ExercisePlayer/ExerciseLoadingScreen.tsx` | Salsa interstitial shown while AI exercises load |
+| `src/content/loadingTips.ts` | 20 practice tips for loading screen |
+| `src/navigation/CustomTabBar.tsx` | Custom bottom tab bar with animated icons |
+| `src/core/abilities/AbilityEngine.ts` | Applies cat abilities to exercise config (timing windows, combo shield, etc.) |
+| `src/stores/types.ts` | Shared types: EvolutionStage, CatAbility, PlaybackSpeed, etc. |
+| `docs/PRD.md` | Product Requirements Document |
+| `docs/design-system.md` | Design system, visual tokens, component inventory, known visual debt |
+| `docs/plans/2026-02-17-16-week-roadmap.md` | 16-week development roadmap |
 | `content/exercises/` | JSON exercise definitions (30 static exercises, 6 lessons; tiers 7-15 use AI generation) |
 
 ## Code Style
@@ -242,7 +236,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**1,725 tests, 75 suites.** Run tests before committing:
+**1,991 tests, 84 suites.** Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
@@ -256,10 +250,12 @@ For detailed guidance on specific topics, read these files:
 - @agent_docs/exercise-format.md - Exercise JSON schema and examples
 - @agent_docs/scoring-algorithm.md - Note validation and scoring logic
 - @agent_docs/midi-integration.md - MIDI device handling
-- @agent_docs/firebase-schema.md - Firestore data models
 - @agent_docs/ai-coaching.md - Gemini prompts and caching
 - @agent_docs/stabilization-report.md - Full changelog of all fixes and improvements
-- @agent_docs/feature-level-map.md - Planned Duolingo-style level map UI
+- @agent_docs/feature-level-map.md - Duolingo-style level map UI (implemented)
+- docs/PRD.md - Product requirements document
+- docs/design-system.md - Design system, visual tokens, and known visual debt
+- docs/plans/2026-02-13-master-plan.md - Master plan with all phase statuses
 
 ## Common Tasks
 

@@ -2,11 +2,12 @@
 
 ## Overview
 
-The scoring system evaluates user performance across four dimensions:
-1. **Accuracy** (40%) - Did you play the right notes?
-2. **Timing** (35%) - Did you play them at the right time?
-3. **Completeness** (15%) - Did you play all the notes?
-4. **Precision** (10%) - Penalty for extra notes
+The scoring system evaluates user performance across five dimensions:
+1. **Accuracy** (35%) - Did you play the right notes?
+2. **Timing** (30%) - Did you play them at the right time?
+3. **Completeness** (10%) - Did you play all the notes?
+4. **Extra Notes** (10%) - Penalty for extra notes (inverted: 100 = no extras)
+5. **Duration** (15%) - Did you hold notes for the right length?
 
 ## Core Types
 
@@ -27,11 +28,13 @@ interface ExerciseScore {
     accuracy: number;
     timing: number;
     completeness: number;
-    precision: number;
+    extraNotes: number;
+    duration: number;
   };
   details: NoteScore[];
   perfectNotes: number;
   goodNotes: number;
+  okNotes: number;
   missedNotes: number;
   extraNotes: number;
   xpEarned: number;
@@ -73,9 +76,15 @@ export function calculateTimingScore(offsetMs: number): { score: number; status:
 ## Final Score Aggregation
 
 ```typescript
-const WEIGHTS = { accuracy: 0.40, timing: 0.35, completeness: 0.15, precision: 0.10 };
+const SCORE_WEIGHTS = {
+  accuracy: 0.35,
+  timing: 0.30,
+  completeness: 0.10,
+  extraNotes: 0.10,
+  duration: 0.15,
+};
 
-overall = accuracy * 0.40 + timing * 0.35 + completeness * 0.15 + precision * 0.10
+overall = accuracy * 0.35 + timing * 0.30 + completeness * 0.10 + extraNotes * 0.10 + duration * 0.15
 ```
 
 ## Star Thresholds

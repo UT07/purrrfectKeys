@@ -22,6 +22,7 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
 import { GoogleAuthProvider, OAuthProvider, EmailAuthProvider } from 'firebase/auth';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 function isGoogleAuthAvailable(): boolean {
@@ -147,21 +148,21 @@ export function AccountScreen(): React.ReactElement {
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
       'Delete Account',
-      'This will permanently delete your account and all progress. This cannot be undone.',
+      'This will permanently delete your account, all progress, cats, and gems. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Delete Forever',
           style: 'destructive',
           onPress: async () => {
             const result = await authDeleteAccount();
             if (result === 'REQUIRES_REAUTH') {
               Alert.alert(
-                'Re-authentication Required',
-                'For security, please sign in again to delete your account.',
+                'Verify Your Identity',
+                'For security, you need to sign in one more time to confirm the deletion. Your account will be deleted immediately after.',
                 [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Continue', onPress: handleReauthAndDelete },
+                  { text: 'Sign In to Delete', style: 'destructive', onPress: handleReauthAndDelete },
                 ]
               );
             }
@@ -259,7 +260,7 @@ export function AccountScreen(): React.ReactElement {
               onPress={handleLinkApple}
               testID="account-link-apple"
             >
-              <Text style={[styles.linkButtonText, { color: '#000' }]}>Link with Apple</Text>
+              <Text style={[styles.linkButtonText, { color: COLORS.background }]}>Link with Apple</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -363,7 +364,7 @@ export function AccountScreen(): React.ReactElement {
           testID="account-signout"
         >
           {isLoading ? (
-            <ActivityIndicator color="#FF6B6B" />
+            <ActivityIndicator color={COLORS.error} />
           ) : (
             <Text style={styles.dangerText}>Sign Out</Text>
           )}
@@ -382,41 +383,41 @@ export function AccountScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0D0D0D' },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
-  backButton: { marginBottom: 24 },
-  backText: { color: '#DC143C', fontSize: 16, fontWeight: '600' },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: 40 },
+  backButton: { marginBottom: SPACING.lg },
+  backText: { ...TYPOGRAPHY.body.md, color: COLORS.primary, fontWeight: '600' },
   // Anonymous hero
-  anonHero: { alignItems: 'center', marginBottom: 32 },
-  anonTitle: { fontSize: 18, color: '#CCC', textAlign: 'center', marginTop: 16, lineHeight: 26 },
-  linkButtons: { gap: 12, marginBottom: 32 },
-  linkButton: { height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  appleLink: { backgroundColor: '#FFF' },
-  googleLink: { backgroundColor: '#1A1A1A', borderWidth: 1, borderColor: '#333' },
-  emailLink: { backgroundColor: '#DC143C' },
-  linkButtonText: { fontSize: 16, fontWeight: '600', color: '#FFF' },
-  infoBox: { backgroundColor: '#1A1A1A', borderRadius: 12, padding: 16 },
-  infoTitle: { color: '#FFF', fontSize: 15, fontWeight: '600' },
-  infoBody: { color: '#999', fontSize: 14, marginTop: 4 },
+  anonHero: { alignItems: 'center', marginBottom: SPACING.xl },
+  anonTitle: { ...TYPOGRAPHY.body.lg, color: COLORS.textSecondary, textAlign: 'center', marginTop: SPACING.md, lineHeight: 26 },
+  linkButtons: { gap: SPACING.sm + 4, marginBottom: SPACING.xl },
+  linkButton: { height: 52, borderRadius: BORDER_RADIUS.lg, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
+  appleLink: { backgroundColor: COLORS.textPrimary },
+  googleLink: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.cardBorder },
+  emailLink: { backgroundColor: COLORS.primary },
+  linkButtonText: { ...TYPOGRAPHY.body.md, fontWeight: '700', color: COLORS.textPrimary },
+  infoBox: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.cardBorder },
+  infoTitle: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary, fontWeight: '600' },
+  infoBody: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: SPACING.xs },
   // Authenticated
-  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 32 },
+  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xl },
   profileInfo: { flex: 1 },
-  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#DC143C', justifyContent: 'center', alignItems: 'center' },
-  avatarText: { color: '#FFF', fontSize: 24, fontWeight: '700' },
-  displayName: { color: '#FFF', fontSize: 20, fontWeight: '700' },
-  email: { color: '#999', fontSize: 14, marginTop: 2 },
-  nameEdit: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  nameInput: { backgroundColor: '#1A1A1A', color: '#FFF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, fontSize: 16, minWidth: 150 },
-  saveText: { color: '#DC143C', fontWeight: '600' },
-  cancelText: { color: '#666' },
-  section: { marginBottom: 24 },
-  sectionTitle: { color: '#666', fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
-  row: { backgroundColor: '#1A1A1A', borderRadius: 12, padding: 16, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  rowText: { color: '#FFF', fontSize: 15 },
-  rowAction: { color: '#DC143C', fontSize: 14 },
-  dangerSection: { marginTop: 16 },
-  dangerRow: { backgroundColor: '#1A1A1A', borderRadius: 12, padding: 16, marginBottom: 8, alignItems: 'center' },
-  dangerText: { color: '#FF6B6B', fontSize: 15, fontWeight: '600' },
-  deleteText: { color: '#FF4444' },
-  errorText: { color: '#FF6B6B', fontSize: 14, textAlign: 'center', marginBottom: 16 },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
+  avatarText: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary },
+  displayName: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary },
+  email: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: 2 },
+  nameEdit: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  nameInput: { backgroundColor: COLORS.surface, color: COLORS.textPrimary, borderRadius: BORDER_RADIUS.sm, paddingHorizontal: SPACING.sm + 4, paddingVertical: 6, ...TYPOGRAPHY.body.md, minWidth: 150, borderWidth: 1, borderColor: COLORS.cardBorder },
+  saveText: { ...TYPOGRAPHY.body.md, color: COLORS.primary, fontWeight: '600' },
+  cancelText: { ...TYPOGRAPHY.body.md, color: COLORS.textMuted },
+  section: { marginBottom: SPACING.lg },
+  sectionTitle: { ...TYPOGRAPHY.special.badge, color: COLORS.textMuted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: SPACING.sm },
+  row: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: COLORS.cardBorder },
+  rowText: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary },
+  rowAction: { ...TYPOGRAPHY.body.sm, color: COLORS.primary, fontWeight: '600' },
+  dangerSection: { marginTop: SPACING.md },
+  dangerRow: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(239, 83, 80, 0.15)' },
+  dangerText: { ...TYPOGRAPHY.body.md, color: COLORS.error, fontWeight: '600' },
+  deleteText: { color: COLORS.error },
+  errorText: { ...TYPOGRAPHY.body.sm, color: COLORS.error, textAlign: 'center', marginBottom: SPACING.md },
 });

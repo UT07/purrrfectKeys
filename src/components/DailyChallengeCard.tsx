@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardInner: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: '#141414',
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.lg - 2,
   },
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   xpBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#1A1A2E',
+    color: '#141414',
   },
   description: {
     fontSize: 14,

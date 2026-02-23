@@ -24,12 +24,14 @@ import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
 import type { DailyRewardDay } from '../stores/types';
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
 interface DailyRewardCalendarProps {
   days: DailyRewardDay[];
   currentDay: number; // 1-7
   onClaim: (day: number) => void;
+  /** Whether today's daily challenge has been completed (required to claim) */
+  dailyChallengeCompleted?: boolean;
 }
 
 function RewardIcon({ type, size = 16 }: { type: DailyRewardDay['reward']['type']; size?: number }): ReactElement {
@@ -51,17 +53,22 @@ function DayCell({
   isClaimed,
   isPast,
   onClaim,
+  disabled = false,
 }: {
   day: DailyRewardDay;
   isToday: boolean;
   isClaimed: boolean;
   isPast: boolean;
   onClaim: () => void;
+  disabled?: boolean;
 }): ReactElement {
   const glowOpacity = useSharedValue(0.3);
 
-  // Pulsing glow for today's reward
-  if (isToday && !isClaimed) {
+  // Both today and past unclaimed days require daily challenge completion
+  const isClaimable = !isClaimed && !disabled && (isToday || isPast);
+
+  // Pulsing glow for claimable rewards
+  if (isClaimable) {
     glowOpacity.value = withRepeat(
       withSequence(
         withTiming(0.7, { duration: 800, easing: Easing.inOut(Easing.ease) }),
@@ -73,20 +80,22 @@ function DayCell({
   }
 
   const glowStyle = useAnimatedStyle(() => ({
-    borderColor: `rgba(255, 215, 0, ${glowOpacity.value})`,
+    borderColor: isToday
+      ? `rgba(255, 215, 0, ${glowOpacity.value})`
+      : `rgba(76, 175, 80, ${glowOpacity.value})`,
   }));
 
   const handlePress = useCallback(() => {
-    if (isToday && !isClaimed) {
+    if (isClaimable) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       onClaim();
     }
-  }, [isToday, isClaimed, onClaim]);
+  }, [isClaimable, onClaim]);
 
   return (
     <TouchableOpacity
       onPress={handlePress}
-      disabled={!isToday || isClaimed}
+      disabled={!isClaimable}
       activeOpacity={0.7}
     >
       <Animated.View
@@ -94,18 +103,22 @@ function DayCell({
           styles.dayCell,
           isClaimed && styles.dayCellClaimed,
           isToday && !isClaimed && styles.dayCellToday,
-          isToday && !isClaimed && glowStyle,
-          isPast && !isClaimed && styles.dayCellMissed,
+          isClaimable && glowStyle,
+          isPast && !isClaimed && styles.dayCellClaimable,
         ]}
       >
-        <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>
+        <Text style={[
+          styles.dayLabel,
+          isToday && styles.dayLabelToday,
+          isPast && !isClaimed && styles.dayLabelClaimable,
+        ]}>
           {DAY_LABELS[day.day - 1]}
         </Text>
 
         {isClaimed ? (
           <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.success} />
         ) : isPast ? (
-          <MaterialCommunityIcons name="close-circle" size={20} color={COLORS.textMuted} />
+          <RewardIcon type={day.reward.type} />
         ) : (
           <RewardIcon type={day.reward.type} />
         )}
@@ -113,7 +126,6 @@ function DayCell({
         <Text style={[
           styles.rewardAmount,
           isClaimed && styles.rewardAmountClaimed,
-          isPast && !isClaimed && styles.rewardAmountMissed,
         ]}>
           {day.reward.type === 'xp_boost' ? '2x' :
            day.reward.type === 'streak_freeze' ? '1' :
@@ -128,7 +140,10 @@ export function DailyRewardCalendar({
   days,
   currentDay,
   onClaim,
+  dailyChallengeCompleted = false,
 }: DailyRewardCalendarProps): ReactElement {
+  const todayClaimable = dailyChallengeCompleted;
+
   return (
     <Animated.View entering={FadeIn.duration(300)} style={styles.container}>
       <View style={styles.header}>
@@ -144,9 +159,26 @@ export function DailyRewardCalendar({
             isClaimed={day.claimed}
             isPast={day.day < currentDay}
             onClaim={() => onClaim(day.day)}
+            disabled={!todayClaimable}
           />
         ))}
       </View>
+      {!dailyChallengeCompleted && currentDay >= 1 && currentDay <= 7 && (
+        <View style={styles.challengeHint}>
+          <MaterialCommunityIcons name="lock" size={12} color={COLORS.textMuted} />
+          <Text style={styles.challengeHintText}>
+            Complete today's challenge to unlock rewards
+          </Text>
+        </View>
+      )}
+      {dailyChallengeCompleted && days.some(d => d.day < currentDay && !d.claimed) && (
+        <View style={styles.challengeHint}>
+          <MaterialCommunityIcons name="gift" size={12} color={COLORS.success} />
+          <Text style={[styles.challengeHintText, { color: COLORS.success }]}>
+            Tap unclaimed days to redeem before they expire!
+          </Text>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -193,8 +225,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderWidth: 2,
   },
-  dayCellMissed: {
-    opacity: 0.4,
+  dayCellClaimable: {
+    backgroundColor: 'rgba(76, 175, 80, 0.08)',
+    borderWidth: 2,
   },
   dayLabel: {
     fontSize: 10,
@@ -206,6 +239,10 @@ const styles = StyleSheet.create({
     color: COLORS.gemGold,
     fontWeight: '800',
   },
+  dayLabelClaimable: {
+    color: COLORS.success,
+    fontWeight: '700',
+  },
   rewardAmount: {
     fontSize: 11,
     fontWeight: '700',
@@ -216,5 +253,17 @@ const styles = StyleSheet.create({
   },
   rewardAmountMissed: {
     color: COLORS.textMuted,
+  },
+  challengeHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: SPACING.sm,
+    justifyContent: 'center',
+  },
+  challengeHintText: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    fontStyle: 'italic',
   },
 });

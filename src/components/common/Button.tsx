@@ -35,15 +35,17 @@ export interface ButtonProps {
   accessibilityHint?: string;
 }
 
-const COLORS = {
-  primary: '#DC143C',
-  secondary: '#333333',
-  danger: '#F44336',
-  outline: '#DC143C',
-  text: '#FFFFFF',
-  outlineText: '#DC143C',
-  disabled: '#444444',
-  disabledText: '#666666',
+import { COLORS as THEME_COLORS, BORDER_RADIUS } from '../../theme/tokens';
+
+const BTN_COLORS = {
+  primary: THEME_COLORS.primary,
+  secondary: THEME_COLORS.cardSurface,
+  danger: THEME_COLORS.error,
+  outline: THEME_COLORS.primary,
+  text: THEME_COLORS.textPrimary,
+  outlineText: THEME_COLORS.primary,
+  disabled: THEME_COLORS.starEmpty,
+  disabledText: THEME_COLORS.textMuted,
 };
 
 const SIZES = {
@@ -96,24 +98,24 @@ export const Button = React.memo(
     }));
 
     const getBackgroundColor = () => {
-      if (disabled) return COLORS.disabled;
+      if (disabled) return BTN_COLORS.disabled;
       switch (variant) {
         case 'primary':
-          return COLORS.primary;
+          return BTN_COLORS.primary;
         case 'secondary':
-          return COLORS.secondary;
+          return BTN_COLORS.secondary;
         case 'danger':
-          return COLORS.danger;
+          return BTN_COLORS.danger;
         case 'outline':
           return 'transparent';
         default:
-          return COLORS.primary;
+          return BTN_COLORS.primary;
       }
     };
 
     const getTextColor = () => {
-      if (disabled) return COLORS.disabledText;
-      return variant === 'outline' ? COLORS.outlineText : COLORS.text;
+      if (disabled) return BTN_COLORS.disabledText;
+      return variant === 'outline' ? BTN_COLORS.outlineText : BTN_COLORS.text;
     };
 
     const sizeStyle = SIZES[size];
@@ -137,7 +139,7 @@ export const Button = React.memo(
               paddingHorizontal: sizeStyle.paddingHorizontal,
               borderWidth: variant === 'outline' ? 2 : 0,
               borderColor:
-                variant === 'outline' ? COLORS.outline : 'transparent',
+                variant === 'outline' ? BTN_COLORS.outline : 'transparent',
             },
           ]}
         >
@@ -167,7 +169,7 @@ Button.displayName = 'Button';
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.sm,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,

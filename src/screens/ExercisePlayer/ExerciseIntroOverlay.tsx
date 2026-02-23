@@ -6,10 +6,12 @@
  * User taps "Ready" to dismiss and begin the exercise.
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import type { Exercise } from '@/core/exercises/types';
-import { COLORS } from '@/theme/tokens';
+import { coachingService } from '@/services/ai/CoachingService';
+import { useLearnerProfileStore } from '@/stores/learnerProfileStore';
+import { COLORS, BORDER_RADIUS, SPACING, glowColor } from '@/theme/tokens';
 
 interface ExerciseIntroOverlayProps {
   exercise: Exercise;
@@ -37,6 +39,17 @@ export function ExerciseIntroOverlay({
         ? 'Right hand'
         : 'Both hands';
   const noteCount = exercise.notes.length;
+
+  // AI coaching tip (async, shows static hint while loading)
+  const [coachTip, setCoachTip] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const weakNotes = useLearnerProfileStore.getState().weakNotes;
+    coachingService.generatePreExerciseTip(title, weakNotes).then((tip) => {
+      if (!cancelled) setCoachTip(tip);
+    });
+    return () => { cancelled = true; };
+  }, [title]);
 
   return (
     <View style={styles.overlay} testID={testID}>
@@ -74,9 +87,14 @@ export function ExerciseIntroOverlay({
           <Text style={styles.statText}>{difficultyStars}</Text>
         </View>
 
-        {exercise.hints?.beforeStart && (
+        {(exercise.hints?.beforeStart || coachTip) && (
           <View style={styles.tipBox}>
-            <Text style={styles.tipText}>{exercise.hints.beforeStart}</Text>
+            {exercise.hints?.beforeStart && (
+              <Text style={styles.tipText}>{exercise.hints.beforeStart}</Text>
+            )}
+            {coachTip && coachTip !== exercise.hints?.beforeStart && (
+              <Text style={styles.coachTipText}>{coachTip}</Text>
+            )}
           </View>
         )}
 
@@ -96,38 +114,38 @@ export function ExerciseIntroOverlay({
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: COLORS.surfaceOverlay,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 50,
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.lg,
   },
   card: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   skillBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(220, 20, 60, 0.12)',
-    borderRadius: 8,
+    backgroundColor: glowColor(COLORS.primary, 0.12),
+    borderRadius: BORDER_RADIUS.sm,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   skillBadgeLabel: {
     fontSize: 9,
@@ -138,11 +156,11 @@ const styles = StyleSheet.create({
   skillBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#CCC',
+    color: COLORS.textSecondary,
   },
   description: {
     fontSize: 14,
-    color: '#999',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 20,
@@ -155,7 +173,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   infoItem: {
-    backgroundColor: '#222',
+    backgroundColor: COLORS.cardHighlight,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -165,7 +183,7 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#666',
+    color: COLORS.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -173,7 +191,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFF',
+    color: COLORS.textPrimary,
   },
   statsRow: {
     flexDirection: 'row',
@@ -183,12 +201,12 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    color: '#888',
+    color: COLORS.textMuted,
   },
   tipBox: {
-    backgroundColor: 'rgba(220, 20, 60, 0.1)',
+    backgroundColor: glowColor(COLORS.primary, 0.1),
     borderRadius: 10,
-    padding: 12,
+    padding: SPACING.sm + 4,
     marginBottom: 20,
     borderLeftWidth: 3,
     borderLeftColor: COLORS.primary,
@@ -196,12 +214,19 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
-    color: '#CCC',
+    color: COLORS.textSecondary,
     lineHeight: 18,
+  },
+  coachTipText: {
+    fontSize: 13,
+    color: COLORS.primaryLight,
+    lineHeight: 18,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   readyButton: {
     backgroundColor: COLORS.primary,
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.lg,
     paddingVertical: 14,
     paddingHorizontal: 48,
     width: '100%',
@@ -210,7 +235,7 @@ const styles = StyleSheet.create({
   readyButtonText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFF',
+    color: COLORS.textPrimary,
     letterSpacing: 0.5,
   },
 });

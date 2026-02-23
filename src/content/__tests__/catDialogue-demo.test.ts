@@ -2,7 +2,7 @@ import { getCatDialogue, getRandomCatMessage } from '../catDialogue';
 import type { DialogueTrigger } from '../catDialogue';
 
 describe('demo dialogue triggers', () => {
-  const CAT_IDS = ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'vinyl', 'aria', 'tempo'];
+  const CAT_IDS = ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'ballymakawww', 'aria', 'tempo'];
   const DEMO_TRIGGERS: DialogueTrigger[] = ['demoOffer', 'demoComplete', 'ghostNotesFarewell'];
 
   it.each(DEMO_TRIGGERS)('all 8 cats have %s dialogue', (trigger) => {

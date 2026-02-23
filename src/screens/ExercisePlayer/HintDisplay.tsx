@@ -11,6 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS } from '../../theme/tokens';
 import type { ExerciseHints } from '../../core/exercises/types';
 
 export interface HintDisplayProps {
@@ -41,7 +42,7 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
       return {
         icon: 'lightbulb-on',
         text: hints.beforeStart,
-        color: '#DC143C',
+        color: COLORS.primary,
       };
     }
 
@@ -49,7 +50,7 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
       return {
         icon: 'clock-outline',
         text: 'Get ready...',
-        color: '#FF9800',
+        color: COLORS.warning,
       };
     }
 
@@ -58,43 +59,43 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
         return {
           icon: 'check-circle',
           text: 'Perfect timing!',
-          color: '#4CAF50',
+          color: COLORS.feedbackPerfect,
         };
       case 'good':
         return {
           icon: 'check',
           text: 'Good!',
-          color: '#8BC34A',
+          color: COLORS.feedbackGood,
         };
       case 'ok':
         return {
           icon: 'minus-circle',
           text: 'Try to be more precise',
-          color: '#FFC107',
+          color: COLORS.feedbackOk,
         };
       case 'miss':
         return {
           icon: 'close-circle',
           text: 'Keep focused on the notes',
-          color: '#F44336',
+          color: COLORS.feedbackMiss,
         };
       case 'early':
         return {
           icon: 'fast-forward',
           text: 'A bit early, slow down',
-          color: '#FF9800',
+          color: COLORS.feedbackEarly,
         };
       case 'late':
         return {
           icon: 'rewind',
           text: 'A bit late, speed up',
-          color: '#FF9800',
+          color: COLORS.feedbackLate,
         };
       default:
         return {
           icon: 'information-outline',
           text: 'Focus on the piano roll',
-          color: '#757575',
+          color: COLORS.feedbackDefault,
         };
     }
   }, [isPlaying, countInComplete, feedback, hints.beforeStart]);
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   compactText: {
     flex: 1,
     fontSize: 11,
-    color: '#B0B0B0',
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   // Full mode styles
@@ -171,14 +172,14 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#252525',
+    backgroundColor: COLORS.cardHighlight,
     borderLeftWidth: 4,
     borderRadius: 6,
   },
   hintText: {
     flex: 1,
     fontSize: 13,
-    color: '#B0B0B0',
+    color: COLORS.textSecondary,
     fontWeight: '500',
     lineHeight: 18,
   },

@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
+import { COLORS, glowColor } from '../../theme/tokens';
 import type { Exercise } from '../../core/exercises/types';
 
 export interface ScoreDisplayProps {
@@ -50,19 +51,19 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   const getFeedbackColor = () => {
     switch (feedback) {
       case 'perfect':
-        return '#4CAF50'; // Green
+        return COLORS.feedbackPerfect;
       case 'good':
-        return '#8BC34A'; // Light green
+        return COLORS.feedbackGood;
       case 'ok':
-        return '#FFC107'; // Yellow
+        return COLORS.feedbackOk;
       case 'early':
-        return '#2196F3'; // Blue
+        return COLORS.feedbackEarly;
       case 'late':
-        return '#FF9800'; // Orange
+        return COLORS.feedbackLate;
       case 'miss':
-        return '#F44336'; // Red
+        return COLORS.feedbackMiss;
       default:
-        return '#757575';
+        return COLORS.feedbackDefault;
     }
   };
 
@@ -190,25 +191,25 @@ const styles = StyleSheet.create({
   compactTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     maxWidth: 140,
   },
   compactProgress: {
     flex: 1,
     height: 4,
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.cardBorder,
     borderRadius: 2,
     overflow: 'hidden',
   },
   compactProgressBar: {
     height: '100%',
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
     borderRadius: 2,
   },
   compactPercent: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#DC143C',
+    color: COLORS.primary,
     minWidth: 30,
     textAlign: 'right',
   },
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
   difficulty: {
     fontSize: 14,
@@ -235,17 +236,17 @@ const styles = StyleSheet.create({
   },
   metadata: {
     fontSize: 12,
-    color: '#B0B0B0',
+    color: COLORS.textSecondary,
   },
   progressContainer: {
     height: 8,
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.cardBorder,
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
     borderRadius: 4,
   },
   bottomRow: {
@@ -256,20 +257,20 @@ const styles = StyleSheet.create({
   },
   comboContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    backgroundColor: glowColor(COLORS.primary, 0.15),
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
   },
   comboLabel: {
     fontSize: 10,
-    color: '#DC143C',
+    color: COLORS.primary,
     fontWeight: '600',
   },
   comboValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#DC143C',
+    color: COLORS.primary,
   },
   feedbackBadge: {
     paddingHorizontal: 12,
@@ -279,12 +280,12 @@ const styles = StyleSheet.create({
   feedbackText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
   progressText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#DC143C',
+    color: COLORS.primary,
   },
 });
 

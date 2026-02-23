@@ -1,5 +1,5 @@
 import type { Exercise } from '@/core/exercises/types';
-import { getTemplateExercise } from '../templateExercises';
+import { getTemplateExercise, getTemplateForSkill } from '../templateExercises';
 
 describe('templateExercises', () => {
   it('returns a valid Exercise for each difficulty', () => {
@@ -106,5 +106,68 @@ describe('templateExercises', () => {
     const ex = getTemplateExercise(2, []);
     expect(ex).toBeDefined();
     expect(ex.notes.length).toBeGreaterThan(0);
+  });
+});
+
+describe('getTemplateForSkill', () => {
+  it('returns an exercise for a known skill ID', () => {
+    const ex = getTemplateForSkill('find-middle-c');
+    expect(ex).toBeDefined();
+    expect(ex.id).toMatch(/^tmpl-/);
+    expect(ex.notes.length).toBeGreaterThan(0);
+  });
+
+  it('returns a skill-targeted exercise containing expected MIDI notes', () => {
+    const ex = getTemplateForSkill('find-middle-c');
+    // The find-middle-c template targets MIDI 60
+    expect(ex.notes.some((n) => n.note === 60)).toBe(true);
+  });
+
+  it('returns the keyboard-geography template for that skill', () => {
+    const ex = getTemplateForSkill('keyboard-geography');
+    expect(ex.notes.length).toBeGreaterThan(0);
+    // Keyboard geography template uses C-D-E range
+    const notes = ex.notes.map((n) => n.note);
+    expect(notes).toContain(60);
+    expect(notes).toContain(62);
+  });
+
+  it('falls back to generic template for unknown skill', () => {
+    const ex = getTemplateForSkill('nonexistent-skill-xyz');
+    expect(ex).toBeDefined();
+    expect(ex.notes.length).toBeGreaterThan(0);
+  });
+
+  it('applies weak note swapping to skill templates', () => {
+    // white-keys template has notes 60-72; swapping in 61 (Db4) should appear
+    let foundSwap = false;
+    for (let i = 0; i < 30; i++) {
+      const ex = getTemplateForSkill('white-keys', [61]);
+      if (ex.notes.some((n) => n.note === 61)) {
+        foundSwap = true;
+        break;
+      }
+    }
+    expect(foundSwap).toBe(true);
+  });
+
+  it('returns valid exercise structure for all tier 1-3 skill templates', () => {
+    const skillIds = [
+      'find-middle-c', 'keyboard-geography', 'white-keys',
+      'rh-cde', 'simple-melodies', 'c-position-review',
+      'lh-scale-descending', 'lh-broken-chords',
+    ];
+    for (const skillId of skillIds) {
+      const ex = getTemplateForSkill(skillId);
+      expect(ex.id).toMatch(/^tmpl-/);
+      expect(ex.metadata.title).toBeTruthy();
+      expect(ex.notes.length).toBeGreaterThan(0);
+      for (const n of ex.notes) {
+        expect(n.note).toBeGreaterThanOrEqual(36);
+        expect(n.note).toBeLessThanOrEqual(96);
+        expect(n.startBeat).toBeGreaterThanOrEqual(0);
+        expect(n.durationBeats).toBeGreaterThan(0);
+      }
+    }
   });
 });

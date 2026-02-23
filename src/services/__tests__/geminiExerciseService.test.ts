@@ -247,6 +247,65 @@ describe('geminiExerciseService', () => {
 
       expect(prompt).toContain('Timing accuracy: 75%');
     });
+
+    it('injects GenerationHints promptHint into prompt', () => {
+      const params = createDefaultParams();
+      params.generationHints = {
+        promptHint: 'Play C-D-E ascending with right hand',
+        targetMidi: [60, 62, 64],
+        hand: 'right',
+        exerciseTypes: ['melody'],
+        keySignature: 'C major',
+        minDifficulty: 1,
+      };
+
+      const prompt = buildPrompt(params);
+
+      expect(prompt).toContain('SKILL OBJECTIVE: Play C-D-E ascending with right hand');
+      expect(prompt).toContain('Use ONLY these MIDI notes: [60,62,64]');
+      expect(prompt).toContain('Hand: right');
+      expect(prompt).toContain('Exercise style: melody');
+    });
+
+    it('uses GenerationHints keySignature over difficulty default', () => {
+      const params = createDefaultParams();
+      params.difficulty = 1; // would default to 'C major'
+      params.generationHints = {
+        promptHint: 'G major scale',
+        keySignature: 'G major',
+      };
+
+      const prompt = buildPrompt(params);
+
+      expect(prompt).toContain('Key signature: G major');
+    });
+
+    it('uses GenerationHints minDifficulty over params difficulty', () => {
+      const params = createDefaultParams();
+      params.difficulty = 5;
+      params.generationHints = {
+        promptHint: 'Simple exercise',
+        minDifficulty: 2,
+      };
+
+      const prompt = buildPrompt(params);
+
+      expect(prompt).toContain('Difficulty: 2/5');
+    });
+
+    it('omits targetMidi line when not provided in hints', () => {
+      const params = createDefaultParams();
+      params.generationHints = {
+        promptHint: 'General exercise',
+        hand: 'both',
+      };
+
+      const prompt = buildPrompt(params);
+
+      expect(prompt).toContain('SKILL OBJECTIVE: General exercise');
+      expect(prompt).not.toContain('Use ONLY these MIDI notes');
+      expect(prompt).toContain('Hand: both');
+    });
   });
 
   // --------------------------------------------------------------------------

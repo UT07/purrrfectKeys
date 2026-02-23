@@ -24,7 +24,7 @@ describe('Cat Quest Service', () => {
     it('should generate a weak_note quest when weak notes exist', () => {
       // Run multiple times to check that at least one targets a note
       const quests: CatQuest[] = [];
-      for (const catId of ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'vinyl', 'aria', 'tempo']) {
+      for (const catId of ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'ballymakawww', 'aria', 'tempo']) {
         quests.push(generateDailyQuest(catId, [60, 62, 64], []));
       }
       const noteQuests = quests.filter(q => q.targetType === 'weak_note');
@@ -38,7 +38,7 @@ describe('Cat Quest Service', () => {
     it('should generate a weak_skill quest when weak skills exist', () => {
       const weakSkills: (keyof Skills)[] = ['timingAccuracy', 'pitchAccuracy'];
       const quests: CatQuest[] = [];
-      for (const catId of ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'vinyl', 'aria', 'tempo']) {
+      for (const catId of ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'ballymakawww', 'aria', 'tempo']) {
         quests.push(generateDailyQuest(catId, [], weakSkills));
       }
       const skillQuests = quests.filter(q => q.targetType === 'weak_skill');
@@ -77,7 +77,7 @@ describe('Cat Quest Service', () => {
     });
 
     it('should produce quests with all 8 cat personalities', () => {
-      const catIds = ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'vinyl', 'aria', 'tempo'];
+      const catIds = ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'ballymakawww', 'aria', 'tempo'];
       for (const catId of catIds) {
         const quest = generateDailyQuest(catId, [], []);
         expect(quest.catId).toBe(catId);
@@ -88,7 +88,7 @@ describe('Cat Quest Service', () => {
 
   describe('getSignatureExercise', () => {
     it('should return a signature exercise for each cat', () => {
-      const catIds = ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'vinyl', 'aria', 'tempo'];
+      const catIds = ['mini-meowww', 'jazzy', 'chonky-monke', 'luna', 'biscuit', 'ballymakawww', 'aria', 'tempo'];
       for (const catId of catIds) {
         const sig = getSignatureExercise(catId);
         expect(sig).toBeDefined();

@@ -220,36 +220,36 @@ export const CAT_CHARACTERS: CatCharacter[] = [
   },
 
   {
-    id: 'vinyl',
-    name: 'Vinyl',
-    emoji: '🧐🎶',
+    id: 'ballymakawww',
+    name: 'Ballymakawww',
+    emoji: '☘️🐱',
     backstory:
-      'A hipster cat with tiny round glasses who owns 3,000 vinyl records and insists everything sounds better on analog. He DJs underground warehouse parties for cats and somehow always finds the most obscure B-sides. He calls mainstream music "basic meow-sic."',
-    musicSkill: 'DJ & Mixing',
-    personality: 'Hipster',
+      'A boisterous ginger-and-white Irish cat who learned piano in a Cork pub by ear. He plays jigs, reels, and folk ballads at twice the speed anyone thinks possible. When he\'s not hammering out trad sets, he\'s telling wildly exaggerated stories about "the time he played for the Queen\'s corgis." Every performance ends with him standing on the keys yelling "ANOTHER!"',
+    musicSkill: 'Folk & Traditional',
+    personality: 'Boisterous & Storyteller',
     color: '#1ABC9C',
     unlockLevel: 1,
     starterCat: false,
     gemCost: 1000,
     legendary: false,
     visuals: {
-      bodyColor: '#607D8B',
-      bellyColor: '#90A4AE',
+      bodyColor: '#D4763A',
+      bellyColor: '#FFF3E0',
       earInnerColor: '#1ABC9C',
       eyeColor: '#1ABC9C',
-      noseColor: '#546E7A',
-      pattern: 'spotted',
+      noseColor: '#C0713B',
+      pattern: 'tabby',
     },
     evolutionVisuals: makeStageVisuals({
-      teen: { accessories: ['round-glasses'], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 },
-      adult: { accessories: ['round-glasses', 'headphones-teal'], hasGlow: true, hasParticles: false, hasCrown: false, auraIntensity: 0.3 },
-      master: { accessories: ['round-glasses', 'headphones-teal', 'vinyl-disc'], hasGlow: true, hasParticles: true, hasCrown: false, auraIntensity: 0.7 },
+      teen: { accessories: ['flat-cap'], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 },
+      adult: { accessories: ['flat-cap', 'scarf'], hasGlow: true, hasParticles: false, hasCrown: false, auraIntensity: 0.3 },
+      master: { accessories: ['flat-cap', 'scarf', 'fiddle'], hasGlow: true, hasParticles: true, hasCrown: false, auraIntensity: 0.7 },
     }),
     abilities: [
-      ability('vn-slow-start', 'Chill Tempo', 'Start 8 BPM slower', 'metronome', { type: 'tempo_reduction', bpmReduction: 8 }, 'baby'),
-      ability('vn-score-boost', 'Analog Boost', '+3% score on exercises', 'trending-up', { type: 'score_boost', percentageBoost: 3 }, 'teen'),
-      ability('vn-hint-boost', 'B-Side Knowledge', 'Hints 30% more frequent', 'lightbulb-outline', { type: 'hint_frequency_boost', multiplier: 1.3 }, 'adult'),
-      ability('vn-double-gems', 'Double Gem Days', '25% chance for double gems', 'cash-multiple', { type: 'lucky_gems', bonusGemMultiplier: 2 }, 'master'),
+      ability('bk-slow-start', 'Pub Tempo', 'Start 8 BPM slower', 'metronome', { type: 'tempo_reduction', bpmReduction: 8 }, 'baby'),
+      ability('bk-score-boost', 'Folk Boost', '+3% score on exercises', 'trending-up', { type: 'score_boost', percentageBoost: 3 }, 'teen'),
+      ability('bk-hint-boost', 'Storyteller\'s Wisdom', 'Hints 30% more frequent', 'lightbulb-outline', { type: 'hint_frequency_boost', multiplier: 1.3 }, 'adult'),
+      ability('bk-double-gems', 'Pot of Gold', '25% chance for double gems', 'cash-multiple', { type: 'lucky_gems', bonusGemMultiplier: 2 }, 'master'),
     ],
   },
 
@@ -322,70 +322,70 @@ export const CAT_CHARACTERS: CatCharacter[] = [
   },
 
   {
-    id: 'noodle',
-    name: 'Noodle',
-    emoji: '🍜🎧',
+    id: 'shibu',
+    name: 'Shibu',
+    emoji: '🌸🐱',
     backstory:
-      'A lanky calico who runs a lo-fi beats YouTube channel from a ramen shop in Tokyo. She plays keyboard one-handed while slurping noodles with the other. Her 24/7 "beats to study/relax to" livestream has 2 million subscribers — all cats.',
-    musicSkill: 'Lo-Fi & Chill Beats',
-    personality: 'Chill & Dreamy',
+      'A cream-and-brown Japanese Bobtail who learned piano at a temple in Kyoto. She plays with the stillness and precision of a tea ceremony — every note placed with intention, every rest meaningful. She meditates before every practice session and insists that "the silence between the notes is where the real music lives." She once played so peacefully that a koi pond froze mid-ripple.',
+    musicSkill: 'Meditative & Ambient',
+    personality: 'Zen & Serene',
     color: '#FF7043',
     unlockLevel: 1,
     starterCat: false,
     gemCost: 1000,
     legendary: false,
     visuals: {
-      bodyColor: '#FFE0B2',
-      bellyColor: '#FFF8E1',
+      bodyColor: '#F5E6D3',
+      bellyColor: '#FFF8F0',
       earInnerColor: '#FF7043',
       eyeColor: '#80DEEA',
       noseColor: '#FFAB91',
-      pattern: 'spotted',
+      pattern: 'siamese',
     },
     evolutionVisuals: makeStageVisuals({
-      teen: { accessories: ['beanie'], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 },
-      adult: { accessories: ['beanie', 'headphones-warm'], hasGlow: true, hasParticles: false, hasCrown: false, auraIntensity: 0.3 },
-      master: { accessories: ['beanie', 'headphones-warm', 'noodle-bowl'], hasGlow: true, hasParticles: true, hasCrown: false, auraIntensity: 0.6 },
+      teen: { accessories: ['temple-bell'], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 },
+      adult: { accessories: ['temple-bell', 'kimono-sash'], hasGlow: true, hasParticles: false, hasCrown: false, auraIntensity: 0.3 },
+      master: { accessories: ['temple-bell', 'kimono-sash', 'cherry-blossom'], hasGlow: true, hasParticles: true, hasCrown: false, auraIntensity: 0.6 },
     }),
     abilities: [
-      ability('nd-slow-start', 'Lo-Fi Start', 'Start 8 BPM slower', 'music-rest-half', { type: 'tempo_reduction', bpmReduction: 8 }, 'baby'),
-      ability('nd-timing', 'Chill Timing', 'Timing window +10%', 'metronome-tick', { type: 'timing_window_multiplier', multiplier: 1.1 }, 'teen'),
-      ability('nd-xp-boost', 'Vibe Boost', '20% more XP', 'trending-up', { type: 'xp_multiplier', multiplier: 1.2 }, 'adult'),
-      ability('nd-gem-magnet', 'Ramen Fund', '15% bonus gem chance', 'noodles', { type: 'gem_magnet', bonusGemChance: 0.15 }, 'master'),
+      ability('sh-slow-start', 'Zen Tempo', 'Start 8 BPM slower', 'music-rest-half', { type: 'tempo_reduction', bpmReduction: 8 }, 'baby'),
+      ability('sh-timing', 'Mindful Timing', 'Timing window +10%', 'metronome-tick', { type: 'timing_window_multiplier', multiplier: 1.1 }, 'teen'),
+      ability('sh-xp-boost', 'Inner Peace', '20% more XP', 'trending-up', { type: 'xp_multiplier', multiplier: 1.2 }, 'adult'),
+      ability('sh-gem-magnet', 'Temple Offering', '15% bonus gem chance', 'diamond-stone', { type: 'gem_magnet', bonusGemChance: 0.15 }, 'master'),
     ],
   },
 
   {
-    id: 'pixel',
-    name: 'Pixel',
-    emoji: '🎮🐱',
+    id: 'bella',
+    name: 'Bella',
+    emoji: '👑🤍',
     backstory:
-      'A retro gaming cat who thinks everything is better in 8-bit. She composes chiptune soundtracks for indie games and once speedran Beethoven\'s 5th in under 2 minutes. Her keyboard has custom keycaps shaped like D-pads.',
-    musicSkill: 'Chiptune & 8-Bit',
-    personality: 'Retro Gamer',
-    color: '#00E676',
+      'A magnificent white Persian with impossibly fluffy fur and eyes like sapphires. She considers herself royalty and honestly? She kind of is. She only plays on white grand pianos, refuses to touch anything dusty, and has a personal assistant (a small mouse named Geoffrey) who turns her sheet music pages. Her Debussy is breathtaking. Her attitude is immaculate. She has never once played a wrong note — or if she has, she insists it was "artistic interpretation."',
+    musicSkill: 'Classical & Debussy',
+    personality: 'Regal & Refined',
+    color: '#90CAF9',
     unlockLevel: 1,
     starterCat: false,
     gemCost: 1500,
     legendary: false,
     visuals: {
-      bodyColor: '#263238',
-      bellyColor: '#37474F',
-      earInnerColor: '#00E676',
-      eyeColor: '#00E676',
-      noseColor: '#4CAF50',
+      bodyColor: '#F5F5F5',
+      bellyColor: '#FFFFFF',
+      earInnerColor: '#FFB6C1',
+      eyeColor: '#64B5F6',
+      noseColor: '#FFB6C1',
       pattern: 'solid',
     },
     evolutionVisuals: makeStageVisuals({
-      teen: { accessories: ['pixel-glasses'], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 },
-      adult: { accessories: ['pixel-glasses', 'game-controller'], hasGlow: true, hasParticles: false, hasCrown: false, auraIntensity: 0.3 },
-      master: { accessories: ['pixel-glasses', 'game-controller', 'pixel-crown'], hasGlow: true, hasParticles: true, hasCrown: true, auraIntensity: 0.7 },
+      teen: { accessories: ['pearl-necklace'], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 },
+      adult: { accessories: ['pearl-necklace', 'tiara-silver'], hasGlow: true, hasParticles: false, hasCrown: false, auraIntensity: 0.3 },
+      master: { accessories: ['pearl-necklace', 'tiara-silver', 'royal-cape-white'], hasGlow: true, hasParticles: true, hasCrown: true, auraIntensity: 0.7 },
     }),
     abilities: [
-      ability('px-retries', 'Extra Life', '1 extra retry', 'heart-plus', { type: 'extra_retries', extraRetries: 1 }, 'baby'),
-      ability('px-combo', 'Combo Multiplier', '1 miss forgiven in combo', 'gamepad-variant', { type: 'combo_shield', missesForgivenPerExercise: 1 }, 'teen'),
-      ability('px-score', 'High Score', '+5% score boost', 'trophy', { type: 'score_boost', percentageBoost: 5 }, 'adult'),
-      ability('px-xp', 'Power-Up', '30% XP multiplier', 'lightning-bolt', { type: 'xp_multiplier', multiplier: 1.3 }, 'master'),
+      ability('bl-retries', 'Royal Pardon', '1 extra retry', 'heart-plus', { type: 'extra_retries', extraRetries: 1 }, 'baby'),
+      ability('bl-combo', 'Regal Composure', '1 miss forgiven in combo', 'shield-star-outline', { type: 'combo_shield', missesForgivenPerExercise: 1 }, 'teen'),
+      ability('bl-score', 'Purrfect Poise', '+5% score boost', 'trophy', { type: 'score_boost', percentageBoost: 5 }, 'adult'),
+      ability('bl-xp', 'Royal Decree', '30% XP multiplier', 'crown', { type: 'xp_multiplier', multiplier: 1.3 }, 'master'),
     ],
   },
 
@@ -518,17 +518,17 @@ export const SALSA_COACH: CoachCharacter = {
   name: 'Salsa',
   emoji: '💃🐱',
   backstory:
-    'A fiery calico with a dancer\'s rhythm and a teacher\'s patience — but make it spicy. She trained in Havana, Buenos Aires, and Nashville before settling down to teach. She doesn\'t just teach piano — she teaches you to FEEL the music. Every lesson is a performance. Every mistake is "just seasoning." Her catchphrase: "¡Mira! You\'re not playing notes, you\'re telling a STORY."',
+    'A sleek grey cat with piercing green eyes, a dancer\'s rhythm, and a teacher\'s patience — but make it spicy. She trained in Havana, Buenos Aires, and Nashville before settling down to teach. She doesn\'t just teach piano — she teaches you to FEEL the music. Every lesson is a performance. Every mistake is "just seasoning." Her catchphrase: "¡Mira! You\'re not playing notes, you\'re telling a STORY."',
   personality: 'Sassy, encouraging, dramatic, warm. Think passionate dance teacher meets motivational speaker.',
   voiceStyle: 'Warm, expressive, slightly theatrical. Uses occasional Spanish exclamations. Never boring.',
   color: '#FF5252',
   visuals: {
-    bodyColor: '#FF8A65',
-    bellyColor: '#FFCCBC',
+    bodyColor: '#7A7A8A',
+    bellyColor: '#B0B0BE',
     earInnerColor: '#FF5252',
-    eyeColor: '#FFD740',
-    noseColor: '#E64A19',
-    pattern: 'spotted',
+    eyeColor: '#2ECC71',
+    noseColor: '#FF5252',
+    pattern: 'solid',
   },
   catchphrases: [
     '¡Mira! You\'re not playing notes, you\'re telling a STORY.',
@@ -569,14 +569,30 @@ export function getLegendaryCats(): CatCharacter[] {
   return CAT_CHARACTERS.filter((cat) => cat.legendary);
 }
 
-/** Get all cats available at a given level (legacy compat — now all unlock at level 1, gated by gems) */
+/**
+ * Get all cats available at a given level.
+ * @deprecated Use getOwnedCats(ownedCatIds) instead — level-gating is defunct.
+ */
 export function getUnlockedCats(level: number): CatCharacter[] {
   return CAT_CHARACTERS.filter((cat) => cat.unlockLevel <= level);
 }
 
-/** Check if a specific cat is unlocked at the given level (legacy compat) */
+/**
+ * Check if a specific cat is unlocked at the given level.
+ * @deprecated Use isCatOwned(catId, ownedCatIds) instead — level-gating is defunct.
+ */
 export function isCatUnlocked(catId: string, level: number): boolean {
   const cat = getCatById(catId);
   if (!cat) return false;
   return cat.unlockLevel <= level;
+}
+
+/** Get CatCharacter objects for owned cats (use ownedCats from catEvolutionStore) */
+export function getOwnedCats(ownedCatIds: string[]): CatCharacter[] {
+  return CAT_CHARACTERS.filter((cat) => ownedCatIds.includes(cat.id));
+}
+
+/** Check if a specific cat is owned */
+export function isCatOwned(catId: string, ownedCatIds: string[]): boolean {
+  return ownedCatIds.includes(catId);
 }

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS } from '../../theme/tokens';
 import { Button } from '../../components/common/Button';
 
 export interface ExerciseControlsProps {
@@ -72,7 +73,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             testID="control-play"
             accessibilityLabel="Play exercise"
           >
-            <MaterialCommunityIcons name="play" size={20} color="#DC143C" />
+            <MaterialCommunityIcons name="play" size={20} color={COLORS.primary} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -84,7 +85,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             <MaterialCommunityIcons
               name={isPaused ? 'play' : 'pause'}
               size={20}
-              color="#DC143C"
+              color={COLORS.primary}
             />
           </TouchableOpacity>
         )}
@@ -96,7 +97,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             testID="control-restart"
             accessibilityLabel="Restart"
           >
-            <MaterialCommunityIcons name="restart" size={20} color="#757575" />
+            <MaterialCommunityIcons name="restart" size={20} color={COLORS.feedbackDefault} />
           </TouchableOpacity>
         )}
 
@@ -106,7 +107,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
           testID="control-exit"
           accessibilityLabel="Exit"
         >
-          <MaterialCommunityIcons name="close" size={20} color="#F44336" />
+          <MaterialCommunityIcons name="close" size={20} color={COLORS.error} />
         </TouchableOpacity>
       </View>
     );
@@ -122,7 +123,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             onPress={handlePlayPress}
             variant="primary"
             size="large"
-            icon={<MaterialCommunityIcons name="play" size={20} color="#FFF" />}
+            icon={<MaterialCommunityIcons name="play" size={20} color={COLORS.textPrimary} />}
             style={styles.playButton}
             testID="control-play"
             accessibilityLabel="Play exercise"
@@ -138,7 +139,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
               <MaterialCommunityIcons
                 name={isPaused ? 'play' : 'pause'}
                 size={20}
-                color="#FFF"
+                color={COLORS.textPrimary}
               />
             }
             style={styles.playButton}
@@ -155,7 +156,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
             onPress={handleRestartPress}
             variant="outline"
             size="large"
-            icon={<MaterialCommunityIcons name="restart" size={20} color="#DC143C" />}
+            icon={<MaterialCommunityIcons name="restart" size={20} color={COLORS.primary} />}
             testID="control-restart"
             accessibilityLabel="Restart exercise"
             accessibilityHint="Restarts the exercise from the beginning"
@@ -169,7 +170,7 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
         onPress={handleExitPress}
         variant="danger"
         size="medium"
-        icon={<MaterialCommunityIcons name="close" size={18} color="#FFF" />}
+        icon={<MaterialCommunityIcons name="close" size={18} color={COLORS.textPrimary} />}
         style={styles.exitButton}
         testID="control-exit"
         accessibilityLabel="Exit exercise"
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#252525',
+    backgroundColor: COLORS.cardHighlight,
     justifyContent: 'center',
     alignItems: 'center',
   },

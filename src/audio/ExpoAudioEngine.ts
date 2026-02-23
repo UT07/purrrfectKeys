@@ -111,7 +111,7 @@ const PRELOAD_NOTES = [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
 
 export class ExpoAudioEngine implements IAudioEngine {
   private initialized = false;
-  private volume = 0.8;
+  private volume = 0.5;
   private soundSource: AVPlaybackSource | null = null;
   private voicePools: Map<number, NoteVoicePool> = new Map();
   private activeNotes: Set<number> = new Set();
@@ -292,9 +292,10 @@ export class ExpoAudioEngine implements IAudioEngine {
 
     const clampedVelocity = Math.max(0.1, Math.min(1.0, velocity));
     const startTime = Date.now() / 1000;
-    // Scale volume down when many notes are active to prevent digital clipping
+    // Scale volume down when many notes are active to prevent digital clipping.
+    // Using 1/sqrt(n) keeps perceived loudness roughly constant as polyphony increases.
     const activeCount = this.activeNotes.size;
-    const polyphonyScale = activeCount >= 4 ? 0.6 : activeCount >= 2 ? 0.8 : 1.0;
+    const polyphonyScale = activeCount > 0 ? Math.min(1.0, 1.0 / Math.sqrt(activeCount)) : 1.0;
     const vol = clampedVelocity * this.volume * polyphonyScale;
 
     const pool = this.voicePools.get(note);

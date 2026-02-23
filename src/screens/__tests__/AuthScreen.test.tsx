@@ -13,6 +13,14 @@ import { Platform, Alert } from 'react-native';
 // Mock dependencies
 // ---------------------------------------------------------------------------
 
+// Mock AnimatedGradientBackground as a plain View
+jest.mock('../../components/common/AnimatedGradientBackground', () => {
+  const { View } = require('react-native');
+  return {
+    AnimatedGradientBackground: (props: any) => <View {...props}>{props.children}</View>,
+  };
+});
+
 // Mock CatAvatar as a simple View to avoid Reanimated complexity
 jest.mock('../../components/Mascot/CatAvatar', () => {
   const { View } = require('react-native');
@@ -370,20 +378,18 @@ describe('AuthScreen', () => {
   // 10. Cat avatar renders in hero section
   // -----------------------------------------------------------------------
 
-  describe('Cat avatar in hero section', () => {
-    it('should render CatAvatar component', () => {
+  describe('Salsa coach in hero section', () => {
+    it('should render SalsaCoach component', () => {
       const { getByTestId } = render(<AuthScreen />);
 
-      expect(getByTestId('cat-avatar')).toBeTruthy();
+      expect(getByTestId('salsa-coach')).toBeTruthy();
     });
 
-    it('should pass correct catId and size props to CatAvatar', () => {
+    it('should render Salsa SVG in hero', () => {
       const { getByTestId } = render(<AuthScreen />);
-      const avatar = getByTestId('cat-avatar');
 
-      expect(avatar.props.catId).toBe('mini-meowww');
-      expect(avatar.props.size).toBe('large');
-      expect(avatar.props.showGlow).toBe(true);
+      expect(getByTestId('salsa-coach')).toBeTruthy();
+      expect(getByTestId('keysie-svg')).toBeTruthy();
     });
   });
 });

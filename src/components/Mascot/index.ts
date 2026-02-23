@@ -23,11 +23,18 @@ export type { RiveMood } from './RiveCatAvatar';
 export { ExerciseBuddy } from './ExerciseBuddy';
 export type { BuddyReaction } from './ExerciseBuddy';
 
+export { SalsaCoach } from './SalsaCoach';
+
+export { POSE_CONFIGS, moodToPose, reactionToPose, reactionToMood, useCatPose } from './animations';
+export type { CatPose, PoseConfig, PoseKeyframe } from './animations';
+
 export {
   CAT_CHARACTERS,
   getCatById,
   getDefaultCat,
   getUnlockedCats,
   isCatUnlocked,
+  getOwnedCats,
+  isCatOwned,
 } from './catCharacters';
 export type { CatCharacter } from './catCharacters';

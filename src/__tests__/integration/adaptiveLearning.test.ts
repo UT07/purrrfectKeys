@@ -101,11 +101,15 @@ describe('Adaptive Learning Integration', () => {
       expect(nextSkill!.prerequisites).toEqual([]);
     });
 
-    it('should include lesson-01-ex-01 in the lesson section', () => {
+    it('should target find-middle-c skill in the lesson section', () => {
       const profile = makeProfile();
       const plan = generateSessionPlan(profile, []);
-      const lessonExerciseIds = plan.lesson.map((r) => r.exerciseId);
-      expect(lessonExerciseIds).toContain('lesson-01-ex-01');
+      const lessonSkillIds = plan.lesson.map((r) => r.skillNodeId);
+      expect(lessonSkillIds).toContain('find-middle-c');
+      // Should use AI-with-fallback source, with lesson-01-ex-01 as static fallback
+      const findMiddleCRef = plan.lesson.find((r) => r.skillNodeId === 'find-middle-c');
+      expect(findMiddleCRef?.source).toBe('ai-with-fallback');
+      expect(findMiddleCRef?.fallbackExerciseId).toBe('lesson-01-ex-01');
     });
   });
 
@@ -250,8 +254,8 @@ describe('Adaptive Learning Integration', () => {
       const profile = makeProfile({ masteredSkills: allMastered });
       const plan = generateSessionPlan(profile, allMastered);
 
-      // Lesson section should have AI-generated exercises
-      const hasAI = plan.lesson.some((r) => r.source === 'ai');
+      // Lesson section should have AI-generated exercises (ai or ai-with-fallback)
+      const hasAI = plan.lesson.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
       expect(hasAI).toBe(true);
 
       // Reasoning should mention all skills mastered
