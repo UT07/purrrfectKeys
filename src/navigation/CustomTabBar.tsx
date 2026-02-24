@@ -32,6 +32,7 @@ interface TabIconConfig {
 const TAB_ICONS: Record<string, TabIconConfig> = {
   Home: { active: 'home', inactive: 'home' },
   Learn: { active: 'map-marker-path', inactive: 'map-marker-path' },
+  Songs: { active: 'music-note', inactive: 'music-note-outline' },
   Play: { active: 'piano', inactive: 'piano' },
   Profile: { active: 'account-circle', inactive: 'account-circle-outline' },
 };

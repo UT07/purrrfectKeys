@@ -26,6 +26,7 @@ import { CatSwitchScreen } from '../screens/CatSwitchScreen';
 // import { CatCollectionScreen } from '../screens/CatCollectionScreen';
 import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 import { DailySessionScreen } from '../screens/DailySessionScreen';
+import { SongLibraryScreen } from '../screens/SongLibraryScreen';
 
 // Navigation
 import { CustomTabBar } from './CustomTabBar';
@@ -60,11 +61,13 @@ export type RootStackParamList = {
   Account: undefined;
   CatSwitch: undefined;
   CatCollection: undefined;
+  SongPlayer: { songId: string };
 };
 
 export type MainTabParamList = {
   Home: undefined;
   Learn: undefined;
+  Songs: undefined;
   Play: undefined;
   Profile: undefined;
 };
@@ -97,6 +100,11 @@ function MainTabs() {
         name="Learn"
         component={DailySessionScreen}
         options={{ tabBarButtonTestID: 'tab-learn' }}
+      />
+      <Tab.Screen
+        name="Songs"
+        component={SongLibraryScreen}
+        options={{ tabBarButtonTestID: 'tab-songs' }}
       />
       <Tab.Screen
         name="Play"

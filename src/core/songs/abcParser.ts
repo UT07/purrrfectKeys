@@ -134,7 +134,7 @@ export function parseABC(abcString: string): ABCParseOutput {
     return { error: 'Failed to parse ABC notation' };
   }
 
-  if (!tunes || tunes.length === 0) {
+  if (!tunes) {
     return { error: 'No tunes found in ABC notation' };
   }
 

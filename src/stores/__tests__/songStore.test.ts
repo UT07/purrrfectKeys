@@ -61,14 +61,6 @@ const mastery1: SongMastery = {
   totalAttempts: 2,
 };
 
-const mastery2: SongMastery = {
-  songId: 'song-2',
-  userId: 'user-1',
-  tier: 'silver',
-  sectionScores: { 'section-0': 85 },
-  lastPlayed: Date.now(),
-  totalAttempts: 5,
-};
 
 const mockSong: Song = {
   id: 'song-1',

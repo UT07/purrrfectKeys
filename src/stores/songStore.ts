@@ -15,7 +15,7 @@
 import { create } from 'zustand';
 import type { Song, SongSummary, SongFilter, SongMastery, SongRequestParams } from '@/core/songs/songTypes';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
-import { getSong, getSongSummaries, saveUserSongMastery as firestoreSaveMastery } from '@/services/songService';
+import { getSong, getSongSummaries } from '@/services/songService';
 import { generateAndSaveSong } from '@/services/songGenerationService';
 
 // ---------------------------------------------------------------------------
