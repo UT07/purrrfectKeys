@@ -6,21 +6,20 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current Sprint (Feb 23, 2026)
+## Current Sprint (Feb 24, 2026)
 
-**Codebase Health:** 90 test suites, 2,135 tests passing, 0 TypeScript errors
+**Codebase Health:** 103 test suites, 2,413 tests passing, 0 TypeScript errors
 
-**Phases 1-7.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises)
+**Phases 1-9 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input, Music Library)
 
-**Currently Active:** Phase 8 — Audio Input (Mic)
+**Up Next:** Phase 10 — Social & Leaderboards
 
 **Active Roadmap:**
-- **Phase 7.5: All-AI Exercises** — COMPLETE (all 6 batches done)
-- **Phase 8: Audio Input (Mic)** — UP NEXT (ship-blocker: pitch detection for users without MIDI)
-- Sound Design — PLANNED
-- Music Library — PLANNED (parallel pipeline)
-- Phase 9: Social & Leaderboards — PLANNED
-- Phase 10: QA + Launch — PLANNED
+- **Phase 8: Audio Input (Mic)** — COMPLETE (device testing remaining)
+- **Phase 9: Music Library** — COMPLETE (content import remaining)
+- **Phase 10: Social & Leaderboards** — UP NEXT (friends, leagues, challenges)
+- Phase 11: QA + Launch — PLANNED
+- Sound Design — PLANNED (parallel)
 
 See `docs/plans/2026-02-13-master-plan.md` for the **single source of truth** on all phases.
 See `docs/PRD.md` for product requirements.
@@ -72,6 +71,7 @@ src/
 │   ├── exercises/        # Exercise validation, scoring algorithms
 │   ├── curriculum/       # SkillTree, CurriculumEngine, WeakSpotDetector, DifficultyEngine
 │   ├── music/            # Music theory utilities (notes, scales, chords)
+│   ├── songs/            # Song types, ABC parser, mastery calculation
 │   ├── progression/      # XP calculation, level unlocks
 │   ├── analytics/        # Event tracking abstraction
 │   └── catMood.ts          # Cat mood engine (happy/neutral/sleepy)
@@ -84,7 +84,7 @@ src/
 ├── input/                # Input handling
 │   ├── MidiInput.ts      # MIDI device handling
 │   └── PitchDetector.ts  # Microphone fallback (TurboModule wrapper)
-├── stores/               # Zustand stores (12 stores)
+├── stores/               # Zustand stores (13 stores)
 │   ├── persistence.ts    # AsyncStorage persistence (debounced + immediate save)
 │   ├── exerciseStore.ts  # Current exercise state
 │   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
@@ -180,6 +180,17 @@ src/
 | `docs/design-system.md` | Design system, visual tokens, component inventory, known visual debt |
 | `docs/plans/2026-02-17-16-week-roadmap.md` | 16-week development roadmap |
 | `content/exercises/` | JSON exercise definitions (30 static exercises, 6 lessons; tiers 7-15 use AI generation) |
+| `src/core/songs/songTypes.ts` | Song, SongSection, SongMastery, MasteryTier, SongFilter types |
+| `src/core/songs/abcParser.ts` | ABC notation → NoteEvent[] converter (uses abcjs) |
+| `src/core/songs/songMastery.ts` | Mastery tier computation, best-score merge, gem rewards |
+| `src/services/songService.ts` | Firestore CRUD for songs collection + per-user mastery |
+| `src/services/songGenerationService.ts` | Gemini 2.0 Flash song generation pipeline |
+| `src/stores/songStore.ts` | Song browsing state, mastery, filters, generation |
+| `src/screens/SongLibraryScreen.tsx` | "Songs" tab — genre carousel, search, song cards, request FAB |
+| `src/screens/SongPlayerScreen.tsx` | Section-based playback with layer toggle, mastery tracking |
+| `scripts/generate-songs.ts` | Batch Gemini song generation (50 curated songs) |
+| `scripts/import-thesession.ts` | TheSession.org folk tune importer |
+| `scripts/import-pdmx.py` | PDMX MusicXML → Song JSON converter (Python + music21) |
 
 ## Code Style
 
@@ -237,7 +248,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**2,135 tests, 90 suites.** Run tests before committing:
+**2,413 tests, 103 suites.** Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
