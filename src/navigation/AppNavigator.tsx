@@ -27,6 +27,7 @@ import { CatSwitchScreen } from '../screens/CatSwitchScreen';
 import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 import { DailySessionScreen } from '../screens/DailySessionScreen';
 import { SongLibraryScreen } from '../screens/SongLibraryScreen';
+import { SongPlayerScreen } from '../screens/SongPlayerScreen';
 
 // Navigation
 import { CustomTabBar } from './CustomTabBar';
@@ -208,6 +209,11 @@ export function AppNavigator() {
               name="FreePlay"
               component={PlayScreen}
               options={{ animation: 'fade' }}
+            />
+            <RootStack.Screen
+              name="SongPlayer"
+              component={SongPlayerScreen}
+              options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
               name="CatSwitch"
