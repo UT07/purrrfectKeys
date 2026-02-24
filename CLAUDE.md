@@ -10,13 +10,13 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Codebase Health:** 103 test suites, 2,413 tests passing, 0 TypeScript errors
 
-**Phases 1-9 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input, Music Library)
+**Phases 1-9 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input, Music Library + 124 songs in Firestore)
 
 **Up Next:** Phase 10 — Social & Leaderboards
 
 **Active Roadmap:**
 - **Phase 8: Audio Input (Mic)** — COMPLETE (device testing remaining)
-- **Phase 9: Music Library** — COMPLETE (content import remaining)
+- **Phase 9: Music Library** — COMPLETE (124 songs uploaded to Firestore: 37 Gemini + 50 folk + 38 classical)
 - **Phase 10: Social & Leaderboards** — UP NEXT (friends, leagues, challenges)
 - Phase 11: QA + Launch — PLANNED
 - Sound Design — PLANNED (parallel)
@@ -184,13 +184,15 @@ src/
 | `src/core/songs/abcParser.ts` | ABC notation → NoteEvent[] converter (uses abcjs) |
 | `src/core/songs/songMastery.ts` | Mastery tier computation, best-score merge, gem rewards |
 | `src/services/songService.ts` | Firestore CRUD for songs collection + per-user mastery |
-| `src/services/songGenerationService.ts` | Gemini 2.0 Flash song generation pipeline |
+| `src/core/songs/songAssembler.ts` | Pure song generation functions (prompt, validate, assemble) — no Firebase deps |
+| `src/services/songGenerationService.ts` | Gemini 2.0 Flash song generation pipeline (imports from songAssembler) |
 | `src/stores/songStore.ts` | Song browsing state, mastery, filters, generation |
 | `src/screens/SongLibraryScreen.tsx` | "Songs" tab — genre carousel, search, song cards, request FAB |
 | `src/screens/SongPlayerScreen.tsx` | Section-based playback with layer toggle, mastery tracking |
-| `scripts/generate-songs.ts` | Batch Gemini song generation (50 curated songs) |
-| `scripts/import-thesession.ts` | TheSession.org folk tune importer |
-| `scripts/import-pdmx.py` | PDMX MusicXML → Song JSON converter (Python + music21) |
+| `scripts/generate-songs.ts` | Batch Gemini song generation (50 curated, standalone — no Firebase) |
+| `scripts/import-thesession.ts` | TheSession.org folk tune importer (two-step API + ABC header construction) |
+| `scripts/upload-songs-to-firestore.ts` | Batch Firestore upload with skip-existing and dry-run |
+| `scripts/import-pdmx.py` | music21 corpus → Song JSON converter (Beethoven, Mozart, Haydn, Bach) |
 
 ## Code Style
 
@@ -248,7 +250,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**2,413 tests, 103 suites.** Run tests before committing:
+**2,413 tests, 103 suites** (4 pre-existing catEvolutionStore failures). Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```

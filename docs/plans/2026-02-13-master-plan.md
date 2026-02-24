@@ -3,7 +3,7 @@
 **Last Updated:** February 24, 2026
 **Goal:** Production-quality piano learning app on App Store & Play Store
 **Target Launch:** June 8, 2026 (16-week roadmap from Feb 17)
-**Codebase Health:** 0 TypeScript errors, 2,302 tests passing, 99 suites
+**Codebase Health:** 0 TypeScript errors, 2,413 tests passing, 103 suites
 
 > **This is the single source of truth.** All other plan files in `docs/plans/` are historical archives. Do not reference them for current status.
 
@@ -26,7 +26,7 @@
 | — | Gem Bug Fix | **COMPLETE** | immediateSave, auto-claim, toast feedback, reward display |
 | — | Cat Gallery Redesign | **COMPLETE** | Unified swipeable gallery with abilities, buy flow, evolution data |
 | Phase 8 | Audio Input (Mic) | **COMPLETE** | YIN pitch detection, InputManager, MicSetup, onboarding + Free Play wired |
-| Phase 9 | Music Library | **COMPLETE** | Song types, ABC parser, mastery tiers, Firestore service, Gemini generation, browse/search UI, section-based playback, 6 achievements, import scripts |
+| Phase 9 | Music Library | **COMPLETE** | Song types, ABC parser, mastery tiers, Firestore service, Gemini generation, browse/search UI, section-based playback, 6 achievements, 124 songs in Firestore |
 | Phase 10 | Social & Leaderboards | **PLANNED** | Friends, weekly leagues (Bronze→Diamond), challenges, share cards, push notifications |
 | Phase 11 | QA + Launch + Audit | **PLANNED** | Comprehensive audit, beta testing, App Store submission, monitoring |
 | — | Sound Design | **PLANNED** | UI sounds, celebrations, cat audio (can be done alongside any phase) |
@@ -151,19 +151,23 @@ Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mas
 
 **Goal:** Transform from exercise-only to full piano learning platform with 120+ songs.
 
-**Completed (Feb 24):** All 11 batches. 20 new files, 8 modified, 59 new tests.
+**Completed (Feb 24):** All 11 batches + content import. 21 new files, 9 modified, 59 new tests. **124 songs uploaded to Firestore.**
 
-**3-Source Content Pipeline:**
-- **PDMX Dataset** (~40 classical songs) — `scripts/import-pdmx.py` (music21 MusicXML parser)
-- **TheSession.org API** (~40 folk songs) — `scripts/import-thesession.ts` (ABC → Song converter)
-- **Gemini Flash** (~40+ pop/film/game) — `scripts/generate-songs.ts` (50 curated songs) + runtime `songGenerationService.ts`
+**3-Source Content Pipeline (124 songs):**
+- **Gemini Flash** (37 songs) — `scripts/generate-songs.ts` (50 curated pop/film/game/holiday, 37 successful). Pure functions extracted to `src/core/songs/songAssembler.ts` for Node.js reuse.
+- **TheSession.org API** (50 songs) — `scripts/import-thesession.ts` (20 reels + 15 waltzes + 15 jigs). Two-step API: search → individual tune detail for ABC notation.
+- **PDMX/music21** (38 songs) — `scripts/import-pdmx.py` (12 Beethoven, 13 Mozart, 5 Haydn, 5 Bach, Handel, Joplin, Chopin). Iconic string quartet movements + Mozart K.545 Piano Sonata.
+- **Upload:** `scripts/upload-songs-to-firestore.ts` — batch upload via Firebase client SDK, skip-existing, dry-run support.
+
+**Genre breakdown:** 55 folk, 47 classical, 10 film, 7 game, 6 holiday
 
 **Core infrastructure:**
 - `songTypes.ts` — Song, SongSection, SongSummary, SongFilter, SongMastery, MasteryTier
 - `abcParser.ts` — ABC notation → NoteEvent[] via `abcjs`, handles keys/accidentals/ties/chords/tuplets
+- `songAssembler.ts` — Pure generation functions (buildSongPrompt, validateGeneratedSong, assembleSong) — no Firebase deps
 - `songMastery.ts` — Tier computation (none→bronze→silver→gold→platinum), best-score merge, gem rewards
 - `songService.ts` — Firestore CRUD (songs collection + per-user mastery subcollection + rate limiting)
-- `songGenerationService.ts` — Gemini 2.0 Flash generates simplified arrangements, 5/day rate limit
+- `songGenerationService.ts` — Gemini 2.0 Flash runtime generation, 5/day rate limit, imports from songAssembler
 - `songStore.ts` — Zustand store with persistence, filters, loading states
 
 **UI:**
@@ -242,7 +246,7 @@ Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mas
 [DONE]     Phase 7.5: All-AI Exercises     ✓
 [DONE]     Gem Bug Fix + Cat Gallery       ✓
 [DONE]     Phase 8: Audio Input (Mic)      ✓ (device testing remaining)
-[DONE]     Phase 9: Music Library          ✓ (content import remaining)
+[DONE]     Phase 9: Music Library          ✓ (124 songs in Firestore)
 [NOW]      Phase 10: Social & Leaderboards ← friends, leagues, challenges
 [NEXT]     Phase 11: QA + Launch + Audit   ← comprehensive audit, then ship
 [PARALLEL] Sound Design                    ← can prototype alongside any phase
@@ -262,7 +266,7 @@ PH7                     ████████   DONE
 PH7.5                      ██     DONE
 GEMS+CAT                     █     DONE
 PH8                        ████████     DONE
-PH9                           ██████     DONE (content import remaining)
+PH9                           ██████     DONE (124 songs uploaded)
 PH10                              ████████  ← NOW  Social
 PH11                                    ████████  QA + Launch
 ```

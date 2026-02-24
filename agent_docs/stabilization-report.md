@@ -8,8 +8,8 @@
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Test Suites | 18 (many failing) | 90 passed |
-| Tests | ~393 passing, 40+ failing | 2,135 passed, 0 failing |
+| Test Suites | 18 (many failing) | 103 passed |
+| Tests | ~393 passing, 40+ failing | 2,413 passed, 0 failing |
 | TypeScript Errors | 144+ | 0 |
 | Skill Nodes | 0 | 100 (15 tiers, DAG-validated) |
 | Session Types | 1 (new-material only) | 4 (new-material, review, challenge, mixed) |
@@ -201,76 +201,84 @@
 
 - **Tests:** 90 suites, 2,135 tests, 0 failures
 
+### Cat Gallery Sneak Peek, Enhanced Challenges, Tier Reorder (Feb 23)
+
+#### Cat Gallery Sneak Peek
+- **Locked cats now show actual avatar:** Replaced blank lock circle with dimmed (opacity 0.4) KeysieSvg + lock badge overlay
+- Users can now see what each locked cat looks like before purchasing
+
+#### Tier Reordering
+- **Songs moved from tier 6 to tier 10:** Songs at tier 6 was too early since Music Library is planned. Black Keys and theory content now come first.
+- **New tier order:** 1-Note Finding, 2-Right Hand, 3-Left Hand, 4-Both Hands, 5-Scales, 6-Black Keys, 7-G&F Major, 8-Minor Keys, 9-Chords, 10-Songs, 11-Rhythm, 12-Arpeggios, 13-Expression, 14-Sight Reading, 15-Performance
+- Updated SkillTree.ts (40+ nodes reordered), LevelMapScreen TIER_META/TIER_CAT_COMPANIONS, TierIntroScreen TIER_META/MASCOT_MESSAGES
+- DAG validation: all 31 SkillTree tests pass (no circular deps, all prereqs point to lower tiers)
+
+#### Enhanced Challenge System
+- **New file: `src/core/challenges/challengeSystem.ts`** — Pure TypeScript challenge engine
+  - 7 daily challenge types: any-exercise, specific-category, score-threshold, combo-streak, speed-run, perfect-notes, practice-minutes
+  - Deterministic date-hash selection: ~40% category-specific, ~60% template-based
+  - Weekly bonus challenge: one random day per week, harder thresholds (90% score, 10-note combo), 50 gems + 3x XP
+  - Monthly challenge: one random day per month, 3-5 exercises in 48h window, 150 gems + 3x XP
+  - All generators are deterministic from date strings (no randomness)
+- **DailyChallengeCard updated:** Now shows specific challenge label, icon, description, and gem reward (was generic motivational text)
+- **New components:** WeeklyChallengeCard (gold/crimson, crown icon, only visible on challenge day), MonthlyChallengeCard (purple, progress bar, 48h countdown)
+- **HomeScreen wiring:** Weekly + monthly cards render below daily challenge (auto-hide when not active)
+- **progressStore updated:** `recordExerciseCompletion` now accepts optional `ExerciseChallengeContext` for challenge validation (score, maxCombo, perfectNotes, playbackSpeed, category, minutesPracticedToday)
+- **ExercisePlayer updated:** Constructs challenge context from score details (computes maxCombo from consecutive correct notes, looks up SkillTree category)
+- **23 new tests** for challengeSystem (determinism, variety, all validation types)
+
+- **Tests:** 94 suites, 2,243 tests, 0 failures
+
+### Phase 8: Audio Input — Mic Pipeline (Feb 23)
+
+#### Batch 8A: Core Pitch Detection
+- **YINPitchDetector (PitchDetector.ts):** Pure TS YIN algorithm with pre-allocated buffers, parabolic interpolation, configurable frequency range (50-2000Hz)
+- **NoteTracker:** Hysteresis layer — 40ms onset hold, 80ms release hold prevents rapid note flickering
+- **AudioCapture (AudioCapture.ts):** react-native-audio-api AudioRecorder wrapper with buffer streaming callbacks
+- **MicrophoneInput (MicrophoneInput.ts):** Composes AudioCapture + YINPitchDetector + NoteTracker → MidiNoteEvent (same interface as MIDI)
+- **pitchUtils (src/core/music/pitchUtils.ts):** frequencyToNearestMidi, frequencyCentsOffset
+
+#### Batch 8B: InputManager & Exercise Integration
+- **InputManager (src/input/InputManager.ts):** Unified input factory — auto-detects MIDI > Mic > Touch, runtime method switching
+- **Timing compensation:** Per-method latency: MIDI=0ms, Touch=20ms, Mic=100ms. Mic gets 1.5x timing tolerance multiplier
+- **useExercisePlayback:** Fully integrated with InputManager — initializes preferred input, subscribes to events, compensates latency in scoring
+- **settingsStore:** Added `preferredInputMethod` ('auto'|'midi'|'mic'|'touch') + `setPreferredInputMethod()`
+
+#### Batch 8C: MicSetupScreen & Settings
+- **MicSetupScreen:** Permission wizard (intro → requesting → granted/denied), privacy assurance, tip card
+- **ProfileScreen:** Input method selector in settings section
+
+#### Batch 8D: Onboarding & Free Play Integration
+- **Onboarding Step 3 redesigned:** "How Will You Play?" with 3 options (MIDI / Microphone / On-Screen Keyboard), replaces old binary MIDI Yes/No
+- **Post-onboarding mic setup:** Users who choose mic are navigated to MicSetupScreen after onboarding completes
+- **PlayScreen (Free Play):** InputManager wired for mic/MIDI input alongside touch keyboard. Active input badge shows current method. Instructions adapt to input method.
+- **Playback speed defaults:** MIDI=1.0x, Mic=0.75x, Touch=0.5x
+
+- **Tests:** 94 suites, 2,243 tests, 0 failures
+
 ### Phase 9: Music Library (Feb 24)
 
-Full song library feature — 120+ songs from 3 sources (classical datasets, folk APIs, AI generation), Firebase Firestore catalogue, browse/search UI, section-based playback, mastery tiers, user song requests, and 6 song achievements.
+#### Code (11 Batches — merged to master)
+- **Song types + ABC parser:** `songTypes.ts`, `abcParser.ts` (via `abcjs`), `songMastery.ts`
+- **Firestore service:** `songService.ts` — songs collection CRUD + per-user mastery subcollection + rate limiting
+- **Gemini generation:** `songGenerationService.ts` → extracted pure functions to `songAssembler.ts` for Node.js script reuse
+- **Song store:** `songStore.ts` — Zustand with persistence, filters, pagination cursor, loading/generation states
+- **Browse UI:** `SongLibraryScreen.tsx` — genre carousel, 400ms debounced search, difficulty filter, song cards, request FAB
+- **Playback UI:** `SongPlayerScreen.tsx` — section pills, layer toggle (melody/full), loop, `sectionToExercise()` → ExercisePlayer
+- **Navigation:** Songs tab (5 tabs: Home, Learn, Songs, Play, Profile), SongPlayer stack route
+- **6 achievements:** first-song-mastered, genre-explorer, classical-connoisseur, platinum-pianist, song-collector, melody-master
+- **Mastery tiers:** none → bronze (70+/melody) → silver (80+/melody) → gold (90+/full) → platinum (95+/full)
+- **Gem rewards on tier upgrade:** bronze=10, silver=20, gold=40, platinum=75
 
-#### Batch 1: Song Types + ABC Parser
-- **songTypes.ts:** Song, SongSection, SongSummary, SongFilter, SongMastery, MasteryTier, SongRequestParams types
-- **abcParser.ts:** ABC notation → NoteEvent[] converter using `abcjs.parseOnly()`. Handles key signatures, accidentals, octave modifiers, ties, chords, tuplets, rests
-- **20 tests** for parser edge cases (keys, accidentals, octaves, durations, ties, chords, error handling)
+#### Content Import (124 songs uploaded to Firestore)
+- **songAssembler.ts extraction:** Pure functions (buildSongPrompt, validateGeneratedSong, assembleSong) extracted from songGenerationService to `src/core/songs/songAssembler.ts` — enables Node.js scripts without Firebase/React Native deps
+- **generate-songs.ts refactor:** Standalone Gemini 2.0 Flash API calls (no Firebase), resume support, JSON output, 50 curated songs → 37 successful
+- **import-thesession.ts rewrite:** Two-step API (search → individual tune detail), constructs ABC headers from metadata, 50 folk tunes (20 reels + 15 waltzes + 15 jigs)
+- **PDMX conversion (Python + music21):** Curated selection of 38 iconic classical pieces — 12 Beethoven (Op.18, Razumovsky, Harp Quartet, Große Fuge), 13 Mozart (K.545 Piano Sonata, The Hunt Quartet, K.155, K.156, K.80), 5 Haydn, 5 Bach chorales, Handel, Joplin, Chopin
+- **upload-songs-to-firestore.ts:** Batch upload via Firebase client SDK, skip-existing, dry-run support
+- **Final catalogue:** 124 songs (37 Gemini AI + 50 TheSession folk + 38 PDMX classical) across 6 genres (55 folk, 47 classical, 10 film, 7 game, 6 holiday)
 
-#### Batch 2: Song Mastery Calculation
-- **songMastery.ts:** `computeMasteryTier()`, `updateSongMastery()` (best-wins merge), `isBetterTier()`, `gemRewardForTier()`, `masteryLabel()`, `masteryColor()`
-- **Tier ladder:** none → bronze (70+/melody) → silver (80+/melody) → gold (90+/full) → platinum (95+/full)
-- **Gem rewards:** bronze=10, silver=20, gold=40, platinum=75
-- **15 tests** for tier computation, best-score merge, gem rewards, ordering
-
-#### Batch 3: Firestore Song Service
-- **songService.ts:** Global `songs/{songId}` collection + per-user `users/{uid}/songMastery/{songId}` subcollection
-- Functions: `getSong()`, `getSongSummaries()` (paginated, filtered), `searchSongs()`, `saveSongToFirestore()`, `getUserSongMastery()`, `saveUserSongMastery()`, rate limiting via `users/{uid}/songRequests/{date}`
-- **12 tests** with Firestore mocks
-
-#### Batch 4: Song Generation Service (Gemini)
-- **songGenerationService.ts:** Gemini 2.0 Flash generates simplified piano arrangements from song title
-- Prompt returns JSON with per-section ABC notation; parsed via `abcParser`; assembled into Song
-- Rate limited to 5 requests/user/day
-- **10 tests** for validation, prompt building, assembly, rate limiting
-
-#### Batch 5: Song Store (Zustand)
-- **songStore.ts:** Persisted mastery + recent songs + request count; transient summaries, filters, loading states
-- Actions: `loadSummaries()`, `setFilter()`, `loadSong()`, `updateMastery()`, `requestSong()`, `canRequestSong()`
-- Follows `gemStore.ts` persistence pattern (debounced save + hydration)
-- **14 tests** for filter, mastery, rate limiting, hydration, reset
-
-#### Batch 6: SongLibraryScreen
-- Genre carousel (All/Classical/Folk/Pop/Film/Game/Holiday), difficulty star filter, search bar (400ms debounce)
-- Song cards with mastery badges, paginated FlatList via `loadMoreSummaries()`
-- "Request a Song" FAB → modal with title input + difficulty picker + rate limit warning
-- Songs tab added to bottom navigation (5 tabs: Home, Learn, Songs, Play, Profile)
-- **12 tests** for genre pills, search, card rendering, FAB, navigation
-
-#### Batch 7: SongPlayerScreen
-- Section pills (horizontal scroll) + layer toggle (Melody/Full) + loop toggle
-- `sectionToExercise()` converts SongSection + layer → Exercise object for ExercisePlayer (zero changes to ExercisePlayer.tsx)
-- On return: reads score from exerciseStore, calls `updateMastery()`, checks tier upgrade → gem reward + achievement
-- **12 tests** for section display, layer toggle, exercise conversion, score capture
-
-#### Batch 8: Song Achievements + Gem Integration
-- **6 new achievements:** first-song-mastered (1 bronze), genre-explorer (3 genres), classical-connoisseur (10 classical), platinum-pianist (any platinum), song-collector (25 bronze), melody-master (50 silver)
-- **5 new condition types** in `isConditionMet()`: songs_bronze_count, song_platinum_any, songs_by_genre, songs_classical_count, songs_silver_count
-- **New `'song'` category** in AchievementCategory
-- **5 new AchievementContext fields** wired through `buildAchievementContext()`
-- **14 tests** for conditions, unlocking, re-trigger prevention, category filter
-
-#### Batch 9: Navigation Wiring
-- Songs tab testID `tab-songs` in CustomTabBar
-- SongPlayer route typed in RootStackParamList
-- **3 new navigation tests** (5-tab assertion, Songs tab, SongPlayer route)
-
-#### Batch 10: Content Import Scripts
-- **scripts/import-thesession.ts:** Fetches folk tunes from TheSession.org API, converts ABC → Song, outputs JSON
-- **scripts/generate-songs.ts:** Gemini batch generator with 50 curated songs (classical/pop/film/game/holiday), `--dry-run` support
-- **scripts/import-pdmx.py:** Python MusicXML converter using music21 (classical corpus)
-
-#### Batch 11: Integration Tests
-- **16 integration tests** covering full mastery progression (none→bronze→silver→gold→platinum), best-score merge, gem rewards, achievement unlocking, filter shapes, tier ordering
-- Located at `src/__tests__/integration/SongFlow.test.tsx`
-
-**New files:** 20 (types, parser, mastery, service, generation, store, screens, tests, scripts)
-**Modified files:** 8 (persistence, authStore, stores/index, achievements, achievementStore, AppNavigator, CustomTabBar, navigation tests)
-
-- **Tests:** 99 suites, 2,302 tests passing (59 new), 4 pre-existing failures in catEvolutionStore, 0 TypeScript errors
+- **Tests:** 103 suites, 2,413 tests (102 passing, 4 pre-existing failures in catEvolutionStore)
 
 ---
 
@@ -284,4 +292,3 @@ Full song library feature — 120+ songs from 3 sources (classical datasets, fol
 6. **Phase 7 Batches 7-10 remaining**: Remaining screen redesigns (AuthScreen, LevelMapScreen, OnboardingScreen), micro-interactions (PressableScale upgrade, animated progress bars, loading skeletons, celebration upgrades), Detox visual audit
 7. **Phase 8 remaining**: Real-device mic accuracy testing, ambient noise calibration tuning, polyphonic detection (research)
 8. **Phase 10+**: Social & Leaderboards, QA + Launch
-9. **catEvolutionStore test fix**: 4 pre-existing failures in `completeDailyChallengeAndClaim` (gem amount mismatch 15 vs 10)
