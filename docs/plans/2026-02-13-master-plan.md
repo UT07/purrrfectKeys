@@ -1,9 +1,9 @@
 # Purrrfect Keys — Master Plan
 
-**Last Updated:** February 23, 2026
+**Last Updated:** February 24, 2026
 **Goal:** Production-quality piano learning app on App Store & Play Store
 **Target Launch:** June 8, 2026 (16-week roadmap from Feb 17)
-**Codebase Health:** 0 TypeScript errors, 2,135 tests passing, 90 suites
+**Codebase Health:** 0 TypeScript errors, 2,243 tests passing, 94 suites
 
 > **This is the single source of truth.** All other plan files in `docs/plans/` are historical archives. Do not reference them for current status.
 
@@ -25,12 +25,12 @@
 | Phase 7.5 | All-AI Exercise Generation | **COMPLETE** | All 6 batches done — skill-aware AI generation for all tiers |
 | — | Gem Bug Fix | **COMPLETE** | immediateSave, auto-claim, toast feedback, reward display |
 | — | Cat Gallery Redesign | **COMPLETE** | Unified swipeable gallery with abilities, buy flow, evolution data |
-| Phase 8 | Audio Input (Mic) | **UP NEXT** | Ship-blocker: pitch detection for 95%+ of users without MIDI |
-| — | Sound Design | **PLANNED** | UI sounds, celebrations, cat audio |
-| — | Rive Animations | **PLANNED** | .riv files (needs Rive editor guidance) |
-| — | Music Library | **PLANNED** | 30+ songs, browse UI, section-based practice |
-| Phase 9 | Social & Leaderboards | **PLANNED** | Friends, leagues, challenges, push notifications |
-| Phase 10 | QA + Launch | **PLANNED** | Beta testing, App Store submission, monitoring |
+| Phase 8 | Audio Input (Mic) | **IN PROGRESS** | YIN pitch detection, InputManager, MicSetup, onboarding + Free Play wired |
+| Phase 9 | Music Library | **PLANNED** | 120+ songs (PDMX + TheSession + Gemini), browse UI, section-based practice, mastery tiers, user song requests |
+| Phase 10 | Social & Leaderboards | **PLANNED** | Friends, weekly leagues (Bronze→Diamond), challenges, share cards, push notifications |
+| Phase 11 | QA + Launch + Audit | **PLANNED** | Comprehensive audit, beta testing, App Store submission, monitoring |
+| — | Sound Design | **PLANNED** | UI sounds, celebrations, cat audio (can be done alongside any phase) |
+| — | Rive Animations | **PLANNED** | .riv files (needs Rive editor guidance, nice-to-have) |
 
 ---
 
@@ -88,35 +88,33 @@ All 6 batches completed: skill mastery for AI exercises, GenerationHints for 100
 
 **Goal:** Low-latency single-note pitch detection via device microphone. Target: <150ms.
 
-### Current State
-- `PitchDetector.ts` — interface exists, C++ TurboModule NOT built
-- `AudioEngine` architecture ready (WebAudioEngine JSI + ExpoAudioEngine)
-- Scoring engine already handles pitch matching — just needs real input events
-- `audio-pipeline.md` documents YIN algorithm spec
+### Current State (Feb 23)
+**Batches 8A-8D COMPLETE.** Core pipeline is built and wired.
 
-### Implementation Options
-| Option | Pros | Cons |
-|--------|------|------|
-| A: C++ TurboModule (YIN) | Lowest latency, spec'd | Most native code work |
-| B: expo-av + JS pitch detection | Easy to ship | Higher latency |
-| C: Platform native APIs (AVAudioEngine/Oboe) | Best quality | Platform-specific work |
+- `PitchDetector.ts` — Pure TS YIN algorithm, pre-allocated buffers, sub-sample parabolic interpolation
+- `NoteTracker` — Hysteresis (40ms onset, 80ms release) prevents rapid flickering
+- `AudioCapture.ts` — react-native-audio-api AudioRecorder wrapper
+- `MicrophoneInput.ts` — Composes AudioCapture + PitchDetector + NoteTracker → MidiNoteEvent
+- `InputManager.ts` — Unified MIDI > Mic > Touch factory with runtime switching
+- `MicSetupScreen.tsx` — Permission wizard with privacy assurances
+- `useExercisePlayback` — Integrated with InputManager, per-method latency compensation
+- `OnboardingScreen` — 3-option input selection (MIDI / Mic / Touch)
+- `PlayScreen` — Free Play wired with InputManager for mic/MIDI alongside touch
+- `pitchUtils.ts` — frequencyToNearestMidi, frequencyCentsOffset
 
-### Key Tasks
-1. Choose implementation path
-2. Monophonic detection first (polyphonic = research problem)
-3. Feed detected pitches as MidiNoteEvent (same interface)
-4. Handle sustained notes + ambient noise rejection
-5. Calibration flow (mic permission + sensitivity)
-6. Input method selector (MIDI / Mic / On-screen)
-7. Adaptive timing windows per input method
-8. Measure latency on real devices
+### Remaining Tasks
+1. Real-device accuracy testing (>95% target)
+2. Ambient noise calibration tuning
+3. Polyphonic detection research (stretch goal)
 
 ### Exit Criteria
-- Monophonic: >95% accuracy, <200ms latency
-- Input method selector in onboarding + settings
-- Adaptive timing windows per input type
-- Mic calibration flow
-- Free play works with mic
+- ~~Monophonic detection~~ DONE
+- ~~Input method selector in onboarding + settings~~ DONE
+- ~~Adaptive timing windows per input type~~ DONE (1.5x for mic)
+- ~~Mic calibration flow~~ DONE (MicSetupScreen)
+- ~~Free play works with mic~~ DONE
+- Real-device accuracy >95% — **NEEDS TESTING**
+- Latency <200ms — **NEEDS MEASUREMENT**
 
 ---
 
@@ -157,56 +155,90 @@ Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mas
 
 ---
 
-## Music Library (PLANNED)
+## Phase 9: Music Library (PLANNED)
 
-### Content Pipeline (background work)
-- Extend Exercise JSON for songs: layers, sections, difficulty per section, attribution
-- MIDI → Exercise JSON conversion script
-- 30+ songs: classical (public domain), simplified pop, film/TV, folk, games
+**Design doc:** `docs/plans/2026-02-24-phase9-music-library-design.md`
 
-### UI Integration
-- Browse screen with genre carousel, search, difficulty filter
-- Song player: section markers, loop section, skip to chorus
-- Song mastery tiers (Bronze → Platinum)
-- AI song coaching (trouble spot drills)
+**Goal:** Transform from exercise-only to full piano learning platform with 120+ songs.
+
+**3-Source Content Pipeline:**
+- **PDMX Dataset** (~40 classical songs) — 254K public domain MusicXML files, parsed offline
+- **TheSession.org API** (~40 folk songs) — 28K+ ABC notation tunes, free JSON API
+- **Gemini Flash** (~40+ pop/film/game) — AI-generates simplified arrangements from title+key, ~$0.001/song
+
+**Key features:**
+- Songs stored in Firebase Firestore, fetched on-demand
+- SongLibraryScreen: genre carousel, search, difficulty filter, mastery badges
+- SongPlayerScreen: section markers, layer toggle (melody/full), loop section
+- Mastery tiers: Bronze → Silver → Gold → Platinum
+- **User song requests:** Type any song name → Gemini generates live → saved for all users
+- Section-aware AI coaching via Gemini
+- Song achievements + gem rewards (6 new achievements)
+- ABC parser (`abcjs` library) for notation → NoteEvent conversion
+- "Songs" tab added to bottom navigation
+
+**Exit Criteria:**
+- 120+ playable songs across 5+ genres in Firebase
+- Browse/search/filter UI with song request feature
+- Section-based practice with layer toggle
+- Mastery system + AI coaching + achievements
+- ~60+ new tests
 
 ---
 
-## Phase 9: Social & Leaderboards (PLANNED)
+## Phase 10: Social & Leaderboards (PLANNED)
 
-- Friends system (add via code/link, activity feed)
-- Weekly leagues (Bronze → Diamond, 30-person, promotion/demotion)
-- Leaderboard UI with animated rank changes
-- Friend challenges (beat my score)
-- Share achievements to social media
-- Firebase backend (Firestore + Cloud Functions for league rotation)
-- Push notifications (FCM: reminders, challenges, streak-at-risk)
+**Design doc:** `docs/plans/2026-02-24-phase10-social-leaderboards-design.md`
+
+**Goal:** Social features that drive daily engagement — friends, leagues, challenges, sharing.
+
+**Key features:**
+- **Friends system:** 6-char friend codes, deep links, friend list with activity feed
+- **Activity feed:** Shows friend milestones with user display name + equipped cat avatar (e.g., "[Avatar] Sarah mastered Fur Elise!")
+- **Weekly leagues:** Duolingo-style Bronze → Silver → Gold → Diamond, 30-person groups, promotion/demotion
+- **Friend challenges:** Challenge a friend to beat your score, 48h window, push notification
+- **Share cards:** Shareable images for scores, streaks, evolution, league rank (via `react-native-view-shot`)
+- **Push notifications:** FCM (remote) + local scheduled (streak reminders, daily practice)
+- **Firebase backend:** Firestore collections + Cloud Functions for league rotation + social notifications
+- "Social" tab replaces "Play" tab (Free Play moves to HomeScreen button)
+
+**Exit Criteria:**
+- Friend system with code/link adding + activity feed
+- Weekly leagues with promotion/demotion + leaderboard UI
+- Friend challenges with 48h window
+- Push notifications (local + remote)
+- Shareable cards
+- ~50+ new tests
 
 ---
 
-## Phase 10: QA + Launch (PLANNED)
+## Phase 11: QA + Launch + Comprehensive Audit (PLANNED)
 
-### Weeks 13-14: QA Sprint
+### QA Sprint
 - AI quality audit (100 exercises, 20+ coaching scenarios)
 - Mic input testing (5+ environments)
+- Music Library content review (all 120+ songs)
 - Performance profiling (every screen, target devices)
 - Full 30-day simulated journey
 - Gamification balance (XP curve, gem rates, evolution milestones)
 - Edge cases (kill mid-exercise, airplane mode, background/foreground)
+- Social feature testing (leagues, challenges, notifications)
 - Accessibility (VoiceOver, dynamic type, color contrast, reduced motion)
 - Security (Firebase rules, API keys, input sanitization)
+- Comprehensive codebase audit
 
-### Week 15: Beta Release
+### Beta Release
 - App Store assets (icon, screenshots, description, privacy policy)
 - EAS production builds (iOS + Android)
 - TestFlight + internal testing (5-10 testers, 5-day window)
 - Critical bug fixes from beta feedback
 
-### Week 16: Launch
+### Launch
 - Final fixes
 - App Store + Play Store submission
 - Launch monitoring (Crashlytics, analytics)
 - Post-launch hotfix plan
+- Reassess and plan next steps
 
 **Launch is 100% free** — monetization (3-tier freemium) designed post-launch.
 
@@ -217,12 +249,12 @@ Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mas
 ```
 [DONE]     Phase 7.5: All-AI Exercises     ✓
 [DONE]     Gem Bug Fix + Cat Gallery       ✓
-[NOW]      Phase 8: Audio Input (Mic)      ← core ship-blocker, needs R&D
-[NEXT]     Sound Design                    ← can prototype alongside audio work
-[LATER]    Music Library                   ← content pipeline can run in parallel
-[LATER]    Rive Animations                 ← nice-to-have, SVG system is functional
-[LATER]    Phase 9: Social & Leaderboards
-[LATER]    Phase 10: QA + Launch
+[TESTING]  Phase 8: Audio Input (Mic)      ← user testing on device
+[NOW]      Phase 9: Music Library          ← 120+ songs, Firebase, browse UI
+[NEXT]     Phase 10: Social & Leaderboards ← friends, leagues, challenges
+[NEXT]     Phase 11: QA + Launch + Audit   ← comprehensive audit, then ship
+[PARALLEL] Sound Design                    ← can prototype alongside any phase
+[PARALLEL] Rive Animations                 ← nice-to-have, SVG system is functional
 ```
 
 ---
@@ -237,14 +269,13 @@ PH6            ████████████        DONE
 PH7                     ████████   DONE
 PH7.5                      ██     DONE
 GEMS+CAT                     █     DONE
-PH8                        ████████     ← NOW  Audio Input
-SOUND                         ████      Sound Design
-MUSIC ░░░░░░░░░░░░░░░░░░░░░░░░░░░░████  Pipeline → UI
-PH9                                  ████████  Social
-PH10                                       ████████  Launch
+PH8                        ████████     DONE (user testing)
+PH9                           ████████     ← NOW  Music Library
+PH10                                ████████  Social
+PH11                                      ████████  QA + Launch
 ```
 
-We are currently in **Week 5** (Feb 23). Phase 7.5 complete, gem bug fixed, cat gallery redesigned. Phase 8 (Audio Input) is next.
+We are currently in **Week 6** (Feb 24). Phase 8 built (user testing on device). Phase 9 (Music Library) starting now.
 
 ---
 
