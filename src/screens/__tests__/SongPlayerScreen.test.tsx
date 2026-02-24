@@ -21,7 +21,7 @@ const mockGoBack = jest.fn();
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
   useRoute: () => ({ params: { songId: 'test-song-1' } }),
-  useFocusEffect: (cb: () => void) => {
+  useFocusEffect: (_cb: () => void) => {
     // Don't call the focus callback during tests to avoid exerciseStore side effects
   },
 }));
@@ -185,7 +185,7 @@ describe('SongPlayerScreen', () => {
   });
 
   it('first section is selected by default', () => {
-    const { getByTestId, getByText } = render(<SongPlayerScreen />);
+    const { getByText } = render(<SongPlayerScreen />);
     // Play button should show first section label
     expect(getByText('Play Verse 1')).toBeTruthy();
   });

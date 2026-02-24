@@ -229,6 +229,12 @@ export function buildAchievementContext(progress: {
   // Time extras
   fastestExerciseSeconds?: number;
   sessionMinutes?: number;
+  // Song extras
+  songsBronzePlus?: number;
+  songsSilverPlus?: number;
+  hasAnySongPlatinum?: boolean;
+  classicalSongsBronzePlus?: number;
+  genresCoveredBronzePlus?: number;
 }): AchievementContext {
   const achievementState = useAchievementStore.getState();
 
@@ -285,5 +291,12 @@ export function buildAchievementContext(progress: {
     isLateNightPractice: hour >= 23,
     isEarlyMorningPractice: hour < 7,
     sessionMinutes: extras?.sessionMinutes ?? 0,
+
+    // Song context
+    songsBronzePlus: extras?.songsBronzePlus ?? 0,
+    songsSilverPlus: extras?.songsSilverPlus ?? 0,
+    hasAnySongPlatinum: extras?.hasAnySongPlatinum ?? false,
+    classicalSongsBronzePlus: extras?.classicalSongsBronzePlus ?? 0,
+    genresCoveredBronzePlus: extras?.genresCoveredBronzePlus ?? 0,
   };
 }

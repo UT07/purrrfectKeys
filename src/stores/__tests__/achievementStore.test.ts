@@ -44,6 +44,12 @@ function defaultContext(overrides: Partial<AchievementContext> = {}): Achievemen
     isLateNightPractice: false,
     isEarlyMorningPractice: false,
     sessionMinutes: 0,
+    // Songs
+    songsBronzePlus: 0,
+    songsSilverPlus: 0,
+    hasAnySongPlatinum: false,
+    classicalSongsBronzePlus: 0,
+    genresCoveredBronzePlus: 0,
     ...overrides,
   };
 }

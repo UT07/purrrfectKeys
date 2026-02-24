@@ -39,7 +39,12 @@ export type AchievementConditionType =
   | 'fast_exercise'
   | 'late_night_practice'
   | 'early_morning_practice'
-  | 'session_minutes';
+  | 'session_minutes'
+  | 'songs_bronze_count'
+  | 'song_platinum_any'
+  | 'songs_by_genre'
+  | 'songs_classical_count'
+  | 'songs_silver_count';
 
 export interface AchievementCondition {
   type: AchievementConditionType;
@@ -56,7 +61,8 @@ export type AchievementCategory =
   | 'evolution'
   | 'gems'
   | 'daily-reward'
-  | 'time';
+  | 'time'
+  | 'song';
 
 export interface Achievement {
   id: string;
@@ -111,6 +117,13 @@ export interface AchievementContext {
   isLateNightPractice: boolean; // practiced after 11pm
   isEarlyMorningPractice: boolean; // practiced before 7am
   sessionMinutes: number; // minutes in current session
+
+  // Song context
+  songsBronzePlus: number; // songs at Bronze tier or above
+  songsSilverPlus: number; // songs at Silver tier or above
+  hasAnySongPlatinum: boolean; // any song at Platinum tier
+  classicalSongsBronzePlus: number; // classical songs at Bronze+
+  genresCoveredBronzePlus: number; // distinct genres with at least one Bronze+ song
 }
 
 /**
@@ -644,6 +657,62 @@ export const ACHIEVEMENTS: Achievement[] = [
     condition: { type: 'current_streak', threshold: 30 },
     xpReward: 300,
   },
+
+  // === Song Achievements (6) ===
+  {
+    id: 'first-song-mastered',
+    title: 'First Song Mastered',
+    description: 'Earn Bronze mastery on a song',
+    icon: 'music-note-eighth',
+    category: 'song',
+    condition: { type: 'songs_bronze_count', threshold: 1 },
+    xpReward: 30,
+  },
+  {
+    id: 'genre-explorer',
+    title: 'Genre Explorer',
+    description: 'Earn Bronze+ on songs in 3 different genres',
+    icon: 'compass',
+    category: 'song',
+    condition: { type: 'songs_by_genre', threshold: 3 },
+    xpReward: 50,
+  },
+  {
+    id: 'classical-connoisseur',
+    title: 'Classical Connoisseur',
+    description: 'Master 10 classical songs at Bronze+',
+    icon: 'violin',
+    category: 'song',
+    condition: { type: 'songs_classical_count', threshold: 10 },
+    xpReward: 40,
+  },
+  {
+    id: 'platinum-pianist',
+    title: 'Platinum Pianist',
+    description: 'Earn Platinum mastery on any song',
+    icon: 'trophy',
+    category: 'song',
+    condition: { type: 'song_platinum_any', threshold: 1 },
+    xpReward: 75,
+  },
+  {
+    id: 'song-collector',
+    title: 'Song Collector',
+    description: 'Earn Bronze+ on 25 songs',
+    icon: 'playlist-music',
+    category: 'song',
+    condition: { type: 'songs_bronze_count', threshold: 25 },
+    xpReward: 100,
+  },
+  {
+    id: 'melody-master',
+    title: 'Melody Master',
+    description: 'Earn Silver+ on 50 songs',
+    icon: 'music-clef-treble',
+    category: 'song',
+    condition: { type: 'songs_silver_count', threshold: 50 },
+    xpReward: 150,
+  },
 ];
 
 /**
@@ -735,6 +804,18 @@ export function isConditionMet(condition: AchievementCondition, context: Achieve
       return context.isEarlyMorningPractice ? 1 >= condition.threshold : false;
     case 'session_minutes':
       return context.sessionMinutes >= condition.threshold;
+
+    // Song conditions
+    case 'songs_bronze_count':
+      return context.songsBronzePlus >= condition.threshold;
+    case 'song_platinum_any':
+      return context.hasAnySongPlatinum ? 1 >= condition.threshold : false;
+    case 'songs_by_genre':
+      return context.genresCoveredBronzePlus >= condition.threshold;
+    case 'songs_classical_count':
+      return context.classicalSongsBronzePlus >= condition.threshold;
+    case 'songs_silver_count':
+      return context.songsSilverPlus >= condition.threshold;
 
     default:
       return false;

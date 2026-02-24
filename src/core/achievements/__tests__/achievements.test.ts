@@ -49,6 +49,12 @@ function defaultContext(overrides: Partial<AchievementContext> = {}): Achievemen
     isLateNightPractice: false,
     isEarlyMorningPractice: false,
     sessionMinutes: 0,
+    // Songs
+    songsBronzePlus: 0,
+    songsSilverPlus: 0,
+    hasAnySongPlatinum: false,
+    classicalSongsBronzePlus: 0,
+    genresCoveredBronzePlus: 0,
     ...overrides,
   };
 }
@@ -67,7 +73,7 @@ describe('Achievement Definitions', () => {
   it('should have valid categories for all achievements', () => {
     const validCategories = [
       'milestone', 'streak', 'score', 'xp', 'practice', 'collection',
-      'evolution', 'gems', 'daily-reward', 'time',
+      'evolution', 'gems', 'daily-reward', 'time', 'song',
     ];
     for (const achievement of ACHIEVEMENTS) {
       expect(validCategories).toContain(achievement.category);
