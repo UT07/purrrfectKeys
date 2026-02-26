@@ -1,4 +1,4 @@
-import { AmbientNoiseCalibrator, CalibrationResult } from '../AmbientNoiseCalibrator';
+import { AmbientNoiseCalibrator } from '../AmbientNoiseCalibrator';
 
 describe('AmbientNoiseCalibrator', () => {
   let calibrator: AmbientNoiseCalibrator;

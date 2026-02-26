@@ -58,10 +58,11 @@ export const INPUT_TIMING_MULTIPLIERS: Record<ActiveInputMethod, number> = {
  * Base latency compensation per input method (ms).
  * Subtracted from played-note timestamps before scoring.
  */
-export const INPUT_LATENCY_COMPENSATION_MS: Record<ActiveInputMethod, number> = {
+export const INPUT_LATENCY_COMPENSATION_MS: Record<string, number> = {
   midi: 0,
   touch: 20,
   mic: 100,
+  mic_poly: 120, // Polyphonic adds ~20ms for ONNX inference overhead
 };
 
 // ---------------------------------------------------------------------------
@@ -232,6 +233,12 @@ export class InputManager {
 
   /** Get latency compensation in ms for the current input method */
   getLatencyCompensationMs(): number {
+    if (this._activeMethod === 'mic') {
+      const detectionMode = useSettingsStore.getState().micDetectionMode ?? 'monophonic';
+      return detectionMode === 'polyphonic'
+        ? INPUT_LATENCY_COMPENSATION_MS.mic_poly
+        : INPUT_LATENCY_COMPENSATION_MS.mic;
+    }
     return INPUT_LATENCY_COMPENSATION_MS[this._activeMethod];
   }
 

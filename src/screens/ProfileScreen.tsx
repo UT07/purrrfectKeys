@@ -319,9 +319,9 @@ export function ProfileScreen(): React.ReactElement {
   const { totalXp, level, streakData, lessonProgress } = useProgressStore();
   const {
     dailyGoalMinutes, masterVolume, displayName, selectedCatId,
-    preferredInputMethod,
+    preferredInputMethod, micDetectionMode,
     setDailyGoalMinutes, setMasterVolume, setDisplayName,
-    setPreferredInputMethod,
+    setPreferredInputMethod, setMicDetectionMode,
   } = useSettingsStore();
   const weeklyPractice = useWeeklyPractice();
   const totalWeekMinutes = weeklyPractice.reduce((sum, d) => sum + d.minutes, 0);
@@ -330,6 +330,7 @@ export function ProfileScreen(): React.ReactElement {
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showVolumePicker, setShowVolumePicker] = useState(false);
   const [showInputPicker, setShowInputPicker] = useState(false);
+  const [showDetectionModePicker, setShowDetectionModePicker] = useState(false);
   const [showNameEditor, setShowNameEditor] = useState(false);
   const [editingName, setEditingName] = useState(displayName);
 
@@ -668,6 +669,44 @@ export function ProfileScreen(): React.ReactElement {
                 </TouchableOpacity>
               ))}
             </View>
+          )}
+
+          {(preferredInputMethod === 'mic' || preferredInputMethod === 'auto') && (
+            <>
+              <TouchableOpacity style={styles.settingItem} onPress={() => setShowDetectionModePicker(!showDetectionModePicker)}>
+                <View style={styles.settingLeft}>
+                  <MaterialCommunityIcons name="waveform" size={24} color={COLORS.textSecondary} />
+                  <Text style={styles.settingLabel}>Mic Detection</Text>
+                </View>
+                <View style={styles.settingRight}>
+                  <Text style={styles.settingValue}>
+                    {micDetectionMode === 'polyphonic' ? 'Chords' : 'Single Notes'}
+                  </Text>
+                  <MaterialCommunityIcons name={showDetectionModePicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
+                </View>
+              </TouchableOpacity>
+              {showDetectionModePicker && (
+                <View style={styles.pickerRow}>
+                  {([
+                    { value: 'monophonic' as const, label: 'Single Notes' },
+                    { value: 'polyphonic' as const, label: 'Chords (AI)' },
+                  ]).map((opt) => (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[styles.pickerChip, micDetectionMode === opt.value && styles.pickerChipActive]}
+                      onPress={() => {
+                        setMicDetectionMode(opt.value);
+                        setShowDetectionModePicker(false);
+                      }}
+                    >
+                      <Text style={[styles.pickerChipText, micDetectionMode === opt.value && styles.pickerChipTextActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </>
           )}
 
           <TouchableOpacity
