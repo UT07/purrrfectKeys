@@ -27,11 +27,14 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
   Easing,
   FadeIn,
   FadeInDown,
   FadeInUp,
   interpolate,
+  interpolateColor,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -43,7 +46,8 @@ import { useCatEvolutionStore, stageFromXp, xpToNextStage } from '../stores/catE
 import { useGemStore } from '../stores/gemStore';
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import type { EvolutionStage, CatAbility } from '../stores/types';
-import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, glowColor } from '../theme/tokens';
+import type { RarityLevel } from '../theme/tokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.88;
@@ -63,6 +67,15 @@ const STAGE_COLORS: Record<EvolutionStage, string> = {
   adult: COLORS.starGold,
   master: COLORS.starGold,
 };
+
+const EVOLUTION_STAGES: EvolutionStage[] = ['baby', 'teen', 'adult', 'master'];
+
+/** Determine rarity tier from cat character data */
+function getCatRarity(cat: CatCharacter): RarityLevel {
+  if (cat.legendary) return 'legendary';
+  if (cat.starterCat) return 'common';
+  return 'rare';
+}
 
 // ───────────────────────────────────────────────────────
 // Sub-components
@@ -129,6 +142,60 @@ function StagePlatform({ color }: { color: string }): React.ReactElement {
       <View style={[styles.stagePlatform, { backgroundColor: color + '25' }]} />
       <View style={[styles.stageShadow, { backgroundColor: color + '12' }]} />
       <View style={[styles.stageShine, { backgroundColor: color + '40' }]} />
+    </View>
+  );
+}
+
+/** Animated legendary shimmer border — cycles between gold and a warm orange-gold */
+function LegendaryShimmerBorder(): React.ReactElement {
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    shimmer.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+  }, [shimmer]);
+
+  const animatedBorderStyle = useAnimatedStyle(() => {
+    const borderColor = interpolateColor(
+      shimmer.value,
+      [0, 1],
+      [RARITY.legendary.borderColor, '#FFA500'],
+    );
+    return { borderColor };
+  });
+
+  return (
+    <Animated.View style={[styles.legendaryBorder, animatedBorderStyle]} pointerEvents="none" />
+  );
+}
+
+/** Evolution stage preview dots — shows 4 dots for baby/teen/adult/master */
+function EvolutionStageDots({ currentStage }: { currentStage: EvolutionStage }): React.ReactElement {
+  const currentStageIndex = EVOLUTION_STAGES.indexOf(currentStage);
+
+  return (
+    <View style={styles.stageDotRow}>
+      {EVOLUTION_STAGES.map((stage, i) => {
+        const isFilled = i <= currentStageIndex;
+        return (
+          <View
+            key={stage}
+            style={[
+              styles.stageDot,
+              {
+                backgroundColor: isFilled ? STAGE_COLORS[stage] : COLORS.cardBorder,
+                opacity: isFilled ? 1 : 0.4,
+              },
+            ]}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -311,15 +378,24 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
     return { label: 'Select', type: 'select' as const };
   }, [isOwned, isSelected, cat.legendary, cat.gemCost]);
 
+  const rarity = getCatRarity(cat);
+  const rarityStyle = RARITY[rarity];
+
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 50).springify().damping(14)}
       style={[
         styles.card,
-        isSelected && { borderColor: cat.color + '80', borderWidth: 2 },
+        {
+          borderColor: isSelected ? cat.color + '80' : rarityStyle.borderColor,
+          borderWidth: rarity === 'legendary' ? 2 : isSelected ? 2 : 1,
+        },
         !isOwned && styles.cardLocked,
       ]}
     >
+      {/* Legendary animated shimmer border overlay */}
+      {rarity === 'legendary' && <LegendaryShimmerBorder />}
+
       {/* Background gradient tinted to cat's color */}
       <LinearGradient
         colors={[cat.color + '15', 'transparent']}
@@ -360,13 +436,16 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
         <StagePlatform color={isOwned ? cat.color : COLORS.textMuted} />
       </View>
 
-      {/* Evolution stage badge */}
+      {/* Evolution stage badge + stage dots */}
       {isOwned && (
-        <View style={[styles.evolutionBadge, { backgroundColor: STAGE_COLORS[stage] + '25' }]}>
-          <Text style={[styles.evolutionBadgeText, { color: STAGE_COLORS[stage] }]}>
-            {STAGE_LABELS[stage]}
-          </Text>
-        </View>
+        <>
+          <View style={[styles.evolutionBadge, { backgroundColor: STAGE_COLORS[stage] + '25' }]}>
+            <Text style={[styles.evolutionBadgeText, { color: STAGE_COLORS[stage] }]}>
+              {STAGE_LABELS[stage]}
+            </Text>
+          </View>
+          <EvolutionStageDots currentStage={stage} />
+        </>
       )}
 
       {/* Cat info */}
@@ -811,6 +890,28 @@ const styles = StyleSheet.create({
   evolutionBadgeText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+
+  // Evolution stage dots
+  stageDotRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: SPACING.xs,
+  },
+  stageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+
+  // Legendary animated border overlay
+  legendaryBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 2,
+    borderColor: RARITY.legendary.borderColor,
   },
 
   // Info section
