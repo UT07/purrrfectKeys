@@ -6,17 +6,18 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current Sprint (Feb 26, 2026)
+## Current Sprint (Feb 27, 2026)
 
-**Codebase Health:** 106 test suites, 2,441 tests passing, 0 TypeScript errors
+**Codebase Health:** ~109 test suites, ~2,500+ tests passing, 0 TypeScript errors
 
-**Phases 1-9 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs in Firestore)
+**Phases 1-9.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs in Firestore, UX Overhaul)
 
 **Up Next:** Phase 10 — Social & Leaderboards
 
 **Active Roadmap:**
-- **Phase 8: Audio Input (Mic)** — COMPLETE (monophonic YIN + polyphonic ONNX Basic Pitch, ambient calibration, device testing remaining)
+- **Phase 8: Audio Input (Mic)** — COMPLETE (monophonic YIN + polyphonic ONNX Basic Pitch, ambient calibration)
 - **Phase 9: Music Library** — COMPLETE (124 songs uploaded to Firestore: 37 Gemini + 50 folk + 38 classical)
+- **Phase 9.5: UX Overhaul** — COMPLETE (assessment fix, HomeScreen feed-style redesign, MusicLibrarySpotlight, ReviewChallengeCard, mastery tests for all 15 tiers, challenge→AI exercise wiring)
 - **Phase 10: Social & Leaderboards** — UP NEXT (friends, leagues, challenges)
 - Phase 11: QA + Launch — PLANNED
 - Sound Design — PLANNED (parallel)
@@ -201,6 +202,9 @@ src/
 | `scripts/import-thesession.ts` | TheSession.org folk tune importer (two-step API + ABC header construction) |
 | `scripts/upload-songs-to-firestore.ts` | Batch Firestore upload with skip-existing and dry-run |
 | `scripts/import-pdmx.py` | music21 corpus → Song JSON converter (Beethoven, Mozart, Haydn, Bach) |
+| `src/components/MusicLibrarySpotlight.tsx` | Music Library spotlight card for HomeScreen (gradient, featured song, Browse CTA) |
+| `src/components/ReviewChallengeCard.tsx` | Decayed skill review prompt card for HomeScreen (conditional on skill decay) |
+| `src/content/templateExercises.ts` | Offline template exercises with tier-specific skill mapping for mastery tests |
 
 ## Code Style
 
@@ -258,7 +262,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**2,413 tests, 103 suites** (4 pre-existing catEvolutionStore failures). Run tests before committing:
+**~2,500+ tests, ~109 suites**. Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```

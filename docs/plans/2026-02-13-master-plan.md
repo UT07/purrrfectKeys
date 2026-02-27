@@ -1,9 +1,9 @@
 # Purrrfect Keys — Master Plan
 
-**Last Updated:** February 24, 2026
+**Last Updated:** February 27, 2026
 **Goal:** Production-quality piano learning app on App Store & Play Store
 **Target Launch:** June 8, 2026 (16-week roadmap from Feb 17)
-**Codebase Health:** 0 TypeScript errors, 2,413 tests passing, 103 suites
+**Codebase Health:** 0 TypeScript errors, ~2,500+ tests passing, ~109 suites
 
 > **This is the single source of truth.** All other plan files in `docs/plans/` are historical archives. Do not reference them for current status.
 
@@ -25,8 +25,9 @@
 | Phase 7.5 | All-AI Exercise Generation | **COMPLETE** | All 6 batches done — skill-aware AI generation for all tiers |
 | — | Gem Bug Fix | **COMPLETE** | immediateSave, auto-claim, toast feedback, reward display |
 | — | Cat Gallery Redesign | **COMPLETE** | Unified swipeable gallery with abilities, buy flow, evolution data |
-| Phase 8 | Audio Input (Mic) | **COMPLETE** | YIN pitch detection, InputManager, MicSetup, onboarding + Free Play wired |
+| Phase 8 | Audio Input (Mic) | **COMPLETE** | YIN pitch detection, polyphonic ONNX Basic Pitch, InputManager, MicSetup, onboarding + Free Play wired |
 | Phase 9 | Music Library | **COMPLETE** | Song types, ABC parser, mastery tiers, Firestore service, Gemini generation, browse/search UI, section-based playback, 6 achievements, 124 songs in Firestore |
+| Phase 9.5 | UX Overhaul | **COMPLETE** | Assessment skill seeding fix, HomeScreen feed-style redesign, MusicLibrarySpotlight, ReviewChallengeCard, challenge→AI exercise wiring, mastery tests for all 15 tiers |
 | Phase 10 | Social & Leaderboards | **PLANNED** | Friends, weekly leagues (Bronze→Diamond), challenges, share cards, push notifications |
 | Phase 11 | QA + Launch + Audit | **PLANNED** | Comprehensive audit, beta testing, App Store submission, monitoring |
 | — | Sound Design | **PLANNED** | UI sounds, celebrations, cat audio (can be done alongside any phase) |
@@ -88,8 +89,12 @@ All 6 batches completed: skill mastery for AI exercises, GenerationHints for 100
 
 **Goal:** Low-latency single-note pitch detection via device microphone. Target: <150ms.
 
-**Completed (Feb 23):** All 4 batches (8A-8D) built and wired.
+**Completed (Feb 23):** Batches 8A-8D (monophonic YIN, InputManager, MicSetup, onboarding + Free Play wired).
+**Completed (Feb 26):** Polyphonic detection via ONNX Basic Pitch model.
 
+**Design docs:** `docs/plans/2026-02-26-phase8-completion-design.md`, `docs/plans/2026-02-26-phase8-polyphonic-implementation.md`
+
+#### Monophonic Pipeline (Feb 23)
 - `PitchDetector.ts` — Pure TS YIN algorithm, pre-allocated buffers, sub-sample parabolic interpolation
 - `NoteTracker` — Hysteresis (40ms onset, 80ms release) prevents rapid flickering
 - `AudioCapture.ts` — react-native-audio-api AudioRecorder wrapper
@@ -101,10 +106,19 @@ All 6 batches completed: skill mastery for AI exercises, GenerationHints for 100
 - `PlayScreen` — Free Play wired with InputManager for mic/MIDI alongside touch
 - `pitchUtils.ts` — frequencyToNearestMidi, frequencyCentsOffset
 
+#### Polyphonic Pipeline (Feb 26)
+- `PolyphonicDetector.ts` — ONNX Runtime wrapper for Spotify Basic Pitch model (88 note bins, A0-C8), resamples 44.1kHz→22.05kHz, configurable thresholds, max polyphony limit (default 6)
+- `MultiNoteTracker.ts` — Per-note hysteresis (30ms onset, 60ms release) for polyphonic input
+- `AmbientNoiseCalibrator.ts` — RMS energy measurement → auto-tunes YIN threshold, confidence, and ONNX note threshold based on noise level
+- `MicrophoneInput` updated — `mode: 'monophonic' | 'polyphonic'`, falls back to YIN if ONNX fails
+- `InputManager` updated — Reads `micDetectionMode` from settingsStore, adjusts latency compensation (100ms mono / 120ms poly)
+- `settingsStore` — Added `micDetectionMode: 'monophonic' | 'polyphonic'`
+- `ProfileScreen` — Mic Detection picker (Single Notes / Chords)
+
 ### Remaining Polish (nice-to-have, not blocking)
 1. Real-device accuracy testing (>95% target)
-2. Ambient noise calibration tuning
-3. Polyphonic detection research (stretch goal)
+2. Basic Pitch ONNX model download + on-device inference testing
+3. Ambient noise calibration UX polish
 
 ---
 
@@ -182,6 +196,22 @@ Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mas
 
 ---
 
+## Phase 9.5: UX Overhaul (COMPLETE — Feb 27)
+
+**Design docs:** `docs/plans/2026-02-27-ux-overhaul-design.md`, `docs/plans/2026-02-27-ux-overhaul-implementation.md`
+
+**Goal:** Surface the Music Library, fix assessment→lesson mismatch, add mastery tests for all 15 tiers, wire challenge buttons to AI exercise generation, and redesign HomeScreen with a feed-style layout.
+
+**Completed (Feb 27):**
+
+- **Assessment skill seeding fix:** `getSkillsToSeedForLesson()` now collects ALL prerequisite skills for the determined start lesson and all prior lessons (was only seeding 3 basic skills regardless of placement). LevelMap now shows correct tier progress after assessment.
+- **Challenge → AI exercise wiring:** DailyChallengeCard "Play Now" now navigates to ExercisePlayer with `aiMode: true` and a challenge-category-mapped skill ID (was navigating to Learn tab with no exercise context).
+- **Mastery tests for all 15 tiers:** Tiers 1-6 use existing static test exercises; tiers 7-15 use AI-generated tests via template exercises. Expanded `templateExercises.ts` with tier-specific skill mapping. All 15 tiers now have testable mastery paths.
+- **HomeScreen redesign:** Feed-style layout — MusicLibrarySpotlight card (most prominent, gradient background, featured song, genre pills), Continue Learning moved up, ReviewChallengeCard (conditional on skill decay), Quick Actions "Practice" replaced with "Songs" to drive library engagement. Weekly/Monthly challenge cards removed from HomeScreen (folded into daily).
+- **New components:** `MusicLibrarySpotlight.tsx` (gradient card with song count, genres, featured song, Browse Library CTA), `ReviewChallengeCard.tsx` (warning card for decayed skills with count badge).
+
+---
+
 ## Phase 10: Social & Leaderboards (PLANNED)
 
 **Design doc:** `docs/plans/2026-02-24-phase10-social-leaderboards-design.md`
@@ -245,8 +275,9 @@ Hybrid approach: piano-derived sounds for gameplay feedback + cat sounds for mas
 ```
 [DONE]     Phase 7.5: All-AI Exercises     ✓
 [DONE]     Gem Bug Fix + Cat Gallery       ✓
-[DONE]     Phase 8: Audio Input (Mic)      ✓ (device testing remaining)
+[DONE]     Phase 8: Audio Input (Mic)      ✓ (monophonic YIN + polyphonic ONNX Basic Pitch)
 [DONE]     Phase 9: Music Library          ✓ (124 songs in Firestore)
+[DONE]     Phase 9.5: UX Overhaul         ✓ (assessment fix, HomeScreen redesign, mastery tests)
 [NOW]      Phase 10: Social & Leaderboards ← friends, leagues, challenges
 [NEXT]     Phase 11: QA + Launch + Audit   ← comprehensive audit, then ship
 [PARALLEL] Sound Design                    ← can prototype alongside any phase
@@ -265,13 +296,14 @@ PH6            ████████████        DONE
 PH7                     ████████   DONE
 PH7.5                      ██     DONE
 GEMS+CAT                     █     DONE
-PH8                        ████████     DONE
+PH8                        ████████     DONE (mono + polyphonic)
 PH9                           ██████     DONE (124 songs uploaded)
+PH9.5                             ██     DONE (UX overhaul)
 PH10                              ████████  ← NOW  Social
 PH11                                    ████████  QA + Launch
 ```
 
-We are currently in **Week 6** (Feb 24). Phases 1-9 complete. Phase 10 (Social & Leaderboards) is next.
+We are currently in **Week 6** (Feb 27). Phases 1-9.5 complete. Phase 10 (Social & Leaderboards) is next.
 
 ---
 
@@ -305,3 +337,7 @@ The following files are **historical archives only** — do not use for current 
 | `2026-02-16-gameplay-ux-rework-implementation.md` | Vertical PianoRoll implementation | Feb 16 |
 | `2026-02-17-16-week-roadmap.md` | Original 16-week roadmap (task details still useful for Phases 8-10) | Feb 17 |
 | `2026-02-22-next-priorities.md` | Priority analysis (merged into this plan) | Feb 22 |
+| `2026-02-26-phase8-completion-design.md` | Phase 8 polyphonic detection design | Feb 26 |
+| `2026-02-26-phase8-polyphonic-implementation.md` | Phase 8 polyphonic implementation plan | Feb 26 |
+| `2026-02-27-ux-overhaul-design.md` | Phase 9.5 UX overhaul design (HomeScreen, Free Play, assessment, mastery tests) | Feb 27 |
+| `2026-02-27-ux-overhaul-implementation.md` | Phase 9.5 UX overhaul implementation plan (7 tasks) | Feb 27 |

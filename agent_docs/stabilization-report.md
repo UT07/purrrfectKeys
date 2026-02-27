@@ -1,15 +1,15 @@
 # Purrrfect Keys Stabilization Report
 
-**Date:** February 2026 (last updated Feb 24)
-**Scope:** Codebase stabilization — tests, types, navigation, UI, adaptive learning, gamification, Phase 7 UI revamp, gem bug fix, cat gallery redesign, Phase 9 Music Library
+**Date:** February 2026 (last updated Feb 27)
+**Scope:** Codebase stabilization — tests, types, navigation, UI, adaptive learning, gamification, Phase 7 UI revamp, gem bug fix, cat gallery redesign, Phase 9 Music Library, Phase 8 polyphonic completion, Phase 9.5 UX overhaul
 **Full history:** See `docs/stabilization-report-archive.md` for detailed change narratives.
 
 ## Final State
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Test Suites | 18 (many failing) | 103 passed |
-| Tests | ~393 passing, 40+ failing | 2,413 passed, 0 failing |
+| Test Suites | 18 (many failing) | ~109 passed |
+| Tests | ~393 passing, 40+ failing | ~2,500+ passed, 0 failing |
 | TypeScript Errors | 144+ | 0 |
 | Skill Nodes | 0 | 100 (15 tiers, DAG-validated) |
 | Session Types | 1 (new-material only) | 4 (new-material, review, challenge, mixed) |
@@ -299,6 +299,34 @@
 - **Model docs:** assets/models/README.md with download instructions
 
 - **Tests:** 106 suites, 2,441 tests, 0 failures, 0 TypeScript errors
+
+### Phase 9.5: UX Overhaul (Feb 27)
+
+#### Assessment Skill Seeding Fix
+- **`getSkillsToSeedForLesson()`:** Now collects ALL prerequisite skills for the determined start lesson and all prior lessons (was only seeding 3 basic skills — `find-middle-c`, `keyboard-geography`, `white-keys` — regardless of placement at lesson-03 or higher)
+- **LESSON_PREREQS map:** Explicit prerequisite chains for lessons 1-6, ensuring LevelMap shows correct tier progress after assessment
+
+#### Challenge → AI Exercise Wiring
+- **DailyChallengeCard "Play Now":** Now navigates to ExercisePlayer with `aiMode: true` and a challenge-category-mapped skill ID (was navigating to Learn tab with no exercise context)
+- **Category mapping:** Challenge categories (e.g., `specific-category: 'scales'`) mapped to corresponding SkillTree skill IDs for targeted AI exercise generation
+
+#### Mastery Tests for All 15 Tiers
+- **Tiers 1-6:** Use existing static test exercises from JSON content
+- **Tiers 7-15:** Use AI-generated tests via expanded `templateExercises.ts` with tier-specific skill mapping
+- **`templateExercises.ts` expanded:** Added tier-to-skill mapping functions, enabling mastery test generation for all 15 tiers including AI-generated tiers
+
+#### HomeScreen Redesign (Feed-Style Layout)
+- **MusicLibrarySpotlight card:** Most prominent element after hero — gradient background, song count (124), genre count (6), featured song with play button, "Browse Library" CTA navigating to Songs tab
+- **Continue Learning moved up:** Now immediately below Music Library spotlight (was buried below Salsa coach and daily rewards)
+- **ReviewChallengeCard:** Conditional card shown when skills are decaying (14+ days unpracticed) — shows count badge and "Start Review" navigation
+- **Quick Actions updated:** "Practice" replaced with "Songs" (music note icon, navigates to Songs tab) to drive Music Library engagement
+- **Weekly/Monthly challenge cards removed:** Folded into daily challenge to reduce HomeScreen clutter
+
+#### New Components
+- **`MusicLibrarySpotlight.tsx`:** Gradient card with song/genre stats, featured song row (daily rotation), difficulty dots, Browse Library button
+- **`ReviewChallengeCard.tsx`:** Warning-styled card with refresh icon, decay count badge, skill names, chevron CTA — returns null when no skills are decaying
+
+- **Tests:** ~109 suites, ~2,500+ tests, 0 failures, 0 TypeScript errors
 
 ---
 
