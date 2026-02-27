@@ -16,6 +16,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
+  ScrollView as RNScrollView,
 } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -32,6 +34,9 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useSongStore } from '../stores/songStore';
 import { analyzeSession, type FreePlayAnalysis } from '../services/FreePlayAnalyzer';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
+import { computeZoomedRange } from '../components/Keyboard/computeZoomedRange';
+import type { NoteEvent } from '../core/exercises/types';
+import type { SongSection } from '../core/songs/songTypes';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 // ============================================================================
@@ -68,6 +73,167 @@ const RIGHT_KB_START = 60; // C4
 const RIGHT_KB_OCTAVES = 2; // C4 - C6
 
 // ============================================================================
+// Horizontal Note Strip — left-to-right piano roll for song mode
+// ============================================================================
+
+const PIXELS_PER_BEAT = 50;
+const NOTE_ROW_HEIGHT = 18;
+const NOTE_COLORS = [
+  '#DC143C', '#E65100', '#FF9800', '#FFC107', '#8BC34A', '#4CAF50',
+  '#009688', '#00BCD4', '#2196F3', '#3F51B5', '#9C27B0', '#E91E63',
+];
+
+function noteColor(midiNote: number): string {
+  return NOTE_COLORS[midiNote % 12];
+}
+
+function HorizontalNoteStrip({
+  notes,
+  highlightedNotes,
+}: {
+  notes: NoteEvent[];
+  highlightedNotes: Set<number>;
+}): React.JSX.Element | null {
+  if (notes.length === 0) {
+    return (
+      <View style={songStyles.emptyStrip}>
+        <MaterialCommunityIcons name="music-note-off" size={32} color={COLORS.textMuted} />
+        <Text style={songStyles.emptyStripText}>No notes in this section</Text>
+      </View>
+    );
+  }
+
+  const minNote = Math.min(...notes.map((n) => n.note));
+  const maxNote = Math.max(...notes.map((n) => n.note));
+  const totalBeats = Math.max(...notes.map((n) => n.startBeat + n.durationBeats));
+  const noteSpan = maxNote - minNote + 1;
+  const stripHeight = noteSpan * NOTE_ROW_HEIGHT;
+  const stripWidth = (totalBeats + 2) * PIXELS_PER_BEAT;
+
+  return (
+    <View style={songStyles.noteStripWrapper}>
+      {/* Note name labels on the left */}
+      <View style={[songStyles.noteLabels, { height: stripHeight }]}>
+        {Array.from({ length: noteSpan }, (_, i) => {
+          const midi = minNote + (noteSpan - 1 - i);
+          return (
+            <View key={midi} style={[songStyles.noteLabelRow, { height: NOTE_ROW_HEIGHT }]}>
+              <Text style={[songStyles.noteLabelText, { color: noteColor(midi) }]}>
+                {NOTE_NAMES[midi % 12]}{Math.floor(midi / 12) - 1}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Scrollable note area */}
+      <RNScrollView
+        horizontal
+        showsHorizontalScrollIndicator={true}
+        style={songStyles.noteStripScroll}
+        contentContainerStyle={{ width: stripWidth, height: stripHeight }}
+      >
+        {/* Horizontal grid lines */}
+        {Array.from({ length: noteSpan }, (_, i) => (
+          <View
+            key={`grid-${i}`}
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: i * NOTE_ROW_HEIGHT,
+              height: 1,
+              backgroundColor: 'rgba(255,255,255,0.04)',
+            }}
+          />
+        ))}
+
+        {/* Beat markers */}
+        {Array.from({ length: Math.ceil(totalBeats) + 1 }, (_, i) => (
+          <View
+            key={`beat-${i}`}
+            style={{
+              position: 'absolute',
+              left: i * PIXELS_PER_BEAT,
+              top: 0,
+              bottom: 0,
+              width: 1,
+              backgroundColor: i % 4 === 0 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
+            }}
+          />
+        ))}
+
+        {/* Note blocks */}
+        {notes.map((note, i) => {
+          const isHighlighted = highlightedNotes.has(note.note);
+          const row = maxNote - note.note; // Higher notes at top
+          return (
+            <View
+              key={i}
+              style={{
+                position: 'absolute',
+                left: note.startBeat * PIXELS_PER_BEAT + 1,
+                top: row * NOTE_ROW_HEIGHT + 1,
+                width: Math.max(note.durationBeats * PIXELS_PER_BEAT - 2, 10),
+                height: NOTE_ROW_HEIGHT - 2,
+                backgroundColor: isHighlighted
+                  ? COLORS.success
+                  : noteColor(note.note),
+                borderRadius: 3,
+                opacity: isHighlighted ? 1 : 0.75,
+                justifyContent: 'center',
+                paddingHorizontal: 3,
+              }}
+            >
+              {note.durationBeats * PIXELS_PER_BEAT > 30 && (
+                <Text style={{ fontSize: 8, color: '#fff', fontWeight: '700' }}>
+                  {NOTE_NAMES[note.note % 12]}
+                </Text>
+              )}
+            </View>
+          );
+        })}
+      </RNScrollView>
+    </View>
+  );
+}
+
+function SongSectionPills({
+  sections,
+  selectedIndex,
+  onSelect,
+}: {
+  sections: SongSection[];
+  selectedIndex: number;
+  onSelect: (i: number) => void;
+}): React.JSX.Element {
+  return (
+    <RNScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={songStyles.sectionPillsRow}
+    >
+      {sections.map((section, i) => (
+        <TouchableOpacity
+          key={section.id}
+          style={[songStyles.sectionPill, i === selectedIndex && songStyles.sectionPillSelected]}
+          onPress={() => onSelect(i)}
+        >
+          <Text
+            style={[
+              songStyles.sectionPillText,
+              i === selectedIndex && songStyles.sectionPillTextSelected,
+            ]}
+          >
+            {section.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </RNScrollView>
+  );
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -98,16 +264,35 @@ export function PlayScreen(): React.JSX.Element {
   const [showSongPicker, setShowSongPicker] = useState(false);
   const [selectedSongTitle, setSelectedSongTitle] = useState<string | null>(null);
   const loadSong = useSongStore((s) => s.loadSong);
+  const currentSong = useSongStore((s) => s.currentSong);
+  const [selectedSectionIndex, setSelectedSectionIndex] = useState(0);
+
+  // Song mode: when a song is loaded, switch to portrait with note strip
+  const songMode = !!(currentSong && selectedSongTitle);
+  const songNotes: NoteEvent[] = songMode
+    ? (currentSong!.sections[selectedSectionIndex]?.layers.melody ?? [])
+    : [];
+
+  // Compute keyboard range from song notes (zoom to the relevant octaves)
+  const songKeyboardRange = React.useMemo(() => {
+    if (songNotes.length === 0) return { startNote: 48, octaveCount: 2 };
+    const allMidi = songNotes.map((n) => n.note);
+    return computeZoomedRange(allMidi, 2);
+  }, [songNotes]);
 
   // --------------------------------------------------------------------------
-  // Landscape orientation lock
+  // Orientation: portrait for song mode, landscape for free play
   // --------------------------------------------------------------------------
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT).catch(() => {});
+    if (songMode) {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+    } else {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT).catch(() => {});
+    }
     return () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
     };
-  }, []);
+  }, [songMode]);
 
   // --------------------------------------------------------------------------
   // Audio engine initialization
@@ -455,7 +640,142 @@ export function PlayScreen(): React.JSX.Element {
   }, [navigation]);
 
   // --------------------------------------------------------------------------
-  // Render
+  // Render — Song Mode (portrait, note strip + keyboard at bottom)
+  // --------------------------------------------------------------------------
+  if (songMode) {
+    return (
+      <SafeAreaView style={songStyles.container} testID="play-screen">
+        {/* Compact header */}
+        <View style={songStyles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <View style={songStyles.headerCenter}>
+            <Text style={songStyles.headerTitle} numberOfLines={1}>
+              {selectedSongTitle}
+            </Text>
+            <Text style={songStyles.headerSubtitle}>
+              {currentSong!.metadata.artist} · {currentSong!.settings.tempo} BPM · {currentSong!.settings.keySignature}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => { setSelectedSongTitle(null); }}
+            style={songStyles.closeSongBtn}
+          >
+            <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Section selector */}
+        {currentSong!.sections.length > 1 && (
+          <SongSectionPills
+            sections={currentSong!.sections}
+            selectedIndex={selectedSectionIndex}
+            onSelect={setSelectedSectionIndex}
+          />
+        )}
+
+        {/* Horizontal note strip — the "music sheet" going left to right */}
+        <View style={songStyles.noteStripContainer}>
+          <HorizontalNoteStrip notes={songNotes} highlightedNotes={highlightedNotes} />
+        </View>
+
+        {/* Controls row */}
+        <View style={songStyles.controlsBar}>
+          <View style={styles.controlsRow}>
+            {!isRecording ? (
+              <TouchableOpacity
+                onPress={startRecording}
+                style={[styles.controlBtn, styles.controlRecord]}
+              >
+                <MaterialCommunityIcons name="record-circle" size={18} color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={stopRecording}
+                style={[styles.controlBtn, styles.controlStop]}
+              >
+                <MaterialCommunityIcons name="stop-circle" size={18} color="#fff" />
+              </TouchableOpacity>
+            )}
+
+            {recordedNotes.length > 0 && !isRecording && (
+              <>
+                {isPlayingBack ? (
+                  <TouchableOpacity
+                    onPress={stopPlayback}
+                    style={[styles.controlBtn, styles.controlPlayback]}
+                  >
+                    <MaterialCommunityIcons name="stop-circle" size={18} color="#fff" />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={playRecording}
+                    style={[styles.controlBtn, styles.controlPlayback]}
+                  >
+                    <MaterialCommunityIcons name="play-circle" size={18} color="#fff" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={clearRecording}
+                  style={[styles.controlBtn, styles.controlClear]}
+                >
+                  <MaterialCommunityIcons name="delete" size={18} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+
+          {/* Live note + stats */}
+          <View style={songStyles.liveNote}>
+            <Text style={styles.noteText}>{currentNoteName || '\u2014'}</Text>
+          </View>
+          <Text style={styles.statsText}>{sessionNoteCount} notes</Text>
+        </View>
+
+        {/* Keyboard at the bottom — zoomed to song range */}
+        <View style={songStyles.keyboardContainer}>
+          <PianoKeyboard
+            startNote={songKeyboardRange.startNote}
+            octaveCount={songKeyboardRange.octaveCount}
+            onNoteOn={handleNoteOn}
+            onNoteOff={handleNoteOff}
+            highlightedNotes={highlightedNotes}
+            enabled={true}
+            hapticEnabled={true}
+            showLabels={true}
+            scrollable={songKeyboardRange.octaveCount > 2}
+            keyHeight={130}
+            testID="freeplay-keyboard-song"
+          />
+        </View>
+
+        {/* Analysis card */}
+        {analysis && (
+          <View style={styles.analysisCard} testID="freeplay-analysis-card">
+            <View style={styles.analysisHeader}>
+              <MaterialCommunityIcons name="music-note-eighth" size={16} color={COLORS.info} />
+              <Text style={styles.analysisTitle}>Analysis</Text>
+              <TouchableOpacity onPress={() => setAnalysis(null)}>
+                <MaterialCommunityIcons name="close" size={16} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.analysisSummary}>{analysis.summary}</Text>
+          </View>
+        )}
+
+        {/* Song reference picker modal */}
+        <SongReferencePicker
+          visible={showSongPicker}
+          onSelect={handleSongSelect}
+          onClose={() => setShowSongPicker(false)}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // Render — Free Play Mode (landscape, side-by-side keyboards)
   // --------------------------------------------------------------------------
   return (
     <View style={styles.container} testID="play-screen">
@@ -868,5 +1188,145 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: COLORS.textPrimary,
+  },
+});
+
+// ============================================================================
+// Song Mode Styles — portrait layout with note strip + keyboard at bottom
+// ============================================================================
+
+const songStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+    gap: SPACING.sm,
+  },
+  headerCenter: {
+    flex: 1,
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.heading.md,
+    color: COLORS.textPrimary,
+  },
+  headerSubtitle: {
+    ...TYPOGRAPHY.caption.sm,
+    color: COLORS.textMuted,
+  },
+  closeSongBtn: {
+    padding: 4,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+
+  // Section pills
+  sectionPillsRow: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  sectionPill: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  sectionPillSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  sectionPillText: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  sectionPillTextSelected: {
+    color: '#fff',
+  },
+
+  // Note strip
+  noteStripContainer: {
+    flex: 1,
+    marginHorizontal: SPACING.sm,
+    marginVertical: SPACING.xs,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    overflow: 'hidden',
+  },
+  noteStripWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  noteLabels: {
+    width: 32,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-start',
+  },
+  noteLabelRow: {
+    justifyContent: 'center',
+    paddingLeft: 3,
+  },
+  noteLabelText: {
+    fontSize: 7,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+  },
+  noteStripScroll: {
+    flex: 1,
+  },
+  emptyStrip: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xl,
+  },
+  emptyStripText: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.textMuted,
+  },
+
+  // Controls bar
+  controlsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.cardBorder,
+  },
+  liveNote: {
+    backgroundColor: COLORS.cardSurface,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    minWidth: 48,
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+
+  // Keyboard
+  keyboardContainer: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.cardBorder,
   },
 });
