@@ -22,6 +22,10 @@ import { migrateLocalToCloud } from './services/firebase/dataMigration';
 import { hydrateGemStore } from './stores/gemStore';
 import { hydrateCatEvolutionStore } from './stores/catEvolutionStore';
 import { hydrateSongStore } from './stores/songStore';
+import { hydrateSocialStore, useSocialStore } from './stores/socialStore';
+import { hydrateLeagueStore, useLeagueStore } from './stores/leagueStore';
+import { getCurrentLeagueMembership, assignToLeague } from './services/firebase/leagueService';
+import { registerFriendCode } from './services/firebase/socialService';
 
 // Configure Google Sign-In at module level (synchronous, must run before any signIn call)
 // iosClientId is passed explicitly so the native module doesn't need GoogleService-Info.plist
@@ -174,6 +178,14 @@ export default function App(): React.ReactElement {
         await hydrateSongStore();
         console.log('[App] Song store hydrated');
 
+        // Hydrate social store (friend code, friends, activity, challenges)
+        await hydrateSocialStore();
+        console.log('[App] Social store hydrated');
+
+        // Hydrate league store (league membership)
+        await hydrateLeagueStore();
+        console.log('[App] League store hydrated');
+
         // ── Phase 2: Firebase Auth (network, may be slow) ──────────────
         try {
           await withTimeout(useAuthStore.getState().initAuth(), 8000, 'initAuth');
@@ -231,6 +243,35 @@ export default function App(): React.ReactElement {
             }
           } catch (err) {
             console.warn('[App] Remote progress pull failed:', err);
+          }
+
+          // Ensure social features (league membership + friend code) are set up
+          try {
+            const user = authState.user;
+            if (user) {
+              // League membership check/assign
+              let membership = await getCurrentLeagueMembership(user.uid);
+              if (!membership) {
+                const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
+                membership = await assignToLeague(
+                  user.uid,
+                  user.displayName ?? 'Player',
+                  catId,
+                  'bronze',
+                );
+              }
+              useLeagueStore.getState().setMembership(membership);
+              console.log('[App] League membership ensured:', membership.leagueId);
+
+              // Friend code registration
+              if (!useSocialStore.getState().friendCode) {
+                const code = await registerFriendCode(user.uid);
+                useSocialStore.getState().setFriendCode(code);
+                console.log('[App] Friend code registered:', code);
+              }
+            }
+          } catch (err) {
+            console.warn('[App] Social setup failed (non-blocking):', err);
           }
         }
       } catch (e) {

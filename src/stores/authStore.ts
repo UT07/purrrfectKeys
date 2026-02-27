@@ -179,6 +179,39 @@ function createLocalGuestUser(): User {
 }
 
 /**
+ * Ensure social features are set up for a non-anonymous user:
+ * 1. Check/assign league membership for the current week.
+ * 2. Register a friend code if none exists locally.
+ *
+ * Runs as part of post-sign-in flow. Failures are logged but never block the UI.
+ */
+async function ensureSocialSetup(uid: string, displayName: string): Promise<void> {
+  // League membership
+  try {
+    const { getCurrentLeagueMembership, assignToLeague } = require('../services/firebase/leagueService');
+    let membership = await getCurrentLeagueMembership(uid);
+    if (!membership) {
+      const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
+      membership = await assignToLeague(uid, displayName, catId, 'bronze');
+    }
+    useLeagueStore.getState().setMembership(membership);
+  } catch (err) {
+    console.warn('[Social] League membership check failed:', err);
+  }
+
+  // Friend code
+  try {
+    if (!useSocialStore.getState().friendCode) {
+      const { registerFriendCode } = require('../services/firebase/socialService');
+      const code = await registerFriendCode(uid);
+      useSocialStore.getState().setFriendCode(code);
+    }
+  } catch (err) {
+    console.warn('[Social] Friend code registration failed:', err);
+  }
+}
+
+/**
  * Trigger migration + remote pull after a non-anonymous sign-in.
  * Uses dynamic imports to avoid circular dependency (authStore → syncService → progressStore).
  * Runs asynchronously — errors are logged but don't block the UI.
@@ -196,6 +229,19 @@ async function triggerPostSignInSync(): Promise<void> {
     syncManager.startPeriodicSync();
   } catch (err) {
     console.warn('[Auth] Post-sign-in pull failed:', err);
+  }
+
+  // Set up social features (league membership + friend code)
+  try {
+    const authState = useAuthStore.getState();
+    if (authState.user && !authState.isAnonymous) {
+      await ensureSocialSetup(
+        authState.user.uid,
+        authState.user.displayName ?? 'Player',
+      );
+    }
+  } catch (err) {
+    console.warn('[Auth] Post-sign-in social setup failed:', err);
   }
 }
 
