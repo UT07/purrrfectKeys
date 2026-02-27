@@ -27,7 +27,16 @@ jest.mock('../config', () => ({
   auth: { currentUser: { uid: 'test-uid' } },
 }));
 
-import { generateFriendCode } from '../socialService';
+import {
+  generateFriendCode,
+  registerFriendCode,
+  lookupFriendCode,
+  sendFriendRequest,
+  acceptFriendRequest,
+  removeFriendConnection,
+  getFriends,
+} from '../socialService';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -41,6 +50,10 @@ const EXCLUDED_CHARS = ['I', 'O', '0', '1'];
 // ---------------------------------------------------------------------------
 
 describe('socialService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('generateFriendCode', () => {
     it('generates a 6-character code', () => {
       const code = generateFriendCode();
@@ -48,7 +61,6 @@ describe('socialService', () => {
     });
 
     it('only uses characters from the allowed alphabet', () => {
-      // Generate many codes and check every character
       for (let i = 0; i < 100; i++) {
         const code = generateFriendCode();
         for (const char of code) {
@@ -74,7 +86,6 @@ describe('socialService', () => {
         codes.add(generateFriendCode());
       }
 
-      // With 31^6 = ~887 million possible codes, collisions in 100 should be extremely rare
       const uniqueRatio = codes.size / iterations;
       expect(uniqueRatio).toBeGreaterThan(0.9);
     });
@@ -84,6 +95,139 @@ describe('socialService', () => {
         const code = generateFriendCode();
         expect(code).toMatch(/^[A-Z2-9]+$/);
       }
+    });
+  });
+
+  describe('registerFriendCode', () => {
+    it('registers a code when no collision occurs', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+      const code = await registerFriendCode('user-123');
+
+      expect(code).toHaveLength(6);
+      expect(setDoc).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries on collision and succeeds', async () => {
+      // First attempt: collision, second: success
+      (getDoc as jest.Mock)
+        .mockResolvedValueOnce({ exists: () => true })
+        .mockResolvedValueOnce({ exists: () => false });
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+      const code = await registerFriendCode('user-123');
+
+      expect(code).toHaveLength(6);
+      expect(getDoc).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws after max retries on persistent collision', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true });
+
+      await expect(registerFriendCode('user-123')).rejects.toThrow(
+        'Failed to generate unique friend code',
+      );
+      expect(getDoc).toHaveBeenCalledTimes(5); // MAX_CODE_RETRIES
+    });
+  });
+
+  describe('lookupFriendCode', () => {
+    it('returns uid when code exists', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({
+        exists: () => true,
+        data: () => ({ uid: 'found-user' }),
+      });
+
+      const result = await lookupFriendCode('ABC123');
+      expect(result).toBe('found-user');
+    });
+
+    it('returns null when code does not exist', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+
+      const result = await lookupFriendCode('XXXXXX');
+      expect(result).toBeNull();
+    });
+
+    it('normalizes code to uppercase', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+
+      await lookupFriendCode('abc123');
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'friendCodes', 'ABC123');
+    });
+  });
+
+  describe('sendFriendRequest', () => {
+    it('writes to both users friend subcollections', async () => {
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+      await sendFriendRequest(
+        'user-a', 'user-b',
+        'Alice', 'luna',
+        'Bob', 'jazzy',
+      );
+
+      expect(setDoc).toHaveBeenCalledTimes(2);
+      // Verify outgoing connection (first call)
+      const outgoingData = (setDoc as jest.Mock).mock.calls[0][1];
+      expect(outgoingData.uid).toBe('user-b');
+      expect(outgoingData.status).toBe('pending_outgoing');
+      expect(outgoingData.displayName).toBe('Bob');
+      // Verify incoming connection (second call)
+      const incomingData = (setDoc as jest.Mock).mock.calls[1][1];
+      expect(incomingData.uid).toBe('user-a');
+      expect(incomingData.status).toBe('pending_incoming');
+      expect(incomingData.displayName).toBe('Alice');
+    });
+  });
+
+  describe('acceptFriendRequest', () => {
+    it('updates both sides to accepted', async () => {
+      (updateDoc as jest.Mock).mockResolvedValue(undefined);
+
+      await acceptFriendRequest('my-uid', 'friend-uid');
+
+      expect(updateDoc).toHaveBeenCalledTimes(2);
+      const call1 = (updateDoc as jest.Mock).mock.calls[0][1];
+      const call2 = (updateDoc as jest.Mock).mock.calls[1][1];
+      expect(call1.status).toBe('accepted');
+      expect(call2.status).toBe('accepted');
+    });
+  });
+
+  describe('removeFriendConnection', () => {
+    it('deletes documents on both sides', async () => {
+      (deleteDoc as jest.Mock).mockResolvedValue(undefined);
+
+      await removeFriendConnection('my-uid', 'friend-uid');
+
+      expect(deleteDoc).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('getFriends', () => {
+    it('returns array of friend connections', async () => {
+      const mockFriends = [
+        { uid: 'f1', displayName: 'Alice', selectedCatId: 'luna', status: 'accepted', connectedAt: 1000 },
+        { uid: 'f2', displayName: 'Bob', selectedCatId: 'jazzy', status: 'pending_incoming', connectedAt: 2000 },
+      ];
+      (getDocs as jest.Mock).mockResolvedValue({
+        docs: mockFriends.map((f) => ({ data: () => f })),
+      });
+
+      const result = await getFriends('user-123');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].uid).toBe('f1');
+      expect(result[1].status).toBe('pending_incoming');
+    });
+
+    it('returns empty array when no friends', async () => {
+      (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+
+      const result = await getFriends('lonely-user');
+      expect(result).toEqual([]);
     });
   });
 });
