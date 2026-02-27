@@ -80,6 +80,8 @@ import { COLORS } from '../../theme/tokens';
 import { suggestDrill } from '../../services/FreePlayAnalyzer';
 import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
 import { getTemplateForSkill, getTemplateExercise } from '../../content/templateExercises';
+import { getChestType, getChestReward } from '../../core/rewards/chestSystem';
+import type { ChestType } from '../../core/rewards/chestSystem';
 
 export interface ExercisePlayerProps {
   exercise?: Exercise;
@@ -593,6 +595,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     newStage: import('../../stores/types').EvolutionStage;
   } | null>(null);
   const [gemsEarnedForModal, setGemsEarnedForModal] = useState(0);
+  const [chestTypeForModal, setChestTypeForModal] = useState<ChestType>('none');
+  const [chestGemsForModal, setChestGemsForModal] = useState(0);
   const [tempoChangeForModal, setTempoChangeForModal] = useState(0);
   const [sessionStartTime] = useState(() => Date.now());
 
@@ -995,6 +999,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Track total gems earned (first-completion + score-based) for CompletionModal
     let totalGemsForModal = gemsEarned;
     if (score.isPassed && !wasPreviouslyCompleted) totalGemsForModal += 25;
+
+    // --- Chest rewards ---
+    const chestType = getChestType(score.stars, !wasPreviouslyCompleted);
+    const chestReward = getChestReward(chestType);
+    if (chestReward.gems > 0) {
+      gemStore.earnGems(chestReward.gems, `chest-${exercise.id}`);
+      totalGemsForModal += chestReward.gems;
+    }
+    setChestTypeForModal(chestType);
+    setChestGemsForModal(chestReward.gems);
+
     setGemsEarnedForModal(totalGemsForModal);
 
     // --- Cat evolution XP (with evolution detection) ---
@@ -2168,6 +2183,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           isTestMode={testMode}
           testID="completion-modal"
           gemsEarned={gemsEarnedForModal}
+          chestType={chestTypeForModal}
+          chestGems={chestGemsForModal}
           sessionMinutes={Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))}
           tempoChange={tempoChangeForModal}
         />

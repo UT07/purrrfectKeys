@@ -42,8 +42,9 @@ import { useProgressStore } from '../../stores/progressStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { getLessonIdForExercise } from '../../content/ContentLoader';
 import { soundManager } from '../../audio/SoundManager';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GLOW, glowColor } from '../../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GLOW, RARITY, glowColor } from '../../theme/tokens';
 import type { Exercise, ExerciseScore } from '../../core/exercises/types';
+import type { ChestType } from '../../core/rewards/chestSystem';
 
 /** Star tier colors (no token equivalent — intentional silver/bronze palette) */
 const STAR_SILVER = '#C0C0C0';
@@ -102,6 +103,8 @@ export interface CompletionModalProps {
   isTestMode?: boolean;
   testID?: string;
   gemsEarned?: number;
+  chestType?: ChestType;
+  chestGems?: number;
   sessionMinutes?: number;
   tempoChange?: number;
   skipAnimation?: boolean;
@@ -118,6 +121,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   isTestMode = false,
   testID,
   gemsEarned = 0,
+  chestType,
+  chestGems = 0,
   sessionMinutes,
   tempoChange = 0,
   skipAnimation = false,
@@ -180,6 +185,14 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       }
     }
 
+    // Record phase -> chest_open (if chest earned)
+    if (current === 'record' && !playedSoundsRef.current.has('record')) {
+      playedSoundsRef.current.add('record');
+      if (chestType && chestType !== 'none') {
+        soundManager.play('chest_open');
+      }
+    }
+
     // Gems phase -> gem_clink
     if (current === 'gems' && !playedSoundsRef.current.has('gems')) {
       playedSoundsRef.current.add('gems');
@@ -187,7 +200,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
         soundManager.play('gem_clink');
       }
     }
-  }, [phaseIndex, skipAnimation, score.stars, gemsEarned]);
+  }, [phaseIndex, skipAnimation, score.stars, gemsEarned, chestType]);
 
   // ---------------------------------------------------------------------------
   // Animation values (RN Animated for score counter)
@@ -503,6 +516,41 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               <MaterialCommunityIcons name="trophy" size={24} color={COLORS.starGold} />
               <Text style={styles.newRecordText}>NEW RECORD!</Text>
               <MaterialCommunityIcons name="trophy" size={24} color={COLORS.starGold} />
+            </Reanimated.View>
+          )}
+
+          {/* ---------------------------------------------------------------- */}
+          {/* RECORD PHASE: Chest Reward                                      */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('record') && chestType && chestType !== 'none' && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.delay(200).duration(400).springify()}
+              style={[
+                styles.chestBanner,
+                {
+                  borderColor: RARITY[chestType].borderColor,
+                  backgroundColor: glowColor(RARITY[chestType].borderColor, 0.12),
+                },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="treasure-chest"
+                size={28}
+                color={RARITY[chestType].borderColor}
+              />
+              <View style={styles.chestTextColumn}>
+                <Text style={[styles.chestLabel, { color: RARITY[chestType].borderColor }]}>
+                  {RARITY[chestType].label} Chest
+                </Text>
+                {chestGems > 0 && (
+                  <Text style={styles.chestGems}>+{chestGems} bonus gems</Text>
+                )}
+              </View>
+              <MaterialCommunityIcons
+                name="diamond-stone"
+                size={20}
+                color={COLORS.gemGold}
+              />
             </Reanimated.View>
           )}
 
@@ -840,6 +888,28 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.starGold,
     letterSpacing: 2,
+  },
+  chestBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+  },
+  chestTextColumn: {
+    flex: 1,
+    gap: 2,
+  },
+  chestLabel: {
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '700',
+  },
+  chestGems: {
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '600',
+    color: COLORS.gemGold,
   },
   breakdownSection: {
     gap: SPACING.sm,
