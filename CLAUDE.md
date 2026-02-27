@@ -8,19 +8,18 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 ## Current Sprint (Feb 27, 2026)
 
-**Codebase Health:** 116 test suites, 2,548 tests passing, 0 TypeScript errors
+**Codebase Health:** 121 test suites, 2,621 tests passing, 0 TypeScript errors
 
-**Phases 1-10 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs, Arcade Concert Hall)
+**Phases 1-10.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs, Arcade Concert Hall, Social & Leaderboards)
 
-**Up Next:** Phase 11 — Social & Leaderboards
+**Up Next:** Phase 11 — QA + Launch
 
 **Active Roadmap:**
 - **Phase 10: Arcade Concert Hall** — COMPLETE (SoundManager, combo escalation, loot reveal, GameCard system, screen redesigns, rarity borders)
-- **Phase 11: Social & Leaderboards** — UP NEXT (friends, leagues, challenges)
-- **Phase 12: QA + Launch** — PLANNED
+- **Phase 10.5: Social & Leaderboards** — COMPLETE (friends, leagues, challenges, activity feed, notifications)
+- **Phase 11: QA + Launch** — UP NEXT
 
 See `docs/plans/UNIFIED-PLAN.md` for the **single source of truth** on all phases.
-See `docs/plans/2026-02-27-arcade-concert-hall-implementation.md` for the active execution plan.
 See `docs/PRD.md` for product requirements.
 See `docs/design-system.md` for design system.
 
@@ -87,7 +86,7 @@ src/
 │   ├── PolyphonicDetector.ts  # ONNX Basic Pitch model wrapper (polyphonic)
 │   ├── MultiNoteTracker.ts  # Multi-note hysteresis for polyphonic detection
 │   └── AmbientNoiseCalibrator.ts  # RMS-based noise calibration for mic thresholds
-├── stores/               # Zustand stores (13 stores)
+├── stores/               # Zustand stores (15 stores)
 │   ├── persistence.ts    # AsyncStorage persistence (debounced + immediate save)
 │   ├── exerciseStore.ts  # Current exercise state
 │   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
@@ -96,7 +95,9 @@ src/
 │   ├── catEvolutionStore.ts  # Cat evolution stages, XP per cat, abilities, daily challenges + auto-claim
 │   ├── gemStore.ts       # Gem balance, earn/spend transactions
 │   ├── achievementStore.ts  # Achievement tracking, unlock checking
-│   └── authStore.ts      # Firebase auth state
+│   ├── authStore.ts      # Firebase auth state
+│   ├── socialStore.ts    # Friends, activity feed, challenges, friend codes
+│   └── leagueStore.ts    # Weekly league membership + standings
 ├── screens/              # Screen components
 │   └── ExercisePlayer/   # Main exercise gameplay screen
 ├── components/           # Reusable UI components
@@ -113,10 +114,11 @@ src/
 │   └── demoPlayback.ts   # DemoPlaybackService (visual-only note demonstration)
 ├── navigation/           # React Navigation setup
 ├── services/             # External integrations
-│   ├── firebase/         # Auth, Firestore, Functions
+│   ├── firebase/         # Auth, Firestore, Functions, Social, Leagues
 │   ├── ai/               # Gemini AI coaching (GeminiCoach + CoachingService + VoiceCoachingService)
 │   ├── tts/              # TTSService (expo-speech wrapper) + catVoiceConfig (per-cat voice params)
 │   ├── analytics/        # PostHog
+│   ├── notificationService.ts  # Local notifications (daily reminders, streak alerts)
 │   ├── FreePlayAnalyzer.ts  # Free play analysis with key/scale detection
 │   └── geminiExerciseService.ts  # AI exercise generation via Gemini Flash (skill-aware)
 ├── theme/                # Design system
@@ -208,6 +210,16 @@ src/
 | `src/components/MusicLibrarySpotlight.tsx` | Music Library spotlight card for HomeScreen (gradient, featured song, Browse CTA) |
 | `src/components/ReviewChallengeCard.tsx` | Decayed skill review prompt card for HomeScreen (conditional on skill decay) |
 | `src/content/templateExercises.ts` | Offline template exercises with tier-specific skill mapping for mastery tests |
+| `src/stores/socialStore.ts` | Friends list, activity feed, friend challenges, friend code management |
+| `src/stores/leagueStore.ts` | Weekly league membership, standings, loading state |
+| `src/services/firebase/socialService.ts` | Firestore CRUD: friend codes, requests, activity feed, challenges |
+| `src/services/firebase/leagueService.ts` | Firestore CRUD: league assignment, standings, XP updates |
+| `src/services/notificationService.ts` | Local notifications: daily reminders, streak alerts |
+| `src/screens/SocialScreen.tsx` | Social tab hub: league card, friends, active challenges |
+| `src/screens/LeaderboardScreen.tsx` | Weekly league standings with tier-colored promotion/demotion zones |
+| `src/screens/AddFriendScreen.tsx` | Friend code display/copy + code lookup to add friends |
+| `src/screens/FriendsScreen.tsx` | Friends list + activity feed (two-tab layout) |
+| `src/components/ShareCard.tsx` | Shareable score/streak/evolution image cards (view-shot + expo-sharing) |
 
 ## Code Style
 
@@ -265,7 +277,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Detox | `e2e/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**2,548 tests, 116 suites**. Run tests before committing:
+**2,621 tests, 121 suites**. Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```

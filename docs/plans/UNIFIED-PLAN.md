@@ -3,7 +3,7 @@
 **Last Updated:** February 27, 2026
 **Goal:** Production-quality piano learning app on App Store & Play Store
 **Target Launch:** June 8, 2026 (16-week roadmap from Feb 17)
-**Codebase Health:** 0 TypeScript errors, ~2,500+ tests passing, ~109 suites
+**Codebase Health:** 0 TypeScript errors, 2,621 tests passing, 121 suites
 
 > **This is the single source of truth.** All historical plan files have been moved to `docs/plans/archive/`. The only other active plan file is `docs/plans/2026-02-27-arcade-concert-hall-implementation.md` (the task-by-task execution plan for Phase 10).
 
@@ -28,9 +28,9 @@
 | Phase 8 | Audio Input (Mic) | **COMPLETE** | YIN pitch detection, polyphonic ONNX Basic Pitch, InputManager |
 | Phase 9 | Music Library | **COMPLETE** | 124 songs in Firestore, browse/search UI, mastery tiers |
 | Phase 9.5 | UX Overhaul | **COMPLETE** | Assessment fix, HomeScreen redesign, mastery tests |
-| **Phase 10** | **Arcade Concert Hall Revamp** | **IN PROGRESS** | 3D cats, sound design, combo escalation, loot reveals |
-| Phase 10.5 | Social & Leaderboards | PLANNED | Friends, leagues, challenges, share cards |
-| Phase 11 | QA + Launch + Audit | PLANNED | Beta testing, App Store submission |
+| Phase 10 | Arcade Concert Hall Revamp | **COMPLETE** | Sound design, combo escalation, loot reveals, screen redesigns |
+| Phase 10.5 | Social & Leaderboards | **COMPLETE** | Friends, leagues, challenges, share cards, notifications |
+| **Phase 11** | **QA + Launch + Audit** | **UP NEXT** | Beta testing, App Store submission |
 
 ---
 
@@ -220,7 +220,7 @@ Full task details: `docs/plans/2026-02-27-arcade-concert-hall-implementation.md`
 
 ---
 
-## Phase 10.5: Social & Leaderboards (PLANNED)
+## Phase 10.5: Social & Leaderboards (COMPLETE)
 
 **Goal:** Social features that drive daily engagement — friends, leagues, challenges, sharing.
 
@@ -350,9 +350,7 @@ Tab order: Home, Learn, Songs, Social, Profile.
 ## Execution Priority
 
 ```
-[DONE]     Phases 1-9.5              ✓ All complete
-[NOW]      Phase 10: ACH Revamp      ← 3D cats, sound design, game-feel, screen polish
-[NEXT]     Phase 10.5: Social        ← friends, leagues, challenges (after app feels premium)
+[DONE]     Phases 1-10.5             ✓ All complete (3D cats deferred)
 [NEXT]     Phase 11: QA + Launch     ← comprehensive audit, then ship
 ```
 
@@ -364,9 +362,9 @@ Tab order: Home, Learn, Songs, Social, Profile.
 WEEK  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16
       ├──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┤
 PH1-9.5                              DONE
-PH10-ACH                         ████████████  ← NOW
-PH10.5-SOC                                ████████
-PH11                                          ████████
+PH10-ACH                         ████████████  DONE
+PH10.5-SOC                                ████  DONE
+PH11                                      ████████  ← NEXT
 ```
 
 Currently in **Week 6** (Feb 27). Phases 1-9.5 complete. Phase 10 ACH starting now.

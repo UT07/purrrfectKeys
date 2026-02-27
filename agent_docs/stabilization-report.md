@@ -1,15 +1,15 @@
 # Purrrfect Keys Stabilization Report
 
 **Date:** February 2026 (last updated Feb 27)
-**Scope:** Codebase stabilization — tests, types, navigation, UI, adaptive learning, gamification, Phase 7 UI revamp, gem bug fix, cat gallery redesign, Phase 9 Music Library, Phase 8 polyphonic completion, Phase 9.5 UX overhaul, Phase 10 Arcade Concert Hall
+**Scope:** Codebase stabilization — tests, types, navigation, UI, adaptive learning, gamification, Phase 7 UI revamp, gem bug fix, cat gallery redesign, Phase 9 Music Library, Phase 8 polyphonic completion, Phase 9.5 UX overhaul, Phase 10 Arcade Concert Hall, Phase 10.5 Social & Leaderboards
 **Full history:** See `docs/stabilization-report-archive.md` for detailed change narratives.
 
 ## Final State
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Test Suites | 18 (many failing) | ~109 passed |
-| Tests | ~393 passing, 40+ failing | ~2,500+ passed, 0 failing |
+| Test Suites | 18 (many failing) | 121 passed |
+| Tests | ~393 passing, 40+ failing | 2,621 passed, 0 failing |
 | TypeScript Errors | 144+ | 0 |
 | Skill Nodes | 0 | 100 (15 tiers, DAG-validated) |
 | Session Types | 1 (new-material only) | 4 (new-material, review, challenge, mixed) |
@@ -362,6 +362,38 @@
 
 - **Tests:** 116 suites, 2,548 tests, 0 failures, 0 TypeScript errors
 
+### Phase 10.5: Social & Leaderboards (Feb 27)
+
+#### Stores & Types
+- **Social types added to `stores/types.ts`:** `LeagueTier`, `FriendStatus`, `FriendConnection`, `ActivityFeedItem`, `LeagueMembership`, `FriendChallenge`, `ShareCardData`
+- **socialStore:** Zustand store for friends, activity feed (capped at 50), friend challenges, friend code. Debounced save. `hydrateSocialStore()` + `reset()`.
+- **leagueStore:** Zustand store for league membership (persisted) and standings (transient). `hydrateLeagueStore()` + `reset()`.
+- **Storage keys:** `SOCIAL` and `LEAGUE` added to persistence.ts
+
+#### Firebase Services
+- **socialService.ts:** 12 functions — `generateFriendCode` (6-char restricted alphabet), `registerFriendCode` (collision-retry), `lookupFriendCode`, `sendFriendRequest` (writes both sides), `acceptFriendRequest`, `removeFriendConnection`, `getFriends`, `postActivity`, `getFriendActivity`, `createChallenge`, `getChallengesForUser` (deduped dual-query), `updateChallengeResult`
+- **leagueService.ts:** 5 functions — `getCurrentWeekMonday`, `assignToLeague` (find-or-create with 30-member cap), `getLeagueStandings` (ranked by weeklyXp), `addLeagueXp` (Firestore `increment()`), `getCurrentLeagueMembership`
+
+#### Navigation Restructure
+- **Play tab → Social tab:** Replaced Play tab with Social in bottom navigation. Free Play moved to HomeScreen card.
+- **New stack routes:** Leaderboard, Friends, AddFriend added to RootStackParamList
+- **CustomTabBar:** Updated icon set (play → account-group)
+
+#### Screens
+- **SocialScreen:** Auth-gated hub with league card (tier-colored border, rank, weekly XP), friends section (counts, pending badges), active challenges section
+- **LeaderboardScreen:** League standings FlatList with top-3 medals, promotion zones (green, top 10), demotion zones (red, bottom 5), current user highlight, pull-to-refresh
+- **AddFriendScreen:** Own code display with copy/share, auto-register on mount, 6-char code input with lookup flow
+- **FriendsScreen:** Two-tab toggle (Friends/Activity), pending request accept/decline, challenge button, chronological activity feed
+
+#### Integration Wiring
+- **League XP:** `progressStore.recordExerciseCompletion` now updates league store + Firestore via `addLeagueXp` (fire-and-forget)
+- **Activity feed:** Level-up posts from `progressStore.addXp`, evolution posts from `catEvolutionStore.addEvolutionXp`
+- **Hydration:** `hydrateSocialStore` + `hydrateLeagueStore` added to App.tsx Phase 1. `ensureSocialSetup()` in authStore Phase 3 (auto-join league + register friend code on sign-in)
+- **ShareCard component:** react-native-view-shot + expo-sharing for shareable score/streak/evolution cards
+- **Notifications:** expo-notifications with daily practice reminder, streak-at-risk reminder, immediate local notifications
+
+- **Tests:** 121 suites, 2,621 tests, 0 failures, 0 TypeScript errors
+
 ---
 
 ## Known Remaining Items
@@ -374,4 +406,4 @@
 6. **Phase 8 remaining**: Real-device testing (mic accuracy >95%, ONNX model loading on device, ambient calibration UX), Basic Pitch ONNX model download
 7. **Sound assets**: SoundManager skeleton in place but actual .wav files not yet sourced (30+ sounds needed)
 8. **3D cat infrastructure**: Deferred (expo-gl + three.js could break RN 0.76 build, no Blender models yet)
-9. **Phase 11+**: Social & Leaderboards, QA + Launch
+9. **Phase 11+**: QA + Launch
