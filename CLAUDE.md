@@ -8,22 +8,19 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 ## Current Sprint (Feb 27, 2026)
 
-**Codebase Health:** ~109 test suites, ~2,500+ tests passing, 0 TypeScript errors
+**Codebase Health:** 106 test suites, 2,441 tests passing, 0 TypeScript errors
 
-**Phases 1-9.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs in Firestore, UX Overhaul)
+**Phases 1-9.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs, UX Overhaul)
 
-**Up Next:** Phase 10 — Social & Leaderboards
+**Up Next:** Phase 10 — Arcade Concert Hall Revamp (3D cats, sound design, game-feel, loot reveals)
 
 **Active Roadmap:**
-- **Phase 8: Audio Input (Mic)** — COMPLETE (monophonic YIN + polyphonic ONNX Basic Pitch, ambient calibration)
-- **Phase 9: Music Library** — COMPLETE (124 songs uploaded to Firestore: 37 Gemini + 50 folk + 38 classical)
-- **Phase 9.5: UX Overhaul** — COMPLETE (assessment fix, HomeScreen feed-style redesign, MusicLibrarySpotlight, ReviewChallengeCard, mastery tests for all 15 tiers, challenge→AI exercise wiring)
-- **Phase 10: Social & Leaderboards** — UP NEXT (friends, leagues, challenges)
-- Phase 11: QA + Launch — PLANNED
-- Sound Design — PLANNED (parallel)
-- 3D Cat Avatars — PLANNED (parallel, Three.js + Blender)
+- **Phase 10: Arcade Concert Hall Revamp** — IN PROGRESS (SoundManager, combo escalation, loot reveal, 3D cats, screen polish)
+- **Phase 10.5: Social & Leaderboards** — PLANNED (friends, leagues, challenges)
+- **Phase 11: QA + Launch** — PLANNED
 
-See `docs/plans/2026-02-13-master-plan.md` for the **single source of truth** on all phases.
+See `docs/plans/UNIFIED-PLAN.md` for the **single source of truth** on all phases.
+See `docs/plans/2026-02-27-arcade-concert-hall-implementation.md` for the active execution plan.
 See `docs/PRD.md` for product requirements.
 See `docs/design-system.md` for design system.
 
@@ -281,7 +278,7 @@ For detailed guidance on specific topics, read these files:
 - @agent_docs/feature-level-map.md - Duolingo-style level map UI (implemented)
 - docs/PRD.md - Product requirements document
 - docs/design-system.md - Design system, visual tokens, and known visual debt
-- docs/plans/2026-02-13-master-plan.md - Master plan with all phase statuses
+- docs/plans/UNIFIED-PLAN.md - Unified plan with all phase statuses and upcoming phase designs
 
 ## Common Tasks
 
