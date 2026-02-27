@@ -1,10 +1,13 @@
 /**
  * Completion Modal Component
- * Celebration screen with animated score counter, star stagger with haptics,
- * confetti burst, cat dialogue, and AI coach feedback
+ * Celebration screen with timed loot reveal sequence:
+ * dim -> title -> score -> stars -> record -> gems -> xp -> cat -> coaching -> actions
+ *
+ * Each section appears in sequence with Reanimated entering animations.
+ * Set skipAnimation={true} for tests to show everything immediately.
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,6 +18,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import Reanimated, {
+  FadeIn,
+  FadeInUp,
+  FadeInDown,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
@@ -33,12 +41,55 @@ import { ttsService } from '../../services/tts/TTSService';
 import { useProgressStore } from '../../stores/progressStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { getLessonIdForExercise } from '../../content/ContentLoader';
+import { soundManager } from '../../audio/SoundManager';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GLOW, glowColor } from '../../theme/tokens';
 import type { Exercise, ExerciseScore } from '../../core/exercises/types';
 
 /** Star tier colors (no token equivalent — intentional silver/bronze palette) */
 const STAR_SILVER = '#C0C0C0';
 const STAR_BRONZE = '#CD7F32';
+
+// ---------------------------------------------------------------------------
+// Phase system
+// ---------------------------------------------------------------------------
+
+type RevealPhase =
+  | 'dim'
+  | 'title'
+  | 'score'
+  | 'stars'
+  | 'record'
+  | 'gems'
+  | 'xp'
+  | 'cat'
+  | 'coaching'
+  | 'actions';
+
+const PHASES: RevealPhase[] = [
+  'dim',
+  'title',
+  'score',
+  'stars',
+  'record',
+  'gems',
+  'xp',
+  'cat',
+  'coaching',
+  'actions',
+];
+
+const PHASE_TIMINGS: Record<RevealPhase, number> = {
+  dim: 0,
+  title: 300,
+  score: 800,
+  stars: 2300,
+  record: 3500,
+  gems: 4000,
+  xp: 4800,
+  cat: 5500,
+  coaching: 6000,
+  actions: 6500,
+};
 
 export interface CompletionModalProps {
   score: ExerciseScore;
@@ -53,6 +104,7 @@ export interface CompletionModalProps {
   gemsEarned?: number;
   sessionMinutes?: number;
   tempoChange?: number;
+  skipAnimation?: boolean;
 }
 
 export const CompletionModal: React.FC<CompletionModalProps> = ({
@@ -68,19 +120,89 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   gemsEarned = 0,
   sessionMinutes,
   tempoChange = 0,
+  skipAnimation = false,
 }) => {
-  // Animation values
-  const scaleAnim = useRef(new Animated.Value(0.5)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
+  // ---------------------------------------------------------------------------
+  // Phase state
+  // ---------------------------------------------------------------------------
+  const [phaseIndex, setPhaseIndex] = useState(
+    skipAnimation ? PHASES.length - 1 : 0
+  );
+
+  const phaseReached = useCallback(
+    (phase: RevealPhase): boolean => phaseIndex >= PHASES.indexOf(phase),
+    [phaseIndex],
+  );
+
+  // Schedule phase transitions via timeouts
+  useEffect(() => {
+    if (skipAnimation) return;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    for (let i = 1; i < PHASES.length; i++) {
+      const delay = PHASE_TIMINGS[PHASES[i]];
+      timers.push(
+        setTimeout(() => {
+          setPhaseIndex(i);
+        }, delay),
+      );
+    }
+
+    return () => {
+      for (const t of timers) clearTimeout(t);
+    };
+  }, [skipAnimation]);
+
+  // ---------------------------------------------------------------------------
+  // Sound effects at phase boundaries
+  // ---------------------------------------------------------------------------
+  const playedSoundsRef = useRef<Set<RevealPhase>>(new Set());
+
+  useEffect(() => {
+    if (skipAnimation) return;
+
+    const current = PHASES[phaseIndex];
+
+    // Title phase -> exercise_complete sound
+    if (current === 'title' && !playedSoundsRef.current.has('title')) {
+      playedSoundsRef.current.add('title');
+      soundManager.play('exercise_complete');
+    }
+
+    // Stars phase -> star_earn per star (staggered)
+    if (current === 'stars' && !playedSoundsRef.current.has('stars')) {
+      playedSoundsRef.current.add('stars');
+      for (let i = 0; i < score.stars; i++) {
+        setTimeout(() => {
+          soundManager.play('star_earn');
+        }, i * 300);
+      }
+    }
+
+    // Gems phase -> gem_clink
+    if (current === 'gems' && !playedSoundsRef.current.has('gems')) {
+      playedSoundsRef.current.add('gems');
+      if (gemsEarned > 0) {
+        soundManager.play('gem_clink');
+      }
+    }
+  }, [phaseIndex, skipAnimation, score.stars, gemsEarned]);
+
+  // ---------------------------------------------------------------------------
+  // Animation values (RN Animated for score counter)
+  // ---------------------------------------------------------------------------
+  const scaleAnim = useRef(new Animated.Value(skipAnimation ? 1 : 0.5)).current;
+  const opacityAnim = useRef(new Animated.Value(skipAnimation ? 1 : 0)).current;
   const scoreCountAnim = useRef(new Animated.Value(0)).current;
 
   // Per-star animation values
   const starAnims = useRef(
-    Array.from({ length: 3 }, () => new Animated.Value(0))
+    Array.from({ length: 3 }, () => new Animated.Value(skipAnimation ? 1 : 0))
   ).current;
 
   // Animated score display
-  const [displayScore, setDisplayScore] = useState(0);
+  const [displayScore, setDisplayScore] = useState(skipAnimation ? Math.round(score.overall) : 0);
   const [showXpPopup, setShowXpPopup] = useState(false);
 
   // AI Coach feedback
@@ -153,9 +275,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     return () => clearTimeout(timer);
   }, [coachFeedback, coachLoading]);
 
-  // Main animation sequence
+  // Main animation sequence — triggered when score phase is reached
   useEffect(() => {
-    // 1. Modal scale + fade in
+    if (skipAnimation) return;
+
+    // 1. Modal scale + fade in (at dim phase)
     Animated.parallel([
       Animated.timing(scaleAnim, {
         toValue: 1,
@@ -170,7 +294,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       }),
     ]).start();
 
-    // 2. Animated score counter: 0 → final (1s)
+    // 2. Animated score counter: 0 -> final (starts at score phase time)
     const scoreListener = scoreCountAnim.addListener(({ value }) => {
       setDisplayScore(Math.round(value));
     });
@@ -178,14 +302,14 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       toValue: score.overall,
       duration: 1000,
       easing: Easing.out(Easing.cubic),
-      delay: 300,
+      delay: PHASE_TIMINGS.score,
       useNativeDriver: false,
     }).start();
 
     // 3. Stars light up one by one (300ms stagger) with haptic per star
     if (score.stars > 0) {
       for (let i = 0; i < score.stars; i++) {
-        const delay = 800 + i * 300;
+        const delay = PHASE_TIMINGS.stars + i * 300;
         Animated.sequence([
           Animated.delay(delay),
           Animated.spring(starAnims[i], {
@@ -207,13 +331,13 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       }
     }
 
-    // 4. XP popup flies up
-    setTimeout(() => setShowXpPopup(true), 1200 + score.stars * 300);
+    // 4. XP popup flies up (at xp phase)
+    setTimeout(() => setShowXpPopup(true), PHASE_TIMINGS.xp);
 
     return () => {
       scoreCountAnim.removeListener(scoreListener);
     };
-  }, [score.stars, score.overall, scaleAnim, opacityAnim, scoreCountAnim, starAnims]);
+  }, [score.stars, score.overall, scaleAnim, opacityAnim, scoreCountAnim, starAnims, skipAnimation]);
 
   // Result display
   const resultDisplay = useMemo(() => {
@@ -250,10 +374,17 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     : displayScore >= 60 ? COLORS.warning
     : COLORS.error;
 
+  // For skipAnimation, show XP popup immediately if earned
+  useEffect(() => {
+    if (skipAnimation && score.xpEarned > 0) {
+      setShowXpPopup(true);
+    }
+  }, [skipAnimation, score.xpEarned]);
+
   return (
     <View style={styles.overlay} testID={testID}>
       {/* Confetti for 3-star scores */}
-      {score.stars === 3 && <ConfettiEffect testID="completion-confetti" />}
+      {score.stars === 3 && phaseReached('stars') && <ConfettiEffect testID="completion-confetti" />}
 
       {/* XP Popup */}
       {showXpPopup && score.xpEarned > 0 && (
@@ -273,110 +404,163 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
         <Animated.View
           style={[
             styles.container,
-            { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
+            skipAnimation
+              ? undefined
+              : { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
           ]}
         >
-          {/* Cat Avatar + Header */}
-          <View style={styles.header}>
-            <CatAvatar
-              catId={activeCatId}
-              size="large"
-              mood={mascotMood}
-              showGlow={score.stars >= 2}
-              evolutionStage={evolutionStage}
-            />
-            <Text style={styles.title}>{exercise.metadata.title}</Text>
-            <Text style={styles.subtitle}>
-              {isTestMode ? 'Mastery Test Complete!' : 'Exercise Complete!'}
-            </Text>
-          </View>
+          {/* ---------------------------------------------------------------- */}
+          {/* TITLE PHASE: Cat Avatar + Header                                */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('title') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInDown.duration(400).springify()}
+              style={styles.header}
+            >
+              <CatAvatar
+                catId={activeCatId}
+                size="large"
+                mood={mascotMood}
+                showGlow={score.stars >= 2}
+                evolutionStage={evolutionStage}
+              />
+              <Text style={styles.title}>{exercise.metadata.title}</Text>
+              <Text style={styles.subtitle}>
+                {isTestMode ? 'Mastery Test Complete!' : 'Exercise Complete!'}
+              </Text>
+            </Reanimated.View>
+          )}
 
-          {/* Score + Stars */}
-          <View style={styles.scoreStarsRow}>
-            {/* Animated Score Circle */}
-            <View style={styles.scoreSection}>
-              <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
-                <View style={styles.scoreRow}>
-                  <Text style={[styles.scoreNumber, { color: scoreColor }]}>{displayScore}</Text>
-                  <Text style={[styles.scorePercent, { color: scoreColor }]}>%</Text>
+          {/* ---------------------------------------------------------------- */}
+          {/* SCORE PHASE: Score + Stars                                       */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('score') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeIn.duration(400)}
+              style={styles.scoreStarsRow}
+            >
+              {/* Animated Score Circle */}
+              <View style={styles.scoreSection}>
+                <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
+                  <View style={styles.scoreRow}>
+                    <Text style={[styles.scoreNumber, { color: scoreColor }]}>{displayScore}</Text>
+                    <Text style={[styles.scorePercent, { color: scoreColor }]}>%</Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            {/* Stars + Result */}
-            <View style={styles.starsResultColumn}>
-              <View style={styles.starsContainer}>
-                {Array.from({ length: 3 }).map((_, i) => {
-                  const starScale = starAnims[i].interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 1],
-                  });
-                  const isEarned = i < score.stars;
-                  return (
-                    <Animated.View
-                      key={i}
-                      style={{ transform: [{ scale: isEarned ? starScale : 1 }] }}
-                    >
+              {/* Stars + Result (stars animate individually via starAnims) */}
+              <View style={styles.starsResultColumn}>
+                {phaseReached('stars') && (
+                  <>
+                    <View style={styles.starsContainer}>
+                      {Array.from({ length: 3 }).map((_, i) => {
+                        const starScale = starAnims[i].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, 1],
+                        });
+                        const isEarned = i < score.stars;
+                        return (
+                          <Animated.View
+                            key={i}
+                            style={{ transform: [{ scale: isEarned ? starScale : 1 }] }}
+                          >
+                            <MaterialCommunityIcons
+                              name={isEarned ? 'star' : 'star-outline'}
+                              size={44}
+                              color={isEarned ? COLORS.starGold : COLORS.starEmpty}
+                            />
+                          </Animated.View>
+                        );
+                      })}
+                    </View>
+
+                    {/* Result message */}
+                    <View style={styles.resultSection}>
                       <MaterialCommunityIcons
-                        name={isEarned ? 'star' : 'star-outline'}
-                        size={44}
-                        color={isEarned ? COLORS.starGold : COLORS.starEmpty}
+                        name={resultDisplay.icon as any}
+                        size={22}
+                        color={resultDisplay.color}
                       />
-                    </Animated.View>
-                  );
-                })}
+                      <Text style={[styles.resultText, { color: resultDisplay.color }]}>
+                        {resultDisplay.text}
+                      </Text>
+                    </View>
+                  </>
+                )}
               </View>
+            </Reanimated.View>
+          )}
 
-              {/* Result message */}
-              <View style={styles.resultSection}>
-                <MaterialCommunityIcons
-                  name={resultDisplay.icon as any}
-                  size={22}
-                  color={resultDisplay.color}
-                />
-                <Text style={[styles.resultText, { color: resultDisplay.color }]}>
-                  {resultDisplay.text}
-                </Text>
+          {/* ---------------------------------------------------------------- */}
+          {/* RECORD PHASE: New Record banner                                  */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('record') && score.isNewHighScore && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.duration(400).springify()}
+              style={styles.newRecordBanner}
+            >
+              <MaterialCommunityIcons name="trophy" size={24} color={COLORS.starGold} />
+              <Text style={styles.newRecordText}>NEW RECORD!</Text>
+              <MaterialCommunityIcons name="trophy" size={24} color={COLORS.starGold} />
+            </Reanimated.View>
+          )}
+
+          {/* ---------------------------------------------------------------- */}
+          {/* GEMS PHASE: Score Breakdown + Stats (gems, XP, record)          */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('gems') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.delay(0).duration(300)}
+            >
+              {/* Score Breakdown */}
+              <View style={styles.breakdownSection}>
+                <Text style={styles.breakdownTitle}>Breakdown</Text>
+                <BreakdownBar label="Accuracy" value={score.breakdown.accuracy} color={COLORS.success} skipAnimation={skipAnimation} />
+                <BreakdownBar label="Timing" value={score.breakdown.timing} color={COLORS.info} skipAnimation={skipAnimation} />
+                <BreakdownBar label="Completeness" value={score.breakdown.completeness} color={COLORS.warning} skipAnimation={skipAnimation} />
+                <BreakdownBar label="Duration" value={score.breakdown.duration} color={COLORS.primary} skipAnimation={skipAnimation} />
+                <BreakdownBar label="Extra Notes" value={score.breakdown.extraNotes} color={COLORS.textMuted} skipAnimation={skipAnimation} />
               </View>
-            </View>
-          </View>
+            </Reanimated.View>
+          )}
 
-          {/* Score Breakdown */}
-          <View style={styles.breakdownSection}>
-            <Text style={styles.breakdownTitle}>Breakdown</Text>
-            <BreakdownBar label="Accuracy" value={score.breakdown.accuracy} color={COLORS.success} />
-            <BreakdownBar label="Timing" value={score.breakdown.timing} color={COLORS.info} />
-            <BreakdownBar label="Completeness" value={score.breakdown.completeness} color={COLORS.warning} />
-            <BreakdownBar label="Duration" value={score.breakdown.duration} color={COLORS.primary} />
-            <BreakdownBar label="Extra Notes" value={score.breakdown.extraNotes} color={COLORS.textMuted} />
-          </View>
-
-          {/* XP and Stats */}
-          <View style={styles.statsSection}>
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="lightning-bolt" size={20} color={COLORS.starGold} />
-              <Text style={styles.statLabel}>XP Earned</Text>
-              <Text style={styles.statValue}>+{score.xpEarned}</Text>
-            </View>
-            {gemsEarned > 0 && (
+          {/* ---------------------------------------------------------------- */}
+          {/* XP PHASE: XP and Stats row                                      */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('xp') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.duration(300)}
+              style={styles.statsSection}
+            >
               <View style={styles.statItem}>
-                <MaterialCommunityIcons name="diamond-stone" size={20} color={COLORS.gemGold} />
-                <Text style={styles.statLabel}>Gems</Text>
-                <Text style={styles.statValue}>+{gemsEarned}</Text>
+                <MaterialCommunityIcons name="lightning-bolt" size={20} color={COLORS.starGold} />
+                <Text style={styles.statLabel}>XP Earned</Text>
+                <Text style={styles.statValue}>+{score.xpEarned}</Text>
               </View>
-            )}
-            {score.isNewHighScore && (
-              <View style={styles.statItem}>
-                <MaterialCommunityIcons name="trophy" size={20} color={COLORS.starGold} />
-                <Text style={styles.statLabel}>New Record!</Text>
-                <Text style={styles.statValue}>{Math.round(score.overall)}%</Text>
-              </View>
-            )}
-          </View>
+              {gemsEarned > 0 && (
+                <View style={styles.statItem}>
+                  <MaterialCommunityIcons name="diamond-stone" size={20} color={COLORS.gemGold} />
+                  <Text style={styles.statLabel}>Gems</Text>
+                  <Text style={styles.statValue}>+{gemsEarned}</Text>
+                </View>
+              )}
+              {score.isNewHighScore && (
+                <View style={styles.statItem}>
+                  <MaterialCommunityIcons name="trophy" size={20} color={COLORS.starGold} />
+                  <Text style={styles.statLabel}>New Record!</Text>
+                  <Text style={styles.statValue}>{Math.round(score.overall)}%</Text>
+                </View>
+              )}
+            </Reanimated.View>
+          )}
 
           {/* Difficulty adjustment indicator */}
-          {tempoChange !== 0 && (
-            <View style={styles.tempoChangeRow}>
+          {phaseReached('xp') && tempoChange !== 0 && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeIn.duration(300)}
+              style={styles.tempoChangeRow}
+            >
               <MaterialCommunityIcons
                 name={tempoChange > 0 ? 'chevron-double-up' : 'chevron-double-down'}
                 size={16}
@@ -385,106 +569,129 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               <Text style={[styles.tempoChangeText, { color: tempoChange > 0 ? COLORS.success : COLORS.warning }]}>
                 Tempo {tempoChange > 0 ? '+' : ''}{tempoChange} BPM for next exercises
               </Text>
-            </View>
+            </Reanimated.View>
           )}
 
-          {/* Cat Dialogue (replaces generic tips) */}
-          <View style={styles.catDialogueSection}>
-            <MascotBubble
-              mood={mascotMood}
-              message={catDialogue}
-              size="small"
-              catId={activeCatId}
-            />
-          </View>
+          {/* ---------------------------------------------------------------- */}
+          {/* CAT PHASE: Cat Dialogue                                         */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('cat') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.duration(400)}
+              style={styles.catDialogueSection}
+            >
+              <MascotBubble
+                mood={mascotMood}
+                message={catDialogue}
+                size="small"
+                catId={activeCatId}
+              />
+            </Reanimated.View>
+          )}
 
-          {/* AI Coach Feedback — Salsa delivers it */}
-          <View style={styles.coachSection}>
-            <View style={styles.coachHeader}>
-              <SalsaCoach size="tiny" mood="teaching" />
-              <Text style={styles.coachTitle}>Salsa Says</Text>
-              {coachFeedback && !coachLoading && (
-                <TouchableOpacity
-                  style={styles.speakerBtn}
-                  onPress={() => {
-                    ttsService.speak(coachFeedback, { catId: 'salsa' });
-                  }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <MaterialCommunityIcons name="volume-high" size={18} color={COLORS.primary} />
-                </TouchableOpacity>
+          {/* ---------------------------------------------------------------- */}
+          {/* COACHING PHASE: AI Coach Feedback + Fun Fact + Demo             */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('coaching') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.duration(400)}
+            >
+              {/* AI Coach Feedback — Salsa delivers it */}
+              <View style={styles.coachSection}>
+                <View style={styles.coachHeader}>
+                  <SalsaCoach size="tiny" mood="teaching" />
+                  <Text style={styles.coachTitle}>Salsa Says</Text>
+                  {coachFeedback && !coachLoading && (
+                    <TouchableOpacity
+                      style={styles.speakerBtn}
+                      onPress={() => {
+                        ttsService.speak(coachFeedback, { catId: 'salsa' });
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <MaterialCommunityIcons name="volume-high" size={18} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {coachLoading ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Text style={styles.coachText}>{coachFeedback}</Text>
+                )}
+              </View>
+
+              {/* Fun Fact */}
+              {completionFunFact && (
+                <FunFactCard
+                  fact={completionFunFact}
+                  animationDelay={600}
+                  compact
+                  testID="completion-fun-fact"
+                />
               )}
-            </View>
-            {coachLoading ? (
-              <ActivityIndicator size="small" color={COLORS.primary} />
-            ) : (
-              <Text style={styles.coachText}>{coachFeedback}</Text>
-            )}
-          </View>
 
-          {/* Fun Fact */}
-          {completionFunFact && (
-            <FunFactCard
-              fact={completionFunFact}
-              animationDelay={600}
-              compact
-              testID="completion-fun-fact"
-            />
+              {/* Demo offer prompt (3+ fails, demo not yet watched) */}
+              {demoOfferMessage && onStartDemo && (
+                <View style={styles.demoPrompt} testID="demo-prompt">
+                  <Text style={styles.demoPromptText}>{demoOfferMessage}</Text>
+                  <TouchableOpacity onPress={onStartDemo} style={styles.demoPromptButton} testID="demo-prompt-button">
+                    <Text style={styles.demoPromptButtonText}>Watch Demo</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </Reanimated.View>
           )}
 
-          {/* Demo offer prompt (3+ fails, demo not yet watched) */}
-          {demoOfferMessage && onStartDemo && (
-            <View style={styles.demoPrompt} testID="demo-prompt">
-              <Text style={styles.demoPromptText}>{demoOfferMessage}</Text>
-              <TouchableOpacity onPress={onStartDemo} style={styles.demoPromptButton} testID="demo-prompt-button">
-                <Text style={styles.demoPromptButtonText}>Watch Demo</Text>
-              </TouchableOpacity>
-            </View>
+          {/* ---------------------------------------------------------------- */}
+          {/* ACTIONS PHASE: Action Buttons                                   */}
+          {/* ---------------------------------------------------------------- */}
+          {phaseReached('actions') && (
+            <Reanimated.View
+              entering={skipAnimation ? undefined : FadeInUp.duration(400)}
+              style={styles.actions}
+            >
+              {onStartTest && score.isPassed && (
+                <Button
+                  title="Take Mastery Test"
+                  onPress={onStartTest}
+                  variant="primary"
+                  size="large"
+                  icon={<MaterialCommunityIcons name="trophy-outline" size={20} color={COLORS.textPrimary} />}
+                  testID="completion-start-test"
+                />
+              )}
+              {onNextExercise && score.isPassed && !onStartTest && (
+                <Button
+                  title="Next Exercise"
+                  onPress={onNextExercise}
+                  variant="primary"
+                  size="large"
+                  icon={<MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.textPrimary} />}
+                  testID="completion-next"
+                />
+              )}
+              {!score.isPassed && onRetry && (
+                <Button
+                  title={isTestMode ? 'Retry Test' : 'Try Again'}
+                  onPress={onRetry}
+                  variant="primary"
+                  size="large"
+                  icon={<MaterialCommunityIcons name="refresh" size={20} color={COLORS.textPrimary} />}
+                  testID="completion-retry"
+                />
+              )}
+              {!(isTestMode && !score.isPassed) && (
+                <Button
+                  title={score.isPassed && (onNextExercise || onStartTest) ? 'Back to Lessons' : (score.isPassed ? 'Continue' : 'Back to Lessons')}
+                  onPress={onClose}
+                  variant={score.isPassed && (onNextExercise || onStartTest) ? 'secondary' : (!score.isPassed ? 'secondary' : 'primary')}
+                  size="large"
+                  icon={<MaterialCommunityIcons name={score.isPassed && !onNextExercise && !onStartTest ? 'check' : 'arrow-left'} size={20} color={score.isPassed && !onNextExercise && !onStartTest ? COLORS.textPrimary : COLORS.textMuted} />}
+                  testID="completion-continue"
+                />
+              )}
+            </Reanimated.View>
           )}
-
-          {/* Action Buttons */}
-          <View style={styles.actions}>
-            {onStartTest && score.isPassed && (
-              <Button
-                title="Take Mastery Test"
-                onPress={onStartTest}
-                variant="primary"
-                size="large"
-                icon={<MaterialCommunityIcons name="trophy-outline" size={20} color={COLORS.textPrimary} />}
-                testID="completion-start-test"
-              />
-            )}
-            {onNextExercise && score.isPassed && !onStartTest && (
-              <Button
-                title="Next Exercise"
-                onPress={onNextExercise}
-                variant="primary"
-                size="large"
-                icon={<MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.textPrimary} />}
-                testID="completion-next"
-              />
-            )}
-            {!score.isPassed && onRetry && (
-              <Button
-                title={isTestMode ? 'Retry Test' : 'Try Again'}
-                onPress={onRetry}
-                variant="primary"
-                size="large"
-                icon={<MaterialCommunityIcons name="refresh" size={20} color={COLORS.textPrimary} />}
-                testID="completion-retry"
-              />
-            )}
-            {!(isTestMode && !score.isPassed) && (
-              <Button
-                title={score.isPassed && (onNextExercise || onStartTest) ? 'Back to Lessons' : (score.isPassed ? 'Continue' : 'Back to Lessons')}
-                onPress={onClose}
-                variant={score.isPassed && (onNextExercise || onStartTest) ? 'secondary' : (!score.isPassed ? 'secondary' : 'primary')}
-                size="large"
-                icon={<MaterialCommunityIcons name={score.isPassed && !onNextExercise && !onStartTest ? 'check' : 'arrow-left'} size={20} color={score.isPassed && !onNextExercise && !onStartTest ? COLORS.textPrimary : COLORS.textMuted} />}
-                testID="completion-continue"
-              />
-            )}
-          </View>
         </Animated.View>
       </ScrollView>
     </View>
@@ -492,10 +699,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
 };
 
 /** Animated breakdown bar */
-function BreakdownBar({ label, value, color }: { label: string; value: number; color: string }) {
-  const widthAnim = useRef(new Animated.Value(0)).current;
+function BreakdownBar({ label, value, color, skipAnimation = false }: { label: string; value: number; color: string; skipAnimation?: boolean }) {
+  const widthAnim = useRef(new Animated.Value(skipAnimation ? Math.round(value) : 0)).current;
 
   useEffect(() => {
+    if (skipAnimation) return;
     Animated.timing(widthAnim, {
       toValue: Math.round(value),
       duration: 800,
@@ -503,7 +711,7 @@ function BreakdownBar({ label, value, color }: { label: string; value: number; c
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [value, widthAnim]);
+  }, [value, widthAnim, skipAnimation]);
 
   return (
     <View style={styles.breakdownRow}>
@@ -617,6 +825,21 @@ const styles = StyleSheet.create({
   resultText: {
     ...TYPOGRAPHY.heading.md,
     fontWeight: '700',
+  },
+  newRecordBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    backgroundColor: glowColor(COLORS.starGold, 0.15),
+    borderRadius: BORDER_RADIUS.md,
+  },
+  newRecordText: {
+    ...TYPOGRAPHY.heading.md,
+    fontWeight: '800',
+    color: COLORS.starGold,
+    letterSpacing: 2,
   },
   breakdownSection: {
     gap: SPACING.sm,

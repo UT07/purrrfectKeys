@@ -36,6 +36,7 @@ export type SoundName =
   | 'level_up'
   | 'chest_open'
   | 'evolution_start'
+  | 'exercise_complete'
   // Cat
   | 'meow_greeting'
   | 'purr_happy'
@@ -69,6 +70,7 @@ const SOUND_HAPTICS: Record<SoundName, HapticType> = {
   level_up: 'heavy',
   chest_open: 'medium',
   evolution_start: 'heavy',
+  exercise_complete: 'success',
   // Cat
   meow_greeting: 'light',
   purr_happy: 'none',

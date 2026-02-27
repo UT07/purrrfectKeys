@@ -46,10 +46,16 @@ jest.mock('react-native-reanimated', () => {
       linear: (t: any) => t,
       in: (fn: any) => fn,
     },
-    FadeIn: { duration: () => ({ delay: () => ({}) }) },
+    FadeIn: { duration: () => ({ delay: () => ({ springify: () => ({}) }) }) },
+    FadeInUp: { duration: () => ({ delay: () => ({ springify: () => ({}) }), springify: () => ({}) }), delay: () => ({ duration: () => ({}) }), springify: () => ({}) },
+    FadeInDown: { duration: () => ({ delay: () => ({ springify: () => ({}) }), springify: () => ({}) }), springify: () => ({}) },
     runOnJS: (fn: any) => fn,
   };
 });
+
+jest.mock('../../../audio/SoundManager', () => ({
+  soundManager: { play: jest.fn(), preload: jest.fn() },
+}));
 
 jest.mock('../../../components/Mascot/MascotBubble', () => {
   const React = require('react');
@@ -137,6 +143,45 @@ jest.mock('../../../stores/settingsStore', () => ({
     const state = { selectedCatId: 'mini-meowww' };
     return typeof selector === 'function' ? selector(state) : state;
   }),
+}));
+
+jest.mock('../../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: jest.fn((selector: any) => {
+    const state = {
+      evolutionData: {
+        'mini-meowww': { currentStage: 'baby' },
+      },
+    };
+    return typeof selector === 'function' ? selector(state) : state;
+  }),
+}));
+
+jest.mock('../../../components/Mascot/SalsaCoach', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    SalsaCoach: (props: any) =>
+      React.createElement(View, { testID: 'salsa-coach', ...props }),
+  };
+});
+
+jest.mock('../../../services/tts/TTSService', () => ({
+  ttsService: { speak: jest.fn(), stop: jest.fn() },
+}));
+
+jest.mock('../../../content/ContentLoader', () => ({
+  getLessonIdForExercise: jest.fn(() => null),
+}));
+
+jest.mock('../../../components/common/Button', () => ({
+  Button: (props: any) => {
+    const { TouchableOpacity, Text } = require('react-native');
+    return (
+      <TouchableOpacity onPress={props.onPress} testID={props.testID} disabled={props.disabled}>
+        <Text>{props.title}</Text>
+      </TouchableOpacity>
+    );
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -263,6 +308,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -277,6 +323,7 @@ describe('CompletionModal', () => {
         score={mockFailingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -291,6 +338,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -308,6 +356,7 @@ describe('CompletionModal', () => {
         score={mockPerfectScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -322,6 +371,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -338,6 +388,7 @@ describe('CompletionModal', () => {
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
         onRetry={onRetry}
+        skipAnimation
       />
     );
 
@@ -353,6 +404,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={onClose}
+        skipAnimation
       />
     );
 
@@ -369,6 +421,7 @@ describe('CompletionModal', () => {
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
         onNextExercise={onNext}
+        skipAnimation
       />
     );
 
@@ -385,6 +438,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -400,6 +454,7 @@ describe('CompletionModal', () => {
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
         onStartTest={onStartTest}
+        skipAnimation
       />
     );
 
@@ -418,6 +473,7 @@ describe('CompletionModal', () => {
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
         onStartDemo={onStartDemo}
+        skipAnimation
       />
     );
 
@@ -434,6 +490,7 @@ describe('CompletionModal', () => {
         score={mockFailingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -447,6 +504,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -460,6 +518,7 @@ describe('CompletionModal', () => {
         score={mockPerfectScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -472,6 +531,7 @@ describe('CompletionModal', () => {
         score={mockOneStarScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -484,6 +544,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -496,6 +557,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -516,6 +578,7 @@ describe('CompletionModal', () => {
         score={mockPerfectScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -528,6 +591,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -540,6 +604,7 @@ describe('CompletionModal', () => {
         score={mockPerfectScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -553,6 +618,7 @@ describe('CompletionModal', () => {
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
         onStartTest={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -566,6 +632,7 @@ describe('CompletionModal', () => {
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
         isTestMode={true}
+        skipAnimation
       />
     );
 
@@ -578,6 +645,7 @@ describe('CompletionModal', () => {
         score={mockPassingScore}
         exercise={MOCK_EXERCISE}
         onClose={jest.fn()}
+        skipAnimation
       />
     );
 
@@ -592,6 +660,7 @@ describe('CompletionModal', () => {
         onClose={jest.fn()}
         onNextExercise={jest.fn()}
         onStartTest={jest.fn()}
+        skipAnimation
       />
     );
 
