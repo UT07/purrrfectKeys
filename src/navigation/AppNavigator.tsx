@@ -5,7 +5,6 @@
  */
 
 import React from 'react';
-import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -29,13 +28,16 @@ import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 import { DailySessionScreen } from '../screens/DailySessionScreen';
 import { SongLibraryScreen } from '../screens/SongLibraryScreen';
 import { SongPlayerScreen } from '../screens/SongPlayerScreen';
+import { SocialScreen } from '../screens/SocialScreen';
+import { LeaderboardScreen } from '../screens/LeaderboardScreen';
+import { FriendsScreen } from '../screens/FriendsScreen';
+import { AddFriendScreen } from '../screens/AddFriendScreen';
 
 // Navigation
 import { CustomTabBar } from './CustomTabBar';
 
 // Stores
 import { useAuthStore } from '../stores/authStore';
-import { COLORS } from '../theme/tokens';
 
 // Types
 export type RootStackParamList = {
@@ -81,39 +83,6 @@ export type MainTabParamList = {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-/** Placeholder for the Social tab — replaced when SocialScreen is implemented */
-function SocialScreenPlaceholder(): React.JSX.Element {
-  return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: COLORS.textPrimary, fontSize: 16 }}>Social — Coming Soon</Text>
-    </View>
-  );
-}
-
-function LeaderboardPlaceholder(): React.JSX.Element {
-  return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: COLORS.textPrimary, fontSize: 16 }}>Leaderboard — Coming Soon</Text>
-    </View>
-  );
-}
-
-function FriendsPlaceholder(): React.JSX.Element {
-  return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: COLORS.textPrimary, fontSize: 16 }}>Friends — Coming Soon</Text>
-    </View>
-  );
-}
-
-function AddFriendPlaceholder(): React.JSX.Element {
-  return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: COLORS.textPrimary, fontSize: 16 }}>Add Friend — Coming Soon</Text>
-    </View>
-  );
-}
-
 /**
  * Main tab navigator (Home, Learn, Songs, Social, Profile)
  */
@@ -142,7 +111,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Social"
-        component={SocialScreenPlaceholder}
+        component={SocialScreen}
         options={{ tabBarButtonTestID: 'tab-social' }}
       />
       <Tab.Screen
@@ -244,17 +213,17 @@ export function AppNavigator() {
             />
             <RootStack.Screen
               name="Leaderboard"
-              component={LeaderboardPlaceholder}
+              component={LeaderboardScreen}
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
               name="Friends"
-              component={FriendsPlaceholder}
+              component={FriendsScreen}
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
               name="AddFriend"
-              component={AddFriendPlaceholder}
+              component={AddFriendScreen}
               options={{ animation: 'slide_from_bottom' }}
             />
             <RootStack.Screen
