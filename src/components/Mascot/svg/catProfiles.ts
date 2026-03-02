@@ -9,6 +9,11 @@
 import type { BodyType, EarType, EyeShape, TailType } from './CatParts';
 import { getCatColors } from '../catColorPalette';
 
+export type HairTuftType =
+  | 'none' | 'curly' | 'slicked' | 'fluffy' | 'spiky'
+  | 'wave' | 'windswept' | 'side-part' | 'silky' | 'sharp'
+  | 'messy' | 'cowlick';
+
 export interface CatProfile {
   body: BodyType;
   ears: EarType;
@@ -17,6 +22,8 @@ export interface CatProfile {
   cheekFluff: boolean;
   blush: boolean;
   blushColor?: string;
+  hairTuft: HairTuftType;
+  eyelashes: boolean;
 }
 
 /** Default profile for unknown cats */
@@ -27,6 +34,8 @@ const DEFAULT_PROFILE: CatProfile = {
   tail: 'curled',
   cheekFluff: false,
   blush: false,
+  hairTuft: 'none',
+  eyelashes: false,
 };
 
 export const CAT_PROFILES: Record<string, CatProfile> = {
@@ -39,6 +48,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: false,
     blush: true,
     blushColor: getCatColors('mini-meowww').blush ?? undefined,
+    hairTuft: 'curly',
+    eyelashes: true,
   },
   'jazzy': {
     body: 'slim',
@@ -47,6 +58,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     tail: 'straight',
     cheekFluff: false,
     blush: false,
+    hairTuft: 'slicked',
+    eyelashes: false,
   },
   'luna': {
     body: 'standard',
@@ -55,6 +68,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     tail: 'fluffy',
     cheekFluff: false,
     blush: false,
+    hairTuft: 'none',
+    eyelashes: true,
   },
 
   // ─── Gem-unlockable ─────────────────────────
@@ -66,6 +81,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: true,
     blush: true,
     blushColor: getCatColors('biscuit').blush ?? undefined,
+    hairTuft: 'fluffy',
+    eyelashes: true,
   },
   'ballymakawww': {
     body: 'round',
@@ -75,6 +92,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: true,
     blush: true,
     blushColor: getCatColors('ballymakawww').blush ?? undefined,
+    hairTuft: 'spiky',
+    eyelashes: false,
   },
   'aria': {
     body: 'slim',
@@ -83,6 +102,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     tail: 'fluffy',
     cheekFluff: false,
     blush: false,
+    hairTuft: 'wave',
+    eyelashes: true,
   },
   'tempo': {
     body: 'slim',
@@ -91,6 +112,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     tail: 'straight',
     cheekFluff: false,
     blush: false,
+    hairTuft: 'windswept',
+    eyelashes: false,
   },
   'shibu': {
     body: 'slim',
@@ -100,6 +123,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: false,
     blush: true,
     blushColor: getCatColors('shibu').blush ?? undefined,
+    hairTuft: 'side-part',
+    eyelashes: false,
   },
   'bella': {
     body: 'round',
@@ -109,6 +134,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: true,
     blush: true,
     blushColor: getCatColors('bella').blush ?? undefined,
+    hairTuft: 'silky',
+    eyelashes: true,
   },
   'sable': {
     body: 'slim',
@@ -117,6 +144,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     tail: 'fluffy',
     cheekFluff: false,
     blush: false,
+    hairTuft: 'sharp',
+    eyelashes: false,
   },
   'coda': {
     body: 'standard',
@@ -125,6 +154,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     tail: 'curled',
     cheekFluff: true,
     blush: false,
+    hairTuft: 'messy',
+    eyelashes: false,
   },
 
   // ─── Legendary ──────────────────────────────
@@ -136,6 +167,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: true,
     blush: true,
     blushColor: getCatColors('chonky-monke').blush ?? undefined,
+    hairTuft: 'cowlick',
+    eyelashes: false,
   },
 
   // ─── Coach NPC ──────────────────────────────
@@ -147,6 +180,8 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     cheekFluff: false,
     blush: true,
     blushColor: getCatColors('salsa').blush ?? undefined,
+    hairTuft: 'none',
+    eyelashes: false,
   },
 };
 

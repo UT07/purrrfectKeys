@@ -106,6 +106,29 @@ describe('Cat Visual Profiles', () => {
     expect(profile.eyes).toBe('round');
     expect(profile.tail).toBe('curled');
   });
+
+  it('every cat has a hairTuft field (can be "none")', () => {
+    for (const cat of CAT_CHARACTERS) {
+      const profile = getCatProfile(cat.id);
+      expect(profile.hairTuft).toBeDefined();
+      expect([
+        'curly', 'slicked', 'none', 'fluffy', 'spiky', 'wave',
+        'windswept', 'side-part', 'silky', 'sharp', 'messy', 'cowlick',
+      ]).toContain(profile.hairTuft);
+    }
+  });
+
+  it('Mini Meowww has curly hair tuft', () => {
+    const profile = getCatProfile('mini-meowww');
+    expect(profile.hairTuft).toBe('curly');
+  });
+
+  it('every cat has an eyelashes boolean', () => {
+    for (const cat of CAT_CHARACTERS) {
+      const profile = getCatProfile(cat.id);
+      expect(typeof profile.eyelashes).toBe('boolean');
+    }
+  });
 });
 
 describe('KeysieSvg composable rendering', () => {
