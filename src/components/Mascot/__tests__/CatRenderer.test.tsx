@@ -230,8 +230,8 @@ describe('KeysieSvg composable rendering', () => {
     // CatPaws renders two Ellipse elements at cy=92 (foot position)
     // Verify the component tree contains these paw ellipses
     const json = JSON.stringify(tree.toJSON());
-    // Paw ellipses are at cy="92" — unique to CatPaws
-    expect(json).toContain('"cy":"92"');
+    // Paw ellipses are at cy=92 (numeric) — unique to CatPaws
+    expect(json).toContain('"cy":92');
   });
 
   it('composable path includes CatHairTuft for cats that have one', () => {

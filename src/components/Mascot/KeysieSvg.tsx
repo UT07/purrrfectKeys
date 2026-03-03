@@ -171,7 +171,7 @@ function renderComposable(
       <CatChestTuft color={bodyColor} />
 
       {/* Paws (below body) */}
-      <CatPaws color={bodyColor} />
+      <CatPaws color={bodyColor} bodyType={profile.body} beanColor={earInnerColor + '80'} />
 
       {/* Head */}
       <CatHead color={bodyColor} cheekFluff={profile.cheekFluff} gradientFill={gradId(catId, 'head')} />
@@ -191,7 +191,7 @@ function renderComposable(
       <CatEars type={profile.ears} bodyColor={bodyColor} innerColor={earInnerColor} />
 
       {/* Hair tuft (between ears, on top of head) */}
-      <CatHairTuft type={profile.hairTuft} color={bodyColor} />
+      <CatHairTuft type={profile.hairTuft} color={bodyColor} size={profile.hairTuftSize} />
 
       {/* Whiskers */}
       <CatWhiskers color={whiskerColor} />
@@ -203,7 +203,7 @@ function renderComposable(
       <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} pupilType={profile.pupilType} />
 
       {/* Mouth */}
-      <CatMouth mood={mood} darkAccent={accentDark} />
+      <CatMouth mood={mood} darkAccent={accentDark} fang={profile.fang} />
 
       {/* Blush */}
       {profile.blush && <CatBlush color={profile.blushColor} />}

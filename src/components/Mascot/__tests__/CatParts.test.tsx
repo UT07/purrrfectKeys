@@ -65,7 +65,7 @@ describe('CatHead', () => {
 });
 
 describe('CatPaws', () => {
-  it('renders two paw ellipses', () => {
+  it('renders paw ellipses with toe beans', () => {
     const { CatPaws } = require('../svg/CatParts');
     const { UNSAFE_getAllByType } = render(
       <SvgWrap><CatPaws color="#FF0000" /></SvgWrap>
@@ -74,35 +74,50 @@ describe('CatPaws', () => {
     const ellipses = allViews.filter(
       (v: any) => v.props.accessibilityLabel === 'Ellipse'
     );
-    expect(ellipses.length).toBe(2);
+    const circles = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    // 2 paw base ellipses + 2 bean pad ellipses = 4 ellipses, plus 4 toe bean circles
+    expect(ellipses.length).toBe(4);
+    expect(circles.length).toBe(4);
   });
 });
 
 describe('CatNose', () => {
-  it('renders small anime nose', () => {
+  it('renders inverted triangle nose with shine', () => {
     const { CatNose } = require('../svg/CatParts');
     const { UNSAFE_getAllByType } = render(
       <SvgWrap><CatNose color="#FF0000" /></SvgWrap>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
-    const ellipses = allViews.filter(
-      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    expect(ellipses.length).toBe(1);
+    const circles = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    // Inverted triangle Path + shine Circle
+    expect(paths.length).toBe(1);
+    expect(circles.length).toBe(1);
   });
 });
 
 describe('CatWhiskers', () => {
-  it('renders 6 whisker lines', () => {
+  it('renders 6 curved whisker paths with follicle dots', () => {
     const { CatWhiskers } = require('../svg/CatParts');
     const { UNSAFE_getAllByType } = render(
       <SvgWrap><CatWhiskers color="#FFFFFF" /></SvgWrap>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
-    const lines = allViews.filter(
-      (v: any) => v.props.accessibilityLabel === 'Line'
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    expect(lines.length).toBe(6);
+    const circles = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    // 6 curved whisker Paths + 6 follicle dot Circles
+    expect(paths.length).toBe(6);
+    expect(circles.length).toBe(6);
   });
 });
 
@@ -131,7 +146,7 @@ describe('CatEars', () => {
 });
 
 describe('CatMouth', () => {
-  it('happy mood renders W-shape mouth path with multiple Q commands', () => {
+  it('happy mood renders W-shape mouth path plus lip line', () => {
     const { UNSAFE_getAllByType } = render(
       <SvgWrap><CatMouth mood="happy" darkAccent="#8B0000" /></SvgWrap>
     );
@@ -139,11 +154,11 @@ describe('CatMouth', () => {
     const paths = allViews.filter(
       (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    // W-shape has a path with multiple Q commands for the double curve
-    const wPaths = paths.filter(
+    // lip line Path + W-shape mouth Path (both have Q commands)
+    const qPaths = paths.filter(
       (p: any) => typeof p.props.d === 'string' && (p.props.d.match(/Q/g) || []).length >= 2
     );
-    expect(wPaths.length).toBe(1);
+    expect(qPaths.length).toBe(2);
   });
 
   it('renders all original moods without crashing', () => {

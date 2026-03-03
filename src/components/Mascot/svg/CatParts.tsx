@@ -318,13 +318,10 @@ export function CatEyes({
     );
   }
 
-  // Happy → arched smile eyes with eyelid curves above
+  // Happy → arched smile eyes (cute upside-down curves)
   if (mood === 'happy') {
     return (
       <G>
-        {/* Eyelid curves on top */}
-        <Path d="M 32 33 Q 38 28 44 33" stroke="#1A1A1A" strokeWidth="0.5" fill="none" opacity={0.4} />
-        <Path d="M 56 33 Q 62 28 68 33" stroke="#1A1A1A" strokeWidth="0.5" fill="none" opacity={0.4} />
         <Path d="M 34 35 Q 38 30 42 35" stroke="#FFFFFF" strokeWidth="2.5" fill="none" strokeLinecap="round" />
         <Path d="M 58 35 Q 62 30 66 35" stroke="#FFFFFF" strokeWidth="2.5" fill="none" strokeLinecap="round" />
         {eyelashes && renderCurvedEyelashes(38, 62, 30)}
@@ -426,41 +423,78 @@ export function CatEyes({
 // Mouth (mood-dependent, repositioned for chibi head)
 // ─────────────────────────────────────────────────
 
-export function CatMouth({ mood, darkAccent }: { mood: MascotMood; darkAccent: string }): ReactElement {
+export function CatMouth({ mood, darkAccent, fang = false }: {
+  mood: MascotMood; darkAccent: string; fang?: boolean;
+}): ReactElement {
+  // Upper lip line (Y-shape from nose) — always rendered
+  const lipLine = (
+    <Path d="M 50 44.5 L 50 47 M 50 47 Q 46 50 43 49 M 50 47 Q 54 50 57 49"
+      stroke="#FFFFFF" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity={0.6} />
+  );
+
+  // Single fang — small triangle on left side
+  const fangEl = fang ? (
+    <Path d="M 46 49 L 45.5 52 L 47 49.5" fill="#FFFFFF" opacity={0.85} />
+  ) : null;
+
   switch (mood) {
     case 'happy':
     case 'love':
-      // Anime cat W-shape mouth (ω) — double curve
       return (
-        <Path
-          d="M 43 49 Q 46.5 53 50 49 Q 53.5 53 57 49"
-          stroke="#FFFFFF"
-          strokeWidth="1.5"
-          fill="none"
-          strokeLinecap="round"
-        />
+        <G>
+          {lipLine}
+          <Path d="M 43 49 Q 46.5 53 50 49 Q 53.5 53 57 49"
+            stroke="#FFFFFF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          {fangEl}
+        </G>
       );
     case 'encouraging':
     case 'smug':
       return (
-        <Path d="M 44 49 Q 50 53 56 49" stroke="#FFFFFF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <G>
+          {lipLine}
+          <Path d="M 44 49 Q 50 53 56 49" stroke="#FFFFFF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          {fangEl}
+        </G>
       );
     case 'excited':
-      return <Ellipse cx="50" cy="50" rx="5" ry="4" fill={darkAccent} />;
+      return (
+        <G>
+          {lipLine}
+          {/* Open mouth with tongue */}
+          <Ellipse cx="50" cy="50" rx="5" ry="4" fill={darkAccent} />
+          <Ellipse cx="50" cy="52" rx="3" ry="2" fill="#FF8FAA" opacity={0.7} />
+          {fang && <Path d="M 46 48 L 45 51 L 47 48.5" fill="#FFFFFF" opacity={0.85} />}
+          {fang && <Path d="M 54 48 L 55 51 L 53 48.5" fill="#FFFFFF" opacity={0.85} />}
+        </G>
+      );
     case 'teaching':
     case 'confused':
       return (
-        <Line x1="44" y1="50" x2="56" y2="50" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+        <G>
+          {lipLine}
+          <Line x1="44" y1="50" x2="56" y2="50" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+          {fangEl}
+        </G>
       );
     case 'celebrating':
       return (
-        <Path d="M 42 48 Q 50 58 58 48" stroke="#FFFFFF" strokeWidth="1.5" fill={darkAccent} strokeLinecap="round" />
+        <G>
+          {lipLine}
+          {/* Wide grin with both fangs */}
+          <Path d="M 42 48 Q 50 58 58 48" stroke="#FFFFFF" strokeWidth="1.5" fill={darkAccent} strokeLinecap="round" />
+          <Path d="M 45 48.5 L 44.5 51.5 L 46 49" fill="#FFFFFF" opacity={0.85} />
+          <Path d="M 55 48.5 L 55.5 51.5 L 54 49" fill="#FFFFFF" opacity={0.85} />
+        </G>
       );
     case 'sleepy':
     default:
-      // Small closed gentle curve
       return (
-        <Path d="M 44 49 Q 50 52 56 49" stroke="#FFFFFF" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <G>
+          {lipLine}
+          <Path d="M 44 49 Q 50 52 56 49" stroke="#FFFFFF" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          {fangEl}
+        </G>
       );
   }
 }
@@ -469,11 +503,30 @@ export function CatMouth({ mood, darkAccent }: { mood: MascotMood; darkAccent: s
 // Paws (positioned below body at cy=92)
 // ─────────────────────────────────────────────────
 
-export function CatPaws({ color }: { color: string }): ReactElement {
+export function CatPaws({ color, bodyType = 'standard', beanColor }: {
+  color: string; bodyType?: BodyType; beanColor?: string;
+}): ReactElement {
+  // Paw width scales per body type
+  const pawW = bodyType === 'chonky' ? 7 : bodyType === 'round' ? 6 : bodyType === 'slim' ? 4 : 5;
+  const beanFill = beanColor ?? '#FFB0C0';
+  const lx = bodyType === 'chonky' ? 40 : 42;
+  const rx = bodyType === 'chonky' ? 60 : 58;
+  const py = 92;
+
   return (
     <G>
-      <Ellipse cx="42" cy="92" rx="5" ry="3" fill={color} />
-      <Ellipse cx="58" cy="92" rx="5" ry="3" fill={color} />
+      {/* Left paw */}
+      <Ellipse cx={lx} cy={py} rx={pawW} ry={3} fill={color} />
+      {/* Toe beans — 1 large pad + 2 small */}
+      <Ellipse cx={lx} cy={py + 0.5} rx={2.5} ry={1.5} fill={beanFill} opacity={0.35} />
+      <Circle cx={lx - 2} cy={py - 1} r={1} fill={beanFill} opacity={0.3} />
+      <Circle cx={lx + 2} cy={py - 1} r={1} fill={beanFill} opacity={0.3} />
+
+      {/* Right paw */}
+      <Ellipse cx={rx} cy={py} rx={pawW} ry={3} fill={color} />
+      <Ellipse cx={rx} cy={py + 0.5} rx={2.5} ry={1.5} fill={beanFill} opacity={0.35} />
+      <Circle cx={rx - 2} cy={py - 1} r={1} fill={beanFill} opacity={0.3} />
+      <Circle cx={rx + 2} cy={py - 1} r={1} fill={beanFill} opacity={0.3} />
     </G>
   );
 }
@@ -483,7 +536,14 @@ export function CatPaws({ color }: { color: string }): ReactElement {
 // ─────────────────────────────────────────────────
 
 export function CatNose({ color }: { color: string }): ReactElement {
-  return <Ellipse cx="50" cy="42" rx="1.8" ry="1.2" fill={color} />;
+  return (
+    <G>
+      {/* Inverted rounded triangle — iconic anime cat nose */}
+      <Path d="M 50 41 L 48 44 Q 50 45.5 52 44 Z" fill={color} />
+      {/* Nose shine — small highlight upper-left */}
+      <Circle cx="49.2" cy="42" r="0.7" fill="#FFFFFF" opacity={0.5} />
+    </G>
+  );
 }
 
 // ─────────────────────────────────────────────────
@@ -493,12 +553,22 @@ export function CatNose({ color }: { color: string }): ReactElement {
 export function CatWhiskers({ color }: { color: string }): ReactElement {
   return (
     <G>
-      <Line x1="14" y1="38" x2="30" y2="40" stroke={color} strokeWidth="0.8" />
-      <Line x1="12" y1="42" x2="30" y2="42" stroke={color} strokeWidth="0.8" />
-      <Line x1="14" y1="46" x2="30" y2="44" stroke={color} strokeWidth="0.8" />
-      <Line x1="70" y1="40" x2="86" y2="38" stroke={color} strokeWidth="0.8" />
-      <Line x1="70" y1="42" x2="88" y2="42" stroke={color} strokeWidth="0.8" />
-      <Line x1="70" y1="44" x2="86" y2="46" stroke={color} strokeWidth="0.8" />
+      {/* Left whiskers — curved, tapered */}
+      <Path d="M 30 39 Q 22 37 13 38" stroke={color} strokeWidth="0.8" fill="none" strokeLinecap="round" />
+      <Path d="M 30 42 Q 20 41 10 42" stroke={color} strokeWidth="0.9" fill="none" strokeLinecap="round" />
+      <Path d="M 30 44 Q 22 45 14 47" stroke={color} strokeWidth="0.7" fill="none" strokeLinecap="round" />
+      {/* Follicle dots */}
+      <Circle cx="30" cy="39" r="0.5" fill={color} opacity={0.4} />
+      <Circle cx="30" cy="42" r="0.6" fill={color} opacity={0.4} />
+      <Circle cx="30" cy="44" r="0.5" fill={color} opacity={0.4} />
+
+      {/* Right whiskers — mirrored */}
+      <Path d="M 70 39 Q 78 37 87 38" stroke={color} strokeWidth="0.8" fill="none" strokeLinecap="round" />
+      <Path d="M 70 42 Q 80 41 90 42" stroke={color} strokeWidth="0.9" fill="none" strokeLinecap="round" />
+      <Path d="M 70 44 Q 78 45 86 47" stroke={color} strokeWidth="0.7" fill="none" strokeLinecap="round" />
+      <Circle cx="70" cy="39" r="0.5" fill={color} opacity={0.4} />
+      <Circle cx="70" cy="42" r="0.6" fill={color} opacity={0.4} />
+      <Circle cx="70" cy="44" r="0.5" fill={color} opacity={0.4} />
     </G>
   );
 }
@@ -518,28 +588,52 @@ export function CatTail({
   bodyColor: string;
   accentColor: string;
 }): ReactElement {
+  const furStroke = darkenColor(bodyColor, 0.8);
+
   switch (type) {
     case 'straight':
       return (
         <G>
-          <Path d="M 68 82 Q 80 72 84 58" stroke={bodyColor} strokeWidth="4" fill="none" strokeLinecap="round" />
-          <Circle cx="84" cy="56" r="4" fill={accentColor} />
+          {/* Tapered filled shape — thick base, thin tip with upward hook */}
+          <Path d="M 66 82 Q 72 78 78 70 Q 82 64 84 58 L 85 56 Q 86 54 84 54 L 83 55 Q 80 62 76 68 Q 70 76 64 80 Z"
+            fill={bodyColor} />
+          {/* Fur direction strokes */}
+          <Path d="M 70 76 Q 74 72 77 66" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
+          <Path d="M 68 78 Q 72 74 75 69" stroke={furStroke} strokeWidth="0.3" fill="none" opacity={0.15} />
+          {/* Tip accent */}
+          <Circle cx="84.5" cy="54" r="2.5" fill={accentColor} />
         </G>
       );
     case 'fluffy':
       return (
         <G>
-          <Path d="M 68 82 Q 80 74 86 64 Q 90 56 84 52" stroke={bodyColor} strokeWidth="6" fill="none" strokeLinecap="round" />
-          <Circle cx="84" cy="50" r="5" fill={bodyColor} />
-          <Circle cx="84" cy="50" r="4" fill={accentColor} opacity={0.3} />
+          {/* Wide bushy shape with scalloped edge */}
+          <Path d="M 66 82 Q 72 76 78 68 Q 82 62 86 58 Q 90 54 88 50 Q 86 48 82 50 Q 80 52 84 56 Q 82 62 76 68 Q 70 74 64 80 Z"
+            fill={bodyColor} />
+          {/* Scalloped fluff bumps */}
+          <Path d="M 86 58 Q 90 56 88 53" fill={bodyColor} stroke={bodyColor} strokeWidth="1.5" />
+          <Path d="M 84 54 Q 88 51 86 48" fill={bodyColor} stroke={bodyColor} strokeWidth="1.5" />
+          {/* Fur strokes */}
+          <Path d="M 72 74 Q 76 70 80 64" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
+          <Path d="M 70 76 Q 74 72 78 66" stroke={furStroke} strokeWidth="0.3" fill="none" opacity={0.15} />
+          {/* Fluffy tip */}
+          <Circle cx="87" cy="50" r="4" fill={bodyColor} />
+          <Circle cx="87" cy="50" r="3" fill={accentColor} opacity={0.25} />
         </G>
       );
     case 'curled':
     default:
       return (
         <G>
-          <Path d="M 68 82 Q 84 76 88 64 Q 90 54 85 49" stroke={bodyColor} strokeWidth="4" fill="none" strokeLinecap="round" />
-          <Circle cx="85" cy="47" r="4" fill={accentColor} />
+          {/* Tapered curl — thick base flowing into spiral tip */}
+          <Path d="M 66 82 Q 74 76 82 68 Q 88 60 90 54 Q 91 50 88 48 Q 85 46 84 50 Q 83 54 86 52 Q 84 56 80 62 Q 74 72 64 80 Z"
+            fill={bodyColor} />
+          {/* Fur direction strokes */}
+          <Path d="M 72 74 Q 78 68 82 60" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
+          {/* Spiral tip accent tuft */}
+          <Circle cx="87" cy="48" r="3.5" fill={accentColor} />
+          <Circle cx="88.5" cy="47" r="1.5" fill={accentColor} opacity={0.6} />
+          <Circle cx="85.5" cy="49" r="1.5" fill={accentColor} opacity={0.4} />
         </G>
       );
   }
@@ -550,10 +644,17 @@ export function CatTail({
 // ─────────────────────────────────────────────────
 
 export function CatBlush({ color = '#FF9999' }: { color?: string }): ReactElement {
+  // Anime hash-mark blush — 3 short diagonal parallel lines per cheek
   return (
-    <G>
-      <Ellipse cx="26" cy="42" rx="6" ry="4" fill={color} opacity={0.3} />
-      <Ellipse cx="74" cy="42" rx="6" ry="4" fill={color} opacity={0.3} />
+    <G opacity={0.3}>
+      {/* Left cheek */}
+      <Line x1="22" y1="40" x2="25" y2="43" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
+      <Line x1="24" y1="39" x2="27" y2="42" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
+      <Line x1="26" y1="38" x2="29" y2="41" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
+      {/* Right cheek */}
+      <Line x1="71" y1="38" x2="74" y2="41" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
+      <Line x1="73" y1="39" x2="76" y2="42" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
+      <Line x1="75" y1="40" x2="78" y2="43" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
     </G>
   );
 }
@@ -595,52 +696,132 @@ export function CatPianoCollar(): ReactElement {
 // Hair Tufts (positioned between ears on top of head)
 // ─────────────────────────────────────────────────
 
-export function CatHairTuft({ type, color }: { type: HairTuftType; color: string }): ReactElement | null {
+export function CatHairTuft({ type, color, size = 'small' }: {
+  type: HairTuftType; color: string; size?: 'small' | 'medium' | 'large';
+}): ReactElement | null {
   if (type === 'none') return null;
 
   const darkColor = darkenColor(color, 0.7);
+  const scale = size === 'large' ? 1.6 : size === 'medium' ? 1.3 : 1.0;
+  // Scale from center of tuft area (50, 4)
+  const transform = scale !== 1.0
+    ? `translate(${50 - 50 * scale}, ${4 - 4 * scale}) scale(${scale})`
+    : undefined;
+
+  let tuft: ReactElement;
+
   switch (type) {
     case 'curly':
-      return <Path d="M 48 6 Q 46 2 50 4 Q 54 2 52 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
-    case 'slicked':
-      return <Path d="M 47 5 Q 50 0 53 5" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+      tuft = (
+        <G>
+          <Path d="M 47 7 Q 45 3 49 4 Q 51 1 53 5 Q 55 3 53 7" fill="#000000" opacity={0.05} />
+          <Path d="M 47 6 Q 45 2 49 3 Q 51 0 53 4 Q 55 2 53 6"
+            fill={color} stroke={darkColor} strokeWidth="0.5" />
+          <Path d="M 48 5 Q 47 3 50 3.5" fill={color} stroke={darkColor} strokeWidth="0.3" />
+        </G>
+      );
+      break;
     case 'fluffy':
-      return (
+      tuft = (
         <G>
-          <Circle cx="48" cy="5" r="2.5" fill={color} />
-          <Circle cx="52" cy="4" r="2.5" fill={color} />
-          <Circle cx="50" cy="3" r="2" fill={color} />
+          <Path d="M 46 6 Q 46 4 48 5 Q 48 2 50 4 Q 52 2 52 5 Q 54 4 54 6" fill="#000000" opacity={0.05} />
+          <Circle cx="47" cy="5" r="2.5" fill={color} />
+          <Circle cx="50" cy="3.5" r="2.8" fill={color} />
+          <Circle cx="53" cy="5" r="2.5" fill={color} />
+          <Circle cx="48.5" cy="4" r="2" fill={color} />
+          <Circle cx="51.5" cy="4" r="2" fill={color} />
         </G>
       );
+      break;
     case 'spiky':
-      return (
+      tuft = (
         <G>
+          <Path d="M 47 7 L 46 2 L 49 6 L 50 0 L 51 6 L 54 2 L 53 7" fill="#000000" opacity={0.05} />
           <Path d="M 47 6 L 46 1 L 49 5" fill={color} />
-          <Path d="M 49 5 L 50 0 L 51 5" fill={color} />
+          <Path d="M 49 5 L 50 -1 L 51 5" fill={color} />
           <Path d="M 51 5 L 54 1 L 53 6" fill={color} />
+          <Path d="M 47.5 4 L 47 2" stroke={darkColor} strokeWidth="0.3" fill="none" opacity={0.3} />
+          <Path d="M 50 3 L 50 1" stroke={darkColor} strokeWidth="0.3" fill="none" opacity={0.3} />
+          <Path d="M 52.5 4 L 53 2" stroke={darkColor} strokeWidth="0.3" fill="none" opacity={0.3} />
         </G>
       );
+      break;
     case 'wave':
-      return <Path d="M 44 6 Q 47 2 50 5 Q 53 2 56 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
-    case 'windswept':
-      return <Path d="M 46 6 Q 50 2 56 4 Q 58 3 60 5" fill={color} stroke={darkColor} strokeWidth="0.5" />;
-    case 'side-part':
-      return <Path d="M 44 6 Q 46 3 50 5 L 52 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
-    case 'silky':
-      return <Path d="M 45 7 Q 48 2 50 4 Q 52 2 55 7" fill={color} stroke={darkColor} strokeWidth="0.3" />;
-    case 'sharp':
-      return <Path d="M 48 6 L 50 1 L 52 6" fill={color} />;
-    case 'messy':
-      return (
+      tuft = (
         <G>
-          <Path d="M 46 6 L 45 2 L 48 5" fill={color} />
-          <Path d="M 50 5 L 51 1 L 52 5" fill={color} />
-          <Path d="M 53 6 L 55 3 L 54 6" fill={color} />
+          <Path d="M 43 7 Q 46 3 50 6 Q 54 3 57 7" fill="#000000" opacity={0.05} />
+          <Path d="M 43 6 Q 46 2 50 5 Q 54 2 57 6" fill={color} stroke={darkColor} strokeWidth="0.5" />
+          <Path d="M 45 5 Q 48 3 50 4.5" fill="none" stroke={darkColor} strokeWidth="0.3" opacity={0.3} />
         </G>
       );
+      break;
+    case 'windswept':
+      tuft = (
+        <G>
+          <Path d="M 45 7 Q 49 3 55 5 Q 57 4 59 6" fill="#000000" opacity={0.05} />
+          <Path d="M 45 6 Q 49 2 55 4 Q 57 3 59 5" fill={color} stroke={darkColor} strokeWidth="0.5" />
+          <Path d="M 47 5 Q 51 3 54 4" fill="none" stroke={darkColor} strokeWidth="0.3" opacity={0.3} />
+        </G>
+      );
+      break;
+    case 'slicked':
+      tuft = (
+        <G>
+          <Path d="M 46 6 Q 50 1 54 6" fill="#000000" opacity={0.05} />
+          <Path d="M 46 5 Q 50 0 54 5" fill={color} stroke={darkColor} strokeWidth="0.5" />
+          <Path d="M 48 4 Q 50 2 52 4" fill="none" stroke={darkColor} strokeWidth="0.3" opacity={0.2} />
+        </G>
+      );
+      break;
+    case 'side-part':
+      tuft = (
+        <G>
+          <Path d="M 43 7 Q 45 4 49 6 L 51 7" fill="#000000" opacity={0.05} />
+          <Path d="M 43 6 Q 45 3 49 5 L 51 6" fill={color} stroke={darkColor} strokeWidth="0.5" />
+        </G>
+      );
+      break;
+    case 'silky':
+      tuft = (
+        <G>
+          <Path d="M 44 8 Q 47 3 49 5 Q 51 3 54 8" fill="#000000" opacity={0.05} />
+          <Path d="M 44 7 Q 47 2 49 4 Q 51 2 54 7" fill={color} stroke={darkColor} strokeWidth="0.3" />
+          <Path d="M 46 5 Q 48 3 50 4" fill="none" stroke={darkColor} strokeWidth="0.2" opacity={0.2} />
+        </G>
+      );
+      break;
+    case 'sharp':
+      tuft = (
+        <G>
+          <Path d="M 47 7 L 50 1 L 53 7" fill="#000000" opacity={0.05} />
+          <Path d="M 47 6 L 50 0 L 53 6" fill={color} />
+          <Path d="M 49 4 L 50 1.5" stroke={darkColor} strokeWidth="0.3" fill="none" opacity={0.3} />
+        </G>
+      );
+      break;
+    case 'messy':
+      tuft = (
+        <G>
+          <Path d="M 45 7 L 44 3 L 47 6 L 49 2 L 51 6 L 54 4 L 53 7 L 56 5 L 55 7" fill="#000000" opacity={0.05} />
+          <Path d="M 45 6 L 44 2 L 47 5" fill={color} />
+          <Path d="M 48 5 L 49 1 L 51 5" fill={color} />
+          <Path d="M 52 6 L 54 3 L 53 6" fill={color} />
+          <Path d="M 54 6 L 56 4 L 55 6" fill={color} />
+        </G>
+      );
+      break;
     case 'cowlick':
-      return <Path d="M 48 5 Q 50 -1 54 4 Q 56 2 55 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+      tuft = (
+        <G>
+          <Path d="M 47 6 Q 49 0 53 5 Q 55 3 54 7" fill="#000000" opacity={0.05} />
+          <Path d="M 47 5 Q 49 -1 53 4 Q 55 2 54 6" fill={color} stroke={darkColor} strokeWidth="0.5" />
+          <Path d="M 49 3 Q 51 1 52 3.5" fill="none" stroke={darkColor} strokeWidth="0.3" opacity={0.3} />
+        </G>
+      );
+      break;
     default:
       return null;
   }
+
+  return transform ? <G transform={transform}>{tuft}</G> : tuft;
 }
