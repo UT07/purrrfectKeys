@@ -273,7 +273,7 @@ export class GeminiCoach {
 
     // Try Cloud Function first
     try {
-      const fn = httpsCallable<CoachRequest, { feedback: string }>(functions, 'generateCoachFeedback', { timeout: 5000 });
+      const fn = httpsCallable<CoachRequest, { feedback: string }>(functions, 'generateCoachFeedback', { timeout: 15000 });
       const result = await fn(request);
       const text = result.data.feedback;
 
@@ -283,7 +283,7 @@ export class GeminiCoach {
         return text;
       }
     } catch (cfError) {
-      logger.warn('[GeminiCoach] Cloud Function unavailable, using direct API:', (cfError as Error)?.message ?? cfError);
+      logger.warn('[GeminiCoach] Cloud Function unavailable, falling back to direct API. Deploy functions to secure API key:', (cfError as Error)?.message ?? cfError);
     }
 
     // Fall back to direct Gemini API call

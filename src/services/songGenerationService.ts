@@ -43,7 +43,7 @@ export async function generateAndSaveSong(
 ): Promise<Song | null> {
   // Try Cloud Function first
   try {
-    const fn = httpsCallable<SongRequestParams, GeneratedSongABC>(functions, 'generateSong', { timeout: 5000 });
+    const fn = httpsCallable<SongRequestParams, GeneratedSongABC>(functions, 'generateSong', { timeout: 15000 });
     const result = await fn(params);
     const rawSong = result.data;
 
@@ -58,7 +58,7 @@ export async function generateAndSaveSong(
       }
     }
   } catch (cfError) {
-    logger.warn('[SongGen] Cloud Function unavailable, using direct API:', (cfError as Error)?.message ?? cfError);
+    logger.warn('[SongGen] Cloud Function unavailable, falling back to direct API. Deploy functions to secure API key:', (cfError as Error)?.message ?? cfError);
   }
 
   // Fall back to direct Gemini API call
