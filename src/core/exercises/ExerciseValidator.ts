@@ -213,11 +213,12 @@ function calculateBreakdown(
   const correctNotes = noteScores.filter((n) => n.isCorrectPitch && !n.isExtraNote).length;
   const accuracy = (correctNotes / totalExpected) * 100;
 
-  // Timing: average timing score of correctly pitched notes
-  const correctNoteScores = noteScores.filter((n) => n.isCorrectPitch && !n.isExtraNote);
+  // Timing: average timing score across ALL expected notes (missed = 0)
+  // This ensures missing notes drags timing down instead of being invisible.
+  const expectedNoteScores = noteScores.filter((n) => !n.isExtraNote);
   const timing =
-    correctNoteScores.length > 0
-      ? correctNoteScores.reduce((sum, n) => sum + n.timingScore, 0) / correctNoteScores.length
+    expectedNoteScores.length > 0
+      ? expectedNoteScores.reduce((sum, n) => sum + n.timingScore, 0) / expectedNoteScores.length
       : 0;
 
   // Completeness: notes played / total expected
@@ -228,10 +229,10 @@ function calculateBreakdown(
   const extraCount = noteScores.filter((n) => n.isExtraNote).length;
   const extraNotes = Math.max(0, 100 - extraCount * 10);
 
-  // Duration: average duration score of correctly pitched notes
+  // Duration: average duration score across ALL expected notes (missed = 0)
   const duration =
-    correctNoteScores.length > 0
-      ? correctNoteScores.reduce((sum, n) => sum + (n.durationScore ?? 100), 0) / correctNoteScores.length
+    expectedNoteScores.length > 0
+      ? expectedNoteScores.reduce((sum, n) => sum + (n.durationScore ?? (n.isMissedNote ? 0 : 100)), 0) / expectedNoteScores.length
       : 0;
 
   return {
