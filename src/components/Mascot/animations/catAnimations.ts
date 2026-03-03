@@ -131,7 +131,12 @@ export function moodToPose(mood: MascotMood): CatPose {
       return 'teach';
     case 'encouraging':
       return 'curious';
+    case 'sleepy':
+      return 'sleep';
     case 'happy':
+    case 'love':
+    case 'confused':
+    case 'smug':
     default:
       return 'idle';
   }

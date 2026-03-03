@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { CatEars } from '../svg/CatParts';
+import { CatEars, CatMouth } from '../svg/CatParts';
 
 jest.mock('react-native-svg', () => {
   const mockReact = require('react');
@@ -124,6 +124,41 @@ describe('CatEars', () => {
     for (const type of ['pointed', 'rounded', 'folded'] as const) {
       const { unmount } = render(
         <SvgWrap><CatEars type={type} bodyColor="#FF0000" innerColor="#FF8800" /></SvgWrap>
+      );
+      unmount();
+    }
+  });
+});
+
+describe('CatMouth', () => {
+  it('happy mood renders W-shape mouth path with multiple Q commands', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap><CatMouth mood="happy" darkAccent="#8B0000" /></SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
+    );
+    // W-shape has a path with multiple Q commands for the double curve
+    const wPaths = paths.filter(
+      (p: any) => typeof p.props.d === 'string' && (p.props.d.match(/Q/g) || []).length >= 2
+    );
+    expect(wPaths.length).toBe(1);
+  });
+
+  it('renders all original moods without crashing', () => {
+    for (const mood of ['happy', 'encouraging', 'excited', 'teaching', 'celebrating'] as const) {
+      const { unmount } = render(
+        <SvgWrap><CatMouth mood={mood} darkAccent="#8B0000" /></SvgWrap>
+      );
+      unmount();
+    }
+  });
+
+  it('renders new moods without crashing', () => {
+    for (const mood of ['love', 'confused', 'smug', 'sleepy'] as const) {
+      const { unmount } = render(
+        <SvgWrap><CatMouth mood={mood} darkAccent="#8B0000" /></SvgWrap>
       );
       unmount();
     }

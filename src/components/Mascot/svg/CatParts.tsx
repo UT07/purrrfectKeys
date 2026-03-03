@@ -232,22 +232,38 @@ export function CatEyes({
 export function CatMouth({ mood, darkAccent }: { mood: MascotMood; darkAccent: string }): ReactElement {
   switch (mood) {
     case 'happy':
+    case 'love':
+      // Anime cat W-shape mouth (ω) — double curve
       return (
-        <Path d="M 43 49 Q 50 55 57 49" stroke="#FFFFFF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <Path
+          d="M 43 49 Q 46.5 53 50 49 Q 53.5 53 57 49"
+          stroke="#FFFFFF"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
       );
     case 'encouraging':
+    case 'smug':
       return (
         <Path d="M 44 49 Q 50 53 56 49" stroke="#FFFFFF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
       );
     case 'excited':
       return <Ellipse cx="50" cy="50" rx="5" ry="4" fill={darkAccent} />;
     case 'teaching':
+    case 'confused':
       return (
         <Line x1="44" y1="50" x2="56" y2="50" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
       );
     case 'celebrating':
       return (
         <Path d="M 42 48 Q 50 58 58 48" stroke="#FFFFFF" strokeWidth="1.5" fill={darkAccent} strokeLinecap="round" />
+      );
+    case 'sleepy':
+    default:
+      // Small closed gentle curve
+      return (
+        <Path d="M 44 49 Q 50 52 56 49" stroke="#FFFFFF" strokeWidth="1.2" fill="none" strokeLinecap="round" />
       );
   }
 }

@@ -1,4 +1,6 @@
-export type MascotMood = 'happy' | 'encouraging' | 'excited' | 'teaching' | 'celebrating';
+export type MascotMood =
+  | 'happy' | 'encouraging' | 'excited' | 'teaching' | 'celebrating'
+  | 'love' | 'confused' | 'smug' | 'sleepy';
 export type MascotSize = 'tiny' | 'small' | 'medium' | 'large';
 
 export const MASCOT_SIZES: Record<MascotSize, number> = {
