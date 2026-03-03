@@ -199,8 +199,8 @@ function renderComposable(
       {/* Nose */}
       <CatNose color={noseColor} />
 
-      {/* Eyes (shape-specific + mood-responsive, 6-layer composite) */}
-      <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} />
+      {/* Eyes (8-layer composite with pupilType support) */}
+      <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} pupilType={profile.pupilType} />
 
       {/* Mouth */}
       <CatMouth mood={mood} darkAccent={accentDark} />
@@ -292,7 +292,7 @@ function renderLegacy(
       <Ellipse cx="50" cy="49" rx="3" ry="2" fill={noseColor} />
 
       {/* Eyes (legacy round style) */}
-      <CatEyes shape="round" mood={mood} eyeColor={eyeColor} />
+      <CatEyes shape="round" mood={mood} eyeColor={eyeColor} pupilType="round" />
 
       {/* Mouth */}
       <CatMouth mood={mood} darkAccent={accentDark} />

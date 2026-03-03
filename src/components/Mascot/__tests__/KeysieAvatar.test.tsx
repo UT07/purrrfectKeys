@@ -314,7 +314,8 @@ describe('KeysieAvatar', () => {
           v.props.accessibilityLabel === 'Path' &&
           v.props.fill === '#FFD700',
       );
-      expect(goldPaths.length).toBe(2);
+      // 2 star paths + 8 sparkle diamonds
+      expect(goldPaths.length).toBe(10);
     });
   });
 });

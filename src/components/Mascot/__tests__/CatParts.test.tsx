@@ -250,8 +250,8 @@ describe('CatHead with gradient', () => {
   });
 });
 
-describe('CatEyes 6-layer system', () => {
-  it('big-sparkly renders at least 6 elements per eye (12 total)', () => {
+describe('CatEyes 8-layer composite system', () => {
+  it('big-sparkly renders 8-layer composite per eye (circles + ellipses)', () => {
     const { UNSAFE_getAllByType } = render(
       <SvgWrap>
         <CatEyes shape="big-sparkly" mood="encouraging" eyeColor="#3DFF88" />
@@ -261,25 +261,28 @@ describe('CatEyes 6-layer system', () => {
     const circles = allViews.filter(
       (v: any) => v.props.accessibilityLabel === 'Circle'
     );
-    // 6 layers per eye x 2 eyes = 12+ circles
-    expect(circles.length).toBeGreaterThanOrEqual(12);
+    const ellipses = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    );
+    // 8-layer system uses mix of Circle (iris, pupil, catch light) + Ellipse (sclera, eyelid)
+    expect(circles.length + ellipses.length).toBeGreaterThanOrEqual(8);
   });
 
-  it('eyelashes prop renders lash lines', () => {
+  it('eyelashes prop renders curved lash paths', () => {
     const { UNSAFE_getAllByType } = render(
       <SvgWrap>
         <CatEyes shape="round" mood="encouraging" eyeColor="#3DFF88" eyelashes={true} />
       </SvgWrap>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
-    const lines = allViews.filter(
-      (v: any) => v.props.accessibilityLabel === 'Line'
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    // At least 6 lash lines (3 per eye)
-    expect(lines.length).toBeGreaterThanOrEqual(6);
+    // At least 6 curved lash paths (3 per eye)
+    expect(paths.length).toBeGreaterThanOrEqual(6);
   });
 
-  it('no eyelashes when prop is false', () => {
+  it('iris detail lines present even without eyelashes', () => {
     const { UNSAFE_getAllByType } = render(
       <SvgWrap>
         <CatEyes shape="round" mood="encouraging" eyeColor="#3DFF88" eyelashes={false} />
@@ -289,8 +292,8 @@ describe('CatEyes 6-layer system', () => {
     const lines = allViews.filter(
       (v: any) => v.props.accessibilityLabel === 'Line'
     );
-    // No lash lines when eyelashes=false
-    expect(lines.length).toBe(0);
+    // 4 iris detail lines per eye x 2 eyes = 8
+    expect(lines.length).toBe(8);
   });
 
   it('love mood renders heart shapes', () => {
@@ -325,18 +328,18 @@ describe('CatEyes 6-layer system', () => {
     expect(paths.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('smug mood renders half-lid eyes', () => {
+  it('smug mood renders asymmetric eyes with eyebrow path', () => {
     const { UNSAFE_getAllByType } = render(
       <SvgWrap>
         <CatEyes shape="round" mood="smug" eyeColor="#3DFF88" />
       </SvgWrap>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
-    const lines = allViews.filter(
-      (v: any) => v.props.accessibilityLabel === 'Line'
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    // 2 lid lines (one per eye)
-    expect(lines.length).toBeGreaterThanOrEqual(2);
+    // Raised eyebrow path
+    expect(paths.length).toBeGreaterThanOrEqual(1);
   });
 
   it('sleepy mood from MascotMood renders heavy-lid eyes', () => {

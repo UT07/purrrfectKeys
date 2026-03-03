@@ -10,7 +10,7 @@
 import type { ReactElement } from 'react';
 import { G, Circle, Path, Ellipse, Line, Rect } from 'react-native-svg';
 import type { MascotMood } from '../types';
-import type { HairTuftType } from './catProfiles';
+import type { HairTuftType, PupilType } from './catProfiles';
 
 // ─────────────────────────────────────────────────
 // Helpers
@@ -176,15 +176,81 @@ export function CatEars({
 
 export type EyeShape = 'round' | 'almond' | 'big-sparkly' | 'sleepy';
 
-function renderEyelashes(leftCx: number, rightCx: number, topY: number): ReactElement {
+function renderCurvedEyelashes(leftCx: number, rightCx: number, topY: number): ReactElement {
   return (
     <G>
-      <Line x1={leftCx - 4} y1={topY} x2={leftCx - 3} y2={topY - 2} stroke="#1A1A1A" strokeWidth="0.8" strokeLinecap="round" />
-      <Line x1={leftCx} y1={topY - 1} x2={leftCx} y2={topY - 3} stroke="#1A1A1A" strokeWidth="0.8" strokeLinecap="round" />
-      <Line x1={leftCx + 4} y1={topY} x2={leftCx + 3} y2={topY - 2} stroke="#1A1A1A" strokeWidth="0.8" strokeLinecap="round" />
-      <Line x1={rightCx - 4} y1={topY} x2={rightCx - 3} y2={topY - 2} stroke="#1A1A1A" strokeWidth="0.8" strokeLinecap="round" />
-      <Line x1={rightCx} y1={topY - 1} x2={rightCx} y2={topY - 3} stroke="#1A1A1A" strokeWidth="0.8" strokeLinecap="round" />
-      <Line x1={rightCx + 4} y1={topY} x2={rightCx + 3} y2={topY - 2} stroke="#1A1A1A" strokeWidth="0.8" strokeLinecap="round" />
+      {/* Left eye — 3 curved lashes on outer corner */}
+      <Path d={`M ${leftCx + 4} ${topY} Q ${leftCx + 6} ${topY - 3} ${leftCx + 5} ${topY - 4}`}
+        stroke="#1A1A1A" strokeWidth="0.7" fill="none" strokeLinecap="round" />
+      <Path d={`M ${leftCx + 5} ${topY + 1} Q ${leftCx + 8} ${topY - 1} ${leftCx + 7} ${topY - 3}`}
+        stroke="#1A1A1A" strokeWidth="0.6" fill="none" strokeLinecap="round" />
+      <Path d={`M ${leftCx + 6} ${topY + 2} Q ${leftCx + 9} ${topY} ${leftCx + 8} ${topY - 1}`}
+        stroke="#1A1A1A" strokeWidth="0.5" fill="none" strokeLinecap="round" />
+      {/* Right eye — mirrored */}
+      <Path d={`M ${rightCx - 4} ${topY} Q ${rightCx - 6} ${topY - 3} ${rightCx - 5} ${topY - 4}`}
+        stroke="#1A1A1A" strokeWidth="0.7" fill="none" strokeLinecap="round" />
+      <Path d={`M ${rightCx - 5} ${topY + 1} Q ${rightCx - 8} ${topY - 1} ${rightCx - 7} ${topY - 3}`}
+        stroke="#1A1A1A" strokeWidth="0.6" fill="none" strokeLinecap="round" />
+      <Path d={`M ${rightCx - 6} ${topY + 2} Q ${rightCx - 9} ${topY} ${rightCx - 8} ${topY - 1}`}
+        stroke="#1A1A1A" strokeWidth="0.5" fill="none" strokeLinecap="round" />
+    </G>
+  );
+}
+
+/** Render a single 8-layer composite eye */
+function renderPremiumEye(
+  cx: number, cy: number,
+  shape: EyeShape, eyeColor: string,
+  irisGradient: string | undefined,
+  pupilType: PupilType,
+  pupilScale: number,
+  lookDown: number,
+): ReactElement {
+  const darkIris = darkenColor(eyeColor, 0.6);
+  // Shape-dependent dimensions
+  const isAlmond = shape === 'almond';
+  const isBig = shape === 'big-sparkly';
+  const scleraRx = isBig ? 8.5 : isAlmond ? 7 : 5.5;
+  const scleraRy = isBig ? 8.5 : isAlmond ? 5.5 : 7;
+  const irisR = isBig ? 5.5 : 3.5;
+  const pupilR = isBig ? 2.2 : 1.4;
+  // Catch light positions (offset from center toward upper-left)
+  const hlX = cx - 2.5;
+  const hlY = cy - 2.5;
+  const hl2X = cx + 2.5;
+  const hl2Y = cy + 2.5;
+
+  return (
+    <G>
+      {/* 1. Eyelid outline */}
+      <Ellipse cx={cx} cy={cy} rx={(scleraRx + 1) * pupilScale} ry={(scleraRy + 1) * pupilScale}
+        fill="none" stroke="#1A1A1A" strokeWidth="0.6" />
+      {/* 2. Sclera with lid shadow */}
+      <Ellipse cx={cx} cy={cy} rx={scleraRx * pupilScale} ry={scleraRy * pupilScale} fill="#FAFAFA" />
+      <Ellipse cx={cx} cy={cy - scleraRy * 0.3} rx={scleraRx * 0.8} ry={scleraRy * 0.3}
+        fill="#D0D4E0" opacity={0.25} />
+      {/* 3. Iris outer ring */}
+      <Circle cx={cx} cy={cy + lookDown} r={(irisR + 0.8) * pupilScale} fill={darkIris} />
+      {/* 4. Iris body */}
+      <Circle cx={cx} cy={cy + lookDown} r={irisR * pupilScale} fill={irisGradient ?? eyeColor} />
+      {/* 5. Pupil */}
+      {pupilType === 'slit'
+        ? <Ellipse cx={cx} cy={cy + lookDown} rx={pupilR * 0.4} ry={pupilR * 1.6} fill="#0A0A0A" />
+        : <Circle cx={cx} cy={cy + lookDown} r={pupilR} fill="#0A0A0A" />
+      }
+      {/* 6. Iris detail lines — 4 radial strokes */}
+      <Line x1={cx} y1={cy + lookDown - irisR * 0.4} x2={cx} y2={cy + lookDown - irisR * 0.9}
+        stroke={eyeColor} strokeWidth="0.4" opacity={0.3} strokeLinecap="round" />
+      <Line x1={cx + irisR * 0.4} y1={cy + lookDown} x2={cx + irisR * 0.9} y2={cy + lookDown}
+        stroke={eyeColor} strokeWidth="0.4" opacity={0.3} strokeLinecap="round" />
+      <Line x1={cx} y1={cy + lookDown + irisR * 0.4} x2={cx} y2={cy + lookDown + irisR * 0.9}
+        stroke={eyeColor} strokeWidth="0.4" opacity={0.25} strokeLinecap="round" />
+      <Line x1={cx - irisR * 0.4} y1={cy + lookDown} x2={cx - irisR * 0.9} y2={cy + lookDown}
+        stroke={eyeColor} strokeWidth="0.4" opacity={0.25} strokeLinecap="round" />
+      {/* 7. Primary catch light */}
+      <Ellipse cx={hlX} cy={hlY} rx={1.8} ry={1.4} fill="#FFFFFF" opacity={0.9} />
+      {/* 8. Secondary catch light */}
+      <Circle cx={hl2X} cy={hl2Y} r={0.9} fill="#FFFFFF" opacity={0.6} />
     </G>
   );
 }
@@ -195,35 +261,45 @@ export function CatEyes({
   eyeColor,
   catId,
   eyelashes = false,
+  pupilType = 'round',
 }: {
   shape: EyeShape;
   mood: MascotMood;
   eyeColor: string;
   catId?: string;
   eyelashes?: boolean;
+  pupilType?: PupilType;
 }): ReactElement {
-  // Celebrating → star eyes (universal, unchanged for backward compat)
+  // Celebrating → star eyes with sparkle diamonds
   if (mood === 'celebrating') {
     return (
       <G>
-        <Path
-          d="M 38 28 L 40 33 L 45 33 L 41 37 L 42.5 42 L 38 39 L 33.5 42 L 35 37 L 31 33 L 36 33 Z"
-          fill="#FFD700"
-        />
-        <Path
-          d="M 62 28 L 64 33 L 69 33 L 65 37 L 66.5 42 L 62 39 L 57.5 42 L 59 37 L 55 33 L 60 33 Z"
-          fill="#FFD700"
-        />
+        <Path d="M 38 28 L 40 33 L 45 33 L 41 37 L 42.5 42 L 38 39 L 33.5 42 L 35 37 L 31 33 L 36 33 Z" fill="#FFD700" />
+        {/* Sparkle diamonds around left star */}
+        <Path d="M 30 30 L 31 29 L 32 30 L 31 31 Z" fill="#FFD700" opacity={0.7} />
+        <Path d="M 44 30 L 45 29 L 46 30 L 45 31 Z" fill="#FFD700" opacity={0.6} />
+        <Path d="M 35 25 L 36 24 L 37 25 L 36 26 Z" fill="#FFD700" opacity={0.5} />
+        <Path d="M 41 43 L 42 42 L 43 43 L 42 44 Z" fill="#FFD700" opacity={0.5} />
+        <Path d="M 62 28 L 64 33 L 69 33 L 65 37 L 66.5 42 L 62 39 L 57.5 42 L 59 37 L 55 33 L 60 33 Z" fill="#FFD700" />
+        {/* Sparkle diamonds around right star */}
+        <Path d="M 54 30 L 55 29 L 56 30 L 55 31 Z" fill="#FFD700" opacity={0.7} />
+        <Path d="M 68 30 L 69 29 L 70 30 L 69 31 Z" fill="#FFD700" opacity={0.6} />
+        <Path d="M 59 25 L 60 24 L 61 25 L 60 26 Z" fill="#FFD700" opacity={0.5} />
+        <Path d="M 65 43 L 66 42 L 67 43 L 66 44 Z" fill="#FFD700" opacity={0.5} />
       </G>
     );
   }
 
-  // Happy → arched smile eyes (universal, unchanged for backward compat)
+  // Happy → arched smile eyes with eyelid curves above
   if (mood === 'happy') {
     return (
       <G>
+        {/* Eyelid curves on top */}
+        <Path d="M 32 33 Q 38 28 44 33" stroke="#1A1A1A" strokeWidth="0.5" fill="none" opacity={0.4} />
+        <Path d="M 56 33 Q 62 28 68 33" stroke="#1A1A1A" strokeWidth="0.5" fill="none" opacity={0.4} />
         <Path d="M 34 35 Q 38 30 42 35" stroke="#FFFFFF" strokeWidth="2.5" fill="none" strokeLinecap="round" />
         <Path d="M 58 35 Q 62 30 66 35" stroke="#FFFFFF" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        {eyelashes && renderCurvedEyelashes(38, 62, 30)}
       </G>
     );
   }
@@ -234,7 +310,7 @@ export function CatEyes({
       <G>
         <Path d="M 38 32 C 35 28 30 30 33 35 L 38 40 L 43 35 C 46 30 41 28 38 32 Z" fill="#FF6B9D" />
         <Path d="M 62 32 C 59 28 54 30 57 35 L 62 40 L 67 35 C 70 30 65 28 62 32 Z" fill="#FF6B9D" />
-        {eyelashes && renderEyelashes(38, 62, 30)}
+        {eyelashes && renderCurvedEyelashes(38, 62, 30)}
       </G>
     );
   }
@@ -247,124 +323,75 @@ export function CatEyes({
         <Path d="M 38 30 Q 42 32 38 34 Q 34 36 38 38" stroke={eyeColor} strokeWidth="1.5" fill="none" />
         <Ellipse cx="62" cy="34" rx="6" ry="6" fill="#FFFFFF" />
         <Path d="M 62 30 Q 66 32 62 34 Q 58 36 62 38" stroke={eyeColor} strokeWidth="1.5" fill="none" />
-        {eyelashes && renderEyelashes(38, 62, 28)}
+        {eyelashes && renderCurvedEyelashes(38, 62, 28)}
       </G>
     );
   }
 
-  // Smug → half-lid with small iris
+  // Smug → asymmetric: left eye more closed, right eye normal, raised eyebrow
   if (mood === 'smug') {
     return (
       <G>
-        <Ellipse cx="38" cy="35" rx="5.5" ry="3.5" fill="#FFFFFF" />
-        <Circle cx="38" cy="35" r={2.5} fill={eyeColor} />
-        <Circle cx="38" cy="35" r={1} fill="#1A1A1A" />
-        <Circle cx="36.5" cy="34" r="0.8" fill="#FFFFFF" />
-        <Line x1="33" y1="32" x2="43" y2="33" stroke={eyeColor} strokeWidth="1.2" strokeLinecap="round" />
-        <Ellipse cx="62" cy="35" rx="5.5" ry="3.5" fill="#FFFFFF" />
-        <Circle cx="62" cy="35" r={2.5} fill={eyeColor} />
-        <Circle cx="62" cy="35" r={1} fill="#1A1A1A" />
-        <Circle cx="60.5" cy="34" r="0.8" fill="#FFFFFF" />
-        <Line x1="57" y1="33" x2="67" y2="32" stroke={eyeColor} strokeWidth="1.2" strokeLinecap="round" />
-        {eyelashes && renderEyelashes(38, 62, 31)}
+        {/* Left eye — more closed (narrow slit) */}
+        <Ellipse cx="38" cy="35" rx="5.5" ry="3" fill="#FAFAFA" />
+        <Circle cx="38" cy="35" r={2.2} fill={eyeColor} />
+        {pupilType === 'slit'
+          ? <Ellipse cx="38" cy="35" rx={0.5} ry={1.4} fill="#0A0A0A" />
+          : <Circle cx="38" cy="35" r={0.9} fill="#0A0A0A" />
+        }
+        <Circle cx="36.5" cy="34" r="0.6" fill="#FFFFFF" opacity={0.8} />
+        {/* Raised eyebrow */}
+        <Path d="M 33 30 Q 38 28 43 31" stroke="#1A1A1A" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+        {/* Right eye — more open (normal) */}
+        <Ellipse cx="62" cy="35" rx="5.5" ry="4.5" fill="#FAFAFA" />
+        <Circle cx="62" cy="35" r={3} fill={eyeColor} />
+        {pupilType === 'slit'
+          ? <Ellipse cx="62" cy="35" rx={0.5} ry={1.6} fill="#0A0A0A" />
+          : <Circle cx="62" cy="35" r={1.1} fill="#0A0A0A" />
+        }
+        <Circle cx="60.5" cy="33.5" r="0.8" fill="#FFFFFF" opacity={0.8} />
+        <Circle cx="63.5" cy="36.5" r="0.5" fill="#FFFFFF" opacity={0.5} />
+        {eyelashes && renderCurvedEyelashes(38, 62, 31)}
       </G>
     );
   }
 
-  // Sleepy mood → heavy-lid droopy eyes
+  // Sleepy → heavy drooping upper eyelid covering 60%
   if (mood === 'sleepy') {
     return (
       <G>
-        <Ellipse cx="38" cy="36" rx="5" ry="3" fill="#FFFFFF" />
+        {/* Left eye — narrow slit showing bottom */}
+        <Ellipse cx="38" cy="36" rx="5" ry="3" fill="#FAFAFA" />
         <Circle cx="38" cy="36" r={2} fill={eyeColor} />
-        <Circle cx="38" cy="36" r={0.8} fill="#1A1A1A" />
-        <Line x1="33" y1="33" x2="43" y2="33" stroke={eyeColor} strokeWidth="1.5" strokeLinecap="round" />
-        <Ellipse cx="62" cy="36" rx="5" ry="3" fill="#FFFFFF" />
+        <Circle cx="38" cy="36" r={0.8} fill="#0A0A0A" />
+        <Circle cx="36.5" cy="35" r="0.6" fill="#FFFFFF" opacity={0.7} />
+        {/* Heavy drooping upper lid */}
+        <Path d="M 32 33 Q 38 31 44 33 L 44 36 Q 38 33 32 36 Z" fill={darkenColor(eyeColor, 0.3)} opacity={0.15} />
+        <Path d="M 32 34 Q 38 32 44 34" stroke="#1A1A1A" strokeWidth="0.8" fill="none" />
+        {/* Right eye */}
+        <Ellipse cx="62" cy="36" rx="5" ry="3" fill="#FAFAFA" />
         <Circle cx="62" cy="36" r={2} fill={eyeColor} />
-        <Circle cx="62" cy="36" r={0.8} fill="#1A1A1A" />
-        <Line x1="57" y1="33" x2="67" y2="33" stroke={eyeColor} strokeWidth="1.5" strokeLinecap="round" />
-        {eyelashes && renderEyelashes(38, 62, 32)}
+        <Circle cx="62" cy="36" r={0.8} fill="#0A0A0A" />
+        <Circle cx="60.5" cy="35" r="0.6" fill="#FFFFFF" opacity={0.7} />
+        <Path d="M 56 33 Q 62 31 68 33 L 68 36 Q 62 33 56 36 Z" fill={darkenColor(eyeColor, 0.3)} opacity={0.15} />
+        <Path d="M 56 34 Q 62 32 68 34" stroke="#1A1A1A" strokeWidth="0.8" fill="none" />
+        {eyelashes && renderCurvedEyelashes(38, 62, 32)}
       </G>
     );
   }
 
-  // Shape-specific rendering for remaining moods (encouraging, excited, teaching)
+  // Default moods (encouraging, excited, teaching, neutral) — 8-layer composite
   const pupilScale = mood === 'excited' ? 1.4 : 1.0;
   const lookDown = mood === 'teaching' ? 1.5 : 0;
   const irisGradient = catId ? `url(#${catId}-iris)` : undefined;
 
-  switch (shape) {
-    case 'big-sparkly':
-      return (
-        <G>
-          {/* Left eye — 6 layers: sclera, outer iris, inner iris, pupil, highlight large, highlight small */}
-          <Circle cx="38" cy="34" r={8.5 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="38" cy={34 + lookDown} r={6 * pupilScale} fill={darkenColor(eyeColor, 0.6)} />
-          <Circle cx="38" cy={34 + lookDown} r={5 * pupilScale} fill={irisGradient ?? eyeColor} />
-          <Circle cx="38" cy={34 + lookDown} r={2} fill="#1A1A1A" />
-          <Circle cx="35.5" cy="31.5" r={2} fill="#FFFFFF" />
-          <Circle cx="40.5" cy="36.5" r={1.2} fill="#FFFFFF" />
-          {/* Right eye — 6 layers */}
-          <Circle cx="62" cy="34" r={8.5 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="62" cy={34 + lookDown} r={6 * pupilScale} fill={darkenColor(eyeColor, 0.6)} />
-          <Circle cx="62" cy={34 + lookDown} r={5 * pupilScale} fill={irisGradient ?? eyeColor} />
-          <Circle cx="62" cy={34 + lookDown} r={2} fill="#1A1A1A" />
-          <Circle cx="59.5" cy="31.5" r={2} fill="#FFFFFF" />
-          <Circle cx="64.5" cy="36.5" r={1.2} fill="#FFFFFF" />
-          {eyelashes && renderEyelashes(38, 62, 26)}
-        </G>
-      );
-
-    case 'almond':
-      return (
-        <G>
-          <Ellipse cx="38" cy="34" rx={7 * pupilScale} ry={5.5 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="38" cy={34 + lookDown} r={3.5} fill={eyeColor} />
-          <Circle cx="38" cy={34 + lookDown} r={1.4} fill="#1A1A1A" />
-          <Circle cx="36.5" cy="32.5" r="1.2" fill="#FFFFFF" />
-          <Circle cx="39.5" cy="35.5" r="0.6" fill="#FFFFFF" />
-          <Ellipse cx="62" cy="34" rx={7 * pupilScale} ry={5.5 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="62" cy={34 + lookDown} r={3.5} fill={eyeColor} />
-          <Circle cx="62" cy={34 + lookDown} r={1.4} fill="#1A1A1A" />
-          <Circle cx="60.5" cy="32.5" r="1.2" fill="#FFFFFF" />
-          <Circle cx="63.5" cy="35.5" r="0.6" fill="#FFFFFF" />
-          {eyelashes && renderEyelashes(38, 62, 29)}
-        </G>
-      );
-
-    case 'sleepy':
-      return (
-        <G>
-          <Ellipse cx="38" cy="35" rx={5.5 * pupilScale} ry={4 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="38" cy={35 + lookDown} r={2.8} fill={eyeColor} />
-          <Circle cx="38" cy={35 + lookDown} r={1.1} fill="#1A1A1A" />
-          <Line x1="33" y1="31.5" x2="43" y2="31.5" stroke={eyeColor} strokeWidth="1.2" strokeLinecap="round" />
-          <Ellipse cx="62" cy="35" rx={5.5 * pupilScale} ry={4 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="62" cy={35 + lookDown} r={2.8} fill={eyeColor} />
-          <Circle cx="62" cy={35 + lookDown} r={1.1} fill="#1A1A1A" />
-          <Line x1="57" y1="31.5" x2="67" y2="31.5" stroke={eyeColor} strokeWidth="1.2" strokeLinecap="round" />
-          {eyelashes && renderEyelashes(38, 62, 30)}
-        </G>
-      );
-
-    case 'round':
-    default:
-      return (
-        <G>
-          <Ellipse cx="38" cy="34" rx={5.5 * pupilScale} ry={7 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="38" cy={34 + lookDown} r={3.5} fill={eyeColor} />
-          <Circle cx="38" cy={34 + lookDown} r={1.4} fill="#1A1A1A" />
-          <Circle cx="36.5" cy="32" r="1.2" fill="#FFFFFF" />
-          <Circle cx="39.5" cy="36" r="0.6" fill="#FFFFFF" />
-          <Ellipse cx="62" cy="34" rx={5.5 * pupilScale} ry={7 * pupilScale} fill="#FFFFFF" />
-          <Circle cx="62" cy={34 + lookDown} r={3.5} fill={eyeColor} />
-          <Circle cx="62" cy={34 + lookDown} r={1.4} fill="#1A1A1A" />
-          <Circle cx="60.5" cy="32" r="1.2" fill="#FFFFFF" />
-          <Circle cx="63.5" cy="36" r="0.6" fill="#FFFFFF" />
-          {eyelashes && renderEyelashes(38, 62, 27)}
-        </G>
-      );
-  }
+  return (
+    <G>
+      {renderPremiumEye(38, 34, shape, eyeColor, irisGradient, pupilType, pupilScale, lookDown)}
+      {renderPremiumEye(62, 34, shape, eyeColor, irisGradient, pupilType, pupilScale, lookDown)}
+      {eyelashes && renderCurvedEyelashes(38, 62, shape === 'big-sparkly' ? 26 : shape === 'almond' ? 29 : 27)}
+    </G>
+  );
 }
 
 // ─────────────────────────────────────────────────

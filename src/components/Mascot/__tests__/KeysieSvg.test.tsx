@@ -236,9 +236,9 @@ describe('KeysieSvg', () => {
       const paths = allViews.filter(
         (v) => v.props.accessibilityLabel === 'Path',
       );
-      // Celebrating eyes: 2 star paths with fill="#FFD700"
+      // Celebrating eyes: 2 star paths + 8 sparkle diamonds with fill="#FFD700"
       const goldPaths = paths.filter((p) => p.props.fill === '#FFD700');
-      expect(goldPaths.length).toBe(2);
+      expect(goldPaths.length).toBe(10);
     });
   });
 
