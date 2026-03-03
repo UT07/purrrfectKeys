@@ -57,12 +57,12 @@ jest.mock('../../components/Mascot/KeysieSvg', () => ({
   },
 }));
 
-jest.mock('../../components/Mascot/3d', () => ({
-  Cat3DCanvas: (props: any) => {
+jest.mock('../../components/Mascot/CatAvatar', () => ({
+  CatAvatar: (props: any) => {
     const React = require('react');
     const { View, Text } = require('react-native');
-    return React.createElement(View, { testID: `cat3d-${props.pose || 'idle'}` },
-      React.createElement(Text, null, `Cat3D-${props.pose || 'idle'}`),
+    return React.createElement(View, { testID: `cat-avatar-${props.pose || 'idle'}` },
+      React.createElement(Text, null, `CatAvatar-${props.pose || 'idle'}`),
     );
   },
 }));
@@ -218,7 +218,7 @@ describe('CatSwitchScreen', () => {
 
   it('shows 3D cat with "celebrate" pose for selected cat', () => {
     const { getByText } = render(<CatSwitchScreen />);
-    expect(getByText('Cat3D-celebrate')).toBeTruthy();
+    expect(getByText('CatAvatar-celebrate')).toBeTruthy();
   });
 
   // =========================================================================

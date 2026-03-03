@@ -31,6 +31,12 @@ jest.mock('expo-haptics', () => ({
   NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
 }));
 
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: jest.fn(() => ({ isConnected: true, isInternetReachable: true })),
+  addEventListener: jest.fn(() => jest.fn()),
+  fetch: jest.fn(() => Promise.resolve({ isConnected: true, isInternetReachable: true })),
+}));
+
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const MockIcon = (props) => React.createElement('Text', props, props.name);

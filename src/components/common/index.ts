@@ -22,3 +22,5 @@ export { PressableScale } from './PressableScale';
 export type { PressableScaleProps } from './PressableScale';
 
 export { AnimatedGradientBackground } from './AnimatedGradientBackground';
+
+export { OfflineBanner } from './OfflineBanner';

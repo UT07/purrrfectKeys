@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -34,6 +35,7 @@ import { FriendsScreen } from '../screens/FriendsScreen';
 import { AddFriendScreen } from '../screens/AddFriendScreen';
 // Navigation
 import { CustomTabBar } from './CustomTabBar';
+import { OfflineBanner } from '../components/common/OfflineBanner';
 
 // Stores
 import { useAuthStore } from '../stores/authStore';
@@ -140,6 +142,8 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer>
+      <View style={navStyles.root}>
+      <OfflineBanner />
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -244,6 +248,11 @@ export function AppNavigator() {
           </>
         )}
       </RootStack.Navigator>
+      </View>
     </NavigationContainer>
   );
 }
+
+const navStyles = StyleSheet.create({
+  root: { flex: 1 },
+});
