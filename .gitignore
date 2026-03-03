@@ -55,9 +55,8 @@ yarn-error.log*
 secrets/
 *.key
 *.pem
-# google-services.json  — allowed in firebase/ (safe to commit, project IDs only)
-# GoogleService-Info.plist — allowed in firebase/ (safe to commit, project IDs only)
-!firebase/google-services.json
-!firebase/GoogleService-Info.plist
+# Firebase config (contains API keys — do NOT commit to public repos)
+google-services.json
+GoogleService-Info.plist
 firebase-config.json
 .env.local
