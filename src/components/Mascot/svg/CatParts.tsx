@@ -74,31 +74,37 @@ export function CatEars({
     case 'rounded':
       return (
         <G>
-          <Path d="M 28 26 Q 20 6 38 20" fill={bodyColor} />
-          <Path d="M 29 22 Q 24 12 36 19" fill={innerColor} />
-          <Path d="M 72 26 Q 80 6 62 20" fill={bodyColor} />
-          <Path d="M 71 22 Q 76 12 64 19" fill={innerColor} />
+          {/* Left ear — wide rounded */}
+          <Path d="M 24 22 Q 16 2 36 16" fill={bodyColor} />
+          <Path d="M 26 19 Q 21 8 34 15" fill={innerColor} />
+          {/* Right ear */}
+          <Path d="M 76 22 Q 84 2 64 16" fill={bodyColor} />
+          <Path d="M 74 19 Q 79 8 66 15" fill={innerColor} />
         </G>
       );
     case 'folded':
       return (
         <G>
-          <Path d="M 28 24 L 22 8 L 38 18 Z" fill={bodyColor} />
-          <Path d="M 29 20 L 25 12 L 36 17 Z" fill={innerColor} />
-          <Path d="M 28 16 Q 26 14 32 15" fill={bodyColor} stroke={bodyColor} strokeWidth="1" />
-          <Path d="M 72 24 L 78 8 L 62 18 Z" fill={bodyColor} />
-          <Path d="M 71 20 L 75 12 L 64 17 Z" fill={innerColor} />
-          <Path d="M 72 16 Q 74 14 68 15" fill={bodyColor} stroke={bodyColor} strokeWidth="1" />
+          {/* Left ear — folded forward */}
+          <Path d="M 24 20 Q 18 4 36 14" fill={bodyColor} />
+          <Path d="M 26 17 Q 22 8 34 13" fill={innerColor} />
+          <Path d="M 24 12 Q 22 10 30 12" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          {/* Right ear */}
+          <Path d="M 76 20 Q 82 4 64 14" fill={bodyColor} />
+          <Path d="M 74 17 Q 78 8 66 13" fill={innerColor} />
+          <Path d="M 76 12 Q 78 10 70 12" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
         </G>
       );
     case 'pointed':
     default:
       return (
         <G>
-          <Path d="M 28 24 L 22 2 L 38 18 Z" fill={bodyColor} />
-          <Path d="M 29 20 L 25 7 L 36 17 Z" fill={innerColor} />
-          <Path d="M 72 24 L 78 2 L 62 18 Z" fill={bodyColor} />
-          <Path d="M 71 20 L 75 7 L 64 17 Z" fill={innerColor} />
+          {/* Left ear — soft bezier pointed */}
+          <Path d="M 24 20 Q 20 -2 38 14" fill={bodyColor} />
+          <Path d="M 26 17 Q 23 4 36 13" fill={innerColor} />
+          {/* Right ear */}
+          <Path d="M 76 20 Q 80 -2 62 14" fill={bodyColor} />
+          <Path d="M 74 17 Q 77 4 64 13" fill={innerColor} />
         </G>
       );
   }

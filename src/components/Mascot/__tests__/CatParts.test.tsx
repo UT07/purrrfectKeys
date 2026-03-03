@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { CatEars } from '../svg/CatParts';
 
 jest.mock('react-native-svg', () => {
   const mockReact = require('react');
@@ -102,5 +103,29 @@ describe('CatWhiskers', () => {
       (v: any) => v.props.accessibilityLabel === 'Line'
     );
     expect(lines.length).toBe(6);
+  });
+});
+
+describe('CatEars', () => {
+  it('pointed ears use bezier curves (Q commands in path)', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap><CatEars type="pointed" bodyColor="#FF0000" innerColor="#FF8800" /></SvgWrap>
+    );
+    const paths = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
+    );
+    const bezierPaths = paths.filter(
+      (p: any) => typeof p.props.d === 'string' && p.props.d.includes('Q')
+    );
+    expect(bezierPaths.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders all 3 ear types without crashing', () => {
+    for (const type of ['pointed', 'rounded', 'folded'] as const) {
+      const { unmount } = render(
+        <SvgWrap><CatEars type={type} bodyColor="#FF0000" innerColor="#FF8800" /></SvgWrap>
+      );
+      unmount();
+    }
   });
 });
