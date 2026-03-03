@@ -238,6 +238,25 @@ function addOutlineMeshes(scene: THREE.Group, accentColor: string): void {
   }
 }
 
+// ────────────────────────────────────────────────
+// Evolution stage → scale transform
+// Baby kittens are tiny, master cats are tall and regal.
+// scaleXZ: horizontal size (width/depth)
+// scaleY:  vertical size (height)
+// ────────────────────────────────────────────────
+
+interface StageScale {
+  scaleXZ: number;
+  scaleY: number;
+}
+
+const EVOLUTION_SCALES: Record<EvolutionStage, StageScale> = {
+  baby:   { scaleXZ: 0.70, scaleY: 0.68 },   // tiny, slightly squat = cute kitten
+  teen:   { scaleXZ: 0.85, scaleY: 0.85 },   // growing up
+  adult:  { scaleXZ: 1.00, scaleY: 1.00 },   // full size
+  master: { scaleXZ: 1.02, scaleY: 1.10 },   // taller, slightly slimmer = regal
+};
+
 /** Idle floating animation (gentle sine-wave bob) */
 function useIdleFloat(groupRef: React.RefObject<THREE.Group | null>, enabled: boolean) {
   const timeRef = useRef(0);
@@ -293,6 +312,7 @@ export function CatModel3D({
     scale={scale}
     enableIdle={enableIdle}
     accessoryProps={mergedAccessoryProps}
+    evolutionStage={evolutionStage}
   />;
 }
 
@@ -304,6 +324,7 @@ function CatModel3DInner({
   scale,
   enableIdle,
   accessoryProps,
+  evolutionStage,
 }: {
   modelUri: string;
   config: Cat3DConfig;
@@ -311,6 +332,7 @@ function CatModel3DInner({
   scale: number;
   enableIdle: boolean;
   accessoryProps: ReturnType<typeof getAccessoryProps>;
+  evolutionStage: EvolutionStage;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useGLTF(modelUri);
@@ -340,10 +362,31 @@ function CatModel3DInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalScene, config.materials.body, config.materials.eye, config.materials.accent, config.hasBlush]);
 
-  // BUG-3 & BUG-4: Dispose cloned scene's geometry AND materials on unmount
-  // or when the scene is re-created. Without this, cloned materials leak GPU memory.
+  // Scene geometry disposal is handled below after useAnimations,
+  // so we can stop animations before freeing geometry.
+
+  // Model height: SketchFab chibi cats are ~1.5 Blender units tall.
+  // Camera at z=3.5, FOV 50° sees ~3.26 units. Scale 1.0 → model 1.5 units → fills view.
+  const MODEL_HEIGHT = 1.5;
+  const HARDCODED_SCALE = 1.0;
+  const HARDCODED_Y_OFFSET = -0.75;
+
+  // Evolution stage scaling: baby kittens are small, masters are tall
+  const evoScale = EVOLUTION_SCALES[evolutionStage];
+
+  // Set up animation mixer — works on cloned scene because bone names are preserved
+  const { actions, mixer } = useAnimations(animations, groupRef);
+
+  // BUG-3/4/5: On unmount or scene/mixer change:
+  // 1. Stop animations FIRST to prevent accessing freed bone transforms
+  // 2. Uncache root to allow full GC (drei's useAnimations doesn't do this)
+  // 3. Dispose cloned geometry + materials to free GPU memory
   useEffect(() => {
     return () => {
+      mixer.stopAllAction();
+      if (groupRef.current) {
+        mixer.uncacheRoot(groupRef.current);
+      }
       scene.traverse((node) => {
         if (node instanceof THREE.Mesh) {
           node.geometry?.dispose();
@@ -354,29 +397,7 @@ function CatModel3DInner({
         }
       });
     };
-  }, [scene]);
-
-  // Model height: SketchFab chibi cats are ~1.5 Blender units tall.
-  // Camera at z=3.5, FOV 50° sees ~3.26 units. Scale 1.0 → model 1.5 units → fills view.
-  const MODEL_HEIGHT = 1.5;
-  const HARDCODED_SCALE = 1.0;
-  const HARDCODED_Y_OFFSET = -0.75;
-
-  // Set up animation mixer — works on cloned scene because bone names are preserved
-  const { actions, mixer } = useAnimations(animations, groupRef);
-
-  // BUG-5: drei's useAnimations calls stopAllAction + uncacheAction on clip change,
-  // but never uncacheRoot on unmount. This retains internal references to the
-  // Three.js group tree. Explicitly uncache the root to allow full GC.
-  useEffect(() => {
-    return () => {
-      mixer.stopAllAction();
-      if (groupRef.current) {
-        mixer.uncacheRoot(groupRef.current);
-      }
-    };
-     
-  }, [mixer]);
+  }, [mixer, scene]);
 
   // Play the correct animation for the current pose.
   // Animation naming varies across GLB exports:
@@ -426,18 +447,24 @@ function CatModel3DInner({
   // Idle floating bob
   useIdleFloat(groupRef, enableIdle && pose === 'idle');
 
-  // Simple transform: scale down, center vertically, no bounding box magic.
-  // The group nesting keeps animation ref separate from positioning.
-  // Accessories go INSIDE the same scale/offset group so they align with the model.
+  // Transform: apply base scale, evolution-stage scale, then center vertically.
+  // Non-uniform Y scale makes master cats taller/regal, baby kittens squat/cute.
+  // Y offset keeps the model visually centered regardless of stage size.
+  const sx = HARDCODED_SCALE * scale * evoScale.scaleXZ;
+  const sy = HARDCODED_SCALE * scale * evoScale.scaleY;
+  const sz = HARDCODED_SCALE * scale * evoScale.scaleXZ;
+  const yOffset = HARDCODED_Y_OFFSET * scale * evoScale.scaleY;
+
   return (
     <group ref={groupRef} dispose={null}>
       <group
-        scale={[HARDCODED_SCALE * scale, HARDCODED_SCALE * scale, HARDCODED_SCALE * scale]}
-        position={[0, HARDCODED_Y_OFFSET * scale, 0]}
+        scale={[sx, sy, sz]}
+        position={[0, yOffset, 0]}
       >
         <primitive object={scene} />
-        {/* Accessories were designed for a normalized 0-1 unit model.
-            Scale by MODEL_HEIGHT so their coordinates align with the actual GLB body. */}
+        {/* Accessories use 0-1 normalized coords, scaled by MODEL_HEIGHT.
+            They inherit the parent's evo scale, so they stay proportional
+            to the cat body (tiny crown on baby, full crown on master). */}
         {accessoryProps && (
           <group scale={[MODEL_HEIGHT, MODEL_HEIGHT, MODEL_HEIGHT]}>
             <CatAccessories3D

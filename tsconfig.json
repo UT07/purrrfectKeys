@@ -43,6 +43,9 @@
       ],
       "@/content/*": [
         "content/*"
+      ],
+      "firebase/*": [
+        "node_modules/firebase/*"
       ]
     }
   },

@@ -38,7 +38,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { CAT_CHARACTERS, isCatOwned, getCatById } from '../components/Mascot/catCharacters';
 import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -292,7 +292,7 @@ function BuyModal({ visible, cat, gems, onConfirm, onCancel }: {
             colors={[cat.color + '20', 'transparent']}
             style={StyleSheet.absoluteFill}
           />
-          <Cat3DCanvas catId={cat.id} size={100} mood="happy" pose="idle" forceSVG />
+          <CatAvatar catId={cat.id} size="large" skipEntryAnimation />
           <Text style={styles.modalTitle}>Unlock {cat.name}?</Text>
           <View style={styles.modalCostRow}>
             <MaterialCommunityIcons name="diamond-stone" size={18} color={COLORS.gemGold} />
@@ -330,7 +330,7 @@ function BuyModal({ visible, cat, gems, onConfirm, onCancel }: {
 // Cat Card — full gallery card
 // ───────────────────────────────────────────────────────
 
-function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbilities, onSelect, onBuy, index, isFocused }: {
+function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbilities, onSelect, onBuy, index }: {
   cat: CatCharacter;
   isSelected: boolean;
   isOwned: boolean;
@@ -340,8 +340,6 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
   onSelect: (id: string) => void;
   onBuy: (cat: CatCharacter) => void;
   index: number;
-  /** Whether this card is the currently centered/visible one — only the focused card renders 3D */
-  isFocused: boolean;
 }): React.ReactElement {
   const [showBurst, setShowBurst] = useState(false);
   const [expandedAbility, setExpandedAbility] = useState<CatAbility | null>(null);
@@ -411,23 +409,21 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
         {isOwned ? (
           <View style={styles.characterDisplay}>
             <SelectBurst color={cat.color} active={showBurst} />
-            <Cat3DCanvas
+            <CatAvatar
               catId={cat.id}
-              size={140}
-              pose={isSelected ? 'celebrate' : 'idle'}
+              size="hero"
+              pose={isSelected ? 'celebrate' : undefined}
               evolutionStage={stage}
-              forceSVG={!isFocused}
+              skipEntryAnimation
             />
           </View>
         ) : (
           <View style={styles.lockedCharacter}>
             <View style={{ opacity: 0.4 }}>
-              <Cat3DCanvas
+              <CatAvatar
                 catId={cat.id}
-                size={140}
-                mood="happy"
-                pose="idle"
-                forceSVG
+                size="hero"
+                skipEntryAnimation
               />
             </View>
             <View style={styles.lockedBadge}>
@@ -656,7 +652,6 @@ export function CatSwitchScreen(): React.ReactElement {
         onSelect={handleSelect}
         onBuy={handleBuy}
         index={index}
-        isFocused={index === currentIndex}
       />
     );
   }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, currentIndex]);

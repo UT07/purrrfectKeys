@@ -21,7 +21,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Cat3DCanvas } from './3d';
+import { CatAvatar } from './CatAvatar';
 import type { MascotMood } from './mascotTips';
 import { ttsService } from '@/services/tts/TTSService';
 
@@ -161,12 +161,11 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
         ]}
         testID="mascot-avatar"
       >
-        <Cat3DCanvas
+        <CatAvatar
           catId={catId ?? 'salsa'}
-          size={Math.round(avatarSize * 0.85)}
-          mood={mood}
-          pose={mood === 'teaching' ? 'teach' : mood === 'celebrating' ? 'celebrate' : 'idle'}
-          forceSVG
+          size={size}
+          pose={mood === 'teaching' ? 'teach' : mood === 'celebrating' ? 'celebrate' : undefined}
+          skipEntryAnimation
         />
       </View>
 

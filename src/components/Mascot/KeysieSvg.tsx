@@ -158,7 +158,7 @@ function renderComposable(
       <EvolutionAura stage={evolutionStage} accent={accent} />
 
       {/* Shadow layers (behind body) */}
-      <CatShadows bodyColor={bodyColor} />
+      <CatShadows />
 
       {/* Tail */}
       <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />

@@ -41,13 +41,6 @@ jest.mock('../../components/Mascot/CatAvatar', () => ({
   },
 }));
 
-jest.mock('../../components/Mascot/3d', () => ({
-  Cat3DCanvas: (props: any) => {
-    const React = require('react');
-    const { View } = require('react-native');
-    return React.createElement(View, { testID: `cat-3d-${props.catId}` });
-  },
-}));
 
 // ---------------------------------------------------------------------------
 // Zustand store mocks
@@ -236,9 +229,9 @@ describe('AccountScreen', () => {
       expect(getByText(/Create an account to save your progress/)).toBeTruthy();
     });
 
-    it('renders Cat3DCanvas', () => {
+    it('renders CatAvatar', () => {
       const { getByTestId } = render(<AccountScreen />);
-      expect(getByTestId('cat-3d-mini-meowww')).toBeTruthy();
+      expect(getByTestId('cat-avatar-mini-meowww')).toBeTruthy();
     });
 
     it('renders "Link with Google" button', () => {

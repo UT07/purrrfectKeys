@@ -32,7 +32,7 @@ function SvgWrap({ children }: { children: React.ReactNode }) {
 describe('CatShadows', () => {
   it('renders 4 shadow ellipses (chin, ground, 2 paw)', () => {
     const { UNSAFE_getAllByType } = render(
-      <SvgWrap><CatShadows bodyColor="#3A3A3A" /></SvgWrap>
+      <SvgWrap><CatShadows /></SvgWrap>
     );
     const ellipses = UNSAFE_getAllByType(require('react-native').View).filter(
       (v: any) => v.props.accessibilityLabel === 'Ellipse'
@@ -42,7 +42,7 @@ describe('CatShadows', () => {
 
   it('all shadows use black fill with low opacity', () => {
     const { UNSAFE_getAllByType } = render(
-      <SvgWrap><CatShadows bodyColor="#3A3A3A" /></SvgWrap>
+      <SvgWrap><CatShadows /></SvgWrap>
     );
     const ellipses = UNSAFE_getAllByType(require('react-native').View).filter(
       (v: any) => v.props.accessibilityLabel === 'Ellipse'

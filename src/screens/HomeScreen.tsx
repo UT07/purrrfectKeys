@@ -29,7 +29,7 @@ import type { SkillCategory } from '../core/curriculum/SkillTree';
 import { MusicLibrarySpotlight } from '../components/MusicLibrarySpotlight';
 import { ReviewChallengeCard } from '../components/ReviewChallengeCard';
 import { useSongStore } from '../stores/songStore';
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import { StreakFlame } from '../components/StreakFlame';
 import { getRandomCatMessage } from '../content/catDialogue';
@@ -395,9 +395,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </Svg>
                 {/* Cat avatar in center — 3D model with SVG fallback */}
                 <View style={styles.avatarInRing}>
-                  <Cat3DCanvas
+                  <CatAvatar
                     catId={selectedCatId ?? 'mini-meowww'}
-                    size={120}
+                    size="large"
                     mood={mascotMood}
                     evolutionStage={activeCatEvolution?.currentStage}
                   />

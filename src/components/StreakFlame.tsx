@@ -4,7 +4,7 @@
  * Flickers continuously using reanimated shared values
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -43,7 +43,7 @@ function getFlameConfig(streak: number, sizeOverride?: 'small' | 'medium' | 'lar
 }
 
 export function StreakFlame({ streak, showCount = true, size }: StreakFlameProps): React.ReactElement | null {
-  const config = getFlameConfig(streak, size);
+  const config = useMemo(() => getFlameConfig(streak, size), [streak, size]);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0.8);
 

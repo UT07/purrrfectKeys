@@ -27,7 +27,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { Cat3DCanvas } from '../Mascot/3d';
+import { CatAvatar } from '../Mascot/CatAvatar';
 import { getCatById } from '../Mascot/catCharacters';
 import type { EvolutionStage, CatAbility } from '../../stores/types';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/tokens';
@@ -146,11 +146,11 @@ export function EvolutionReveal({
 
       {/* Cat avatar */}
       <Animated.View style={[styles.catContainer, catStyle]}>
-        <Cat3DCanvas
+        <CatAvatar
           catId={catId}
-          size={120}
-          pose={phase === 'reveal' || phase === 'ability' ? 'celebrate' : 'idle'}
-          forceSVG
+          size="large"
+          pose={phase === 'reveal' || phase === 'ability' ? 'celebrate' : undefined}
+          skipEntryAnimation
         />
       </Animated.View>
 

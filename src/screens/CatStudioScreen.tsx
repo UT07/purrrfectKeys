@@ -23,7 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 
 import { GradientMeshBackground } from '../components/effects';
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { getCatById } from '../components/Mascot/catCharacters';
 import {
   ACCESSORY_CATEGORIES,
@@ -312,10 +312,9 @@ export function CatStudioScreen() {
 
       {/* 3D Cat Preview */}
       <View style={styles.previewContainer}>
-        <Cat3DCanvas
+        <CatAvatar
           catId={selectedCatId}
-          pose="idle"
-          size={180}
+          size="hero"
           evolutionStage={currentStage}
         />
         {catData && (

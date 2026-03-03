@@ -37,7 +37,7 @@ import Animated, {
   FadeInUp,
   FadeInDown,
 } from 'react-native-reanimated';
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
@@ -48,10 +48,12 @@ import { logger } from '../utils/logger';
 type AuthNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 /**
- * Check whether the Apple Sign-In native module is available and functional.
- * Returns false when expo-apple-authentication is not installed or not linked.
+ * Check whether the Apple Sign-In native module is installed.
+ * Synchronous check — just verifies the module exists in the bundle.
+ * Runtime availability (iOS 13+, Apple ID configured) is checked
+ * asynchronously in the sign-in handler via isAvailableAsync().
  */
-function isAppleAuthAvailable(): boolean {
+function isAppleAuthInstalled(): boolean {
   try {
     const AppleAuth = require('expo-apple-authentication');
     return AppleAuth.isAvailableAsync != null;
@@ -186,7 +188,7 @@ export function AuthScreen(): React.ReactElement {
   );
 
   const handleAppleSignIn = useCallback(async () => {
-    if (!isAppleAuthAvailable()) {
+    if (!isAppleAuthInstalled()) {
       Alert.alert(
         'Coming Soon',
         'Apple Sign-In is not yet configured for this build. Use email or skip for now.',
@@ -197,6 +199,16 @@ export function AuthScreen(): React.ReactElement {
     try {
       const AppleAuth = require('expo-apple-authentication');
       const crypto = require('expo-crypto');
+
+      // Verify runtime availability (iOS 13+, Apple ID configured on device)
+      const available = await AppleAuth.isAvailableAsync();
+      if (!available) {
+        Alert.alert(
+          'Not Available',
+          'Apple Sign-In is not available on this device. Please use email sign-in instead.',
+        );
+        return;
+      }
 
       // Generate a random raw nonce, then SHA256 hash it for Apple.
       // Firebase expects the RAW nonce as rawNonce; Apple receives the hash.
@@ -283,7 +295,7 @@ export function AuthScreen(): React.ReactElement {
       {/* Hero section: Salsa + App name + Tagline */}
       <Animated.View entering={FadeInUp.duration(600).delay(200)} style={styles.hero}>
         <View style={styles.salsaContainer}>
-          <Cat3DCanvas catId="salsa" size={180} pose="play" mood="excited" />
+          <CatAvatar catId="salsa" size="hero" pose="play" />
         </View>
         <ShimmerTitle />
         <Text style={styles.tagline}>Learn piano. Grow cats.</Text>

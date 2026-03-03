@@ -27,7 +27,7 @@ import { logger } from '../utils/logger';
  * Singleton instance managed by the factory
  */
 let factoryInstance: IAudioEngine | null = null;
-let audioModeConfigured = false;
+let lastAudioMode: 'playback' | 'playAndRecord' | null = null;
 
 /**
  * Try to create a WebAudioEngine. Returns null if react-native-audio-api
@@ -70,12 +70,11 @@ function tryCreateWebAudioEngine(): IAudioEngine | null {
  * Falls back to expo-av only when AudioManager is unavailable (e.g., Expo Go).
  */
 export async function ensureAudioModeConfigured(allowRecording = false): Promise<void> {
-  // Skip reconfiguration only for playback-only when already configured.
-  // ALWAYS reconfigure when recording is requested — the native AVAudioSession
-  // may have been changed by another library or system event since we last set it.
-  if (audioModeConfigured && !allowRecording) return;
+  // Skip if already configured in the requested mode
+  const requestedMode = allowRecording ? 'playAndRecord' : 'playback';
+  if (lastAudioMode === requestedMode) return;
 
-  audioModeConfigured = true;
+  lastAudioMode = requestedMode;
 
   // Primary: use AudioManager from react-native-audio-api (SYNCHRONOUS — no race condition)
   try {
@@ -133,7 +132,11 @@ export function createAudioEngine(): IAudioEngine {
 
   const selectionStart = Date.now();
 
-  // Configure iOS audio session eagerly (fire-and-forget — resolves before first playNote)
+  // Configure iOS audio session eagerly for playback.
+  // This uses AudioManager (synchronous) so there's no async race with
+  // InputManager's configureAudioSessionForRecording() — both use the same
+  // synchronous AudioManager API, so the last call wins deterministically.
+  // If mic is later needed, useExercisePlayback reconfigures to playAndRecord.
   ensureAudioModeConfigured();
 
   // Log device/platform info for debugging audio latency across environments
@@ -172,4 +175,5 @@ export function resetAudioEngineFactory(): void {
     factoryInstance = null;
     logger.log('[createAudioEngine] Factory reset — engine disposed');
   }
+  lastAudioMode = null;
 }

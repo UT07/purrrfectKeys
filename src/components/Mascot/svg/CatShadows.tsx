@@ -1,11 +1,7 @@
 import type { ReactElement } from 'react';
 import { G, Ellipse } from 'react-native-svg';
 
-interface CatShadowsProps {
-  bodyColor: string;
-}
-
-export function CatShadows({ bodyColor }: CatShadowsProps): ReactElement {
+export function CatShadows(): ReactElement {
   return (
     <G>
       {/* Chin shadow at head-body junction */}

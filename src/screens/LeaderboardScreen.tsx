@@ -32,7 +32,7 @@ import { getLeagueStandings } from '../services/firebase/leagueService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -86,11 +86,11 @@ function PodiumPedestal({
     >
       {/* Cat avatar */}
       <View style={[styles.podiumAvatar, isCurrentUser && styles.podiumAvatarCurrent]}>
-        <Cat3DCanvas
+        <CatAvatar
           catId={entry.selectedCatId ?? 'mini-meowww'}
-          size={catSize}
-          pose={place === 1 ? 'celebrate' : 'idle'}
-          forceSVG
+          size={catSize > 60 ? 'medium' : 'small'}
+          pose={place === 1 ? 'celebrate' : undefined}
+          skipEntryAnimation
         />
       </View>
 
@@ -440,11 +440,10 @@ export function LeaderboardScreen(): React.JSX.Element {
             <View style={styles.pinnedRank}>
               <Text style={styles.pinnedRankText}>{currentUserRank}</Text>
             </View>
-            <Cat3DCanvas
+            <CatAvatar
               catId={me.selectedCatId ?? 'mini-meowww'}
-              size={36}
-              pose="idle"
-              forceSVG
+              size="small"
+              skipEntryAnimation
             />
             <Text style={styles.pinnedName} numberOfLines={1}>
               {me.displayName} (You)

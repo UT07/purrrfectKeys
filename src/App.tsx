@@ -167,12 +167,13 @@ export default function App(): React.ReactElement {
         }
 
         // Hydrate remaining stores in parallel (all independent AsyncStorage reads)
+        // Each promise has its own .catch() so one store failure doesn't crash startup
         await Promise.all([
-          hydrateGemStore().then(() => logger.log('[App] Gem store hydrated')),
-          hydrateCatEvolutionStore().then(() => logger.log('[App] Cat evolution store hydrated')),
-          hydrateSongStore().then(() => logger.log('[App] Song store hydrated')),
-          hydrateSocialStore().then(() => logger.log('[App] Social store hydrated')),
-          hydrateLeagueStore().then(() => logger.log('[App] League store hydrated')),
+          hydrateGemStore().then(() => logger.log('[App] Gem store hydrated')).catch((e) => logger.warn('[App] Gem store hydration failed:', e)),
+          hydrateCatEvolutionStore().then(() => logger.log('[App] Cat evolution store hydrated')).catch((e) => logger.warn('[App] Cat evolution hydration failed:', e)),
+          hydrateSongStore().then(() => logger.log('[App] Song store hydrated')).catch((e) => logger.warn('[App] Song store hydration failed:', e)),
+          hydrateSocialStore().then(() => logger.log('[App] Social store hydrated')).catch((e) => logger.warn('[App] Social store hydration failed:', e)),
+          hydrateLeagueStore().then(() => logger.log('[App] League store hydrated')).catch((e) => logger.warn('[App] League store hydration failed:', e)),
         ]);
 
         // ── Phase 2: Firebase Auth (network, may be slow) ──────────────
@@ -274,7 +275,11 @@ export default function App(): React.ReactElement {
       setAppIsReady(true);
     }, 3000);
 
-    prepare().then(() => clearTimeout(failsafeTimeout));
+    prepare().then(() => clearTimeout(failsafeTimeout)).catch((e) => {
+      logger.warn('[App] prepare() failed:', e);
+      clearTimeout(failsafeTimeout);
+      setAppIsReady(true);
+    });
 
     // Lock all screens to portrait by default.
     // ExercisePlayer overrides to landscape on mount and restores portrait on unmount.

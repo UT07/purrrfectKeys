@@ -19,7 +19,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { MascotBubble } from '../components/Mascot/MascotBubble';
 import { FunFactCard } from '../components/FunFact/FunFactCard';
 import { getFactForLesson } from '../content/funFactSelector';
@@ -408,7 +408,7 @@ export function LessonIntroScreen(): React.ReactElement {
 
         {/* Keysie mascot */}
         <View style={styles.mascotSection}>
-          <Cat3DCanvas catId={selectedCatId ?? 'mini-meowww'} size={140} pose="teach" forceSVG />
+          <CatAvatar catId={selectedCatId ?? 'mini-meowww'} size="hero" pose="teach" skipEntryAnimation />
           <View style={styles.mascotBubbleWrapper}>
             <MascotBubble
               mood="teaching"

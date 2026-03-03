@@ -357,7 +357,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -387,7 +387,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -427,7 +427,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -451,7 +451,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -480,7 +480,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -510,7 +510,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -539,7 +539,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
-      triggerPostSignInSync();
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({
         isLoading: false,
@@ -549,6 +549,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    const { isAnonymous } = get();
     set({ isLoading: true, error: null });
 
     let signOutSucceeded = false;
@@ -557,8 +558,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       signOutSucceeded = true;
 
       cancelAllPendingSaves();
-      await PersistenceManager.clearAll();
-      resetAllStores();
+
+      if (isAnonymous) {
+        // Anonymous accounts have local-only progress that was never synced
+        // under a permanent uid. Preserve local state so migrateLocalToCloud()
+        // can push it to the new account after re-sign-in.
+        // Clear the migration flag to force re-migration on next sign-in.
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        await AsyncStorage.removeItem('purrrfect_keys_migrated');
+        logger.log('[Auth] Anonymous sign-out: preserved local progress for re-migration');
+      } else {
+        // Real accounts: data is already in Firestore. Safe to wipe local.
+        await PersistenceManager.clearAll();
+        resetAllStores();
+      }
 
       set({
         user: null,
@@ -573,8 +586,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Leaving a stale user reference after sign-out is worse than the cleanup error.
         logger.warn('[Auth] Post-signout cleanup failed, forcing state clear:', error);
         cancelAllPendingSaves();
-        await PersistenceManager.clearAll().catch(() => {});
-        resetAllStores();
+        if (!isAnonymous) {
+          await PersistenceManager.clearAll().catch(() => {});
+          resetAllStores();
+        }
         set({
           user: null,
           isAuthenticated: false,

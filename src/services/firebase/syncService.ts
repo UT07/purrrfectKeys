@@ -82,7 +82,7 @@ export class SyncManager {
     this.syncTimer = setInterval(() => {
       this.flushQueue();
       // Also pull remote changes so cross-device updates are picked up
-      this.pullRemoteProgress().catch(() => {});
+      this.pullRemoteProgress().catch((e) => logger.warn('[SyncManager] Periodic pull failed:', e));
     }, intervalMs);
   }
 
@@ -287,7 +287,7 @@ export class SyncManager {
 
       if (changesUploaded === 0) {
         // No local changes to upload, but still pull remote updates
-        await this.pullRemoteProgress().catch(() => {});
+        await this.pullRemoteProgress().catch((e) => logger.warn('[SyncManager] Pull in syncAll failed:', e));
         return {
           success: true,
           changesUploaded: 0,

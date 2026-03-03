@@ -382,8 +382,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               generationHints: hints,
             },
             count: BUFFER_MIN_THRESHOLD,
-          }]).catch(() => {
-            // Silent — buffer fill is best-effort
+          }]).catch((e) => {
+            logger.warn('[ExercisePlayer] Buffer fill failed:', e);
           });
         } else {
           fillBuffer({
@@ -392,8 +392,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             difficulty,
             noteCount: 12,
             skills: profile.skills,
-          }).catch(() => {
-            // Silent — buffer fill is best-effort
+          }).catch((e) => {
+            logger.warn('[ExercisePlayer] Buffer fill failed:', e);
           });
         }
       }

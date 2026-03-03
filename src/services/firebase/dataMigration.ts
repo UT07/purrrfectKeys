@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Timestamp } from 'firebase/firestore';
 import { useProgressStore } from '../../stores/progressStore';
 import { auth } from './config';
-import { createGamificationData, addXp, createLessonProgress } from './firestore';
+import { createGamificationData, addXp, createLessonProgress, getGamificationData, getAllLessonProgress } from './firestore';
 import type { ExerciseProgress as FirestoreExerciseProgress } from './firestore';
 import { logger } from '../../utils/logger';
 
@@ -41,14 +41,41 @@ export async function migrateLocalToCloud(): Promise<{ migrated: boolean; error?
   try {
     const progressState = useProgressStore.getState();
 
-    // 1. Migrate XP and level
-    if (progressState.totalXp > 0) {
-      await createGamificationData(uid);
-      await addXp(uid, progressState.totalXp, 'migration');
+    // If local state is empty (all stores were reset), skip migration
+    const hasLocalProgress = progressState.totalXp > 0 ||
+      Object.keys(progressState.lessonProgress).length > 0;
+    if (!hasLocalProgress) {
+      logger.log('[DataMigration] No local progress to migrate — skipping');
+      await AsyncStorage.setItem(MIGRATION_KEY, 'true');
+      return { migrated: false };
     }
 
-    // 2. Migrate lesson progress
+    // 1. Migrate XP — merge with existing remote data (highest wins)
+    const remoteGamification = await getGamificationData(uid).catch(() => null);
+    if (progressState.totalXp > 0) {
+      if (!remoteGamification) {
+        await createGamificationData(uid);
+        await addXp(uid, progressState.totalXp, 'migration');
+      } else if (progressState.totalXp > remoteGamification.xp) {
+        // Local has more XP — add the difference
+        await addXp(uid, progressState.totalXp - remoteGamification.xp, 'migration');
+      }
+      // If remote has more XP, pullRemoteProgress() will handle it
+    }
+
+    // 2. Migrate lesson progress — only push lessons that don't exist remotely
+    //    or where local scores are higher. pullRemoteProgress() merges the rest.
+    const remoteLessons = await getAllLessonProgress(uid).catch(() => []);
+    const remoteLessonMap = new Map(remoteLessons.map((l) => [l.lessonId, l]));
+
     for (const [lessonId, lessonProgress] of Object.entries(progressState.lessonProgress)) {
+      const remoteLesson = remoteLessonMap.get(lessonId);
+
+      // Skip if remote already has this lesson with a better or equal best score
+      if (remoteLesson && (remoteLesson.bestScore ?? 0) >= (lessonProgress.bestScore ?? 0)) {
+        continue;
+      }
+
       // Convert local ExerciseProgress (number timestamps) to Firestore format (Timestamps)
       const firestoreScores: Record<string, FirestoreExerciseProgress> = {};
       for (const [exId, exProgress] of Object.entries(lessonProgress.exerciseScores)) {

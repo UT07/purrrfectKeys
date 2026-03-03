@@ -29,13 +29,6 @@ jest.mock('../../components/Mascot/CatAvatar', () => {
   };
 });
 
-// Mock Cat3DCanvas (used by SalsaCoach)
-jest.mock('../../components/Mascot/3d', () => {
-  const { View } = require('react-native');
-  return {
-    Cat3DCanvas: (props: any) => <View testID="cat-3d" {...props} />,
-  };
-});
 
 // Mock settingsStore
 jest.mock('../../stores/settingsStore', () => ({
@@ -388,10 +381,10 @@ describe('AuthScreen', () => {
   // -----------------------------------------------------------------------
 
   describe('Salsa cat in hero section', () => {
-    it('should render 3D cat in hero', () => {
+    it('should render cat avatar in hero', () => {
       const { getByTestId } = render(<AuthScreen />);
 
-      expect(getByTestId('cat-3d')).toBeTruthy();
+      expect(getByTestId('cat-avatar')).toBeTruthy();
     });
   });
 });

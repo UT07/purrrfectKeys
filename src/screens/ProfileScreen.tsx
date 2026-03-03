@@ -40,7 +40,7 @@ import { useCatEvolutionStore, xpToNextStage } from '../stores/catEvolutionStore
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import { ACHIEVEMENTS } from '../core/achievements/achievements';
 import type { Achievement } from '../core/achievements/achievements';
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { CAT_CHARACTERS, getCatById } from '../components/Mascot/catCharacters';
 import { StreakFlame } from '../components/StreakFlame';
 import { getLevelProgress } from '../core/progression/XpSystem';
@@ -485,7 +485,7 @@ export function ProfileScreen(): React.ReactElement {
             {/* Circular halo glow behind avatar */}
             <View style={[styles.avatarHalo, { backgroundColor: glowColor(catColor, 0.18) }]} />
             <View style={[styles.avatarHaloInner, { borderColor: glowColor(catColor, 0.25) }]} />
-            <Cat3DCanvas catId={selectedCatId} size={140} evolutionStage={evolutionStage} />
+            <CatAvatar catId={selectedCatId} size="hero" evolutionStage={evolutionStage} />
             <View style={styles.editBadge}>
               <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
             </View>

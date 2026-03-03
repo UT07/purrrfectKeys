@@ -228,7 +228,12 @@ export function useExercisePlayback({
   }, [enableMidi, resolvedInputMethod]);
 
   /**
-   * Initialize audio engine
+   * Initialize audio engine.
+   *
+   * Audio session config uses AudioManager (synchronous) so there's no async
+   * race with InputManager — both use the same synchronous API. The effect
+   * re-runs when activeInputMethod changes (after InputManager completes)
+   * to reconfigure the session for recording if mic is active.
    *
    * IMPORTANT: We do NOT dispose the audio engine on unmount because it's a
    * singleton shared across screen navigations. Disposing it on unmount causes
@@ -246,9 +251,10 @@ export function useExercisePlayback({
 
     const initAudio = async () => {
       try {
-        // Ensure iOS audio session is configured BEFORE engine init.
-        // When mic is the preferred input, configure for recording from the start
-        // so the session category is PlayAndRecord (not overridden to Playback later).
+        // Configure iOS audio session based on the user's PREFERRED input method.
+        // We intentionally do NOT use activeInputMethod here — that changes after
+        // InputManager completes, which would re-run this effect and reconfigure
+        // the audio session mid-playback, causing audio disruption/freeze.
         const needsRecording = resolvedInputMethod === 'mic';
         await ensureAudioModeConfigured(needsRecording);
 
@@ -261,6 +267,13 @@ export function useExercisePlayback({
           return;
         }
         await audioEngine.initialize();
+
+        // Re-configure session after AudioContext creation in case the native
+        // module reset it to 'playback' during context setup.
+        if (needsRecording) {
+          await ensureAudioModeConfigured(true);
+        }
+
         if (mounted) {
           isAudioReadyRef.current = true; setIsAudioReady(true);
           logger.log('[useExercisePlayback] Audio engine initialized');
@@ -284,7 +297,7 @@ export function useExercisePlayback({
         audioEngine.releaseAllNotes();
       }
     };
-     
+
   }, [enableAudio, audioEngine, resolvedInputMethod]);
 
   /**

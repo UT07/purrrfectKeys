@@ -19,11 +19,15 @@ jest.mock('../config', () => ({
 const mockCreateGamificationData = jest.fn().mockResolvedValue(undefined);
 const mockAddXp = jest.fn().mockResolvedValue(1);
 const mockCreateLessonProgress = jest.fn().mockResolvedValue(undefined);
+const mockGetGamificationData = jest.fn().mockResolvedValue(null);
+const mockGetAllLessonProgress = jest.fn().mockResolvedValue([]);
 
 jest.mock('../firestore', () => ({
   createGamificationData: (...args: unknown[]) => mockCreateGamificationData(...args),
   addXp: (...args: unknown[]) => mockAddXp(...args),
   createLessonProgress: (...args: unknown[]) => mockCreateLessonProgress(...args),
+  getGamificationData: (...args: unknown[]) => mockGetGamificationData(...args),
+  getAllLessonProgress: (...args: unknown[]) => mockGetAllLessonProgress(...args),
 }));
 
 jest.mock('../../../stores/progressStore', () => ({
@@ -102,7 +106,7 @@ describe('dataMigration', () => {
       expect(mockAddXp).toHaveBeenCalledWith('test-user', 500, 'migration');
     });
 
-    it('should not migrate XP when totalXp is 0', async () => {
+    it('should skip migration when no local progress exists (totalXp=0, no lessons)', async () => {
       mockGetState.mockReturnValue({
         totalXp: 0,
         lessonProgress: {},
@@ -110,7 +114,8 @@ describe('dataMigration', () => {
 
       const result = await migrateLocalToCloud();
 
-      expect(result.migrated).toBe(true);
+      // No progress to migrate → sets flag and returns false
+      expect(result.migrated).toBe(false);
       expect(mockCreateGamificationData).not.toHaveBeenCalled();
       expect(mockAddXp).not.toHaveBeenCalled();
     });
@@ -204,7 +209,7 @@ describe('dataMigration', () => {
 
     it('should set migration flag after successful migration', async () => {
       mockGetState.mockReturnValue({
-        totalXp: 0,
+        totalXp: 200,
         lessonProgress: {},
       });
 
@@ -218,6 +223,7 @@ describe('dataMigration', () => {
         totalXp: 100,
         lessonProgress: {},
       });
+      mockGetGamificationData.mockResolvedValue(null); // No remote data
       mockCreateGamificationData.mockRejectedValue(new Error('Firestore error'));
 
       const result = await migrateLocalToCloud();

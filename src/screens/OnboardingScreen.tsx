@@ -32,7 +32,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { Button, Card } from '../components/common';
-import { Cat3DCanvas } from '../components/Mascot/3d';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { getStarterCats } from '../components/Mascot/catCharacters';
 import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -144,7 +144,7 @@ function WelcomeStep({
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-1">
       <View style={styles.iconContainer}>
-        <Cat3DCanvas catId={catInfo.catId} size={80} pose="idle" forceSVG />
+        <CatAvatar catId={catInfo.catId} size="large" skipEntryAnimation />
       </View>
       <Text style={styles.stepTitle}>Welcome to Purrrfect Keys</Text>
       <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
@@ -187,7 +187,7 @@ function ExperienceLevelStep({
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-2">
       <View style={styles.stepCatRow}>
-        <Cat3DCanvas catId={catInfo.catId} size={36} pose="idle" forceSVG />
+        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
         <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
       </View>
       <Text style={styles.stepTitle}>What's Your Experience Level?</Text>
@@ -254,7 +254,7 @@ function EquipmentCheckStep({
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-3">
       <View style={styles.stepCatRow}>
-        <Cat3DCanvas catId={catInfo.catId} size={36} pose="idle" forceSVG />
+        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
         <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
       </View>
       <Text style={styles.stepTitle}>How Will You Play?</Text>
@@ -321,7 +321,7 @@ function GoalSettingStep({
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-4">
       <View style={styles.stepCatRow}>
-        <Cat3DCanvas catId={catInfo.catId} size={36} pose="idle" forceSVG />
+        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
         <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
       </View>
       <Text style={styles.stepTitle}>What's Your Goal?</Text>
@@ -446,7 +446,7 @@ function CatSelectionCard({
       testID={`onboarding-cat-${cat.id}`}
     >
       <View style={styles.catCardAvatar}>
-        <Cat3DCanvas catId={cat.id} size={80} pose="idle" forceSVG />
+        <CatAvatar catId={cat.id} size="large" skipEntryAnimation />
       </View>
 
       <Text style={styles.catCardName}>{cat.name}</Text>
@@ -567,7 +567,7 @@ function ProgressBar({ step }: { step: number }): React.ReactElement {
     <View style={styles.progressBarContainer} testID="onboarding-progress">
       {/* Cat avatar walking along the bar */}
       <Animated.View style={[styles.catAvatarContainer, catStyle]}>
-        <Cat3DCanvas catId={catInfo.catId} size={CAT_SIZE} pose="idle" forceSVG />
+        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
       </Animated.View>
 
       {/* Track */}
