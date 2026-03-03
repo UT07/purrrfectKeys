@@ -81,9 +81,8 @@ describe('renderAccessory', () => {
   it('renders alias accessories correctly', () => {
     const aliases = [
       'pink-bow', 'velvet-ribbon', 'pixel-crown', 'tiny-crown',
-      'accessory-1', 'accessory-2', 'cape-purple', 'royal-robe',
-      'golden-cape', 'chef-hat', 'lightning-collar', 'crescent-collar',
-      'round-glasses', 'pixel-glasses', 'racing-goggles', 'royal-cape-white',
+      'accessory-1', 'accessory-2', 'cape-purple',
+      'golden-cape', 'royal-cape-white',
     ];
     for (const name of aliases) {
       const result = renderAccessory(name, '#FF0000');
@@ -91,6 +90,34 @@ describe('renderAccessory', () => {
       const { unmount } = render(<SvgWrap>{result!}</SvgWrap>);
       unmount();
     }
+  });
+});
+
+describe('P2 accessories', () => {
+  const p2Names = [
+    'chef-hat', 'flat-cap', 'round-glasses', 'pixel-glasses', 'racing-goggles',
+    'crescent-collar', 'lightning-collar', 'kimono-sash', 'temple-bell',
+    'royal-robe', 'conductor-coat', 'apron',
+    'fiddle', 'baton', 'cookie-wand', 'sax',
+    'tiara', 'tiara-gold', 'tiara-silver',
+  ];
+
+  it.each(p2Names)('renders %s without returning null', (name) => {
+    const result = renderAccessory(name, '#DC143C');
+    expect(result).not.toBeNull();
+    const { unmount } = render(<SvgWrap>{result!}</SvgWrap>);
+    unmount();
+  });
+});
+
+describe('P3 effect accessories', () => {
+  const p3Names = ['cherry-blossom', 'constellation', 'speed-aura', 'candelabra', 'piano-throne'];
+
+  it.each(p3Names)('renders %s without returning null', (name) => {
+    const result = renderAccessory(name, '#DC143C');
+    expect(result).not.toBeNull();
+    const { unmount } = render(<SvgWrap>{result!}</SvgWrap>);
+    unmount();
   });
 });
 
