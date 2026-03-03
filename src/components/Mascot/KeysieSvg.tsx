@@ -23,6 +23,7 @@ import {
 import { getCatProfile } from './svg/catProfiles';
 import { EvolutionAura, renderAccessories } from './svg/CatAccessories';
 import { getCatById } from './catCharacters';
+import { CatGradientDefs, gradId } from './svg/CatGradients';
 
 interface KeysieSvgProps {
   mood: MascotMood;
@@ -151,6 +152,9 @@ function renderComposable(
 
   return (
     <G>
+      {/* Gradient definitions (must be before elements that reference them) */}
+      <CatGradientDefs catId={catId} bodyColor={bodyColor} eyeColor={eyeColor} />
+
       {/* Evolution aura (background) */}
       <EvolutionAura stage={evolutionStage} accent={accent} />
 
@@ -158,13 +162,13 @@ function renderComposable(
       <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />
 
       {/* Body */}
-      <CatBody type={profile.body} color={bodyColor} />
+      <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} />
 
       {/* Paws (below body) */}
       <CatPaws color={bodyColor} />
 
       {/* Head */}
-      <CatHead color={bodyColor} cheekFluff={profile.cheekFluff} />
+      <CatHead color={bodyColor} cheekFluff={profile.cheekFluff} gradientFill={gradId(catId, 'head')} />
 
       {/* Pattern overlay (clip to body) — use catId prefix for unique ClipPath */}
       <Defs>

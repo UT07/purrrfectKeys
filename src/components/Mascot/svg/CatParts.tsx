@@ -29,17 +29,20 @@ function darkenColor(hex: string, factor: number): string {
 
 export type BodyType = 'slim' | 'standard' | 'round' | 'chonky';
 
-export function CatBody({ type, color }: { type: BodyType; color: string }): ReactElement {
+export function CatBody({ type, color, gradientFill }: {
+  type: BodyType; color: string; gradientFill?: string;
+}): ReactElement {
+  const fill = gradientFill ?? color;
   switch (type) {
     case 'slim':
-      return <Ellipse cx="50" cy="80" rx="11" ry="10" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="11" ry="10" fill={fill} />;
     case 'round':
-      return <Ellipse cx="50" cy="80" rx="16" ry="13" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="16" ry="13" fill={fill} />;
     case 'chonky':
-      return <Ellipse cx="50" cy="80" rx="20" ry="15" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="20" ry="15" fill={fill} />;
     case 'standard':
     default:
-      return <Ellipse cx="50" cy="80" rx="14" ry="12" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="14" ry="12" fill={fill} />;
   }
 }
 
@@ -50,17 +53,20 @@ export function CatBody({ type, color }: { type: BodyType; color: string }): Rea
 export function CatHead({
   color,
   cheekFluff = false,
+  gradientFill,
 }: {
   color: string;
   cheekFluff?: boolean;
+  gradientFill?: string;
 }): ReactElement {
+  const fill = gradientFill ?? color;
   return (
     <G>
-      <Circle cx="50" cy="35" r="32" fill={color} />
+      <Circle cx="50" cy="35" r="32" fill={fill} />
       {cheekFluff && (
         <G>
-          <Circle cx="20" cy="42" r="7" fill={color} />
-          <Circle cx="80" cy="42" r="7" fill={color} />
+          <Circle cx="20" cy="42" r="7" fill={fill} />
+          <Circle cx="80" cy="42" r="7" fill={fill} />
         </G>
       )}
     </G>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { CatEars, CatMouth, CatHairTuft } from '../svg/CatParts';
+import { CatBody, CatHead, CatEars, CatMouth, CatHairTuft } from '../svg/CatParts';
 
 jest.mock('react-native-svg', () => {
   const mockReact = require('react');
@@ -191,5 +191,61 @@ describe('CatHairTuft', () => {
       );
       unmount();
     }
+  });
+});
+
+describe('CatBody with gradient', () => {
+  it('uses gradientFill when provided', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatBody type="standard" color="#FF0000" gradientFill="url(#test-body)" />
+      </SvgWrap>
+    );
+    const ellipses = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    );
+    const bodyEllipse = ellipses.find((e: any) => e.props.fill === 'url(#test-body)');
+    expect(bodyEllipse).toBeTruthy();
+  });
+
+  it('falls back to color when no gradientFill', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatBody type="standard" color="#FF0000" />
+      </SvgWrap>
+    );
+    const ellipses = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    );
+    const bodyEllipse = ellipses.find((e: any) => e.props.fill === '#FF0000');
+    expect(bodyEllipse).toBeTruthy();
+  });
+});
+
+describe('CatHead with gradient', () => {
+  it('uses gradientFill when provided', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatHead color="#FF0000" gradientFill="url(#test-head)" />
+      </SvgWrap>
+    );
+    const circles = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    const headCircle = circles.find((c: any) => c.props.fill === 'url(#test-head)');
+    expect(headCircle).toBeTruthy();
+  });
+
+  it('falls back to color when no gradientFill', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatHead color="#FF0000" />
+      </SvgWrap>
+    );
+    const circles = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    const headCircle = circles.find((c: any) => c.props.fill === '#FF0000');
+    expect(headCircle).toBeTruthy();
   });
 });
