@@ -197,8 +197,8 @@ function renderComposable(
       {/* Nose */}
       <CatNose color={noseColor} />
 
-      {/* Eyes (shape-specific + mood-responsive) */}
-      <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} />
+      {/* Eyes (shape-specific + mood-responsive, 6-layer composite) */}
+      <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} />
 
       {/* Mouth */}
       <CatMouth mood={mood} darkAccent={accentDark} />

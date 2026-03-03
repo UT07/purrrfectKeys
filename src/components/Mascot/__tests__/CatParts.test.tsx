@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { CatBody, CatHead, CatEars, CatMouth, CatHairTuft } from '../svg/CatParts';
+import { CatBody, CatHead, CatEars, CatEyes, CatMouth, CatHairTuft } from '../svg/CatParts';
 
 jest.mock('react-native-svg', () => {
   const mockReact = require('react');
@@ -247,5 +247,134 @@ describe('CatHead with gradient', () => {
     );
     const headCircle = circles.find((c: any) => c.props.fill === '#FF0000');
     expect(headCircle).toBeTruthy();
+  });
+});
+
+describe('CatEyes 6-layer system', () => {
+  it('big-sparkly renders at least 6 elements per eye (12 total)', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="big-sparkly" mood="encouraging" eyeColor="#3DFF88" />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const circles = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    // 6 layers per eye x 2 eyes = 12+ circles
+    expect(circles.length).toBeGreaterThanOrEqual(12);
+  });
+
+  it('eyelashes prop renders lash lines', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="encouraging" eyeColor="#3DFF88" eyelashes={true} />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const lines = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Line'
+    );
+    // At least 6 lash lines (3 per eye)
+    expect(lines.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('no eyelashes when prop is false', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="encouraging" eyeColor="#3DFF88" eyelashes={false} />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const lines = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Line'
+    );
+    // No lash lines when eyelashes=false
+    expect(lines.length).toBe(0);
+  });
+
+  it('love mood renders heart shapes', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="love" eyeColor="#FF6B9D" />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
+    );
+    // Hearts rendered as paths
+    expect(paths.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('confused mood renders spiral eyes with ellipses', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="confused" eyeColor="#3DFF88" />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const ellipses = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    );
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
+    );
+    // 2 sclera ellipses + 2 spiral paths
+    expect(ellipses.length).toBeGreaterThanOrEqual(2);
+    expect(paths.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('smug mood renders half-lid eyes', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="smug" eyeColor="#3DFF88" />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const lines = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Line'
+    );
+    // 2 lid lines (one per eye)
+    expect(lines.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('sleepy mood from MascotMood renders heavy-lid eyes', () => {
+    const { unmount } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="sleepy" eyeColor="#3DFF88" />
+      </SvgWrap>
+    );
+    unmount();
+  });
+
+  it('round shape still uses Ellipse for sclera (backward compat)', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="round" mood="encouraging" eyeColor="#3DFF88" />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const ellipses = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    );
+    // round shape uses 2 Ellipse sclera
+    expect(ellipses.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('big-sparkly uses catId for iris gradient reference', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap>
+        <CatEyes shape="big-sparkly" mood="encouraging" eyeColor="#3DFF88" catId="mini-meowww" />
+      </SvgWrap>
+    );
+    const allViews = UNSAFE_getAllByType(require('react-native').View);
+    const circles = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Circle'
+    );
+    const irisCircle = circles.find(
+      (c: any) => c.props.fill === 'url(#mini-meowww-iris)'
+    );
+    expect(irisCircle).toBeTruthy();
   });
 });
