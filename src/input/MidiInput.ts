@@ -450,7 +450,7 @@ export function getMidiInput(): MidiInput {
     // Try to use native Web MIDI API if @motiz88/react-native-midi is available.
     // IMPORTANT: Check NativeModules BEFORE require(). In Hermes, require() for
     // native modules can throw uncatchable errors during module evaluation —
-    // try/catch won't save us. Same pattern as Cat3DCanvas.tsx.
+    // try/catch won't save us.
     let useNative = false;
     if (Platform.OS !== 'web') {
       const hasNativeMidi = !!NativeModules.ReactNativeMidi;

@@ -2,7 +2,7 @@
 
 **Version:** 3.3
 **Last Updated:** March 2, 2026
-**Status:** Phase 10 Arcade Concert Hall complete + Phase 11 polish — Concert Hall palette (black + crimson), lava lamp gradient, typography, shadows, composable cat SVG, Salsa NPC, rarity borders, combo escalation, 3D Ghibli-style cats, sound design, ElevenLabs neural TTS
+**Status:** Phase 11A — Concert Hall palette (black + crimson), lava lamp gradient, typography, shadows, composable cat SVG, Salsa NPC, rarity borders, combo escalation, sound design, ElevenLabs neural TTS
 
 ---
 
@@ -237,40 +237,9 @@ Moods: happy, neutral, sleepy, excited, sad, teaching, encouraging, curious
 #### Evolution Stages
 baby → teen → adult → master, with XP thresholds. Each stage unlocks accessories and abilities.
 
-### Current: 3D Cat System — Ghibli Style (Phase 10 + Phase 11 polish)
+### Cat Rendering: SVG Only
 
-The 3D cat system uses react-three-fiber v8 + @react-three/drei for native 3D rendering with **Studio Ghibli-inspired cel-shaded aesthetics**.
-
-#### Architecture
-- **`Cat3DCanvas.tsx`** — Wraps R3F Canvas with SVG CatAvatar fallback when expo-gl unavailable. Warm Ghibli-style lighting: hemisphere light (sky #FFE4C4, ground #8B7355) + directional sun + rim light.
-- **`CatModel3D.tsx`** — GLB scene loader with material color overrides. Handles 3 mesh naming conventions: `Mat_` prefix (salsa-cat), no-prefix (chonky-cat), no-materials (slim/round-cat with bone-weight fallback).
-- **`ghibliMaterials.ts`** — Applies `MeshToonMaterial` (cel-shaded) with custom 3-step gradient ramp (`DataTexture` with 4 pixels: 80/140/210/255). Warm pastel palette shift for Ghibli aesthetic. Eye glossiness via separate `MeshStandardMaterial`.
-- **`splitMeshByBones.ts`** — For models without named materials: splits single mesh by bone weights into body/head/ears/eyes/tail/belly submeshes, enabling per-part toon material coloring.
-- **`cat3DConfig.ts`** — Per-cat color mapping (body, belly, earInner, eyeIris, nose, blush colors) for 13 cats + Salsa NPC.
-- **4 GLB body types**: `salsa-cat.glb` (standard), `slim-cat.glb`, `round-cat.glb`, `chonky-cat.glb`
-- **`CatAccessories3D.tsx`** — Programmatic Three.js geometry for 30+ evolution accessories
-- **Evolution glow**: pointLight + aura sphere for adult/master stages
-- **Performance**: ONE 3D canvas per screen max, 30fps target. All reusable components (SalsaCoach, MascotBubble, ExerciseBuddy) always use `forceSVG`.
-
-#### Ghibli Material Config
-```typescript
-// 3-step toon gradient ramp (cel-shading bands)
-const gradientPixels = new Uint8Array([80, 140, 210, 255]);
-const gradientMap = new THREE.DataTexture(gradientPixels, 4, 1, THREE.RedFormat);
-gradientMap.minFilter = THREE.NearestFilter;
-gradientMap.magFilter = THREE.NearestFilter;
-
-// Applied to each mesh:
-new THREE.MeshToonMaterial({
-  color: partColor,
-  gradientMap,
-  emissive: warmShift,  // Subtle warm pastel shift
-  emissiveIntensity: 0.05,
-});
-```
-
-#### Fallback
-SVG composable system (`KeysieSvg.tsx`) used when `forceSVG=true` or WebGL unavailable.
+3D cat rendering (react-three-fiber + expo-gl) was **eliminated in Phase 11A** due to GL context crashes on device. All cat rendering uses the composable SVG system exclusively. See Premium SVG Cats design (`docs/plans/2026-03-03-premium-svg-cats-design.md`) for the planned visual upgrade.
 
 ---
 

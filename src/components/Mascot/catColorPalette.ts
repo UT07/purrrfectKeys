@@ -1,9 +1,9 @@
 /**
  * Shared Cat Color Palette — Single Source of Truth
  *
- * All 13 cat color definitions live here. Both the 3D material system
- * (cat3DConfig.ts) and SVG profile system (catProfiles.ts / catCharacters.ts)
- * import from this file to guarantee visual consistency.
+ * All 13 cat color definitions live here. The SVG profile system
+ * (catProfiles.ts / catCharacters.ts) imports from this file to
+ * guarantee visual consistency.
  *
  * Palette follows the chibi anime redesign: anime-vivid versions of real
  * cat breed coats with neon eye/accent pops.

@@ -177,59 +177,6 @@ jest.mock('@shopify/react-native-skia', () => {
   };
 });
 
-// Mock 3D rendering modules (not available in Jest node environment)
-jest.mock('@react-three/fiber/native', () => ({
-  Canvas: jest.fn(({ children }) => children),
-  useFrame: jest.fn(),
-}));
-
-jest.mock('@react-three/drei/native', () => ({
-  useGLTF: jest.fn(() => ({
-    scene: { clone: jest.fn(() => ({ traverse: jest.fn() })) },
-    animations: [],
-  })),
-  useAnimations: jest.fn(() => ({
-    actions: {},
-    mixer: null,
-  })),
-}));
-
-jest.mock('three', () => {
-  const MockGeometry = jest.fn();
-  const MockColor = jest.fn(() => ({
-    multiplyScalar: jest.fn().mockReturnThis(),
-    offsetHSL: jest.fn().mockReturnThis(),
-    lerp: jest.fn().mockReturnThis(),
-    clone: jest.fn(() => MockColor()),
-    getHexString: jest.fn(() => '000000'),
-  }));
-  return {
-    Color: MockColor,
-    Mesh: jest.fn(),
-    Group: jest.fn(),
-    MeshStandardMaterial: jest.fn(),
-    MeshToonMaterial: jest.fn(),
-    MeshBasicMaterial: jest.fn(),
-    DataTexture: jest.fn(),
-    BufferAttribute: jest.fn(),
-    RedFormat: 1028,
-    NearestFilter: 1003,
-    SphereGeometry: MockGeometry,
-    BoxGeometry: MockGeometry,
-    TorusGeometry: MockGeometry,
-    ConeGeometry: MockGeometry,
-    RingGeometry: MockGeometry,
-    CylinderGeometry: MockGeometry,
-    DoubleSide: 2,
-    BackSide: 1,
-    SkinnedMesh: jest.fn(),
-  };
-});
-
-jest.mock('expo-gl', () => ({
-  GLView: jest.fn(),
-}));
-
 // Mock Firebase modules (prevent real Firebase initialization in test environment)
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(() => ({})),

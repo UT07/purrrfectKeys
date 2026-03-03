@@ -95,8 +95,8 @@ export const ACCESSORIES: Accessory[] = [
 ];
 
 /**
- * Map shop accessory IDs → CatAccessories3D render names.
- * null = no 3D geometry (effects, some outfits).
+ * Map shop accessory IDs → visual render names for accessories.
+ * null = no visual geometry (effects, some outfits).
  */
 export const ACCESSORY_RENDER_NAMES: Record<string, string | null> = {
   // Hats
@@ -145,7 +145,7 @@ export const ACCESSORY_RENDER_NAMES: Record<string, string | null> = {
   'collar-bell': 'temple-bell',
   'collar-musicnote': 'gem-pendant',
   'collar-choker': 'crescent-collar',
-  // Effects (auras — no 3D geometry)
+  // Effects (auras — no geometry)
   'effect-sparkle': null,
   'effect-fire': null,
   'effect-rainbow': null,
@@ -155,7 +155,7 @@ export const ACCESSORY_RENDER_NAMES: Record<string, string | null> = {
   'effect-snowflake': null,
 };
 
-/** Convert equipped accessory IDs to 3D render names (filtering out nulls) */
+/** Convert equipped accessory IDs to render names (filtering out nulls) */
 export function getEquippedRenderNames(equippedAccessories: Record<string, string>): string[] {
   return Object.values(equippedAccessories)
     .map((id) => ACCESSORY_RENDER_NAMES[id])
