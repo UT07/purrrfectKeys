@@ -6,7 +6,7 @@
  */
 
 import type { ReactElement } from 'react';
-import { G, Circle, Path, Rect, Line, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { G, Circle, Path, Rect, Ellipse, Line, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 /** Darken a hex color */
 function darken(hex: string, factor: number): string {
@@ -116,6 +116,69 @@ function CapeAccessory({ color }: { color: string }): ReactElement {
   );
 }
 
+function Scarf({ color }: { color: string }): ReactElement {
+  return (
+    <G>
+      <Path d="M 36 64 Q 50 60 64 64 Q 65 68 60 70 Q 50 72 40 70 Q 35 68 36 64" fill={color} opacity={0.85} />
+      <Path d="M 56 68 Q 58 74 54 80 Q 52 82 50 78" fill={color} opacity={0.75} />
+    </G>
+  );
+}
+
+function Fedora({ color }: { color: string }): ReactElement {
+  return (
+    <G>
+      <Path d="M 28 16 Q 50 10 72 16" stroke={darken(color, 0.6)} strokeWidth="2.5" fill="none" />
+      <Path d="M 32 16 Q 50 6 68 16" fill={color} />
+      <Rect x="30" y="14" width="40" height="3" rx="1" fill={darken(color, 0.7)} />
+    </G>
+  );
+}
+
+function Trilby({ color }: { color: string }): ReactElement {
+  return (
+    <G>
+      <Path d="M 30 18 Q 50 12 70 18" stroke={darken(color, 0.6)} strokeWidth="2" fill="none" />
+      <Path d="M 34 18 Q 50 8 66 18" fill={color} />
+      <Path d="M 34 17 L 66 17" stroke={lighten(color, 0.3)} strokeWidth="1" />
+    </G>
+  );
+}
+
+function PearlNecklace({ _color }: { _color: string }): ReactElement {
+  return (
+    <G>
+      <Circle cx="40" cy="64" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
+      <Circle cx="44" cy="62.5" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
+      <Circle cx="48" cy="62" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
+      <Circle cx="52" cy="62" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
+      <Circle cx="56" cy="62.5" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
+      <Circle cx="60" cy="64" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
+    </G>
+  );
+}
+
+function GoldChain({ _color }: { _color: string }): ReactElement {
+  return (
+    <G>
+      <Path d="M 38 64 Q 50 60 62 64" stroke="#FFD700" strokeWidth="1.5" fill="none" />
+      <Path d="M 47 62 L 50 58 L 53 62 L 50 66 Z" fill="#FFD700" stroke={darken('#FFD700', 0.7)} strokeWidth="0.5" />
+    </G>
+  );
+}
+
+function GoldenHeadphones({ _color }: { _color: string }): ReactElement {
+  return (
+    <G>
+      <Path d="M 20 28 Q 50 10 80 28" stroke="#FFD700" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Ellipse cx="20" cy="30" rx="7" ry="7" fill="#FFD700" />
+      <Ellipse cx="20" cy="30" rx="5" ry="5" fill={darken('#FFD700', 0.6)} />
+      <Ellipse cx="80" cy="30" rx="7" ry="7" fill="#FFD700" />
+      <Ellipse cx="80" cy="30" rx="5" ry="5" fill={darken('#FFD700', 0.6)} />
+    </G>
+  );
+}
+
 // ─────────────────────────────────────────────────
 // Background aura for evolution stages
 // ─────────────────────────────────────────────────
@@ -163,7 +226,11 @@ export function renderAccessory(name: string, accent: string): ReactElement | nu
   switch (name) {
     case 'bow-tie':
     case 'accessory-1':
+    case 'pink-bow':
+    case 'velvet-ribbon':
       return <BowTie key={name} color={accent} />;
+    case 'scarf':
+      return <Scarf key={name} color={accent} />;
     case 'sunglasses':
       return <Sunglasses key={name} color={accent} />;
     case 'crown':
@@ -179,21 +246,26 @@ export function renderAccessory(name: string, accent: string): ReactElement | nu
       return <Beanie key={name} color={accent} />;
     case 'cape':
     case 'cape-purple':
-    case 'golden-cape':
     case 'royal-robe':
+    case 'royal-cape-white':
       return <CapeAccessory key={name} color={accent} />;
-    case 'scarf':
-    case 'pink-bow':
-    case 'velvet-ribbon':
-    case 'pearl-necklace':
-    case 'crescent-collar':
-    case 'lightning-collar':
-    case 'gold-chain':
-      return <BowTie key={name} color={accent} />;
+    case 'golden-cape':
+      return <CapeAccessory key={name} color="#FFD700" />;
     case 'fedora':
+      return <Fedora key={name} color={accent} />;
     case 'trilby':
+      return <Trilby key={name} color={accent} />;
     case 'chef-hat':
-      return <Beanie key={name} color={accent} />;
+      return <Beanie key={name} color="#FFFFFF" />;
+    case 'pearl-necklace':
+      return <PearlNecklace key={name} _color={accent} />;
+    case 'gold-chain':
+    case 'lightning-collar':
+      return <GoldChain key={name} _color={accent} />;
+    case 'crescent-collar':
+      return <PearlNecklace key={name} _color={accent} />;
+    case 'golden-headphones':
+      return <GoldenHeadphones key={name} _color={accent} />;
     case 'round-glasses':
     case 'pixel-glasses':
     case 'racing-goggles':
