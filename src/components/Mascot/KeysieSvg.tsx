@@ -17,6 +17,8 @@ import {
   CatBlush,
   CatHeadphones,
   CatPianoCollar,
+  CatPaws,
+  CatHairTuft,
 } from './svg/CatParts';
 import { getCatProfile } from './svg/catProfiles';
 import { EvolutionAura, renderAccessories } from './svg/CatAccessories';
@@ -158,28 +160,28 @@ function renderComposable(
       {/* Body */}
       <CatBody type={profile.body} color={bodyColor} />
 
+      {/* Paws (below body) */}
+      <CatPaws color={bodyColor} />
+
       {/* Head */}
       <CatHead color={bodyColor} cheekFluff={profile.cheekFluff} />
 
-      {/* Pattern overlay (clip to body) */}
+      {/* Pattern overlay (clip to body) — use catId prefix for unique ClipPath */}
       <Defs>
-        <ClipPath id="bodyClip">
-          <Circle cx="50" cy="42" r="22" />
-          <Ellipse cx="50" cy="65" rx="22" ry="20" />
+        <ClipPath id={`bodyClip-${catId}`}>
+          <Circle cx="50" cy="35" r="32" />
+          <Ellipse cx="50" cy="80" rx="18" ry="14" />
         </ClipPath>
       </Defs>
-      <G clipPath="url(#bodyClip)">
+      <G clipPath={`url(#bodyClip-${catId})`}>
         {renderPattern(pattern, bodyColor, bellyColor)}
       </G>
 
       {/* Ears */}
       <CatEars type={profile.ears} bodyColor={bodyColor} innerColor={earInnerColor} />
 
-      {/* Headphones */}
-      <CatHeadphones color={accent} darkColor={darkenColor(accent, 0.3)} />
-
-      {/* Piano-key collar */}
-      <CatPianoCollar />
+      {/* Hair tuft (between ears, on top of head) */}
+      <CatHairTuft type={profile.hairTuft} color={bodyColor} />
 
       {/* Whiskers */}
       <CatWhiskers color={whiskerColor} />
