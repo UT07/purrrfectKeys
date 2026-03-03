@@ -2,7 +2,7 @@
  * CatParts — Composable SVG building blocks for unique cat avatars.
  *
  * All parts operate within a 100×100 viewBox coordinate system.
- * Chibi proportions: oversized head (r=28 at cy=38), tiny body below.
+ * Anime chibi proportions: oversized head (r=32 at cy=35), tiny body (cy=80).
  * Body types, eye shapes, ear styles, and tails can be mixed/matched
  * via catProfiles.ts to give each cat a distinct silhouette.
  */
@@ -12,7 +12,7 @@ import { G, Circle, Path, Ellipse, Line, Rect } from 'react-native-svg';
 import type { MascotMood } from '../types';
 
 // ─────────────────────────────────────────────────
-// Body types (chibi: tiny bodies tucked below oversized head)
+// Body types (chibi: tiny bodies tucked below oversized head at cy=80)
 // ─────────────────────────────────────────────────
 
 export type BodyType = 'slim' | 'standard' | 'round' | 'chonky';
@@ -20,19 +20,19 @@ export type BodyType = 'slim' | 'standard' | 'round' | 'chonky';
 export function CatBody({ type, color }: { type: BodyType; color: string }): ReactElement {
   switch (type) {
     case 'slim':
-      return <Ellipse cx="50" cy="74" rx="14" ry="14" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="11" ry="10" fill={color} />;
     case 'round':
-      return <Ellipse cx="50" cy="75" rx="19" ry="16" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="16" ry="13" fill={color} />;
     case 'chonky':
-      return <Ellipse cx="50" cy="76" rx="23" ry="18" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="20" ry="15" fill={color} />;
     case 'standard':
     default:
-      return <Ellipse cx="50" cy="74" rx="17" ry="16" fill={color} />;
+      return <Ellipse cx="50" cy="80" rx="14" ry="12" fill={color} />;
   }
 }
 
 // ─────────────────────────────────────────────────
-// Head (with optional cheek fluff) — chibi oversized
+// Head (with optional cheek fluff) — anime chibi oversized at cy=35, r=32
 // ─────────────────────────────────────────────────
 
 export function CatHead({
@@ -44,11 +44,11 @@ export function CatHead({
 }): ReactElement {
   return (
     <G>
-      <Circle cx="50" cy="38" r="28" fill={color} />
+      <Circle cx="50" cy="35" r="32" fill={color} />
       {cheekFluff && (
         <G>
-          <Circle cx="24" cy="44" r="6" fill={color} />
-          <Circle cx="76" cy="44" r="6" fill={color} />
+          <Circle cx="20" cy="42" r="7" fill={color} />
+          <Circle cx="80" cy="42" r="7" fill={color} />
         </G>
       )}
     </G>
@@ -56,7 +56,7 @@ export function CatHead({
 }
 
 // ─────────────────────────────────────────────────
-// Ears (positioned for chibi head at cy=38, r=28, top at y=10)
+// Ears (positioned for chibi head at cy=35, r=32, top at y=3)
 // ─────────────────────────────────────────────────
 
 export type EarType = 'pointed' | 'rounded' | 'folded';
@@ -247,32 +247,45 @@ export function CatMouth({ mood, darkAccent }: { mood: MascotMood; darkAccent: s
 }
 
 // ─────────────────────────────────────────────────
-// Nose (repositioned for chibi head center)
+// Paws (positioned below body at cy=92)
 // ─────────────────────────────────────────────────
 
-export function CatNose({ color }: { color: string }): ReactElement {
-  return <Ellipse cx="50" cy="44" rx="3" ry="2" fill={color} />;
-}
-
-// ─────────────────────────────────────────────────
-// Whiskers (repositioned and slightly longer for bigger head)
-// ─────────────────────────────────────────────────
-
-export function CatWhiskers({ color }: { color: string }): ReactElement {
+export function CatPaws({ color }: { color: string }): ReactElement {
   return (
     <G>
-      <Line x1="16" y1="40" x2="30" y2="42" stroke={color} strokeWidth="1" />
-      <Line x1="14" y1="44" x2="30" y2="44" stroke={color} strokeWidth="1" />
-      <Line x1="16" y1="48" x2="30" y2="46" stroke={color} strokeWidth="1" />
-      <Line x1="70" y1="42" x2="84" y2="40" stroke={color} strokeWidth="1" />
-      <Line x1="70" y1="44" x2="86" y2="44" stroke={color} strokeWidth="1" />
-      <Line x1="70" y1="46" x2="84" y2="48" stroke={color} strokeWidth="1" />
+      <Ellipse cx="42" cy="92" rx="5" ry="3" fill={color} />
+      <Ellipse cx="58" cy="92" rx="5" ry="3" fill={color} />
     </G>
   );
 }
 
 // ─────────────────────────────────────────────────
-// Tail (repositioned for lower chibi body)
+// Nose (tiny anime nose for bigger head)
+// ─────────────────────────────────────────────────
+
+export function CatNose({ color }: { color: string }): ReactElement {
+  return <Ellipse cx="50" cy="42" rx="1.8" ry="1.2" fill={color} />;
+}
+
+// ─────────────────────────────────────────────────
+// Whiskers (repositioned for bigger head at cy=35, r=32)
+// ─────────────────────────────────────────────────
+
+export function CatWhiskers({ color }: { color: string }): ReactElement {
+  return (
+    <G>
+      <Line x1="14" y1="38" x2="30" y2="40" stroke={color} strokeWidth="0.8" />
+      <Line x1="12" y1="42" x2="30" y2="42" stroke={color} strokeWidth="0.8" />
+      <Line x1="14" y1="46" x2="30" y2="44" stroke={color} strokeWidth="0.8" />
+      <Line x1="70" y1="40" x2="86" y2="38" stroke={color} strokeWidth="0.8" />
+      <Line x1="70" y1="42" x2="88" y2="42" stroke={color} strokeWidth="0.8" />
+      <Line x1="70" y1="44" x2="86" y2="46" stroke={color} strokeWidth="0.8" />
+    </G>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Tail (repositioned for body at cy=80)
 // ─────────────────────────────────────────────────
 
 export type TailType = 'curled' | 'straight' | 'fluffy';
@@ -290,89 +303,71 @@ export function CatTail({
     case 'straight':
       return (
         <G>
-          <Path
-            d="M 68 78 Q 80 65 84 50"
-            stroke={bodyColor}
-            strokeWidth="4"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <Circle cx="84" cy="48" r="4" fill={accentColor} />
+          <Path d="M 68 82 Q 80 72 84 58" stroke={bodyColor} strokeWidth="4" fill="none" strokeLinecap="round" />
+          <Circle cx="84" cy="56" r="4" fill={accentColor} />
         </G>
       );
     case 'fluffy':
       return (
         <G>
-          <Path
-            d="M 68 78 Q 80 68 86 58 Q 90 50 84 46"
-            stroke={bodyColor}
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <Circle cx="84" cy="44" r="5" fill={bodyColor} />
-          <Circle cx="84" cy="44" r="4" fill={accentColor} opacity={0.3} />
+          <Path d="M 68 82 Q 80 74 86 64 Q 90 56 84 52" stroke={bodyColor} strokeWidth="6" fill="none" strokeLinecap="round" />
+          <Circle cx="84" cy="50" r="5" fill={bodyColor} />
+          <Circle cx="84" cy="50" r="4" fill={accentColor} opacity={0.3} />
         </G>
       );
     case 'curled':
     default:
       return (
         <G>
-          <Path
-            d="M 68 78 Q 84 72 88 58 Q 90 48 85 43"
-            stroke={bodyColor}
-            strokeWidth="4"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <Circle cx="85" cy="41" r="4" fill={accentColor} />
+          <Path d="M 68 82 Q 84 76 88 64 Q 90 54 85 49" stroke={bodyColor} strokeWidth="4" fill="none" strokeLinecap="round" />
+          <Circle cx="85" cy="47" r="4" fill={accentColor} />
         </G>
       );
   }
 }
 
 // ─────────────────────────────────────────────────
-// Blush (repositioned wider for bigger chibi head)
+// Blush (wider for bigger head at r=32)
 // ─────────────────────────────────────────────────
 
 export function CatBlush({ color = '#FF9999' }: { color?: string }): ReactElement {
   return (
     <G>
-      <Circle cx="28" cy="42" r="5" fill={color} opacity={0.3} />
-      <Circle cx="72" cy="42" r="5" fill={color} opacity={0.3} />
+      <Ellipse cx="26" cy="42" rx="6" ry="4" fill={color} opacity={0.3} />
+      <Ellipse cx="74" cy="42" rx="6" ry="4" fill={color} opacity={0.3} />
     </G>
   );
 }
 
 // ─────────────────────────────────────────────────
-// Headphones (repositioned for chibi head)
+// Headphones (repositioned for bigger head at cy=35, r=32)
 // ─────────────────────────────────────────────────
 
 export function CatHeadphones({ color, darkColor }: { color: string; darkColor: string }): ReactElement {
   return (
     <G>
-      <Path d="M 24 32 Q 50 14 76 32" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
-      <Circle cx="24" cy="34" r="7" fill={color} />
-      <Circle cx="24" cy="34" r="5" fill={darkColor} />
-      <Circle cx="76" cy="34" r="7" fill={color} />
-      <Circle cx="76" cy="34" r="5" fill={darkColor} />
+      <Path d="M 20 28 Q 50 10 80 28" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Circle cx="20" cy="30" r="7" fill={color} />
+      <Circle cx="20" cy="30" r="5" fill={darkColor} />
+      <Circle cx="80" cy="30" r="7" fill={color} />
+      <Circle cx="80" cy="30" r="5" fill={darkColor} />
     </G>
   );
 }
 
 // ─────────────────────────────────────────────────
-// Piano-key collar (repositioned for chibi neck zone)
+// Piano-key collar (repositioned for new neck zone between head and body)
 // ─────────────────────────────────────────────────
 
 export function CatPianoCollar(): ReactElement {
   return (
     <G>
-      <Rect x="35" y="62" width="4" height="5" rx="1" fill="#FFFFFF" />
-      <Rect x="40" y="62" width="4" height="5" rx="1" fill="#1A1A1A" />
-      <Rect x="45" y="62" width="4" height="5" rx="1" fill="#FFFFFF" />
-      <Rect x="50" y="62" width="4" height="5" rx="1" fill="#1A1A1A" />
-      <Rect x="55" y="62" width="4" height="5" rx="1" fill="#FFFFFF" />
-      <Rect x="60" y="62" width="4" height="5" rx="1" fill="#1A1A1A" />
+      <Rect x="35" y="66" width="4" height="5" rx="1" fill="#FFFFFF" />
+      <Rect x="40" y="66" width="4" height="5" rx="1" fill="#1A1A1A" />
+      <Rect x="45" y="66" width="4" height="5" rx="1" fill="#FFFFFF" />
+      <Rect x="50" y="66" width="4" height="5" rx="1" fill="#1A1A1A" />
+      <Rect x="55" y="66" width="4" height="5" rx="1" fill="#FFFFFF" />
+      <Rect x="60" y="66" width="4" height="5" rx="1" fill="#1A1A1A" />
     </G>
   );
 }
