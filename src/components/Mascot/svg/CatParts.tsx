@@ -29,21 +29,58 @@ function darkenColor(hex: string, factor: number): string {
 
 export type BodyType = 'slim' | 'standard' | 'round' | 'chonky';
 
-export function CatBody({ type, color, gradientFill }: {
-  type: BodyType; color: string; gradientFill?: string;
+export function CatBody({ type, color, gradientFill, bellyColor }: {
+  type: BodyType; color: string; gradientFill?: string; bellyColor?: string;
 }): ReactElement {
   const fill = gradientFill ?? color;
+  const belly = bellyColor ?? color;
+
+  let bodyPath: string;
+  let bellyPath: string;
+
   switch (type) {
     case 'slim':
-      return <Ellipse cx="50" cy="80" rx="11" ry="10" fill={fill} />;
+      bodyPath = 'M 50 66 C 58 66 61 72 61 78 C 61 84 57 90 50 90 C 43 90 39 84 39 78 C 39 72 42 66 50 66 Z';
+      bellyPath = 'M 50 72 C 55 72 57 76 57 80 C 57 84 55 87 50 87 C 45 87 43 84 43 80 C 43 76 45 72 50 72 Z';
+      break;
     case 'round':
-      return <Ellipse cx="50" cy="80" rx="16" ry="13" fill={fill} />;
+      bodyPath = 'M 50 65 C 62 65 68 72 68 80 C 68 87 60 92 50 92 C 40 92 32 87 32 80 C 32 72 38 65 50 65 Z';
+      bellyPath = 'M 50 71 C 58 71 62 76 62 81 C 62 86 57 89 50 89 C 43 89 38 86 38 81 C 38 76 42 71 50 71 Z';
+      break;
     case 'chonky':
-      return <Ellipse cx="50" cy="80" rx="20" ry="15" fill={fill} />;
+      bodyPath = 'M 50 64 C 66 64 74 72 74 80 C 74 88 64 94 50 94 C 36 94 26 88 26 80 C 26 72 34 64 50 64 Z';
+      bellyPath = 'M 50 70 C 62 70 67 76 67 82 C 67 88 60 91 50 91 C 40 91 33 88 33 82 C 33 76 38 70 50 70 Z';
+      break;
     case 'standard':
     default:
-      return <Ellipse cx="50" cy="80" rx="14" ry="12" fill={fill} />;
+      bodyPath = 'M 50 66 C 60 66 66 72 66 79 C 66 86 58 91 50 91 C 42 91 34 86 34 79 C 34 72 40 66 50 66 Z';
+      bellyPath = 'M 50 72 C 57 72 61 76 61 81 C 61 86 56 88 50 88 C 44 88 39 86 39 81 C 39 76 43 72 50 72 Z';
+      break;
   }
+
+  return (
+    <G>
+      <Path d={bodyPath} fill={fill} />
+      {/* Belly patch — lighter inner contour */}
+      <Path d={bellyPath} fill={belly} opacity={0.5} />
+    </G>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Chest tuft (fur wisps at head-body junction)
+// ─────────────────────────────────────────────────
+
+/** Chest fur tuft — small fur wisps at head-body junction */
+export function CatChestTuft({ color }: { color: string }): ReactElement {
+  const dark = darkenColor(color, 0.8);
+  return (
+    <G>
+      <Path d="M 44 63 Q 46 60 48 63" fill={color} stroke={dark} strokeWidth="0.3" />
+      <Path d="M 48 62 Q 50 59 52 62" fill={color} stroke={dark} strokeWidth="0.3" />
+      <Path d="M 52 63 Q 54 60 56 63" fill={color} stroke={dark} strokeWidth="0.3" />
+    </G>
+  );
 }
 
 // ─────────────────────────────────────────────────

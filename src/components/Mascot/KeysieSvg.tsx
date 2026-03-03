@@ -7,6 +7,7 @@ import type { CatPattern, CatVisuals } from './catCharacters';
 import type { EvolutionStage } from '@/stores/types';
 import {
   CatBody,
+  CatChestTuft,
   CatHead,
   CatEars,
   CatEyes,
@@ -164,7 +165,10 @@ function renderComposable(
       <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />
 
       {/* Body */}
-      <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} />
+      <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} bellyColor={bellyColor} />
+
+      {/* Chest tuft (fur wisps at head-body junction) */}
+      <CatChestTuft color={bodyColor} />
 
       {/* Paws (below body) */}
       <CatPaws color={bodyColor} />

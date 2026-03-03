@@ -201,11 +201,11 @@ describe('CatBody with gradient', () => {
         <CatBody type="standard" color="#FF0000" gradientFill="url(#test-body)" />
       </SvgWrap>
     );
-    const ellipses = UNSAFE_getAllByType(require('react-native').View).filter(
-      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    const paths = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    const bodyEllipse = ellipses.find((e: any) => e.props.fill === 'url(#test-body)');
-    expect(bodyEllipse).toBeTruthy();
+    const bodyPath = paths.find((e: any) => e.props.fill === 'url(#test-body)');
+    expect(bodyPath).toBeTruthy();
   });
 
   it('falls back to color when no gradientFill', () => {
@@ -214,11 +214,11 @@ describe('CatBody with gradient', () => {
         <CatBody type="standard" color="#FF0000" />
       </SvgWrap>
     );
-    const ellipses = UNSAFE_getAllByType(require('react-native').View).filter(
-      (v: any) => v.props.accessibilityLabel === 'Ellipse'
+    const paths = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    const bodyEllipse = ellipses.find((e: any) => e.props.fill === '#FF0000');
-    expect(bodyEllipse).toBeTruthy();
+    const bodyPath = paths.find((e: any) => e.props.fill === '#FF0000');
+    expect(bodyPath).toBeTruthy();
   });
 });
 
