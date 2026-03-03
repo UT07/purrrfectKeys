@@ -14,7 +14,9 @@ import {
   reactionToMood,
   PART_SPRINGS,
   SQUASH_STRETCH,
+  REACTIONS,
 } from '../catAnimations';
+import type { PartName } from '../catAnimations';
 import type { CatPose } from '../catAnimations';
 import type { MascotMood } from '../../types';
 import type { BuddyReaction } from '../../ExerciseBuddy';
@@ -203,5 +205,75 @@ describe('SQUASH_STRETCH', () => {
         }
       }
     }
+  });
+});
+
+const VALID_PART_NAMES: PartName[] = ['body', 'head', 'ears', 'tail', 'face', 'accessories'];
+const REACTIONS_WITH_CONFIGS: BuddyReaction[] = ['perfect', 'miss', 'good', 'combo', 'celebrating'];
+
+describe('REACTIONS', () => {
+  it('has configs for perfect, miss, good, combo, and celebrating', () => {
+    for (const reaction of REACTIONS_WITH_CONFIGS) {
+      expect(REACTIONS[reaction]).toBeDefined();
+    }
+  });
+
+  it('does not have a config for idle (idle returns to neutral)', () => {
+    expect(REACTIONS.idle).toBeUndefined();
+  });
+
+  it('each config has parts and a positive settle duration', () => {
+    for (const reaction of REACTIONS_WITH_CONFIGS) {
+      const config = REACTIONS[reaction]!;
+      expect(config.parts).toBeDefined();
+      expect(typeof config.settle).toBe('number');
+      expect(config.settle).toBeGreaterThan(0);
+    }
+  });
+
+  it('all part keys are valid PartName values', () => {
+    for (const reaction of REACTIONS_WITH_CONFIGS) {
+      const config = REACTIONS[reaction]!;
+      for (const partKey of Object.keys(config.parts)) {
+        expect(VALID_PART_NAMES).toContain(partKey);
+      }
+    }
+  });
+
+  it('each ReactionTarget has a positive duration', () => {
+    for (const reaction of REACTIONS_WITH_CONFIGS) {
+      const config = REACTIONS[reaction]!;
+      for (const [, target] of Object.entries(config.parts)) {
+        if (!target) continue;
+        expect(typeof target.duration).toBe('number');
+        expect(target.duration).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('perfect has body, ears, and face targets', () => {
+    const config = REACTIONS.perfect!;
+    expect(config.parts.body).toBeDefined();
+    expect(config.parts.ears).toBeDefined();
+    expect(config.parts.face).toBeDefined();
+  });
+
+  it('miss has body with positive translateY (droop)', () => {
+    const config = REACTIONS.miss!;
+    expect(config.parts.body).toBeDefined();
+    expect(config.parts.body!.translateY).toBeGreaterThan(0);
+  });
+
+  it('celebrating has the longest settle duration', () => {
+    const settles = REACTIONS_WITH_CONFIGS.map(r => REACTIONS[r]!.settle);
+    const maxSettle = Math.max(...settles);
+    expect(REACTIONS.celebrating!.settle).toBe(maxSettle);
+  });
+
+  it('combo includes tail rotation', () => {
+    const config = REACTIONS.combo!;
+    expect(config.parts.tail).toBeDefined();
+    expect(config.parts.tail!.rotate).toBeDefined();
+    expect(config.parts.tail!.rotate).toBeGreaterThan(0);
   });
 });

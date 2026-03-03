@@ -18,19 +18,17 @@ import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withSequence,
   withTiming,
-  withRepeat,
   withDelay,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
 
-import { Cat3DCanvas } from './3d';
+import { CatAvatar } from './CatAvatar';
 import { getCatById, getDefaultCat } from './catCharacters';
 import { useCatEvolutionStore } from '@/stores/catEvolutionStore';
-import { reactionToMood, reactionToPose } from './animations/catAnimations';
+import { reactionToPose, REACTIONS } from './animations/catAnimations';
 
 export type BuddyReaction =
   | 'idle'
@@ -103,80 +101,38 @@ export function ExerciseBuddy({
     lastReactionRef.current = reaction;
     lastReactionTimeRef.current = now;
 
-    switch (reaction) {
-      case 'perfect':
-        // Bounce up with sparkle
-        bounceY.value = withSequence(
-          withSpring(-8, { damping: 6, stiffness: 200 }),
-          withSpring(0, { damping: 10, stiffness: 120 }),
-        );
-        bounceScale.value = withSequence(
-          withSpring(1.15, { damping: 6, stiffness: 200 }),
-          withSpring(1.0, { damping: 10, stiffness: 120 }),
-        );
-        runOnJS(triggerEmoji)();
-        break;
-
-      case 'good':
-        // Gentle nod
+    // Data-driven reactions from REACTIONS config
+    const reactionConfig = REACTIONS[reaction];
+    if (reactionConfig) {
+      const bodyTarget = reactionConfig.parts.body;
+      if (bodyTarget) {
+        if (bodyTarget.translateY != null) {
+          bounceY.value = withSequence(
+            withTiming(bodyTarget.translateY, { duration: bodyTarget.duration }),
+            withTiming(0, { duration: reactionConfig.settle }),
+          );
+        }
+        if (bodyTarget.scaleY != null) {
+          bounceScale.value = withSequence(
+            withTiming(bodyTarget.scaleY, { duration: bodyTarget.duration }),
+            withTiming(1.0, { duration: reactionConfig.settle }),
+          );
+        }
+      }
+      const earTarget = reactionConfig.parts.ears;
+      if (earTarget?.rotate != null) {
         rotation.value = withSequence(
-          withTiming(5, { duration: 150 }),
-          withTiming(-3, { duration: 150 }),
-          withTiming(0, { duration: 200 }),
+          withTiming(earTarget.rotate, { duration: earTarget.duration }),
+          withTiming(0, { duration: reactionConfig.settle }),
         );
-        break;
-
-      case 'miss':
-        // Droop down slightly
-        bounceY.value = withSequence(
-          withTiming(4, { duration: 300, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 500, easing: Easing.inOut(Easing.ease) }),
-        );
-        bounceScale.value = withSequence(
-          withTiming(0.92, { duration: 300 }),
-          withTiming(1.0, { duration: 500 }),
-        );
-        runOnJS(triggerEmoji)();
-        break;
-
-      case 'combo':
-        // Excited wiggle
-        rotation.value = withSequence(
-          withTiming(8, { duration: 100 }),
-          withTiming(-8, { duration: 100 }),
-          withTiming(5, { duration: 100 }),
-          withTiming(-5, { duration: 100 }),
-          withTiming(0, { duration: 150 }),
-        );
-        bounceScale.value = withSequence(
-          withSpring(1.2, { damping: 5, stiffness: 250 }),
-          withSpring(1.0, { damping: 10, stiffness: 120 }),
-        );
-        runOnJS(triggerEmoji)();
-        break;
-
-      case 'celebrating':
-        // Full celebration: continuous bounce
-        bounceY.value = withRepeat(
-          withSequence(
-            withTiming(-6, { duration: 300 }),
-            withTiming(0, { duration: 300 }),
-          ),
-          4,
-          false,
-        );
-        bounceScale.value = withSequence(
-          withSpring(1.2, { damping: 5, stiffness: 200 }),
-          withSpring(1.0, { damping: 8, stiffness: 120 }),
-        );
-        runOnJS(triggerEmoji)();
-        break;
-
-      default:
-        // Idle: gentle breathing
-        bounceY.value = withTiming(0, { duration: 300 });
-        bounceScale.value = withTiming(1.0, { duration: 300 });
-        rotation.value = withTiming(0, { duration: 300 });
+      }
+      // Trigger emoji for all non-idle reactions
+      runOnJS(triggerEmoji)();
+    } else {
+      // idle: gentle return to neutral
+      bounceY.value = withTiming(0, { duration: 300 });
+      bounceScale.value = withTiming(1.0, { duration: 300 });
+      rotation.value = withTiming(0, { duration: 300 });
     }
   }, [reaction, bounceY, bounceScale, rotation, triggerEmoji]);
 
@@ -205,13 +161,12 @@ export function ExerciseBuddy({
 
       {/* Cat avatar with pose-driven mood + animation */}
       <Animated.View style={buddyStyle}>
-        <Cat3DCanvas
+        <CatAvatar
           catId={catId}
-          size={56}
-          mood={reactionToMood(reaction)}
+          size="medium"
           pose={reactionToPose(reaction)}
           evolutionStage={evolutionStage}
-          forceSVG
+          skipEntryAnimation
         />
       </Animated.View>
 

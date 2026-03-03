@@ -183,6 +183,78 @@ export const PART_SPRINGS = {
 
 export type PartName = keyof typeof PART_SPRINGS;
 
+// ─────────────────────────────────────────────────
+// Game-event reaction targets (per-part)
+// ─────────────────────────────────────────────────
+
+/** A single part's animation target during a game-event reaction */
+export interface ReactionTarget {
+  scale?: number;
+  scaleY?: number;
+  translateY?: number;
+  rotate?: number; // degrees
+  duration: number; // ms
+}
+
+/** Full reaction config: per-part targets + settle duration */
+export interface ReactionConfig {
+  parts: Partial<Record<PartName, ReactionTarget>>;
+  /** ms to return to neutral after the reaction fires */
+  settle: number;
+}
+
+/**
+ * Data-driven reaction animations keyed by BuddyReaction.
+ * Each entry defines per-part animation targets and a settle duration.
+ * Consumed by ExerciseBuddy to drive Reanimated shared values.
+ */
+export const REACTIONS: Partial<Record<BuddyReaction, ReactionConfig>> = {
+  perfect: {
+    parts: {
+      face: { scale: 1.3, duration: 200 },
+      ears: { rotate: 10, duration: 150 },
+      body: { translateY: -5, scaleY: 1.1, duration: 200 },
+    },
+    settle: 500,
+  },
+  miss: {
+    parts: {
+      face: { scale: 0.8, duration: 200 },
+      ears: { rotate: -5, duration: 200 },
+      body: { translateY: 3, scaleY: 0.95, duration: 300 },
+    },
+    settle: 600,
+  },
+  good: {
+    parts: {
+      face: { scale: 1.1, duration: 200 },
+      ears: { rotate: 5, duration: 200 },
+    },
+    settle: 400,
+  },
+  combo: {
+    parts: {
+      tail: { rotate: 15, duration: 150 },
+      body: { scaleY: 1.08, duration: 200 },
+      ears: { rotate: 12, duration: 150 },
+    },
+    settle: 500,
+  },
+  celebrating: {
+    parts: {
+      body: { translateY: -8, scaleY: 1.15, duration: 250 },
+      ears: { rotate: 15, duration: 200 },
+      face: { scale: 1.2, duration: 250 },
+      tail: { rotate: 20, duration: 200 },
+    },
+    settle: 700,
+  },
+};
+
+// ─────────────────────────────────────────────────
+// Squash/stretch per-pose keyframes
+// ─────────────────────────────────────────────────
+
 /** Squash/stretch keyframes for energetic poses */
 export const SQUASH_STRETCH: Partial<Record<CatPose, Record<string, { scaleX: number; scaleY: number }[]>>> = {
   celebrate: {
