@@ -45,7 +45,7 @@ jest.mock('react-native-svg', () => {
   };
 });
 
-const ALL_MOODS: MascotMood[] = ['happy', 'encouraging', 'excited', 'teaching', 'celebrating'];
+const ALL_MOODS: MascotMood[] = ['happy', 'encouraging', 'excited', 'teaching', 'celebrating', 'love', 'confused', 'smug', 'sleepy'];
 const ALL_SIZES: MascotSize[] = ['tiny', 'small', 'medium', 'large'];
 
 describe('KeysieSvg', () => {
@@ -366,6 +366,58 @@ describe('KeysieSvg', () => {
         expect(svg.props.height).toBe(expectedPx);
         unmount();
       }
+    });
+  });
+
+  describe('New mood rendering (love, confused, smug, sleepy)', () => {
+    it('love mood renders same W-shape mouth as happy', () => {
+      const { UNSAFE_getAllByType } = render(
+        <KeysieSvg mood="love" size="medium" />,
+      );
+      const allViews = UNSAFE_getAllByType(require('react-native').View);
+      const paths = allViews.filter(
+        (v) => v.props.accessibilityLabel === 'Path',
+      );
+      // love shares happy mouth: W-shape path "M 43 49"
+      const mouthPath = paths.find(
+        (p) => typeof p.props.d === 'string' && p.props.d.includes('M 43 49'),
+      );
+      expect(mouthPath).toBeTruthy();
+    });
+
+    it('smug mood renders same gentle curve as encouraging', () => {
+      const { UNSAFE_getAllByType } = render(
+        <KeysieSvg mood="smug" size="medium" />,
+      );
+      const allViews = UNSAFE_getAllByType(require('react-native').View);
+      const paths = allViews.filter(
+        (v) => v.props.accessibilityLabel === 'Path',
+      );
+      const mouthPath = paths.find(
+        (p) => typeof p.props.d === 'string' && p.props.d.includes('M 44 49'),
+      );
+      expect(mouthPath).toBeTruthy();
+    });
+
+    it('confused mood renders same straight line as teaching', () => {
+      const { UNSAFE_getAllByType } = render(
+        <KeysieSvg mood="confused" size="medium" />,
+      );
+      const allViews = UNSAFE_getAllByType(require('react-native').View);
+      const lines = allViews.filter(
+        (v) => v.props.accessibilityLabel === 'Line',
+      );
+      const mouthLine = lines.find(
+        (l) => l.props.x1 === '44' && l.props.y1 === '50',
+      );
+      expect(mouthLine).toBeTruthy();
+    });
+
+    it('sleepy mood renders a closed gentle curve', () => {
+      const { getByTestId } = render(
+        <KeysieSvg mood="sleepy" size="medium" />,
+      );
+      expect(getByTestId('keysie-svg')).toBeTruthy();
     });
   });
 

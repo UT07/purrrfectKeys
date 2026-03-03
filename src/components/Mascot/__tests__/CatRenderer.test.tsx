@@ -15,6 +15,7 @@ import { KeysieSvg } from '../KeysieSvg';
 import { getCatProfile } from '../svg/catProfiles';
 import type { EvolutionStage } from '@/stores/types';
 import type { MascotMood } from '../types';
+import type { CatPose } from '../animations/catAnimations';
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
@@ -132,7 +133,7 @@ describe('Cat Visual Profiles', () => {
 });
 
 describe('KeysieSvg composable rendering', () => {
-  const moods: MascotMood[] = ['happy', 'encouraging', 'excited', 'teaching', 'celebrating'];
+  const moods: MascotMood[] = ['happy', 'encouraging', 'excited', 'teaching', 'celebrating', 'love', 'confused', 'smug', 'sleepy'];
   const stages: EvolutionStage[] = ['baby', 'teen', 'adult', 'master'];
 
   it('renders with catId prop (composable path)', () => {
@@ -282,5 +283,33 @@ describe('CatAvatar with composable system', () => {
     const avatar = getByTestId('cat-avatar');
     // The avatar View has width/height set to 200
     expect(avatar.props.style).toBeDefined();
+  });
+
+  const poses: CatPose[] = ['idle', 'celebrate', 'teach', 'sleep', 'play', 'curious', 'sad'];
+
+  it('renders with pose prop (pose-driven mood)', () => {
+    for (const poseName of poses) {
+      const { getByTestId } = render(
+        <CatAvatar catId="jazzy" size="medium" pose={poseName} />
+      );
+      expect(getByTestId('cat-avatar')).toBeTruthy();
+    }
+  });
+
+  it('renders all new moods without crashing', () => {
+    const newMoods: MascotMood[] = ['love', 'confused', 'smug', 'sleepy'];
+    for (const m of newMoods) {
+      const { getByTestId } = render(
+        <CatAvatar catId="luna" size="medium" mood={m} />
+      );
+      expect(getByTestId('cat-avatar')).toBeTruthy();
+    }
+  });
+
+  it('renders skipEntryAnimation prop', () => {
+    const { getByTestId } = render(
+      <CatAvatar catId="mini-meowww" size="small" skipEntryAnimation />
+    );
+    expect(getByTestId('cat-avatar')).toBeTruthy();
   });
 });
