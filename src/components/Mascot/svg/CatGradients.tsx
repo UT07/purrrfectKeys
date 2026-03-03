@@ -30,16 +30,18 @@ interface CatGradientDefsProps {
   catId: string;
   bodyColor: string;
   eyeColor: string;
+  bellyColor?: string;
+  earInnerColor?: string;
 }
 
-export function CatGradientDefs({ catId, bodyColor, eyeColor }: CatGradientDefsProps): ReactElement {
+export function CatGradientDefs({ catId, bodyColor, eyeColor, bellyColor, earInnerColor }: CatGradientDefsProps): ReactElement {
   return (
     <Defs>
-      {/* Head sphere gradient — light upper-left */}
-      <RadialGradient id={`${catId}-head`} cx="40%" cy="35%" r="60%">
-        <Stop offset="0%" stopColor={lighten(bodyColor, 0.15)} />
-        <Stop offset="70%" stopColor={bodyColor} />
-        <Stop offset="100%" stopColor={darken(bodyColor, 0.80)} />
+      {/* Head sphere gradient — stronger contrast, light upper-left */}
+      <RadialGradient id={`${catId}-head`} cx="38%" cy="32%" r="60%">
+        <Stop offset="0%" stopColor={lighten(bodyColor, 0.22)} />
+        <Stop offset="50%" stopColor={bodyColor} />
+        <Stop offset="100%" stopColor={darken(bodyColor, 0.70)} />
       </RadialGradient>
 
       {/* Body roundness gradient */}
@@ -67,11 +69,36 @@ export function CatGradientDefs({ catId, bodyColor, eyeColor }: CatGradientDefsP
         <Stop offset="0%" stopColor={lighten(bodyColor, 0.05)} />
         <Stop offset="100%" stopColor={darken(bodyColor, 0.80)} />
       </LinearGradient>
+
+      {/* Belly patch — soft lighter area */}
+      <RadialGradient id={`${catId}-belly`} cx="50%" cy="45%" r="50%">
+        <Stop offset="0%" stopColor={lighten(bellyColor ?? bodyColor, 0.20)} />
+        <Stop offset="100%" stopColor={bellyColor ?? lighten(bodyColor, 0.08)} />
+      </RadialGradient>
+
+      {/* Nose shine — tiny bright spot */}
+      <RadialGradient id={`${catId}-nose`} cx="35%" cy="30%" r="50%">
+        <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
+        <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+      </RadialGradient>
+
+      {/* Paw pad — warm pink-ish */}
+      <RadialGradient id={`${catId}-paw`} cx="50%" cy="40%" r="60%">
+        <Stop offset="0%" stopColor={lighten(earInnerColor ?? '#FFB0C0', 0.3)} />
+        <Stop offset="100%" stopColor={earInnerColor ?? '#FFB0C0'} />
+      </RadialGradient>
+
+      {/* Rim light — bright edge on right side */}
+      <LinearGradient id={`${catId}-rim`} x1="80%" y1="20%" x2="100%" y2="50%">
+        <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
+        <Stop offset="70%" stopColor="#FFFFFF" stopOpacity="0.08" />
+        <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.15" />
+      </LinearGradient>
     </Defs>
   );
 }
 
 /** Gradient ID helpers — use these instead of raw strings */
-export function gradId(catId: string, part: 'head' | 'body' | 'iris' | 'ear' | 'tail'): string {
+export function gradId(catId: string, part: 'head' | 'body' | 'iris' | 'ear' | 'tail' | 'belly' | 'nose' | 'paw' | 'rim'): string {
   return `url(#${catId}-${part})`;
 }

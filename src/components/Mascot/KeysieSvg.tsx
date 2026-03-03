@@ -23,7 +23,7 @@ import { getCatProfile } from './svg/catProfiles';
 import { EvolutionAura, renderAccessories } from './svg/CatAccessories';
 import { getCatById } from './catCharacters';
 import { CatGradientDefs, gradId } from './svg/CatGradients';
-import { CatShadows } from './svg/CatShadows';
+import { CatShadows, CatRimLight, CatFurSheen } from './svg/CatShadows';
 
 interface KeysieSvgProps {
   mood: MascotMood;
@@ -45,6 +45,14 @@ const DEFAULT_BELLY = '#4A4A4A';
 const DEFAULT_EYE = '#2ECC71';
 const CRIMSON = '#DC143C';
 const DARK_RED = '#8B0000';
+
+/** Body clip paths matching organic body shapes for pattern overlay */
+const BODY_CLIP_PATHS: Record<string, string> = {
+  slim: 'M 50 66 C 58 66 61 72 61 78 C 61 84 57 90 50 90 C 43 90 39 84 39 78 C 39 72 42 66 50 66 Z',
+  standard: 'M 50 66 C 60 66 66 72 66 79 C 66 86 58 91 50 91 C 42 91 34 86 34 79 C 34 72 40 66 50 66 Z',
+  round: 'M 50 65 C 62 65 68 72 68 80 C 68 87 60 92 50 92 C 40 92 32 87 32 80 C 32 72 38 65 50 65 Z',
+  chonky: 'M 50 64 C 66 64 74 72 74 80 C 74 88 64 94 50 94 C 36 94 26 88 26 80 C 26 72 34 64 50 64 Z',
+};
 
 /** Darken a hex color by a factor (0-1, where 0 = black) */
 function darkenColor(hex: string, factor: number): string {
@@ -153,7 +161,8 @@ function renderComposable(
   return (
     <G>
       {/* Gradient definitions (must be before elements that reference them) */}
-      <CatGradientDefs catId={catId} bodyColor={bodyColor} eyeColor={eyeColor} />
+      <CatGradientDefs catId={catId} bodyColor={bodyColor} eyeColor={eyeColor}
+        bellyColor={bellyColor} earInnerColor={earInnerColor} />
 
       {/* Evolution aura (background) */}
       <EvolutionAura stage={evolutionStage} accent={accent} />
@@ -176,11 +185,14 @@ function renderComposable(
       {/* Head */}
       <CatHead color={bodyColor} cheekFluff={profile.cheekFluff} gradientFill={gradId(catId, 'head')} />
 
+      {/* Fur sheen highlight (on head and body) */}
+      <CatFurSheen />
+
       {/* Pattern overlay (clip to body) — use catId prefix for unique ClipPath */}
       <Defs>
         <ClipPath id={`bodyClip-${catId}`}>
           <Path d="M 50 3 C 70 3 82 14 82 30 C 82 46 70 60 58 62 C 54 63 46 63 42 62 C 30 60 18 46 18 30 C 18 14 30 3 50 3 Z" />
-          <Ellipse cx="50" cy="80" rx="18" ry="14" />
+          <Path d={BODY_CLIP_PATHS[profile.body] ?? BODY_CLIP_PATHS.standard} />
         </ClipPath>
       </Defs>
       <G clipPath={`url(#bodyClip-${catId})`}>
@@ -207,6 +219,9 @@ function renderComposable(
 
       {/* Blush */}
       {profile.blush && <CatBlush color={profile.blushColor} />}
+
+      {/* Rim light (bright edge on right side) */}
+      <CatRimLight />
 
       {/* Evolution accessories */}
       {accessories.length > 0 && renderAccessories(accessories, accent)}

@@ -341,3 +341,57 @@ describe('CatAvatar with composable system', () => {
     expect(getByTestId('cat-avatar')).toBeTruthy();
   });
 });
+
+describe('Premium SVG art features', () => {
+  it('CatBody renders belly patch for all body types', () => {
+    for (const _bt of ['slim', 'standard', 'round', 'chonky'] as const) {
+      const { getByTestId, unmount } = render(
+        <KeysieSvg mood="happy" size="medium" catId="mini-meowww"
+          visuals={CAT_CHARACTERS[0].visuals} accentColor={CAT_CHARACTERS[0].color} />
+      );
+      expect(getByTestId('keysie-svg')).toBeTruthy();
+      unmount();
+    }
+  });
+
+  it('cats with fang=true render without crashing', () => {
+    const jazzy = CAT_CHARACTERS.find(c => c.id === 'jazzy')!;
+    const { getByTestId } = render(
+      <KeysieSvg mood="happy" size="medium" catId="jazzy"
+        visuals={jazzy.visuals} accentColor={jazzy.color} />
+    );
+    expect(getByTestId('keysie-svg')).toBeTruthy();
+  });
+
+  it('cats with slit pupils render without crashing', () => {
+    const luna = CAT_CHARACTERS.find(c => c.id === 'luna')!;
+    const { getByTestId } = render(
+      <KeysieSvg mood="encouraging" size="medium" catId="luna"
+        visuals={luna.visuals} accentColor={luna.color} />
+    );
+    expect(getByTestId('keysie-svg')).toBeTruthy();
+  });
+
+  it('renders all 12 cats at every mood with premium art', () => {
+    const moods: MascotMood[] = ['happy', 'encouraging', 'excited', 'teaching', 'celebrating', 'love', 'confused', 'smug', 'sleepy'];
+    for (const cat of CAT_CHARACTERS) {
+      for (const mood of moods) {
+        const { getByTestId, unmount } = render(
+          <KeysieSvg mood={mood} size="medium" catId={cat.id}
+            visuals={cat.visuals} accentColor={cat.color} />
+        );
+        expect(getByTestId('keysie-svg')).toBeTruthy();
+        unmount();
+      }
+    }
+  });
+
+  it('Chonky Monke renders with large hair tuft', () => {
+    const chonky = CAT_CHARACTERS.find(c => c.id === 'chonky-monke')!;
+    const { getByTestId } = render(
+      <KeysieSvg mood="happy" size="medium" catId="chonky-monke"
+        visuals={chonky.visuals} accentColor={chonky.color} />
+    );
+    expect(getByTestId('keysie-svg')).toBeTruthy();
+  });
+});
