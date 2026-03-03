@@ -130,6 +130,38 @@ describe('Cat Visual Profiles', () => {
       expect(typeof profile.eyelashes).toBe('boolean');
     }
   });
+
+  it('every cat has a pupilType field', () => {
+    for (const cat of CAT_CHARACTERS) {
+      const profile = getCatProfile(cat.id);
+      expect(['round', 'slit']).toContain(profile.pupilType);
+    }
+  });
+
+  it('every cat has a fang boolean', () => {
+    for (const cat of CAT_CHARACTERS) {
+      const profile = getCatProfile(cat.id);
+      expect(typeof profile.fang).toBe('boolean');
+    }
+  });
+
+  it('every cat has a hairTuftSize field', () => {
+    for (const cat of CAT_CHARACTERS) {
+      const profile = getCatProfile(cat.id);
+      expect(['small', 'medium', 'large']).toContain(profile.hairTuftSize);
+    }
+  });
+
+  it('Jazzy has slit pupils and a fang', () => {
+    const profile = getCatProfile('jazzy');
+    expect(profile.pupilType).toBe('slit');
+    expect(profile.fang).toBe(true);
+  });
+
+  it('Chonky Monke has large hair tuft', () => {
+    const profile = getCatProfile('chonky-monke');
+    expect(profile.hairTuftSize).toBe('large');
+  });
 });
 
 describe('KeysieSvg composable rendering', () => {

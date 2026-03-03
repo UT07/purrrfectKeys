@@ -14,6 +14,9 @@ export type HairTuftType =
   | 'wave' | 'windswept' | 'side-part' | 'silky' | 'sharp'
   | 'messy' | 'cowlick';
 
+export type PupilType = 'round' | 'slit';
+export type HairTuftSize = 'small' | 'medium' | 'large';
+
 export interface CatProfile {
   body: BodyType;
   ears: EarType;
@@ -24,6 +27,9 @@ export interface CatProfile {
   blushColor?: string;
   hairTuft: HairTuftType;
   eyelashes: boolean;
+  pupilType: PupilType;
+  fang: boolean;
+  hairTuftSize: HairTuftSize;
 }
 
 /** Default profile for unknown cats */
@@ -36,6 +42,9 @@ const DEFAULT_PROFILE: CatProfile = {
   blush: false,
   hairTuft: 'none',
   eyelashes: false,
+  pupilType: 'round',
+  fang: false,
+  hairTuftSize: 'small',
 };
 
 export const CAT_PROFILES: Record<string, CatProfile> = {
@@ -50,6 +59,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('mini-meowww').blush ?? undefined,
     hairTuft: 'curly',
     eyelashes: true,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'small',
   },
   'jazzy': {
     body: 'slim',
@@ -60,6 +72,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blush: false,
     hairTuft: 'slicked',
     eyelashes: false,
+    pupilType: 'slit',
+    fang: true,
+    hairTuftSize: 'medium',
   },
   'luna': {
     body: 'standard',
@@ -70,6 +85,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blush: false,
     hairTuft: 'none',
     eyelashes: true,
+    pupilType: 'slit',
+    fang: false,
+    hairTuftSize: 'small',
   },
 
   // ─── Gem-unlockable ─────────────────────────
@@ -83,6 +101,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('biscuit').blush ?? undefined,
     hairTuft: 'fluffy',
     eyelashes: true,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'medium',
   },
   'ballymakawww': {
     body: 'round',
@@ -94,6 +115,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('ballymakawww').blush ?? undefined,
     hairTuft: 'spiky',
     eyelashes: false,
+    pupilType: 'round',
+    fang: true,
+    hairTuftSize: 'medium',
   },
   'aria': {
     body: 'slim',
@@ -104,6 +128,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blush: false,
     hairTuft: 'wave',
     eyelashes: true,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'medium',
   },
   'tempo': {
     body: 'slim',
@@ -114,6 +141,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blush: false,
     hairTuft: 'windswept',
     eyelashes: false,
+    pupilType: 'slit',
+    fang: true,
+    hairTuftSize: 'small',
   },
   'shibu': {
     body: 'slim',
@@ -125,6 +155,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('shibu').blush ?? undefined,
     hairTuft: 'side-part',
     eyelashes: false,
+    pupilType: 'slit',
+    fang: false,
+    hairTuftSize: 'small',
   },
   'bella': {
     body: 'round',
@@ -136,6 +169,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('bella').blush ?? undefined,
     hairTuft: 'silky',
     eyelashes: true,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'medium',
   },
   'sable': {
     body: 'slim',
@@ -146,6 +182,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blush: false,
     hairTuft: 'sharp',
     eyelashes: false,
+    pupilType: 'slit',
+    fang: true,
+    hairTuftSize: 'medium',
   },
   'coda': {
     body: 'standard',
@@ -156,6 +195,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blush: false,
     hairTuft: 'messy',
     eyelashes: false,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'medium',
   },
 
   // ─── Legendary ──────────────────────────────
@@ -169,6 +211,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('chonky-monke').blush ?? undefined,
     hairTuft: 'cowlick',
     eyelashes: false,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'large',
   },
 
   // ─── Coach NPC ──────────────────────────────
@@ -182,6 +227,9 @@ export const CAT_PROFILES: Record<string, CatProfile> = {
     blushColor: getCatColors('salsa').blush ?? undefined,
     hairTuft: 'none',
     eyelashes: false,
+    pupilType: 'round',
+    fang: false,
+    hairTuftSize: 'small',
   },
 };
 
