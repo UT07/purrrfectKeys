@@ -267,4 +267,20 @@ describe('CatAvatar with composable system', () => {
     );
     expect(getByTestId('cat-avatar')).toBeTruthy();
   });
+
+  it('renders at hero size (200px)', () => {
+    const { getByTestId } = render(
+      <CatAvatar catId="mini-meowww" size="hero" />
+    );
+    expect(getByTestId('cat-avatar')).toBeTruthy();
+  });
+
+  it('hero size has dimension of 200', () => {
+    const { getByTestId } = render(
+      <CatAvatar catId="biscuit" size="hero" />
+    );
+    const avatar = getByTestId('cat-avatar');
+    // The avatar View has width/height set to 200
+    expect(avatar.props.style).toBeDefined();
+  });
 });

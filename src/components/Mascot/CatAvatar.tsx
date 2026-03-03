@@ -31,12 +31,13 @@ import { useCatPose } from './animations/useCatPose';
 import { POSE_CONFIGS } from './animations/catAnimations';
 import type { CatPose } from './animations/catAnimations';
 
-export type CatAvatarSize = 'small' | 'medium' | 'large';
+export type CatAvatarSize = 'small' | 'medium' | 'large' | 'hero';
 
 const SIZE_MAP: Record<CatAvatarSize, number> = {
   small: 48,
   medium: 72,
   large: 120,
+  hero: 200,
 };
 
 interface CatAvatarProps {
