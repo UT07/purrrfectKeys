@@ -1,10 +1,12 @@
 /**
  * Cloud Function: Generate Coach Feedback
  * Called from client when user completes an exercise
- * Returns AI-generated coaching feedback using Gemini 1.5 Flash
+ * Returns AI-generated coaching feedback using Gemini 2.0 Flash
  */
 
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -77,21 +79,16 @@ RULES:
 // Helper Functions
 // ============================================================================
 
-/**
- * Build prompt from request data
- */
 function buildPrompt(request: CoachFeedbackRequest): string {
   const { score, issues, context } = request;
 
   let prompt = `The student just played "${request.exerciseTitle}" (difficulty ${request.difficulty}/5).\n\n`;
 
-  // Score summary
   prompt += `SCORE: ${score.overall}% overall\n`;
   prompt += `- Accuracy: ${score.accuracy}% (right notes)\n`;
   prompt += `- Timing: ${score.timing}% (on beat)\n`;
   prompt += `- Completeness: ${score.completeness}% (notes played)\n\n`;
 
-  // Specific issues
   if (issues.pitchErrors.length > 0) {
     prompt += `PITCH ISSUES:\n`;
     for (const error of issues.pitchErrors.slice(0, 2)) {
@@ -114,7 +111,6 @@ function buildPrompt(request: CoachFeedbackRequest): string {
     prompt += `Missed ${issues.missedCount} notes completely.\n\n`;
   }
 
-  // Context
   prompt += `CONTEXT:\n`;
   prompt += `- Attempt #${context.attemptNumber} at this exercise\n`;
   if (context.previousScore) {
@@ -129,9 +125,6 @@ function buildPrompt(request: CoachFeedbackRequest): string {
   return prompt;
 }
 
-/**
- * Get fallback feedback when API is unavailable
- */
 function getFallbackFeedback(request: CoachFeedbackRequest): CoachFeedbackResponse {
   const { score, issues } = request;
 
@@ -160,9 +153,6 @@ function getFallbackFeedback(request: CoachFeedbackRequest): CoachFeedbackRespon
   };
 }
 
-/**
- * Validate AI response quality
- */
 function validateResponse(text: string): boolean {
   const forbiddenPhrases = [
     'as an ai',
@@ -191,18 +181,18 @@ function validateResponse(text: string): boolean {
 // Cloud Function
 // ============================================================================
 
-export const generateCoachFeedback = functions
-  .region('us-central1')
-  .https.onCall(async (data: CoachFeedbackRequest, context: functions.https.CallableContext) => {
-    // Authentication check
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const generateCoachFeedback = onCall(
+  { region: 'us-central1', secrets: ['GEMINI_API_KEY'] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
-        'Must be authenticated to call this function'
+        'Must be authenticated to call this function',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
+    const data = request.data as CoachFeedbackRequest;
 
     try {
       // Check cache first (Firestore cache)
@@ -218,7 +208,6 @@ export const generateCoachFeedback = functions
       if (cachedDoc.exists) {
         const cached = cachedDoc.data();
         if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
-          // Return cached response
           return {
             feedback: cached.feedback,
             suggestedNextAction: cached.suggestedNextAction,
@@ -230,7 +219,7 @@ export const generateCoachFeedback = functions
       // Call Gemini API
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction: COACH_SYSTEM_PROMPT,
         generationConfig: {
           maxOutputTokens: 150,
@@ -240,12 +229,11 @@ export const generateCoachFeedback = functions
 
       const prompt = buildPrompt(data);
       const result = await model.generateContent(prompt);
-      const response = await result.response;
+      const response = result.response;
       const text = response.text();
 
-      // Validate response
       if (!validateResponse(text)) {
-        functions.logger.warn('Invalid AI response, using fallback', {
+        logger.warn('Invalid AI response, using fallback', {
           userId: uid,
           exerciseId: data.exerciseId,
         });
@@ -259,11 +247,10 @@ export const generateCoachFeedback = functions
           suggestedNextAction: data.score.overall >= 80 ? 'continue' : 'retry',
           timestamp: Date.now(),
         },
-        { merge: true }
+        { merge: true },
       );
 
-      // Log the call for monitoring
-      functions.logger.info('Coach feedback generated', {
+      logger.info('Coach feedback generated', {
         userId: uid,
         exerciseId: data.exerciseId,
         score: data.score.overall,
@@ -275,26 +262,24 @@ export const generateCoachFeedback = functions
         cached: false,
       } as CoachFeedbackResponse;
     } catch (error) {
-      functions.logger.error('Error generating coach feedback', {
+      logger.error('Error generating coach feedback', {
         userId: uid,
         exerciseId: data.exerciseId,
         error: String(error),
       });
 
-      // Return fallback on error
       return getFallbackFeedback(data);
     }
-  });
+  },
+);
 
 // ============================================================================
 // Cleanup: Remove old cache entries daily
 // ============================================================================
 
-export const cleanupCoachFeedbackCache = functions
-  .region('us-central1')
-  .pubsub.schedule('every day 02:00')
-  .timeZone('UTC')
-  .onRun(async () => {
+export const cleanupCoachFeedbackCache = onSchedule(
+  { schedule: 'every day 02:00', timeZone: 'UTC', region: 'us-central1' },
+  async () => {
     const cutoffTime = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days old
 
     try {
@@ -310,12 +295,13 @@ export const cleanupCoachFeedbackCache = functions
       oldDocs.docs.forEach((doc: admin.firestore.QueryDocumentSnapshot) => batch.delete(doc.ref));
       await batch.commit();
 
-      functions.logger.info('Coach feedback cache cleanup completed', {
+      logger.info('Coach feedback cache cleanup completed', {
         deletedDocs: oldDocs.docs.length,
       });
     } catch (error) {
-      functions.logger.error('Error cleaning up coach feedback cache', {
+      logger.error('Error cleaning up coach feedback cache', {
         error: String(error),
       });
     }
-  });
+  },
+);

@@ -7,12 +7,13 @@
  * so we validate the raw Gemini response and return it for client-side assembly.
  */
 
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ============================================================================
-// Type Definitions (mirrored from client songTypes.ts & songAssembler.ts)
+// Type Definitions
 // ============================================================================
 
 interface SongRequestParams {
@@ -43,7 +44,7 @@ interface GeneratedSongABC {
 const MAX_REQUESTS_PER_DAY = 5;
 
 // ============================================================================
-// Validation (copied from client songAssembler.ts)
+// Validation
 // ============================================================================
 
 function validateGeneratedSong(raw: unknown): raw is GeneratedSongABC {
@@ -72,7 +73,7 @@ function validateGeneratedSong(raw: unknown): raw is GeneratedSongABC {
 }
 
 // ============================================================================
-// Prompt Builder (copied from client songAssembler.ts)
+// Prompt Builder
 // ============================================================================
 
 function difficultyGuide(d: number): string {
@@ -159,23 +160,23 @@ async function incrementRateLimit(uid: string): Promise<void> {
 // Cloud Function
 // ============================================================================
 
-export const generateSong = functions
-  .region('us-central1')
-  .https.onCall(async (data: SongRequestParams, context: functions.https.CallableContext) => {
-    // Authentication check
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const generateSong = onCall(
+  { region: 'us-central1', secrets: ['GEMINI_API_KEY'] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Must be authenticated to generate songs',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
+    const data = request.data as SongRequestParams;
 
     // Rate limit check
     const withinLimit = await checkRateLimit(uid);
     if (!withinLimit) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Daily song generation limit reached (5/day)',
       );
@@ -184,7 +185,7 @@ export const generateSong = functions
     try {
       const apiKey = process.env.GEMINI_API_KEY || '';
       if (!apiKey) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'failed-precondition',
           'Gemini API key not configured',
         );
@@ -212,7 +213,7 @@ export const generateSong = functions
       }
 
       if (!validatedSong) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'internal',
           'Both song generation attempts failed validation',
         );
@@ -221,29 +222,28 @@ export const generateSong = functions
       // Increment rate limit counter on success
       await incrementRateLimit(uid);
 
-      functions.logger.info('Song generated', {
+      logger.info('Song generated', {
         userId: uid,
         title: data.title,
         difficulty: data.difficulty,
       });
 
-      // Return the validated GeneratedSongABC for client-side assembly
-      // (ABC parsing via abcjs is only available on the client)
       return validatedSong;
     } catch (error) {
-      if (error instanceof functions.https.HttpsError) {
+      if (error instanceof HttpsError) {
         throw error;
       }
-      functions.logger.error('Song generation error', {
+      logger.error('Song generation error', {
         userId: uid,
         error: String(error),
       });
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'internal',
         'Failed to generate song',
       );
     }
-  });
+  },
+);
 
 // ============================================================================
 // Internal Helpers

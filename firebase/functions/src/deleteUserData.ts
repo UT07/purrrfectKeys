@@ -13,7 +13,8 @@
  *   - challenges/{id} where fromUid or toUid == caller
  */
 
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
 const USER_SUBCOLLECTIONS = [
@@ -59,20 +60,20 @@ async function deleteCollection(
  * Callable Cloud Function: deleteUserAllData
  * Deletes all user data from Firestore. Must be called by the authenticated user.
  */
-export const deleteUserAllData = functions
-  .region('us-central1')
-  .https.onCall(async (_data: unknown, context: functions.https.CallableContext) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const deleteUserAllData = onCall(
+  { region: 'us-central1' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Must be authenticated to delete account data',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
     const db = admin.firestore();
 
-    functions.logger.info('Starting user data deletion', { uid });
+    logger.info('Starting user data deletion', { uid });
 
     try {
       let totalDeleted = 0;
@@ -82,7 +83,7 @@ export const deleteUserAllData = functions
         const path = `users/${uid}/${subcollection}`;
         const count = await deleteCollection(db, path);
         if (count > 0) {
-          functions.logger.info(`Deleted ${count} docs from ${path}`);
+          logger.info(`Deleted ${count} docs from ${path}`);
         }
         totalDeleted += count;
       }
@@ -104,11 +105,10 @@ export const deleteUserAllData = functions
         }
         await batch.commit();
         totalDeleted += friendCodesSnap.size;
-        functions.logger.info(`Deleted ${friendCodesSnap.size} friend codes`);
+        logger.info(`Deleted ${friendCodesSnap.size} friend codes`);
       }
 
       // 4. Clean up league memberships
-      // Query across all leagues for this user's membership docs
       const memberSnap = await db
         .collectionGroup('members')
         .where('uid', '==', uid)
@@ -118,7 +118,6 @@ export const deleteUserAllData = functions
         const batch = db.batch();
         for (const doc of memberSnap.docs) {
           batch.delete(doc.ref);
-          // Decrement memberCount on parent league
           const leagueRef = doc.ref.parent.parent;
           if (leagueRef) {
             batch.update(leagueRef, {
@@ -128,7 +127,7 @@ export const deleteUserAllData = functions
         }
         await batch.commit();
         totalDeleted += memberSnap.size;
-        functions.logger.info(`Deleted ${memberSnap.size} league memberships`);
+        logger.info(`Deleted ${memberSnap.size} league memberships`);
       }
 
       // 5. Clean up challenges where user is participant
@@ -152,7 +151,7 @@ export const deleteUserAllData = functions
       if (challengeIds.size > 0) {
         await challengeBatch.commit();
         totalDeleted += challengeIds.size;
-        functions.logger.info(`Deleted ${challengeIds.size} challenges`);
+        logger.info(`Deleted ${challengeIds.size} challenges`);
       }
 
       // 6. Remove this user from other users' friend lists
@@ -168,17 +167,18 @@ export const deleteUserAllData = functions
         }
         await batch.commit();
         totalDeleted += friendOfSnap.size;
-        functions.logger.info(`Removed from ${friendOfSnap.size} friend lists`);
+        logger.info(`Removed from ${friendOfSnap.size} friend lists`);
       }
 
-      functions.logger.info('User data deletion complete', { uid, totalDeleted });
+      logger.info('User data deletion complete', { uid, totalDeleted });
 
       return { success: true, deletedDocuments: totalDeleted };
     } catch (error) {
-      functions.logger.error('User data deletion failed', { uid, error: String(error) });
-      throw new functions.https.HttpsError(
+      logger.error('User data deletion failed', { uid, error: String(error) });
+      throw new HttpsError(
         'internal',
         'Failed to delete user data',
       );
     }
-  });
+  },
+);

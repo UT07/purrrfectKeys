@@ -4,7 +4,8 @@
  * Rate-limited to 30 requests per user per day.
  */
 
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -65,7 +66,7 @@ interface AIExercise {
 }
 
 // ============================================================================
-// Constants (mirrored from client geminiExerciseService.ts)
+// Constants
 // ============================================================================
 
 const MIDI_MIN = 36;
@@ -82,7 +83,7 @@ const MAX_EXERCISE_BEATS = 128;
 const MAX_REQUESTS_PER_DAY = 30;
 
 // ============================================================================
-// Validation (copied from client geminiExerciseService.ts)
+// Validation
 // ============================================================================
 
 function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise is AIExercise {
@@ -144,7 +145,6 @@ function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise
       return false;
     }
 
-    // Validate duration is a musically sensible value
     if (!VALID_DURATIONS.has(n.durationBeats as number)) {
       const closest = Array.from(VALID_DURATIONS).find(
         (d) => Math.abs(d - (n.durationBeats as number)) < 0.05,
@@ -166,7 +166,6 @@ function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise
     }
   }
 
-  // Check total exercise length is reasonable
   const lastNote = notes[notes.length - 1];
   const totalBeats = (lastNote.startBeat as number) + (lastNote.durationBeats as number);
   if (totalBeats > MAX_EXERCISE_BEATS || totalBeats <= 0) {
@@ -177,7 +176,7 @@ function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise
 }
 
 // ============================================================================
-// Prompt Builder (copied from client geminiExerciseService.ts)
+// Prompt Builder
 // ============================================================================
 
 function calculateTempo(params: GenerationParams): number {
@@ -304,23 +303,23 @@ async function incrementRateLimit(uid: string): Promise<void> {
 // Cloud Function
 // ============================================================================
 
-export const generateExercise = functions
-  .region('us-central1')
-  .https.onCall(async (data: GenerationParams, context: functions.https.CallableContext) => {
-    // Authentication check
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const generateExercise = onCall(
+  { region: 'us-central1', secrets: ['GEMINI_API_KEY'] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'Must be authenticated to generate exercises',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
+    const data = request.data as GenerationParams;
 
     // Rate limit check
     const withinLimit = await checkRateLimit(uid);
     if (!withinLimit) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'resource-exhausted',
         'Daily exercise generation limit reached (30/day)',
       );
@@ -329,7 +328,7 @@ export const generateExercise = functions
     try {
       const apiKey = process.env.GEMINI_API_KEY || '';
       if (!apiKey) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'failed-precondition',
           'Gemini API key not configured',
         );
@@ -362,7 +361,7 @@ export const generateExercise = functions
       }
 
       if (!exercise) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'internal',
           'Both generation attempts failed validation',
         );
@@ -371,7 +370,7 @@ export const generateExercise = functions
       // Increment rate limit counter on success
       await incrementRateLimit(uid);
 
-      functions.logger.info('Exercise generated', {
+      logger.info('Exercise generated', {
         userId: uid,
         difficulty: data.difficulty,
         noteCount: data.noteCount,
@@ -379,19 +378,20 @@ export const generateExercise = functions
 
       return exercise;
     } catch (error) {
-      if (error instanceof functions.https.HttpsError) {
+      if (error instanceof HttpsError) {
         throw error;
       }
-      functions.logger.error('Exercise generation error', {
+      logger.error('Exercise generation error', {
         userId: uid,
         error: String(error),
       });
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'internal',
         'Failed to generate exercise',
       );
     }
-  });
+  },
+);
 
 // ============================================================================
 // Internal Helpers

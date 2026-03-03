@@ -4,6 +4,8 @@
  */
 
 import * as admin from 'firebase-admin';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions';
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -18,23 +20,25 @@ export * from './generateSong';
 // Additional Cloud Functions
 // ============================================================================
 
-import * as functions from 'firebase-functions';
-
 /**
  * Cloud Function: Sync Progress
  * Handles bidirectional sync of user progress with conflict resolution
  */
-export const syncProgress = functions
-  .region('us-central1')
-  .https.onCall(async (data: any, context: functions.https.CallableContext) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const syncProgress = onCall(
+  { region: 'us-central1' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
-        'Must be authenticated'
+        'Must be authenticated',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
+    const data = request.data as {
+      lastSyncTimestamp: number;
+      localChanges: Array<Record<string, any>>;
+    };
 
     try {
       const { lastSyncTimestamp, localChanges } = data;
@@ -58,7 +62,7 @@ export const syncProgress = functions
           (sc: Record<string, any>) =>
             sc.type === localChange.type &&
             sc.exerciseId === localChange.exerciseId &&
-            Math.abs(sc.timestamp.toMillis() - localChange.timestamp.toMillis()) < 5000
+            Math.abs(sc.timestamp.toMillis() - localChange.timestamp.toMillis()) < 5000,
         );
 
         if (conflict) {
@@ -91,29 +95,31 @@ export const syncProgress = functions
         synced: true,
       };
     } catch (error) {
-      functions.logger.error('Sync error', { uid, error: String(error) });
-      throw new functions.https.HttpsError(
+      logger.error('Sync error', { uid, error: String(error) });
+      throw new HttpsError(
         'internal',
-        'Sync failed'
+        'Sync failed',
       );
     }
-  });
+  },
+);
 
 /**
  * Cloud Function: Complete Exercise
  * Awards XP, updates progress, checks achievements
  */
-export const completeExercise = functions
-  .region('us-central1')
-  .https.onCall(async (data: any, context: functions.https.CallableContext) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const completeExercise = onCall(
+  { region: 'us-central1' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
-        'Must be authenticated'
+        'Must be authenticated',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
+    const data = request.data as { exerciseId: string; isPerfect: boolean };
     const { exerciseId, isPerfect } = data;
 
     try {
@@ -159,7 +165,7 @@ export const completeExercise = functions
           level: newLevel,
           lastExerciseAt: admin.firestore.FieldValue.serverTimestamp(),
         },
-        { merge: true }
+        { merge: true },
       );
 
       // Log XP change
@@ -198,30 +204,31 @@ export const completeExercise = functions
         achievementsUnlocked: achievements,
       };
     } catch (error) {
-      functions.logger.error('Exercise completion error', {
+      logger.error('Exercise completion error', {
         uid,
         exerciseId,
         error: String(error),
       });
-      throw new functions.https.HttpsError('internal', 'Failed to complete exercise');
+      throw new HttpsError('internal', 'Failed to complete exercise');
     }
-  });
+  },
+);
 
 /**
  * Cloud Function: Get Exercise Recommendations
  * Suggests next exercises based on user performance
  */
-export const getExerciseRecommendations = functions
-  .region('us-central1')
-  .https.onCall(async (_data: any, context: functions.https.CallableContext) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const getExerciseRecommendations = onCall(
+  { region: 'us-central1' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
-        'Must be authenticated'
+        'Must be authenticated',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
 
     try {
       const db = admin.firestore();
@@ -252,7 +259,7 @@ export const getExerciseRecommendations = functions
       }
 
       // Recommend next in sequence
-      const nextLesson = Math.min(progressDocs.docs.length + 1, 30); // Assume 30 exercises total
+      const nextLesson = Math.min(progressDocs.docs.length + 1, 30);
       recommendations.push({
         exerciseId: `lesson_${nextLesson}`,
         reason: 'Ready for the next challenge?',
@@ -260,26 +267,27 @@ export const getExerciseRecommendations = functions
 
       return recommendations;
     } catch (error) {
-      functions.logger.error('Recommendations error', { uid, error: String(error) });
+      logger.error('Recommendations error', { uid, error: String(error) });
       return [];
     }
-  });
+  },
+);
 
 /**
  * Cloud Function: Get Weekly Summary
  * Generates weekly insights and goals
  */
-export const getWeeklySummary = functions
-  .region('us-central1')
-  .https.onCall(async (_data: any, context: functions.https.CallableContext) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const getWeeklySummary = onCall(
+  { region: 'us-central1' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
-        'Must be authenticated'
+        'Must be authenticated',
       );
     }
 
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
 
     try {
       const db = admin.firestore();
@@ -297,11 +305,11 @@ export const getWeeklySummary = functions
       let totalXp = 0;
 
       for (const doc of syncLogs.docs) {
-        const data = doc.data();
-        if (data.type === 'exercise_completed') {
+        const logData = doc.data();
+        if (logData.type === 'exercise_completed') {
           exercisesCompleted++;
-        } else if (data.type === 'xp_earned') {
-          totalXp += data.xpAmount || 0;
+        } else if (logData.type === 'xp_earned') {
+          totalXp += logData.xpAmount || 0;
         }
       }
 
@@ -331,7 +339,7 @@ export const getWeeklySummary = functions
         nextWeekGoals,
       };
     } catch (error) {
-      functions.logger.error('Weekly summary error', { uid, error: String(error) });
+      logger.error('Weekly summary error', { uid, error: String(error) });
       return {
         exercisesCompleted: 0,
         minutesPracticed: 0,
@@ -340,7 +348,8 @@ export const getWeeklySummary = functions
         nextWeekGoals: [],
       };
     }
-  });
+  },
+);
 
 /**
  * Calculate user level from total XP
