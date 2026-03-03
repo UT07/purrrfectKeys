@@ -166,3 +166,48 @@ export function reactionToMood(reaction: BuddyReaction): MascotMood {
   const pose = reactionToPose(reaction);
   return POSE_CONFIGS[pose].mood;
 }
+
+// ─────────────────────────────────────────────────
+// Per-part spring physics configs
+// ─────────────────────────────────────────────────
+
+/** Spring config per SVG layer — controls follow-through physics */
+export const PART_SPRINGS = {
+  body:        { damping: 12, stiffness: 100, mass: 1.0, delay: 0 },
+  head:        { damping: 10, stiffness: 120, mass: 0.8, delay: 30 },
+  ears:        { damping: 6,  stiffness: 80,  mass: 0.3, delay: 80 },
+  tail:        { damping: 5,  stiffness: 60,  mass: 0.4, delay: 120 },
+  face:        { damping: 15, stiffness: 150, mass: 0.5, delay: 0 },
+  accessories: { damping: 4,  stiffness: 40,  mass: 0.6, delay: 150 },
+} as const;
+
+export type PartName = keyof typeof PART_SPRINGS;
+
+/** Squash/stretch keyframes for energetic poses */
+export const SQUASH_STRETCH: Partial<Record<CatPose, Record<string, { scaleX: number; scaleY: number }[]>>> = {
+  celebrate: {
+    body: [
+      { scaleX: 0.9, scaleY: 1.15 },  // stretch up
+      { scaleX: 1.1, scaleY: 0.85 },  // squash down
+      { scaleX: 1.0, scaleY: 1.0 },   // settle
+    ],
+    head: [
+      { scaleX: 1.05, scaleY: 0.95 },
+      { scaleX: 0.95, scaleY: 1.05 },
+      { scaleX: 1.0, scaleY: 1.0 },
+    ],
+  },
+  play: {
+    body: [
+      { scaleX: 0.92, scaleY: 1.1 },
+      { scaleX: 1.08, scaleY: 0.9 },
+      { scaleX: 1.0, scaleY: 1.0 },
+    ],
+  },
+  sad: {
+    body: [
+      { scaleX: 1.05, scaleY: 0.92 },  // slight droop squash
+      { scaleX: 1.0, scaleY: 1.0 },
+    ],
+  },
+};
