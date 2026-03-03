@@ -130,41 +130,69 @@ export function CatEars({
   bodyColor: string;
   innerColor: string;
 }): ReactElement {
+  const innerDark = darkenColor(innerColor, 0.7);
+
   switch (type) {
     case 'rounded':
       return (
         <G>
-          {/* Left ear — wide rounded */}
-          <Path d="M 24 22 Q 16 2 36 16" fill={bodyColor} />
+          {/* Left ear — Scottish Fold-style rounded */}
+          <Path d="M 24 22 Q 16 2 36 16" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
           <Path d="M 26 19 Q 21 8 34 15" fill={innerColor} />
+          {/* Fold line */}
+          <Path d="M 24 16 Q 27 12 32 14" fill="none" stroke={innerDark} strokeWidth="0.5" opacity={0.5} />
+          {/* Inner fur tufts */}
+          <Path d="M 28 18 Q 26 15 29 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
+          <Path d="M 30 17 Q 28 13 31 13" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
+          <Path d="M 26 20 Q 24 17 27 16" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
           {/* Right ear */}
-          <Path d="M 76 22 Q 84 2 64 16" fill={bodyColor} />
+          <Path d="M 76 22 Q 84 2 64 16" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
           <Path d="M 74 19 Q 79 8 66 15" fill={innerColor} />
+          <Path d="M 76 16 Q 73 12 68 14" fill="none" stroke={innerDark} strokeWidth="0.5" opacity={0.5} />
+          <Path d="M 72 18 Q 74 15 71 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
+          <Path d="M 70 17 Q 72 13 69 13" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
+          <Path d="M 74 20 Q 76 17 73 16" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
         </G>
       );
     case 'folded':
       return (
         <G>
-          {/* Left ear — folded forward */}
-          <Path d="M 24 20 Q 18 4 36 14" fill={bodyColor} />
+          {/* Left ear — dramatically folded forward with overlap shadow */}
+          <Path d="M 24 20 Q 18 4 36 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
           <Path d="M 26 17 Q 22 8 34 13" fill={innerColor} />
-          <Path d="M 24 12 Q 22 10 30 12" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          {/* Fold overlap */}
+          <Path d="M 23 13 Q 22 10 30 12" fill={bodyColor} stroke={bodyColor} strokeWidth="1" />
+          {/* Fold shadow */}
+          <Path d="M 24 14 Q 25 11 31 13" fill="#000000" opacity={0.08} />
+          {/* Inner fur */}
+          <Path d="M 28 16 Q 26 14 29 13" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
+          <Path d="M 30 15 Q 28 12 31 12" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.25} />
           {/* Right ear */}
-          <Path d="M 76 20 Q 82 4 64 14" fill={bodyColor} />
+          <Path d="M 76 20 Q 82 4 64 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
           <Path d="M 74 17 Q 78 8 66 13" fill={innerColor} />
-          <Path d="M 76 12 Q 78 10 70 12" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          <Path d="M 77 13 Q 78 10 70 12" fill={bodyColor} stroke={bodyColor} strokeWidth="1" />
+          <Path d="M 76 14 Q 75 11 69 13" fill="#000000" opacity={0.08} />
+          <Path d="M 72 16 Q 74 14 71 13" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
+          <Path d="M 70 15 Q 72 12 69 12" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.25} />
         </G>
       );
     case 'pointed':
     default:
       return (
         <G>
-          {/* Left ear — soft bezier pointed */}
-          <Path d="M 24 20 Q 20 -2 38 14" fill={bodyColor} />
+          {/* Left ear — sharp pointed with backward curve at tip */}
+          <Path d="M 24 20 Q 20 -2 38 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
           <Path d="M 26 17 Q 23 4 36 13" fill={innerColor} />
+          {/* Inner fur tufts */}
+          <Path d="M 29 16 Q 27 12 30 11" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
+          <Path d="M 31 14 Q 28 10 32 9" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
+          <Path d="M 27 18 Q 25 15 28 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
           {/* Right ear */}
-          <Path d="M 76 20 Q 80 -2 62 14" fill={bodyColor} />
+          <Path d="M 76 20 Q 80 -2 62 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
           <Path d="M 74 17 Q 77 4 64 13" fill={innerColor} />
+          <Path d="M 71 16 Q 73 12 70 11" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
+          <Path d="M 69 14 Q 72 10 68 9" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
+          <Path d="M 73 18 Q 75 15 72 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
         </G>
       );
   }
