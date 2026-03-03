@@ -303,6 +303,8 @@ export function handleFunctionError(error: any): FunctionError {
 const functionCallCounts = new Map<string, number[]>();
 const RATE_LIMIT_CONFIG = {
   generateCoachFeedback: { maxPerHour: 20, maxPerDay: 100 },
+  generateExercise: { maxPerHour: 15, maxPerDay: 50 },
+  generateSong: { maxPerHour: 5, maxPerDay: 20 },
   syncProgress: { maxPerHour: 30, maxPerDay: 200 },
 };
 

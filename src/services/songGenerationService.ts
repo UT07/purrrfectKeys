@@ -19,6 +19,7 @@ import {
 } from '@/core/songs/songAssembler';
 import type { Song, SongRequestParams } from '@/core/songs/songTypes';
 import { saveSongToFirestore, getUserSongRequestCount, incrementSongRequestCount } from './songService';
+import { checkRateLimit } from './firebase/functions';
 import { withTimeout } from '../utils/withTimeout';
 import { logger } from '../utils/logger';
 
@@ -41,6 +42,13 @@ export async function generateAndSaveSong(
   params: SongRequestParams,
   uid: string,
 ): Promise<Song | null> {
+  // Client-side rate limit (lightweight first gate before Firestore check)
+  const rateCheck = checkRateLimit('generateSong');
+  if (!rateCheck.allowed) {
+    logger.warn('[SongGen] Rate limited:', rateCheck.reason);
+    return null;
+  }
+
   // Try Cloud Function first
   try {
     const fn = httpsCallable<SongRequestParams, GeneratedSongABC>(functions, 'generateSong', { timeout: 15000 });

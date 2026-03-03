@@ -10,6 +10,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase/config';
 import type { GenerationHints } from '../core/curriculum/SkillTree';
+import { checkRateLimit } from './firebase/functions';
 import { withTimeout } from '../utils/withTimeout';
 import { logger } from '../utils/logger';
 
@@ -329,6 +330,13 @@ export async function generateChallenge(profile: {
 // ============================================================================
 
 export async function generateExercise(params: GenerationParams): Promise<AIExercise | null> {
+  // Client-side rate limit (prevents runaway API costs)
+  const rateCheck = checkRateLimit('generateExercise');
+  if (!rateCheck.allowed) {
+    logger.warn('[GeminiExercise] Rate limited:', rateCheck.reason);
+    return null;
+  }
+
   // Try Cloud Function first (15s timeout — allows for cold starts; undeployed functions hang for 70s by default)
   try {
     const fn = httpsCallable<GenerationParams, AIExercise>(functions, 'generateExercise', { timeout: 15000 });

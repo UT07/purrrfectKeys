@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
 import { getOfflineCoachingText } from '../../content/offlineCoachingTemplates';
+import { checkRateLimit } from '../firebase/functions';
 import { withTimeout } from '../../utils/withTimeout';
 import { logger } from '../../utils/logger';
 
@@ -269,6 +270,13 @@ export class GeminiCoach {
     const cached = await this.getCachedResponse(cacheKey);
     if (cached) {
       return cached;
+    }
+
+    // Client-side rate limit (prevents runaway API costs)
+    const rateCheck = checkRateLimit('generateCoachFeedback');
+    if (!rateCheck.allowed) {
+      logger.warn('[GeminiCoach] Rate limited:', rateCheck.reason);
+      return this.getFallbackFeedback(request);
     }
 
     // Try Cloud Function first
