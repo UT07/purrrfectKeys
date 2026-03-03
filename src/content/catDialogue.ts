@@ -1229,6 +1229,107 @@ const CODA: CatMessages = {
   ],
 };
 
+const SALSA: CatMessages = {
+  exercise_start: [
+    'Listen up — I\'ve coached hundreds of cats through this exact piece. You\'re ready.',
+    'Real talk, this one\'s a good challenge. I\'ve seen it trip up the best, but I\'ve also seen cats surprise themselves.',
+    'Alright, take it from me — loosen those paws, find your center, and let\'s get to work.',
+    'Between us, I had to play this one about fifty times before it clicked for me. You\'re gonna do it faster.',
+    'I\'ve seen it all on this stage, and right now? I see someone who\'s about to nail this.',
+  ],
+  exercise_mid_great: [
+    'There it is! That\'s the sound I\'ve been coaching you toward. Trust me, that was clean.',
+    'Listen, I don\'t hand out compliments for free. That was genuinely good.',
+    'Real talk — I just got chills. And I\'ve heard thousands of run-throughs.',
+    'Now THAT\'s what I mean when I say feel the music. You\'re getting it.',
+    'Between us? That passage right there would\'ve made my old teacher proud.',
+  ],
+  exercise_mid_miss: [
+    'Shake it off. I\'ve seen cats stumble on that exact spot and come back swinging.',
+    'Real talk — that note trips up everyone. Trust me on this, just breathe and keep moving.',
+    'Listen, I didn\'t get where I am by nailing every note the first time. Neither will you. Move on.',
+    'I\'ve seen worse, believe me. Way worse. You\'re still in this.',
+    'Take it from me, the cats who recover fastest are the ones who go the furthest. Keep playing.',
+  ],
+  exercise_complete_pass: [
+    'Listen, I\'ve coached hundreds of cats. That? That was special. Trust me.',
+    'Real talk — you just played that like someone who\'s been at this for years. I\'m impressed.',
+    'Between us, I had my doubts at the start. You just proved me wrong, and I love that.',
+    'Take it from me, performances like that don\'t come from luck. That was preparation meeting talent.',
+    'I\'ve seen it all on this stage, and what you just did? That\'s the real deal.',
+  ],
+  exercise_complete_fail: [
+    'Real talk — that could\'ve been better. But I\'ve seen worse, and those cats went on to be great.',
+    'Listen, every performer I\'ve ever coached had bad days. This is just one session, not your whole story.',
+    'Trust me on this — the cats who struggle hardest here are usually the ones who peak the highest.',
+    'I\'m not gonna sugarcoat it. That was rough. But between us? I still believe in you.',
+    'Take it from me, I bombed my first hundred performances. You\'re already ahead of where I was.',
+  ],
+  level_up: [
+    'Now that\'s what I like to see. I\'ve been watching you grow, and this level-up was earned.',
+    'Real talk — I don\'t say this to every cat, but you\'re climbing faster than most I\'ve coached.',
+    'Listen up, leveling up isn\'t just a number. It means your ears are sharper and your paws are steadier.',
+    'Between us, I already saw this coming. You\'ve had that next-level energy for a while now.',
+    'Take it from me, the view gets better from up here. And you deserve to see it.',
+  ],
+  daily_login: [
+    'You\'re back. Good. Trust me, consistency is what separates the good from the great.',
+    'Listen, the fact that you showed up again says more than any score ever will.',
+    'Real talk — I\'ve seen cats disappear after one tough session. You\'re not one of those cats.',
+    'Between us, I always look forward to seeing who walks through that door. Glad it\'s you.',
+    'Take it from me, the stage rewards the ones who keep coming back. Let\'s make today count.',
+  ],
+  idle: [
+    'Hey — I\'m still here, you know. These keys aren\'t gonna play themselves.',
+    'Real talk, I didn\'t clear my schedule to watch you stare at the screen.',
+    'Listen up — every second you\'re not playing is a second someone else is getting better.',
+    'Trust me on this, the piano gets cold if you leave it too long. Let\'s warm it up.',
+    'Between us, I\'ve seen that glazed-over look before. Snap out of it and play something.',
+  ],
+  ai_exercise_intro: [
+    'Listen up — this one was built specifically for where you are right now. Trust the process.',
+    'Real talk, I helped design exercises like this. It targets exactly what you need to work on.',
+    'I\'ve seen it all, and the cats who grow fastest are the ones who embrace custom challenges.',
+    'Between us, this AI stuff is pretty sharp. But it still needs a great student. That\'s you.',
+    'Take it from me — personalized practice is how the pros train. You\'re getting the VIP treatment.',
+  ],
+  achievement_unlock: [
+    'Now we\'re talking. I\'ve coached a lot of cats, and not all of them earn that badge.',
+    'Real talk — achievements like this don\'t just happen. You put in the work, and it shows.',
+    'Trust me, I know what it takes to unlock that. You should be proud.',
+    'Between us, I might keep a little wall of fame for my best students. You just made it.',
+    'Listen, I don\'t get impressed easily anymore. But that achievement? That\'s impressive.',
+  ],
+  streak_milestone: [
+    'Day after day, you keep showing up. Trust me, that kind of discipline is rare.',
+    'Real talk — streaks don\'t lie. This tells me you\'re serious about getting better.',
+    'I\'ve seen it all, and the cats with the longest streaks always end up on the biggest stages.',
+    'Listen up — maintaining a streak like that takes grit. I respect grit.',
+    'Between us, I broke my own practice streak more times than I can count. You\'re already beating me.',
+  ],
+  demoOffer: [
+    'Watch closely — I\'m gonna run through this so you can see how it\'s supposed to feel.',
+    'Real talk, watching a demo isn\'t weakness. It\'s strategy. Trust me on this.',
+    'Listen up — I played this piece a hundred times on stage. Let me show you the line.',
+    'Between us, even the best performers study before they play. Eyes on the keys.',
+    'Take it from me — the pros always watch film before the game. This is your film session.',
+  ],
+  demoComplete: [
+    'Alright, you saw how it\'s done. Now show me what you\'ve got.',
+    'That\'s the roadmap. Trust me, your version is gonna have its own flavor.',
+    'Real talk — now that you\'ve seen it, I expect you to bring something the demo didn\'t.',
+    'Listen, I gave you the blueprint. The performance? That\'s all you.',
+    'Between us, I always played it a little differently than the demo too. Make it yours.',
+  ],
+  ghostNotesFarewell: [
+    'The training wheels are off. Trust me, you don\'t need them anymore.',
+    'Real talk — I pulled the guide notes because you\'re ready. I don\'t do that for just anyone.',
+    'Listen up, flying solo is where the real growth happens. I\'ve seen it a thousand times.',
+    'Between us, the moment the guides come off is always my favorite. This is where you become a player.',
+    'Take it from me — every great performer I\'ve coached had this exact moment. Welcome to the other side.',
+  ],
+};
+
 const ALL_DIALOGUES: Record<string, CatMessages> = {
   'mini-meowww': MINI_MEOWWW,
   'jazzy': JAZZY,
@@ -1242,28 +1343,319 @@ const ALL_DIALOGUES: Record<string, CatMessages> = {
   'bella': BELLA,
   'sable': SABLE,
   'coda': CODA,
+  'salsa': SALSA,
 };
 
 const CONDITION_OVERRIDES: Record<string, Partial<Record<DialogueTrigger, Partial<Record<DialogueCondition, string[]>>>>> = {
   'mini-meowww': {
     exercise_complete_pass: {
       score_high: [
-        'OH MY GOSH!! PERFECT SCORE!! I\'m gonna EXPLODE!!',
-        'Three stars!! THREE STARS!! This is the best!!',
-        'You are LITERALLY the best pianist EVER!!',
+        'OH MY GOSH!! PERFECT SCORE!! I\'m literally gonna EXPLODE into confetti!!',
+        'THREE STARS?! THREE?! I can\'t— I CAN\'T— this is the GREATEST moment of my LIFE!!',
+        'You are LITERALLY the most AMAZING pianist in the ENTIRE UNIVERSE and I\'m NOT exaggerating!!',
+      ],
+      score_low: [
+        'Okay okay so it wasn\'t PERFECT but— ooh ooh you know what?? You still TRIED and that\'s HUGE!!',
+        'Wait wait don\'t be sad!! I messed up like a BILLION times before I got good!! You\'re gonna get there!!',
+        'Sooo that was a little rough BUT— I still believe in you SO MUCH!! Let\'s try again!!',
       ],
       first_try: [
-        'First try?! FIRST TRY?! You\'re a genius!!',
-        'Nailed it on the first go!! Incredible!!',
+        'WAIT— first try?! FIRST TRY?! My whiskers are LITERALLY vibrating right now!!',
+        'You did that on your VERY FIRST ATTEMPT and I\'m— I\'m SCREAMING!! INCREDIBLE!!',
+        'OH OH OH first try!! Do you KNOW how rare that is?! You\'re a PRODIGY!!',
+      ],
+      retry: [
+        'You came BACK!! Ooh ooh I KNEW you would!! This time it\'s gonna be even MORE amazing!!',
+        'OKAY round two— wait round three?? Doesn\'t MATTER because every try is a NEW ADVENTURE!!',
+        'The fact that you\'re trying AGAIN makes me sooo HAPPY I could CRY!! Let\'s DO this!!',
+      ],
+    },
+  },
+  'jazzy': {
+    exercise_complete_pass: {
+      score_high: [
+        'Now that\'s a headliner performance, baby. Pure silk from top to bottom.',
+        'I\'ve heard a lot of cats play, and that right there was a standing ovation set.',
+        'Smooth, clean, and effortless. That\'s how the greats make it look, baby.',
+      ],
+      score_low: [
+        'The groove was a little rough, baby. But even Bird had off nights at the club.',
+        'That\'s jazz, cool cat. Sometimes the notes scatter. You\'ll pull them together next set.',
+        'Not your smoothest take, but every stumble teaches you where the pocket really lives, baby.',
+      ],
+      first_try: [
+        'First take and you nailed it? Baby, that\'s a rare kind of cool.',
+        'One shot, one kill. You walked into the session and owned it, cool cat.',
+        'Sight-reading like a studio session pro. I can dig that, baby.',
+      ],
+      retry: [
+        'Back for another take? That\'s the studio mentality, baby. The best cut is always the next one.',
+        'Legends don\'t quit after one run-through, cool cat. Let\'s find that perfect groove.',
+        'Every great album has outtakes, baby. This is just you finding the definitive version.',
+      ],
+    },
+  },
+  'luna': {
+    exercise_complete_pass: {
+      score_high: [
+        'The stars aligned perfectly for that performance... truly celestial',
+        'That was like watching a comet trace its path across the night sky... flawless',
+        'The cosmos rarely produces something so precise... the universe noticed',
+      ],
+      score_low: [
+        'Even the moon hides behind clouds sometimes... it always emerges again',
+        'The stars see your effort, even through the mist... patience will guide you',
+        'A clouded sky doesn\'t mean the stars have gone... they are waiting for you',
+      ],
+      first_try: [
+        'On your very first orbit... the constellations must have whispered the way',
+        'First attempt, and already the sky opens for you... remarkable',
+        'Some souls simply arrive knowing the melody... the stars chose well',
+      ],
+      retry: [
+        'Returning to the same sky with wiser eyes... that is the way of the cosmos',
+        'The moon completes its cycle again and again... each pass reveals new light',
+        'Persistence is its own kind of starlight... quiet, steady, and eventually brilliant',
+      ],
+    },
+  },
+  'chonky-monke': {
+    exercise_complete_pass: {
+      score_high: [
+        'BRO WHAT?? ABSOLUTE UNIT PERFORMANCE!! No cap that was LEGENDARY!!',
+        'SHEEEESH!! You just DEMOLISHED that!! Built DIFFERENT fr fr!!',
+        'Bruh... that was so clean I gotta lie down. GOATED performance no cap!!',
+      ],
+      score_low: [
+        'Ayo it\'s chill bruh, even CHONKY bois trip sometimes. We go again.',
+        'Bruh that was kinda rough ngl BUT we don\'t give up in this dojo. NEVER.',
+        'Listen fam, L\'s are just XP for the soul. No cap, you\'ll bounce back HARDER.',
+      ],
+      first_try: [
+        'FIRST TRY?! BRO?! That\'s BUILT DIFFERENT energy right there!! NO CAP!!',
+        'Bruh you just one-shotted that like a SPEEDRUN!! Absolutely CRACKED!!',
+        'First attempt W?? Fam you are GOATED and I will NOT be taking questions!!',
+      ],
+      retry: [
+        'ROUND TWO BABY!! The GRIND never stops for us absolute UNITS!!',
+        'Back at it again bruh?? That\'s that SIGMA mentality right there!! RESPECT!!',
+        'We don\'t quit fam. We CHONK harder. Let\'s GET this W!!',
+      ],
+    },
+  },
+  'biscuit': {
+    exercise_complete_pass: {
+      score_high: [
+        'Oh sweetie, that was absolutely scrumptious! A five-star recipe of pure talent!',
+        'Well butter my biscuits, that was the most perfectly baked performance I\'ve ever tasted!',
+        'Sugar, that was chef\'s kiss perfection! Like a souffl\u00e9 that rose just right!',
+      ],
+      score_low: [
+        'Oh honey, sometimes the cake falls flat. But you know what? We just add more frosting and try again.',
+        'Sweetie, even the best bakers burn a batch now and then. The next one will be golden.',
+        'Sugar, that was a little undercooked, but every good recipe takes a few tries to perfect.',
+      ],
+      first_try: [
+        'First try, sweetie?! That\'s like pulling a perfect souffl\u00e9 on your first bake! Delicious!',
+        'Oh honey, nailing it on the first attempt is rarer than a perfect macaron. Well done, sugar!',
+        'First batch and it came out golden brown! You\'re a natural in this kitchen, sweetie!',
+      ],
+      retry: [
+        'Back for seconds, sugar? That\'s my favorite kind of student — always hungry for more!',
+        'Oh sweetie, the best recipes are the ones you make over and over until they\'re just right.',
+        'Another round in the kitchen, honey? Every attempt adds a little more flavor to your playing!',
+      ],
+    },
+  },
+  'ballymakawww': {
+    exercise_complete_pass: {
+      score_high: [
+        'Jaysus, that was fierce altogether! Best bit of playing I\'ve heard since the fleadh!',
+        'Holy Mother, what a performance! The whole parish would be up on their feet for that craic!',
+        'Ah would you stop, that was absolutely brilliant! Fierce talent, so it is!',
+      ],
+      score_low: [
+        'Ah sure look, it wasn\'t the best craic but we\'ve all had sessions like that, so we have.',
+        'Don\'t be worrying now, even the finest fiddlers in Galway have off nights. You\'ll be grand.',
+        'Sure it\'s only a bit of a wobble. The craic will be mighty again next time, I promise ye.',
+      ],
+      first_try: [
+        'First go and you nailed it?! Fierce stuff altogether! Are ye sure you\'re not from Doolin?!',
+        'Ah g\'wan outta that — first try! The craic is strong with this one, so it is!',
+        'Well blow me down, first attempt! You\'ve got the gift, and that\'s no word of a lie!',
+      ],
+      retry: [
+        'Back for another round? Sure that\'s the spirit! The best sessions go on till dawn!',
+        'Ah good on ye for coming back! In Ireland we say the road to mastery has a few potholes!',
+        'Another go at it? Fierce determination, so it is! We\'ll make a proper musician of ye yet!',
+      ],
+    },
+  },
+  'aria': {
+    exercise_complete_pass: {
+      score_high: [
+        'BRAVISSIMO! Magnifico! That was worthy of La Scala itself, darling!',
+        'Che bellezza! A performance of such precision — the maestro would weep with joy!',
+        'Perfetto! Absolutely perfetto! The stage was made for a talent like yours, caro!',
+      ],
+      score_low: [
+        'Ah, caro mio, even the greatest divas have a difficult aria. Tomorrow the voice will soar again.',
+        'Non preoccuparti, darling. Every artist stumbles before the grande performance. It is the way.',
+        'The stage is forgiving, caro. She has seen a thousand imperfect rehearsals become perfect premieres.',
+      ],
+      first_try: [
+        'Prima volta and already perfetto?! Incredibile! You have the soul of a born performer!',
+        'First attempt, caro, and you sang it like you\'ve performed it a hundred times! BRAVISSIMO!',
+        'Mamma mia, on the very first try! The stage is already yours, darling!',
+      ],
+      retry: [
+        'Encore, encore! The true artist always returns to refine the performance, caro!',
+        'Ah, you come back to the stage! Bellissimo — persistence is the mark of a real artista!',
+        'Another rehearsal, darling? The greatest operas were perfected through many, many run-throughs!',
       ],
     },
   },
   'tempo': {
     exercise_complete_pass: {
       score_high: [
-        'Score: 95%+. Exceptional. Top percentile performance.',
-        'Accuracy: maximum. No deviations detected.',
-        'Perfect execution. Logging as reference performance.',
+        'Score: 95%+. Exceptional. Top percentile performance among all tracked users.',
+        'Accuracy: maximum. Zero deviations detected. Logging as reference performance.',
+        'All metrics in the green. Timing precision: elite tier. Personal best: confirmed.',
+      ],
+      score_low: [
+        'Score below optimal threshold. However, data shows improvement trajectory is still positive.',
+        'Performance metrics: below baseline. Statistically, 73% of users improve by the third attempt.',
+        'Results logged. Current score is an outlier relative to your trend line. Recommend retry.',
+      ],
+      first_try: [
+        'First attempt: passed. Success rate on first tries across all users is 34%. You beat the curve.',
+        'Initial run: above threshold. No prior data needed. Impressive cold-start performance.',
+        'Attempt count: 1. Result: pass. Statistically significant. Personal best by default.',
+      ],
+      retry: [
+        'Attempt number incremented. Historical data shows each retry improves scores by 8-12%.',
+        'Multiple attempts logged. Pattern recognition improves with repetition. This is optimal behavior.',
+        'Retry detected. Running delta analysis against previous attempt. Improvement vector: positive.',
+      ],
+    },
+  },
+  'shibu': {
+    exercise_complete_pass: {
+      score_high: [
+        'Still water, clear reflection. Your playing has found its true depth.',
+        'The bamboo bends but does not break. Your precision is like morning dew on a blade of grass.',
+        'When the student is ready, the music flows without effort. You were ready.',
+      ],
+      score_low: [
+        'The river does not judge the stone it flows around. Be gentle with yourself.',
+        'A garden grows at its own pace. Not every season brings blossoms, and that is natural.',
+        'Even the mountain was once a pebble. Small steps are still the path.',
+      ],
+      first_try: [
+        'One breath. One attempt. Clarity from the very first note. Remarkable.',
+        'The arrow found its mark on the first draw. Your focus was complete.',
+        'No hesitation, no wasted motion. The first attempt held the whole truth.',
+      ],
+      retry: [
+        'Returning to the same stream with new eyes. Each visit reveals a different reflection.',
+        'The potter shapes the clay again. Not because it was wrong, but because there is always more.',
+        'To try again is to say the journey matters more than the destination. Wisdom.',
+      ],
+    },
+  },
+  'bella': {
+    exercise_complete_pass: {
+      score_high: [
+        'Well, I must say, that was quite the distinguished performance, darling. Absolutely top drawer.',
+        'Exquisite, darling. The kind of playing one expects at a proper recital. Quite impressive.',
+        'Impeccable taste and execution, darling. One might say that was positively regal.',
+      ],
+      score_low: [
+        'Well, darling, that was rather a bumpy ride, wasn\'t it? No matter, we shall press on with grace.',
+        'Not quite your finest hour, darling. But even the most refined pianists have the odd rough patch.',
+        'A touch rough around the edges, I must say. But one mustn\'t dwell, darling. Onwards.',
+      ],
+      first_try: [
+        'First attempt, darling, and quite splendid! One might think you\'d been rehearsing in secret.',
+        'Well, colour me impressed. Nailing it on the first go is rather distinguished, darling.',
+        'Quite remarkable, darling. First try success shows genuine natural refinement.',
+      ],
+      retry: [
+        'Back for another go, darling? How wonderfully dedicated. Persistence is ever so admirable.',
+        'Returning to refine one\'s craft is the mark of a proper musician, darling. Carry on.',
+        'Another attempt? Quite right, darling. The pursuit of excellence is never a waste of time.',
+      ],
+    },
+  },
+  'sable': {
+    exercise_complete_pass: {
+      score_high: [
+        'Interesting... that was actually flawless. I suppose even I have to admit that was impressive.',
+        'Hm. Not bad at all. In fact, that might be the cleanest thing I\'ve heard all week.',
+        'Well well... near-perfect execution. I\'d critique it, but there\'s nothing to critique.',
+      ],
+      score_low: [
+        'Interesting... that wasn\'t your best work. But then, the best work rarely comes easy.',
+        'Hm. A bit rough. But I\'ve seen enough to know this isn\'t your ceiling.',
+        'Not bad isn\'t the right phrase. Not great either. Somewhere in the middle. You\'ll climb out.',
+      ],
+      first_try: [
+        'First attempt... and you passed. Interesting. Most don\'t manage that.',
+        'Hm. On the first try, no less. I wasn\'t expecting that. Consider me mildly surprised.',
+        'Well, that was efficient. First attempt, clean pass. Not bad at all.',
+      ],
+      retry: [
+        'Back again... interesting. The ones who return are usually the ones worth watching.',
+        'Another attempt. Hm. Stubbornness or determination? With you, I think the latter.',
+        'You\'re not the type to leave things unfinished, are you? Interesting.',
+      ],
+    },
+  },
+  'coda': {
+    exercise_complete_pass: {
+      score_high: [
+        'Analysis: score exceeds 95th percentile. Classification: exceptional output. Recommendation: proceed to next challenge.',
+        'Performance audit complete: zero critical errors detected. Assessment: reference-grade execution.',
+        'Metrics summary: accuracy optimal, timing precise, completion full. Status: peak performance logged.',
+      ],
+      score_low: [
+        'Analysis: score below expected threshold. Root cause: likely timing drift. Recommendation: focused retry.',
+        'Performance audit: multiple deviations logged. Assessment: insufficient, but recoverable. Retry advised.',
+        'Diagnostic: accuracy below baseline parameters. Note: this data point does not define your trajectory.',
+      ],
+      first_try: [
+        'Attempt index: 0. Result: pass. Analysis: cold-start success indicates strong pattern recognition.',
+        'First-run pass confirmed. No prior calibration data needed. Classification: naturally proficient.',
+        'Initial execution: successful. Note: first-try passes correlate with accelerated learning curves.',
+      ],
+      retry: [
+        'Iteration count: incremented. Analysis: each cycle refines muscle memory by measurable margins.',
+        'Retry logged. Historical data shows convergence toward optimal performance. Continue iterating.',
+        'New attempt initiated. Delta from previous run: pending. Prediction: improvement probable.',
+      ],
+    },
+  },
+  'salsa': {
+    exercise_complete_pass: {
+      score_high: [
+        'Listen, I\'ve coached hundreds of cats. That right there? That was a masterclass. Trust me.',
+        'Real talk — I don\'t throw around words like \'perfect\' lightly. But that? Perfect.',
+        'Between us, I just saw the kind of performance that made me fall in love with coaching.',
+      ],
+      score_low: [
+        'Real talk — that was tough to watch. But I\'ve seen it all, and the cats who struggle here always come back stronger.',
+        'Listen, I\'m not gonna lie to you. That needs work. But trust me on this — I\'ve seen worse become great.',
+        'Between us, my own early performances were rougher than that. Take it from me, this is just the beginning.',
+      ],
+      first_try: [
+        'First try and you passed? Take it from me, that\'s rarer than you think. I\'m impressed.',
+        'Listen up — nailing it on the first attempt? I\'ve coached hundreds of cats and only a handful pull that off.',
+        'Real talk, first-try success tells me something about you. You\'ve got instincts. Trust them.',
+      ],
+      retry: [
+        'You came back. Good. Trust me on this — the cats who return are the ones who make it.',
+        'Real talk — I respect the retry more than the first try. It takes guts to face the same challenge again.',
+        'Between us, every great performer I\'ve ever coached was someone who refused to walk away. Keep going.',
       ],
     },
   },
