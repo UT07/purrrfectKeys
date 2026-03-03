@@ -175,7 +175,7 @@ function renderComposable(
       {/* Pattern overlay (clip to body) — use catId prefix for unique ClipPath */}
       <Defs>
         <ClipPath id={`bodyClip-${catId}`}>
-          <Circle cx="50" cy="35" r="32" />
+          <Path d="M 50 3 C 70 3 82 14 82 30 C 82 46 70 60 58 62 C 54 63 46 63 42 62 C 30 60 18 46 18 30 C 18 14 30 3 50 3 Z" />
           <Ellipse cx="50" cy="80" rx="18" ry="14" />
         </ClipPath>
       </Defs>

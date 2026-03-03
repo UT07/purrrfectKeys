@@ -60,15 +60,20 @@ export function CatHead({
   gradientFill?: string;
 }): ReactElement {
   const fill = gradientFill ?? color;
+
+  // Organic chibi head — wider at cheeks, flattened forehead, tapered chin.
+  // Approximate bounding box: x=18..82, y=3..62 (center ~50,35, ~same as old r=32 circle).
+  // Without cheek fluff: smooth rounded shape
+  // With cheek fluff: wider bumpy cheeks (extends to x=14..86)
+  const headPath = cheekFluff
+    ? // Cheek-fluff variant: pronounced round cheeks bulging outward
+      'M 50 3 C 68 3 82 10 82 25 C 82 30 84 34 86 38 C 86 44 82 46 78 44 C 76 50 68 58 58 60 C 54 61 46 61 42 60 C 32 58 24 50 22 44 C 18 46 14 44 14 38 C 16 34 18 30 18 25 C 18 10 32 3 50 3 Z'
+    : // Standard: clean rounded chibi skull
+      'M 50 3 C 70 3 82 14 82 30 C 82 46 70 60 58 62 C 54 63 46 63 42 62 C 30 60 18 46 18 30 C 18 14 30 3 50 3 Z';
+
   return (
     <G>
-      <Circle cx="50" cy="35" r="32" fill={fill} />
-      {cheekFluff && (
-        <G>
-          <Circle cx="20" cy="42" r="7" fill={fill} />
-          <Circle cx="80" cy="42" r="7" fill={fill} />
-        </G>
-      )}
+      <Path d={headPath} fill={fill} />
     </G>
   );
 }

@@ -51,16 +51,16 @@ describe('CatBody', () => {
 });
 
 describe('CatHead', () => {
-  it('renders with r=32 for anime chibi proportions', () => {
+  it('renders organic chibi head path', () => {
     const { CatHead } = require('../svg/CatParts');
     const { UNSAFE_getAllByType } = render(
       <SvgWrap><CatHead color="#FF0000" /></SvgWrap>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
-    const circles = allViews.filter(
-      (v: any) => v.props.accessibilityLabel === 'Circle' && v.props.r === '32'
+    const paths = allViews.filter(
+      (v: any) => v.props.accessibilityLabel === 'Path' && v.props.fill === '#FF0000' && v.props.d?.startsWith('M 50 3')
     );
-    expect(circles.length).toBeGreaterThanOrEqual(1);
+    expect(paths.length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -229,11 +229,11 @@ describe('CatHead with gradient', () => {
         <CatHead color="#FF0000" gradientFill="url(#test-head)" />
       </SvgWrap>
     );
-    const circles = UNSAFE_getAllByType(require('react-native').View).filter(
-      (v: any) => v.props.accessibilityLabel === 'Circle'
+    const paths = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    const headCircle = circles.find((c: any) => c.props.fill === 'url(#test-head)');
-    expect(headCircle).toBeTruthy();
+    const headPath = paths.find((p: any) => p.props.fill === 'url(#test-head)');
+    expect(headPath).toBeTruthy();
   });
 
   it('falls back to color when no gradientFill', () => {
@@ -242,11 +242,11 @@ describe('CatHead with gradient', () => {
         <CatHead color="#FF0000" />
       </SvgWrap>
     );
-    const circles = UNSAFE_getAllByType(require('react-native').View).filter(
-      (v: any) => v.props.accessibilityLabel === 'Circle'
+    const paths = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
     );
-    const headCircle = circles.find((c: any) => c.props.fill === '#FF0000');
-    expect(headCircle).toBeTruthy();
+    const headPath = paths.find((p: any) => p.props.fill === '#FF0000');
+    expect(headPath).toBeTruthy();
   });
 });
 
