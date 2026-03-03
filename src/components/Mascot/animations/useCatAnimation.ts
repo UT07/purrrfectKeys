@@ -118,11 +118,11 @@ export function useCatAnimation(
   }
 
   return {
-    bodyProps,
-    headProps,
-    earProps,
-    tailProps,
-    faceProps,
-    accessoryProps,
+    bodyProps: bodyProps as PartAnimatedProps,
+    headProps: headProps as PartAnimatedProps,
+    earProps: earProps as PartAnimatedProps,
+    tailProps: tailProps as PartAnimatedProps,
+    faceProps: faceProps as PartAnimatedProps,
+    accessoryProps: accessoryProps as PartAnimatedProps,
   };
 }

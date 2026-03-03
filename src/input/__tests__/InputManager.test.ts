@@ -140,14 +140,14 @@ describe('InputManager', () => {
       manager.dispose();
     });
 
-    it('selects mic in auto mode when no MIDI and mic permission already granted', async () => {
-      // Auto mode tries MIDI > Mic (if already permitted) > Touch
+    it('selects touch in auto mode even when mic permission is granted (auto never tries mic)', async () => {
+      // Auto mode: MIDI > Touch. Mic requires explicit 'mic' setting.
       mockMicPermissionGranted = true;
 
       const manager = new InputManager({ preferred: 'auto' });
       await manager.initialize();
 
-      expect(manager.activeMethod).toBe('mic');
+      expect(manager.activeMethod).toBe('touch');
 
       manager.dispose();
     });

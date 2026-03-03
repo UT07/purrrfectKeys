@@ -15,8 +15,6 @@ import {
   CatWhiskers,
   CatTail,
   CatBlush,
-  CatHeadphones,
-  CatPianoCollar,
   CatPaws,
   CatHairTuft,
 } from './svg/CatParts';

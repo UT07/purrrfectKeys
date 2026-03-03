@@ -229,12 +229,8 @@ describe('KeysieSvg composable rendering', () => {
         accentColor={CAT_CHARACTERS[0].color}
       />
     );
-    const json = JSON.stringify(tree.toJSON());
-    // CatPianoCollar renders Rect elements at y="58" with alternating white/black fills
-    // In composable path, these should NOT be present (headphones/collar are now accessories)
-    // Legacy path has Rect at x="35" y="58" — composable should not
-    // Note: we can't fully test absence of headphones without SVG mocks,
-    // but we verify the tree renders successfully without them
+    // Composable path should not include legacy headphones/piano collar.
+    // Verify the tree renders successfully without them.
     expect(tree.getByTestId('keysie-svg')).toBeTruthy();
   });
 

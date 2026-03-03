@@ -145,7 +145,7 @@ function Trilby({ color }: { color: string }): ReactElement {
   );
 }
 
-function PearlNecklace({ _color }: { _color: string }): ReactElement {
+function PearlNecklace(_: { _color: string }): ReactElement {
   return (
     <G>
       <Circle cx="40" cy="64" r="1.5" fill="#F5F5DC" stroke="#E8E8D0" strokeWidth="0.3" />
@@ -158,7 +158,7 @@ function PearlNecklace({ _color }: { _color: string }): ReactElement {
   );
 }
 
-function GoldChain({ _color }: { _color: string }): ReactElement {
+function GoldChain(_: { _color: string }): ReactElement {
   return (
     <G>
       <Path d="M 38 64 Q 50 60 62 64" stroke="#FFD700" strokeWidth="1.5" fill="none" />
@@ -167,7 +167,7 @@ function GoldChain({ _color }: { _color: string }): ReactElement {
   );
 }
 
-function GoldenHeadphones({ _color }: { _color: string }): ReactElement {
+function GoldenHeadphones(_: { _color: string }): ReactElement {
   return (
     <G>
       <Path d="M 20 28 Q 50 10 80 28" stroke="#FFD700" strokeWidth="3" fill="none" strokeLinecap="round" />

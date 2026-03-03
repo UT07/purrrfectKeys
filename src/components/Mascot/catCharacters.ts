@@ -466,8 +466,39 @@ export const SALSA_COACH: CoachCharacter = {
   ],
 };
 
-/** Get a cat character by its ID */
+/** Salsa adapted as CatCharacter for rendering (lazy singleton) */
+let _salsaAsCat: CatCharacter | undefined;
+function getSalsaAsCat(): CatCharacter {
+  if (!_salsaAsCat) {
+    const noExtras = { accessories: [] as string[], hasGlow: false, hasParticles: false, hasCrown: false, auraIntensity: 0 };
+    _salsaAsCat = {
+      id: SALSA_COACH.id,
+      name: SALSA_COACH.name,
+      emoji: SALSA_COACH.emoji,
+      backstory: '',
+      musicSkill: 'Your Coach',
+      personality: SALSA_COACH.personality,
+      color: SALSA_COACH.color,
+      unlockLevel: 0,
+      visuals: SALSA_COACH.visuals,
+      starterCat: false,
+      gemCost: null,
+      legendary: false,
+      evolutionVisuals: {
+        baby: noExtras,
+        teen: noExtras,
+        adult: { ...noExtras, accessories: ['headphones'] },
+        master: { ...noExtras, accessories: ['headphones', 'star-badge'], hasGlow: true, auraIntensity: 0.5 },
+      },
+      abilities: [],
+    };
+  }
+  return _salsaAsCat;
+}
+
+/** Get a cat character by its ID (also checks Salsa NPC) */
 export function getCatById(id: string): CatCharacter | undefined {
+  if (id === SALSA_COACH.id) return getSalsaAsCat();
   return CAT_CHARACTERS.find((cat) => cat.id === id);
 }
 

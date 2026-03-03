@@ -2,7 +2,7 @@
  * SalsaCoach — Dedicated coach character component.
  *
  * Renders Salsa (the grey cat with green eyes — your coach) with:
- * - 3D rendering via Cat3DCanvas (SVG fallback if GL fails)
+ * - 2D SVG rendering via CatAvatar
  * - Context-aware mood (time of day, user progress)
  * - Optional speech bubble with catchphrase (auto-spoken via TTS)
  * - Larger default size than CatAvatar (100px vs 72px)
@@ -18,7 +18,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { SALSA_COACH } from './catCharacters';
-import { Cat3DCanvas } from './3d';
+import { CatAvatar } from './CatAvatar';
 import type { MascotMood } from './types';
 import type { CatPose } from './animations/catAnimations';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/theme/tokens';
@@ -43,6 +43,10 @@ const MOOD_TO_POSE: Record<MascotMood, CatPose> = {
   encouraging: 'teach',
   teaching: 'teach',
   excited: 'play',
+  love: 'idle',
+  confused: 'curious',
+  smug: 'idle',
+  sleepy: 'sleep',
 };
 
 interface SalsaCoachProps {
@@ -102,10 +106,6 @@ export function SalsaCoach({
     };
   }, [shouldSpeak, phrase]);
 
-  // Use 3D for medium+ sizes, SVG for tiny/small (performance)
-  // Always use SVG — SalsaCoach is an accent component that appears alongside
-  // primary Cat3DCanvas instances. Multiple GL contexts exhaust GPU resources.
-  const use3D = false;
   const pose: CatPose = MOOD_TO_POSE[effectiveMood] ?? 'idle';
 
   return (
@@ -122,12 +122,11 @@ export function SalsaCoach({
           },
         ]}
       >
-        <Cat3DCanvas
+        <CatAvatar
           catId="salsa"
-          size={Math.round(dimension * 0.85)}
-          pose={pose}
-          mood={effectiveMood}
-          forceSVG={!use3D}
+          size={size === 'large' ? 'large' : size === 'medium' ? 'medium' : 'small'}
+          pose={pose !== 'idle' ? pose : undefined}
+          skipEntryAnimation
         />
       </View>
 
