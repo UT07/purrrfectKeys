@@ -113,6 +113,23 @@ export class SyncManager {
    */
   async queueChange(change: SyncChange): Promise<void> {
     const queue = await this.loadQueue();
+
+    // Dedup: for exercise_completed, replace existing entry for same exerciseId (keep highest score)
+    if (change.type === 'exercise_completed' && change.data.exerciseId) {
+      const existingIdx = queue.findIndex(
+        (q) => q.type === 'exercise_completed' && q.data.exerciseId === change.data.exerciseId
+      );
+      if (existingIdx !== -1) {
+        const existingScore = (queue[existingIdx].data.score as number) ?? 0;
+        const newScore = (change.data.score as number) ?? 0;
+        if (newScore >= existingScore) {
+          queue[existingIdx] = change;
+        }
+        await this.saveQueue(queue);
+        return;
+      }
+    }
+
     queue.push(change);
 
     // Drop oldest items if queue exceeds max size

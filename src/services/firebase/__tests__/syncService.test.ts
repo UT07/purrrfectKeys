@@ -97,10 +97,10 @@ describe('SyncManager', () => {
     });
 
     it('should append to existing queue', async () => {
-      const existingQueue = [createChange({ timestamp: 1000 })];
+      const existingQueue = [createChange({ timestamp: 1000, data: { exerciseId: 'ex-a', score: 85 } })];
       mockGetItem.mockResolvedValue(JSON.stringify(existingQueue));
 
-      const newChange = createChange({ timestamp: 2000 });
+      const newChange = createChange({ timestamp: 2000, data: { exerciseId: 'ex-b', score: 90 } });
       await manager.queueChange(newChange);
 
       const savedJson = mockSetItem.mock.calls[0][1];
@@ -109,13 +109,13 @@ describe('SyncManager', () => {
     });
 
     it('should enforce max 100 items by dropping oldest', async () => {
-      // Create a queue of 100 items
+      // Create a queue of 100 items with unique exerciseIds to avoid dedup
       const fullQueue = Array.from({ length: 100 }, (_, i) =>
-        createChange({ timestamp: i })
+        createChange({ timestamp: i, data: { exerciseId: `ex-${i}`, score: 85 } })
       );
       mockGetItem.mockResolvedValue(JSON.stringify(fullQueue));
 
-      const newChange = createChange({ timestamp: 999 });
+      const newChange = createChange({ timestamp: 999, data: { exerciseId: 'ex-new', score: 85 } });
       await manager.queueChange(newChange);
 
       const savedJson = mockSetItem.mock.calls[0][1];
@@ -134,6 +134,67 @@ describe('SyncManager', () => {
       const savedJson = mockSetItem.mock.calls[0][1];
       const savedQueue = JSON.parse(savedJson);
       expect(savedQueue[0].type).toBe('xp_earned');
+    });
+
+    it('should deduplicate exercise_completed entries for same exerciseId (keep highest score)', async () => {
+      const existingQueue = [
+        createChange({ data: { exerciseId: 'lesson-01-ex-01', score: 85 }, timestamp: 1000 }),
+      ];
+      mockGetItem.mockResolvedValue(JSON.stringify(existingQueue));
+
+      const newChange = createChange({ data: { exerciseId: 'lesson-01-ex-01', score: 92 }, timestamp: 2000 });
+      await manager.queueChange(newChange);
+
+      const savedJson = mockSetItem.mock.calls[0][1];
+      const savedQueue = JSON.parse(savedJson);
+      const matching = savedQueue.filter(
+        (q: SyncChange) => q.type === 'exercise_completed' && q.data.exerciseId === 'lesson-01-ex-01'
+      );
+      expect(matching).toHaveLength(1);
+      expect(matching[0].data.score).toBe(92);
+    });
+
+    it('should keep existing entry if new score is lower', async () => {
+      const existingQueue = [
+        createChange({ data: { exerciseId: 'lesson-01-ex-01', score: 95 }, timestamp: 1000 }),
+      ];
+      mockGetItem.mockResolvedValue(JSON.stringify(existingQueue));
+
+      const newChange = createChange({ data: { exerciseId: 'lesson-01-ex-01', score: 80 }, timestamp: 2000 });
+      await manager.queueChange(newChange);
+
+      const savedJson = mockSetItem.mock.calls[0][1];
+      const savedQueue = JSON.parse(savedJson);
+      expect(savedQueue).toHaveLength(1);
+      expect(savedQueue[0].data.score).toBe(95);
+    });
+
+    it('should not deduplicate different exerciseIds', async () => {
+      const existingQueue = [
+        createChange({ data: { exerciseId: 'lesson-01-ex-01', score: 85 }, timestamp: 1000 }),
+      ];
+      mockGetItem.mockResolvedValue(JSON.stringify(existingQueue));
+
+      const newChange = createChange({ data: { exerciseId: 'lesson-01-ex-02', score: 92 }, timestamp: 2000 });
+      await manager.queueChange(newChange);
+
+      const savedJson = mockSetItem.mock.calls[0][1];
+      const savedQueue = JSON.parse(savedJson);
+      expect(savedQueue).toHaveLength(2);
+    });
+
+    it('should not deduplicate non-exercise change types', async () => {
+      const existingQueue = [
+        createChange({ type: 'xp_earned', data: { amount: 50 }, timestamp: 1000 }),
+      ];
+      mockGetItem.mockResolvedValue(JSON.stringify(existingQueue));
+
+      const newChange = createChange({ type: 'xp_earned', data: { amount: 100 }, timestamp: 2000 });
+      await manager.queueChange(newChange);
+
+      const savedJson = mockSetItem.mock.calls[0][1];
+      const savedQueue = JSON.parse(savedJson);
+      expect(savedQueue).toHaveLength(2);
     });
 
     it('should initialize retryCount to 0', async () => {
