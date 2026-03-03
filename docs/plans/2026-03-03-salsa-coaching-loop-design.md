@@ -212,24 +212,26 @@ With ~60% cache hit rate on intros: effective ~$0.033/exercise.
 ## 5. Data Flow
 
 ```
-ExerciseScore.details (from handleCompletion)
+handleExerciseCompletion(score)
         │
-        ▼
-ReplayCoachingService.buildReplayPlan(exercise, score)
+        ├── setReplayPlanState(null)       ← clear previous
+        ├── setFinalScore(score)           ← local state in ExercisePlayer
+        ├── buildReplayPlan(exercise, score) fires async
+        │         │
+        │         ├── Maps NoteScore[] → ReplayScheduleEntry[]
+        │         │     { note, startBeat, durationBeats, jitterMs, play, status, color }
+        │         │
+        │         ├── Calls Gemini → structured JSON (pausePoints, comments)
+        │         │
+        │         └── setReplayPlanState(plan)  ← stored in ExercisePlayer state
         │
-        ├── Maps NoteScore[] → ReplayScheduleEntry[]
-        │     { note, startBeat, durationBeats, jitterMs, play, status, color }
-        │
-        ├── Calls Gemini → structured JSON (pausePoints, comments)
-        │     (fires at completion time, parallel with score reveal)
-        │
-        └── Returns ReplayPlan
-              { entries[], pausePoints[], comments[], summary }
+        └── setShowCompletion(true)        ← CompletionModal appears
+              (6.5s animation — AI runs in parallel)
 ```
 
-`ReplayPlan` is built once, stored in React state. Scrubbing reads from it — no recomputation.
+**Score data ownership:** The `ReplayPlan` is built and stored as local state (`useState<ReplayPlan | null>`) inside `ExercisePlayer.tsx` — NOT via a ref leak from `useExercisePlayback`. When `handleExerciseCompletion` fires, ExercisePlayer receives the `ExerciseScore`, immediately kicks off `buildReplayPlan()` as an async side effect, and stores the result in its own state. This survives the mode transition from `'exercise'` to `'replay'` cleanly — no cross-hook ref coupling.
 
-The Gemini call fires immediately when the exercise completes, running in parallel with the CompletionModal's 6.5-second animation sequence. By the time the user sees the replay, the AI response is ready.
+`ReplayPlan` is built once, stored in React state. Scrubbing reads from it — no recomputation.
 
 ---
 
@@ -253,8 +255,8 @@ The Gemini call fires immediately when the exercise completes, running in parall
 | `ExercisePlayer.tsx` | Add `mode: 'exercise' \| 'replay'` state, wire replay trigger from CompletionModal, integrate SalsaIntro before countdown |
 | `CompletionModal.tsx` | Add "Review with Salsa" button, smart auto-trigger logic |
 | `DemoPlaybackService.ts` | Accept `ReplayScheduleEntry[]` with jitter/skip, add pause/resume at specific beats, add `seekToBeat()` for scrubbing |
-| `useExercisePlayback.ts` | Expose `finalScoreRef` so ExercisePlayer can pass score.details to replay without it being wiped by reset |
-| `VerticalPianoRoll.tsx` | Accept `noteColorOverrides: Map<number, string>` for replay mode coloring |
+| `useExercisePlayback.ts` | No changes needed — ExercisePlayer captures score from `onComplete` callback directly |
+| `VerticalPianoRoll.tsx` | Accept `mode: 'play' \| 'replay'` prop. In replay mode, `noteColorOverrides` take precedence over active-note highlighting. In play mode, existing behavior unchanged. |
 | `Keyboard.tsx` | Add `readOnly` display mode with dual-highlight (expected green outline + played red fill at mistakes) |
 
 ---
@@ -281,3 +283,62 @@ The Gemini call fires immediately when the exercise completes, running in parall
 - **Missed notes**: Expected key pulses with grey outline (ghost press)
 - **Extra notes**: Played key flashes purple briefly
 - **No touch input accepted** — keyboard is display-only during replay
+
+---
+
+## 9. Audio Mixing: TTS vs Piano Playback
+
+TTS (Salsa speaking) and piano note audio compete for the same iOS audio session. Rules:
+
+**During continuous play:** No TTS. Continuous comments are text-only (speech bubble, no voice). Piano audio plays at full volume. This avoids the mixing problem entirely for 90% of playback time.
+
+**At pause points:** Piano audio stops (playback is frozen). TTS speaks at full volume with no competition. Clean separation — only one audio source active at a time.
+
+**During correct-version demo (after explanation):** TTS finishes first, then the mini-demo plays piano audio. Sequential, not simultaneous. The Salsa card minimizes to a pill ("Watch...") as a visual cue that speech is done and playback is starting.
+
+**Why not duck:** Audio ducking (lowering piano volume while TTS plays) creates a muddy experience on phone speakers. Sequential audio is cleaner for single-speaker devices. If we later add headphone detection, ducking could be an enhancement.
+
+---
+
+## 10. Fast-Forward Handling for Long Exercises
+
+For exercises with 30+ notes, continuous replay at 1x speed is tedious. The fast-forward system:
+
+**Speed zones:** `ReplayCoachingService` tags each beat range as `'normal'` or `'fast'`:
+- Beats where all notes are green (timingScore ≥ 70): tagged `'fast'`
+- Beats within ±4 beats of a pause point or yellow/red note: tagged `'normal'`
+- First 4 beats and last 4 beats: always `'normal'` (natural start/end)
+
+**DemoPlaybackService speed scaling:**
+- `'normal'` zones: 1.0x speed
+- `'fast'` zones: 2.0x speed (not 1.5x — needs to feel noticeably faster)
+- Speed transitions use a 0.5-second ease (not instant snap) to avoid jarring PianoRoll jumps
+
+**PianoRoll handling:** `VerticalPianoRoll` already receives `currentBeat` from the demo service and uses `msPerBeat` for scroll speed. When speed changes, `DemoPlaybackService` updates the effective `msPerBeat` passed to the beat callback. The PianoRoll doesn't need to know about speed zones — it just follows the beat position it receives.
+
+**Scrub bar handling:** The playhead moves at real-time speed (proportional to actual elapsed seconds, not beats). This means it visually accelerates through fast zones, which is the correct behavior — the user sees it zip through the green sections.
+
+**`seekToBeat()` implementation:** When the user scrubs to a specific beat, `DemoPlaybackService` computes the elapsed time for that beat by summing the durations of all preceding zones at their respective speeds. This ensures the playhead position stays consistent after seeking.
+
+---
+
+## 11. Cost Monitoring
+
+**Per-user-session estimate:** Average 5 exercises/session × $0.045/exercise = ~$0.22/session.
+
+**At scale:**
+
+| DAU | Sessions/day | Gemini calls/day | Daily cost | Monthly cost |
+|-----|-------------|-----------------|------------|-------------|
+| 100 | 100 | 1,000 | $22 | $660 |
+| 1,000 | 1,000 | 10,000 | $220 | $6,600 |
+| 10,000 | 10,000 | 100,000 | $2,200 | $66,000 |
+
+**Mitigation layers (cumulative):**
+1. **Cloud Function rate limiting** (already deployed): 15 exercises/hr, 50/day per user
+2. **Client-side rate limiting** (already wired): prevents runaway calls
+3. **Intro caching** (~60% hit rate): exercise-level cache means repeat plays skip the AI call
+4. **Replay caching** (~30% hit rate): score-bucket cache means similar scores get same coaching
+5. **With all caching**: effective cost drops ~40-50%
+
+**Monitoring:** Add PostHog events for `replay_ai_call` and `intro_ai_call` with `cached: boolean` property. Dashboard alert if daily Gemini spend exceeds threshold.
