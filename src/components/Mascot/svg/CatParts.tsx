@@ -10,6 +10,18 @@
 import type { ReactElement } from 'react';
 import { G, Circle, Path, Ellipse, Line, Rect } from 'react-native-svg';
 import type { MascotMood } from '../types';
+import type { HairTuftType } from './catProfiles';
+
+// ─────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────
+
+function darkenColor(hex: string, factor: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `#${Math.round(r * factor).toString(16).padStart(2, '0')}${Math.round(g * factor).toString(16).padStart(2, '0')}${Math.round(b * factor).toString(16).padStart(2, '0')}`;
+}
 
 // ─────────────────────────────────────────────────
 // Body types (chibi: tiny bodies tucked below oversized head at cy=80)
@@ -392,4 +404,58 @@ export function CatPianoCollar(): ReactElement {
       <Rect x="60" y="66" width="4" height="5" rx="1" fill="#1A1A1A" />
     </G>
   );
+}
+
+// ─────────────────────────────────────────────────
+// Hair Tufts (positioned between ears on top of head)
+// ─────────────────────────────────────────────────
+
+export function CatHairTuft({ type, color }: { type: HairTuftType; color: string }): ReactElement | null {
+  if (type === 'none') return null;
+
+  const darkColor = darkenColor(color, 0.7);
+  switch (type) {
+    case 'curly':
+      return <Path d="M 48 6 Q 46 2 50 4 Q 54 2 52 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+    case 'slicked':
+      return <Path d="M 47 5 Q 50 0 53 5" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+    case 'fluffy':
+      return (
+        <G>
+          <Circle cx="48" cy="5" r="2.5" fill={color} />
+          <Circle cx="52" cy="4" r="2.5" fill={color} />
+          <Circle cx="50" cy="3" r="2" fill={color} />
+        </G>
+      );
+    case 'spiky':
+      return (
+        <G>
+          <Path d="M 47 6 L 46 1 L 49 5" fill={color} />
+          <Path d="M 49 5 L 50 0 L 51 5" fill={color} />
+          <Path d="M 51 5 L 54 1 L 53 6" fill={color} />
+        </G>
+      );
+    case 'wave':
+      return <Path d="M 44 6 Q 47 2 50 5 Q 53 2 56 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+    case 'windswept':
+      return <Path d="M 46 6 Q 50 2 56 4 Q 58 3 60 5" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+    case 'side-part':
+      return <Path d="M 44 6 Q 46 3 50 5 L 52 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+    case 'silky':
+      return <Path d="M 45 7 Q 48 2 50 4 Q 52 2 55 7" fill={color} stroke={darkColor} strokeWidth="0.3" />;
+    case 'sharp':
+      return <Path d="M 48 6 L 50 1 L 52 6" fill={color} />;
+    case 'messy':
+      return (
+        <G>
+          <Path d="M 46 6 L 45 2 L 48 5" fill={color} />
+          <Path d="M 50 5 L 51 1 L 52 5" fill={color} />
+          <Path d="M 53 6 L 55 3 L 54 6" fill={color} />
+        </G>
+      );
+    case 'cowlick':
+      return <Path d="M 48 5 Q 50 -1 54 4 Q 56 2 55 6" fill={color} stroke={darkColor} strokeWidth="0.5" />;
+    default:
+      return null;
+  }
 }

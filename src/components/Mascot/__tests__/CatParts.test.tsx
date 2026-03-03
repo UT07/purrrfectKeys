@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { CatEars, CatMouth } from '../svg/CatParts';
+import { CatEars, CatMouth, CatHairTuft } from '../svg/CatParts';
 
 jest.mock('react-native-svg', () => {
   const mockReact = require('react');
@@ -159,6 +159,35 @@ describe('CatMouth', () => {
     for (const mood of ['love', 'confused', 'smug', 'sleepy'] as const) {
       const { unmount } = render(
         <SvgWrap><CatMouth mood={mood} darkAccent="#8B0000" /></SvgWrap>
+      );
+      unmount();
+    }
+  });
+});
+
+describe('CatHairTuft', () => {
+  it('renders curly tuft without crashing', () => {
+    const { unmount } = render(
+      <SvgWrap><CatHairTuft type="curly" color="#FF0000" /></SvgWrap>
+    );
+    unmount();
+  });
+
+  it('renders "none" as null (no path elements)', () => {
+    const { UNSAFE_getAllByType } = render(
+      <SvgWrap><CatHairTuft type="none" color="#FF0000" /></SvgWrap>
+    );
+    const paths = UNSAFE_getAllByType(require('react-native').View).filter(
+      (v: any) => v.props.accessibilityLabel === 'Path'
+    );
+    expect(paths.length).toBe(0);
+  });
+
+  it('renders all 12 tuft types without crashing', () => {
+    const types = ['none', 'curly', 'slicked', 'fluffy', 'spiky', 'wave', 'windswept', 'side-part', 'silky', 'sharp', 'messy', 'cowlick'] as const;
+    for (const type of types) {
+      const { unmount } = render(
+        <SvgWrap><CatHairTuft type={type} color="#FF0000" /></SvgWrap>
       );
       unmount();
     }
