@@ -1,9 +1,9 @@
 # Purrrfect Keys — Product Requirements Document
 
-**Version:** 3.0
-**Last Updated:** February 28, 2026
+**Version:** 4.0
+**Last Updated:** March 3, 2026
 **Author:** Product Team
-**Status:** Phase 11 QA + Launch (Phases 1-10.5 complete)
+**Status:** Phase 11A — Making existing app work on device (Phases 1-10.5 code complete, device verification in progress)
 
 ---
 
@@ -211,14 +211,25 @@ Evolution is NOT cosmetic — it reflects the learner's real progress:
 
 ---
 
-## 7. Current State (Feb 28, 2026)
+## 7. Current State (March 3, 2026)
 
-**Completed:** Phases 1-10.5 (Core Loop, Gamification, Auth, Adaptive Learning, Avatar Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library with 124 songs, Arcade Concert Hall, Social & Leaderboards, 3D Cat Integration)
-**In Progress:** Phase 11 — QA + Launch (account deletion, Cloud Functions, CI/CD done; Maestro E2E, deep testing underway)
-**Codebase:** 122 test suites, 2,630 tests, 0 TypeScript errors
-**Content:** 30 static exercises across 6 lessons, AI generation for tiers 7-15, 124 songs in Firestore
+**Code Complete:** Phases 1-10.5 (all features coded and passing in Jest/simulator)
+**Device-Verified:** Phases 1-3 partially (sign-in tested on device), all others simulator-only
+**Broken on Device:** Phase 8 mic input (ONNX crash), Phase 10.5 social (Firebase not deployed)
+**Eliminated:** 3D cat rendering (GL context issues, replaced with premium SVG plan)
+**In Progress:** Phase 11A — Make existing app work on physical device
+**Codebase:** 129 test suites, 2,717 tests, 0 TypeScript errors
+**Content:** 36 static exercises across 6 lessons, AI generation for tiers 7-15, 124 songs in Firestore
+**Audio:** Synthetic oscillator sounds (no real piano samples yet)
 
-**Key milestone:** The app is feature-complete. Phase 11 focuses on quality assurance, security hardening (GDPR-compliant account deletion, server-side API keys via Cloud Functions), and launch preparation. A comprehensive codebase audit identified 40 issues (8 P0, 13 P1, 7 P2, 12 P3) being addressed.
+**Key blockers:**
+1. IPA build fails (missing `EXPO_TOKEN` in GitHub secrets)
+2. Mic input crashes on device (ONNX native module not in standard build)
+3. Firebase Cloud Functions/rules/indexes not deployed (social features dead)
+4. No real piano sounds (synthetic beeps only)
+5. Zero .wav/.mp3 sound assets in repo
+
+**Strategy shift (March 3):** Stop building new features. Fix the foundation first. Full plan in `docs/plans/UNIFIED-PLAN.md`.
 
 ---
 
