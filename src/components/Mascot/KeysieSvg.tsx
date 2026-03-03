@@ -24,6 +24,7 @@ import { getCatProfile } from './svg/catProfiles';
 import { EvolutionAura, renderAccessories } from './svg/CatAccessories';
 import { getCatById } from './catCharacters';
 import { CatGradientDefs, gradId } from './svg/CatGradients';
+import { CatShadows } from './svg/CatShadows';
 
 interface KeysieSvgProps {
   mood: MascotMood;
@@ -157,6 +158,9 @@ function renderComposable(
 
       {/* Evolution aura (background) */}
       <EvolutionAura stage={evolutionStage} accent={accent} />
+
+      {/* Shadow layers (behind body) */}
+      <CatShadows bodyColor={bodyColor} />
 
       {/* Tail */}
       <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />
