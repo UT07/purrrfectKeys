@@ -39,6 +39,8 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { CatAvatar } from '../components/Mascot/CatAvatar';
+import { AbilityIcon } from '../components/Mascot/svg/AbilityIcons';
+import { AbilityPreviewOverlay } from '../components/Mascot/svg/AbilityPreview';
 import { CAT_CHARACTERS, isCatOwned, getCatById } from '../components/Mascot/catCharacters';
 import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -200,7 +202,7 @@ function EvolutionStageDots({ currentStage }: { currentStage: EvolutionStage }):
   );
 }
 
-/** Ability icon row — 4 circular icons with stage-based unlock indicators */
+/** Ability icon row — 4 illustrated SVG icons with stage-based unlock indicators */
 function AbilityIconRow({ abilities, unlockedAbilities, catColor, onTap }: {
   abilities: CatAbility[];
   unlockedAbilities: string[];
@@ -224,10 +226,11 @@ function AbilityIconRow({ abilities, unlockedAbilities, catColor, onTap }: {
             onPress={() => onTap(ability)}
             activeOpacity={0.7}
           >
-            <MaterialCommunityIcons
-              name={ability.icon as keyof typeof MaterialCommunityIcons.glyphMap}
-              size={18}
-              color={isUnlocked ? catColor : COLORS.textMuted}
+            <AbilityIcon
+              abilityType={ability.effect.type}
+              unlocked={isUnlocked}
+              size={28}
+              catColor={catColor}
             />
             {!isUnlocked && (
               <View style={styles.abilityLockBadge}>
@@ -252,10 +255,11 @@ function AbilityDetail({ ability, catColor, isUnlocked }: {
       entering={FadeIn.duration(200)}
       style={[styles.abilityDetail, { borderColor: isUnlocked ? catColor + '40' : COLORS.cardBorder }]}
     >
-      <MaterialCommunityIcons
-        name={ability.icon as keyof typeof MaterialCommunityIcons.glyphMap}
-        size={20}
-        color={isUnlocked ? catColor : COLORS.textMuted}
+      <AbilityIcon
+        abilityType={ability.effect.type}
+        unlocked={isUnlocked}
+        size={32}
+        catColor={catColor}
       />
       <View style={styles.abilityDetailText}>
         <Text style={[styles.abilityDetailName, { color: isUnlocked ? COLORS.textPrimary : COLORS.textMuted }]}>
@@ -416,6 +420,14 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
               evolutionStage={stage}
               skipEntryAnimation
             />
+            {expandedAbility && (
+              <AbilityPreviewOverlay
+                abilityType={expandedAbility.effect.type}
+                catColor={cat.color}
+                active
+                size={200}
+              />
+            )}
           </View>
         ) : (
           <View style={styles.lockedCharacter}>

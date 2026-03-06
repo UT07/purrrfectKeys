@@ -32,6 +32,7 @@ import { EvolutionAura, renderAccessories } from './svg/CatAccessories';
 import { getCatById } from './catCharacters';
 import { CatGradientDefs, gradId } from './svg/CatGradients';
 import { CatShadows, CatRimLight, CatFurSheen } from './svg/CatShadows';
+import { renderFigmaCat } from './svg/FigmaCatArt';
 
 /** Micro-animation shared values from useMicroAnimations + useMoodTransition */
 export interface MicroAnimationProps {
@@ -446,11 +447,12 @@ export function KeysieSvg({
       testID="keysie-svg"
     >
       {catId
-        ? renderComposable(
+        ? (renderFigmaCat(catId, animStyles) ??
+          renderComposable(
             catId, mood, bodyColor, bellyColor, earInnerColor,
             eyeColor, noseColor, accent, accentDark, pattern, evolutionStage,
             animStyles,
-          )
+          ))
         : renderLegacy(
             mood, bodyColor, bellyColor, earInnerColor,
             eyeColor, noseColor, accent, accentDark, pattern, evolutionStage,

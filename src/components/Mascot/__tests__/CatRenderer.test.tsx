@@ -217,7 +217,7 @@ describe('KeysieSvg composable rendering', () => {
     }
   });
 
-  it('composable path includes CatPaws element', () => {
+  it('composable path includes paw elements', () => {
     const tree = render(
       <KeysieSvg
         mood="happy"
@@ -227,11 +227,9 @@ describe('KeysieSvg composable rendering', () => {
         accentColor={CAT_CHARACTERS[0].color}
       />
     );
-    // CatPaws renders two Ellipse elements at cy=92 (foot position)
-    // Verify the component tree contains these paw ellipses
+    // Figma art renders paw ellipses at cy=84/85.5 for mini-meowww
     const json = JSON.stringify(tree.toJSON());
-    // Paw ellipses are at cy=92 (numeric) — unique to CatPaws
-    expect(json).toContain('"cy":92');
+    expect(json).toContain('"cy":"84"');
   });
 
   it('composable path includes CatHairTuft for cats that have one', () => {
@@ -266,7 +264,7 @@ describe('KeysieSvg composable rendering', () => {
     expect(tree.getByTestId('keysie-svg')).toBeTruthy();
   });
 
-  it('composable path uses catId-prefixed ClipPath id', () => {
+  it('Figma art renders bespoke SVG elements for known catId', () => {
     const tree = render(
       <KeysieSvg
         mood="happy"
@@ -277,8 +275,8 @@ describe('KeysieSvg composable rendering', () => {
       />
     );
     const json = JSON.stringify(tree.toJSON());
-    // ClipPath should have id="bodyClip-mini-meowww"
-    expect(json).toContain('bodyClip-mini-meowww');
+    // Figma art for mini-meowww has tuxedo chest bib (#F0F0F5) — unique to bespoke art
+    expect(json).toContain('4293980405'); // #F0F0F5 as ARGB int
   });
 });
 
