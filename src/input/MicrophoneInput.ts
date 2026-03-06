@@ -58,10 +58,11 @@ const DEFAULT_CONFIG: MicrophoneInputConfig = {
  * Thresholds are slightly relaxed from defaults for speaker-to-mic SNR.
  */
 const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
-  threshold: 0.20,       // Default 0.15 — slightly relaxed for room noise
-  minConfidence: 0.45,   // Default 0.7 — lowered from 0.6 for phone mic → speaker audio (room echo reduces confidence to 0.5-0.65)
-  rmsThreshold: 0.012,   // Default 0.01 — slightly above ambient noise, lowered from 0.015 to detect softer piano notes
-  octaveCorrection: true, // Critical for piano — YIN often detects harmonics
+  threshold: 0.25,       // Default 0.15 — relaxed for room noise + speaker reverb
+  minConfidence: 0.30,   // Default 0.7 — phone speaker→mic path adds reverb that drops confidence to 0.3-0.5
+  rmsThreshold: 0.008,   // Default 0.01 — lowered to catch softer notes from phone speakers
+  octaveCorrection: false, // Disabled: speaker audio has different harmonic structure than direct piano;
+                           // octave correction was "correcting" correct detections down an octave
   minFrequency: 80,      // Default 50 — E2, covers beginner piano range. Also reduces maxTau from 882→551
   maxFrequency: 1500,    // Default 2000 — ~G6, covers all beginner exercises
 };
@@ -72,8 +73,10 @@ const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
  * Longer release hold accounts for speaker resonance decay.
  */
 const AMBIENT_TRACKER_OVERRIDES: Partial<NoteTrackerConfig> = {
-  onsetHoldMs: 50,       // ~2 confirmations at 46ms/buffer. Snappier than 60ms while still rejecting flukes.
-  releaseHoldMs: 100,    // Reduced from 120ms for faster note-off response (still covers speaker resonance)
+  onsetHoldMs: 46,       // ~1 confirmation at 46ms/buffer → minConfirmations clamps to 2.
+                         // Combined with gap tolerance, this allows detection within ~92-138ms.
+  releaseHoldMs: 120,    // Slightly longer release — speaker resonance + room reverb
+                         // can cause brief unvoiced gaps that shouldn't end a note.
 };
 
 // ---------------------------------------------------------------------------
@@ -283,9 +286,10 @@ export class MicrophoneInput {
             totalRMS += this.calibrator.computeRMS(buf);
           }
           const avgRMS = totalRMS / calibrationBuffers.length;
-          // Set RMS threshold to 2.5x ambient (ensures detection only triggers on
-          // signal significantly above background noise)
-          const adaptiveThreshold = Math.max(0.005, avgRMS * 2.5);
+          // Set RMS threshold to 2x ambient (lowered from 2.5x — softer notes
+          // from phone speakers were being rejected). Cap at 0.02 to prevent
+          // noisy environments from setting an unreachable threshold.
+          const adaptiveThreshold = Math.min(0.02, Math.max(0.004, avgRMS * 2.0));
           this.detector.setRmsThreshold(adaptiveThreshold);
           logger.log(
             `[MicrophoneInput] Ambient calibration: avgRMS=${avgRMS.toFixed(4)}, ` +

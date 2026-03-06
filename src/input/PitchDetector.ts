@@ -420,16 +420,24 @@ export class NoteTracker {
   private currentNote: number | null = null;
   private candidateNote: number | null = null;
   private candidateCount = 0;
+  /** How many consecutive unvoiced frames the candidate has survived */
+  private candidateGapCount = 0;
   private lastVoicedTime = 0;
   private callback: ((event: NoteEvent) => void) | null = null;
-  /** Minimum consecutive detections before onset (derived from onsetHoldMs) */
+  /** Minimum detections (not necessarily consecutive) before onset */
   private readonly minConfirmations: number;
+  /** Max unvoiced frames a candidate can survive before resetting */
+  private readonly maxCandidateGap: number;
 
   constructor(config?: Partial<NoteTrackerConfig>) {
     this.config = { ...DEFAULT_TRACKER_CONFIG, ...config };
     // At ~46ms per buffer (2048/44100), 2 confirmations = ~92ms.
     // Clamp to minimum 2 to reject single-buffer flukes.
     this.minConfirmations = Math.max(2, Math.round(this.config.onsetHoldMs / 46));
+    // Allow candidate to survive 1 unvoiced frame — mic audio often has
+    // intermittent voiced/unvoiced frames due to back-pressure buffer drops
+    // or transient portions of notes with unstable pitch.
+    this.maxCandidateGap = 1;
   }
 
   /** Register callback for note events */
@@ -444,6 +452,7 @@ export class NoteTracker {
 
     if (result.voiced && result.midiNote !== null) {
       this.lastVoicedTime = now;
+      this.candidateGapCount = 0; // Reset gap counter on any voiced frame
 
       if (result.midiNote === this.currentNote) {
         // Same note sustained — reset candidate
@@ -471,9 +480,21 @@ export class NoteTracker {
         this.candidateCount = 1;
       }
     } else {
-      // Unvoiced — check for release
-      this.candidateNote = null;
-      this.candidateCount = 0;
+      // Unvoiced frame — allow candidate to survive a few gaps before resetting.
+      // Mic audio often has intermittent unvoiced frames due to buffer drops
+      // or transient noise. Without gap tolerance, the candidate resets and
+      // notes need to restart their confirmation count from scratch.
+      if (this.candidateNote !== null) {
+        this.candidateGapCount++;
+        if (this.candidateGapCount > this.maxCandidateGap) {
+          this.candidateNote = null;
+          this.candidateCount = 0;
+          this.candidateGapCount = 0;
+        }
+        // else: keep candidate alive, don't reset count
+      }
+
+      // Check for release of active note
       if (this.currentNote !== null && now - this.lastVoicedTime >= this.config.releaseHoldMs) {
         this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
         this.currentNote = null;
@@ -489,6 +510,7 @@ export class NoteTracker {
     this.currentNote = null;
     this.candidateNote = null;
     this.candidateCount = 0;
+    this.candidateGapCount = 0;
     this.lastVoicedTime = 0;
   }
 
