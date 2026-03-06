@@ -648,12 +648,24 @@ export function useExercisePlayback({
         }
       : exercise;
 
-    // Look up previous high score so isNewHighScore is accurate
-    const lessonId = getLessonIdForExercise(exercise.id);
+    // Look up previous high score so isNewHighScore is accurate.
+    // Search ALL lesson progress entries — AI exercises may be stored under
+    // a synthetic lesson ID, and getLessonIdForExercise only finds static lessons.
     const progressState = useProgressStore.getState();
-    const previousHighScore = lessonId
-      ? progressState.lessonProgress[lessonId]?.exerciseScores[exercise.id]?.highScore ?? 0
-      : 0;
+    let previousHighScore = 0;
+    const directLessonId = getLessonIdForExercise(exercise.id);
+    if (directLessonId) {
+      previousHighScore = progressState.lessonProgress[directLessonId]?.exerciseScores[exercise.id]?.highScore ?? 0;
+    } else {
+      // Scan all lessons for a matching exercise score (covers AI exercises, songs, etc.)
+      for (const lp of Object.values(progressState.lessonProgress)) {
+        const exScore = lp.exerciseScores[exercise.id];
+        if (exScore?.highScore) {
+          previousHighScore = exScore.highScore;
+          break;
+        }
+      }
+    }
 
     const score = scoreExercise(scoringExercise, adjustedNotes, previousHighScore);
     useExerciseStore.getState().setScore(score);

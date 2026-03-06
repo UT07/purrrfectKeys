@@ -686,6 +686,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
+    // Recompute isNewHighScore after ability boosts — the hook's computation
+    // may have used stale/zero previousHighScore (e.g., AI exercises with no lesson).
+    // Search all lesson progress for an existing score for this exercise.
+    const progressStateForHighScore = useProgressStore.getState();
+    let prevHigh = 0;
+    for (const lp of Object.values(progressStateForHighScore.lessonProgress)) {
+      const exScore = lp.exerciseScores[ex.id];
+      if (exScore?.highScore) {
+        prevHigh = exScore.highScore;
+        break;
+      }
+    }
+    score = { ...score, isNewHighScore: score.overall > prevHigh };
+
     // Set finalScore AFTER ability boosts so CompletionModal shows the correct values
     setFinalScore(score);
 
@@ -759,12 +773,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Save exercise score to lesson progress and compute sync data
     const exLessonId = getLessonIdForExercise(ex.id);
+    // Use real lesson ID or synthetic "__ai__" bucket for non-lesson exercises
+    const effectiveLessonId = exLessonId ?? '__ai__';
 
     // Capture whether this exercise was previously completed BEFORE we update lesson progress
     // (used for first-completion gem bonus below)
-    const wasPreviouslyCompleted = exLessonId
-      ? progressStore.lessonProgress[exLessonId]?.exerciseScores[ex.id]?.completedAt != null
-      : true; // AI exercises (no lesson) don't count for first-completion
+    const wasPreviouslyCompleted = progressStore.lessonProgress[effectiveLessonId]?.exerciseScores[ex.id]?.completedAt != null;
 
     let lessonSyncData: {
       lessonId: string;
@@ -774,15 +788,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       exerciseScore: { highScore: number; stars: number; attempts: number; averageScore: number };
     } | undefined;
 
-    if (exLessonId) {
-      const lesson = getLesson(exLessonId);
-      const existingLP = progressStore.lessonProgress[exLessonId];
+    if (true) {
+      const lesson = exLessonId ? getLesson(exLessonId) : null;
+      const existingLP = progressStore.lessonProgress[effectiveLessonId];
 
       // Initialize lesson progress if first attempt
       if (!existingLP) {
-        progressStore.updateLessonProgress(exLessonId, {
-          lessonId: exLessonId,
-          status: 'in_progress',
+        progressStore.updateLessonProgress(effectiveLessonId, {
+          lessonId: effectiveLessonId,
+          status: exLessonId ? 'in_progress' : 'completed',
           exerciseScores: {},
           bestScore: 0,
           totalAttempts: 0,
@@ -791,7 +805,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
 
       // Get fresh state after potential initialization
-      const currentLP = useProgressStore.getState().lessonProgress[exLessonId];
+      const currentLP = useProgressStore.getState().lessonProgress[effectiveLessonId];
       const existingExScore = currentLP?.exerciseScores[ex.id];
       const isNewHighScore = !existingExScore || score.overall > existingExScore.highScore;
 
@@ -803,7 +817,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         : score.overall;
 
       // Save exercise progress
-      progressStore.updateExerciseProgress(exLessonId, ex.id, {
+      progressStore.updateExerciseProgress(effectiveLessonId, ex.id, {
         exerciseId: ex.id,
         highScore: newHighScore,
         stars: newStars,
@@ -813,16 +827,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}),
       });
 
-      // Build lesson sync data (starts as in_progress, may upgrade to completed below)
-      lessonSyncData = {
-        lessonId: exLessonId,
-        status: 'in_progress',
-        exerciseId: ex.id,
-        exerciseScore: { highScore: newHighScore, stars: newStars, attempts: newAttempts, averageScore: newAvgScore },
-      };
+      // Build lesson sync data (only for real lessons, not __ai__ bucket)
+      if (exLessonId) {
+        lessonSyncData = {
+          lessonId: exLessonId,
+          status: 'in_progress',
+          exerciseId: ex.id,
+          exerciseScore: { highScore: newHighScore, stars: newStars, attempts: newAttempts, averageScore: newAvgScore },
+        };
+      }
 
-      // Check lesson completion status
-      if (lesson && score.isPassed) {
+      // Check lesson completion status (only for real lessons)
+      if (exLessonId && lesson && score.isPassed) {
         const updatedLP = useProgressStore.getState().lessonProgress[exLessonId];
         const currentIsTest = isTestExercise(ex.id);
 
@@ -837,8 +853,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             });
             progressStore.addXp(lesson.xpReward);
 
-            lessonSyncData.status = 'completed';
-            lessonSyncData.completedAt = completedAt;
+            if (lessonSyncData) {
+              lessonSyncData.status = 'completed';
+              lessonSyncData.completedAt = completedAt;
+            }
 
             const nonTestIds = getNonTestExercises(exLessonId).map((e) => e.id);
             const totalStars = nonTestIds.reduce((sum, eid) =>
