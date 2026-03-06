@@ -4,7 +4,7 @@
  * daily goal arc, streak flame, stats pills, and continue learning card
  */
 
-import React, { useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,7 +17,7 @@ import {
 import { PressableScale } from '../components/common/PressableScale';
 import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
 import { GameCard } from '../components/common/GameCard';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GradientMeshBackground } from '../components/effects';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -130,6 +130,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
   const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(1, minutesPracticedToday / dailyGoalMinutes) : 0;
 
+  // Recompute session plan when returning from exercises
+  const [focusCounter, setFocusCounter] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      setFocusCounter((c) => c + 1);
+    }, []),
+  );
+
   // Curriculum-driven progress
   const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
   const totalSkills = SKILL_TREE.length;
@@ -168,7 +176,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       },
       profile.masteredSkills,
     );
-  }, [masteredSkills]);
+  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- reads fresh store state on every focus
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
@@ -332,7 +340,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const profile = useLearnerProfileStore.getState();
     if (!profile.calculateDecayedSkills) return [];
     return profile.calculateDecayedSkills();
-  }, []);
+  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- refresh on screen focus
 
   return (
     <SafeAreaView style={styles.container} testID="home-screen">

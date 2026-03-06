@@ -24,6 +24,11 @@ jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => mockNavigation,
   useRoute: () => ({ params: {} }),
+  useFocusEffect: (cb: () => void) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const React = require('react');
+    React.useEffect(() => { cb(); }, []);
+  },
   NavigationContainer: ({ children }: any) => children,
 }));
 
