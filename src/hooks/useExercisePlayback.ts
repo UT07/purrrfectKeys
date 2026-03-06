@@ -122,6 +122,10 @@ export function useExercisePlayback({
   const lastExternalNoteRef = useRef<MidiNoteEvent | null>(null);
   const [externalNoteCount, setExternalNoteCount] = useState(0);
 
+  // Echo dedup: tracks recent touch notes (MIDI note → timestamp) so mic events
+  // that are speaker echoes of touch can be skipped in auto mode.
+  const recentTouchNotesRef = useRef<Map<number, number>>(new Map());
+
   const trackNoteOnIndex = useCallback((note: number, index: number) => {
     const stack = noteOnIndexMapRef.current.get(note) ?? [];
     stack.push(index);
@@ -322,6 +326,18 @@ export function useExercisePlayback({
         // Mic timestamps already use Date.now() with latency compensation applied —
         // overwriting would defeat the compensation. Touch also uses Date.now().
         const source = midiEvent.inputSource ?? manager.activeMethod;
+
+        // Echo dedup: In auto mode (mic active + touch enabled), when the user taps
+        // the on-screen keyboard, the speaker plays a note that the mic picks up
+        // ~100-200ms later. Skip mic events that match a recent touch note.
+        if (source === 'mic') {
+          const lastTouchTime = recentTouchNotesRef.current.get(midiEvent.note);
+          if (lastTouchTime && Date.now() - lastTouchTime < 300) {
+            recentTouchNotesRef.current.delete(midiEvent.note); // One-shot dedup
+            return; // Skip — this is a speaker echo of a touch event
+          }
+        }
+
         const normalizedEvent = {
           ...midiEvent,
           timestamp: source === 'midi' ? Date.now() : midiEvent.timestamp,
@@ -710,12 +726,18 @@ export function useExercisePlayback({
       // after startPlayback() could be dropped if React hasn't re-rendered yet.
       if (!isPlayingRef.current) return;
 
-      // When mic is the active input, do NOT record touch events for scoring.
-      // The mic pipeline will pick up the speaker output and record its own noteOn
-      // with proper latency compensation. Recording both double-counts notes and
-      // inflates the played note count, potentially triggering early completion.
+      // In explicit mic mode, block touch events — the mic pipeline handles
+      // detection with proper latency compensation.
+      // In auto mode (mic active), allow touch events — they have priority over
+      // mic detection. Record the note in the echo dedup map so the mic event
+      // (speaker echo arriving ~100-200ms later) can be skipped.
       const currentInputMethod = inputManagerRef.current?.activeMethod;
-      if (currentInputMethod === 'mic') return;
+      if (currentInputMethod === 'mic') {
+        const preferred = useSettingsStore.getState().preferredInputMethod;
+        if (preferred === 'mic') return; // Explicit mic — block touch entirely
+        // Auto mode — allow touch, record for echo dedup
+        recentTouchNotesRef.current.set(note, Date.now());
+      }
 
       const midiEvent: MidiNoteEvent = {
         type: 'noteOn',
