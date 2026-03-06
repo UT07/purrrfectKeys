@@ -86,10 +86,16 @@ export class YINPitchDetector {
   private _rmsRejectCount = 0;
   private _confRejectCount = 0;
   private _detectCount = 0;
+  /** 3-sample median filter for frequency stability (eliminates single-frame outliers) */
+  private readonly _freqHistory: [number, number, number] = [0, 0, 0];
+  private _freqHistoryIdx = 0;
+  /** Runtime-adjustable RMS threshold (updated by ambient calibration) */
+  private _rmsThreshold: number;
 
   constructor(config?: Partial<PitchDetectorConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.halfSize = Math.floor(this.config.bufferSize / 2);
+    this._rmsThreshold = this.config.rmsThreshold;
 
     // Pre-allocate YIN difference buffer (CRITICAL: no allocation in detect())
     this.yinBuffer = new Float32Array(this.halfSize);
@@ -101,6 +107,17 @@ export class YINPitchDetector {
 
     // Pre-allocate result object (mutated in detect() to avoid GC pressure)
     this._result = { frequency: 0, confidence: 0, voiced: false, midiNote: null, centsOffset: 0, timestamp: 0 };
+  }
+
+  /** Update RMS threshold at runtime (used by ambient noise calibration) */
+  setRmsThreshold(threshold: number): void {
+    this._rmsThreshold = Math.max(0.001, threshold);
+    logger.log(`[PitchDetector] RMS threshold updated to ${this._rmsThreshold.toFixed(4)}`);
+  }
+
+  /** Get current RMS threshold */
+  getRmsThreshold(): number {
+    return this._rmsThreshold;
   }
 
   /**
@@ -121,13 +138,13 @@ export class YINPitchDetector {
 
     // Step 0: RMS gate — reject silent/quiet buffers before expensive YIN
     const rms = this.computeRMS(audioBuffer);
-    if (rms < this.config.rmsThreshold) {
+    if (rms < this._rmsThreshold) {
       this._rmsRejectCount++;
       // Log every 200 rejections for diagnostics (not every frame — too noisy)
       if (this._rmsRejectCount % 200 === 0) {
         logger.log(
           `[PitchDetector] RMS silence: ${this._rmsRejectCount}/${this._detectCount} rejected ` +
-          `(rms=${rms.toFixed(4)} < ${this.config.rmsThreshold})`
+          `(rms=${rms.toFixed(4)} < ${this._rmsThreshold.toFixed(4)})`
         );
       }
       r.frequency = 0; r.confidence = 0; r.voiced = false; r.midiNote = null; r.centsOffset = 0;
@@ -177,12 +194,37 @@ export class YINPitchDetector {
       }
     }
 
+    // Step 6: Median filter — smooth out single-frame frequency outliers.
+    // Only apply when all 3 history entries map to the SAME MIDI note.
+    // This stabilizes within-note frequency jitter without blending across notes.
+    const currentMidi = frequencyToNearestMidi(frequency);
+    this._freqHistory[this._freqHistoryIdx] = frequency;
+    this._freqHistoryIdx = (this._freqHistoryIdx + 1) % 3;
+    if (
+      this._freqHistory[0] > 0 && this._freqHistory[1] > 0 && this._freqHistory[2] > 0 &&
+      frequencyToNearestMidi(this._freqHistory[0]) === currentMidi &&
+      frequencyToNearestMidi(this._freqHistory[1]) === currentMidi &&
+      frequencyToNearestMidi(this._freqHistory[2]) === currentMidi
+    ) {
+      frequency = this._median3(this._freqHistory[0], this._freqHistory[1], this._freqHistory[2]);
+    }
+
     r.frequency = frequency;
     r.confidence = confidence;
     r.voiced = true;
     r.midiNote = frequencyToNearestMidi(frequency);
     r.centsOffset = frequencyCentsOffset(frequency);
     return r;
+  }
+
+  /** Fast median of 3 values (no allocation) */
+  private _median3(a: number, b: number, c: number): number {
+    if (a > b) {
+      if (b > c) return b;
+      return a > c ? c : a;
+    }
+    if (a > c) return a;
+    return b > c ? c : b;
   }
 
   /**
@@ -284,35 +326,41 @@ export class YINPitchDetector {
    * pitch was likely a harmonic — correct to the fundamental.
    */
   private correctOctaveError(refinedTau: number, rawTau: number): number {
-    // Check tau*2 (one octave below) — if it has a good valley, prefer it
-    const doubleTau = rawTau * 2;
-    if (doubleTau >= this.maxTau) return refinedTau;
-
     // If the original valley is very deep (CMNDF near zero), the detected
     // frequency is almost certainly the true fundamental — not a harmonic.
-    // Pure sines and strong fundamentals have CMNDF < threshold * 0.3.
-    // Piano harmonics produce shallower valleys (CMNDF 0.05–0.12).
     const originalVal = this.yinBuffer[rawTau];
     if (originalVal < this.config.threshold * 0.3) return refinedTau;
 
-    // Find the best valley near doubleTau (±3 samples for tolerance)
-    let bestTau = doubleTau;
-    let bestVal = this.yinBuffer[doubleTau] ?? 1;
-    for (let t = Math.max(this.minTau, doubleTau - 3); t <= Math.min(this.maxTau - 1, doubleTau + 3); t++) {
-      if (this.yinBuffer[t] < bestVal) {
-        bestVal = this.yinBuffer[t];
-        bestTau = t;
+    // Check tau*2 (one octave below) and tau*3 (two octaves below / fifth).
+    // Piano fundamentals below C3 often have 2nd or 3rd harmonic stronger
+    // than the fundamental, causing YIN to lock onto the harmonic.
+    let bestCorrectedTau = refinedTau;
+    let bestCorrectedVal = originalVal;
+
+    for (const multiplier of [2, 3]) {
+      const candidateTau = rawTau * multiplier;
+      if (candidateTau >= this.maxTau) continue;
+
+      // Find the best valley near candidateTau (±3 samples for tolerance)
+      let bestTau = candidateTau;
+      let bestVal = this.yinBuffer[candidateTau] ?? 1;
+      for (let t = Math.max(this.minTau, candidateTau - 3); t <= Math.min(this.maxTau - 1, candidateTau + 3); t++) {
+        if (this.yinBuffer[t] < bestVal) {
+          bestVal = this.yinBuffer[t];
+          bestTau = t;
+        }
+      }
+
+      // The multiplied valley must be below threshold AND within 1.5x of the original.
+      // For 3x correction, be slightly more conservative (1.3x) to avoid false corrections.
+      const ratio = multiplier === 2 ? 1.5 : 1.3;
+      if (bestVal < this.config.threshold && bestVal < bestCorrectedVal * ratio) {
+        bestCorrectedTau = this.parabolicInterpolation(bestTau);
+        bestCorrectedVal = bestVal;
       }
     }
 
-    // The 2x valley must be below threshold AND within 1.5x of the original.
-    // This is conservative: only correct when the fundamental's valley
-    // is nearly as good as the harmonic's, suggesting true octave confusion.
-    if (bestVal < this.config.threshold && bestVal < originalVal * 1.5) {
-      return this.parabolicInterpolation(bestTau);
-    }
-
-    return refinedTau;
+    return bestCorrectedTau;
   }
 
   /** Get the configured sample rate */

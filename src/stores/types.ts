@@ -153,6 +153,8 @@ export interface MidiSettings {
   autoConnectMidi: boolean;
   preferredInputMethod: PreferredInputMethod;
   micDetectionMode: MicDetectionMode;
+  /** Cached mic permission state — avoids re-prompting on every input switch */
+  micPermissionGranted: boolean;
 }
 
 export interface OnboardingSettings {
@@ -190,6 +192,7 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   setLastMidiDevice: (deviceId: string | null, deviceName: string | null) => void;
   setPreferredInputMethod: (method: PreferredInputMethod) => void;
   setMicDetectionMode: (mode: MicDetectionMode) => void;
+  setMicPermissionGranted: (granted: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setShowTutorials: (show: boolean) => void;
   setHasCompletedOnboarding: (completed: boolean) => void;

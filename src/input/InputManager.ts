@@ -18,7 +18,7 @@ import type { MidiNoteEvent } from '../core/exercises/types';
 import { getMidiInput } from './MidiInput';
 import type { MidiInput } from './MidiInput';
 import { MicrophoneInput, createMicrophoneInput } from './MicrophoneInput';
-import { configureAudioSessionForRecording, checkMicrophonePermission } from './AudioCapture';
+import { configureAudioSessionForRecording, isMicPermissionCached } from './AudioCapture';
 import { useSettingsStore } from '../stores/settingsStore';
 import { logger } from '../utils/logger';
 
@@ -131,28 +131,25 @@ export class InputManager {
     logger.log(`[InputManager] MIDI available: ${midiAvailable}`);
 
     // Determine active method.
-    // Priority: MIDI (if available) > Mic (only if EXPLICITLY requested) > Touch
-    // Auto mode NEVER tries mic — mic requires the user to set 'mic' in settings.
-    // Reason: mic init requests permission (dialog), switches iOS audio session to
-    // PlayAndRecord (disrupts playback), and can take 10-15s. All of this happens
-    // in the background while the user tries to play, causing audio glitches and
-    // making gameplay appear frozen.
+    // Priority: MIDI (if available) > Mic (if permission cached) > Touch
+    // Auto mode now includes mic IF permission was previously granted and cached.
+    // This avoids: (1) blocking permission dialog, (2) the defaultToSpeaker option
+    // in configureAudioSessionForRecording() routes audio to speaker (not earpiece).
     if (preferred === 'midi' || (preferred === 'auto' && midiAvailable)) {
       this._activeMethod = 'midi';
       // Auto-connect to the first available MIDI device so messages flow immediately
       await this._autoConnectMidi();
       logger.log('[InputManager] Selected: midi');
-    } else if (preferred === 'mic') {
-      // Explicit mic mode: request permission and set up mic pipeline.
+    } else if (preferred === 'mic' || (preferred === 'auto' && !midiAvailable && isMicPermissionCached())) {
+      // Mic mode: explicit request OR auto mode with cached permission.
       try {
-        // Configure react-native-audio-api's AudioManager for PlayAndRecord.
-        // IMPORTANT: Do NOT call expo-av's ensureAudioModeConfigured() here — expo-av
-        // and react-native-audio-api share the same iOS AVAudioSession singleton but
-        // maintain separate internal state.
-        logger.log('[InputManager] Configuring audio session for recording...');
+        logger.log(`[InputManager] Configuring mic (preferred=${preferred}, cachedPermission=${isMicPermissionCached()})...`);
         configureAudioSessionForRecording();
 
-        const detectionMode = useSettingsStore.getState().micDetectionMode ?? 'monophonic';
+        // Auto mode always uses monophonic (fast YIN init, <1s). Explicit mic uses user's setting.
+        const detectionMode = preferred === 'auto'
+          ? 'monophonic'
+          : (useSettingsStore.getState().micDetectionMode ?? 'monophonic');
         this.micInput = await withTimeout(
           createMicrophoneInput({
             defaultVelocity: this.config.micDefaultVelocity ?? 80,
@@ -177,7 +174,7 @@ export class InputManager {
         logger.error('[InputManager] Mic init error → falling back to touch:', error);
       }
     } else {
-      // 'auto' without MIDI, or 'touch' — use touch keyboard
+      // 'auto' without MIDI and no cached mic permission, or 'touch' — use touch keyboard
       this._activeMethod = 'touch';
       logger.log('[InputManager] Selected: touch');
     }
@@ -335,36 +332,26 @@ export class InputManager {
         await this._autoConnectMidi();
       } else if (this.micInput) {
         this._activeMethod = 'mic';
-      } else {
-        // Try to init mic if permission is already granted
-        const micPermitted = await withTimeout(
-          checkMicrophonePermission(), 2000, false, 'switchMethod:checkMicPermission',
-        );
-        if (micPermitted) {
-          try {
-            configureAudioSessionForRecording();
-            const detectionMode = useSettingsStore.getState().micDetectionMode ?? 'monophonic';
-            this.micInput = await withTimeout(
-              createMicrophoneInput({
-                defaultVelocity: this.config.micDefaultVelocity ?? 80,
-                latencyCompensationMs: this.config.micLatencyCompensationMs ?? 0,
-                mode: detectionMode,
-              }),
-              10000,
-              null,
-              'switchMethod:auto:createMicrophoneInput',
-            );
-            if (this.micInput) {
-              this._activeMethod = 'mic';
-            } else {
-              this._activeMethod = 'touch';
-            }
-          } catch {
-            this._activeMethod = 'touch';
-          }
-        } else {
+      } else if (isMicPermissionCached()) {
+        // Permission was previously granted — init mic without OS dialog
+        try {
+          configureAudioSessionForRecording();
+          this.micInput = await withTimeout(
+            createMicrophoneInput({
+              defaultVelocity: this.config.micDefaultVelocity ?? 80,
+              latencyCompensationMs: this.config.micLatencyCompensationMs ?? 0,
+              mode: 'monophonic', // Auto mode uses fast monophonic
+            }),
+            10000,
+            null,
+            'switchMethod:auto:createMicrophoneInput',
+          );
+          this._activeMethod = this.micInput ? 'mic' : 'touch';
+        } catch {
           this._activeMethod = 'touch';
         }
+      } else {
+        this._activeMethod = 'touch';
       }
     }
 

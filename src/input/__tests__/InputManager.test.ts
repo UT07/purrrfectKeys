@@ -55,6 +55,7 @@ jest.mock('../AudioCapture', () => ({
   configureAudioSessionForRecording: jest.fn(),
   requestMicrophonePermission: jest.fn(async () => true),
   checkMicrophonePermission: jest.fn(async () => true),
+  isMicPermissionCached: jest.fn(() => false),
 }));
 
 // Mock MicrophoneInput
@@ -140,24 +141,24 @@ describe('InputManager', () => {
       manager.dispose();
     });
 
-    it('selects touch in auto mode even when mic permission is granted (auto never tries mic)', async () => {
-      // Auto mode: MIDI > Touch. Mic requires explicit 'mic' setting.
+    it('selects mic in auto mode when permission is cached', async () => {
+      // Auto mode: MIDI > Mic (if cached permission) > Touch
       mockMicPermissionGranted = true;
+      const { isMicPermissionCached } = require('../AudioCapture');
+      (isMicPermissionCached as jest.Mock).mockReturnValue(true);
 
       const manager = new InputManager({ preferred: 'auto' });
       await manager.initialize();
 
-      expect(manager.activeMethod).toBe('touch');
+      expect(manager.activeMethod).toBe('mic');
 
       manager.dispose();
+      (isMicPermissionCached as jest.Mock).mockReturnValue(false);
     });
 
-    it('selects touch in auto mode when no MIDI and mic permission not granted', async () => {
-      // Mic permission not granted — auto mode doesn't request it, just falls back to touch
+    it('selects touch in auto mode when no MIDI and mic permission not cached', async () => {
+      // Mic permission not cached — auto mode doesn't request it, just falls back to touch
       mockMicPermissionGranted = false;
-      // Override checkMicrophonePermission to return false
-      const { checkMicrophonePermission } = require('../AudioCapture');
-      (checkMicrophonePermission as jest.Mock).mockResolvedValueOnce(false);
 
       const manager = new InputManager({ preferred: 'auto' });
       await manager.initialize();

@@ -51,6 +51,7 @@ const defaultSettings: SettingsData = {
   autoConnectMidi: true,
   preferredInputMethod: 'auto' as const,
   micDetectionMode: 'monophonic' as const,
+  micPermissionGranted: false,
 
   // Onboarding settings
   hasCompletedOnboarding: false,
@@ -196,6 +197,12 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   setMicDetectionMode: (mode: 'monophonic' | 'polyphonic') => {
     set({ micDetectionMode: mode });
     debouncedSave({ ...get(), micDetectionMode: mode });
+  },
+
+  // Mic permission — saves IMMEDIATELY so it persists even if app is killed right after granting
+  setMicPermissionGranted: (granted: boolean) => {
+    set({ micPermissionGranted: granted });
+    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), micPermissionGranted: granted });
   },
 
   // Onboarding settings — saves IMMEDIATELY (not debounced) because

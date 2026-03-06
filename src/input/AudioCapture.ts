@@ -274,6 +274,23 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 }
 
 export async function requestMicrophonePermission(): Promise<boolean> {
+  // Check cached permission first — avoid unnecessary OS round-trip
+  const { useSettingsStore } = require('../stores/settingsStore');
+  const cached = useSettingsStore.getState().micPermissionGranted;
+  if (cached) {
+    // Verify the OS-level permission is still valid (user could revoke in Settings)
+    const stillGranted = await withTimeout(
+      checkMicrophonePermission(), 2000, 'verifyCache',
+    ).catch(() => false);
+    if (stillGranted) {
+      logger.log('[AudioCapture] Mic permission: cached=true, OS confirmed');
+      return true;
+    }
+    // Permission was revoked — clear cache
+    logger.warn('[AudioCapture] Mic permission was revoked in OS Settings, clearing cache');
+    useSettingsStore.getState().setMicPermissionGranted(false);
+  }
+
   try {
     // Primary: use react-native-audio-api's own permission API (5s timeout)
     const status = await withTimeout(
@@ -282,7 +299,11 @@ export async function requestMicrophonePermission(): Promise<boolean> {
       'AudioManager.requestRecordingPermissions',
     );
     logger.log(`[AudioCapture] Mic permission request result (AudioManager): ${status}`);
-    return status === 'Granted';
+    const granted = status === 'Granted';
+    if (granted) {
+      useSettingsStore.getState().setMicPermissionGranted(true);
+    }
+    return granted;
   } catch (error) {
     logger.warn('[AudioCapture] AudioManager permission request failed, trying expo-av:', error);
     // Fallback to expo-av (also with 5s timeout)
@@ -294,7 +315,11 @@ export async function requestMicrophonePermission(): Promise<boolean> {
         'Audio.requestPermissionsAsync',
       );
       logger.log(`[AudioCapture] Mic permission request result (expo-av): ${status}`);
-      return status === 'granted';
+      const granted = status === 'granted';
+      if (granted) {
+        useSettingsStore.getState().setMicPermissionGranted(true);
+      }
+      return granted;
     } catch (fallbackError) {
       console.error('[AudioCapture] All mic permission request methods failed:', fallbackError);
       return false;
@@ -313,7 +338,16 @@ export async function checkMicrophonePermission(): Promise<boolean> {
       'AudioManager.checkRecordingPermissions',
     );
     logger.log(`[AudioCapture] Mic permission check (AudioManager): ${status}`);
-    return status === 'Granted';
+    const granted = status === 'Granted';
+    // Sync cache with OS state
+    try {
+      const { useSettingsStore } = require('../stores/settingsStore');
+      const cached = useSettingsStore.getState().micPermissionGranted;
+      if (granted !== cached) {
+        useSettingsStore.getState().setMicPermissionGranted(granted);
+      }
+    } catch { /* store not ready yet — ignore */ }
+    return granted;
   } catch (error) {
     logger.warn('[AudioCapture] AudioManager permission check failed, trying expo-av:', error);
     try {
@@ -329,5 +363,18 @@ export async function checkMicrophonePermission(): Promise<boolean> {
       console.error('[AudioCapture] All mic permission check methods failed:', fallbackError);
       return false;
     }
+  }
+}
+
+/**
+ * Fast permission check using only the cached settingsStore value.
+ * No OS round-trip — returns immediately. Use for auto mode decisions.
+ */
+export function isMicPermissionCached(): boolean {
+  try {
+    const { useSettingsStore } = require('../stores/settingsStore');
+    return useSettingsStore.getState().micPermissionGranted;
+  } catch {
+    return false;
   }
 }

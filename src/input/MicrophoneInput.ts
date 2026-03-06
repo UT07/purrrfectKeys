@@ -22,6 +22,7 @@ import { YINPitchDetector, NoteTracker } from './PitchDetector';
 import type { PitchDetectorConfig, NoteTrackerConfig } from './PitchDetector';
 import { PolyphonicDetector } from './PolyphonicDetector';
 import { MultiNoteTracker } from './MultiNoteTracker';
+import { AmbientNoiseCalibrator } from './AmbientNoiseCalibrator';
 import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
@@ -71,8 +72,8 @@ const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
  * Longer release hold accounts for speaker resonance decay.
  */
 const AMBIENT_TRACKER_OVERRIDES: Partial<NoteTrackerConfig> = {
-  onsetHoldMs: 60,       // Default 40 — drives minConfirmations=2 at ~46ms/buffer
-  releaseHoldMs: 120,    // Default 80 — speaker resonance sustains longer
+  onsetHoldMs: 50,       // ~2 confirmations at 46ms/buffer. Snappier than 60ms while still rejecting flukes.
+  releaseHoldMs: 100,    // Reduced from 120ms for faster note-off response (still covers speaker resonance)
 };
 
 // ---------------------------------------------------------------------------
@@ -84,6 +85,7 @@ export class MicrophoneInput {
   private readonly capture: AudioCapture;
   private readonly detector: YINPitchDetector;
   private readonly tracker: NoteTracker;
+  private readonly calibrator: AmbientNoiseCalibrator;
   private polyDetector: PolyphonicDetector | null = null;
   private multiTracker: MultiNoteTracker | null = null;
   private mode: 'monophonic' | 'polyphonic';
@@ -97,6 +99,7 @@ export class MicrophoneInput {
   private polyBusy = false; // BUG-016 fix: back-pressure flag for async polyphonic detection
   private monoBusy = false; // Back-pressure flag for monophonic YIN (prevents JS thread stacking)
   private readonly pendingBuffer: Float32Array; // Pre-allocated buffer for deferred YIN detection
+  private hasCalibrated = false; // Only auto-calibrate once per session
 
   constructor(config?: Partial<MicrophoneInputConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -122,6 +125,7 @@ export class MicrophoneInput {
 
     this.detector = new YINPitchDetector(pitchConfig);
     this.tracker = new NoteTracker(trackerConfig);
+    this.calibrator = new AmbientNoiseCalibrator();
 
     logger.log(
       `[MicrophoneInput] Created in ${this.mode} mode, pitchConfig: threshold=${pitchConfig.threshold}, ` +
@@ -247,6 +251,49 @@ export class MicrophoneInput {
     this.voicedCount = 0;
     await this.capture.start();
     logger.log('[MicrophoneInput] Started listening');
+
+    // Auto-calibrate RMS threshold from ambient noise (once per session).
+    // Collect ~0.5s of audio buffers, compute average RMS, set threshold to 2.5x ambient.
+    // Runs in background — detection is already active with default thresholds.
+    if (!this.hasCalibrated && this.mode === 'monophonic') {
+      this.hasCalibrated = true;
+      this._runAmbientCalibration();
+    }
+  }
+
+  /**
+   * Collect ~0.5s of ambient audio and auto-tune the YIN RMS threshold.
+   * Runs asynchronously while detection continues with default thresholds.
+   */
+  private _runAmbientCalibration(): void {
+    const calibrationBuffers: Float32Array[] = [];
+    const startTime = Date.now();
+    const CALIBRATION_MS = 500;
+
+    // Tap into the audio stream for calibration
+    const unsub = this.capture.onAudioBuffer((samples) => {
+      if (Date.now() - startTime < CALIBRATION_MS) {
+        calibrationBuffers.push(new Float32Array(samples));
+      } else {
+        unsub();
+        // Compute calibration result
+        if (calibrationBuffers.length > 0) {
+          let totalRMS = 0;
+          for (const buf of calibrationBuffers) {
+            totalRMS += this.calibrator.computeRMS(buf);
+          }
+          const avgRMS = totalRMS / calibrationBuffers.length;
+          // Set RMS threshold to 2.5x ambient (ensures detection only triggers on
+          // signal significantly above background noise)
+          const adaptiveThreshold = Math.max(0.005, avgRMS * 2.5);
+          this.detector.setRmsThreshold(adaptiveThreshold);
+          logger.log(
+            `[MicrophoneInput] Ambient calibration: avgRMS=${avgRMS.toFixed(4)}, ` +
+            `adaptive rmsThreshold=${adaptiveThreshold.toFixed(4)} (${calibrationBuffers.length} buffers)`
+          );
+        }
+      }
+    });
   }
 
   /**
