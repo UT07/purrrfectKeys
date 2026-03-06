@@ -1523,9 +1523,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    * for each key press, find the closest unconsumed note (by beat distance)
    * with matching MIDI pitch. This eliminates dead zones between notes.
    */
+  const isMicInput = activeInputMethod === 'mic';
+
   const handleKeyDown = useCallback(
     (midiNote: MidiNoteEvent) => {
       if (isDemoPlaying) return; // No user input during demo
+
+      // In mic mode, block all touch keyboard interaction.
+      // Playing audio through the speaker creates mic echo that gets double-detected.
+      // The mic pipeline handles detection + feedback through the external note path.
+      if (activeInputMethodRef.current === 'mic') return;
 
       // Always play the note for audio feedback (playNote handles scoring guard internally)
       handleManualNoteOn(midiNote.note, midiNote.velocity / 127);
@@ -2238,7 +2245,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               onNoteOff={handleKeyUp}
               highlightedNotes={isDemoPlaying ? demoActiveNotes : highlightedKeys}
               expectedNotes={expectedNotes}
-              enabled={true}
+              enabled={!isMicInput}
               hapticEnabled={true}
               showLabels={true}
               keyHeight={singleKeyHeight}
@@ -2254,7 +2261,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               onNoteOff={handleKeyUp}
               highlightedNotes={isDemoPlaying ? demoActiveNotes : highlightedKeys}
               expectedNotes={expectedNotes}
-              enabled={true}
+              enabled={!isMicInput}
               hapticEnabled={true}
               showLabels={true}
               scrollable={true}
