@@ -354,9 +354,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <GradientMeshBackground accent="home" />
             {/* Top bar: greeting + gem counter + settings */}
             <View style={styles.topBar}>
-              <View>
+              <View style={styles.topBarLeft}>
                 <Text style={styles.greeting}>{getGreeting()}</Text>
-                <Text style={styles.greetingName}>{displayName}</Text>
+                <Text style={styles.greetingName} numberOfLines={1}>{displayName}</Text>
               </View>
               <View style={styles.topBarRight}>
                 <View style={styles.gemCounter} testID="gem-counter">
@@ -674,6 +674,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: SPACING.md,
   },
+  topBarLeft: {
+    flex: 1,
+    marginRight: SPACING.sm,
+  },
   greeting: {
     ...TYPOGRAPHY.body.md,
     fontWeight: '500' as const,
@@ -728,7 +732,7 @@ const styles = StyleSheet.create({
   heroStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
   levelBadge: {

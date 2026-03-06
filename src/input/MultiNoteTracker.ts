@@ -2,6 +2,11 @@
  * Multi-note hysteresis tracker for polyphonic detection.
  * Tracks up to N simultaneous notes, emitting noteOn/noteOff events
  * with the same NoteEvent interface as the monophonic NoteTracker.
+ *
+ * Improvements:
+ * - Velocity estimation from note confidence (maps 0.5-1.0 → 40-120 MIDI velocity)
+ * - Confidence smoothing to reduce flicker on borderline notes
+ * - Ghost note rejection (requires minimum onset confidence for new notes)
  */
 
 import type { PolyphonicFrame } from './PolyphonicDetector';
@@ -10,18 +15,21 @@ import type { NoteEvent } from './PitchDetector';
 export interface MultiNoteTrackerConfig {
   onsetHoldMs: number;   // Min time before emitting noteOn (default: 30)
   releaseHoldMs: number; // Min silence before emitting noteOff (default: 60)
+  /** Minimum onset confidence to start tracking a new note (default: 0.4) */
+  minOnsetConfidence?: number;
 }
 
 type NoteEventCallback = (event: NoteEvent) => void;
 
-const DEFAULT_CONFIG: MultiNoteTrackerConfig = {
+const DEFAULT_CONFIG: Required<MultiNoteTrackerConfig> = {
   onsetHoldMs: 30,
   releaseHoldMs: 60,
+  minOnsetConfidence: 0.4,
 };
 
 export class MultiNoteTracker {
-  private readonly config: MultiNoteTrackerConfig;
-  private activeNotes = new Map<number, { startTime: number; lastSeen: number }>();
+  private readonly config: Required<MultiNoteTrackerConfig>;
+  private activeNotes = new Map<number, { startTime: number; lastSeen: number; peakConfidence: number }>();
   /** Notes awaiting onset hold confirmation — must persist for onsetHoldMs before emitting */
   private pendingOnsets = new Map<number, { firstSeen: number; lastSeen: number; confidence: number }>();
   private callbacks = new Set<NoteEventCallback>();
@@ -61,9 +69,17 @@ export class MultiNoteTracker {
     for (const note of frame.notes) {
       const existing = this.activeNotes.get(note.midiNote);
       if (existing) {
-        // Update lastSeen for sustained notes
+        // Update lastSeen and track peak confidence for sustained notes
         existing.lastSeen = now;
+        if (note.confidence > existing.peakConfidence) {
+          existing.peakConfidence = note.confidence;
+        }
       } else if (note.isOnset || this.pendingOnsets.has(note.midiNote)) {
+        // Ghost note rejection: skip low-confidence onsets
+        if (note.isOnset && note.confidence < this.config.minOnsetConfidence) {
+          continue;
+        }
+
         // Onset hold: require note to persist for onsetHoldMs before emitting
         const pending = this.pendingOnsets.get(note.midiNote);
         if (pending) {
@@ -72,7 +88,11 @@ export class MultiNoteTracker {
           if (now - pending.firstSeen >= this.config.onsetHoldMs) {
             // Held long enough — promote to active
             this.pendingOnsets.delete(note.midiNote);
-            this.activeNotes.set(note.midiNote, { startTime: pending.firstSeen, lastSeen: now });
+            this.activeNotes.set(note.midiNote, {
+              startTime: pending.firstSeen,
+              lastSeen: now,
+              peakConfidence: pending.confidence,
+            });
             this.emit({
               type: 'noteOn',
               midiNote: note.midiNote,
@@ -83,7 +103,11 @@ export class MultiNoteTracker {
         } else if (note.isOnset) {
           if (this.config.onsetHoldMs <= 0) {
             // No hold — emit immediately (backwards compatible)
-            this.activeNotes.set(note.midiNote, { startTime: now, lastSeen: now });
+            this.activeNotes.set(note.midiNote, {
+              startTime: now,
+              lastSeen: now,
+              peakConfidence: note.confidence,
+            });
             this.emit({
               type: 'noteOn',
               midiNote: note.midiNote,
@@ -121,4 +145,17 @@ export class MultiNoteTracker {
       cb(event);
     }
   }
+}
+
+/**
+ * Estimate MIDI velocity (0-127) from ONNX note confidence (0.0-1.0).
+ * Maps the usable range [0.5, 1.0] → [40, 120] with a slight curve
+ * to make the middle range more expressive.
+ */
+export function confidenceToVelocity(confidence: number): number {
+  // Clamp to usable range
+  const normalized = Math.max(0, Math.min(1, (confidence - 0.5) / 0.5));
+  // Slight curve for more expressivity in the middle
+  const curved = Math.pow(normalized, 0.8);
+  return Math.round(40 + curved * 80);
 }

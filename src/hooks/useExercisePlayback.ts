@@ -318,9 +318,15 @@ export function useExercisePlayback({
 
       // Only record noteOn events for scoring (noteOff would double-count notes)
       if (midiEvent.type === 'noteOn') {
-        // Normalize timestamp to Date.now() domain (native MIDI may use a different clock)
+        // Normalize timestamp: MIDI hardware may use a different clock, so override.
+        // Mic timestamps already use Date.now() with latency compensation applied —
+        // overwriting would defeat the compensation. Touch also uses Date.now().
         const source = midiEvent.inputSource ?? manager.activeMethod;
-        const normalizedEvent = { ...midiEvent, timestamp: Date.now(), inputSource: source as 'midi' | 'mic' | 'touch' };
+        const normalizedEvent = {
+          ...midiEvent,
+          timestamp: source === 'midi' ? Date.now() : midiEvent.timestamp,
+          inputSource: source as 'midi' | 'mic' | 'touch',
+        };
         const noteIndex = playedNotesRef.current.length;
         playedNotesRef.current.push(normalizedEvent);
         trackNoteOnIndex(normalizedEvent.note, noteIndex);
