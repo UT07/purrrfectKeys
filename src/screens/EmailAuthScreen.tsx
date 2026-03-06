@@ -20,6 +20,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../stores/authStore';
+import { EmailAuthProvider } from 'firebase/auth';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -61,6 +62,8 @@ export function EmailAuthScreen(): React.ReactElement {
     return true;
   }, [email, password, displayName, mode]);
 
+  const isAnonymous = useAuthStore((s) => s.isAnonymous);
+
   const handleSubmit = useCallback(async () => {
     if (!validate()) return;
     clearError();
@@ -69,11 +72,17 @@ export function EmailAuthScreen(): React.ReactElement {
       // Link anonymous account with email credentials (preserves progress)
       await linkWithEmail(email, password);
     } else if (mode === 'signIn') {
-      await signInWithEmail(email, password);
+      if (isAnonymous) {
+        // Replace anonymous account with existing email account (GDPR-compliant)
+        const credential = EmailAuthProvider.credential(email, password);
+        await useAuthStore.getState().signInReplacingAnonymous(credential);
+      } else {
+        await signInWithEmail(email, password);
+      }
     } else {
       await signUpWithEmail(email, password, displayName.trim());
     }
-  }, [mode, email, password, displayName, isLinking, validate, clearError, signInWithEmail, signUpWithEmail, linkWithEmail]);
+  }, [mode, email, password, displayName, isLinking, isAnonymous, validate, clearError, signInWithEmail, signUpWithEmail, linkWithEmail]);
 
   const handleForgotPassword = useCallback(async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

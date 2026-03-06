@@ -233,6 +233,7 @@ export class NativeMidiInput implements MidiInput {
           velocity: data2,
           timestamp: Date.now(), // Normalize to JS time domain
           channel,
+          inputSource: 'midi',
         };
         this.state.lastNoteTime = Date.now();
         this.noteCallbacks.forEach((cb) => {
@@ -252,6 +253,7 @@ export class NativeMidiInput implements MidiInput {
           velocity: data2,
           timestamp: Date.now(),
           channel,
+          inputSource: 'midi',
         };
         this.noteCallbacks.forEach((cb) => {
           try {

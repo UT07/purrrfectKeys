@@ -793,7 +793,23 @@ async function deleteUserDataClientSide(uid: string): Promise<void> {
     logger.warn('[deleteUserData] Friend code cleanup failed:', err);
   }
 
-  // 3. Delete league membership
+  // 3. Delete usernames
+  try {
+    const usernamesQuery = query(collection(db, 'usernames'), where('uid', '==', uid));
+    const usernamesSnap = await getDocs(usernamesQuery);
+    if (!usernamesSnap.empty) {
+      const batch = writeBatch(db);
+      for (const docSnap of usernamesSnap.docs) {
+        batch.delete(docSnap.ref);
+      }
+      await batch.commit();
+      logger.log(`[deleteUserData] Deleted ${usernamesSnap.size} usernames`);
+    }
+  } catch (err) {
+    logger.warn('[deleteUserData] Username cleanup failed:', err);
+  }
+
+  // 4. Delete league membership
   try {
     const deleted = await deleteLeagueMembership(uid);
     if (deleted > 0) {
@@ -803,7 +819,7 @@ async function deleteUserDataClientSide(uid: string): Promise<void> {
     logger.warn('[deleteUserData] League membership cleanup failed:', err);
   }
 
-  // 4. Delete challenges
+  // 5. Delete challenges
   try {
     const deleted = await deleteChallenges(uid);
     if (deleted > 0) {
@@ -813,7 +829,7 @@ async function deleteUserDataClientSide(uid: string): Promise<void> {
     logger.warn('[deleteUserData] Challenge cleanup failed:', err);
   }
 
-  // 5. Delete all user subcollections
+  // 6. Delete all user subcollections
   for (const subcollection of USER_SUBCOLLECTIONS) {
     try {
       const deleted = await deleteSubcollection(uid, subcollection);
@@ -825,7 +841,7 @@ async function deleteUserDataClientSide(uid: string): Promise<void> {
     }
   }
 
-  // 6. Delete the root user document
+  // 7. Delete the root user document
   await deleteDoc(doc(db, 'users', uid));
   logger.log('[deleteUserData] Root user document deleted');
 }

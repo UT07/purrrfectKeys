@@ -9,6 +9,7 @@ import { useExerciseStore } from './exerciseStore';
 import { useProgressStore } from './progressStore';
 import { useSettingsStore } from './settingsStore';
 import { getLevelProgress } from '@/core/progression/XpSystem';
+import { getTodayDateString } from '@/utils/time';
 import type { LevelProgressInfo } from './types';
 
 /**
@@ -77,7 +78,7 @@ export function useLevelProgress(): LevelProgressInfo {
  * Check if daily goal is complete
  */
 export function useDailyGoalComplete(): boolean {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateString();
   const dailyGoal = useProgressStore((state) => state.dailyGoalData[today]);
   return dailyGoal?.isComplete ?? false;
 }
@@ -86,7 +87,7 @@ export function useDailyGoalComplete(): boolean {
  * Get today's practice minutes
  */
 export function useTodaysPracticeDuration(): number {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateString();
   const dailyGoal = useProgressStore((state) => state.dailyGoalData[today]);
   return dailyGoal?.minutesPracticed ?? 0;
 }
@@ -95,7 +96,7 @@ export function useTodaysPracticeDuration(): number {
  * Get today's completed exercises count
  */
 export function useTodaysExercisesCompleted(): number {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateString();
   const dailyGoal = useProgressStore((state) => state.dailyGoalData[today]);
   return dailyGoal?.exercisesCompleted ?? 0;
 }

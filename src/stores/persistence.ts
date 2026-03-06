@@ -169,10 +169,15 @@ export class PersistenceManager {
 }
 
 /**
- * Registry of all active debounced save timers.
- * Used by cancelAllPendingSaves() to prevent ghost writes after account deletion.
+ * Registry of all active debounced saves.
+ * Stores both the timer ID and the save callback so we can either
+ * cancel (on sign-out/deletion) or flush (on app background).
  */
-const pendingSaveTimers: Set<NodeJS.Timeout> = new Set();
+interface PendingSave {
+  timerId: NodeJS.Timeout;
+  execute: () => Promise<void>;
+}
+const pendingSaves: Map<string, PendingSave> = new Map();
 
 /**
  * Cancel all pending debounced saves across all stores.
@@ -180,10 +185,22 @@ const pendingSaveTimers: Set<NodeJS.Timeout> = new Set();
  * to prevent race conditions where old data is re-written after clearing.
  */
 export function cancelAllPendingSaves(): void {
-  for (const timerId of pendingSaveTimers) {
+  for (const { timerId } of pendingSaves.values()) {
     clearTimeout(timerId);
   }
-  pendingSaveTimers.clear();
+  pendingSaves.clear();
+}
+
+/**
+ * Flush all pending debounced saves immediately.
+ * Call this when the app transitions to background/inactive to prevent data loss.
+ */
+export function flushAllPendingSaves(): void {
+  for (const { timerId, execute } of pendingSaves.values()) {
+    clearTimeout(timerId);
+    execute().catch(err => console.error('[PERSIST] Flush save failed:', err));
+  }
+  pendingSaves.clear();
 }
 
 /**
@@ -207,23 +224,20 @@ export function createDebouncedSave<T>(
   key: string,
   delayMs: number = 1000
 ): (state: T) => void {
-  let timeoutId: NodeJS.Timeout | null = null;
-
   return (state: T) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      pendingSaveTimers.delete(timeoutId);
+    const existing = pendingSaves.get(key);
+    if (existing) {
+      clearTimeout(existing.timerId);
     }
 
-    timeoutId = setTimeout(() => {
-      pendingSaveTimers.delete(timeoutId!);
-      // Fire and forget - async save
-      PersistenceManager.saveState(key, state).catch(err =>
+    const execute = () => PersistenceManager.saveState(key, state);
+    const timerId = setTimeout(() => {
+      pendingSaves.delete(key);
+      execute().catch(err =>
         console.error('[PERSIST] Debounced save failed:', err)
       );
-      timeoutId = null;
     }, delayMs);
-    pendingSaveTimers.add(timeoutId);
+    pendingSaves.set(key, { timerId, execute });
   };
 }
 

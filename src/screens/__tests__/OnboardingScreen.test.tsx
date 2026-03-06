@@ -1,18 +1,19 @@
 /**
  * OnboardingScreen Tests
- * Comprehensive UI tests for the 5-step onboarding flow:
+ * Comprehensive UI tests for the 6-step onboarding flow:
  * 1. Welcome
  * 2. Experience Level
  * 3. Equipment Check
  * 4. Goal Setting
  * 5. Choose Your Cat Companion
+ * 6. Pick Username & Display Name
  *
  * Covers rendering, navigation, step progression, settings persistence,
  * progress bar, cat avatar, and edge cases.
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 
 // ---------------------------------------------------------------------------
 // Mock setup (MUST come before component import)
@@ -26,6 +27,8 @@ let mockSettingsState: any = {
   dailyGoalMinutes: 10,
   selectedCatId: 'mini-meowww',
   playbackSpeed: 0.5,
+  username: '',
+  displayName: 'Piano Student',
   setExperienceLevel: jest.fn(),
   setLearningGoal: jest.fn(),
   setDailyGoalMinutes: jest.fn(),
@@ -34,6 +37,8 @@ let mockSettingsState: any = {
   setPreferredInputMethod: jest.fn(),
   updateMidiSettings: jest.fn(),
   setSelectedCatId: jest.fn(),
+  setUsername: jest.fn(),
+  setDisplayName: jest.fn(),
   preferredInputMethod: 'touch',
 };
 
@@ -86,6 +91,17 @@ jest.mock('@react-navigation/native', () => {
     },
   };
 });
+
+// Mock socialService (used by UsernameStep)
+jest.mock('../../services/firebase/socialService', () => ({
+  checkUsernameAvailable: jest.fn().mockResolvedValue(true),
+  isValidUsername: jest.fn((u: string) => /^[a-z0-9_-]{3,20}$/.test(u)),
+  registerFriendCode: jest.fn().mockResolvedValue('ABC123'),
+  registerUsername: jest.fn().mockResolvedValue(undefined),
+  lookupFriendCode: jest.fn().mockResolvedValue(null),
+  sendFriendRequest: jest.fn().mockResolvedValue(undefined),
+  getUserPublicProfile: jest.fn().mockResolvedValue(null),
+}));
 
 // Mock CatAvatar
 jest.mock('../../components/Mascot/CatAvatar', () => ({
@@ -242,6 +258,8 @@ function resetSettingsState(overrides: Partial<typeof mockSettingsState> = {}) {
     dailyGoalMinutes: 10,
     selectedCatId: 'mini-meowww',
     playbackSpeed: 0.5,
+    username: '',
+    displayName: 'Piano Student',
     setExperienceLevel: jest.fn(),
     setLearningGoal: jest.fn(),
     setDailyGoalMinutes: jest.fn(),
@@ -250,9 +268,42 @@ function resetSettingsState(overrides: Partial<typeof mockSettingsState> = {}) {
     setPreferredInputMethod: jest.fn(),
     updateMidiSettings: jest.fn(),
     setSelectedCatId: jest.fn(),
+    setUsername: jest.fn(),
+    setDisplayName: jest.fn(),
     preferredInputMethod: 'touch',
     ...overrides,
   };
+}
+
+/**
+ * Helper: navigate through steps 1-5, then complete step 6 (username) and press Finish.
+ * Must be called in an async test because the username availability check is debounced.
+ */
+async function navigateToCompletion(
+  getByText: ReturnType<typeof render>['getByText'],
+  getByTestId: ReturnType<typeof render>['getByTestId'],
+  opts: { cat?: string; goal?: string } = {},
+): Promise<void> {
+  const cat = opts.cat ?? 'Mini Meowww';
+  const goal = opts.goal ?? 'Play My Favorite Songs';
+
+  fireEvent.press(getByText('Get Started'));
+  fireEvent.press(getByText('Complete Beginner'));
+  fireEvent.press(getByText('Next'));
+  fireEvent.press(getByText('On-Screen Keyboard'));
+  fireEvent.press(getByText('Next'));
+  fireEvent.press(getByText(goal));
+  fireEvent.press(getByText('Next'));
+  // Step 5: Choose cat → Next
+  fireEvent.press(getByText(`Choose ${cat}`));
+  fireEvent.press(getByTestId('onboarding-cat-next'));
+  // Step 6: Username → Finish
+  fireEvent.changeText(getByTestId('onboarding-username-input'), 'testuser');
+  await waitFor(
+    () => { expect(getByText('Username available!')).toBeTruthy(); },
+    { timeout: 2000 },
+  );
+  fireEvent.press(getByText('Finish'));
 }
 
 // ===========================================================================
@@ -552,76 +603,36 @@ describe('OnboardingScreen', () => {
       );
     });
 
-    it('calls setHasCompletedOnboarding(true) on final step completion', () => {
-      const { getByText } = render(<OnboardingScreen />);
-
-      fireEvent.press(getByText('Get Started'));
-      fireEvent.press(getByText('Complete Beginner'));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText("On-Screen Keyboard"));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText('Play My Favorite Songs'));
-      fireEvent.press(getByText('Next'));
-      // Step 5: Choose cat
-      fireEvent.press(getByText('Choose Mini Meowww'));
-      fireEvent.press(getByText("Let's Get Started!"));
+    it('calls setHasCompletedOnboarding(true) on final step completion', async () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+      await navigateToCompletion(getByText, getByTestId);
 
       expect(mockSettingsState.setHasCompletedOnboarding).toHaveBeenCalledWith(
         true,
       );
     });
 
-    it('calls setLearningGoal with selected goal on final step', () => {
-      const { getByText } = render(<OnboardingScreen />);
-
-      fireEvent.press(getByText('Get Started'));
-      fireEvent.press(getByText('Complete Beginner'));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText("On-Screen Keyboard"));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText('Learn Proper Technique'));
-      fireEvent.press(getByText('Next'));
-      // Step 5: Choose cat
-      fireEvent.press(getByText('Choose Mini Meowww'));
-      fireEvent.press(getByText("Let's Get Started!"));
+    it('calls setLearningGoal with selected goal on final step', async () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+      await navigateToCompletion(getByText, getByTestId, { goal: 'Learn Proper Technique' });
 
       expect(mockSettingsState.setLearningGoal).toHaveBeenCalledWith(
         'technique',
       );
     });
 
-    it('calls setLearningGoal with exploration goal', () => {
-      const { getByText } = render(<OnboardingScreen />);
-
-      fireEvent.press(getByText('Get Started'));
-      fireEvent.press(getByText('Complete Beginner'));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText("On-Screen Keyboard"));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText('Just Explore & Have Fun'));
-      fireEvent.press(getByText('Next'));
-      // Step 5: Choose cat
-      fireEvent.press(getByText('Choose Mini Meowww'));
-      fireEvent.press(getByText("Let's Get Started!"));
+    it('calls setLearningGoal with exploration goal', async () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+      await navigateToCompletion(getByText, getByTestId, { goal: 'Just Explore & Have Fun' });
 
       expect(mockSettingsState.setLearningGoal).toHaveBeenCalledWith(
         'exploration',
       );
     });
 
-    it('calls initializeStarterCat and setSelectedCatId on final step', () => {
-      const { getByText } = render(<OnboardingScreen />);
-
-      fireEvent.press(getByText('Get Started'));
-      fireEvent.press(getByText('Complete Beginner'));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText("On-Screen Keyboard"));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText('Play My Favorite Songs'));
-      fireEvent.press(getByText('Next'));
-      // Step 5: Choose Jazzy
-      fireEvent.press(getByText('Choose Jazzy'));
-      fireEvent.press(getByText("Let's Get Started!"));
+    it('calls initializeStarterCat and setSelectedCatId on final step', async () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+      await navigateToCompletion(getByText, getByTestId, { cat: 'Jazzy' });
 
       expect(mockInitializeStarterCat).toHaveBeenCalledWith('jazzy');
       expect(mockSettingsState.setSelectedCatId).toHaveBeenCalledWith('jazzy');
@@ -728,24 +739,14 @@ describe('OnboardingScreen', () => {
   // 10. Final step navigates away
   // -----------------------------------------------------------------------
   describe('Final step navigation', () => {
-    it('calls navigation.goBack() on completing the final step', () => {
-      const { getByText } = render(<OnboardingScreen />);
-
-      fireEvent.press(getByText('Get Started'));
-      fireEvent.press(getByText('Complete Beginner'));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText("On-Screen Keyboard"));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText('Play My Favorite Songs'));
-      fireEvent.press(getByText('Next'));
-      // Step 5: Choose cat
-      fireEvent.press(getByText('Choose Mini Meowww'));
-      fireEvent.press(getByText("Let's Get Started!"));
+    it('calls navigation.goBack() on completing the final step', async () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+      await navigateToCompletion(getByText, getByTestId);
 
       expect(mockGoBack).toHaveBeenCalled();
     });
 
-    it('calls setHasCompletedOnboarding BEFORE setLearningGoal', () => {
+    it('calls setHasCompletedOnboarding BEFORE setLearningGoal', async () => {
       const callOrder: string[] = [];
       resetSettingsState({
         setHasCompletedOnboarding: jest.fn(() =>
@@ -754,18 +755,8 @@ describe('OnboardingScreen', () => {
         setLearningGoal: jest.fn(() => callOrder.push('setLearningGoal')),
       });
 
-      const { getByText } = render(<OnboardingScreen />);
-
-      fireEvent.press(getByText('Get Started'));
-      fireEvent.press(getByText('Complete Beginner'));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText("On-Screen Keyboard"));
-      fireEvent.press(getByText('Next'));
-      fireEvent.press(getByText('Play My Favorite Songs'));
-      fireEvent.press(getByText('Next'));
-      // Step 5: Choose cat
-      fireEvent.press(getByText('Choose Mini Meowww'));
-      fireEvent.press(getByText("Let's Get Started!"));
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+      await navigateToCompletion(getByText, getByTestId);
 
       expect(callOrder).toEqual([
         'setHasCompletedOnboarding',
@@ -858,8 +849,8 @@ describe('OnboardingScreen', () => {
       expect(getByText("What's Your Goal?")).toBeTruthy();
     });
 
-    it('Lets Get Started button is disabled on step 5 when no cat selected', () => {
-      const { getByText } = render(<OnboardingScreen />);
+    it('Next button is disabled on step 5 when no cat selected', () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
 
       fireEvent.press(getByText('Get Started'));
       fireEvent.press(getByText('Complete Beginner'));
@@ -869,8 +860,8 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Play My Favorite Songs'));
       fireEvent.press(getByText('Next'));
 
-      // Pressing Let's Get Started without a cat should NOT complete
-      fireEvent.press(getByText("Let's Get Started!"));
+      // Pressing Next without selecting a cat should NOT advance
+      fireEvent.press(getByTestId('onboarding-cat-next'));
       // Still on step 5
       expect(getByText('Choose Your Cat Companion')).toBeTruthy();
     });
@@ -908,8 +899,8 @@ describe('OnboardingScreen', () => {
   // Full end-to-end flow
   // -----------------------------------------------------------------------
   describe('Full flow end-to-end', () => {
-    it('completes entire onboarding flow with all 5 steps', () => {
-      const { getByText } = render(<OnboardingScreen />);
+    it('completes entire onboarding flow with all 6 steps', async () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
 
       // Step 1: Welcome
       expect(getByText('Welcome to Purrrfect Keys')).toBeTruthy();
@@ -930,10 +921,19 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Just Explore & Have Fun'));
       fireEvent.press(getByText('Next'));
 
-      // Step 5: Choose Cat Companion
+      // Step 5: Choose Cat Companion → Next
       expect(getByText('Choose Your Cat Companion')).toBeTruthy();
       fireEvent.press(getByText('Choose Luna'));
-      fireEvent.press(getByText("Let's Get Started!"));
+      fireEvent.press(getByTestId('onboarding-cat-next'));
+
+      // Step 6: Username → Finish
+      expect(getByText('Pick a Username')).toBeTruthy();
+      fireEvent.changeText(getByTestId('onboarding-username-input'), 'testuser');
+      await waitFor(
+        () => { expect(getByText('Username available!')).toBeTruthy(); },
+        { timeout: 2000 },
+      );
+      fireEvent.press(getByText('Finish'));
 
       // Verify all stores were called correctly
       expect(mockSettingsState.setExperienceLevel).toHaveBeenCalledWith(
@@ -947,6 +947,7 @@ describe('OnboardingScreen', () => {
       );
       expect(mockInitializeStarterCat).toHaveBeenCalledWith('luna');
       expect(mockSettingsState.setSelectedCatId).toHaveBeenCalledWith('luna');
+      expect(mockSettingsState.setUsername).toHaveBeenCalledWith('testuser');
       expect(mockGoBack).toHaveBeenCalled();
     });
   });

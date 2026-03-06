@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: BORDER_RADIUS.full,
-    marginTop: SPACING.xs,
+    marginTop: SPACING.sm,
   },
   evolutionBadgeText: {
     fontSize: 11,
@@ -941,7 +941,7 @@ const styles = StyleSheet.create({
   infoSection: {
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
+    paddingTop: SPACING.md,
   },
   catName: {
     fontSize: 24,

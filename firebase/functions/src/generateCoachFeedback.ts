@@ -178,6 +178,32 @@ function validateResponse(text: string): boolean {
 }
 
 // ============================================================================
+// Rate Limiting
+// ============================================================================
+
+const MAX_COACHING_PER_DAY = 100;
+
+async function checkAndIncrementRateLimit(uid: string): Promise<boolean> {
+  const today = new Date().toISOString().split('T')[0];
+  const db = admin.firestore();
+  const rateLimitRef = db
+    .collection('rateLimit')
+    .doc(uid)
+    .collection('coaching')
+    .doc(today);
+
+  return db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(rateLimitRef);
+    const count = doc.exists ? (doc.data()?.count ?? 0) : 0;
+    if (count >= MAX_COACHING_PER_DAY) {
+      return false;
+    }
+    transaction.set(rateLimitRef, { count: count + 1, updatedAt: Date.now() }, { merge: true });
+    return true;
+  });
+}
+
+// ============================================================================
 // Cloud Function
 // ============================================================================
 
@@ -193,6 +219,12 @@ export const generateCoachFeedback = onCall(
 
     const uid = request.auth.uid;
     const data = request.data as CoachFeedbackRequest;
+
+    // Rate limit check
+    const withinLimit = await checkAndIncrementRateLimit(uid);
+    if (!withinLimit) {
+      return getFallbackFeedback(data);
+    }
 
     try {
       // Check cache first (Firestore cache)

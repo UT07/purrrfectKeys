@@ -71,7 +71,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.619761780367-tqf3t4srqtkklkigep0clojvoailsteu"
         }
-      ]
+      ],
+      "./plugins/strip-push-entitlement"
     ],
     "extra": {
       "eas": {

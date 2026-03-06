@@ -1,10 +1,18 @@
 import type { ReactElement } from 'react';
 import Svg, { G, Circle, Path, Rect, Ellipse, Line, Defs, ClipPath } from 'react-native-svg';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import type { GProps } from 'react-native-svg';
 
 import { MASCOT_SIZES } from './types';
 import type { MascotMood, MascotSize } from './types';
 import type { CatPattern, CatVisuals } from './catCharacters';
 import type { EvolutionStage } from '@/stores/types';
+
+// Animated.createAnimatedComponent(G) works at runtime but TS can't see the
+// added `style` prop. Cast to accept style for SVG transform animations.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const AnimatedG = Animated.createAnimatedComponent(G) as React.ComponentType<GProps & { style?: any; children?: React.ReactNode }>;
 import {
   CatBody,
   CatChestTuft,
@@ -25,6 +33,26 @@ import { getCatById } from './catCharacters';
 import { CatGradientDefs, gradId } from './svg/CatGradients';
 import { CatShadows, CatRimLight, CatFurSheen } from './svg/CatShadows';
 
+/** Micro-animation shared values from useMicroAnimations + useMoodTransition */
+export interface MicroAnimationProps {
+  breathScale: SharedValue<number>;
+  breathTranslateY: SharedValue<number>;
+  eyeScaleY: SharedValue<number>;
+  leftEarRotate: SharedValue<number>;
+  rightEarRotate: SharedValue<number>;
+  tailRotate: SharedValue<number>;
+  faceScaleY?: SharedValue<number>;
+}
+
+/** Pre-computed animated styles passed to renderComposable */
+interface MicroAnimatedStyles {
+  tailStyle: ReturnType<typeof useAnimatedStyle>;
+  bodyStyle: ReturnType<typeof useAnimatedStyle>;
+  earStyle: ReturnType<typeof useAnimatedStyle>;
+  eyeStyle: ReturnType<typeof useAnimatedStyle>;
+  faceStyle: ReturnType<typeof useAnimatedStyle> | null;
+}
+
 interface KeysieSvgProps {
   mood: MascotMood;
   size: MascotSize;
@@ -38,6 +66,8 @@ interface KeysieSvgProps {
   evolutionStage?: EvolutionStage;
   /** Cat ID — when provided, uses the composable profile system for unique silhouettes. */
   catId?: string;
+  /** Micro-animation shared values — when provided, wraps SVG groups with animated transforms */
+  microAnimations?: MicroAnimationProps;
 }
 
 const DEFAULT_BODY = '#3A3A3A';
@@ -152,6 +182,7 @@ function renderComposable(
   accentDark: string,
   pattern: CatPattern,
   evolutionStage: EvolutionStage,
+  animStyles?: MicroAnimatedStyles,
 ): ReactElement {
   const profile = getCatProfile(catId);
   const cat = getCatById(catId);
@@ -170,17 +201,29 @@ function renderComposable(
       {/* Shadow layers (behind body) */}
       <CatShadows />
 
-      {/* Tail */}
-      <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />
+      {/* Tail — tail swish rotation */}
+      {animStyles ? (
+        <AnimatedG style={animStyles.tailStyle}>
+          <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />
+        </AnimatedG>
+      ) : (
+        <CatTail type={profile.tail} bodyColor={bodyColor} accentColor={accent} />
+      )}
 
-      {/* Body */}
-      <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} bellyColor={bellyColor} />
-
-      {/* Chest tuft (fur wisps at head-body junction) */}
-      <CatChestTuft color={bodyColor} />
-
-      {/* Paws (below body) */}
-      <CatPaws color={bodyColor} bodyType={profile.body} beanColor={earInnerColor + '80'} />
+      {/* Body group — breathing animation */}
+      {animStyles ? (
+        <AnimatedG style={animStyles.bodyStyle}>
+          <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} bellyColor={bellyColor} />
+          <CatChestTuft color={bodyColor} />
+          <CatPaws color={bodyColor} bodyType={profile.body} beanColor={earInnerColor + '80'} />
+        </AnimatedG>
+      ) : (
+        <>
+          <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} bellyColor={bellyColor} />
+          <CatChestTuft color={bodyColor} />
+          <CatPaws color={bodyColor} bodyType={profile.body} beanColor={earInnerColor + '80'} />
+        </>
+      )}
 
       {/* Head */}
       <CatHead color={bodyColor} cheekFluff={profile.cheekFluff} gradientFill={gradId(catId, 'head')} />
@@ -199,23 +242,45 @@ function renderComposable(
         {renderPattern(pattern, bodyColor, bellyColor)}
       </G>
 
-      {/* Ears */}
-      <CatEars type={profile.ears} bodyColor={bodyColor} innerColor={earInnerColor} />
+      {/* Ears — ear twitch rotation */}
+      {animStyles ? (
+        <AnimatedG style={animStyles.earStyle}>
+          <CatEars type={profile.ears} bodyColor={bodyColor} innerColor={earInnerColor} />
+        </AnimatedG>
+      ) : (
+        <CatEars type={profile.ears} bodyColor={bodyColor} innerColor={earInnerColor} />
+      )}
 
       {/* Hair tuft (between ears, on top of head) */}
       <CatHairTuft type={profile.hairTuft} color={bodyColor} size={profile.hairTuftSize} />
 
-      {/* Whiskers */}
-      <CatWhiskers color={whiskerColor} />
-
-      {/* Nose */}
-      <CatNose color={noseColor} />
-
-      {/* Eyes (8-layer composite with pupilType support) */}
-      <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} pupilType={profile.pupilType} />
-
-      {/* Mouth */}
-      <CatMouth mood={mood} darkAccent={accentDark} fang={profile.fang} />
+      {/* Face group — mood transition morph + eye blinks */}
+      {animStyles?.faceStyle ? (
+        <AnimatedG style={animStyles.faceStyle}>
+          <CatWhiskers color={whiskerColor} />
+          <CatNose color={noseColor} />
+          <AnimatedG style={animStyles.eyeStyle}>
+            <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} pupilType={profile.pupilType} />
+          </AnimatedG>
+          <CatMouth mood={mood} darkAccent={accentDark} fang={profile.fang} />
+        </AnimatedG>
+      ) : animStyles ? (
+        <>
+          <CatWhiskers color={whiskerColor} />
+          <CatNose color={noseColor} />
+          <AnimatedG style={animStyles.eyeStyle}>
+            <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} pupilType={profile.pupilType} />
+          </AnimatedG>
+          <CatMouth mood={mood} darkAccent={accentDark} fang={profile.fang} />
+        </>
+      ) : (
+        <>
+          <CatWhiskers color={whiskerColor} />
+          <CatNose color={noseColor} />
+          <CatEyes shape={profile.eyes} mood={mood} eyeColor={eyeColor} catId={catId} eyelashes={profile.eyelashes} pupilType={profile.pupilType} />
+          <CatMouth mood={mood} darkAccent={accentDark} fang={profile.fang} />
+        </>
+      )}
 
       {/* Blush */}
       {profile.blush && <CatBlush color={profile.blushColor} />}
@@ -323,6 +388,7 @@ export function KeysieSvg({
   visuals,
   evolutionStage = 'baby',
   catId,
+  microAnimations,
 }: KeysieSvgProps): ReactElement {
   const px = pixelSize ?? MASCOT_SIZES[size];
 
@@ -336,6 +402,42 @@ export function KeysieSvg({
   const accentDark = visuals ? darkenColor(visuals.noseColor, 0.5) : (accentColor ? darkenColor(accentColor, 0.5) : DARK_RED);
   const pattern = visuals?.pattern ?? 'solid';
 
+  // Pre-compute animated styles via useAnimatedStyle (avoids inline .value access
+  // which triggers Reanimated Babel plugin issues in test environments)
+  const tailStyle = useAnimatedStyle(() => {
+    if (!microAnimations) return {};
+    return { transform: [{ rotate: `${microAnimations.tailRotate.value}deg` }] };
+  });
+  const bodyStyle = useAnimatedStyle(() => {
+    if (!microAnimations) return {};
+    return { transform: [
+      { translateY: microAnimations.breathTranslateY.value },
+      { scaleY: microAnimations.breathScale.value },
+    ] };
+  });
+  const earStyle = useAnimatedStyle(() => {
+    if (!microAnimations) return {};
+    return { transform: [{ rotate: `${microAnimations.leftEarRotate.value}deg` }] };
+  });
+  const eyeStyle = useAnimatedStyle(() => {
+    if (!microAnimations) return {};
+    return { transform: [{ scaleY: microAnimations.eyeScaleY.value }] };
+  });
+  const faceStyle = useAnimatedStyle(() => {
+    if (!microAnimations?.faceScaleY) return {};
+    return { transform: [{ scaleY: microAnimations.faceScaleY.value }] };
+  });
+
+  const animStyles: MicroAnimatedStyles | undefined = microAnimations
+    ? {
+        tailStyle,
+        bodyStyle,
+        earStyle,
+        eyeStyle,
+        faceStyle: microAnimations.faceScaleY ? faceStyle : null,
+      }
+    : undefined;
+
   return (
     <Svg
       width={px}
@@ -347,6 +449,7 @@ export function KeysieSvg({
         ? renderComposable(
             catId, mood, bodyColor, bellyColor, earInnerColor,
             eyeColor, noseColor, accent, accentDark, pattern, evolutionStage,
+            animStyles,
           )
         : renderLegacy(
             mood, bodyColor, bellyColor, earInnerColor,

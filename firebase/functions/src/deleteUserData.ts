@@ -154,7 +154,23 @@ export const deleteUserAllData = onCall(
         logger.info(`Deleted ${challengeIds.size} challenges`);
       }
 
-      // 6. Remove this user from other users' friend lists
+      // 6. Clean up usernames where uid == this user
+      const usernamesSnap = await db
+        .collection('usernames')
+        .where('uid', '==', uid)
+        .get();
+
+      if (!usernamesSnap.empty) {
+        const batch = db.batch();
+        for (const doc of usernamesSnap.docs) {
+          batch.delete(doc.ref);
+        }
+        await batch.commit();
+        totalDeleted += usernamesSnap.size;
+        logger.info(`Deleted ${usernamesSnap.size} usernames`);
+      }
+
+      // 7. Remove this user from other users' friend lists
       const friendOfSnap = await db
         .collectionGroup('friends')
         .where('uid', '==', uid)

@@ -91,6 +91,7 @@ export class InputManager {
   private callbacks: Set<InputNoteCallback> = new Set();
   private unsubMidi: (() => void) | null = null;
   private unsubMic: (() => void) | null = null;
+  private unsubMidiConnection: (() => void) | null = null;
   private _activeMethod: ActiveInputMethod = 'touch';
   private isStarted = false;
   private isInitialized = false;
@@ -138,6 +139,8 @@ export class InputManager {
     // making gameplay appear frozen.
     if (preferred === 'midi' || (preferred === 'auto' && midiAvailable)) {
       this._activeMethod = 'midi';
+      // Auto-connect to the first available MIDI device so messages flow immediately
+      await this._autoConnectMidi();
       logger.log('[InputManager] Selected: midi');
     } else if (preferred === 'mic') {
       // Explicit mic mode: request permission and set up mic pipeline.
@@ -217,10 +220,12 @@ export class InputManager {
     this.stop();
     this.unsubMidi?.();
     this.unsubMic?.();
+    this.unsubMidiConnection?.();
     this.micInput?.dispose();
     this.callbacks.clear();
     this.unsubMidi = null;
     this.unsubMic = null;
+    this.unsubMidiConnection = null;
     this.micInput = null;
     this.isInitialized = false;
   }
@@ -278,8 +283,10 @@ export class InputManager {
     // Unsubscribe current
     this.unsubMidi?.();
     this.unsubMic?.();
+    this.unsubMidiConnection?.();
     this.unsubMidi = null;
     this.unsubMic = null;
+    this.unsubMidiConnection = null;
 
     this.config.preferred = method;
 
@@ -287,6 +294,7 @@ export class InputManager {
     this._micFailureReason = null;
     if (method === 'midi') {
       this._activeMethod = 'midi';
+      await this._autoConnectMidi();
     } else if (method === 'mic') {
       if (!this.micInput) {
         try {
@@ -324,6 +332,7 @@ export class InputManager {
         (await this.midiInput.getConnectedDevices()).length > 0;
       if (midiAvailable) {
         this._activeMethod = 'midi';
+        await this._autoConnectMidi();
       } else if (this.micInput) {
         this._activeMethod = 'mic';
       } else {
@@ -370,12 +379,56 @@ export class InputManager {
   // Private
   // -----------------------------------------------------------------------
 
+  /**
+   * Auto-connect to the first available MIDI device.
+   * Without this, NativeMidiInput.activeInput stays null and no MIDI messages flow.
+   */
+  private async _autoConnectMidi(): Promise<void> {
+    try {
+      const devices = await this.midiInput.getConnectedDevices();
+      if (devices.length > 0) {
+        const device = devices[0];
+        await this.midiInput.connectDevice(device.id);
+        logger.log(`[InputManager] Auto-connected MIDI device: ${device.name} (${device.id})`);
+      }
+    } catch (error) {
+      logger.warn('[InputManager] MIDI auto-connect failed:', error);
+    }
+  }
+
   private _wireEvents(): void {
     // Always subscribe to MIDI (in case device is connected mid-session)
     if (!this.unsubMidi) {
       this.unsubMidi = this.midiInput.onNoteEvent((event) => {
         if (this._activeMethod !== 'midi') return;
         this._emitNote(event);
+      });
+    }
+
+    // Hot-plug: auto-connect newly connected MIDI devices and switch to MIDI
+    if (!this.unsubMidiConnection) {
+      this.unsubMidiConnection = this.midiInput.onDeviceConnection((device, connected) => {
+        if (connected) {
+          logger.log(`[InputManager] MIDI device hot-plugged: ${device.name}`);
+          // Auto-connect and switch to MIDI if not already
+          this.midiInput.connectDevice(device.id).then(() => {
+            if (this._activeMethod !== 'midi') {
+              this._activeMethod = 'midi';
+              logger.log('[InputManager] Switched to MIDI (hot-plug)');
+            }
+          }).catch((err) => {
+            logger.warn('[InputManager] Hot-plug connect failed:', err);
+          });
+        } else {
+          logger.log(`[InputManager] MIDI device disconnected: ${device.name}`);
+          // If all MIDI devices disconnected, fall back to touch
+          this.midiInput.getConnectedDevices().then((devices) => {
+            if (devices.length === 0 && this._activeMethod === 'midi') {
+              this._activeMethod = 'touch';
+              logger.log('[InputManager] No MIDI devices — falling back to touch');
+            }
+          }).catch(() => {});
+        }
       });
     }
 

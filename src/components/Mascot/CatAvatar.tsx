@@ -30,6 +30,8 @@ import type { EvolutionStage } from '@/stores/types';
 import { useCatPose } from './animations/useCatPose';
 import { POSE_CONFIGS } from './animations/catAnimations';
 import type { CatPose } from './animations/catAnimations';
+import { useMicroAnimations } from './animations/useMicroAnimations';
+import { useMoodTransition } from './animations/useMoodTransition';
 
 export type CatAvatarSize = 'small' | 'medium' | 'large' | 'hero';
 
@@ -156,6 +158,14 @@ export function CatAvatar({
   // When pose is provided, it drives the mood for facial expression
   const effectiveMood: MascotMood = pose ? POSE_CONFIGS[pose].mood : mood;
 
+  // Micro-animations: breathing, blinks, ear twitches, tail swish
+  // Disabled when a pose is actively driving the cat animation
+  const microAnims = useMicroAnimations({
+    enabled: !pose,
+    mood: effectiveMood,
+  });
+  const moodTransition = useMoodTransition(effectiveMood);
+
   // Master stage automatically enables glow aura
   const effectiveShowGlow = showGlow || evolutionStage === 'master';
 
@@ -217,6 +227,7 @@ export function CatAvatar({
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
               catId={catId}
+              microAnimations={pose ? undefined : { ...microAnims, faceScaleY: moodTransition.faceScaleY }}
             />
           </Animated.View>
         </Animated.View>

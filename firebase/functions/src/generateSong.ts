@@ -127,33 +127,24 @@ RULES:
 // Rate Limiting
 // ============================================================================
 
-async function checkRateLimit(uid: string): Promise<boolean> {
+async function checkAndIncrementRateLimit(uid: string): Promise<boolean> {
   const today = new Date().toISOString().split('T')[0];
-  const rateLimitRef = admin
-    .firestore()
+  const db = admin.firestore();
+  const rateLimitRef = db
     .collection('rateLimit')
     .doc(uid)
     .collection('songs')
     .doc(today);
 
-  const doc = await rateLimitRef.get();
-  const count = doc.exists ? (doc.data()?.count ?? 0) : 0;
-  return count < MAX_REQUESTS_PER_DAY;
-}
-
-async function incrementRateLimit(uid: string): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
-  const rateLimitRef = admin
-    .firestore()
-    .collection('rateLimit')
-    .doc(uid)
-    .collection('songs')
-    .doc(today);
-
-  await rateLimitRef.set(
-    { count: admin.firestore.FieldValue.increment(1), updatedAt: Date.now() },
-    { merge: true },
-  );
+  return db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(rateLimitRef);
+    const count = doc.exists ? (doc.data()?.count ?? 0) : 0;
+    if (count >= MAX_REQUESTS_PER_DAY) {
+      return false;
+    }
+    transaction.set(rateLimitRef, { count: count + 1, updatedAt: Date.now() }, { merge: true });
+    return true;
+  });
 }
 
 // ============================================================================
@@ -174,7 +165,7 @@ export const generateSong = onCall(
     const data = request.data as SongRequestParams;
 
     // Rate limit check
-    const withinLimit = await checkRateLimit(uid);
+    const withinLimit = await checkAndIncrementRateLimit(uid);
     if (!withinLimit) {
       throw new HttpsError(
         'resource-exhausted',
@@ -218,9 +209,6 @@ export const generateSong = onCall(
           'Both song generation attempts failed validation',
         );
       }
-
-      // Increment rate limit counter on success
-      await incrementRateLimit(uid);
 
       logger.info('Song generated', {
         userId: uid,

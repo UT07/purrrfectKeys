@@ -223,6 +223,7 @@ function ActivityRow({ item }: { item: ActivityFeedItem }): React.JSX.Element {
 export function FriendsScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const user = useAuthStore((s) => s.user);
+  const isAnonymous = useAuthStore((s) => s.isAnonymous);
   const friends = useSocialStore((s) => s.friends);
   const activityFeed = useSocialStore((s) => s.activityFeed);
   const updateFriendStatus = useSocialStore((s) => s.updateFriendStatus);
@@ -237,7 +238,7 @@ export function FriendsScreen(): React.JSX.Element {
   // Sync friends list from Firestore on mount to discover incoming requests.
   // Also enriches any connections with missing display names (legacy data).
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || isAnonymous) return;
     let cancelled = false;
     setIsSyncing(true);
 
@@ -275,7 +276,7 @@ export function FriendsScreen(): React.JSX.Element {
     })();
 
     return () => { cancelled = true; };
-  }, [user?.uid, setFriends]);
+  }, [user?.uid, isAnonymous, setFriends]);
 
   const pendingIncoming = useMemo(
     () => friends.filter((f) => f.status === 'pending_incoming'),

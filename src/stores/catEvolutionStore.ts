@@ -125,9 +125,13 @@ const defaultData: EvolutionData = {
 const debouncedSave = createDebouncedSave<EvolutionData>(STORAGE_KEYS.CAT_EVOLUTION, 500);
 const immediateSave = createImmediateSave<EvolutionData>(STORAGE_KEYS.CAT_EVOLUTION);
 
-/** Get today's ISO date string */
+/** Get today's local date string (YYYY-MM-DD in user's timezone) */
 function todayISO(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /** Get the Monday of the current week as ISO date string.

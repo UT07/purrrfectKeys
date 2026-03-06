@@ -162,6 +162,7 @@ export interface OnboardingSettings {
 }
 
 export interface ProfileSettings {
+  username: string; // Unique invite code (3-20 chars, a-z0-9_-, lowercase)
   displayName: string;
   avatarEmoji: string; // Emoji used as avatar
   selectedCatId: string; // Cat character avatar ID
@@ -194,6 +195,7 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   setHasCompletedOnboarding: (completed: boolean) => void;
   setExperienceLevel: (level: 'beginner' | 'intermediate' | 'returning') => void;
   setLearningGoal: (goal: 'songs' | 'technique' | 'exploration') => void;
+  setUsername: (name: string) => void;
   setDisplayName: (name: string) => void;
   setAvatarEmoji: (emoji: string) => void;
   setSelectedCatId: (id: string) => void;

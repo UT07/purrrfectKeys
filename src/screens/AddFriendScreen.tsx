@@ -1,8 +1,8 @@
 /**
- * AddFriendScreen — Friend code display + entry
+ * AddFriendScreen — Username / friend code display + entry
  *
- * Top: Shows user's own 6-char friend code with Copy/Share actions
- * Bottom: Text input to enter a friend's code and send a request
+ * Top: Shows user's username (or legacy 6-char friend code) with Copy/Share actions
+ * Bottom: Text input to enter a friend's username or legacy code and send a request
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -26,6 +26,7 @@ import { useSocialStore } from '../stores/socialStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import {
   registerFriendCode,
+  registerUsername,
   lookupFriendCode,
   sendFriendRequest,
   getUserPublicProfile,
@@ -84,21 +85,33 @@ export function AddFriendScreen(): React.JSX.Element {
   const [success, setSuccess] = useState<string | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Register friend code on mount if not yet set
+  const storedUsername = useSettingsStore((s) => s.username);
+
+  // Register username/friend code on mount if not yet set
   useEffect(() => {
     if (isAnonymous) return;
     if (!friendCode && user?.uid) {
       setIsRegistering(true);
-      registerFriendCode(user.uid)
-        .then((code) => {
-          setFriendCode(code);
-        })
+      const register = async (): Promise<void> => {
+        if (storedUsername) {
+          try {
+            await registerUsername(user.uid, storedUsername, displayName || storedUsername);
+            setFriendCode(storedUsername);
+            return;
+          } catch {
+            // Username taken — fall through to legacy code
+          }
+        }
+        const code = await registerFriendCode(user.uid);
+        setFriendCode(code);
+      };
+      register()
         .catch(() => {
           setError('Failed to generate your friend code. Try again later.');
         })
         .finally(() => setIsRegistering(false));
     }
-  }, [isAnonymous, friendCode, user?.uid, setFriendCode]);
+  }, [isAnonymous, friendCode, user?.uid, setFriendCode, storedUsername, displayName]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -121,7 +134,7 @@ export function AddFriendScreen(): React.JSX.Element {
     if (!friendCode) return;
     try {
       await Share.share({
-        message: `Add me on Purrrfect Keys! My friend code is: ${friendCode}`,
+        message: `Add me on Purrrfect Keys! My username is: ${friendCode}`,
       });
     } catch {
       // User cancelled or error — no action needed
@@ -129,13 +142,13 @@ export function AddFriendScreen(): React.JSX.Element {
   }, [friendCode]);
 
   const handleAddFriend = useCallback(async () => {
-    const code = inputCode.trim().toUpperCase();
-    if (code.length !== 6) {
-      setError('Friend codes are 6 characters long.');
+    const code = inputCode.trim();
+    if (code.length < 3) {
+      setError('Enter at least 3 characters.');
       return;
     }
 
-    if (code === friendCode) {
+    if (code.toLowerCase() === friendCode?.toLowerCase()) {
       setError("That's your own code!");
       return;
     }
@@ -152,7 +165,7 @@ export function AddFriendScreen(): React.JSX.Element {
     try {
       const friendUid = await lookupFriendCode(code);
       if (!friendUid) {
-        setError('No user found with that code. Double-check and try again.');
+        setError('No user found. Check the username or code and try again.');
         setIsLooking(false);
         return;
       }
@@ -221,11 +234,11 @@ export function AddFriendScreen(): React.JSX.Element {
           <MaterialCommunityIcons name="account-lock" size={64} color={COLORS.textMuted} />
           <Text style={styles.authGateTitle}>Sign In Required</Text>
           <Text style={styles.authGateSubtitle}>
-            Sign in to generate your friend code and add friends.
+            Sign in to register your username and add friends.
           </Text>
           <TouchableOpacity
             style={styles.authGateButton}
-            onPress={() => navigation.navigate('Auth')}
+            onPress={() => navigation.navigate('Account')}
           >
             <Text style={styles.authGateButtonText}>Sign In</Text>
           </TouchableOpacity>
@@ -253,9 +266,9 @@ export function AddFriendScreen(): React.JSX.Element {
 
         {/* Your Code Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Friend Code</Text>
+          <Text style={styles.sectionTitle}>Your Username</Text>
           <Text style={styles.sectionSubtitle}>
-            Share this code so friends can find you
+            Share your username so friends can find you
           </Text>
 
           <View style={styles.codeCard}>
@@ -302,7 +315,7 @@ export function AddFriendScreen(): React.JSX.Element {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Add a Friend</Text>
           <Text style={styles.sectionSubtitle}>
-            Enter their 6-character friend code
+            Enter their username or legacy friend code
           </Text>
 
           <View style={styles.inputRow}>
@@ -310,14 +323,14 @@ export function AddFriendScreen(): React.JSX.Element {
               style={styles.input}
               value={inputCode}
               onChangeText={(text) => {
-                setInputCode(text.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
+                setInputCode(text.replace(/\s/g, '').slice(0, 20));
                 setError(null);
                 setSuccess(null);
               }}
-              placeholder="ABCDEF"
+              placeholder="username"
               placeholderTextColor={COLORS.textMuted}
-              maxLength={6}
-              autoCapitalize="characters"
+              maxLength={20}
+              autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={handleAddFriend}
@@ -327,10 +340,10 @@ export function AddFriendScreen(): React.JSX.Element {
           <TouchableOpacity
             style={[
               styles.addButton,
-              (inputCode.length < 6 || isLooking) && styles.addButtonDisabled,
+              (inputCode.trim().length < 3 || isLooking) && styles.addButtonDisabled,
             ]}
             onPress={handleAddFriend}
-            disabled={inputCode.length < 6 || isLooking}
+            disabled={inputCode.trim().length < 3 || isLooking}
           >
             {isLooking ? (
               <ActivityIndicator color={COLORS.textPrimary} size="small" />
@@ -468,10 +481,8 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
     color: COLORS.textPrimary,
-    fontFamily: 'monospace',
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: 6,
+    ...TYPOGRAPHY.body.lg,
+    fontWeight: '600',
     textAlign: 'center',
   },
   addButton: {

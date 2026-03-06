@@ -153,6 +153,7 @@ export const useExerciseStore = create<ExerciseSessionState>((set, get) => ({
       isPlaying: false,
       currentBeat: 0,
       score: null,
+      lastCompletedScore: null,
       sessionStartTime: null,
       sessionEndTime: null,
       ...transientDefaults,

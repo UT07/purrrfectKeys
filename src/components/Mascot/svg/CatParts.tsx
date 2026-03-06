@@ -136,9 +136,9 @@ export function CatEars({
     case 'rounded':
       return (
         <G>
-          {/* Left ear — Scottish Fold-style rounded */}
-          <Path d="M 24 22 Q 16 2 36 16" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
-          <Path d="M 26 19 Q 21 8 34 15" fill={innerColor} />
+          {/* Left ear — Scottish Fold-style soft rounded */}
+          <Path d="M 24 22 Q 16 6 36 16" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          <Path d="M 26 19 Q 21 10 34 15" fill={innerColor} />
           {/* Fold line */}
           <Path d="M 24 16 Q 27 12 32 14" fill="none" stroke={innerDark} strokeWidth="0.5" opacity={0.5} />
           {/* Inner fur tufts */}
@@ -146,8 +146,8 @@ export function CatEars({
           <Path d="M 30 17 Q 28 13 31 13" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
           <Path d="M 26 20 Q 24 17 27 16" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
           {/* Right ear */}
-          <Path d="M 76 22 Q 84 2 64 16" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
-          <Path d="M 74 19 Q 79 8 66 15" fill={innerColor} />
+          <Path d="M 76 22 Q 84 6 64 16" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          <Path d="M 74 19 Q 79 10 66 15" fill={innerColor} />
           <Path d="M 76 16 Q 73 12 68 14" fill="none" stroke={innerDark} strokeWidth="0.5" opacity={0.5} />
           <Path d="M 72 18 Q 74 15 71 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
           <Path d="M 70 17 Q 72 13 69 13" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
@@ -180,16 +180,16 @@ export function CatEars({
     default:
       return (
         <G>
-          {/* Left ear — sharp pointed with backward curve at tip */}
-          <Path d="M 24 20 Q 20 -2 38 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
-          <Path d="M 26 17 Q 23 4 36 13" fill={innerColor} />
+          {/* Left ear — softened pointed with rounder tip */}
+          <Path d="M 24 20 Q 17 5 38 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          <Path d="M 26 17 Q 21 8 36 13" fill={innerColor} />
           {/* Inner fur tufts */}
           <Path d="M 29 16 Q 27 12 30 11" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
           <Path d="M 31 14 Q 28 10 32 9" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
           <Path d="M 27 18 Q 25 15 28 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
           {/* Right ear */}
-          <Path d="M 76 20 Q 80 -2 62 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
-          <Path d="M 74 17 Q 77 4 64 13" fill={innerColor} />
+          <Path d="M 76 20 Q 83 5 62 14" fill={bodyColor} stroke={bodyColor} strokeWidth="0.8" />
+          <Path d="M 74 17 Q 79 8 64 13" fill={innerColor} />
           <Path d="M 71 16 Q 73 12 70 11" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.3} />
           <Path d="M 69 14 Q 72 10 68 9" fill="none" stroke={innerDark} strokeWidth="0.3" opacity={0.3} />
           <Path d="M 73 18 Q 75 15 72 14" fill="none" stroke={innerDark} strokeWidth="0.4" opacity={0.25} />
@@ -553,22 +553,22 @@ export function CatNose({ color }: { color: string }): ReactElement {
 export function CatWhiskers({ color }: { color: string }): ReactElement {
   return (
     <G>
-      {/* Left whiskers — curved, tapered */}
-      <Path d="M 30 39 Q 22 37 13 38" stroke={color} strokeWidth="0.8" fill="none" strokeLinecap="round" />
-      <Path d="M 30 42 Q 20 41 10 42" stroke={color} strokeWidth="0.9" fill="none" strokeLinecap="round" />
-      <Path d="M 30 44 Q 22 45 14 47" stroke={color} strokeWidth="0.7" fill="none" strokeLinecap="round" />
+      {/* Left whiskers — curved, visible */}
+      <Path d="M 30 39 Q 20 36 8 37" stroke={color} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity={0.8} />
+      <Path d="M 30 42 Q 18 41 5 42" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity={0.85} />
+      <Path d="M 30 44 Q 20 46 9 48" stroke={color} strokeWidth="1.1" fill="none" strokeLinecap="round" opacity={0.75} />
       {/* Follicle dots */}
-      <Circle cx="30" cy="39" r="0.5" fill={color} opacity={0.4} />
-      <Circle cx="30" cy="42" r="0.6" fill={color} opacity={0.4} />
-      <Circle cx="30" cy="44" r="0.5" fill={color} opacity={0.4} />
+      <Circle cx="30" cy="39" r="0.8" fill={color} opacity={0.6} />
+      <Circle cx="30" cy="42" r="0.9" fill={color} opacity={0.6} />
+      <Circle cx="30" cy="44" r="0.8" fill={color} opacity={0.6} />
 
       {/* Right whiskers — mirrored */}
-      <Path d="M 70 39 Q 78 37 87 38" stroke={color} strokeWidth="0.8" fill="none" strokeLinecap="round" />
-      <Path d="M 70 42 Q 80 41 90 42" stroke={color} strokeWidth="0.9" fill="none" strokeLinecap="round" />
-      <Path d="M 70 44 Q 78 45 86 47" stroke={color} strokeWidth="0.7" fill="none" strokeLinecap="round" />
-      <Circle cx="70" cy="39" r="0.5" fill={color} opacity={0.4} />
-      <Circle cx="70" cy="42" r="0.6" fill={color} opacity={0.4} />
-      <Circle cx="70" cy="44" r="0.5" fill={color} opacity={0.4} />
+      <Path d="M 70 39 Q 80 36 92 37" stroke={color} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity={0.8} />
+      <Path d="M 70 42 Q 82 41 95 42" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity={0.85} />
+      <Path d="M 70 44 Q 80 46 91 48" stroke={color} strokeWidth="1.1" fill="none" strokeLinecap="round" opacity={0.75} />
+      <Circle cx="70" cy="39" r="0.8" fill={color} opacity={0.6} />
+      <Circle cx="70" cy="42" r="0.9" fill={color} opacity={0.6} />
+      <Circle cx="70" cy="44" r="0.8" fill={color} opacity={0.6} />
     </G>
   );
 }

@@ -20,6 +20,7 @@ import {
   orderBy,
   limit,
   writeBatch,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { FriendConnection, ActivityFeedItem, FriendChallenge } from '../../stores/types';
@@ -31,6 +32,17 @@ import type { FriendConnection, ActivityFeedItem, FriendChallenge } from '../../
 const FRIEND_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const FRIEND_CODE_LENGTH = 6;
 const MAX_CODE_RETRIES = 5;
+
+// ---------------------------------------------------------------------------
+// Username Validation
+// ---------------------------------------------------------------------------
+
+const USERNAME_REGEX = /^[a-z0-9_-]{3,20}$/;
+
+/** Validate username format: 3-20 chars, lowercase alphanumeric + underscore + hyphen */
+export function isValidUsername(username: string): boolean {
+  return USERNAME_REGEX.test(username);
+}
 
 // ---------------------------------------------------------------------------
 // Friend Code Operations
@@ -72,12 +84,79 @@ export async function registerFriendCode(uid: string): Promise<string> {
   throw new Error('Failed to generate unique friend code after maximum retries');
 }
 
+// ---------------------------------------------------------------------------
+// Username Operations
+// ---------------------------------------------------------------------------
+
 /**
- * Look up a uid from a friend code.
- * Returns the uid if found, or null if the code doesn't exist.
+ * Check if a username is available.
+ * Reads usernames/{username_lowercase} to see if it exists.
+ */
+export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  const normalized = username.toLowerCase();
+  if (!isValidUsername(normalized)) return false;
+
+  const usernameRef = doc(db, 'usernames', normalized);
+  const snap = await getDoc(usernameRef);
+  return !snap.exists();
+}
+
+/**
+ * Register a username for a user. Writes to:
+ *   usernames/{username} -> { uid, createdAt }
+ *   users/{uid}.username  -> username
+ *
+ * Throws if username is already taken or invalid.
+ */
+export async function registerUsername(
+  uid: string,
+  username: string,
+  displayName: string,
+): Promise<void> {
+  const normalized = username.toLowerCase();
+  if (!isValidUsername(normalized)) {
+    throw new Error('Invalid username format');
+  }
+
+  const usernameRef = doc(db, 'usernames', normalized);
+  const userRef = doc(db, 'users', uid);
+
+  // Use a transaction to atomically check availability and claim the username.
+  // This prevents TOCTOU races where two users check the same name simultaneously.
+  await runTransaction(db, async (transaction) => {
+    const existing = await transaction.get(usernameRef);
+    if (existing.exists()) {
+      throw new Error('Username already taken');
+    }
+
+    transaction.set(usernameRef, { uid, createdAt: Date.now() });
+    transaction.update(userRef, { username: normalized, displayName });
+  });
+}
+
+/**
+ * Look up a uid from a username or legacy friend code.
+ * Tries username lookup first (if input looks like a username),
+ * then falls back to legacy friend code lookup.
+ * Returns the uid if found, or null.
  */
 export async function lookupFriendCode(code: string): Promise<string | null> {
-  const codeRef = doc(db, 'friendCodes', code.toUpperCase());
+  const trimmed = code.trim();
+
+  // Try username lookup first (lowercase, 3-20 chars)
+  const asUsername = trimmed.toLowerCase();
+  if (isValidUsername(asUsername)) {
+    const usernameRef = doc(db, 'usernames', asUsername);
+    const usernameSnap = await getDoc(usernameRef);
+    if (usernameSnap.exists()) {
+      const data = usernameSnap.data() as { uid: string };
+      return data.uid;
+    }
+  }
+
+  // Fall back to legacy 6-char friend code
+  const asCode = trimmed.toUpperCase();
+  const codeRef = doc(db, 'friendCodes', asCode);
   const snap = await getDoc(codeRef);
 
   if (!snap.exists()) return null;
@@ -122,6 +201,10 @@ export async function sendFriendRequest(
   toDisplayName: string,
   toCatId: string,
 ): Promise<void> {
+  if (fromUid === toUid) {
+    throw new Error('Cannot send friend request to yourself');
+  }
+
   const now = Date.now();
 
   const outgoingRef = doc(db, 'users', fromUid, 'friends', toUid);

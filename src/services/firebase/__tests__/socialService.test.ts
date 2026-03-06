@@ -7,12 +7,21 @@
  * - Batch operations for friend requests / removal
  */
 
-// Mock firebase/firestore with writeBatch support
+// Mock firebase/firestore with writeBatch + runTransaction support
 jest.mock('firebase/firestore', () => {
   const batchSet = jest.fn();
   const batchUpdate = jest.fn();
   const batchDelete = jest.fn();
   const batchCommit = jest.fn().mockResolvedValue(undefined);
+
+  const transactionGet = jest.fn();
+  const transactionSet = jest.fn();
+  const transactionUpdate = jest.fn();
+  const mockTransaction = {
+    get: transactionGet,
+    set: transactionSet,
+    update: transactionUpdate,
+  };
 
   return {
     doc: jest.fn(),
@@ -32,7 +41,11 @@ jest.mock('firebase/firestore', () => {
       delete: batchDelete,
       commit: batchCommit,
     })),
+    runTransaction: jest.fn(async (_db: unknown, updateFn: (t: typeof mockTransaction) => Promise<void>) => {
+      await updateFn(mockTransaction);
+    }),
     __mockBatch: { set: batchSet, update: batchUpdate, delete: batchDelete, commit: batchCommit },
+    __mockTransaction: mockTransaction,
   };
 });
 
@@ -43,14 +56,17 @@ jest.mock('../config', () => ({
 
 import {
   generateFriendCode,
+  isValidUsername,
   registerFriendCode,
+  checkUsernameAvailable,
+  registerUsername,
   lookupFriendCode,
   sendFriendRequest,
   acceptFriendRequest,
   removeFriendConnection,
   getFriends,
 } from '../socialService';
-import { doc, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, writeBatch, runTransaction } from 'firebase/firestore';
 
 // Access the batch mock helpers
 const firestoreMock = jest.requireMock('firebase/firestore');
@@ -59,6 +75,11 @@ const mockBatch = firestoreMock.__mockBatch as {
   update: jest.Mock;
   delete: jest.Mock;
   commit: jest.Mock;
+};
+const mockTransaction = firestoreMock.__mockTransaction as {
+  get: jest.Mock;
+  set: jest.Mock;
+  update: jest.Mock;
 };
 
 // ---------------------------------------------------------------------------
@@ -155,29 +176,146 @@ describe('socialService', () => {
     });
   });
 
-  describe('lookupFriendCode', () => {
-    it('returns uid when code exists', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({
-        exists: () => true,
-        data: () => ({ uid: 'found-user' }),
-      });
-
-      const result = await lookupFriendCode('ABC123');
-      expect(result).toBe('found-user');
+  describe('isValidUsername', () => {
+    it('accepts valid usernames', () => {
+      expect(isValidUsername('jazzycat99')).toBe(true);
+      expect(isValidUsername('abc')).toBe(true);
+      expect(isValidUsername('a-b_c')).toBe(true);
+      expect(isValidUsername('12345')).toBe(true);
+      expect(isValidUsername('a'.repeat(20))).toBe(true);
     });
 
-    it('returns null when code does not exist', async () => {
+    it('rejects invalid usernames', () => {
+      expect(isValidUsername('ab')).toBe(false); // too short
+      expect(isValidUsername('a'.repeat(21))).toBe(false); // too long
+      expect(isValidUsername('ABC')).toBe(false); // uppercase
+      expect(isValidUsername('has space')).toBe(false);
+      expect(isValidUsername('has.dot')).toBe(false);
+      expect(isValidUsername('')).toBe(false);
+    });
+  });
+
+  describe('checkUsernameAvailable', () => {
+    it('returns true when username is not taken', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+
+      const result = await checkUsernameAvailable('newuser');
+      expect(result).toBe(true);
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'usernames', 'newuser');
+    });
+
+    it('returns false when username is taken', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true });
+
+      const result = await checkUsernameAvailable('takenuser');
+      expect(result).toBe(false);
+    });
+
+    it('normalizes username to lowercase', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+
+      await checkUsernameAvailable('MixedCase');
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'usernames', 'mixedcase');
+    });
+
+    it('returns false for invalid username format', async () => {
+      const result = await checkUsernameAvailable('ab');
+      expect(result).toBe(false);
+      expect(getDoc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('registerUsername', () => {
+    it('uses transaction to atomically write to usernames and users collections', async () => {
+      mockTransaction.get.mockResolvedValue({ exists: () => false });
+
+      await registerUsername('uid-123', 'coolcat', 'Cool Cat');
+
+      expect(runTransaction).toHaveBeenCalledTimes(1);
+      expect(mockTransaction.get).toHaveBeenCalledTimes(1);
+      expect(mockTransaction.set).toHaveBeenCalledTimes(1);
+      expect(mockTransaction.update).toHaveBeenCalledTimes(1);
+
+      // Username doc
+      const usernameData = mockTransaction.set.mock.calls[0][1];
+      expect(usernameData.uid).toBe('uid-123');
+      expect(usernameData.createdAt).toBeDefined();
+
+      // User doc update
+      const userData = mockTransaction.update.mock.calls[0][1];
+      expect(userData.username).toBe('coolcat');
+      expect(userData.displayName).toBe('Cool Cat');
+    });
+
+    it('throws if username already taken', async () => {
+      mockTransaction.get.mockResolvedValue({ exists: () => true });
+
+      await expect(registerUsername('uid-123', 'takenuser', 'Name')).rejects.toThrow(
+        'Username already taken',
+      );
+    });
+
+    it('throws for invalid username format', async () => {
+      await expect(registerUsername('uid-123', 'AB', 'Name')).rejects.toThrow(
+        'Invalid username format',
+      );
+    });
+
+    it('normalizes username to lowercase', async () => {
+      mockTransaction.get.mockResolvedValue({ exists: () => false });
+
+      await registerUsername('uid-123', 'MyCoolName', 'Display');
+
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'usernames', 'mycoolname');
+    });
+  });
+
+  describe('lookupFriendCode', () => {
+    it('finds user by username first', async () => {
+      // Username lookup succeeds
+      (getDoc as jest.Mock).mockResolvedValue({
+        exists: () => true,
+        data: () => ({ uid: 'found-by-username' }),
+      });
+
+      const result = await lookupFriendCode('jazzycat');
+      expect(result).toBe('found-by-username');
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'usernames', 'jazzycat');
+    });
+
+    it('falls back to legacy friend code when username not found', async () => {
+      // First call (username): not found. Second call (friendCode): found.
+      (getDoc as jest.Mock)
+        .mockResolvedValueOnce({ exists: () => false })
+        .mockResolvedValueOnce({
+          exists: () => true,
+          data: () => ({ uid: 'found-by-code' }),
+        });
+
+      const result = await lookupFriendCode('ABC123');
+      expect(result).toBe('found-by-code');
+      // Should have tried username first, then friend code
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'usernames', 'abc123');
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'friendCodes', 'ABC123');
+    });
+
+    it('returns null when neither username nor code exists', async () => {
       (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
 
       const result = await lookupFriendCode('XXXXXX');
       expect(result).toBeNull();
     });
 
-    it('normalizes code to uppercase', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
+    it('handles pure legacy codes (6 uppercase chars) that are not valid usernames', async () => {
+      // "AB" is too short for a username — skips username check, goes to friendCodes
+      (getDoc as jest.Mock).mockResolvedValue({
+        exists: () => true,
+        data: () => ({ uid: 'legacy-user' }),
+      });
 
-      await lookupFriendCode('abc123');
-      expect(doc).toHaveBeenCalledWith(expect.anything(), 'friendCodes', 'ABC123');
+      const result = await lookupFriendCode('AB');
+      // "ab" is only 2 chars — not a valid username, so goes straight to friendCodes
+      expect(result).toBe('legacy-user');
     });
   });
 

@@ -58,6 +58,7 @@ const defaultSettings: SettingsData = {
   learningGoal: null,
 
   // Profile settings
+  username: '',
   displayName: 'Piano Student',
   avatarEmoji: '\uD83C\uDFB9', // piano emoji
   selectedCatId: 'mini-meowww', // default cat character
@@ -216,6 +217,13 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   // Profile settings — saves IMMEDIATELY (not debounced) because the user
   // expects the name to persist even if they close the app right after saving
+  setUsername: (name: string) => {
+    const normalized = name.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
+    if (normalized.length < 3) return;
+    set({ username: normalized });
+    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), username: normalized });
+  },
+
   setDisplayName: (name: string) => {
     const trimmed = name.trim().slice(0, 30).trim();
     if (trimmed.length === 0) return;

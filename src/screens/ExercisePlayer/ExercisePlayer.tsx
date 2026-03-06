@@ -77,6 +77,7 @@ import { SKILL_TREE, getSkillsForExercise, getSkillById, getGenerationHints } fr
 import type { SkillCategory } from '../../core/curriculum/SkillTree';
 import { getTierMasteryTestSkillId, isTierMasteryTestAvailable, hasTierMasteryTestPassed } from '../../core/curriculum/tierMasteryTest';
 import { adjustDifficulty } from '../../core/curriculum/DifficultyEngine';
+import { getTodayDateString } from '../../utils/time';
 // detectWeakPatterns: kept available for future use but not imported to avoid unused-import errors
 // import { detectWeakPatterns } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
@@ -87,6 +88,31 @@ import { suggestDrill } from '../../services/FreePlayAnalyzer';
 import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
 import { getTemplateForSkill, getTemplateExercise } from '../../content/templateExercises';
 import { getChestType, getChestReward } from '../../core/rewards/chestSystem';
+
+/**
+ * Timing tolerance multiplier per input method — mirrors InputManager's
+ * INPUT_TIMING_MULTIPLIERS but avoids importing the full module (which
+ * pulls in native AudioCapture → react-native-audio-api).
+ */
+const TIMING_MULTIPLIER_BY_INPUT: Record<string, number> = {
+  midi: 1.0,
+  touch: 1.0,
+  mic: 1.5,
+};
+
+/**
+ * Latency compensation per input method (ms) — mirrors InputManager's
+ * INPUT_LATENCY_COMPENSATION_MS. Used to shift the effective beat position
+ * backwards in visual feedback so mic notes aren't penalized for pipeline delay.
+ *
+ * Without this, mic notes arrive ~100ms after the user plays, so realtimeBeat
+ * has advanced past the expected position and feedback always shows "late".
+ */
+const LATENCY_COMP_MS_BY_INPUT: Record<string, number> = {
+  midi: 0,
+  touch: 0,
+  mic: 100,
+};
 import type { ChestType } from '../../core/rewards/chestSystem';
 import { logger } from '../../utils/logger';
 
@@ -501,13 +527,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       };
     }
 
-    // Apply playback speed
+    // Apply playback speed — scale BOTH tempo and timing windows.
+    // Without scaling the windows, slow practice is paradoxically harder:
+    // at 0.5x speed, msPerBeat doubles, so the same absolute ms tolerance
+    // represents half the beat-fraction → 2x tighter scoring.
     if (playbackSpeed !== 1.0) {
+      const windowScale = 1 / playbackSpeed; // e.g. 0.5x → 2x wider windows
       ex = {
         ...ex,
         settings: {
           ...ex.settings,
           tempo: Math.round(ex.settings.tempo * playbackSpeed),
+        },
+        scoring: {
+          ...ex.scoring,
+          timingToleranceMs: Math.round(ex.scoring.timingToleranceMs * windowScale),
+          timingGracePeriodMs: Math.round(ex.scoring.timingGracePeriodMs * windowScale),
         },
       };
     }
@@ -630,15 +665,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (currentAbilityConfig) {
       // Score boost (cap at 100)
       if (currentAbilityConfig.scoreBoostPercent > 0) {
+        const preboostStars = score.stars;
         const boostedOverall = Math.min(100, score.overall + currentAbilityConfig.scoreBoostPercent);
+        const boostedStars = (boostedOverall >= ex.scoring.starThresholds[2] ? 3
+          : boostedOverall >= ex.scoring.starThresholds[1] ? 2
+          : boostedOverall >= ex.scoring.starThresholds[0] ? 1 : 0) as 0 | 1 | 2 | 3;
+        // If boost elevated to 3 stars, add the 50 XP perfect bonus that ExerciseValidator missed
+        const perfectBonusFromBoost = (boostedStars === 3 && preboostStars < 3) ? 50 : 0;
         score = {
           ...score,
           overall: boostedOverall,
-          // Use exerciseRef (not closure exercise) for threshold checks
           isPassed: boostedOverall >= ex.scoring.passingScore,
-          stars: (boostedOverall >= ex.scoring.starThresholds[2] ? 3
-            : boostedOverall >= ex.scoring.starThresholds[1] ? 2
-            : boostedOverall >= ex.scoring.starThresholds[0] ? 1 : 0) as 0 | 1 | 2 | 3,
+          stars: boostedStars,
+          xpEarned: score.xpEarned + perfectBonusFromBoost,
         };
       }
       // XP multiplier
@@ -671,7 +710,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Persist XP and daily goal progress with challenge context
     const progressStore = useProgressStore.getState();
-    const todayISO = new Date().toISOString().split('T')[0];
+    const todayISO = getTodayDateString();
 
     // Compute max combo from score details (longest consecutive correct-pitch streak)
     let maxCombo = 0;
@@ -1156,6 +1195,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     timingOffsetMs: 0,
   });
   const [comboCount, setComboCount] = useState(0);
+  const comboCountRef = useRef(0); // mirror for use in callbacks without stale closures
+  const comboShieldUsedRef = useRef(0); // how many shield misses consumed this exercise
 
   // Buddy reaction — derived from feedback type + combo
   const buddyReaction: BuddyReaction = useMemo(() => {
@@ -1166,6 +1207,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (feedback.type === 'miss') return 'miss';
     return 'idle';
   }, [feedback.type, comboCount]);
+
+  // Keep comboCountRef in sync for use in callbacks without stale closures
+  comboCountRef.current = comboCount;
 
   // References
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1180,6 +1224,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   isPausedRef.current = isPaused;
   const activeInputMethodRef = useRef(activeInputMethod);
   activeInputMethodRef.current = activeInputMethod;
+  const abilityConfigRef = useRef(abilityConfig);
+  abilityConfigRef.current = abilityConfig;
 
   // Hit particle state
   const [hitParticle, setHitParticle] = useState({ x: 0, y: 0, color: '#fff', trigger: 0 });
@@ -1198,6 +1244,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     };
   }, []);
+
+  // Detect loop restart: when beat jumps backward, reset visual tracking state
+  const prevBeatRef = useRef(currentBeat);
+  useEffect(() => {
+    if (currentBeat < prevBeatRef.current - 1 && isPlaying) {
+      // Beat jumped backward significantly — loop restarted
+      consumedNoteIndicesRef.current.clear();
+      setComboCount(0);
+      comboShieldUsedRef.current = 0;
+      setHighlightedKeys(new Set());
+      setFeedback({ type: null, noteIndex: -1, timestamp: 0, timingOffsetMs: 0 });
+    }
+    prevBeatRef.current = currentBeat;
+  }, [currentBeat, isPlaying]);
 
   // Derived state
   const countInComplete = currentBeat >= 0;
@@ -1316,9 +1376,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     isStartingRef.current = true;
 
     playbackStartTimeRef.current = Date.now();
+    consumedNoteIndicesRef.current.clear(); // Ensure no stale consumed indices from demo or prior partial play
     startPlayback();
     setIsPaused(false);
     setComboCount(0);
+    comboShieldUsedRef.current = 0;
 
     // Reset guard after a tick to allow future starts (e.g. retry)
     setTimeout(() => { isStartingRef.current = false; }, 100);
@@ -1355,6 +1417,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setIsPaused(false);
     setHighlightedKeys(new Set());
     setComboCount(0);
+    comboShieldUsedRef.current = 0;
     setFeedback({ type: null, noteIndex: -1, timestamp: 0, timingOffsetMs: 0 });
     consumedNoteIndicesRef.current.clear();
 
@@ -1455,17 +1518,21 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       // Haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
-      // Scoring feedback only during active playback
-      if (!isPlaying || isPaused || !countInComplete) return;
+      // Scoring feedback only during active playback.
+      // Use realtimeBeatRef (60fps) instead of countInComplete (derived from throttled
+      // currentBeat ~20fps) — the throttled state can still be negative at beat 0,
+      // causing the first note to silently miss feedback.
+      if (!isPlaying || isPaused || realtimeBeatRef.current < 0) return;
 
       // Nearest-note matching: find the closest unconsumed note with matching pitch.
       // Uses realtimeBeatRef (60fps) instead of currentBeat (throttled to 20fps)
       // for accurate timing classification.
       const realtimeBeat = realtimeBeatRef.current;
       const msPerBeat = 60000 / exercise.settings.tempo;
-      const graceWindowBeats = exercise.scoring.timingGracePeriodMs / msPerBeat;
-      const toleranceWindowBeats = exercise.scoring.timingToleranceMs / msPerBeat;
-      const matchWindowBeats = Math.max(graceWindowBeats, toleranceWindowBeats) + 0.35;
+      // Match window must align with the scorer's ±1.5-beat window (ExerciseValidator.matchNotes).
+      // A tighter visual window causes notes to show "miss" during gameplay but still score —
+      // confusing the user. Use the same 1.5 beats so visual feedback always matches the final score.
+      const matchWindowBeats = 1.5;
 
       let bestMatch:
         | {
@@ -1549,7 +1616,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         const particleColor = feedbackType === 'perfect' ? '#FFD700' : getFeedbackColor(feedbackType);
         setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: particleColor, trigger: Date.now() });
       } else {
-        setComboCount(0);
+        // Combo shield: forgive the miss if the cat's ability allows it
+        const shieldMax = abilityConfigRef.current?.comboShieldMisses ?? 0;
+        if (shieldMax > 0 && comboShieldUsedRef.current < shieldMax && comboCountRef.current > 0) {
+          comboShieldUsedRef.current++;
+          // Shield absorbed the miss — keep combo, show softer feedback
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        } else {
+          setComboCount(0);
+          // Screen shake + red particles on miss
+          shakeRef.current?.shake('medium');
+          setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: '#FF5252', trigger: Date.now() });
+          setShowMissFlash(true);
+          setTimeout(() => setShowMissFlash(false), 150);
+        }
         setFeedback({
           type: 'miss',
           noteIndex: -1,
@@ -1559,12 +1639,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
         // Warning haptic for incorrect
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-
-        // Screen shake + red particles on miss
-        shakeRef.current?.shake('medium');
-        setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: '#FF5252', trigger: Date.now() });
-        setShowMissFlash(true);
-        setTimeout(() => setShowMissFlash(false), 150);
       }
 
       // Clear feedback after delay
@@ -1579,7 +1653,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       isDemoPlaying,
       isPlaying,
       isPaused,
-      countInComplete,
       realtimeBeatRef,
       exercise.notes,
       exercise.settings.tempo,
@@ -1614,14 +1687,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    * keyboard UI. This effect bridges that gap by calling handleKeyDown when a
    * new external noteOn arrives, giving the user visual + haptic feedback.
    */
-  const lastProcessedExternalNoteRef = useRef<number>(0);
+  const lastProcessedExternalCountRef = useRef<number>(0);
   useEffect(() => {
     const externalNote = lastExternalNoteRef.current;
     if (!externalNote) return;
 
-    // Avoid re-processing the same event (dedup by timestamp)
-    if (externalNote.timestamp <= lastProcessedExternalNoteRef.current) return;
-    lastProcessedExternalNoteRef.current = externalNote.timestamp;
+    // Dedup by counter (not timestamp — chords produce multiple events at the same ms)
+    if (externalNoteCount <= lastProcessedExternalCountRef.current) return;
+    lastProcessedExternalCountRef.current = externalNoteCount;
 
     // Highlight the key
     setHighlightedKeys((prev) => new Set([...prev, externalNote.note]));
@@ -1644,12 +1717,23 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const curInputMethod = activeInputMethodRef.current;
 
     if (curIsPlaying && !curIsPaused && curCountInComplete) {
-      // Feed into the same nearest-note matching for visual feedback
+      // Feed into the same nearest-note matching for visual feedback.
+      // Apply timing multiplier so mic real-time feedback matches final scoring windows.
+      const timingMul = TIMING_MULTIPLIER_BY_INPUT[curInputMethod] ?? 1.0;
+      const toleranceMs = curExercise.scoring.timingToleranceMs * timingMul;
+      const graceMs = curExercise.scoring.timingGracePeriodMs * timingMul;
       const realtimeBeat = realtimeBeatRef.current;
       const msPerBeat = 60000 / curExercise.settings.tempo;
-      const graceWindowBeats = curExercise.scoring.timingGracePeriodMs / msPerBeat;
-      const toleranceWindowBeats = curExercise.scoring.timingToleranceMs / msPerBeat;
-      const matchWindowBeats = Math.max(graceWindowBeats, toleranceWindowBeats) + 0.35;
+
+      // Latency compensation: mic pipeline adds ~100ms delay, so by the time
+      // the note event arrives, realtimeBeat has advanced past where the user
+      // actually played. Shift the effective beat backwards by the pipeline
+      // latency so visual feedback matches the actual timing.
+      const latencyCompMs = LATENCY_COMP_MS_BY_INPUT[curInputMethod] ?? 0;
+      const compensatedBeat = realtimeBeat - (latencyCompMs / msPerBeat);
+
+      // Align with scorer's ±1.5-beat match window (ExerciseValidator.matchNotes)
+      const matchWindowBeats = 1.5;
 
       let bestMatch: { index: number; beatDiffSigned: number; startBeat: number; matchScore: number } | null = null;
 
@@ -1657,7 +1741,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         const note = curExercise.notes[i];
         if (consumedNoteIndicesRef.current.has(i)) continue;
         if (note.note !== externalNote.note) continue;
-        const beatDiffSigned = realtimeBeat - note.startBeat;
+        const beatDiffSigned = compensatedBeat - note.startBeat;
         const beatDiffAbs = Math.abs(beatDiffSigned);
         if (beatDiffAbs > matchWindowBeats) continue;
         const matchScore = beatDiffAbs + (beatDiffSigned < 0 ? 0.1 : 0);
@@ -1670,9 +1754,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         consumedNoteIndicesRef.current.add(bestMatch.index);
         const beatDiffMs = Math.abs(bestMatch.beatDiffSigned) * msPerBeat;
         let feedbackType: FeedbackState['type'];
-        if (beatDiffMs <= curExercise.scoring.timingToleranceMs * 0.5) feedbackType = 'perfect';
-        else if (beatDiffMs <= curExercise.scoring.timingToleranceMs) feedbackType = 'good';
-        else if (beatDiffMs <= curExercise.scoring.timingGracePeriodMs) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
+        if (beatDiffMs <= toleranceMs * 0.5) feedbackType = 'perfect';
+        else if (beatDiffMs <= toleranceMs) feedbackType = 'good';
+        else if (beatDiffMs <= graceMs) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
         else feedbackType = 'ok';
 
         setComboCount((prev) => prev + 1);
@@ -1683,7 +1767,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // external notes are often speaker echoes of touch events that were
         // already consumed by handleKeyDown. Showing "miss" would incorrectly
         // overwrite the correct feedback that was already displayed.
-        setComboCount(0);
+        const shieldMax = abilityConfigRef.current?.comboShieldMisses ?? 0;
+        if (shieldMax > 0 && comboShieldUsedRef.current < shieldMax && comboCountRef.current > 0) {
+          comboShieldUsedRef.current++;
+        } else {
+          setComboCount(0);
+        }
         setFeedback({ type: 'miss', noteIndex: -1, timestamp: Date.now(), timingOffsetMs: 0 });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
       }
@@ -2312,7 +2401,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    marginTop: 4,
     backgroundColor: COLORS.background,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.cardBorder,

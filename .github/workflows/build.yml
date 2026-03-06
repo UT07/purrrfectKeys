@@ -1,14 +1,14 @@
 name: EAS Build
 
-# Dual-build workflow:
-#   Feature branches → Dev Client (connects to Expo dev server for hot reload testing)
+# Build workflow:
+#   Feature branches → Dev Client (connects to Expo dev server for hot reload + native module testing)
 #   Master merge     → Preview IPA (standalone, no dev server needed)
-#   Version tags     → Production build
+#   Version tags     → Production build (iOS + Android)
 #   Manual dispatch  → Any profile/platform combination
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, 'feat/**']
     tags:
       - 'v*'
   workflow_dispatch:
@@ -16,10 +16,11 @@ on:
       profile:
         description: 'EAS build profile'
         required: true
-        default: 'preview'
+        default: 'development-device'
         type: choice
         options:
           - development-device
+          - development
           - preview
           - production
       platform:
@@ -30,12 +31,52 @@ on:
         options:
           - ios
           - android
+          - all
 
 jobs:
+  # ── Feature branches → Dev Client (native modules + hot reload) ──
+  build-dev-ios:
+    name: Dev Client (iOS device)
+    if: >
+      github.event_name == 'push' &&
+      !startsWith(github.ref, 'refs/tags/') &&
+      github.ref != 'refs/heads/master' &&
+      github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Firebase config files
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" | base64 --decode > firebase/GoogleService-Info.plist
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > firebase/google-services.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build iOS dev client
+        run: eas build --platform ios --profile development-device --non-interactive
+
   # ── Master push → Preview IPA (standalone, testable without dev server) ──
   build-preview-ios:
     name: Preview IPA (iOS)
-    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+    if: >
+      github.event_name == 'push' &&
+      !startsWith(github.ref, 'refs/tags/') &&
+      (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -99,7 +140,7 @@ jobs:
       - name: Build ${{ matrix.platform }}
         run: eas build --platform ${{ matrix.platform }} --profile production --non-interactive
 
-  # ── Manual dispatch → any profile/platform (dev client, preview, or production) ──
+  # ── Manual dispatch → any profile/platform ──
   build-manual:
     name: Manual Build
     if: github.event_name == 'workflow_dispatch'
@@ -131,5 +172,10 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build
-        run: eas build --platform "$BUILD_PLATFORM" --profile "$BUILD_PROFILE" --non-interactive
+      - name: Build iOS
+        if: env.BUILD_PLATFORM == 'ios' || env.BUILD_PLATFORM == 'all'
+        run: eas build --platform ios --profile "$BUILD_PROFILE" --non-interactive
+
+      - name: Build Android
+        if: env.BUILD_PLATFORM == 'android' || env.BUILD_PLATFORM == 'all'
+        run: eas build --platform android --profile "$BUILD_PROFILE" --non-interactive

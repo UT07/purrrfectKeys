@@ -1,17 +1,18 @@
 /**
  * Onboarding Screen
- * First-time user experience with 5-step flow
+ * First-time user experience with 6-step flow
  * 1. Welcome
  * 2. Experience Level
  * 3. Equipment Check
  * 4. Goal Setting
  * 5. Choose Your Cat Companion
+ * 6. Pick Username & Display Name
  *
  * Features animated progress bar with walking cat avatar,
  * per-step cat characters, and slide transitions.
  */
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +21,8 @@ import {
   ScrollView,
   Dimensions,
   Pressable,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -38,6 +41,7 @@ import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
+import { checkUsernameAvailable, isValidUsername } from '../services/firebase/socialService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 
@@ -53,13 +57,15 @@ const CAT_SIZE = 28;
 const SLIDE_DURATION = 300;
 const SLIDE_OFFSET = 50;
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 interface OnboardingState {
   experienceLevel?: 'beginner' | 'intermediate' | 'returning';
   inputMethod?: 'midi' | 'mic' | 'touch';
   goal?: 'songs' | 'technique' | 'exploration';
   selectedCatId?: string;
+  username?: string;
+  usernameDisplayName?: string;
   completedAt?: Date;
 }
 
@@ -80,6 +86,7 @@ const STEP_CATS: Record<number, StepCatInfo> = {
   3: { catId: 'chonky-monke', subtitle: 'Chonky Monk\u00E9 checks your setup' },
   4: { catId: 'luna', subtitle: 'Luna helps you set goals' },
   5: { catId: 'mini-meowww', subtitle: 'Choose your companion!' },
+  6: { catId: 'jazzy', subtitle: 'Jazzy wants to know your name!' },
 };
 
 // ---------------------------------------------------------------------------
@@ -412,9 +419,168 @@ function CatSelectionStep({
       </Text>
 
       <Button
-        title="Let's Get Started!"
+        title="Next"
         onPress={onNext}
         disabled={!selectedCatId}
+        size="large"
+        style={styles.button}
+        testID="onboarding-cat-next"
+      />
+    </AnimatedStepWrapper>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 6: Choose Username & Display Name
+// ---------------------------------------------------------------------------
+
+function UsernameStep({
+  onNext,
+  username,
+  displayNameValue,
+  onUsernameChange,
+  onDisplayNameChange,
+  direction,
+}: {
+  onNext: () => void;
+  username?: string;
+  displayNameValue?: string;
+  onUsernameChange: (name: string) => void;
+  onDisplayNameChange: (name: string) => void;
+  direction: SlideDirection;
+}): React.ReactElement {
+  const catInfo = STEP_CATS[6];
+  const [isChecking, setIsChecking] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleUsernameInput = useCallback(
+    (text: string) => {
+      const normalized = text.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
+      onUsernameChange(normalized);
+      setIsAvailable(null);
+      setValidationError(null);
+
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+
+      if (normalized.length === 0) return;
+
+      if (normalized.length < 3) {
+        setValidationError('At least 3 characters');
+        return;
+      }
+
+      if (!isValidUsername(normalized)) {
+        setValidationError('Only lowercase letters, numbers, _ and -');
+        return;
+      }
+
+      setIsChecking(true);
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const available = await checkUsernameAvailable(normalized);
+          setIsAvailable(available);
+          if (!available) {
+            setValidationError('Username already taken');
+          }
+        } catch {
+          // Network/permission error — allow proceeding optimistically.
+          // Registration will validate again. Don't block onboarding on network.
+          setIsAvailable(true);
+          setValidationError(null);
+        } finally {
+          setIsChecking(false);
+        }
+      }, 500);
+    },
+    [onUsernameChange],
+  );
+
+  const canProceed =
+    !!username &&
+    username.length >= 3 &&
+    isValidUsername(username) &&
+    isAvailable === true &&
+    !isChecking;
+
+  return (
+    <AnimatedStepWrapper direction={direction} testID="onboarding-step-6">
+      <View style={styles.stepCatRow}>
+        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
+        <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
+      </View>
+      <Text style={styles.stepTitle}>Pick a Username</Text>
+      <Text style={styles.stepDescription}>
+        Friends will use this to find you. Choose wisely — it can't be changed!
+      </Text>
+
+      {/* Username input */}
+      <View style={styles.usernameInputContainer}>
+        <Text style={styles.inputLabel}>Username</Text>
+        <View style={styles.usernameInputRow}>
+          <TextInput
+            style={[
+              styles.usernameInput,
+              validationError ? styles.usernameInputError : null,
+              isAvailable === true && username && username.length >= 3 ? styles.usernameInputSuccess : null,
+            ]}
+            value={username ?? ''}
+            onChangeText={handleUsernameInput}
+            placeholder="jazzycat99"
+            placeholderTextColor={COLORS.textMuted}
+            maxLength={20}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+            testID="onboarding-username-input"
+          />
+          {isChecking && (
+            <ActivityIndicator
+              size="small"
+              color={COLORS.primary}
+              style={styles.usernameSpinner}
+            />
+          )}
+          {!isChecking && isAvailable === true && username && username.length >= 3 && (
+            <Text style={styles.usernameAvailable}>✓</Text>
+          )}
+        </View>
+        {validationError && (
+          <Text style={styles.usernameErrorText}>{validationError}</Text>
+        )}
+        {!validationError && isAvailable === true && username && username.length >= 3 && (
+          <Text style={styles.usernameSuccessText}>Username available!</Text>
+        )}
+      </View>
+
+      {/* Display name input */}
+      <View style={styles.usernameInputContainer}>
+        <Text style={styles.inputLabel}>Display Name (optional)</Text>
+        <TextInput
+          style={styles.usernameInput}
+          value={displayNameValue ?? ''}
+          onChangeText={(text) => onDisplayNameChange(text.slice(0, 30))}
+          placeholder="Defaults to your username"
+          placeholderTextColor={COLORS.textMuted}
+          maxLength={30}
+          autoCorrect={false}
+          returnKeyType="done"
+          testID="onboarding-displayname-input"
+        />
+      </View>
+
+      <Button
+        title="Finish"
+        onPress={onNext}
+        disabled={!canProceed}
         size="large"
         style={styles.button}
         testID="onboarding-finish"
@@ -649,6 +815,12 @@ export function OnboardingScreen(): React.ReactElement {
         useCatEvolutionStore.getState().initializeStarterCat(state.selectedCatId);
         useSettingsStore.getState().setSelectedCatId(state.selectedCatId);
       }
+      // Persist username + display name from step 6
+      if (state.username) {
+        useSettingsStore.getState().setUsername(state.username);
+        const dn = state.usernameDisplayName?.trim() || state.username;
+        useSettingsStore.getState().setDisplayName(dn);
+      }
       // Pre-fill buffer with tier-1 exercises for immediate play (fire-and-forget)
       prefillOnboardingBuffer().catch(() => {});
       // Dismiss the onboarding modal and return to MainTabs
@@ -667,6 +839,8 @@ export function OnboardingScreen(): React.ReactElement {
     state.inputMethod,
     state.goal,
     state.selectedCatId,
+    state.username,
+    state.usernameDisplayName,
     setExperienceLevel,
     setHasCompletedOnboarding,
     setLearningGoal,
@@ -726,6 +900,21 @@ export function OnboardingScreen(): React.ReactElement {
             onSelect={(catId) => {
               setState((prev) => ({ ...prev, selectedCatId: catId }));
             }}
+            onNext={handleNext}
+            direction={direction}
+          />
+        );
+      case 6:
+        return (
+          <UsernameStep
+            username={state.username}
+            displayNameValue={state.usernameDisplayName}
+            onUsernameChange={(name) =>
+              setState((prev) => ({ ...prev, username: name }))
+            }
+            onDisplayNameChange={(name) =>
+              setState((prev) => ({ ...prev, usernameDisplayName: name }))
+            }
             onNext={handleNext}
             direction={direction}
           />
@@ -1000,6 +1189,59 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: SPACING.md,
     fontStyle: 'italic',
+  },
+
+  // Username step
+  usernameInputContainer: {
+    marginBottom: SPACING.md,
+  },
+  inputLabel: {
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.xs,
+  },
+  usernameInputRow: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  usernameInput: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.cardBorder,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingRight: 44,
+    color: COLORS.textPrimary,
+    ...TYPOGRAPHY.body.md,
+  },
+  usernameInputError: {
+    borderColor: COLORS.error,
+  },
+  usernameInputSuccess: {
+    borderColor: COLORS.success,
+  },
+  usernameSpinner: {
+    position: 'absolute',
+    right: SPACING.md,
+  },
+  usernameAvailable: {
+    position: 'absolute',
+    right: SPACING.md,
+    fontSize: 18,
+    color: COLORS.success,
+    fontWeight: '700',
+  },
+  usernameErrorText: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.error,
+    marginTop: SPACING.xs,
+  },
+  usernameSuccessText: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.success,
+    marginTop: SPACING.xs,
   },
 });
 

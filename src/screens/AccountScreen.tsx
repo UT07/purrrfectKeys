@@ -189,7 +189,6 @@ export function AccountScreen(): React.ReactElement {
       const { GoogleSignin } = require('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
-      // v16 returns { type: 'success' | 'cancelled', data } instead of throwing
       if (response.type === 'cancelled') return;
       const idToken = response.data?.idToken;
       if (!idToken) {
@@ -200,6 +199,31 @@ export function AccountScreen(): React.ReactElement {
     } catch (err: unknown) {
       const errObj = err as { code?: string; message?: string };
       if (errObj.code === 'SIGN_IN_CANCELLED') return;
+
+      // If credential belongs to an existing account, offer to sign in instead
+      if (errObj.code === 'auth/credential-already-in-use') {
+        try {
+          const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+          const resp = await GoogleSignin.signIn();
+          if (resp.type === 'cancelled') return;
+          const token = resp.data?.idToken;
+          if (!token) return;
+          const credential = GoogleAuthProvider.credential(token);
+          Alert.alert(
+            'Account Already Exists',
+            'This Google account is already registered. Sign in to your existing account? Your guest progress will be replaced.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Sign In',
+                onPress: () => useAuthStore.getState().signInReplacingAnonymous(credential),
+              },
+            ],
+          );
+        } catch { /* user cancelled re-auth */ }
+        return;
+      }
+
       logger.warn('[AccountScreen] Google link error:', err);
       Alert.alert('Link Failed', errObj.message ?? 'Google linking failed. Please try again.');
     }
@@ -234,8 +258,103 @@ export function AccountScreen(): React.ReactElement {
     } catch (err: unknown) {
       const errObj = err as { code?: string; message?: string };
       if (errObj.code === 'ERR_REQUEST_CANCELED') return;
+
+      // If credential belongs to an existing account, offer to sign in instead
+      if (errObj.code === 'auth/credential-already-in-use') {
+        try {
+          const AppleAuth = require('expo-apple-authentication');
+          const crypto = require('expo-crypto');
+          const rawNonce2 = Math.random().toString(36).substring(2, 18) + Math.random().toString(36).substring(2, 18);
+          const hashedNonce2 = await crypto.digestStringAsync(
+            crypto.CryptoDigestAlgorithm.SHA256,
+            rawNonce2,
+          );
+          const cred2 = await AppleAuth.signInAsync({
+            requestedScopes: [AppleAuth.AppleAuthenticationScope.EMAIL],
+            nonce: hashedNonce2,
+          });
+          if (cred2.identityToken) {
+            const provider = new OAuthProvider('apple.com');
+            const credential = provider.credential({
+              idToken: cred2.identityToken,
+              rawNonce: rawNonce2,
+            });
+            Alert.alert(
+              'Account Already Exists',
+              'This Apple account is already registered. Sign in to your existing account? Your guest progress will be replaced.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Sign In',
+                  onPress: () => useAuthStore.getState().signInReplacingAnonymous(credential),
+                },
+              ],
+            );
+          }
+        } catch { /* user cancelled re-auth */ }
+        return;
+      }
+
       logger.warn('[AccountScreen] Apple link error:', err);
       Alert.alert('Link Failed', errObj.message ?? 'Apple linking failed. Please try again.');
+    }
+  }, []);
+
+  const handleSignInGoogle = useCallback(async () => {
+    if (!isGoogleAuthAvailable()) {
+      Alert.alert('Coming Soon', 'Google Sign-In is not yet configured for this build.');
+      return;
+    }
+    try {
+      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (response.type === 'cancelled') return;
+      const idToken = response.data?.idToken;
+      if (!idToken) return;
+      const credential = GoogleAuthProvider.credential(idToken);
+      await useAuthStore.getState().signInReplacingAnonymous(credential);
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj.code === 'SIGN_IN_CANCELLED') return;
+      logger.warn('[AccountScreen] Google sign-in error:', err);
+      Alert.alert('Sign In Failed', errObj.message ?? 'Google sign-in failed. Please try again.');
+    }
+  }, []);
+
+  const handleSignInApple = useCallback(async () => {
+    if (!isAppleAuthAvailable()) {
+      Alert.alert('Coming Soon', 'Apple Sign-In is not yet configured for this build.');
+      return;
+    }
+    try {
+      const AppleAuth = require('expo-apple-authentication');
+      const crypto = require('expo-crypto');
+      const rawNonce = Math.random().toString(36).substring(2, 18) + Math.random().toString(36).substring(2, 18);
+      const hashedNonce = await crypto.digestStringAsync(
+        crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
+      const cred = await AppleAuth.signInAsync({
+        requestedScopes: [
+          AppleAuth.AppleAuthenticationScope.FULL_NAME,
+          AppleAuth.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+      if (cred.identityToken) {
+        const provider = new OAuthProvider('apple.com');
+        const credential = provider.credential({
+          idToken: cred.identityToken,
+          rawNonce,
+        });
+        await useAuthStore.getState().signInReplacingAnonymous(credential);
+      }
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj.code === 'ERR_REQUEST_CANCELED') return;
+      logger.warn('[AccountScreen] Apple sign-in error:', err);
+      Alert.alert('Sign In Failed', errObj.message ?? 'Apple sign-in failed. Please try again.');
     }
   }, []);
 
@@ -280,11 +399,61 @@ export function AccountScreen(): React.ReactElement {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <View style={styles.signInSection}>
+          <Text style={styles.signInTitle}>Already have an account?</Text>
+          <Text style={styles.signInSubtitle}>Sign in to your existing account. Guest progress will be replaced.</Text>
+
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={[styles.signInButton]}
+              onPress={handleSignInApple}
+              testID="account-signin-apple"
+            >
+              <Text style={styles.signInButtonText}>Sign in with Apple</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.signInButton]}
+            onPress={handleSignInGoogle}
+            testID="account-signin-google"
+          >
+            <Text style={styles.signInButtonText}>Sign in with Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.signInButton]}
+            onPress={() => navigation.navigate('EmailAuth', { isLinking: false })}
+            testID="account-signin-email"
+          >
+            <Text style={styles.signInButtonText}>Sign in with Email</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>Your progress is saved locally.</Text>
           <Text style={styles.infoBody}>
             Without an account, you'll lose it if you reinstall the app.
           </Text>
+        </View>
+
+        <View style={styles.dangerSection}>
+          <TouchableOpacity
+            style={styles.dangerRow}
+            onPress={handleDeleteAccount}
+            disabled={isLoading}
+            testID="account-delete-anon"
+          >
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.error} />
+            ) : (
+              <Text style={styles.dangerText}>Delete Guest Account</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {error && <Text style={styles.errorText}>{error}</Text>}
@@ -391,13 +560,21 @@ const styles = StyleSheet.create({
   // Anonymous hero
   anonHero: { alignItems: 'center', marginBottom: SPACING.xl },
   anonTitle: { ...TYPOGRAPHY.body.lg, color: COLORS.textSecondary, textAlign: 'center', marginTop: SPACING.md, lineHeight: 26 },
-  linkButtons: { gap: SPACING.sm + 4, marginBottom: SPACING.xl },
+  linkButtons: { gap: SPACING.sm + 4, marginBottom: SPACING.md },
   linkButton: { height: 52, borderRadius: BORDER_RADIUS.lg, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
   appleLink: { backgroundColor: COLORS.textPrimary },
   googleLink: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.cardBorder },
   emailLink: { backgroundColor: COLORS.primary },
   linkButtonText: { ...TYPOGRAPHY.body.md, fontWeight: '700', color: COLORS.textPrimary },
-  infoBox: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.cardBorder },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: SPACING.md },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.cardBorder },
+  dividerText: { ...TYPOGRAPHY.body.sm, color: COLORS.textMuted, marginHorizontal: SPACING.sm },
+  signInSection: { marginBottom: SPACING.lg, gap: SPACING.sm },
+  signInTitle: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary, fontWeight: '600' },
+  signInSubtitle: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginBottom: SPACING.xs },
+  signInButton: { height: 48, borderRadius: BORDER_RADIUS.md, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.cardBorder },
+  signInButtonText: { ...TYPOGRAPHY.body.md, fontWeight: '600', color: COLORS.textSecondary },
+  infoBox: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.cardBorder, marginBottom: SPACING.md },
   infoTitle: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary, fontWeight: '600' },
   infoBody: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: SPACING.xs },
   // Authenticated

@@ -5,10 +5,12 @@
  * Designed for real-time piano note detection via microphone.
  *
  * Algorithm steps:
- * 1. Compute autocorrelation difference function
- * 2. Cumulative mean normalized difference
- * 3. Absolute threshold search
- * 4. Parabolic interpolation for sub-sample accuracy
+ * 1. RMS gate — reject buffers below noise floor
+ * 2. Compute autocorrelation difference function
+ * 3. Cumulative mean normalized difference
+ * 4. Absolute threshold search
+ * 5. Parabolic interpolation for sub-sample accuracy
+ * 6. Octave error correction via harmonic check
  *
  * All buffers are pre-allocated to avoid GC pressure in the audio path.
  *
@@ -17,6 +19,7 @@
  */
 
 import { frequencyToNearestMidi, frequencyCentsOffset } from '../core/music/pitchUtils';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +53,10 @@ export interface PitchDetectorConfig {
   minFrequency: number;
   /** Maximum detectable frequency in Hz (default: 2000, ~B6) */
   maxFrequency: number;
+  /** RMS threshold for silence gating (default: 0.01). Buffers below this are ignored. */
+  rmsThreshold: number;
+  /** Enable octave error correction (default: true) */
+  octaveCorrection: boolean;
 }
 
 const DEFAULT_CONFIG: PitchDetectorConfig = {
@@ -59,6 +66,8 @@ const DEFAULT_CONFIG: PitchDetectorConfig = {
   minConfidence: 0.7,
   minFrequency: 50,
   maxFrequency: 2000,
+  rmsThreshold: 0.01,
+  octaveCorrection: true,
 };
 
 // ---------------------------------------------------------------------------
@@ -71,6 +80,12 @@ export class YINPitchDetector {
   private readonly yinBuffer: Float32Array;
   private readonly minTau: number;
   private readonly maxTau: number;
+  /** Pre-allocated result object — reused every detect() call to avoid GC pressure */
+  private readonly _result: PitchResult;
+  /** Diagnostic counters for logging (non-critical) */
+  private _rmsRejectCount = 0;
+  private _confRejectCount = 0;
+  private _detectCount = 0;
 
   constructor(config?: Partial<PitchDetectorConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -83,6 +98,9 @@ export class YINPitchDetector {
     // tau = sampleRate / frequency
     this.minTau = Math.max(2, Math.floor(this.config.sampleRate / this.config.maxFrequency));
     this.maxTau = Math.min(this.halfSize - 1, Math.floor(this.config.sampleRate / this.config.minFrequency));
+
+    // Pre-allocate result object (mutated in detect() to avoid GC pressure)
+    this._result = { frequency: 0, confidence: 0, voiced: false, midiNote: null, centsOffset: 0, timestamp: 0 };
   }
 
   /**
@@ -91,10 +109,29 @@ export class YINPitchDetector {
    * Returns PitchResult with frequency, confidence, and MIDI note.
    */
   detect(audioBuffer: Float32Array): PitchResult {
-    const now = Date.now();
+    const r = this._result;
+    r.timestamp = Date.now();
 
     if (audioBuffer.length < this.config.bufferSize) {
-      return { frequency: 0, confidence: 0, voiced: false, midiNote: null, centsOffset: 0, timestamp: now };
+      r.frequency = 0; r.confidence = 0; r.voiced = false; r.midiNote = null; r.centsOffset = 0;
+      return r;
+    }
+
+    this._detectCount++;
+
+    // Step 0: RMS gate — reject silent/quiet buffers before expensive YIN
+    const rms = this.computeRMS(audioBuffer);
+    if (rms < this.config.rmsThreshold) {
+      this._rmsRejectCount++;
+      // Log every 200 rejections for diagnostics (not every frame — too noisy)
+      if (this._rmsRejectCount % 200 === 0) {
+        logger.log(
+          `[PitchDetector] RMS silence: ${this._rmsRejectCount}/${this._detectCount} rejected ` +
+          `(rms=${rms.toFixed(4)} < ${this.config.rmsThreshold})`
+        );
+      }
+      r.frequency = 0; r.confidence = 0; r.voiced = false; r.midiNote = null; r.centsOffset = 0;
+      return r;
     }
 
     // Step 1: Difference function
@@ -107,37 +144,71 @@ export class YINPitchDetector {
     const tauEstimate = this.findThresholdTau();
 
     if (tauEstimate < 0) {
-      return { frequency: 0, confidence: 0, voiced: false, midiNote: null, centsOffset: 0, timestamp: now };
+      r.frequency = 0; r.confidence = 0; r.voiced = false; r.midiNote = null; r.centsOffset = 0;
+      return r;
     }
 
     // Step 4: Parabolic interpolation for sub-sample accuracy
-    const refinedTau = this.parabolicInterpolation(tauEstimate);
-    const frequency = this.config.sampleRate / refinedTau;
+    let refinedTau = this.parabolicInterpolation(tauEstimate);
+    let frequency = this.config.sampleRate / refinedTau;
     const confidence = 1 - this.yinBuffer[tauEstimate];
 
     if (confidence < this.config.minConfidence) {
-      return { frequency: 0, confidence, voiced: false, midiNote: null, centsOffset: 0, timestamp: now };
+      this._confRejectCount++;
+      // Log every 50 confidence rejections with the detected frequency (helps diagnose missed notes)
+      if (this._confRejectCount % 50 === 0) {
+        logger.log(
+          `[PitchDetector] Low confidence: ${this._confRejectCount}/${this._detectCount} rejected ` +
+          `(conf=${confidence.toFixed(2)} < ${this.config.minConfidence}, freq=${frequency.toFixed(1)}Hz)`
+        );
+      }
+      r.frequency = 0; r.confidence = confidence; r.voiced = false; r.midiNote = null; r.centsOffset = 0;
+      return r;
     }
 
-    const midiNote = frequencyToNearestMidi(frequency);
-    const centsOffset = frequencyCentsOffset(frequency);
+    // Step 5: Octave error correction — check if the detected pitch is
+    // actually a harmonic of a lower fundamental. Piano's 2nd harmonic is
+    // often stronger than the fundamental for low notes.
+    if (this.config.octaveCorrection) {
+      const corrected = this.correctOctaveError(refinedTau, tauEstimate);
+      if (corrected !== refinedTau) {
+        refinedTau = corrected;
+        frequency = this.config.sampleRate / refinedTau;
+      }
+    }
 
-    return {
-      frequency,
-      confidence,
-      voiced: true,
-      midiNote,
-      centsOffset,
-      timestamp: now,
-    };
+    r.frequency = frequency;
+    r.confidence = confidence;
+    r.voiced = true;
+    r.midiNote = frequencyToNearestMidi(frequency);
+    r.centsOffset = frequencyCentsOffset(frequency);
+    return r;
+  }
+
+  /**
+   * Compute RMS (root mean square) amplitude of the buffer.
+   * Used for silence gating — no point running YIN on noise.
+   */
+  private computeRMS(buffer: Float32Array): number {
+    let sum = 0;
+    const len = Math.min(buffer.length, this.config.bufferSize);
+    for (let i = 0; i < len; i++) {
+      sum += buffer[i] * buffer[i];
+    }
+    return Math.sqrt(sum / len);
   }
 
   /**
    * Step 1: Compute the difference function d(tau).
    * d(tau) = sum_{j=0}^{W-1} (x[j] - x[j + tau])^2
+   *
+   * PERF: Only compute up to maxTau+1 — values beyond the detectable
+   * frequency range are never read. With minFrequency=80 Hz this cuts
+   * the outer loop from 1024 to ~552, saving ~46% of O(n²) work.
    */
   private computeDifference(buffer: Float32Array): void {
-    for (let tau = 0; tau < this.halfSize; tau++) {
+    const limit = this.maxTau + 1;
+    for (let tau = 0; tau < limit; tau++) {
       let sum = 0;
       for (let j = 0; j < this.halfSize; j++) {
         const delta = buffer[j] - buffer[j + tau];
@@ -153,9 +224,10 @@ export class YINPitchDetector {
    * d'(0) = 1
    */
   private cumulativeMeanNormalize(): void {
+    const limit = this.maxTau + 1;
     this.yinBuffer[0] = 1;
     let runningSum = 0;
-    for (let tau = 1; tau < this.halfSize; tau++) {
+    for (let tau = 1; tau < limit; tau++) {
       runningSum += this.yinBuffer[tau];
       if (runningSum === 0) {
         this.yinBuffer[tau] = 1;
@@ -200,6 +272,47 @@ export class YINPitchDetector {
 
     const adjustment = (s2 - s0) / denominator;
     return tau + adjustment;
+  }
+
+  /**
+   * Step 5: Octave error correction.
+   *
+   * YIN can lock onto the 2nd harmonic (octave above) instead of the
+   * fundamental, especially for piano low notes where the 2nd harmonic
+   * has more energy. We check if there's a valid valley at 2x tau
+   * (octave below). If that valley is reasonably deep, the detected
+   * pitch was likely a harmonic — correct to the fundamental.
+   */
+  private correctOctaveError(refinedTau: number, rawTau: number): number {
+    // Check tau*2 (one octave below) — if it has a good valley, prefer it
+    const doubleTau = rawTau * 2;
+    if (doubleTau >= this.maxTau) return refinedTau;
+
+    // If the original valley is very deep (CMNDF near zero), the detected
+    // frequency is almost certainly the true fundamental — not a harmonic.
+    // Pure sines and strong fundamentals have CMNDF < threshold * 0.3.
+    // Piano harmonics produce shallower valleys (CMNDF 0.05–0.12).
+    const originalVal = this.yinBuffer[rawTau];
+    if (originalVal < this.config.threshold * 0.3) return refinedTau;
+
+    // Find the best valley near doubleTau (±3 samples for tolerance)
+    let bestTau = doubleTau;
+    let bestVal = this.yinBuffer[doubleTau] ?? 1;
+    for (let t = Math.max(this.minTau, doubleTau - 3); t <= Math.min(this.maxTau - 1, doubleTau + 3); t++) {
+      if (this.yinBuffer[t] < bestVal) {
+        bestVal = this.yinBuffer[t];
+        bestTau = t;
+      }
+    }
+
+    // The 2x valley must be below threshold AND within 1.5x of the original.
+    // This is conservative: only correct when the fundamental's valley
+    // is nearly as good as the harmonic's, suggesting true octave confusion.
+    if (bestVal < this.config.threshold && bestVal < originalVal * 1.5) {
+      return this.parabolicInterpolation(bestTau);
+    }
+
+    return refinedTau;
   }
 
   /** Get the configured sample rate */
@@ -248,17 +361,27 @@ export interface NoteEvent {
  * Tracks pitch detections over time and emits stable noteOn/noteOff events.
  * Prevents rapid flickering by requiring sustained detection before onset
  * and sustained silence before release.
+ *
+ * Uses a confirmation counter instead of pure time-based onset: the candidate
+ * note must be detected N consecutive times (default: 2) before triggering.
+ * This is more reliable than time-based onset because buffer arrival timing
+ * can be irregular.
  */
 export class NoteTracker {
   private readonly config: NoteTrackerConfig;
   private currentNote: number | null = null;
   private candidateNote: number | null = null;
-  private candidateStartTime = 0;
+  private candidateCount = 0;
   private lastVoicedTime = 0;
   private callback: ((event: NoteEvent) => void) | null = null;
+  /** Minimum consecutive detections before onset (derived from onsetHoldMs) */
+  private readonly minConfirmations: number;
 
   constructor(config?: Partial<NoteTrackerConfig>) {
     this.config = { ...DEFAULT_TRACKER_CONFIG, ...config };
+    // At ~46ms per buffer (2048/44100), 2 confirmations = ~92ms.
+    // Clamp to minimum 2 to reject single-buffer flukes.
+    this.minConfirmations = Math.max(2, Math.round(this.config.onsetHoldMs / 46));
   }
 
   /** Register callback for note events */
@@ -277,29 +400,32 @@ export class NoteTracker {
       if (result.midiNote === this.currentNote) {
         // Same note sustained — reset candidate
         this.candidateNote = null;
+        this.candidateCount = 0;
         return;
       }
 
       if (result.midiNote === this.candidateNote) {
-        // Candidate sustained — check if held long enough
-        if (now - this.candidateStartTime >= this.config.onsetHoldMs) {
-          // Emit noteOff for previous note (if any)
+        // Same candidate again — increment confirmation counter
+        this.candidateCount++;
+        if (this.candidateCount >= this.minConfirmations) {
+          // Confirmed! Emit noteOff for previous, noteOn for new
           if (this.currentNote !== null) {
             this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
           }
-          // Emit noteOn for new note
           this.currentNote = result.midiNote;
           this.candidateNote = null;
+          this.candidateCount = 0;
           this.emit({ type: 'noteOn', midiNote: this.currentNote, confidence: result.confidence, timestamp: now });
         }
       } else {
-        // New candidate
+        // New candidate — start fresh
         this.candidateNote = result.midiNote;
-        this.candidateStartTime = now;
+        this.candidateCount = 1;
       }
     } else {
       // Unvoiced — check for release
       this.candidateNote = null;
+      this.candidateCount = 0;
       if (this.currentNote !== null && now - this.lastVoicedTime >= this.config.releaseHoldMs) {
         this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
         this.currentNote = null;
@@ -314,7 +440,7 @@ export class NoteTracker {
     }
     this.currentNote = null;
     this.candidateNote = null;
-    this.candidateStartTime = 0;
+    this.candidateCount = 0;
     this.lastVoicedTime = 0;
   }
 
@@ -324,6 +450,9 @@ export class NoteTracker {
   }
 
   private emit(event: NoteEvent): void {
+    if (event.type === 'noteOn') {
+      logger.log(`[NoteTracker] noteOn: MIDI ${event.midiNote} (conf=${event.confidence.toFixed(2)})`);
+    }
     this.callback?.(event);
   }
 }

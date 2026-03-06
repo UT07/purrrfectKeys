@@ -64,6 +64,8 @@ export interface AuthState {
   linkWithGoogle: (idToken: string) => Promise<void>;
   linkWithApple: (identityToken: string, nonce: string) => Promise<void>;
   linkWithEmail: (email: string, password: string) => Promise<void>;
+  /** Sign in with credential, abandoning anonymous account. Deletes the anon user for GDPR. */
+  signInReplacingAnonymous: (credential: AuthCredential) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<string | void>;
   reauthenticateAndDelete: (credential: AuthCredential) => Promise<void>;
@@ -202,12 +204,29 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
     logger.warn('[Social] League membership check failed:', err);
   }
 
-  // Friend code
+  // Username / friend code
   try {
     if (!useSocialStore.getState().friendCode) {
-      const { registerFriendCode } = require('../services/firebase/socialService');
-      const code = await registerFriendCode(uid);
-      useSocialStore.getState().setFriendCode(code);
+      const username = useSettingsStore.getState().username;
+      if (username) {
+        // Try registering the chosen username first
+        try {
+          const { registerUsername } = require('../services/firebase/socialService');
+          await registerUsername(uid, username, displayName);
+          useSocialStore.getState().setFriendCode(username);
+        } catch {
+          // Username taken or failed — fall back to legacy random code
+          logger.warn('[Social] Username registration failed, falling back to legacy code');
+          const { registerFriendCode } = require('../services/firebase/socialService');
+          const code = await registerFriendCode(uid);
+          useSocialStore.getState().setFriendCode(code);
+        }
+      } else {
+        // No username chosen — use legacy friend code
+        const { registerFriendCode } = require('../services/firebase/socialService');
+        const code = await registerFriendCode(uid);
+        useSocialStore.getState().setFriendCode(code);
+      }
     }
   } catch (err) {
     logger.warn('[Social] Friend code registration failed:', err);
@@ -539,6 +558,57 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: handleAuthError(error),
+      });
+    }
+  },
+
+  signInReplacingAnonymous: async (credential: AuthCredential) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const { user: anonUser, isAnonymous } = get();
+
+      // Delete the anonymous Firebase Auth user for GDPR compliance
+      if (anonUser && isAnonymous) {
+        try {
+          await deleteUser(anonUser);
+          logger.log('[Auth] Anonymous user deleted before sign-in replacement');
+        } catch (err) {
+          // If deletion fails (e.g. requires-recent-login), just sign out instead
+          logger.warn('[Auth] Could not delete anonymous user, signing out:', err);
+          await firebaseSignOut(auth).catch(() => {});
+        }
+      }
+
+      // Clear local anonymous progress
+      cancelAllPendingSaves();
+      await PersistenceManager.clearAll();
+      resetAllStores();
+
+      // Sign in with the existing account's credential
+      const result = await signInWithCredential(auth, credential);
+
+      // Restore display name from Firestore if available
+      try {
+        const profile = await getUserProfile(result.user.uid);
+        if (profile?.displayName && profile.displayName !== result.user.displayName) {
+          await updateProfile(result.user, { displayName: profile.displayName });
+        }
+      } catch { /* non-critical */ }
+
+      set({
+        user: result.user,
+        isAuthenticated: true,
+        isAnonymous: false,
+        isLoading: false,
+        error: null,
+      });
+
       triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
     } catch (error) {
       set({

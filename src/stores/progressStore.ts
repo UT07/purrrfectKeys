@@ -260,12 +260,10 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         score: _score, maxCombo: 0, perfectNotes: 0, playbackSpeed: 1.0, minutesPracticedToday: 0,
       };
       if (isWeeklyChallengeComplete(weeklyChallenge, ctx)) {
-        // Award weekly gems (only if not already claimed — use gem source as idempotency key)
         const weeklyKey = `weekly-${weekStartISO}`;
         const gemState = useGemStore.getState();
-        const alreadyClaimed = gemState.transactions?.some((t) => t.source === weeklyKey);
-        if (!alreadyClaimed) {
-          gemState.earnGems(weeklyChallenge.reward.gems, weeklyKey);
+        if (!gemState.hasClaimedReward(weeklyKey)) {
+          gemState.claimReward(weeklyKey, weeklyChallenge.reward.gems);
           xpMultiplier = Math.max(xpMultiplier, weeklyChallenge.reward.xpMultiplier ?? 1);
         }
       }
@@ -278,13 +276,12 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       // Monthly requires N exercises within 48h window — count today's completions
       const monthlyKey = `monthly-${monthISO}`;
       const gemState = useGemStore.getState();
-      const alreadyClaimed = gemState.transactions?.some((t) => t.source === monthlyKey);
-      if (!alreadyClaimed) {
+      if (!gemState.hasClaimedReward(monthlyKey)) {
         // Count exercises completed today toward monthly goal
         const todayGoal = get().dailyGoalData[today];
         const exercisesToday = (todayGoal?.exercisesCompleted ?? 0) + 1;
         if (exercisesToday >= monthlyChallenge.exercisesRequired) {
-          gemState.earnGems(monthlyChallenge.reward.gems, monthlyKey);
+          gemState.claimReward(monthlyKey, monthlyChallenge.reward.gems);
           xpMultiplier = Math.max(xpMultiplier, monthlyChallenge.reward.xpMultiplier ?? 1);
         }
       }

@@ -482,7 +482,7 @@ export function SocialScreen(): React.JSX.Element {
   }, [user?.uid, isAnonymous, setFriends, setMembership, setStandings]);
 
   const handleSignIn = useCallback(() => {
-    navigation.navigate('Auth');
+    navigation.navigate('Account');
   }, [navigation]);
 
   if (isAnonymous) {

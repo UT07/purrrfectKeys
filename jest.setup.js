@@ -227,3 +227,68 @@ jest.mock('firebase/functions', () => ({
   connectFunctionsEmulator: jest.fn(),
 }));
 
+// Mock react-native-reanimated globally (required for module-scope AnimatedG in KeysieSvg)
+jest.mock('react-native-reanimated', () => {
+  const View = require('react-native').View;
+  return {
+    __esModule: true,
+    default: {
+      View,
+      Text: require('react-native').Text,
+      Image: require('react-native').Image,
+      ScrollView: require('react-native').ScrollView,
+      FlatList: require('react-native').FlatList,
+      createAnimatedComponent: (c) => c,
+      addWhitelistedNativeProps: jest.fn(),
+      addWhitelistedUIProps: jest.fn(),
+    },
+    useSharedValue: (v) => ({ value: v }),
+    useAnimatedStyle: (fn) => (typeof fn === 'function' ? fn() : {}),
+    useAnimatedProps: (fn) => (typeof fn === 'function' ? fn() : {}),
+    useDerivedValue: (fn) => ({ value: typeof fn === 'function' ? fn() : fn }),
+    useAnimatedGestureHandler: jest.fn(),
+    useAnimatedScrollHandler: jest.fn(),
+    withRepeat: (v) => v,
+    withSequence: (...args) => args[0],
+    withTiming: (v) => v,
+    withSpring: (v) => v,
+    withDelay: (_d, v) => v,
+    withDecay: (v) => v,
+    cancelAnimation: jest.fn(),
+    runOnJS: (fn) => fn,
+    runOnUI: (fn) => fn,
+    interpolate: jest.fn((v) => v),
+    interpolateColor: (v) => `rgba(0,0,0,${v})`,
+    Extrapolate: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
+    Easing: {
+      linear: (v) => v,
+      ease: 0,
+      quad: (v) => v,
+      cubic: (v) => v,
+      sin: (v) => v,
+      circle: (v) => v,
+      exp: (v) => v,
+      bounce: (v) => v,
+      bezier: () => (v) => v,
+      inOut: (v) => v,
+      in: (v) => v,
+      out: (v) => v,
+      sine: 0,
+    },
+    // Chainable entering/exiting animations — each method returns the same chainable object
+    ...(function() {
+      function chainable() {
+        const obj = {};
+        const methods = ['duration', 'delay', 'springify', 'damping', 'stiffness', 'easing', 'withInitialValues', 'withCallback', 'build'];
+        methods.forEach(m => { obj[m] = () => obj; });
+        return obj;
+      }
+      const names = ['FadeIn', 'FadeInUp', 'FadeInDown', 'FadeInLeft', 'FadeInRight', 'FadeOut', 'FadeOutUp', 'FadeOutDown', 'FadeOutLeft', 'FadeOutRight', 'SlideInRight', 'SlideInLeft', 'SlideOutRight', 'SlideOutLeft', 'ZoomIn', 'ZoomOut', 'Layout', 'BounceIn', 'BounceOut', 'StretchInX', 'StretchInY'];
+      const result = {};
+      names.forEach(n => { result[n] = chainable(); });
+      return result;
+    })(),
+    createAnimatedComponent: (c) => c,
+  };
+});
+

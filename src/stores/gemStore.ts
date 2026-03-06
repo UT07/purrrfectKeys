@@ -19,21 +19,26 @@ export interface GemStoreState {
   totalGemsEarned: number;
   totalGemsSpent: number;
   transactions: GemTransaction[];
+  /** Permanent set of one-time reward keys (weekly-2026-03-02, monthly-2026-03, etc.) */
+  claimedRewards: string[];
 
   // Actions
   earnGems: (amount: number, source: string) => void;
   spendGems: (amount: number, item: string) => boolean;
   canAfford: (amount: number) => boolean;
+  hasClaimedReward: (key: string) => boolean;
+  claimReward: (key: string, gems: number) => void;
   reset: () => void;
 }
 
-type GemData = Pick<GemStoreState, 'gems' | 'totalGemsEarned' | 'totalGemsSpent' | 'transactions'>;
+type GemData = Pick<GemStoreState, 'gems' | 'totalGemsEarned' | 'totalGemsSpent' | 'transactions' | 'claimedRewards'>;
 
 const defaultData: GemData = {
   gems: 0,
   totalGemsEarned: 0,
   totalGemsSpent: 0,
   transactions: [],
+  claimedRewards: [],
 };
 
 const debouncedSave = createDebouncedSave<GemData>(STORAGE_KEYS.GEMS, 500);
@@ -86,6 +91,18 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
 
   canAfford: (amount: number) => {
     return get().gems >= amount;
+  },
+
+  hasClaimedReward: (key: string) => {
+    return get().claimedRewards.includes(key);
+  },
+
+  claimReward: (key: string, gems: number) => {
+    const state = get();
+    if (state.claimedRewards.includes(key)) return;
+    // Mark as claimed first, then earn gems
+    set({ claimedRewards: [...state.claimedRewards, key] });
+    state.earnGems(gems, key);
   },
 
   reset: () => {

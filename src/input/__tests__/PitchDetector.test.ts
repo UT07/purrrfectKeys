@@ -199,6 +199,40 @@ describe('YINPitchDetector', () => {
     expect(detector.getLatencyMs()).toBeCloseTo(expectedLatency, 1);
   });
 
+  it('RMS gate rejects very quiet buffers as unvoiced', () => {
+    // Generate a sine wave at very low amplitude (below RMS threshold of 0.01)
+    const buffer = generateSineWave(440, SAMPLE_RATE, BUFFER_SIZE, 0.005);
+    const result = detector.detect(buffer);
+
+    // RMS of a sine with amplitude 0.005 ≈ 0.0035 → below 0.01 threshold
+    expect(result.voiced).toBe(false);
+  });
+
+  it('detects pitch when amplitude is above RMS threshold', () => {
+    const buffer = generateSineWave(440, SAMPLE_RATE, BUFFER_SIZE, 0.1);
+    const result = detector.detect(buffer);
+
+    // RMS of a sine with amplitude 0.1 ≈ 0.07 → well above 0.01 threshold
+    expect(result.voiced).toBe(true);
+    expect(result.midiNote).toBe(69);
+  });
+
+  it('octave correction can be disabled', () => {
+    const detectorNoOctaveCorr = new YINPitchDetector({
+      sampleRate: SAMPLE_RATE,
+      bufferSize: BUFFER_SIZE,
+      threshold: 0.15,
+      minConfidence: 0.7,
+      octaveCorrection: false,
+    });
+
+    const buffer = generateSineWave(440, SAMPLE_RATE, BUFFER_SIZE);
+    const result = detectorNoOctaveCorr.detect(buffer);
+
+    expect(result.voiced).toBe(true);
+    expect(result.midiNote).toBe(69); // Pure sine — no correction needed anyway
+  });
+
   it('respects custom threshold', () => {
     // Very strict threshold — should detect less
     const strictDetector = new YINPitchDetector({
@@ -246,16 +280,14 @@ describe('NoteTracker', () => {
   // Note onset
   // =========================================================================
 
-  it('emits noteOn after sustained detection exceeds onsetHoldMs', () => {
-    // 3 detections of same note, each ~20ms apart
+  it('emits noteOn after minConfirmations consecutive detections', () => {
+    // With onsetHoldMs=40: minConfirmations = max(2, round(40/46)) = 2
+    // So 2 consecutive detections of the same note triggers noteOn
     tracker.update(makePitch(60, true, 1000));
-    expect(events).toHaveLength(0); // Not yet — needs to be sustained
+    expect(events).toHaveLength(0); // 1st detection — candidate, not confirmed
 
-    tracker.update(makePitch(60, true, 1020));
-    expect(events).toHaveLength(0); // Still under 40ms
-
-    tracker.update(makePitch(60, true, 1045)); // 45ms from first detection
-    expect(events).toHaveLength(1);
+    tracker.update(makePitch(60, true, 1050));
+    expect(events).toHaveLength(1); // 2nd detection — confirmed!
     expect(events[0]).toEqual(expect.objectContaining({
       type: 'noteOn',
       midiNote: 60,
@@ -276,16 +308,16 @@ describe('NoteTracker', () => {
   // =========================================================================
 
   it('emits noteOff after silence exceeds releaseHoldMs', () => {
-    // Onset
+    // Onset (2 confirmations)
     tracker.update(makePitch(60, true, 1000));
     tracker.update(makePitch(60, true, 1050));
     expect(events).toHaveLength(1); // noteOn
 
-    // Silence
+    // Silence — lastVoicedTime was 1050
     tracker.update(makePitch(null, false, 1100));
-    expect(events).toHaveLength(1); // Not yet released
+    expect(events).toHaveLength(1); // 50ms silence < 80ms threshold
 
-    tracker.update(makePitch(null, false, 1200)); // 100ms of silence > 80ms threshold
+    tracker.update(makePitch(null, false, 1200)); // 150ms silence > 80ms threshold
     expect(events).toHaveLength(2);
     expect(events[1]).toEqual(expect.objectContaining({
       type: 'noteOff',

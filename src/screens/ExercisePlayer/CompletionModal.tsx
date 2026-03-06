@@ -281,19 +281,20 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     return () => { cancelled = true; };
   }, [exercise.id, exercise.metadata.title, exercise.metadata.difficulty, score]);
 
-  // Auto-play coach feedback via TTS when it arrives (Salsa's voice)
+  // Auto-play coach feedback via TTS once the coaching phase is visible.
+  // Gate on phaseIndex so TTS doesn't fire before the text is on screen.
+  const coachingPhaseReached = phaseIndex >= PHASES.indexOf('coaching');
   useEffect(() => {
-    if (!coachFeedback || coachLoading || hasAutoPlayed.current) return;
+    if (!coachFeedback || coachLoading || !coachingPhaseReached || hasAutoPlayed.current) return;
     hasAutoPlayed.current = true;
-    // Small delay to let the score animation finish
     const timer = setTimeout(() => {
       ttsService.speak(coachFeedback, { catId: 'salsa' });
-    }, 800);
+    }, 400);
     return () => {
       clearTimeout(timer);
       ttsService.stop();
     };
-  }, [coachFeedback, coachLoading]);
+  }, [coachFeedback, coachLoading, coachingPhaseReached]);
 
   // Main animation sequence — triggered when score phase is reached
   useEffect(() => {
@@ -651,6 +652,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 message={catDialogue}
                 size="small"
                 catId={activeCatId}
+                speakMessage={false}
               />
             </Reanimated.View>
           )}

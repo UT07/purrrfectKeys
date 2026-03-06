@@ -123,10 +123,12 @@ service cloud.firestore {
       // ====================================================================
 
       match /activity/{itemId} {
-        // Owner reads own feed; friends can post to it
-        allow read: if isOwner(userId);
-        // Any authenticated non-anonymous user can post (friend posts activity)
-        allow create: if isAuthenticated() && isNotAnonymous();
+        // Owner and confirmed friends can read the activity feed
+        allow read: if isOwner(userId) ||
+          (isAuthenticated() &&
+           exists(/databases/$(database)/documents/users/$(userId)/friends/$(request.auth.uid)));
+        // Only the owner posts to their own feed
+        allow create: if isOwner(userId) && isNotAnonymous();
         allow update, delete: if false;
       }
 
@@ -165,7 +167,24 @@ service cloud.firestore {
     }
 
     // ========================================================================
-    // Friend Codes (friendCodes/{code}) — Public lookup
+    // Usernames (usernames/{username}) — Human-readable invite codes
+    // ========================================================================
+
+    match /usernames/{username} {
+      // Any authenticated user can look up a username
+      allow read: if isAuthenticated();
+      // Non-anonymous users can register their username (uid must match)
+      allow create: if isAuthenticated() && isNotAnonymous() &&
+                       request.resource.data.uid == request.auth.uid;
+      // No updates — usernames are immutable once set
+      allow update: if false;
+      // Owner can delete their username (account cleanup)
+      allow delete: if isAuthenticated() &&
+                       resource.data.uid == request.auth.uid;
+    }
+
+    // ========================================================================
+    // Friend Codes (friendCodes/{code}) — Legacy public lookup
     // ========================================================================
 
     match /friendCodes/{code} {

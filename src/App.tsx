@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -11,7 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './navigation/AppNavigator';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { PersistenceManager, STORAGE_KEYS } from './stores/persistence';
+import { PersistenceManager, STORAGE_KEYS, flushAllPendingSaves } from './stores/persistence';
 import { useProgressStore } from './stores/progressStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
@@ -126,7 +127,7 @@ export default function App(): React.ReactElement {
         );
 
         if (savedProgress) {
-          const { totalXp, streakData, lessonProgress, dailyGoalData } =
+          const { totalXp, streakData, lessonProgress, dailyGoalData, tierTestResults, streakMilestonesClaimed } =
             savedProgress as Record<string, unknown>;
           const xp = (totalXp as number) ?? 0;
           useProgressStore.setState({
@@ -135,6 +136,8 @@ export default function App(): React.ReactElement {
             ...(streakData ? { streakData: streakData as any } : {}),
             ...(lessonProgress ? { lessonProgress: lessonProgress as any } : {}),
             ...(dailyGoalData ? { dailyGoalData: dailyGoalData as any } : {}),
+            ...(tierTestResults ? { tierTestResults: tierTestResults as any } : {}),
+            ...(streakMilestonesClaimed ? { streakMilestonesClaimed: streakMilestonesClaimed as any } : {}),
           });
           logger.log('[App] Progress state hydrated from storage (level', levelFromXp(xp), ')');
         }
@@ -284,6 +287,16 @@ export default function App(): React.ReactElement {
     // Lock all screens to portrait by default.
     // ExercisePlayer overrides to landscape on mount and restores portrait on unmount.
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => { });
+  }, []);
+
+  // Flush pending debounced saves when app goes to background to prevent data loss
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        flushAllPendingSaves();
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   useEffect(() => {

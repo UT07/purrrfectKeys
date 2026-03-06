@@ -113,6 +113,7 @@ export function useExercisePlayback({
   const hasCrossedZeroRef = useRef(false); // Track count-in → playback transition
   const playedNotesRef = useRef<MidiNoteEvent[]>([]); // Ref for scoring (avoids stale closure)
   const realtimeBeatRef = useRef(-exercise.settings.countIn); // 60fps beat position for scoring
+  const hasCompletedRef = useRef(false); // Guard against double-completion from rapid interval ticks
   // Tracks noteOn indices so noteOff/release can attach durationMs for scoring.
   const noteOnIndexMapRef = useRef<Map<number, number[]>>(new Map());
 
@@ -323,7 +324,9 @@ export function useExercisePlayback({
         const noteIndex = playedNotesRef.current.length;
         playedNotesRef.current.push(normalizedEvent);
         trackNoteOnIndex(normalizedEvent.note, noteIndex);
-        setPlayedNotes([...playedNotesRef.current]);
+        // PERF: Don't call setPlayedNotes here — it creates a full array copy
+        // on every noteOn (~21×/sec for mic) triggering unnecessary re-renders.
+        // Scoring reads from playedNotesRef.current; state synced at completion.
         useExerciseStore.getState().addPlayedNote(normalizedEvent);
 
         // Surface external noteOn for keyboard highlighting in ExercisePlayer.
@@ -485,6 +488,7 @@ export function useExercisePlayback({
     startTimeRef.current = Date.now();
     pauseElapsedRef.current = 0;
     hasCrossedZeroRef.current = false;
+    hasCompletedRef.current = false; // Allow completion for this new playback
     playedNotesRef.current = [];
     noteOnIndexMapRef.current.clear();
     realtimeBeatRef.current = -exercise.settings.countIn;
@@ -586,6 +590,8 @@ export function useExercisePlayback({
    */
   const handleCompletion = useCallback(() => {
     if (!mountedRef.current) return;
+    if (hasCompletedRef.current) return; // Prevent double-completion from rapid interval ticks
+    hasCompletedRef.current = true;
 
     // Clear interval synchronously to prevent further state updates
     if (playbackIntervalRef.current) {
@@ -651,6 +657,8 @@ export function useExercisePlayback({
 
     const score = scoreExercise(scoringExercise, adjustedNotes, previousHighScore);
     useExerciseStore.getState().setScore(score);
+    // Sync playedNotes state for post-exercise display
+    setPlayedNotes([...playedNotesRef.current]);
 
     logger.log('[useExercisePlayback] Exercise completed:', score);
     onComplete?.(score);
