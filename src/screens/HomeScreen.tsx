@@ -481,7 +481,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
               <Text style={styles.practiceProgressText}>{masteredSkills.length}/{totalSkills} skills</Text>
             </View>
-            <HomePracticeSections plan={sessionPlan} onExercisePress={handleExercisePress} />
+            <HomePracticeSections plan={sessionPlan} onExercisePress={handleExercisePress} lessonProgress={lessonProgress} />
           </GameCard>
         </Animated.View>
 
@@ -606,9 +606,10 @@ const PRACTICE_SECTION_COLORS = {
 } as const;
 
 /** Compact practice sections for the HomeScreen dashboard */
-function HomePracticeSections({ plan, onExercisePress }: {
+function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
   plan: { warmUp: ExerciseRef[]; lesson: ExerciseRef[]; challenge: ExerciseRef[] };
   onExercisePress: (ref: ExerciseRef) => void;
+  lessonProgress: Record<string, { exerciseScores: Record<string, { completedAt?: number; highScore?: number; stars?: number }> }>;
 }) {
   return (
     <View style={styles.practiceContainer}>
@@ -629,15 +630,28 @@ function HomePracticeSections({ plan, onExercisePress }: {
               const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
               const skillNode = isAI ? getSkillById(ref.skillNodeId) : null;
               const title = exercise?.metadata.title ?? skillNode?.name ?? 'AI Exercise';
+
+              // Check completion: AI exercises stored under __ai__ bucket with stable key
+              const isCompleted = isAI
+                ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null
+                : Object.values(lessonProgress).some((lp) => lp.exerciseScores[ref.exerciseId]?.completedAt != null);
+              const highScore = isAI
+                ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore
+                : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore;
+
               return (
                 <PressableScale key={`${ref.exerciseId}-${i}`} haptic onPress={() => onExercisePress(ref)}>
-                  <View style={[styles.practiceExerciseCard, { borderColor: sec.border, backgroundColor: sec.bg }]}>
+                  <View style={[styles.practiceExerciseCard, { borderColor: isCompleted ? glowColor(COLORS.success, 0.3) : sec.border, backgroundColor: isCompleted ? glowColor(COLORS.success, 0.06) : sec.bg }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.practiceExerciseTitle} numberOfLines={1}>{title}</Text>
-                      <Text style={styles.practiceExerciseReason} numberOfLines={1}>{ref.reason}</Text>
+                      <Text style={[styles.practiceExerciseTitle, isCompleted && { color: COLORS.success }]} numberOfLines={1}>
+                        {isCompleted ? '\u2713 ' : ''}{title}
+                      </Text>
+                      <Text style={styles.practiceExerciseReason} numberOfLines={1}>
+                        {isCompleted && highScore ? `Score: ${highScore}%` : ref.reason}
+                      </Text>
                     </View>
-                    <View style={[styles.practicePlayIcon, { backgroundColor: sec.accent }]}>
-                      <MaterialCommunityIcons name="play" size={16} color={COLORS.textPrimary} />
+                    <View style={[styles.practicePlayIcon, { backgroundColor: isCompleted ? COLORS.success : sec.accent }]}>
+                      <MaterialCommunityIcons name={isCompleted ? 'replay' : 'play'} size={16} color={COLORS.textPrimary} />
                     </View>
                   </View>
                 </PressableScale>

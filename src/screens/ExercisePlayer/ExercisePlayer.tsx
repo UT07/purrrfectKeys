@@ -924,6 +924,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Track recent exercise for dedup in CurriculumEngine
     useLearnerProfileStore.getState().addRecentExercise(ex.id);
+    // Also track skill-based stable ID so CurriculumEngine filters same skill
+    if (isAiExercise && skillIdParam) {
+      useLearnerProfileStore.getState().addRecentExercise(`ai-skill-${skillIdParam}`);
+    }
 
     useLearnerProfileStore.getState().recordExerciseResult({
       tempo: ex.settings.tempo,

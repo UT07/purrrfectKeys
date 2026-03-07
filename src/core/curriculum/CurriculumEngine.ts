@@ -254,8 +254,9 @@ function generateWarmUp(
 
   // Strategy 1: AI warm-up targeting weak notes from a mastered skill
   if (profile.weakNotes.length > 0 && masteredSkills.length > 0) {
-    // Find the mastered skill whose notes overlap with weak notes
+    // Find the mastered skill whose notes overlap with weak notes (skip recently practiced)
     for (const skillId of [...masteredSkills].reverse()) {
+      if (recentSet.has(`ai-skill-${skillId}`)) continue;
       const skill = getSkillById(skillId);
       if (skill) {
         refs.push(makeAIRef(skill, `Warm-up targets weak notes: ${profile.weakNotes.slice(0, 3).map(midiToNoteName).join(', ')}`, recentSet));
@@ -267,11 +268,20 @@ function generateWarmUp(
     }
   }
 
-  // Strategy 2: AI review of a recently mastered skill
+  // Strategy 2: AI review of a recently mastered skill (skip if just practiced)
   if (refs.length < 2 && masteredSkills.length > 0) {
-    const recentSkillId = masteredSkills[masteredSkills.length - 1];
-    const recentSkill = getSkillById(recentSkillId);
-    if (recentSkill && !refs.some((r) => r.skillNodeId === recentSkillId)) {
+    // Walk backwards through mastered skills, skip recently practiced
+    let recentSkill = null;
+    for (let j = masteredSkills.length - 1; j >= 0; j--) {
+      const sid = masteredSkills[j];
+      if (recentSet.has(`ai-skill-${sid}`)) continue;
+      const s = getSkillById(sid);
+      if (s && !refs.some((r) => r.skillNodeId === sid)) {
+        recentSkill = s;
+        break;
+      }
+    }
+    if (recentSkill) {
       refs.push(makeAIRef(recentSkill, `Review recently learned: ${recentSkill.name}`, recentSet));
       reasoning.push(`Warm-up reviews recent skill: ${recentSkill.name}`);
     }
