@@ -686,13 +686,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
-    // Recompute isNewHighScore after ability boosts — the hook's computation
-    // may have used stale/zero previousHighScore (e.g., AI exercises with no lesson).
-    // Search all lesson progress for an existing score for this exercise.
+    // Recompute isNewHighScore after ability boosts.
+    // For AI exercises (unique IDs like ai-*, tmpl-*), use skillIdParam as the
+    // lookup key — otherwise every AI exercise is always a "new record" since
+    // the unique ID has no previous score.
     const progressStateForHighScore = useProgressStore.getState();
+    const isAiExercise = ex.id.startsWith('ai-') || ex.id.startsWith('tmpl-');
+    const scoreKey = isAiExercise && skillIdParam ? `ai-skill-${skillIdParam}` : ex.id;
     let prevHigh = 0;
     for (const lp of Object.values(progressStateForHighScore.lessonProgress)) {
-      const exScore = lp.exerciseScores[ex.id];
+      const exScore = lp.exerciseScores[scoreKey];
       if (exScore?.highScore) {
         prevHigh = exScore.highScore;
         break;
@@ -776,9 +779,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Use real lesson ID or synthetic "__ai__" bucket for non-lesson exercises
     const effectiveLessonId = exLessonId ?? '__ai__';
 
+    // For AI exercises, use a stable key (based on skillId) so scores accumulate
+    // across attempts instead of each unique ID being treated as a brand-new exercise.
+    const stableExId = isAiExercise && skillIdParam ? `ai-skill-${skillIdParam}` : ex.id;
+
     // Capture whether this exercise was previously completed BEFORE we update lesson progress
     // (used for first-completion gem bonus below)
-    const wasPreviouslyCompleted = progressStore.lessonProgress[effectiveLessonId]?.exerciseScores[ex.id]?.completedAt != null;
+    const wasPreviouslyCompleted = progressStore.lessonProgress[effectiveLessonId]?.exerciseScores[stableExId]?.completedAt != null;
 
     let lessonSyncData: {
       lessonId: string;
@@ -806,7 +813,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
       // Get fresh state after potential initialization
       const currentLP = useProgressStore.getState().lessonProgress[effectiveLessonId];
-      const existingExScore = currentLP?.exerciseScores[ex.id];
+      const existingExScore = currentLP?.exerciseScores[stableExId];
       const isNewHighScore = !existingExScore || score.overall > existingExScore.highScore;
 
       const newHighScore = isNewHighScore ? score.overall : (existingExScore?.highScore ?? score.overall);
@@ -816,9 +823,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         ? (existingExScore.averageScore * existingExScore.attempts + score.overall) / newAttempts
         : score.overall;
 
-      // Save exercise progress
-      progressStore.updateExerciseProgress(effectiveLessonId, ex.id, {
-        exerciseId: ex.id,
+      // Save exercise progress using stable key (skillId for AI, exerciseId for static)
+      progressStore.updateExerciseProgress(effectiveLessonId, stableExId, {
+        exerciseId: stableExId,
         highScore: newHighScore,
         stars: newStars,
         attempts: newAttempts,
