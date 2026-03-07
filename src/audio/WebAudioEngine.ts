@@ -233,7 +233,12 @@ export class WebAudioEngine implements IAudioEngine {
    */
   playNote(note: number, velocity: number = 0.8): NoteHandle {
     if (!this.context || !this.masterGain) {
-      throw new Error('WebAudioEngine not initialized. Call initialize() first');
+      logger.warn(`[WebAudioEngine] playNote(${note}) skipped: not initialized`);
+      return {
+        note,
+        startTime: Date.now() / 1000,
+        release: () => {},
+      };
     }
 
     // iOS requires a user gesture to unlock the AudioContext from suspended state.
