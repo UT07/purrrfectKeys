@@ -50,33 +50,34 @@ const DEFAULT_CONFIG: MicrophoneInputConfig = {
 };
 
 /**
- * Tuned pitch detection preset for ambient mic detection.
+ * Tuned pitch detection preset for microphone input (real instrument → phone mic).
  *
  * The RMS gate (rmsThreshold) rejects silence before expensive YIN runs.
  * Octave correction prevents YIN from locking onto the 2nd harmonic
  * (common with piano low notes where the fundamental is weaker).
- * Thresholds are slightly relaxed from defaults for speaker-to-mic SNR.
+ *
+ * These settings are tuned for REAL instrument input (piano/keyboard near phone mic),
+ * NOT for phone-speaker-to-mic echo. Speaker echo is handled by echo dedup in
+ * useExercisePlayback, not by relaxing detection thresholds.
  */
 const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
-  threshold: 0.25,       // Default 0.15 — relaxed for room noise + speaker reverb
-  minConfidence: 0.30,   // Default 0.7 — phone speaker→mic path adds reverb that drops confidence to 0.3-0.5
-  rmsThreshold: 0.008,   // Default 0.01 — lowered to catch softer notes from phone speakers
-  octaveCorrection: false, // Disabled: speaker audio has different harmonic structure than direct piano;
-                           // octave correction was "correcting" correct detections down an octave
+  threshold: 0.15,       // Default 0.15 — standard YIN threshold; tighter = fewer false positives
+  minConfidence: 0.55,   // Default 0.7 — slightly relaxed for phone mic SNR, but high enough to reject noise
+  rmsThreshold: 0.012,   // Default 0.01 — slightly above default to gate background noise
+  octaveCorrection: true, // Essential for piano: low notes have stronger 2nd harmonic than fundamental
   minFrequency: 80,      // Default 50 — E2, covers beginner piano range. Also reduces maxTau from 882→551
   maxFrequency: 1500,    // Default 2000 — ~G6, covers all beginner exercises
 };
 
 /**
- * Tuned tracker preset for ambient mic detection.
+ * Tuned tracker preset for mic detection.
  * 2 consecutive detections required for onset (minConfirmations = max(2, round(60/46)) = 2).
- * Longer release hold accounts for speaker resonance decay.
  */
 const AMBIENT_TRACKER_OVERRIDES: Partial<NoteTrackerConfig> = {
-  onsetHoldMs: 46,       // ~1 confirmation at 46ms/buffer → minConfirmations clamps to 2.
+  onsetHoldMs: 60,       // ~1.3 buffers at 46ms → minConfirmations clamps to 2.
                          // Combined with gap tolerance, this allows detection within ~92-138ms.
-  releaseHoldMs: 120,    // Slightly longer release — speaker resonance + room reverb
-                         // can cause brief unvoiced gaps that shouldn't end a note.
+  releaseHoldMs: 100,    // Short enough to release notes promptly, long enough to survive
+                         // 1-2 unvoiced frames from transient noise during sustained notes.
 };
 
 // ---------------------------------------------------------------------------

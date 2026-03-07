@@ -347,11 +347,16 @@ export class ExpoAudioEngine implements IAudioEngine {
     if (!this.soundSource) return;
 
     try {
+      // Apply polyphony scaling to match pooled path behavior
+      const activeCount = this.activeNotes.size;
+      const polyphonyScale = activeCount > 0 ? Math.min(1.0, 1.0 / Math.sqrt(activeCount)) : 1.0;
+      const vol = velocity * this.volume * polyphonyScale;
+
       const { sound } = await Audio.Sound.createAsync(
         this.soundSource,
         {
           shouldPlay: true,
-          volume: velocity * this.volume,
+          volume: vol,
           rate,
           shouldCorrectPitch: false,
         }

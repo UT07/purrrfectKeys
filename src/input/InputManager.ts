@@ -214,7 +214,12 @@ export class InputManager {
    * Clean up all resources.
    */
   dispose(): void {
-    this.stop();
+    // Stop mic recording (async but fire-and-forget — dispose must be synchronous
+    // for React cleanup. The mic's native recorder handles abrupt teardown safely.)
+    if (this._activeMethod === 'mic' && this.micInput && this.isStarted) {
+      this.micInput.stop().catch(() => {});
+    }
+    this.isStarted = false;
     this.unsubMidi?.();
     this.unsubMic?.();
     this.unsubMidiConnection?.();

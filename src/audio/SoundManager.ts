@@ -115,10 +115,9 @@ export class SoundManager {
   async preload(): Promise<void> {
     if (this.preloaded) return;
 
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-    });
+    // Audio session is configured by createAudioEngine.ts:ensureAudioModeConfigured()
+    // which uses AudioManager (sync) to avoid racing with mic PlayAndRecord mode.
+    // Do NOT call Audio.setAudioModeAsync() here — it would clobber the session.
 
     // Generate all sound URIs procedurally (no .wav files needed)
     const uris = generateAllSoundUris();

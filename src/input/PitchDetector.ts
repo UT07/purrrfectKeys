@@ -214,6 +214,16 @@ export class YINPitchDetector {
     r.voiced = true;
     r.midiNote = frequencyToNearestMidi(frequency);
     r.centsOffset = frequencyCentsOffset(frequency);
+
+    // Log first 10 voiced detections for diagnostics (helps debug wrong-note issues)
+    if (this._detectCount - this._rmsRejectCount - this._confRejectCount <= 10 && r.midiNote !== null) {
+      logger.log(
+        `[PitchDetector] Voiced: MIDI ${r.midiNote} (${r.frequency.toFixed(1)}Hz, ` +
+        `conf=${r.confidence.toFixed(2)}, cents=${r.centsOffset.toFixed(0)}, ` +
+        `rms=${rms.toFixed(4)}, octCorr=${this.config.octaveCorrection})`
+      );
+    }
+
     return r;
   }
 
@@ -521,7 +531,9 @@ export class NoteTracker {
 
   private emit(event: NoteEvent): void {
     if (event.type === 'noteOn') {
-      logger.log(`[NoteTracker] noteOn: MIDI ${event.midiNote} (conf=${event.confidence.toFixed(2)})`);
+      logger.log(`[NoteTracker] noteOn: MIDI ${event.midiNote} (conf=${event.confidence.toFixed(2)}, confirmations=${this.minConfirmations})`);
+    } else {
+      logger.log(`[NoteTracker] noteOff: MIDI ${event.midiNote}`);
     }
     this.callback?.(event);
   }
