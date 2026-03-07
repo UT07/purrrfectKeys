@@ -1083,7 +1083,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const chestType = getChestType(score.stars, !wasPreviouslyCompleted);
     const chestReward = getChestReward(chestType);
     if (chestReward.gems > 0) {
-      gemStore.earnGems(chestReward.gems, `chest-${exercise.id}`);
+      gemStore.earnGems(chestReward.gems, `chest-${ex.id}`);
       totalGemsForModal += chestReward.gems;
     }
     setChestTypeForModal(chestType);

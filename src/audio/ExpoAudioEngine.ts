@@ -125,13 +125,9 @@ export class ExpoAudioEngine implements IAudioEngine {
     const totalStart = Date.now();
 
     try {
-      const audioModeStart = Date.now();
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-      });
-      logger.log(`[ExpoAudioEngine] Audio mode configured (${Date.now() - audioModeStart}ms)`);
+      // Audio session is configured by createAudioEngine.ts:ensureAudioModeConfigured()
+      // which uses AudioManager (sync) to avoid racing with mic PlayAndRecord mode.
+      // Do NOT call Audio.setAudioModeAsync() here — it would clobber the session.
 
       // Generate and write base WAV
       const wavStart = Date.now();

@@ -104,6 +104,7 @@ export class MicrophoneInput {
   private monoBusy = false; // Back-pressure flag for monophonic YIN (prevents JS thread stacking)
   private readonly pendingBuffer: Float32Array; // Pre-allocated buffer for deferred YIN detection
   private hasCalibrated = false; // Only auto-calibrate once per session
+  private calibrationUnsub: (() => void) | null = null;
 
   constructor(config?: Partial<MicrophoneInputConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -280,6 +281,7 @@ export class MicrophoneInput {
         calibrationBuffers.push(new Float32Array(samples));
       } else {
         unsub();
+        this.calibrationUnsub = null;
         // Compute calibration result
         if (calibrationBuffers.length > 0) {
           let totalRMS = 0;
@@ -299,6 +301,7 @@ export class MicrophoneInput {
         }
       }
     });
+    this.calibrationUnsub = unsub;
   }
 
   /**
@@ -306,6 +309,9 @@ export class MicrophoneInput {
    */
   async stop(): Promise<void> {
     if (!this.isActive) return;
+    // Clean up any in-progress calibration subscription
+    this.calibrationUnsub?.();
+    this.calibrationUnsub = null;
     this.isActive = false;
     this.tracker.reset();
     this.multiTracker?.reset();

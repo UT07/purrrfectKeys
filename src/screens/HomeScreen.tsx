@@ -365,7 +365,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </View>
                 <TouchableOpacity
                   style={styles.settingsBtn}
-                  onPress={onNavigateToSettings ?? (() => navigation.navigate('MidiSetup'))}
+                  onPress={onNavigateToSettings ?? (() => navigation.navigate('MainTabs', { screen: 'Profile' }))}
                 >
                   <MaterialCommunityIcons name="cog-outline" size={24} color={COLORS.textSecondary} />
                 </TouchableOpacity>

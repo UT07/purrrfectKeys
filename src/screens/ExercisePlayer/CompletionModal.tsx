@@ -167,6 +167,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   // Sound effects at phase boundaries
   // ---------------------------------------------------------------------------
   const playedSoundsRef = useRef<Set<RevealPhase>>(new Set());
+  const starTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     if (skipAnimation) return;
@@ -183,9 +184,9 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     if (current === 'stars' && !playedSoundsRef.current.has('stars')) {
       playedSoundsRef.current.add('stars');
       for (let i = 0; i < score.stars; i++) {
-        setTimeout(() => {
+        starTimersRef.current.push(setTimeout(() => {
           soundManager.play('star_earn');
-        }, i * 300);
+        }, i * 300));
       }
     }
 
@@ -205,6 +206,14 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       }
     }
   }, [phaseIndex, skipAnimation, score.stars, gemsEarned, chestType]);
+
+  // Cleanup star sound timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const t of starTimersRef.current) clearTimeout(t);
+      starTimersRef.current = [];
+    };
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Animation values (RN Animated for score counter)
