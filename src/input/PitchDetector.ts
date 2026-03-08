@@ -78,8 +78,8 @@ export class YINPitchDetector {
   private readonly config: PitchDetectorConfig;
   private readonly halfSize: number;
   private readonly yinBuffer: Float32Array;
-  private readonly minTau: number;
-  private readonly maxTau: number;
+  private minTau: number;
+  private maxTau: number;
   /** Pre-allocated result object — reused every detect() call to avoid GC pressure */
   private readonly _result: PitchResult;
   /** Diagnostic counters for logging (non-critical) */
@@ -118,6 +118,24 @@ export class YINPitchDetector {
   /** Get current RMS threshold */
   getRmsThreshold(): number {
     return this._rmsThreshold;
+  }
+
+  /**
+   * Update sample rate at runtime. Called when AudioCapture detects that the
+   * hardware delivers audio at a different rate than requested (e.g., 48000Hz
+   * on iPhones when 44100Hz was requested). Without this correction, all pitch
+   * calculations will be off by sampleRate_actual/sampleRate_configured ratio,
+   * causing every detected note to be wrong by ~1-2 semitones.
+   */
+  setSampleRate(sampleRate: number): void {
+    const oldRate = this.config.sampleRate;
+    (this.config as { sampleRate: number }).sampleRate = sampleRate;
+    this.minTau = Math.max(2, Math.floor(sampleRate / this.config.maxFrequency));
+    this.maxTau = Math.min(this.halfSize - 1, Math.floor(sampleRate / this.config.minFrequency));
+    logger.log(
+      `[PitchDetector] Sample rate updated: ${oldRate} → ${sampleRate}Hz ` +
+      `(tau range: ${this.minTau}–${this.maxTau})`
+    );
   }
 
   /**
@@ -361,9 +379,14 @@ export class YINPitchDetector {
         }
       }
 
-      // The multiplied valley must be below threshold AND within 1.5x of the original.
-      // For 3x correction, be slightly more conservative (1.3x) to avoid false corrections.
-      const ratio = multiplier === 2 ? 1.5 : 1.3;
+      // The multiplied valley must be below threshold AND deeper (lower CMNDF) than
+      // the original. The ratio determines how much deeper:
+      // - 2x: must be at least as deep (1.0) — autocorrelation at true period aligns
+      //   ALL harmonics, so the fundamental valley is typically deeper than the harmonic.
+      // - 3x: must be 20% deeper (0.8) — 3x corrections are riskier (fifth+octave).
+      // Previous 1.5x/1.3x ratios were too generous and caused false corrections
+      // where correct detections were shifted down an octave.
+      const ratio = multiplier === 2 ? 1.0 : 0.8;
       if (bestVal < this.config.threshold && bestVal < bestCorrectedVal * ratio) {
         bestCorrectedTau = this.parabolicInterpolation(bestTau);
         bestCorrectedVal = bestVal;

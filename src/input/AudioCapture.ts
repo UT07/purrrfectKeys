@@ -46,6 +46,8 @@ export class AudioCapture {
   private bufferWatchdogTimer: ReturnType<typeof setTimeout> | null = null;
   /** Pre-allocated copy buffer to avoid GC pressure in the audio callback hot path */
   private copyBuffer: Float32Array;
+  /** Actual sample rate detected from the first audio buffer (may differ from requested) */
+  private actualSampleRate: number | null = null;
 
   constructor(config?: Partial<AudioCaptureConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -90,6 +92,27 @@ export class AudioCapture {
       const timestamp = typeof event.when === 'number' ? event.when * 1000 : Date.now();
 
       this.bufferCount++;
+
+      // Detect actual sample rate from the AudioBuffer (first buffer only).
+      // Modern iPhones use 48000Hz natively — if AudioRecorder doesn't resample,
+      // our YIN detector needs the actual rate for correct pitch calculation.
+      if (this.bufferCount === 1) {
+        const bufferSR = (event.buffer as { sampleRate?: number }).sampleRate;
+        if (bufferSR && bufferSR !== this.config.sampleRate) {
+          this.actualSampleRate = bufferSR;
+          logger.warn(
+            `[AudioCapture] SAMPLE RATE MISMATCH: requested ${this.config.sampleRate}Hz, ` +
+            `got ${bufferSR}Hz from hardware. Pitch detection will use actual rate.`
+          );
+        } else {
+          this.actualSampleRate = this.config.sampleRate;
+          logger.log(
+            `[AudioCapture] Sample rate confirmed: ${this.config.sampleRate}Hz` +
+            (bufferSR ? ` (buffer reports ${bufferSR}Hz)` : ' (buffer.sampleRate not available)')
+          );
+        }
+      }
+
       // Log first 5 buffers and then every 200th for ongoing diagnostics
       if (this.bufferCount <= 5 || this.bufferCount % 200 === 0) {
         const maxAmp = samples.reduce((max, s) => Math.max(max, Math.abs(s)), 0);
@@ -211,6 +234,15 @@ export class AudioCapture {
   /** Get the configured sample rate */
   getSampleRate(): number {
     return this.config.sampleRate;
+  }
+
+  /**
+   * Get the actual sample rate detected from audio hardware.
+   * Returns null before the first buffer arrives.
+   * May differ from configured rate (e.g., 48000Hz on iPhones requesting 44100Hz).
+   */
+  getActualSampleRate(): number | null {
+    return this.actualSampleRate;
   }
 
   /** Get the configured buffer size */

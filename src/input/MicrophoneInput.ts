@@ -22,7 +22,6 @@ import { YINPitchDetector, NoteTracker } from './PitchDetector';
 import type { PitchDetectorConfig, NoteTrackerConfig } from './PitchDetector';
 import { PolyphonicDetector } from './PolyphonicDetector';
 import { MultiNoteTracker } from './MultiNoteTracker';
-import { AmbientNoiseCalibrator } from './AmbientNoiseCalibrator';
 import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
@@ -90,7 +89,6 @@ export class MicrophoneInput {
   private readonly capture: AudioCapture;
   private readonly detector: YINPitchDetector;
   private readonly tracker: NoteTracker;
-  private readonly calibrator: AmbientNoiseCalibrator;
   private polyDetector: PolyphonicDetector | null = null;
   private multiTracker: MultiNoteTracker | null = null;
   private mode: 'monophonic' | 'polyphonic';
@@ -104,8 +102,8 @@ export class MicrophoneInput {
   private polyBusy = false; // BUG-016 fix: back-pressure flag for async polyphonic detection
   private monoBusy = false; // Back-pressure flag for monophonic YIN (prevents JS thread stacking)
   private readonly pendingBuffer: Float32Array; // Pre-allocated buffer for deferred YIN detection
-  private hasCalibrated = false; // Only auto-calibrate once per session
   private calibrationUnsub: (() => void) | null = null;
+  private sampleRateCorrected = false; // Only check once per session
 
   constructor(config?: Partial<MicrophoneInputConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -131,7 +129,6 @@ export class MicrophoneInput {
 
     this.detector = new YINPitchDetector(pitchConfig);
     this.tracker = new NoteTracker(trackerConfig);
-    this.calibrator = new AmbientNoiseCalibrator();
 
     logger.log(
       `[MicrophoneInput] Created in ${this.mode} mode, pitchConfig: threshold=${pitchConfig.threshold}, ` +
@@ -200,6 +197,22 @@ export class MicrophoneInput {
       // detections. Back-pressure flag drops buffers if detection is slow.
       this.unsubCapture = this.capture.onAudioBuffer((samples) => {
         this.detectionCount++;
+
+        // Check for sample rate mismatch on first buffer.
+        // Modern iPhones use 48000Hz natively — if AudioRecorder doesn't resample
+        // to 44100Hz, every pitch calculation will be off by ~1.5 semitones.
+        if (!this.sampleRateCorrected) {
+          this.sampleRateCorrected = true;
+          const actualRate = this.capture.getActualSampleRate();
+          const configuredRate = this.detector.getSampleRate();
+          if (actualRate && actualRate !== configuredRate) {
+            logger.warn(
+              `[MicrophoneInput] Correcting YIN sample rate: ${configuredRate} → ${actualRate}Hz`
+            );
+            this.detector.setSampleRate(actualRate);
+          }
+        }
+
         if (this.monoBusy) return; // Drop buffer — previous detection still running
         this.monoBusy = true;
 
@@ -273,43 +286,6 @@ export class MicrophoneInput {
     // causes false positives in practice.
   }
 
-  /**
-   * Collect ~0.5s of ambient audio and auto-tune the YIN RMS threshold.
-   * Runs asynchronously while detection continues with default thresholds.
-   */
-  private _runAmbientCalibration(): void {
-    const calibrationBuffers: Float32Array[] = [];
-    const startTime = Date.now();
-    const CALIBRATION_MS = 500;
-
-    // Tap into the audio stream for calibration
-    const unsub = this.capture.onAudioBuffer((samples) => {
-      if (Date.now() - startTime < CALIBRATION_MS) {
-        calibrationBuffers.push(new Float32Array(samples));
-      } else {
-        unsub();
-        this.calibrationUnsub = null;
-        // Compute calibration result
-        if (calibrationBuffers.length > 0) {
-          let totalRMS = 0;
-          for (const buf of calibrationBuffers) {
-            totalRMS += this.calibrator.computeRMS(buf);
-          }
-          const avgRMS = totalRMS / calibrationBuffers.length;
-          // Set RMS threshold to 2x ambient (lowered from 2.5x — softer notes
-          // from phone speakers were being rejected). Cap at 0.02 to prevent
-          // noisy environments from setting an unreachable threshold.
-          const adaptiveThreshold = Math.min(0.02, Math.max(0.004, avgRMS * 2.0));
-          this.detector.setRmsThreshold(adaptiveThreshold);
-          logger.log(
-            `[MicrophoneInput] Ambient calibration: avgRMS=${avgRMS.toFixed(4)}, ` +
-            `adaptive rmsThreshold=${adaptiveThreshold.toFixed(4)} (${calibrationBuffers.length} buffers)`
-          );
-        }
-      }
-    });
-    this.calibrationUnsub = unsub;
-  }
 
   /**
    * Stop listening.
