@@ -11,13 +11,13 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   Alert,
   TextInput,
   Modal,
   Platform,
   Animated as RNAnimated,
 } from 'react-native';
+import { PressableScale } from '../components/common/PressableScale';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -296,11 +296,10 @@ function AchievementsSection(): React.ReactElement {
           const isUnlocked = unlockedSet.has(achievement.id);
           const isRecent = recentlyUnlockedSet.has(achievement.id);
           return (
-            <TouchableOpacity
+            <PressableScale
               key={achievement.id}
               style={styles.achievementBadgeContainer}
               onPress={() => handleBadgePress(achievement, isUnlocked)}
-              activeOpacity={0.7}
             >
               <ShimmerBadge isUnlocked={isUnlocked}>
                 <View
@@ -336,7 +335,7 @@ function AchievementsSection(): React.ReactElement {
               >
                 {achievement.title}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
           );
         })}
       </ScrollView>
@@ -473,13 +472,12 @@ export function ProfileScreen(): React.ReactElement {
       >
         {/* Gradient Header with cat avatar centerpiece and level progress ring */}
         <LinearGradient
-          colors={[catColor + '22', 'transparent', 'transparent']}
+          colors={[glowColor(catColor, 0.13), 'transparent', 'transparent']}
           style={styles.header}
         >
-          <TouchableOpacity
+          <PressableScale
             style={styles.avatarContainer}
             onPress={() => navigation.navigate('CatSwitch')}
-            activeOpacity={0.7}
             testID="profile-open-cat-switch"
           >
             {/* Circular halo glow behind avatar */}
@@ -489,7 +487,7 @@ export function ProfileScreen(): React.ReactElement {
             <View style={styles.editBadge}>
               <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
             </View>
-          </TouchableOpacity>
+          </PressableScale>
 
           {/* Level progress ring */}
           <LevelProgressRing
@@ -502,12 +500,12 @@ export function ProfileScreen(): React.ReactElement {
             {levelProgress.xpToNextLevel} XP to next
           </Text>
 
-          <TouchableOpacity onPress={() => { setEditingName(displayName); setShowNameEditor(true); }}>
+          <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }}>
             <View style={styles.nameRow}>
               <Text style={styles.username}>{displayName}</Text>
               <MaterialCommunityIcons name="pencil-outline" size={16} color={COLORS.textMuted} />
             </View>
-          </TouchableOpacity>
+          </PressableScale>
           <Text style={styles.subtitle}>
             Level {level} Pianist {selectedCat.personality ? `\u00B7 ${selectedCat.name}` : ''}
           </Text>
@@ -669,7 +667,7 @@ export function ProfileScreen(): React.ReactElement {
                           borderBottomLeftRadius: 2,
                           borderBottomRightRadius: 2,
                           backgroundColor: day.minutes > 0
-                            ? (isToday ? COLORS.primary : COLORS.primary + '88')
+                            ? (isToday ? COLORS.primary : glowColor(COLORS.primary, 0.53))
                             : COLORS.cardBorder,
                         },
                       ]}
@@ -691,7 +689,7 @@ export function ProfileScreen(): React.ReactElement {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
+          <PressableScale style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="target" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Daily Goal</Text>
@@ -700,11 +698,11 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.settingValue}>{dailyGoalMinutes} min</Text>
               <MaterialCommunityIcons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
             </View>
-          </TouchableOpacity>
+          </PressableScale>
           {showGoalPicker && (
             <View style={styles.pickerRow}>
               {DAILY_GOAL_OPTIONS.map((mins) => (
-                <TouchableOpacity
+                <PressableScale
                   key={mins}
                   style={[styles.pickerChip, dailyGoalMinutes === mins && styles.pickerChipActive]}
                   onPress={() => { setDailyGoalMinutes(mins); setShowGoalPicker(false); }}
@@ -712,12 +710,12 @@ export function ProfileScreen(): React.ReactElement {
                   <Text style={[styles.pickerChipText, dailyGoalMinutes === mins && styles.pickerChipTextActive]}>
                     {mins} min
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               ))}
             </View>
           )}
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)}>
+          <PressableScale style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)}>
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="volume-high" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Volume</Text>
@@ -726,11 +724,11 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.settingValue}>{Math.round(masterVolume * 100)}%</Text>
               <MaterialCommunityIcons name={showVolumePicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
             </View>
-          </TouchableOpacity>
+          </PressableScale>
           {showVolumePicker && (
             <View style={styles.pickerRow}>
               {VOLUME_OPTIONS.map((opt) => (
-                <TouchableOpacity
+                <PressableScale
                   key={opt.value}
                   style={[styles.pickerChip, masterVolume === opt.value && styles.pickerChipActive]}
                   onPress={() => { setMasterVolume(opt.value); setShowVolumePicker(false); }}
@@ -738,12 +736,12 @@ export function ProfileScreen(): React.ReactElement {
                   <Text style={[styles.pickerChipText, masterVolume === opt.value && styles.pickerChipTextActive]}>
                     {opt.label}
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               ))}
             </View>
           )}
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => setShowInputPicker(!showInputPicker)}>
+          <PressableScale style={styles.settingItem} onPress={() => setShowInputPicker(!showInputPicker)}>
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="music-note" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Input Method</Text>
@@ -754,7 +752,7 @@ export function ProfileScreen(): React.ReactElement {
               </Text>
               <MaterialCommunityIcons name={showInputPicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
             </View>
-          </TouchableOpacity>
+          </PressableScale>
           {showInputPicker && (
             <View style={styles.pickerRow}>
               {([
@@ -763,7 +761,7 @@ export function ProfileScreen(): React.ReactElement {
                 { value: 'mic', label: 'Mic', icon: 'microphone' },
                 { value: 'touch', label: 'Touch', icon: 'gesture-tap' },
               ] as const).map((opt) => (
-                <TouchableOpacity
+                <PressableScale
                   key={opt.value}
                   style={[styles.pickerChip, preferredInputMethod === opt.value && styles.pickerChipActive]}
                   onPress={() => {
@@ -783,14 +781,14 @@ export function ProfileScreen(): React.ReactElement {
                   <Text style={[styles.pickerChipText, preferredInputMethod === opt.value && styles.pickerChipTextActive]}>
                     {opt.label}
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               ))}
             </View>
           )}
 
           {(preferredInputMethod === 'mic' || preferredInputMethod === 'auto') && (
             <>
-              <TouchableOpacity style={styles.settingItem} onPress={() => setShowDetectionModePicker(!showDetectionModePicker)}>
+              <PressableScale style={styles.settingItem} onPress={() => setShowDetectionModePicker(!showDetectionModePicker)}>
                 <View style={styles.settingLeft}>
                   <MaterialCommunityIcons name="waveform" size={24} color={COLORS.textSecondary} />
                   <Text style={styles.settingLabel}>Mic Detection</Text>
@@ -801,14 +799,14 @@ export function ProfileScreen(): React.ReactElement {
                   </Text>
                   <MaterialCommunityIcons name={showDetectionModePicker ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
                 </View>
-              </TouchableOpacity>
+              </PressableScale>
               {showDetectionModePicker && (
                 <View style={styles.pickerRow}>
                   {([
                     { value: 'monophonic' as const, label: 'Single Notes' },
                     { value: 'polyphonic' as const, label: 'Chords (AI)' },
                   ]).map((opt) => (
-                    <TouchableOpacity
+                    <PressableScale
                       key={opt.value}
                       style={[styles.pickerChip, micDetectionMode === opt.value && styles.pickerChipActive]}
                       onPress={() => {
@@ -819,14 +817,14 @@ export function ProfileScreen(): React.ReactElement {
                       <Text style={[styles.pickerChipText, micDetectionMode === opt.value && styles.pickerChipTextActive]}>
                         {opt.label}
                       </Text>
-                    </TouchableOpacity>
+                    </PressableScale>
                   ))}
                 </View>
               )}
             </>
           )}
 
-          <TouchableOpacity
+          <PressableScale
             style={styles.settingItem}
             onPress={() => navigation.navigate('CatSwitch')}
             testID="profile-open-cat-switch-row"
@@ -836,9 +834,9 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.settingLabel}>Change Cat</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity
+          <PressableScale
             style={styles.settingItem}
             onPress={() => navigation.navigate('MidiSetup')}
             testID="profile-open-midi-setup"
@@ -848,9 +846,9 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.settingLabel}>MIDI Setup</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity
+          <PressableScale
             style={styles.settingItem}
             onPress={() => navigation.navigate('Account')}
             testID="profile-open-account"
@@ -860,9 +858,9 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.settingLabel}>Account</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity
+          <PressableScale
             style={styles.settingItem}
             onPress={() => Alert.alert('About Purrrfect Keys', 'Purrrfect Keys v1.0.0\nAI-Powered Piano Learning\n\nLearn piano with real-time feedback, MIDI support, and AI coaching.')}
           >
@@ -871,7 +869,21 @@ export function ProfileScreen(): React.ReactElement {
               <Text style={styles.settingLabel}>About</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
-          </TouchableOpacity>
+          </PressableScale>
+
+          {__DEV__ && (
+            <PressableScale
+              style={styles.settingItem}
+              onPress={() => navigation.navigate('DebugLog')}
+              testID="profile-debug-log"
+            >
+              <View style={styles.settingLeft}>
+                <MaterialCommunityIcons name="bug" size={24} color="#FF9800" />
+                <Text style={styles.settingLabel}>Debug Log</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
+            </PressableScale>
+          )}
         </View>
       </ScrollView>
 
@@ -893,12 +905,12 @@ export function ProfileScreen(): React.ReactElement {
               onSubmitEditing={handleSaveName}
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowNameEditor(false)}>
+              <PressableScale style={styles.modalCancel} onPress={() => setShowNameEditor(false)}>
                 <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSave} onPress={handleSaveName}>
+              </PressableScale>
+              <PressableScale style={styles.modalSave} onPress={handleSaveName}>
                 <Text style={styles.modalSaveText}>Save</Text>
-              </TouchableOpacity>
+              </PressableScale>
             </View>
           </View>
         </View>
@@ -1056,12 +1068,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor('#FFFFFF', 0.06),
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor('#FFFFFF', 0.10),
   },
   settingLeft: {
     flexDirection: 'row',
@@ -1127,12 +1139,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor('#FFFFFF', 0.06),
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     paddingBottom: SPACING.md - 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor('#FFFFFF', 0.10),
     height: 140,
     position: 'relative',
   },
@@ -1230,9 +1242,9 @@ const styles = StyleSheet.create({
     } : { elevation: 4 }),
   },
   achievementBadgeLocked: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: glowColor('#FFFFFF', 0.04),
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor('#FFFFFF', 0.10),
   },
   achievementBadgeRecent: {
     shadowColor: COLORS.starGold,
@@ -1253,7 +1265,7 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: glowColor('#000000', 0.7),
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
@@ -1315,7 +1327,7 @@ const styles = StyleSheet.create({
   // Evolution progress
   evolutionCard: {
     ...SHADOWS.sm,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor('#FFFFFF', 0.06),
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     borderWidth: 1,

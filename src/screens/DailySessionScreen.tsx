@@ -13,8 +13,8 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native';
+import { PressableScale } from '../components/common/PressableScale';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { GameCard } from '../components/common/GameCard';
 import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
@@ -159,14 +159,14 @@ export function DailySessionScreen() {
       >
         {/* Header with back button */}
         <View style={styles.header}>
-          <TouchableOpacity
+          <PressableScale
             onPress={() => navigation.goBack()}
             style={styles.backButton}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             testID="daily-session-back"
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <View style={styles.headerTextContainer}>
             <View style={styles.headerTitleRow}>
               <Text style={styles.headerTitle}>Today's Practice</Text>
@@ -214,15 +214,14 @@ export function DailySessionScreen() {
               Your practice is personalized based on your skills and performance.
               Take a quick assessment so we can find the right starting point.
             </Text>
-            <TouchableOpacity
+            <PressableScale
               style={styles.assessmentBtn}
               onPress={handleAssessment}
-              activeOpacity={0.7}
               testID="daily-session-assessment-cta"
             >
               <MaterialCommunityIcons name="clipboard-check-outline" size={18} color={COLORS.textPrimary} />
               <Text style={styles.assessmentBtnText}>Quick Assessment</Text>
-            </TouchableOpacity>
+            </PressableScale>
           </View>
         )}
 
@@ -263,14 +262,14 @@ export function DailySessionScreen() {
         )}
 
         {/* Browse All Lessons Link */}
-        <TouchableOpacity
+        <PressableScale
           style={styles.browseLessonsBtn}
           onPress={handleBrowseLessons}
           testID="daily-session-browse-lessons"
         >
           <MaterialCommunityIcons name="view-grid-outline" size={18} color={COLORS.textSecondary} />
           <Text style={styles.browseLessonsText}>Browse All Lessons</Text>
-        </TouchableOpacity>
+        </PressableScale>
 
         <View style={{ height: SPACING.xl }} />
       </ScrollView>
@@ -474,10 +473,10 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
     marginHorizontal: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor('#FFFFFF', 0.06),
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor('#FFFFFF', 0.10),
     marginBottom: SPACING.lg,
   },
   skillProgressRow: {
@@ -522,7 +521,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
     marginTop: SPACING.md,
   },
@@ -615,10 +614,10 @@ const styles = StyleSheet.create({
   reasoningCard: {
     marginHorizontal: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor('#FFFFFF', 0.06),
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor('#FFFFFF', 0.10),
     marginBottom: SPACING.md,
   },
   reasoningHeader: {

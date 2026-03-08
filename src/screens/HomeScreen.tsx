@@ -11,7 +11,6 @@ import {
   Text,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   Animated,
 } from 'react-native';
 import { PressableScale } from '../components/common/PressableScale';
@@ -363,12 +362,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <MaterialCommunityIcons name="diamond-stone" size={18} color={COLORS.gemGold} />
                   <Text style={styles.gemCountText}>{gems}</Text>
                 </View>
-                <TouchableOpacity
+                <PressableScale
                   style={styles.settingsBtn}
                   onPress={onNavigateToSettings ?? (() => navigation.navigate('MainTabs', { screen: 'Profile' }))}
                 >
                   <MaterialCommunityIcons name="cog-outline" size={24} color={COLORS.textSecondary} />
-                </TouchableOpacity>
+                </PressableScale>
               </View>
             </View>
 
@@ -464,13 +463,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <GameCard rarity="rare" testID="practice-game-card">
             <View style={styles.practiceHeader}>
               <Text style={styles.sectionTitle}>Today's Practice</Text>
-              <TouchableOpacity
+              <PressableScale
                 onPress={() => navigation.navigate('DailySession')}
                 style={styles.seeAllBtn}
               >
                 <Text style={styles.seeAllText}>See All</Text>
                 <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.primary} />
-              </TouchableOpacity>
+              </PressableScale>
             </View>
             <View style={styles.practiceProgressRow}>
               <AnimatedProgressBar

@@ -42,7 +42,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
 import { checkUsernameAvailable, isValidUsername } from '../services/firebase/socialService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 
 // ---------------------------------------------------------------------------
@@ -607,7 +607,7 @@ function CatSelectionCard({
       style={[
         styles.catCard,
         { borderColor: selected ? cat.color : COLORS.cardBorder },
-        selected && { backgroundColor: `${cat.color}15` },
+        selected && { backgroundColor: glowColor(cat.color, 0.08) },
       ]}
       testID={`onboarding-cat-${cat.id}`}
     >
@@ -618,7 +618,7 @@ function CatSelectionCard({
       <Text style={styles.catCardName}>{cat.name}</Text>
       <Text style={styles.catCardPersonality}>{cat.personality}</Text>
 
-      <View style={[styles.catCardBadge, { backgroundColor: `${cat.color}30` }]}>
+      <View style={[styles.catCardBadge, { backgroundColor: glowColor(cat.color, 0.19) }]}>
         <Text style={[styles.catCardBadgeText, { color: cat.color }]}>
           {cat.musicSkill}
         </Text>
@@ -967,7 +967,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md + 4,
+    paddingVertical: SPACING.lg,
   },
 
   // Progress bar
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
   stepSubtitle: {
     ...TYPOGRAPHY.body.lg,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.lg + 4,
+    marginBottom: SPACING.xl,
     textAlign: 'center',
   },
   stepDescription: {
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: SPACING.sm + 4,
+    gap: SPACING.md,
   },
   featureIcon: {
     fontSize: 20,
@@ -1063,11 +1063,11 @@ const styles = StyleSheet.create({
   // Option cards
   optionsList: {
     marginBottom: SPACING.lg,
-    gap: SPACING.sm + 4,
+    gap: SPACING.md,
   },
   midiOptions: {
     marginBottom: SPACING.lg,
-    gap: SPACING.sm + 4,
+    gap: SPACING.md,
   },
   optionCard: {
     marginBottom: 0,
@@ -1076,12 +1076,12 @@ const styles = StyleSheet.create({
   },
   optionCardSelected: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(220, 20, 60, 0.1)',
+    backgroundColor: glowColor(COLORS.primary, 0.1),
   },
   optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm + 4,
+    gap: SPACING.md,
   },
   optionIcon: {
     fontSize: 32,
@@ -1126,7 +1126,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.md,
     flexDirection: 'row',
-    gap: SPACING.sm + 4,
+    gap: SPACING.md,
   },
 
   // Cat selection cards
@@ -1159,7 +1159,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   catCardBadge: {
-    paddingHorizontal: SPACING.sm + 4,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
     marginBottom: SPACING.md,
@@ -1171,7 +1171,7 @@ const styles = StyleSheet.create({
   },
   catChooseButton: {
     width: '100%',
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
   },
