@@ -61,9 +61,10 @@ const DEFAULT_CONFIG: MicrophoneInputConfig = {
  * useExercisePlayback, not by relaxing detection thresholds.
  */
 const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
-  threshold: 0.15,       // Default 0.15 — standard YIN threshold; tighter = fewer false positives
-  minConfidence: 0.55,   // Default 0.7 — slightly relaxed for phone mic SNR, but high enough to reject noise
-  rmsThreshold: 0.012,   // Default 0.01 — slightly above default to gate background noise
+  threshold: 0.18,       // Default 0.15 — slightly relaxed for phone mic reverb; NoteTracker filters flukes
+  minConfidence: 0.35,   // Default 0.7 — phone mic + room reverb drops confidence to 0.3-0.6 for valid notes;
+                         // NoteTracker's 2-confirmation requirement already rejects single-frame noise
+  rmsThreshold: 0.006,   // Default 0.01 — low enough to catch decaying piano sustain; too high = notes cut short
   octaveCorrection: true, // Essential for piano: low notes have stronger 2nd harmonic than fundamental
   minFrequency: 80,      // Default 50 — E2, covers beginner piano range. Also reduces maxTau from 882→551
   maxFrequency: 1500,    // Default 2000 — ~G6, covers all beginner exercises
@@ -76,8 +77,8 @@ const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
 const AMBIENT_TRACKER_OVERRIDES: Partial<NoteTrackerConfig> = {
   onsetHoldMs: 60,       // ~1.3 buffers at 46ms → minConfirmations clamps to 2.
                          // Combined with gap tolerance, this allows detection within ~92-138ms.
-  releaseHoldMs: 100,    // Short enough to release notes promptly, long enough to survive
-                         // 1-2 unvoiced frames from transient noise during sustained notes.
+  releaseHoldMs: 250,    // Piano notes sustain 1-5s; keep the note active through brief amplitude dips.
+                         // At 46ms/buffer, this survives ~5 unvoiced buffers before releasing.
 };
 
 // ---------------------------------------------------------------------------
@@ -211,7 +212,15 @@ export class MicrophoneInput {
           this.monoBusy = false;
           if (result.voiced) this.voicedCount++;
 
-          if (this.detectionCount % 100 === 0) {
+          // Verbose logging for first 30 buffers — helps diagnose wrong-note issues
+          if (this.detectionCount <= 30) {
+            logger.log(
+              `[MicrophoneInput] #${this.detectionCount}: ` +
+              (result.voiced
+                ? `MIDI ${result.midiNote} (${result.frequency.toFixed(0)}Hz, conf=${result.confidence.toFixed(2)})`
+                : `unvoiced (conf=${result.confidence.toFixed(2)})`)
+            );
+          } else if (this.detectionCount % 100 === 0) {
             logger.log(
               `[MicrophoneInput] Detection stats: ${this.voicedCount}/${this.detectionCount} voiced ` +
               `(${((this.voicedCount / this.detectionCount) * 100).toFixed(1)}%), ` +
@@ -257,13 +266,11 @@ export class MicrophoneInput {
     await this.capture.start();
     logger.log('[MicrophoneInput] Started listening');
 
-    // Auto-calibrate RMS threshold from ambient noise (once per session).
-    // Collect ~0.5s of audio buffers, compute average RMS, set threshold to 2.5x ambient.
-    // Runs in background — detection is already active with default thresholds.
-    if (!this.hasCalibrated && this.mode === 'monophonic') {
-      this.hasCalibrated = true;
-      this._runAmbientCalibration();
-    }
+    // Auto-calibration disabled: it was raising the RMS threshold above the
+    // initial 0.006, causing decaying piano notes to be rejected. The static
+    // rmsThreshold is a better default for real instrument detection.
+    // TODO: re-enable with a lower multiplier (1.5x) if background noise
+    // causes false positives in practice.
   }
 
   /**

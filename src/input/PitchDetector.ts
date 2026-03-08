@@ -444,10 +444,11 @@ export class NoteTracker {
     // At ~46ms per buffer (2048/44100), 2 confirmations = ~92ms.
     // Clamp to minimum 2 to reject single-buffer flukes.
     this.minConfirmations = Math.max(2, Math.round(this.config.onsetHoldMs / 46));
-    // Allow candidate to survive 1 unvoiced frame — mic audio often has
-    // intermittent voiced/unvoiced frames due to back-pressure buffer drops
-    // or transient portions of notes with unstable pitch.
-    this.maxCandidateGap = 1;
+    // Allow candidate to survive 2 unvoiced frames — phone mic audio has
+    // intermittent unvoiced frames due to: back-pressure buffer drops,
+    // transient noise during note attacks, and amplitude dips during sustain.
+    // With 46ms buffers, 2 gaps = ~92ms tolerance during onset confirmation.
+    this.maxCandidateGap = 2;
   }
 
   /** Register callback for note events */
