@@ -9,7 +9,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   TextInput,
   ActivityIndicator,
@@ -22,7 +21,8 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
 import { GoogleAuthProvider, OAuthProvider, EmailAuthProvider } from 'firebase/auth';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -364,9 +364,9 @@ export function AccountScreen(): React.ReactElement {
   if (isAnonymous) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} testID="account-screen">
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
+        <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
           <Text style={styles.backText}>← Account</Text>
-        </TouchableOpacity>
+        </PressableScale>
 
         <View style={styles.anonHero}>
           <CatAvatar catId={selectedCatId ?? 'mini-meowww'} size="large" skipEntryAnimation />
@@ -375,28 +375,28 @@ export function AccountScreen(): React.ReactElement {
 
         <View style={styles.linkButtons}>
           {Platform.OS === 'ios' && (
-            <TouchableOpacity
+            <PressableScale
               style={[styles.linkButton, styles.appleLink]}
               onPress={handleLinkApple}
               testID="account-link-apple"
             >
               <Text style={[styles.linkButtonText, { color: COLORS.background }]}>Link with Apple</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
-          <TouchableOpacity
+          <PressableScale
             style={[styles.linkButton, styles.googleLink]}
             onPress={handleLinkGoogle}
             testID="account-link-google"
           >
             <Text style={styles.linkButtonText}>Link with Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </PressableScale>
+          <PressableScale
             style={[styles.linkButton, styles.emailLink]}
             onPress={() => navigation.navigate('EmailAuth', { isLinking: true })}
             testID="account-link-email"
           >
             <Text style={styles.linkButtonText}>Link with Email</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         <View style={styles.dividerRow}>
@@ -410,28 +410,28 @@ export function AccountScreen(): React.ReactElement {
           <Text style={styles.signInSubtitle}>Sign in to your existing account. Guest progress will be replaced.</Text>
 
           {Platform.OS === 'ios' && (
-            <TouchableOpacity
+            <PressableScale
               style={[styles.signInButton]}
               onPress={handleSignInApple}
               testID="account-signin-apple"
             >
               <Text style={styles.signInButtonText}>Sign in with Apple</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
-          <TouchableOpacity
+          <PressableScale
             style={[styles.signInButton]}
             onPress={handleSignInGoogle}
             testID="account-signin-google"
           >
             <Text style={styles.signInButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </PressableScale>
+          <PressableScale
             style={[styles.signInButton]}
             onPress={() => navigation.navigate('EmailAuth', { isLinking: false })}
             testID="account-signin-email"
           >
             <Text style={styles.signInButtonText}>Sign in with Email</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         <View style={styles.infoBox}>
@@ -442,7 +442,7 @@ export function AccountScreen(): React.ReactElement {
         </View>
 
         <View style={styles.dangerSection}>
-          <TouchableOpacity
+          <PressableScale
             style={styles.dangerRow}
             onPress={handleDeleteAccount}
             disabled={isLoading}
@@ -453,7 +453,7 @@ export function AccountScreen(): React.ReactElement {
             ) : (
               <Text style={styles.dangerText}>Delete Guest Account</Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         {error && <Text style={styles.errorText}>{error}</Text>}
@@ -464,9 +464,9 @@ export function AccountScreen(): React.ReactElement {
   // Authenticated user → full account management
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} testID="account-screen">
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
+      <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
         <Text style={styles.backText}>← Account</Text>
-      </TouchableOpacity>
+      </PressableScale>
 
       <View style={styles.profileHeader}>
         <View style={styles.avatar}>
@@ -482,52 +482,52 @@ export function AccountScreen(): React.ReactElement {
                 autoFocus
                 maxLength={30}
               />
-              <TouchableOpacity onPress={handleSaveName}>
+              <PressableScale onPress={handleSaveName}>
                 <Text style={styles.saveText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setIsEditingName(false)}>
+              </PressableScale>
+              <PressableScale onPress={() => setIsEditingName(false)}>
                 <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
+              </PressableScale>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => setIsEditingName(true)}>
+            <PressableScale onPress={() => setIsEditingName(true)}>
               <Text style={styles.displayName}>{user?.displayName ?? 'Unknown'}</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
           <Text style={styles.email}>{user?.email ?? ''}</Text>
         </View>
       </View>
 
       {error && (
-        <TouchableOpacity onPress={clearError}>
+        <PressableScale onPress={clearError}>
           <Text style={styles.errorText}>{error}</Text>
-        </TouchableOpacity>
+        </PressableScale>
       )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Profile</Text>
-        <TouchableOpacity style={styles.row} onPress={() => setIsEditingName(true)}>
+        <PressableScale style={styles.row} onPress={() => setIsEditingName(true)}>
           <Text style={styles.rowText}>Change Display Name</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Linked Accounts</Text>
-        <TouchableOpacity style={styles.row} onPress={handleLinkGoogle}>
+        <PressableScale style={styles.row} onPress={handleLinkGoogle}>
           <Text style={styles.rowText}>Google</Text>
           <Text style={styles.rowAction}>Link Account</Text>
-        </TouchableOpacity>
+        </PressableScale>
         {Platform.OS === 'ios' && (
-          <TouchableOpacity style={styles.row} onPress={handleLinkApple}>
+          <PressableScale style={styles.row} onPress={handleLinkApple}>
             <Text style={styles.rowText}>Apple</Text>
             <Text style={styles.rowAction}>Link Account</Text>
-          </TouchableOpacity>
+          </PressableScale>
         )}
       </View>
 
       <View style={styles.dangerSection}>
         <Text style={styles.sectionTitle}>Danger Zone</Text>
-        <TouchableOpacity
+        <PressableScale
           style={styles.dangerRow}
           onPress={handleSignOut}
           disabled={isLoading}
@@ -538,15 +538,15 @@ export function AccountScreen(): React.ReactElement {
           ) : (
             <Text style={styles.dangerText}>Sign Out</Text>
           )}
-        </TouchableOpacity>
-        <TouchableOpacity
+        </PressableScale>
+        <PressableScale
           style={styles.dangerRow}
           onPress={handleDeleteAccount}
           disabled={isLoading}
           testID="account-delete"
         >
           <Text style={[styles.dangerText, styles.deleteText]}>Delete Account</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
     </ScrollView>
   );
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   // Anonymous hero
   anonHero: { alignItems: 'center', marginBottom: SPACING.xl },
   anonTitle: { ...TYPOGRAPHY.body.lg, color: COLORS.textSecondary, textAlign: 'center', marginTop: SPACING.md, lineHeight: 26 },
-  linkButtons: { gap: SPACING.sm + 4, marginBottom: SPACING.md },
+  linkButtons: { gap: SPACING.md, marginBottom: SPACING.md },
   linkButton: { height: 52, borderRadius: BORDER_RADIUS.lg, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
   appleLink: { backgroundColor: COLORS.textPrimary },
   googleLink: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.cardBorder },
@@ -580,12 +580,12 @@ const styles = StyleSheet.create({
   // Authenticated
   profileHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xl },
   profileInfo: { flex: 1 },
-  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
+  avatar: { width: 60, height: 60, borderRadius: BORDER_RADIUS.full, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
   avatarText: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary },
   displayName: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary },
   email: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: 2 },
   nameEdit: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  nameInput: { backgroundColor: COLORS.surface, color: COLORS.textPrimary, borderRadius: BORDER_RADIUS.sm, paddingHorizontal: SPACING.sm + 4, paddingVertical: 6, ...TYPOGRAPHY.body.md, minWidth: 150, borderWidth: 1, borderColor: COLORS.cardBorder },
+  nameInput: { backgroundColor: COLORS.surface, color: COLORS.textPrimary, borderRadius: BORDER_RADIUS.sm, paddingHorizontal: SPACING.md, paddingVertical: 6, ...TYPOGRAPHY.body.md, minWidth: 150, borderWidth: 1, borderColor: COLORS.cardBorder },
   saveText: { ...TYPOGRAPHY.body.md, color: COLORS.primary, fontWeight: '600' },
   cancelText: { ...TYPOGRAPHY.body.md, color: COLORS.textMuted },
   section: { marginBottom: SPACING.lg },
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   rowText: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary },
   rowAction: { ...TYPOGRAPHY.body.sm, color: COLORS.primary, fontWeight: '600' },
   dangerSection: { marginTop: SPACING.md },
-  dangerRow: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(239, 83, 80, 0.15)' },
+  dangerRow: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, alignItems: 'center', borderWidth: 1, borderColor: glowColor(COLORS.error, 0.15) },
   dangerText: { ...TYPOGRAPHY.body.md, color: COLORS.error, fontWeight: '600' },
   deleteText: { color: COLORS.error },
   errorText: { ...TYPOGRAPHY.body.sm, color: COLORS.error, textAlign: 'center', marginBottom: SPACING.md },

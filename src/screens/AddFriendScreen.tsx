@@ -12,7 +12,6 @@ import {
   StyleSheet,
   SafeAreaView,
   TextInput,
-  TouchableOpacity,
   Share,
   ActivityIndicator,
   Keyboard,
@@ -32,6 +31,7 @@ import {
   getUserPublicProfile,
 } from '../services/firebase/socialService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -219,14 +219,13 @@ export function AddFriendScreen(): React.JSX.Element {
     return (
       <SafeAreaView style={styles.container} testID="add-friend-screen">
         <View style={styles.header}>
-          <TouchableOpacity
+          <PressableScale
             onPress={() => navigation.goBack()}
             style={styles.backButton}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             testID="add-friend-back"
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <Text style={styles.headerTitle}>Add Friend</Text>
           <View style={styles.backButton} />
         </View>
@@ -236,12 +235,12 @@ export function AddFriendScreen(): React.JSX.Element {
           <Text style={styles.authGateSubtitle}>
             Sign in to register your username and add friends.
           </Text>
-          <TouchableOpacity
+          <PressableScale
             style={styles.authGateButton}
             onPress={() => navigation.navigate('Account')}
           >
             <Text style={styles.authGateButtonText}>Sign In</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       </SafeAreaView>
     );
@@ -252,14 +251,13 @@ export function AddFriendScreen(): React.JSX.Element {
       <SafeAreaView style={styles.container} testID="add-friend-screen">
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
+          <PressableScale
             onPress={() => navigation.goBack()}
             style={styles.backButton}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             testID="add-friend-back"
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <Text style={styles.headerTitle}>Add Friend</Text>
           <View style={styles.backButton} />
         </View>
@@ -282,7 +280,7 @@ export function AddFriendScreen(): React.JSX.Element {
           </View>
 
           <View style={styles.codeActions}>
-            <TouchableOpacity
+            <PressableScale
               style={[styles.actionButton, copied && styles.actionButtonActive]}
               onPress={handleCopy}
               disabled={!friendCode}
@@ -295,16 +293,16 @@ export function AddFriendScreen(): React.JSX.Element {
               <Text style={[styles.actionButtonText, copied && styles.actionButtonTextActive]}>
                 {copied ? 'Copied!' : 'Copy'}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
 
-            <TouchableOpacity
+            <PressableScale
               style={styles.actionButton}
               onPress={handleShare}
               disabled={!friendCode}
             >
               <MaterialCommunityIcons name="share-variant" size={18} color={COLORS.textPrimary} />
               <Text style={styles.actionButtonText}>Share</Text>
-            </TouchableOpacity>
+            </PressableScale>
           </View>
         </View>
 
@@ -337,7 +335,7 @@ export function AddFriendScreen(): React.JSX.Element {
             />
           </View>
 
-          <TouchableOpacity
+          <PressableScale
             style={[
               styles.addButton,
               (inputCode.trim().length < 3 || isLooking) && styles.addButtonDisabled,
@@ -350,7 +348,7 @@ export function AddFriendScreen(): React.JSX.Element {
             ) : (
               <Text style={styles.addButtonText}>Add Friend</Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
 
           {error && (
             <View style={styles.messageBanner}>

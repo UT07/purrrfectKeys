@@ -15,21 +15,21 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   Platform,
+  StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { getMidiInput } from '../input/MidiInput';
 import MidiDeviceManager from '../input/MidiDevice';
 import type { MidiDevice } from '../input/MidiInput';
 import type { MidiNoteEvent } from '../core/exercises/types';
+import { COLORS, BORDER_RADIUS, SHADOWS, TYPOGRAPHY, SPACING } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import { logger } from '../utils/logger';
 
-/**
- * Setup Step Type
- */
 type SetupStep = 'welcome' | 'detecting' | 'select' | 'verify' | 'success';
 
 interface MidiSetupScreenProps {
@@ -37,14 +37,12 @@ interface MidiSetupScreenProps {
   onCancel?: () => void;
 }
 
-/**
- * MIDI Setup Screen Component
- */
 export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
   onComplete,
   onCancel,
 }) => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [step, setStep] = useState<SetupStep>('welcome');
   const [availableDevices, setAvailableDevices] = useState<MidiDevice[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<MidiDevice | null>(null);
@@ -54,9 +52,14 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
   >('pending');
   const [testNoteDetected, setTestNoteDetected] = useState(false);
 
-  /**
-   * Initialize MIDI system on mount
-   */
+  const handleGoBack = () => {
+    if (onCancel) {
+      onCancel();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
+
   useEffect(() => {
     const initMidi = async () => {
       try {
@@ -67,19 +70,14 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
         Alert.alert('Error', 'Failed to initialize MIDI. Please check your device.');
       }
     };
-
     initMidi();
   }, []);
 
-  /**
-   * Start device detection
-   */
   const startDetection = async () => {
     setIsDetecting(true);
     setStep('detecting');
 
     try {
-      // Get currently connected devices
       const devices = await getMidiInput().getConnectedDevices();
       setAvailableDevices(devices);
 
@@ -92,11 +90,9 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
         );
         setStep('welcome');
       } else if (devices.length === 1) {
-        // Auto-select single device
         setSelectedDevice(devices[0]);
         setStep('verify');
       } else {
-        // Let user choose
         setStep('select');
       }
     } catch (error) {
@@ -108,20 +104,16 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
     }
   };
 
-  /**
-   * Test selected device by waiting for a note
-   */
   const startVerification = async () => {
     if (!selectedDevice) return;
 
     setVerificationStatus('testing');
     setTestNoteDetected(false);
 
-    // Listen for note
     const timer = setTimeout(() => {
       setVerificationStatus('failed');
       unsubscribe();
-    }, 15000); // 15 second timeout — first-time users need time to read instructions
+    }, 15000);
 
     const unsubscribe = getMidiInput().onNoteEvent((event: MidiNoteEvent) => {
       if (event.type === 'noteOn' && event.velocity > 0) {
@@ -133,28 +125,23 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
     });
   };
 
-  /**
-   * Handle verification success
-   */
   const handleVerificationSuccess = () => {
     if (selectedDevice) {
-      // Save device preference
       MidiDeviceManager.registerDevice(selectedDevice);
       MidiDeviceManager.setPreferredDevice(selectedDevice.id);
       MidiDeviceManager.setAutoConnectEnabled(true);
 
       setStep('success');
 
-      // Call completion callback
       setTimeout(() => {
         onComplete?.(selectedDevice.id);
+        if (!onComplete && navigation.canGoBack()) {
+          navigation.goBack();
+        }
       }, 1500);
     }
   };
 
-  /**
-   * Handle verification retry
-   */
   const handleVerificationRetry = () => {
     setVerificationStatus('pending');
     setTestNoteDetected(false);
@@ -162,45 +149,38 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: '#f5f5f5' }}
+      style={[s.container, { backgroundColor: COLORS.background }]}
       contentContainerStyle={{ paddingTop: insets.top }}
       testID="midi-setup-screen"
     >
-      <View style={{ padding: 20, paddingBottom: insets.bottom + 20 }}>
+      <View style={{ padding: SPACING.lg, paddingBottom: insets.bottom + SPACING.lg }}>
+        {/* Back Button */}
+        <PressableScale onPress={handleGoBack} style={s.backButton} testID="midi-back">
+          <Text style={s.backButtonText}>← Back</Text>
+        </PressableScale>
+
         {/* Header */}
-        <View style={{ marginBottom: 30 }}>
-          <Text style={{ fontSize: 28, fontWeight: '700', marginBottom: 8 }}>
-            Connect Your MIDI Keyboard
-          </Text>
-          <Text style={{ fontSize: 14, color: '#666' }}>
+        <View style={{ marginBottom: SPACING.xl }}>
+          <Text style={s.title}>Connect Your MIDI Keyboard</Text>
+          <Text style={s.subtitle}>
             {step === 'welcome' && 'Follow these steps to set up your MIDI keyboard'}
             {step === 'detecting' && 'Searching for devices...'}
             {step === 'select' && 'Choose your keyboard'}
             {step === 'verify' && 'Testing connection'}
-            {step === 'success' && '✓ Ready to play!'}
+            {step === 'success' && 'Ready to play!'}
           </Text>
         </View>
 
-        {/* Welcome Step */}
-        {step === 'welcome' && <WelcomeStep onStart={startDetection} onCancel={onCancel} />}
-
-        {/* Detecting Step */}
+        {step === 'welcome' && <WelcomeStep onStart={startDetection} />}
         {step === 'detecting' && <DetectingStep />}
-
-        {/* Select Step */}
         {step === 'select' && (
           <SelectStep
             devices={availableDevices}
             selectedDevice={selectedDevice}
-            onSelect={(device) => {
-              setSelectedDevice(device);
-              setStep('verify');
-            }}
+            onSelect={(device) => { setSelectedDevice(device); setStep('verify'); }}
             onBack={() => setStep('welcome')}
           />
         )}
-
-        {/* Verify Step */}
         {step === 'verify' && selectedDevice && (
           <VerifyStep
             device={selectedDevice}
@@ -212,173 +192,93 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
             onBack={() => setStep(availableDevices.length > 1 ? 'select' : 'welcome')}
           />
         )}
-
-        {/* Success Step */}
         {step === 'success' && selectedDevice && <SuccessStep device={selectedDevice} />}
       </View>
     </ScrollView>
   );
 };
 
-/**
- * Welcome Step Component
- */
-const WelcomeStep: React.FC<{
-  onStart: () => void;
-  onCancel?: () => void;
-}> = ({ onStart, onCancel }) => {
+const WelcomeStep: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const instructions =
     Platform.OS === 'ios'
       ? [
-          'Connect your MIDI keyboard to your iPad using the Apple Camera Connection Kit (Lightning or USB-C)',
+          'Connect your MIDI keyboard using the Apple Camera Connection Kit (Lightning or USB-C)',
           'Power on the MIDI keyboard',
-          'Tap "Connect" below',
+          'Tap "Search for Devices" below',
         ]
       : [
           'Connect your MIDI keyboard using USB OTG adapter, or pair via Bluetooth',
           'Power on the MIDI keyboard',
-          'Tap "Connect" below',
+          'Tap "Search for Devices" below',
         ];
 
   return (
     <View>
-      {/* Instructions */}
-      <View style={{ backgroundColor: 'white', borderRadius: 12, padding: 16, marginBottom: 24 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 12 }}>
-          📋 Setup Instructions
-        </Text>
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Setup Instructions</Text>
         {instructions.map((instruction, index) => (
-          <View key={index} style={{ flexDirection: 'row', marginBottom: index < instructions.length - 1 ? 12 : 0 }}>
-            <Text style={{ fontSize: 14, color: '#333', marginRight: 12, fontWeight: '600' }}>
-              {index + 1}.
-            </Text>
-            <Text style={{ flex: 1, fontSize: 14, color: '#333', lineHeight: 20 }}>
-              {instruction}
-            </Text>
+          <View key={index} style={{ flexDirection: 'row', marginBottom: index < instructions.length - 1 ? SPACING.md : 0 }}>
+            <Text style={[s.cardText, { marginRight: SPACING.md, fontWeight: '600' }]}>{index + 1}.</Text>
+            <Text style={[s.cardText, { flex: 1, lineHeight: 20 }]}>{instruction}</Text>
           </View>
         ))}
       </View>
 
-      {/* Supported Devices */}
-      <View style={{ backgroundColor: 'white', borderRadius: 12, padding: 16, marginBottom: 24 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 12 }}>
-          ✓ Supported Keyboards
-        </Text>
-        <Text style={{ fontSize: 13, color: '#666', lineHeight: 20 }}>
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Supported Keyboards</Text>
+        <Text style={[s.cardText, { color: COLORS.textMuted, lineHeight: 20 }]}>
           Yamaha P-125/225, Roland FP-30X, Casio CDP-S130, M-Audio Hammer 88, Korg microKEY, Alesis Q88, and most class-compliant USB MIDI keyboards
         </Text>
       </View>
 
-      {/* Action Buttons */}
-      <View style={{ gap: 12 }}>
-        <TouchableOpacity
-          onPress={onStart}
-          style={{
-            backgroundColor: '#007AFF',
-            borderRadius: 8,
-            paddingVertical: 16,
-            alignItems: 'center',
-          }}
-          testID="midi-search-devices"
-        >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-            🔍 Search for Devices
-          </Text>
-        </TouchableOpacity>
-
-        {onCancel && (
-          <TouchableOpacity
-            onPress={onCancel}
-            style={{
-              backgroundColor: '#f0f0f0',
-              borderRadius: 8,
-              paddingVertical: 16,
-              alignItems: 'center',
-            }}
-            testID="midi-cancel"
-          >
-            <Text style={{ color: '#333', fontSize: 16, fontWeight: '600' }}>
-              Cancel
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <PressableScale onPress={onStart} style={s.primaryButton} testID="midi-search-devices">
+        <Text style={s.primaryButtonText}>Search for Devices</Text>
+      </PressableScale>
     </View>
   );
 };
 
-/**
- * Detecting Step Component
- */
-const DetectingStep: React.FC = () => {
-  return (
-    <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-      <ActivityIndicator size="large" color="#007AFF" />
-      <Text style={{ marginTop: 16, fontSize: 14, color: '#666' }}>
-        Scanning for MIDI devices...
-      </Text>
-      <Text style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
-        Make sure your keyboard is connected and powered on
-      </Text>
-    </View>
-  );
-};
+const DetectingStep: React.FC = () => (
+  <View style={{ alignItems: 'center', paddingVertical: SPACING.xxl }}>
+    <ActivityIndicator size="large" color={COLORS.primary} />
+    <Text style={[s.subtitle, { marginTop: SPACING.md }]}>Scanning for MIDI devices...</Text>
+    <Text style={[s.cardText, { marginTop: SPACING.sm, color: COLORS.textMuted }]}>
+      Make sure your keyboard is connected and powered on
+    </Text>
+  </View>
+);
 
-/**
- * Select Step Component
- */
 const SelectStep: React.FC<{
   devices: MidiDevice[];
   selectedDevice: MidiDevice | null;
   onSelect: (device: MidiDevice) => void;
   onBack: () => void;
-}> = ({ devices, selectedDevice, onSelect, onBack }) => {
-  return (
-    <View>
-      <View style={{ marginBottom: 24 }}>
-        {devices.map((device) => (
-          <TouchableOpacity
-            key={device.id}
-            onPress={() => onSelect(device)}
-            style={{
-              backgroundColor: selectedDevice?.id === device.id ? '#E3F2FD' : 'white',
-              borderRadius: 8,
-              padding: 16,
-              marginBottom: 8,
-              borderWidth: selectedDevice?.id === device.id ? 2 : 1,
-              borderColor: selectedDevice?.id === device.id ? '#007AFF' : '#ddd',
-            }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 4 }}>
-              {device.name}
-            </Text>
-            <Text style={{ fontSize: 12, color: '#666' }}>
-              {device.manufacturer} • {device.type.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity
-        onPress={onBack}
-        style={{
-          backgroundColor: '#f0f0f0',
-          borderRadius: 8,
-          paddingVertical: 12,
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ color: '#333', fontSize: 14, fontWeight: '600' }}>
-          ← Back
-        </Text>
-      </TouchableOpacity>
+}> = ({ devices, selectedDevice, onSelect, onBack }) => (
+  <View>
+    <View style={{ marginBottom: SPACING.lg }}>
+      {devices.map((device) => (
+        <PressableScale
+          key={device.id}
+          onPress={() => onSelect(device)}
+          style={[
+            s.card,
+            { marginBottom: SPACING.sm },
+            selectedDevice?.id === device.id && { borderColor: COLORS.primary, borderWidth: 2 },
+          ]}
+        >
+          <Text style={[s.cardTitle, { marginBottom: SPACING.xs }]}>{device.name}</Text>
+          <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }]}>
+            {device.manufacturer} · {device.type.toUpperCase()}
+          </Text>
+        </PressableScale>
+      ))}
     </View>
-  );
-};
+    <PressableScale onPress={onBack} style={s.secondaryButton}>
+      <Text style={s.secondaryButtonText}>← Back</Text>
+    </PressableScale>
+  </View>
+);
 
-/**
- * Verify Step Component
- */
 const VerifyStep: React.FC<{
   device: MidiDevice;
   status: 'pending' | 'testing' | 'success' | 'failed';
@@ -387,152 +287,149 @@ const VerifyStep: React.FC<{
   onRetry: () => void;
   onSuccess: () => void;
   onBack: () => void;
-}> = ({ device, status, noteDetected, onStart, onRetry, onSuccess, onBack }) => {
-  return (
-    <View>
-      {/* Device Info */}
-      <View style={{ backgroundColor: 'white', borderRadius: 12, padding: 16, marginBottom: 24 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>
-          {device.name}
-        </Text>
-        <Text style={{ fontSize: 12, color: '#666' }}>
-          {device.manufacturer} • {device.type.toUpperCase()}
-        </Text>
-      </View>
+}> = ({ device, status, noteDetected, onStart, onRetry, onSuccess, onBack }) => (
+  <View>
+    <View style={s.card}>
+      <Text style={s.cardTitle}>{device.name}</Text>
+      <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }]}>
+        {device.manufacturer} · {device.type.toUpperCase()}
+      </Text>
+    </View>
 
-      {/* Testing Area */}
-      <View style={{ backgroundColor: '#f9f9f9', borderRadius: 12, padding: 16, marginBottom: 24, alignItems: 'center' }}>
-        {status === 'pending' && (
-          <>
-            <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 16 }}>
-              🎹 Play a note on your keyboard
-            </Text>
-            <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', marginBottom: 20 }}>
-              Press any key and we'll detect it to verify the connection works
-            </Text>
-          </>
-        )}
-
-        {status === 'testing' && (
-          <>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={{ marginTop: 16, fontSize: 14, color: '#666' }}>
-              Listening for notes...
-            </Text>
-          </>
-        )}
-
-        {status === 'success' && (
-          <>
-            <Text style={{ fontSize: 28, marginBottom: 8 }}>✓</Text>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#4CAF50' }}>
-              Connection Successful!
-            </Text>
-            <Text style={{ fontSize: 12, color: '#666', marginTop: 8 }}>
-              Detected: {noteDetected ? 'Note received ✓' : 'Waiting for note'}
-            </Text>
-          </>
-        )}
-
-        {status === 'failed' && (
-          <>
-            <Text style={{ fontSize: 28, marginBottom: 8 }}>✗</Text>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#FF5252' }}>
-              No notes detected
-            </Text>
-            <Text style={{ fontSize: 12, color: '#666', marginTop: 8, textAlign: 'center' }}>
-              Make sure the keyboard is connected and powered on
-            </Text>
-          </>
-        )}
-      </View>
-
-      {/* Action Buttons */}
-      <View style={{ gap: 12 }}>
-        {status === 'pending' && (
-          <TouchableOpacity
-            onPress={onStart}
-            style={{
-              backgroundColor: '#007AFF',
-              borderRadius: 8,
-              paddingVertical: 16,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-              Start Test
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {status === 'success' && (
-          <TouchableOpacity
-            onPress={onSuccess}
-            style={{
-              backgroundColor: '#4CAF50',
-              borderRadius: 8,
-              paddingVertical: 16,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-              Confirm & Continue
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {status === 'failed' && (
-          <TouchableOpacity
-            onPress={onRetry}
-            style={{
-              backgroundColor: '#FF9800',
-              borderRadius: 8,
-              paddingVertical: 16,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-              Try Again
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          onPress={onBack}
-          style={{
-            backgroundColor: '#f0f0f0',
-            borderRadius: 8,
-            paddingVertical: 12,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#333', fontSize: 14, fontWeight: '600' }}>
-            ← Back
+    <View style={[s.card, { alignItems: 'center' }]}>
+      {status === 'pending' && (
+        <>
+          <Text style={[s.cardTitle, { marginBottom: SPACING.md }]}>Play a note on your keyboard</Text>
+          <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted, textAlign: 'center', marginBottom: SPACING.lg }]}>
+            Press any key and we'll detect it to verify the connection works
           </Text>
-        </TouchableOpacity>
-      </View>
+        </>
+      )}
+      {status === 'testing' && (
+        <>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={[s.subtitle, { marginTop: SPACING.md }]}>Listening for notes...</Text>
+        </>
+      )}
+      {status === 'success' && (
+        <>
+          <Text style={{ ...TYPOGRAPHY.display.md, marginBottom: SPACING.sm, color: COLORS.success }}>✓</Text>
+          <Text style={[s.cardTitle, { color: COLORS.success }]}>Connection Successful!</Text>
+          <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted, marginTop: SPACING.sm }]}>
+            {noteDetected ? 'Note received' : 'Waiting for note'}
+          </Text>
+        </>
+      )}
+      {status === 'failed' && (
+        <>
+          <Text style={{ ...TYPOGRAPHY.display.md, marginBottom: SPACING.sm, color: COLORS.error }}>✗</Text>
+          <Text style={[s.cardTitle, { color: COLORS.error }]}>No notes detected</Text>
+          <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted, marginTop: SPACING.sm, textAlign: 'center' }]}>
+            Make sure the keyboard is connected and powered on
+          </Text>
+        </>
+      )}
     </View>
-  );
-};
 
-/**
- * Success Step Component
- */
-const SuccessStep: React.FC<{ device: MidiDevice }> = ({ device }) => {
-  return (
-    <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-      <Text style={{ fontSize: 48, marginBottom: 16 }}>🎉</Text>
-      <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
-        All Set!
-      </Text>
-      <Text style={{ fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24 }}>
-        Your {device.name} is ready to use
-      </Text>
-      <Text style={{ fontSize: 12, color: '#999' }}>
-        Redirecting to lessons...
-      </Text>
+    <View style={{ gap: SPACING.md }}>
+      {status === 'pending' && (
+        <PressableScale onPress={onStart} style={s.primaryButton}>
+          <Text style={s.primaryButtonText}>Start Test</Text>
+        </PressableScale>
+      )}
+      {status === 'success' && (
+        <PressableScale onPress={onSuccess} style={[s.primaryButton, { backgroundColor: COLORS.success }]}>
+          <Text style={s.primaryButtonText}>Confirm & Continue</Text>
+        </PressableScale>
+      )}
+      {status === 'failed' && (
+        <PressableScale onPress={onRetry} style={[s.primaryButton, { backgroundColor: COLORS.warning }]}>
+          <Text style={s.primaryButtonText}>Try Again</Text>
+        </PressableScale>
+      )}
+      <PressableScale onPress={onBack} style={s.secondaryButton}>
+        <Text style={s.secondaryButtonText}>← Back</Text>
+      </PressableScale>
     </View>
-  );
-};
+  </View>
+);
+
+const SuccessStep: React.FC<{ device: MidiDevice }> = ({ device }) => (
+  <View style={{ alignItems: 'center', paddingVertical: SPACING.xxl }}>
+    <Text style={{ fontSize: 48, marginBottom: SPACING.md }}>🎉</Text>
+    <Text style={[s.title, { fontSize: 18 }]}>All Set!</Text>
+    <Text style={[s.subtitle, { textAlign: 'center', marginBottom: SPACING.lg }]}>
+      Your {device.name} is ready to use
+    </Text>
+    <Text style={{ ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }}>Redirecting...</Text>
+  </View>
+);
+
+const s = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  backButtonText: {
+    color: COLORS.primary,
+    ...TYPOGRAPHY.button.lg,
+  },
+  title: {
+    ...TYPOGRAPHY.display.md,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
+  },
+  subtitle: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
+  },
+  card: {
+    backgroundColor: COLORS.cardSurface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    ...SHADOWS.sm,
+  },
+  cardTitle: {
+    ...TYPOGRAPHY.body.md,
+    fontWeight: '600' as const,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
+  },
+  cardText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  primaryButtonText: {
+    color: COLORS.textPrimary,
+    ...TYPOGRAPHY.button.lg,
+  },
+  secondaryButton: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  secondaryButtonText: {
+    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.button.md,
+  },
+});
 
 export default MidiSetupScreen;
