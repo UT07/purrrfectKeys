@@ -66,12 +66,18 @@ import { DemoPlaybackService } from '../../services/demoPlayback';
 import { createAudioEngine } from '../../audio/createAudioEngine';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
 import { ExerciseLoadingScreen } from './ExerciseLoadingScreen';
+import { SalsaIntro } from './SalsaIntro';
+import { ReplayOverlay } from './ReplayOverlay';
+import { ReplayTimelineBar } from './ReplayTimelineBar';
 import { ComboMeter } from './ComboMeter';
 import { ComboGlow } from './ComboGlow';
 import { FeedbackText } from './FeedbackText';
 import { HitParticles } from './HitParticles';
 import { ScreenShake, type ScreenShakeRef } from '../../components/effects';
 import { GlassmorphismCard } from '../../components/effects';
+import { buildReplayPlan } from '../../services/replayCoachingService';
+import { getIntroData } from '../../services/replayCoachingService';
+import type { ReplayPlan } from '../../core/exercises/replayTypes';
 import ReAnimated, { FadeIn } from 'react-native-reanimated';
 import { SKILL_TREE, getSkillsForExercise, getSkillById, getGenerationHints } from '../../core/curriculum/SkillTree';
 import type { SkillCategory } from '../../core/curriculum/SkillTree';
@@ -706,6 +712,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Set finalScore AFTER ability boosts so CompletionModal shows the correct values
     setFinalScore(score);
 
+    // Build replay plan in background (parallel with CompletionModal animation)
+    // Plan is ready by the time user taps "Review with Salsa"
+    buildReplayPlan(ex, score).then((plan) => {
+      if (mountedRef.current) setReplayPlan(plan);
+    }).catch(() => {
+      // Silently fail — replay just won't be available
+    });
+
     // Track consecutive fails for demo prompt
     // Read ghostNotesEnabled from store directly (not from closure) to avoid stale state
     const currentGhostNotes = useExerciseStore.getState().ghostNotesEnabled;
@@ -1164,6 +1178,23 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const demoWatched = useExerciseStore(s => s.demoWatched);
   const failCount = useExerciseStore(s => s.failCount);
 
+  // Replay coaching mode state
+  const [playerMode, setPlayerMode] = useState<'exercise' | 'replay'>('exercise');
+  const [replayPlan, setReplayPlan] = useState<ReplayPlan | null>(null);
+  const [replayBeat, setReplayBeat] = useState(0);
+  const [replayPaused, setReplayPaused] = useState(false);
+  const [replayOverlayMode, setReplayOverlayMode] = useState<'hidden' | 'pill' | 'card'>('hidden');
+  const [replayPillText, setReplayPillText] = useState('');
+  const [replayCardText, setReplayCardText] = useState('');
+  const replayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const replayPauseIndexRef = useRef(0);
+  const replayCommentIndexRef = useRef(0);
+
+  // Salsa intro state (pre-exercise coaching)
+  const [salsaIntroTier, setSalsaIntroTier] = useState<1 | 2 | 3 | null>(null);
+  const [salsaIntroText, setSalsaIntroText] = useState('');
+  const [salsaIntroTip, setSalsaIntroTip] = useState('');
+
   // Effective beat: during demo, use demo beat; otherwise use playback hook's beat.
   // Negative beats (count-in) are passed through so VerticalPianoRoll can animate
   // the Tetris-style cascade: notes start above the visible area and fall into view.
@@ -1191,6 +1222,46 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   const keyboardStartNote = keyboardRange.startNote;
   const keyboardOctaveCount = keyboardRange.octaveCount;
+
+  // Load Salsa intro data on mount (determines tier and text)
+  useEffect(() => {
+    if (!exercise || showLoadingScreen) return;
+
+    // Determine previous high score for this exercise
+    const progress = useProgressStore.getState();
+    let prevScore: number | null = null;
+    for (const lp of Object.values(progress.lessonProgress)) {
+      const es = lp.exerciseScores[exercise.id];
+      if (es?.highScore) {
+        prevScore = es.highScore;
+        break;
+      }
+    }
+
+    // Determine tier
+    const currentFailCount = useExerciseStore.getState().failCount;
+    let tier: 1 | 2 | 3;
+    if (currentFailCount >= 3) tier = 3;
+    else if (prevScore === null) tier = 2;
+    else if (prevScore >= 70) tier = 1;
+    else tier = 2;
+
+    setSalsaIntroTier(tier);
+
+    // Load AI intro text in background
+    getIntroData(exercise, prevScore, currentFailCount).then((data) => {
+      if (mountedRef.current) {
+        setSalsaIntroText(data.introText);
+        setSalsaIntroTip(data.tip);
+      }
+    }).catch(() => {
+      // Fallback text already set by defaults
+      if (mountedRef.current) {
+        setSalsaIntroText(`Let's practice ${exercise.metadata.title}!`);
+        setSalsaIntroTip('Keep your wrist relaxed and your fingers curved.');
+      }
+    });
+  }, [exercise?.id, showLoadingScreen]);
 
   // Coaching tip for count-in based on learner weaknesses
   const coachingTip = useMemo(() => {
@@ -1879,6 +1950,201 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [handleRestart]);
 
   /**
+   * Start replay mode — Salsa's coaching review of the exercise
+   */
+  const startReplay = useCallback(() => {
+    if (!replayPlan) return;
+    setShowCompletion(false);
+    setPlayerMode('replay');
+    setReplayBeat(0);
+    setReplayPaused(false);
+    setReplayOverlayMode('hidden');
+    replayPauseIndexRef.current = 0;
+    replayCommentIndexRef.current = 0;
+
+    // Start a simple beat timer that drives the replay forward
+    const bpm = exercise.settings.tempo;
+    const msPerBeat = 60000 / bpm;
+    let beatAccum = 0;
+
+    if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+
+    const tick = () => {
+      if (!mountedRef.current) return;
+
+      // Check for pause points at current beat
+      const plan = replayPlan;
+      const pauseIdx = replayPauseIndexRef.current;
+      if (pauseIdx < plan.pausePoints.length) {
+        const pp = plan.pausePoints[pauseIdx];
+        if (beatAccum >= pp.beatPosition) {
+          // Pause at this point
+          setReplayPaused(true);
+          setReplayOverlayMode('card');
+          setReplayCardText(pp.explanation);
+          replayPauseIndexRef.current = pauseIdx + 1;
+          if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+          return;
+        }
+      }
+
+      // Check for continuous comments
+      const commentIdx = replayCommentIndexRef.current;
+      if (commentIdx < plan.comments.length) {
+        const comment = plan.comments[commentIdx];
+        if (beatAccum >= comment.beatPosition) {
+          setReplayOverlayMode('pill');
+          setReplayPillText(comment.text);
+          replayCommentIndexRef.current = commentIdx + 1;
+          // Auto-hide pill after 2 seconds
+          setTimeout(() => {
+            if (mountedRef.current) setReplayOverlayMode('hidden');
+          }, 2000);
+        }
+      }
+
+      // Determine speed (1x near mistakes, 2x through clean sections)
+      let speed = 1;
+      if (plan.speedZones.length > 0) {
+        const zone = plan.speedZones.find(z => beatAccum >= z.fromBeat && beatAccum < z.toBeat);
+        if (zone?.zone === 'fast') speed = 2;
+      }
+
+      beatAccum += 0.25 * speed; // quarter-beat increments
+      setReplayBeat(beatAccum);
+
+      // Check if replay is complete
+      if (beatAccum >= plan.totalBeats) {
+        if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+        setReplayPaused(true);
+        setReplayOverlayMode('card');
+        setReplayCardText(plan.summary);
+      }
+    };
+
+    replayTimerRef.current = setInterval(tick, msPerBeat / 4);
+  }, [replayPlan, exercise.settings.tempo]);
+
+  /**
+   * Stop replay and return to CompletionModal
+   */
+  const stopReplay = useCallback(() => {
+    if (replayTimerRef.current) {
+      clearInterval(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
+    setPlayerMode('exercise');
+    setReplayOverlayMode('hidden');
+    setShowCompletion(true);
+  }, []);
+
+  /**
+   * Resume replay after a pause point
+   */
+  const resumeReplay = useCallback(() => {
+    setReplayPaused(false);
+    setReplayOverlayMode('hidden');
+
+    if (!replayPlan) return;
+
+    // If replay completed (at totalBeats), exit replay
+    if (replayBeat >= replayPlan.totalBeats) {
+      stopReplay();
+      return;
+    }
+
+    // Restart the beat timer from current position
+    const bpm = exercise.settings.tempo;
+    const msPerBeat = 60000 / bpm;
+    let beatAccum = replayBeat;
+
+    if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+
+    replayTimerRef.current = setInterval(() => {
+      if (!mountedRef.current) return;
+
+      const plan = replayPlan;
+      const pauseIdx = replayPauseIndexRef.current;
+      if (pauseIdx < plan.pausePoints.length) {
+        const pp = plan.pausePoints[pauseIdx];
+        if (beatAccum >= pp.beatPosition) {
+          setReplayPaused(true);
+          setReplayOverlayMode('card');
+          setReplayCardText(pp.explanation);
+          replayPauseIndexRef.current = pauseIdx + 1;
+          if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+          return;
+        }
+      }
+
+      const commentIdx = replayCommentIndexRef.current;
+      if (commentIdx < plan.comments.length) {
+        const comment = plan.comments[commentIdx];
+        if (beatAccum >= comment.beatPosition) {
+          setReplayOverlayMode('pill');
+          setReplayPillText(comment.text);
+          replayCommentIndexRef.current = commentIdx + 1;
+          setTimeout(() => {
+            if (mountedRef.current) setReplayOverlayMode('hidden');
+          }, 2000);
+        }
+      }
+
+      let speed = 1;
+      if (plan.speedZones.length > 0) {
+        const zone = plan.speedZones.find(z => beatAccum >= z.fromBeat && beatAccum < z.toBeat);
+        if (zone?.zone === 'fast') speed = 2;
+      }
+
+      beatAccum += 0.25 * speed;
+      setReplayBeat(beatAccum);
+
+      if (beatAccum >= plan.totalBeats) {
+        if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+        setReplayPaused(true);
+        setReplayOverlayMode('card');
+        setReplayCardText(plan.summary);
+      }
+    }, msPerBeat / 4);
+  }, [replayPlan, replayBeat, exercise.settings.tempo, stopReplay]);
+
+  /**
+   * Seek to a specific beat in the replay timeline
+   */
+  const handleReplaySeek = useCallback((beat: number) => {
+    setReplayBeat(beat);
+    // Reset pause/comment indices to find next ones after the seek position
+    if (replayPlan) {
+      replayPauseIndexRef.current = replayPlan.pausePoints.findIndex(p => p.beatPosition > beat);
+      if (replayPauseIndexRef.current === -1) replayPauseIndexRef.current = replayPlan.pausePoints.length;
+      replayCommentIndexRef.current = replayPlan.comments.findIndex(c => c.beatPosition > beat);
+      if (replayCommentIndexRef.current === -1) replayCommentIndexRef.current = replayPlan.comments.length;
+    }
+  }, [replayPlan]);
+
+  /**
+   * Toggle replay play/pause
+   */
+  const handleReplayToggle = useCallback(() => {
+    if (replayPaused) {
+      resumeReplay();
+    } else {
+      setReplayPaused(true);
+      if (replayTimerRef.current) {
+        clearInterval(replayTimerRef.current);
+        replayTimerRef.current = null;
+      }
+    }
+  }, [replayPaused, resumeReplay]);
+
+  // Clean up replay timer on unmount
+  useEffect(() => {
+    return () => {
+      if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+    };
+  }, []);
+
+  /**
    * Navigate to the next exercise in the lesson
    */
   const handleNextExercise = useCallback(() => {
@@ -2349,8 +2615,25 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
-      {/* Exercise intro overlay — shows objectives before starting */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && (
+      {/* Salsa intro — pre-exercise coaching overlay */}
+      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && salsaIntroTier && salsaIntroText.length > 0 && (
+        <SalsaIntro
+          tier={salsaIntroTier}
+          introText={salsaIntroText}
+          tip={salsaIntroTip}
+          onDismiss={() => {
+            setShowIntro(false);
+            handleStart();
+          }}
+          onRequestDemo={salsaIntroTier === 3 ? () => {
+            setShowIntro(false);
+            startDemo();
+          } : undefined}
+        />
+      )}
+
+      {/* Fallback: original intro overlay when SalsaIntro hasn't loaded yet */}
+      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && (!salsaIntroTier || salsaIntroText.length === 0) && (
         <ExerciseIntroOverlay
           exercise={exercise}
           onReady={() => {
@@ -2388,7 +2671,52 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           sessionMinutes={Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))}
           tempoChange={tempoChangeForModal}
           failCount={failCount}
+          onStartReplay={replayPlan ? startReplay : undefined}
         />
+      )}
+
+      {/* Replay mode UI — Salsa's coaching review */}
+      {playerMode === 'replay' && replayPlan && (
+        <>
+          {/* Replay top bar */}
+          <View style={styles.replayTopBar}>
+            <TouchableOpacity
+              onPress={stopReplay}
+              style={styles.replayExitButton}
+              testID="replay-exit"
+            >
+              <MaterialCommunityIcons name="close" size={20} color={COLORS.textPrimary} />
+              <Text style={styles.replayExitText}>Exit Review</Text>
+            </TouchableOpacity>
+            <Text style={styles.replayTitle}>Salsa&apos;s Review</Text>
+            <View style={{ width: 100 }} />
+          </View>
+
+          {/* Replay timeline bar */}
+          <ReplayTimelineBar
+            entries={replayPlan.entries}
+            pausePoints={replayPlan.pausePoints}
+            totalBeats={replayPlan.totalBeats}
+            currentBeat={replayBeat}
+            elapsedTime={formatReplayTime(replayBeat, exercise.settings.tempo)}
+            totalTime={formatReplayTime(replayPlan.totalBeats, exercise.settings.tempo)}
+            onSeek={handleReplaySeek}
+            isPaused={replayPaused}
+            onTogglePlayPause={handleReplayToggle}
+          />
+
+          {/* Replay coaching overlay (pill or card) */}
+          <ReplayOverlay
+            mode={replayOverlayMode}
+            pillText={replayPillText}
+            cardText={replayCardText}
+            onShowCorrect={() => {
+              // Show correct version — for now just resume
+              resumeReplay();
+            }}
+            onContinue={resumeReplay}
+          />
+        </>
       )}
 
       {/* Evolution reveal overlay — shown when cat evolves from XP earned */}
@@ -2404,6 +2732,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 };
 
 ExercisePlayer.displayName = 'ExercisePlayer';
+
+/** Convert beat position to a time string like "0:04" */
+function formatReplayTime(beat: number, bpm: number): string {
+  const seconds = Math.round((beat / bpm) * 60);
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -2553,6 +2889,39 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(225, 190, 231, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  replayTopBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingTop: 48,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    zIndex: 200,
+  },
+  replayExitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: COLORS.surfaceElevated,
+  },
+  replayExitText: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  replayTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

@@ -101,6 +101,8 @@ export interface CompletionModalProps {
   onNextExercise?: () => void;
   onStartTest?: () => void;
   onStartDemo?: () => void;
+  /** Called when user taps "Review with Salsa" — switches to replay mode */
+  onStartReplay?: () => void;
   isTestMode?: boolean;
   testID?: string;
   gemsEarned?: number;
@@ -121,6 +123,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   onNextExercise,
   onStartTest,
   onStartDemo,
+  onStartReplay,
   isTestMode = false,
   testID,
   gemsEarned = 0,
@@ -760,6 +763,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                   size="large"
                   icon={<MaterialCommunityIcons name="refresh" size={20} color={COLORS.textPrimary} />}
                   testID="completion-retry"
+                />
+              )}
+              {onStartReplay && (
+                <Button
+                  title="Review with Salsa"
+                  onPress={onStartReplay}
+                  variant="secondary"
+                  size="large"
+                  icon={<MaterialCommunityIcons name="replay" size={20} color={COLORS.textSecondary} />}
+                  testID="completion-review-replay"
                 />
               )}
               {!(isTestMode && !score.isPassed) && (
