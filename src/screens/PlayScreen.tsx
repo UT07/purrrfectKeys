@@ -80,13 +80,8 @@ const RIGHT_KB_OCTAVES = 2; // C4 - C6
 
 const PIXELS_PER_BEAT = 60;
 const NOTE_ROW_HEIGHT = 28;
-const NOTE_COLORS = [
-  '#FF3B5C', '#FF6D1F', '#FFA726', '#FFD54F', '#A5D64A', '#66CC66',
-  '#26C6A0', '#29D6E6', '#42A5F5', '#5C6BC0', '#BA68C8', '#F06292',
-];
-
 function noteColor(midiNote: number): string {
-  return NOTE_COLORS[midiNote % 12];
+  return COLORS.noteWheel[midiNote % 12];
 }
 
 function HorizontalNoteStrip({
@@ -96,7 +91,19 @@ function HorizontalNoteStrip({
   notes: NoteEvent[];
   highlightedNotes: Set<number>;
 }): React.JSX.Element | null {
-  if (notes.length === 0) {
+  // Filter out notes with missing/invalid properties (Firestore data may be malformed)
+  const validNotes = notes.filter(
+    (n) =>
+      typeof n.note === 'number' &&
+      !isNaN(n.note) &&
+      typeof n.startBeat === 'number' &&
+      !isNaN(n.startBeat) &&
+      typeof n.durationBeats === 'number' &&
+      !isNaN(n.durationBeats) &&
+      n.durationBeats > 0,
+  );
+
+  if (validNotes.length === 0) {
     return (
       <View style={songStyles.emptyStrip}>
         <MaterialCommunityIcons name="music-note-off" size={32} color={COLORS.textMuted} />
@@ -105,9 +112,9 @@ function HorizontalNoteStrip({
     );
   }
 
-  const minNote = Math.min(...notes.map((n) => n.note));
-  const maxNote = Math.max(...notes.map((n) => n.note));
-  const totalBeats = Math.max(...notes.map((n) => n.startBeat + n.durationBeats));
+  const minNote = Math.min(...validNotes.map((n) => n.note));
+  const maxNote = Math.max(...validNotes.map((n) => n.note));
+  const totalBeats = Math.max(...validNotes.map((n) => n.startBeat + n.durationBeats));
   const noteSpan = maxNote - minNote + 1;
   const stripHeight = noteSpan * NOTE_ROW_HEIGHT;
   const stripWidth = (totalBeats + 2) * PIXELS_PER_BEAT;
@@ -166,7 +173,7 @@ function HorizontalNoteStrip({
         ))}
 
         {/* Note blocks */}
-        {notes.map((note, i) => {
+        {validNotes.map((note, i) => {
           const isHighlighted = highlightedNotes.has(note.note);
           const row = maxNote - note.note; // Higher notes at top
           return (
@@ -249,6 +256,7 @@ export function PlayScreen(): React.JSX.Element {
   const [sessionNoteCount, setSessionNoteCount] = useState(0);
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [analysis, setAnalysis] = useState<FreePlayAnalysis | null>(null);
+  const [analysisHidden, setAnalysisHidden] = useState(false);
   const [activeInput, setActiveInput] = useState<ActiveInputMethod>('touch');
   const preferredInput = useSettingsStore((s) => s.preferredInputMethod);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
@@ -440,6 +448,7 @@ export function PlayScreen(): React.JSX.Element {
       // Reset silence timer for auto-analysis
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       setAnalysis(null); // dismiss any existing analysis card while playing
+      setAnalysisHidden(false); // allow analysis to reappear after next silence
       silenceTimerRef.current = setTimeout(() => {
         if (sessionNotesRef.current.length > 0) {
           const result = analyzeSession(sessionNotesRef.current);
@@ -816,13 +825,20 @@ export function PlayScreen(): React.JSX.Element {
         </View>
 
         {/* Analysis card */}
-        {analysis && (
+        {analysis && !analysisHidden && (
           <View style={styles.analysisCard} testID="freeplay-analysis-card">
             <View style={styles.analysisHeader}>
               <MaterialCommunityIcons name="music-note-eighth" size={16} color={COLORS.info} />
               <Text style={styles.analysisTitle}>Analysis</Text>
-              <TouchableOpacity onPress={() => setAnalysis(null)}>
-                <MaterialCommunityIcons name="close" size={16} color={COLORS.textMuted} />
+              <TouchableOpacity
+                onPress={() => {
+                  setAnalysis(null);
+                  setAnalysisHidden(true);
+                }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={styles.analysisCloseBtn}
+              >
+                <MaterialCommunityIcons name="close-circle" size={22} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
             <Text style={styles.analysisSummary}>{analysis.summary}</Text>
@@ -1003,35 +1019,44 @@ export function PlayScreen(): React.JSX.Element {
       </View>
 
       {/* Free play analysis card — appears after 2s of silence */}
-      {analysis && (
+      {analysis && !analysisHidden && (
         <View style={styles.analysisCard} testID="freeplay-analysis-card">
           <View style={styles.analysisHeader}>
             <MaterialCommunityIcons name="music-note-eighth" size={16} color={COLORS.info} />
             <Text style={styles.analysisTitle}>Analysis</Text>
-            <TouchableOpacity onPress={() => setAnalysis(null)}>
-              <MaterialCommunityIcons name="close" size={16} color={COLORS.textMuted} />
+            <TouchableOpacity
+              onPress={() => {
+                setAnalysis(null);
+                setAnalysisHidden(true);
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              style={styles.analysisCloseBtn}
+            >
+              <MaterialCommunityIcons name="close-circle" size={22} color={COLORS.textMuted} />
             </TouchableOpacity>
           </View>
           <Text style={styles.analysisSummary}>{analysis.summary}</Text>
-          <TouchableOpacity
-            style={styles.generateDrillBtn}
-            onPress={() => {
-              navigation.navigate('Exercise', {
-                exerciseId: 'ai-mode',
-                aiMode: true,
-                freePlayContext: {
-                  detectedKey: analysis.detectedKey,
-                  suggestedDrillType: analysis.suggestedDrillType,
-                  weakNotes: analysis.uniqueNotes.slice(0, 6),
-                },
-              });
-              setAnalysis(null);
-            }}
-            testID="freeplay-generate-drill"
-          >
-            <MaterialCommunityIcons name="lightning-bolt" size={14} color={COLORS.textPrimary} />
-            <Text style={styles.generateDrillText}>Drill</Text>
-          </TouchableOpacity>
+          <View style={styles.analysisActions}>
+            <TouchableOpacity
+              style={styles.generateDrillBtn}
+              onPress={() => {
+                navigation.navigate('Exercise', {
+                  exerciseId: 'ai-mode',
+                  aiMode: true,
+                  freePlayContext: {
+                    detectedKey: analysis.detectedKey,
+                    suggestedDrillType: analysis.suggestedDrillType,
+                    weakNotes: analysis.uniqueNotes.slice(0, 6),
+                  },
+                });
+                setAnalysis(null);
+              }}
+              testID="freeplay-generate-drill"
+            >
+              <MaterialCommunityIcons name="lightning-bolt" size={14} color={COLORS.textPrimary} />
+              <Text style={styles.generateDrillText}>Drill</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -1253,6 +1278,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: COLORS.textPrimary,
+  },
+  analysisCloseBtn: {
+    padding: 2,
+  },
+  analysisActions: {
+    flexDirection: 'row',
+    gap: 6,
   },
 });
 

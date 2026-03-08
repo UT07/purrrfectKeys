@@ -84,8 +84,8 @@ import type { SkillCategory } from '../../core/curriculum/SkillTree';
 import { getTierMasteryTestSkillId, isTierMasteryTestAvailable, hasTierMasteryTestPassed } from '../../core/curriculum/tierMasteryTest';
 import { adjustDifficulty } from '../../core/curriculum/DifficultyEngine';
 import { getTodayDateString } from '../../utils/time';
-// detectWeakPatterns: kept available for future use but not imported to avoid unused-import errors
-// import { detectWeakPatterns } from '../../core/curriculum/WeakSpotDetector';
+import { detectWeakPatterns, generateDrillParams } from '../../core/curriculum/WeakSpotDetector';
+import type { WeakPattern } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
 import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
 import { midiToNoteName } from '../../core/music/MusicTheory';
@@ -252,6 +252,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // AI mode: exercise loaded asynchronously from buffer
   const [aiExercise, setAiExercise] = useState<Exercise | null>(null);
   const freePlayContext = route.params?.freePlayContext;
+  const bonusDrillExercise = route.params?.bonusDrillExercise;
 
   useEffect(() => {
     if (!aiMode) return;
@@ -259,6 +260,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     let cancelled = false;
 
     const loadAIExercise = async () => {
+      // If launched with a pre-generated bonus drill exercise, use it directly
+      if (bonusDrillExercise) {
+        if (!cancelled) {
+          setAiExercise(bonusDrillExercise);
+        }
+        return;
+      }
+
       // If launched from free play analysis, generate a targeted exercise
       // instead of pulling from the generic buffer
       if (freePlayContext) {
@@ -448,7 +457,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       clearTimeout(loadTimeout);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiMode, freePlayContext?.detectedKey]);
+  }, [aiMode, freePlayContext?.detectedKey, bonusDrillExercise]);
 
   // Load exercise: prop > AI mode > route param > store > fallback
   const loadedExercise = (!aiMode && route.params?.exerciseId)
@@ -637,6 +646,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [chestGemsForModal, setChestGemsForModal] = useState(0);
   const [tempoChangeForModal, setTempoChangeForModal] = useState(0);
   const [sessionStartTime] = useState(() => Date.now());
+
+  // Bonus drill state — detected weak pattern for post-completion drill
+  const [bonusDrillPattern, setBonusDrillPattern] = useState<WeakPattern | null>(null);
 
   // Lesson completion celebration state
   const [showLessonComplete, setShowLessonComplete] = useState(false);
@@ -1120,6 +1132,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
+    // Detect weak patterns from learner profile for Bonus Drill button
+    try {
+      const profileState = useLearnerProfileStore.getState();
+      const weakPatterns = detectWeakPatterns({
+        noteAccuracy: profileState.noteAccuracy,
+        weakNotes: profileState.weakNotes,
+        skills: profileState.skills,
+        tempoRange: profileState.tempoRange,
+      });
+      if (weakPatterns.length > 0) {
+        setBonusDrillPattern(weakPatterns[0]); // Use the worst pattern
+      }
+    } catch (err) {
+      logger.warn('[ExercisePlayer] Bonus drill detection failed:', err);
+    }
+
     // Always show full CompletionModal with AI coaching, score ring, cat dialogue.
     // CompletionModal handles all scenarios: pass, fail, retry, next exercise, lesson complete.
     setShowCompletion(true);
@@ -1130,6 +1158,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       );
     }
   }, [onExerciseComplete, abilityConfig]);
+
+  // Metronome toggle — defaults to exercise setting, user can toggle during play
+  const [metronomeOn, setMetronomeOn] = useState(exercise.settings.metronomeEnabled ?? true);
 
   // Exercise playback coordination (MIDI + Audio + Scoring)
   const {
@@ -1155,6 +1186,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     onComplete: handleExerciseCompletion,
     enableMidi: true,
     enableAudio: true,
+    metronomeEnabled: metronomeOn,
   });
 
   // UI state (separate from playback logic)
@@ -2200,6 +2232,102 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [stopPlayback, exerciseStore, navigation, skillIdParam]);
 
   /**
+   * Navigate to a bonus drill targeting the learner's weakest pattern.
+   * Generates an AI exercise from the detected WeakPattern, with fallback
+   * to a template exercise if generation fails.
+   */
+  const handleBonusDrill = useCallback(async () => {
+    if (!bonusDrillPattern) return;
+
+    const drillParams = generateDrillParams(bonusDrillPattern);
+
+    setShowCompletion(false);
+    stopPlayback();
+    exerciseStore.clearSession();
+
+    try {
+      const generated = await generateFreePlayExercise(drillParams);
+      if (!mountedRef.current) return;
+
+      if (generated) {
+        const drillExercise: Exercise = {
+          id: `drill-${bonusDrillPattern.type}-${Date.now()}`,
+          version: 1,
+          metadata: {
+            title: `Drill: ${bonusDrillPattern.description}`,
+            description: `Targeted practice for ${bonusDrillPattern.description}`,
+            difficulty: (generated.metadata?.difficulty ?? 2) as 1 | 2 | 3 | 4 | 5,
+            estimatedMinutes: 2,
+            skills: generated.metadata?.skills ?? [],
+            prerequisites: [],
+          },
+          settings: {
+            tempo: generated.settings.tempo,
+            timeSignature: generated.settings.timeSignature,
+            keySignature: generated.settings.keySignature ?? 'C',
+            countIn: 4,
+            metronomeEnabled: true,
+          },
+          notes: generated.notes.map((n) => ({
+            note: n.note,
+            startBeat: n.startBeat,
+            durationBeats: n.durationBeats,
+            ...(n.hand ? { hand: n.hand as 'left' | 'right' } : {}),
+          })),
+          scoring: {
+            timingToleranceMs: generated.scoring?.timingToleranceMs ?? 80,
+            timingGracePeriodMs: 200,
+            passingScore: generated.scoring?.passingScore ?? 60,
+            starThresholds: (generated.scoring?.starThresholds ?? [70, 85, 95]) as [number, number, number],
+          },
+          hints: {
+            beforeStart: `Focus on ${bonusDrillPattern.description}`,
+            commonMistakes: [],
+            successMessage: 'Great drill session!',
+          },
+        };
+
+        // Navigate to new ExercisePlayer with the generated drill
+        setTimeout(() => {
+          if (mountedRef.current) {
+            (navigation as any).replace('Exercise', {
+              exerciseId: drillExercise.id,
+              aiMode: true,
+              bonusDrillExercise: drillExercise,
+            });
+          }
+        }, 100);
+        return;
+      }
+    } catch (error) {
+      logger.warn('[ExercisePlayer] Bonus drill generation failed:', error);
+    }
+
+    // Fallback: use a template exercise targeting the weak MIDI notes
+    if (!mountedRef.current) return;
+    const drillDifficulty = Math.max(1, Math.min(3, Math.ceil(bonusDrillPattern.severity * 3))) as 1 | 2 | 3;
+    const templateEx = getTemplateExercise(drillDifficulty, bonusDrillPattern.targetMidi);
+    if (templateEx) {
+      setTimeout(() => {
+        if (mountedRef.current) {
+          (navigation as any).replace('Exercise', {
+            exerciseId: `drill-tmpl-${Date.now()}`,
+            aiMode: true,
+            bonusDrillExercise: {
+              ...templateEx,
+              id: `drill-tmpl-${Date.now()}`,
+              metadata: {
+                ...templateEx.metadata,
+                title: `Drill: ${bonusDrillPattern.description}`,
+              },
+            },
+          });
+        }
+      }, 100);
+    }
+  }, [bonusDrillPattern, stopPlayback, exerciseStore, navigation]);
+
+  /**
    * Navigate to the mastery test for the current lesson/tier
    */
   const handleStartTest = useCallback(() => {
@@ -2362,6 +2490,21 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             compact
             testID="exercise-controls"
           />
+
+          {/* Metronome toggle */}
+          <TouchableOpacity
+            onPress={() => setMetronomeOn((prev) => !prev)}
+            style={[styles.metronomePill, metronomeOn && styles.metronomePillActive]}
+            testID="metronome-toggle"
+            accessibilityLabel={metronomeOn ? 'Metronome on. Tap to turn off.' : 'Metronome off. Tap to turn on.'}
+            accessibilityRole="switch"
+          >
+            <MaterialCommunityIcons
+              name="metronome"
+              size={16}
+              color={metronomeOn ? COLORS.primary : COLORS.textSecondary}
+            />
+          </TouchableOpacity>
 
           <View style={{ flex: 1 }}>
             <ScoreDisplay
@@ -2672,6 +2815,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           tempoChange={tempoChangeForModal}
           failCount={failCount}
           onStartReplay={replayPlan ? startReplay : undefined}
+          onBonusDrill={bonusDrillPattern ? handleBonusDrill : undefined}
+          bonusDrillDescription={bonusDrillPattern?.description}
         />
       )}
 
@@ -2811,6 +2956,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.cardBorder,
     overflow: 'hidden',
+  },
+  metronomePill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  metronomePillActive: {
+    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    borderColor: COLORS.primary,
   },
   speedPill: {
     paddingHorizontal: 10,

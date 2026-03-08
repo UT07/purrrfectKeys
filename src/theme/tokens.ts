@@ -58,6 +58,12 @@ export const COLORS = {
 
   // Combo
   comboGold: '#FFD700',
+
+  // Note visualization (12-tone color wheel for piano roll)
+  noteWheel: [
+    '#FF3B5C', '#FF6D1F', '#FFA726', '#FFD54F', '#A5D64A', '#66CC66',
+    '#26C6A0', '#29D6E6', '#42A5F5', '#5C6BC0', '#BA68C8', '#F06292',
+  ] as const,
 } as const;
 
 // ─────────────────────────────────────────────────

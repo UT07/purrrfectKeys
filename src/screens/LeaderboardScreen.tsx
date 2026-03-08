@@ -30,27 +30,13 @@ import type { LeagueStandingEntry } from '../stores/leagueStore';
 import { useAuthStore } from '../stores/authStore';
 import { getLeagueStandings } from '../services/firebase/leagueService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-// League tier display configuration
-const LEAGUE_TIER_CONFIG = {
-  bronze: { color: '#CD7F32', label: 'Bronze', icon: 'shield-outline' as const },
-  silver: { color: '#C0C0C0', label: 'Silver', icon: 'shield-half-full' as const },
-  gold: { color: '#FFD700', label: 'Gold', icon: 'shield-star' as const },
-  diamond: { color: '#B9F2FF', label: 'Diamond', icon: 'shield-crown' as const },
-} as const;
-
-// Medal icons for top 3
-const MEDAL_COLORS: Record<number, string> = {
-  1: '#FFD700', // Gold
-  2: '#C0C0C0', // Silver
-  3: '#CD7F32', // Bronze
-};
 
 // Promotion: top 10 get green zone; demotion: bottom 5 get red zone
 const PROMOTION_CUTOFF = 10;
@@ -77,7 +63,7 @@ function PodiumPedestal({
 
   const height = PODIUM_HEIGHTS[place === 2 ? 0 : place === 1 ? 1 : 2];
   const catSize = PODIUM_CAT_SIZES[place];
-  const medalColor = MEDAL_COLORS[place];
+  const medalColor = PODIUM_MEDAL_COLORS[place];
 
   return (
     <Animated.View
@@ -185,7 +171,7 @@ function StandingsRow({
           <MaterialCommunityIcons
             name="medal"
             size={24}
-            color={MEDAL_COLORS[entry.rank]}
+            color={PODIUM_MEDAL_COLORS[entry.rank]}
           />
         ) : (
           <Text style={styles.rankText}>{entry.rank}</Text>

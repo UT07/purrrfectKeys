@@ -33,19 +33,12 @@ import {
   getLeagueStandings,
 } from '../services/firebase/leagueService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
+import { LEAGUE_TIER_CONFIG } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-// League tier display configuration
-const LEAGUE_TIER_CONFIG = {
-  bronze: { color: '#CD7F32', label: 'Bronze', icon: 'shield-outline' as const, arenaGlow: 'rgba(205, 127, 50, 0.12)' },
-  silver: { color: '#C0C0C0', label: 'Silver', icon: 'shield-half-full' as const, arenaGlow: 'rgba(192, 192, 192, 0.12)' },
-  gold: { color: '#FFD700', label: 'Gold', icon: 'shield-star' as const, arenaGlow: 'rgba(255, 215, 0, 0.12)' },
-  diamond: { color: '#B9F2FF', label: 'Diamond', icon: 'shield-crown' as const, arenaGlow: 'rgba(185, 242, 255, 0.15)' },
-} as const;
 
 // ---------------------------------------------------------------------------
 // Auth Gate Component

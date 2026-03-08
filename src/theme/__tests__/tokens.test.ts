@@ -41,6 +41,11 @@ describe('Design Tokens', () => {
       for (const [key, value] of Object.entries(COLORS)) {
         if (key === 'surfaceOverlay') {
           expect(value).toMatch(/^rgba\(/);
+        } else if (key === 'noteWheel') {
+          expect(Array.isArray(value)).toBe(true);
+          for (const c of value as readonly string[]) {
+            expect(c).toMatch(HEX_REGEX);
+          }
         } else {
           expect(value).toMatch(HEX_REGEX);
         }
