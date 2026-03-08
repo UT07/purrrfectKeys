@@ -22,8 +22,8 @@ import type { NoteEvent } from '@/core/exercises/types';
 /** Default vertical pixels per beat (fallback when container size unavailable) */
 export const PIXELS_PER_BEAT = 100;
 
-/** Hit line position as a ratio of container height — near the keyboard edge */
-export const HIT_LINE_RATIO = 0.95;
+/** Hit line position as a ratio of container height — flush with keyboard edge */
+export const HIT_LINE_RATIO = 0.98;
 
 /** How many beats ahead of the hit line should be visible (Tetris-like cascade) */
 export const LOOK_AHEAD_BEATS = 4;
@@ -217,6 +217,8 @@ export interface VerticalPianoRollProps {
   ghostBeatOffset?: number;
   timingGracePeriodMs?: number;
   testID?: string;
+  /** Per-note color overrides for replay mode (index → hex color) */
+  noteColorOverrides?: Map<number, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -237,6 +239,7 @@ export const VerticalPianoRoll = React.memo(
     ghostBeatOffset = 2,
     timingGracePeriodMs = 200,
     testID,
+    noteColorOverrides,
   }: VerticalPianoRollProps) => {
     const midiRange = midiMax - midiMin;
     const hitLineY = containerHeight * HIT_LINE_RATIO;
@@ -249,8 +252,7 @@ export const VerticalPianoRoll = React.memo(
     // At 120 BPM with 200ms grace: 200 / 500 = 0.4 beats ≈ 40-50px per side.
     const msPerBeat = 60000 / tempo;
     const zoneHalfBeats = timingGracePeriodMs / msPerBeat;
-    const zoneHalfPx = zoneHalfBeats * pixelsPerBeat;
-    const releaseLineGapPx = Math.max(24, zoneHalfPx * 2);
+    const zoneHalfPx = Math.max(12, zoneHalfBeats * pixelsPerBeat);
 
     // translateY drives the scrolling. As currentBeat increases the content
     // layer shifts down so that notes at currentBeat align with the hit line.
@@ -316,6 +318,20 @@ export const VerticalPianoRoll = React.memo(
           borderColor = '#FFF';
         }
 
+        // Replay mode: override colors per note index
+        const overrideColor = noteColorOverrides?.get(index);
+        let glowColor: string | undefined;
+        let haloColor: string | undefined;
+        if (overrideColor) {
+          color = overrideColor;
+          gradientTop = overrideColor;
+          gradientBottom = overrideColor;
+          borderColor = overrideColor;
+          // Use override color at lower opacity for glow effects
+          glowColor = overrideColor + '59'; // ~35% opacity
+          haloColor = overrideColor + '26'; // ~15% opacity
+        }
+
         const noteName = midiToNoteName(note.note);
 
         return {
@@ -333,9 +349,11 @@ export const VerticalPianoRoll = React.memo(
           isActive,
           noteName,
           hand: note.hand,
+          glowColor,
+          haloColor,
         };
       });
-    }, [notes, currentBeat, containerWidth, containerHeight, midiMin, midiRange, hitLineY, pixelsPerBeat]);
+    }, [notes, currentBeat, containerWidth, containerHeight, midiMin, midiRange, hitLineY, pixelsPerBeat, noteColorOverrides]);
 
     // Ghost notes (semi-transparent overlay of upcoming notes)
     const visualGhostNotes = useMemo(() => {
@@ -422,6 +440,7 @@ export const VerticalPianoRoll = React.memo(
                       width: vn.width + 16,
                       height: vn.noteHeight + 16,
                     },
+                    vn.haloColor != null && { backgroundColor: vn.haloColor },
                   ]}
                 />
               )}
@@ -436,6 +455,7 @@ export const VerticalPianoRoll = React.memo(
                       width: vn.width + 8,
                       height: vn.noteHeight + 8,
                     },
+                    vn.glowColor != null && { backgroundColor: vn.glowColor },
                   ]}
                 />
               )}
@@ -485,12 +505,12 @@ export const VerticalPianoRoll = React.memo(
           ))}
         </View>
 
-        {/* Timing zone: gradient fade below press line */}
+        {/* Timing zone: symmetric gradient centered on press line (early/late window) */}
         <LinearGradient
-          colors={['rgba(64, 196, 255, 0.15)', 'rgba(64, 196, 255, 0)']}
+          colors={['rgba(64, 196, 255, 0)', 'rgba(64, 196, 255, 0.15)', 'rgba(64, 196, 255, 0)']}
           style={[styles.timingZoneFill, {
-            top: hitLineY,
-            height: releaseLineGapPx,
+            top: hitLineY - zoneHalfPx,
+            height: zoneHalfPx * 2,
           }]}
           testID="timing-zone-fill"
         />

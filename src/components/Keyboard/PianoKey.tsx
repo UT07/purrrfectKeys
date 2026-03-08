@@ -21,6 +21,8 @@ export interface PianoKeyProps {
   isExpected?: boolean;
   isPressed?: boolean;
   showLabels?: boolean;
+  /** Replay mode highlight color (hex string, overrides default highlight color) */
+  replayColor?: string;
 }
 
 /**
@@ -52,6 +54,7 @@ export const PianoKey = React.memo(
     isExpected = false,
     isPressed = false,
     showLabels = false,
+    replayColor,
   }: PianoKeyProps) => {
     const isBlackKey = useMemo(
       () => isBlackKeyProp || isBlackKeyNote(midiNote),
@@ -97,6 +100,7 @@ export const PianoKey = React.memo(
               isExpected && styles.expectedBlackKey,
               isHighlighted && styles.highlightedBlackKey,
               isPressed && styles.pressedBlackKey,
+              replayColor != null && { backgroundColor: replayColor },
             ]}
           >
             {showLabels && (
@@ -122,6 +126,7 @@ export const PianoKey = React.memo(
             isExpected && styles.expectedWhiteKey,
             isHighlighted && styles.highlightedWhiteKey,
             isPressed && styles.pressedWhiteKey,
+            replayColor != null && { backgroundColor: replayColor },
           ]}
         >
           {showLabels && (

@@ -40,6 +40,8 @@ export interface KeyboardProps {
   scrollEnabled?: boolean; // Allow manual scroll (default: true). Set false during exercises.
   keyHeight?: number;
   focusNote?: number; // MIDI note to auto-center on (for auto-scroll)
+  /** Per-note color overrides for replay mode (MIDI note → hex color string) */
+  replayHighlights?: Map<number, string>;
   testID?: string;
 }
 
@@ -62,6 +64,7 @@ export const Keyboard = React.memo(
     scrollEnabled = true,
     keyHeight = 80,
     focusNote,
+    replayHighlights,
     testID,
   }: KeyboardProps) => {
     // Validate octave count
@@ -394,6 +397,7 @@ export const Keyboard = React.memo(
               isExpected={expectedNotes.has(note)}
               isPressed={pressedNotes.has(note)}
               showLabels={showLabels}
+              replayColor={replayHighlights?.get(note)}
             />
           </View>
         ))}
@@ -432,6 +436,7 @@ export const Keyboard = React.memo(
                 isExpected={expectedNotes.has(note)}
                 isPressed={pressedNotes.has(note)}
                 showLabels={showLabels}
+                replayColor={replayHighlights?.get(note)}
               />
             </View>
           );
