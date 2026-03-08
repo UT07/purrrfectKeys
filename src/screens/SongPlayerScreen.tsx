@@ -13,7 +13,6 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -33,7 +32,8 @@ import {
 } from '../core/songs/songMastery';
 import type { Song, SongSection, SongLayer, MasteryTier } from '../core/songs/songTypes';
 import type { Exercise, NoteEvent, ExerciseScore } from '../core/exercises/types';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuthStore } from '../stores/authStore';
 import { logger } from '../utils/logger';
@@ -119,9 +119,9 @@ export function fullSongToExercise(
   // Sort by startBeat for correct playback order
   allNotes.sort((a, b) => a.startBeat - b.startBeat || a.note - b.note);
 
-  const avgDifficulty = Math.round(
-    song.sections.reduce((sum, s) => sum + s.difficulty, 0) / song.sections.length,
-  ) as 1 | 2 | 3 | 4 | 5;
+  const avgDifficulty = (song.sections.length > 0
+    ? Math.round(song.sections.reduce((sum, s) => sum + s.difficulty, 0) / song.sections.length)
+    : 1) as 1 | 2 | 3 | 4 | 5;
 
   return {
     id: `${song.id}-full-${layer}`,
@@ -228,7 +228,7 @@ function SectionPill({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
+    <PressableScale
       style={[styles.sectionPill, isSelected && styles.sectionPillSelected]}
       onPress={onPress}
       testID={`section-${section.id}`}
@@ -241,7 +241,7 @@ function SectionPill({
           <Text style={styles.scoreBadgeText}>{Math.round(score)}%</Text>
         </View>
       )}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -435,9 +435,9 @@ export function SongPlayerScreen() {
     <SafeAreaView style={styles.container} testID="song-player-screen">
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} testID="back-button">
+        <PressableScale onPress={() => navigation.goBack()} testID="back-button">
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-        </TouchableOpacity>
+        </PressableScale>
         <View style={styles.headerCenter}>
           <Text style={styles.songTitle} numberOfLines={1}>
             {song.metadata.title}
@@ -469,7 +469,7 @@ export function SongPlayerScreen() {
           contentContainerStyle={styles.sectionCarousel}
         >
           {/* Full Song pill */}
-          <TouchableOpacity
+          <PressableScale
             style={[styles.sectionPill, styles.fullSongPill, selectedSectionIndex === null && styles.fullSongPillSelected]}
             onPress={() => setSelectedSectionIndex(null)}
             testID="section-full-song"
@@ -482,7 +482,7 @@ export function SongPlayerScreen() {
             <Text style={[styles.sectionPillLabel, selectedSectionIndex === null && styles.sectionPillLabelSelected]}>
               Full Song
             </Text>
-          </TouchableOpacity>
+          </PressableScale>
 
           {song.sections.map((section, index) => (
             <SectionPill
@@ -497,7 +497,7 @@ export function SongPlayerScreen() {
 
         {/* Layer toggle */}
         <View style={styles.toggleRow}>
-          <TouchableOpacity
+          <PressableScale
             style={[styles.layerToggle, layer === 'melody' && styles.layerToggleActive]}
             onPress={() => setLayer('melody')}
             testID="layer-melody"
@@ -507,8 +507,8 @@ export function SongPlayerScreen() {
             >
               Melody Only
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </PressableScale>
+          <PressableScale
             style={[
               styles.layerToggle,
               layer === 'full' && styles.layerToggleActive,
@@ -527,10 +527,10 @@ export function SongPlayerScreen() {
             >
               Full
             </Text>
-          </TouchableOpacity>
+          </PressableScale>
 
           {/* Loop toggle */}
-          <TouchableOpacity
+          <PressableScale
             style={[styles.loopToggle, loop && styles.loopToggleActive]}
             onPress={() => setLoop((v) => !v)}
             testID="loop-toggle"
@@ -540,7 +540,7 @@ export function SongPlayerScreen() {
               size={20}
               color={loop ? COLORS.primary : COLORS.textMuted}
             />
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         {/* Song info */}
@@ -572,14 +572,14 @@ export function SongPlayerScreen() {
 
       {/* Play button */}
       <View style={styles.playButtonContainer}>
-        <TouchableOpacity style={styles.playButton} onPress={handlePlay} testID="play-button">
+        <PressableScale style={styles.playButton} onPress={handlePlay} testID="play-button">
           <MaterialCommunityIcons name="play" size={28} color={COLORS.background} />
           <Text style={styles.playButtonText}>
             {selectedSectionIndex === null
               ? 'Play Full Song'
               : `Play ${song.sections[selectedSectionIndex]?.label ?? 'Section'}`}
           </Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
     </SafeAreaView>
   );
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   headerBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.sm,
   },
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scoreBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.2),
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: BORDER_RADIUS.sm,
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
   },
   loopToggleActive: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(220, 20, 60, 0.1)',
+    backgroundColor: glowColor(COLORS.primary, 0.1),
   },
 
   // Info card

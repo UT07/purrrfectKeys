@@ -14,7 +14,6 @@ import {
   SafeAreaView,
   FlatList,
   TextInput,
-  TouchableOpacity,
   Modal,
   ActivityIndicator,
 } from 'react-native';
@@ -33,7 +32,8 @@ import { useGemStore } from '../stores/gemStore';
 import { useAuthStore } from '../stores/authStore';
 import { masteryColor, masteryLabel } from '../core/songs/songMastery';
 import type { SongGenre, SongSummary, SongRequestParams, MasteryTier } from '../core/songs/songTypes';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -69,7 +69,7 @@ function GenrePill({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
+    <PressableScale
       style={[styles.genrePill, isActive && styles.genrePillActive]}
       onPress={onPress}
       testID={`genre-${label.toLowerCase()}`}
@@ -77,7 +77,7 @@ function GenrePill({
       <Text style={[styles.genrePillText, isActive && styles.genrePillTextActive]}>
         {label}
       </Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -91,7 +91,7 @@ function DifficultyPill({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
+    <PressableScale
       style={[styles.difficultyPill, isActive && styles.difficultyPillActive]}
       onPress={onPress}
       testID={`difficulty-${level}`}
@@ -104,7 +104,7 @@ function DifficultyPill({
       <Text style={[styles.difficultyPillText, isActive && styles.difficultyPillTextActive]}>
         {level}
       </Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -149,7 +149,7 @@ function MasteryBadge({ tier }: { tier: MasteryTier }) {
         {
           backgroundColor: color,
           borderWidth: 1,
-          borderColor: isPlatinum ? '#FFFFFF' : color,
+          borderColor: isPlatinum ? COLORS.textPrimary : color,
         },
       ]}
       testID="mastery-badge"
@@ -235,10 +235,9 @@ function SongCard({
   const isNew = mastery === 'none';
   return (
     <Animated.View entering={FadeIn.duration(300)}>
-      <TouchableOpacity
+      <PressableScale
         style={[styles.songCard, SHADOWS.sm as Record<string, unknown>]}
         onPress={onPress}
-        activeOpacity={0.7}
         testID={`song-card-${summary.id}`}
       >
         <View style={styles.songCardContent}>
@@ -260,7 +259,7 @@ function SongCard({
             <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.textMuted} />
           </View>
         </View>
-      </TouchableOpacity>
+      </PressableScale>
     </Animated.View>
   );
 }
@@ -339,10 +338,10 @@ function RequestSongModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
 
           <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <PressableScale style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </PressableScale>
+            <PressableScale
               style={[styles.submitButton, (!canRequest || isGenerating) && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={!canRequest || isGenerating || !title.trim()}
@@ -353,7 +352,7 @@ function RequestSongModal({
               ) : (
                 <Text style={styles.submitButtonText}>Generate</Text>
               )}
-            </TouchableOpacity>
+            </PressableScale>
           </View>
         </View>
       </View>
@@ -535,14 +534,13 @@ export function SongLibraryScreen() {
       />
 
       {/* FAB — Request a Song */}
-      <TouchableOpacity
+      <PressableScale
         style={styles.fab}
         onPress={() => setRequestModalVisible(true)}
-        activeOpacity={0.8}
         testID="request-fab"
       >
         <MaterialCommunityIcons name="music-note-plus" size={24} color={COLORS.background} />
-      </TouchableOpacity>
+      </PressableScale>
 
       {/* Request modal */}
       <RequestSongModal
@@ -585,7 +583,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
-    gap: 4,
+    gap: SPACING.xs,
   },
   gemText: {
     ...TYPOGRAPHY.body.sm,
@@ -630,11 +628,11 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.sm,
     marginBottom: SPACING.xs,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderRadius: BORDER_RADIUS.md,
     paddingHorizontal: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
   },
   searchInput: {
     flex: 1,
@@ -655,7 +653,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
@@ -681,11 +679,11 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   songCard: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
   },
   songCardContent: {
     flexDirection: 'row',
@@ -738,7 +736,7 @@ const styles = StyleSheet.create({
   masteryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: BORDER_RADIUS.full,
   },
@@ -752,7 +750,7 @@ const styles = StyleSheet.create({
   // NEW badge (pulsing)
   newBadge: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
@@ -760,7 +758,7 @@ const styles = StyleSheet.create({
   },
   newBadgeText: {
     ...TYPOGRAPHY.caption.sm,
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     fontWeight: '800',
     letterSpacing: 1,
   },
@@ -796,7 +794,7 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: glowColor('#000000', 0.6),
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -829,7 +827,7 @@ const styles = StyleSheet.create({
   rateLimitWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(244, 67, 54, 0.15)',
+    backgroundColor: glowColor(COLORS.error, 0.15),
     padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.sm,
     marginBottom: SPACING.md,
