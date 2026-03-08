@@ -5,7 +5,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { Pressable, ViewStyle, StyleProp, Platform } from 'react-native';
+import { Pressable, ViewStyle, StyleProp, Platform, Insets } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -38,6 +38,7 @@ export interface PressableScaleProps {
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
   testID?: string;
+  hitSlop?: Insets | number;
 }
 
 export function PressableScale({
@@ -51,6 +52,7 @@ export function PressableScale({
   glowOnPress = false,
   soundOnPress = true,
   testID,
+  hitSlop,
 }: PressableScaleProps): React.JSX.Element {
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
@@ -92,6 +94,7 @@ export function PressableScale({
       onLongPress={onLongPress}
       disabled={disabled}
       testID={testID}
+      hitSlop={hitSlop}
       style={[animatedStyle, style]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}

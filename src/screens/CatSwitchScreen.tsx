@@ -16,7 +16,6 @@ import {
   StyleSheet,
   SafeAreaView,
   FlatList,
-  TouchableOpacity,
   Dimensions,
   Modal,
 } from 'react-native';
@@ -48,7 +47,8 @@ import { useCatEvolutionStore, stageFromXp, xpToNextStage } from '../stores/catE
 import { useGemStore } from '../stores/gemStore';
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import type { EvolutionStage, CatAbility } from '../stores/types';
-import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import type { RarityLevel } from '../theme/tokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -141,9 +141,9 @@ function BurstParticle({ angle, color, progress }: {
 function StagePlatform({ color }: { color: string }): React.ReactElement {
   return (
     <View style={styles.stageContainer}>
-      <View style={[styles.stagePlatform, { backgroundColor: color + '25' }]} />
-      <View style={[styles.stageShadow, { backgroundColor: color + '12' }]} />
-      <View style={[styles.stageShine, { backgroundColor: color + '40' }]} />
+      <View style={[styles.stagePlatform, { backgroundColor: glowColor(color, 0.15) }]} />
+      <View style={[styles.stageShadow, { backgroundColor: glowColor(color, 0.07) }]} />
+      <View style={[styles.stageShine, { backgroundColor: glowColor(color, 0.25) }]} />
     </View>
   );
 }
@@ -214,17 +214,16 @@ function AbilityIconRow({ abilities, unlockedAbilities, catColor, onTap }: {
       {abilities.map((ability) => {
         const isUnlocked = unlockedAbilities.includes(ability.id);
         return (
-          <TouchableOpacity
+          <PressableScale
             key={ability.id}
             style={[
               styles.abilityIcon,
               {
-                backgroundColor: isUnlocked ? catColor + '30' : COLORS.surface,
-                borderColor: isUnlocked ? catColor + '60' : COLORS.cardBorder,
+                backgroundColor: isUnlocked ? glowColor(catColor, 0.19) : COLORS.surface,
+                borderColor: isUnlocked ? glowColor(catColor, 0.38) : COLORS.cardBorder,
               },
             ]}
             onPress={() => onTap(ability)}
-            activeOpacity={0.7}
           >
             <AbilityIcon
               abilityType={ability.effect.type}
@@ -237,7 +236,7 @@ function AbilityIconRow({ abilities, unlockedAbilities, catColor, onTap }: {
                 <MaterialCommunityIcons name="lock" size={8} color={COLORS.textMuted} />
               </View>
             )}
-          </TouchableOpacity>
+          </PressableScale>
         );
       })}
     </View>
@@ -253,7 +252,7 @@ function AbilityDetail({ ability, catColor, isUnlocked }: {
   return (
     <Animated.View
       entering={FadeIn.duration(200)}
-      style={[styles.abilityDetail, { borderColor: isUnlocked ? catColor + '40' : COLORS.cardBorder }]}
+      style={[styles.abilityDetail, { borderColor: isUnlocked ? glowColor(catColor, 0.25) : COLORS.cardBorder }]}
     >
       <AbilityIcon
         abilityType={ability.effect.type}
@@ -293,7 +292,7 @@ function BuyModal({ visible, cat, gems, onConfirm, onCancel }: {
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           <LinearGradient
-            colors={[cat.color + '20', 'transparent']}
+            colors={[glowColor(cat.color, 0.13), 'transparent']}
             style={StyleSheet.absoluteFill}
           />
           <CatAvatar catId={cat.id} size="large" skipEntryAnimation />
@@ -307,17 +306,17 @@ function BuyModal({ visible, cat, gems, onConfirm, onCancel }: {
             {!canAfford && ` (need ${cost - gems} more)`}
           </Text>
           <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.modalCancelBtn} onPress={onCancel}>
+            <PressableScale style={styles.modalCancelBtn} onPress={onCancel}>
               <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
+            </PressableScale>
             {canAfford ? (
-              <TouchableOpacity
+              <PressableScale
                 style={[styles.modalConfirmBtn, { backgroundColor: cat.color }]}
                 onPress={onConfirm}
               >
-                <MaterialCommunityIcons name="diamond-stone" size={16} color="#FFF" />
+                <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.textPrimary} />
                 <Text style={styles.modalConfirmText}>Unlock</Text>
-              </TouchableOpacity>
+              </PressableScale>
             ) : (
               <View style={[styles.modalConfirmBtn, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.cardBorder }]}>
                 <Text style={[styles.modalConfirmText, { color: COLORS.textMuted }]}>Not enough gems</Text>
@@ -391,7 +390,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
       style={[
         styles.card,
         {
-          borderColor: isSelected ? cat.color + '80' : rarityStyle.borderColor,
+          borderColor: isSelected ? glowColor(cat.color, 0.50) : rarityStyle.borderColor,
           borderWidth: rarity === 'legendary' ? 2 : isSelected ? 2 : 1,
         },
         !isOwned && styles.cardLocked,
@@ -402,7 +401,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
 
       {/* Background gradient tinted to cat's color */}
       <LinearGradient
-        colors={[cat.color + '15', 'transparent']}
+        colors={[glowColor(cat.color, 0.08), 'transparent']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.6 }}
         style={StyleSheet.absoluteFill}
@@ -439,7 +438,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
               />
             </View>
             <View style={styles.lockedBadge}>
-              <MaterialCommunityIcons name="lock" size={20} color="#FFF" />
+              <MaterialCommunityIcons name="lock" size={20} color={COLORS.textPrimary} />
             </View>
           </View>
         )}
@@ -449,7 +448,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
       {/* Evolution stage badge + stage dots */}
       {isOwned && (
         <>
-          <View style={[styles.evolutionBadge, { backgroundColor: STAGE_COLORS[stage] + '25' }]}>
+          <View style={[styles.evolutionBadge, { backgroundColor: glowColor(STAGE_COLORS[stage], 0.15) }]}>
             <Text style={[styles.evolutionBadgeText, { color: STAGE_COLORS[stage] }]}>
               {STAGE_LABELS[stage]}
             </Text>
@@ -464,7 +463,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
           {cat.name}
         </Text>
 
-        <View style={[styles.personalityBadge, { backgroundColor: isOwned ? cat.color + '25' : COLORS.surface }]}>
+        <View style={[styles.personalityBadge, { backgroundColor: isOwned ? glowColor(cat.color, 0.15) : COLORS.surface }]}>
           <Text style={[styles.personalityText, { color: isOwned ? cat.color : COLORS.textMuted }]}>
             {cat.personality}
           </Text>
@@ -517,23 +516,22 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
       </View>
 
       {/* Action button */}
-      <TouchableOpacity
+      <PressableScale
         style={[
           styles.actionButton,
           actionButton.type === 'selected' && { backgroundColor: 'transparent', borderWidth: 2, borderColor: cat.color },
           actionButton.type === 'select' && { backgroundColor: cat.color },
           actionButton.type === 'buy' && { backgroundColor: cat.color },
-          actionButton.type === 'legendary' && { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.warning + '60' },
+          actionButton.type === 'legendary' && { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: glowColor(COLORS.warning, 0.38) },
         ]}
         onPress={handleSelect}
-        activeOpacity={0.85}
         testID={`cat-switch-select-${cat.id}`}
       >
         {actionButton.type === 'selected' && (
           <MaterialCommunityIcons name="check-circle" size={18} color={cat.color} />
         )}
         {actionButton.type === 'buy' && (
-          <MaterialCommunityIcons name="diamond-stone" size={16} color="#FFF" />
+          <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.textPrimary} />
         )}
         {actionButton.type === 'legendary' && (
           <MaterialCommunityIcons name="star-four-points" size={16} color={COLORS.warning} />
@@ -545,7 +543,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
         ]}>
           {actionButton.label}
         </Text>
-      </TouchableOpacity>
+      </PressableScale>
     </Animated.View>
   );
 }
@@ -676,7 +674,7 @@ export function CatSwitchScreen(): React.ReactElement {
     <View style={styles.container} testID="cat-switch-screen">
       {/* Dynamic background gradient matching current cat */}
       <LinearGradient
-        colors={[currentCat.color + '18', COLORS.background, COLORS.background]}
+        colors={[glowColor(currentCat.color, 0.09), COLORS.background, COLORS.background]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.4 }}
         style={StyleSheet.absoluteFill}
@@ -685,14 +683,14 @@ export function CatSwitchScreen(): React.ReactElement {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.header}>
-          <TouchableOpacity
+          <PressableScale
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             testID="cat-switch-back"
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Cat Gallery</Text>
             <Text style={styles.headerSubtitle}>
@@ -700,14 +698,13 @@ export function CatSwitchScreen(): React.ReactElement {
             </Text>
           </View>
           {/* Customize button */}
-          <TouchableOpacity
+          <PressableScale
             style={styles.customizeButton}
             onPress={() => (navigation as any).navigate('CatStudio')}
-            activeOpacity={0.7}
           >
             <MaterialCommunityIcons name="palette" size={16} color={COLORS.primary} />
             <Text style={styles.customizeText}>Studio</Text>
-          </TouchableOpacity>
+          </PressableScale>
           {/* Gem balance pill */}
           <View style={styles.gemPill}>
             <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
@@ -790,35 +787,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.display.sm,
     color: COLORS.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     color: COLORS.textSecondary,
     marginTop: 1,
   },
   customizeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary + '20',
+    backgroundColor: glowColor(COLORS.primary, 0.13),
     borderRadius: BORDER_RADIUS.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 6,
-    gap: 4,
+    gap: SPACING.xs,
     borderWidth: 1,
-    borderColor: COLORS.primary + '40',
+    borderColor: glowColor(COLORS.primary, 0.25),
   },
   customizeText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
     color: COLORS.primary,
   },
   gemPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     backgroundColor: glowColor(COLORS.starGold, 0.1),
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -827,7 +823,7 @@ const styles = StyleSheet.create({
     borderColor: glowColor(COLORS.starGold, 0.25),
   },
   gemPillText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     fontWeight: '800',
     color: COLORS.gemGold,
   },
@@ -871,7 +867,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: glowColor('#000000', 0.6),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -923,7 +919,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   evolutionBadgeText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     fontWeight: '700',
   },
 
@@ -956,8 +952,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
   catName: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.display.sm,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
   },
@@ -968,11 +963,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   personalityText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
   },
   musicSkill: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
   },
@@ -999,7 +994,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   evolutionXpText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     color: COLORS.textSecondary,
     minWidth: 80,
     textAlign: 'right',
@@ -1049,18 +1044,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   abilityDetailName: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '700',
   },
   abilityDetailDesc: {
-    fontSize: 11,
-    lineHeight: 16,
+    ...TYPOGRAPHY.caption.md,
     marginTop: 2,
   },
   abilityDetailStage: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     fontWeight: '700',
-    marginTop: 4,
+    marginTop: SPACING.xs,
   },
 
   // Action button
@@ -1068,7 +1062,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     paddingVertical: 12,
     paddingHorizontal: 28,
     borderRadius: BORDER_RADIUS.md,
@@ -1077,9 +1071,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   actionButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '700' as const,
+    color: COLORS.textPrimary,
   },
 
   // Pagination
@@ -1098,7 +1092,7 @@ const styles = StyleSheet.create({
   // Buy modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: glowColor('#000000', 0.7),
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
@@ -1114,8 +1108,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.md,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.heading.lg,
     color: COLORS.textPrimary,
     marginTop: SPACING.md,
     marginBottom: SPACING.sm,
@@ -1127,12 +1120,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   modalCostText: {
-    fontSize: 22,
+    ...TYPOGRAPHY.display.sm,
     fontWeight: '800',
     color: COLORS.gemGold,
   },
   modalBalance: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
   },
@@ -1151,8 +1144,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCancelText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.button.md,
     color: COLORS.textSecondary,
   },
   modalConfirmBtn: {
@@ -1165,8 +1157,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   modalConfirmText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.button.md,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
   },
 });

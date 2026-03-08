@@ -15,7 +15,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
   ScrollView as RNScrollView,
 } from 'react-native';
@@ -34,6 +33,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useSongStore } from '../stores/songStore';
 import { analyzeSession, type FreePlayAnalysis } from '../services/FreePlayAnalyzer';
 import { ttsService } from '../services/tts/TTSService';
+import { PressableScale } from '../components/common/PressableScale';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
 import { computeZoomedRange } from '../components/Keyboard/computeZoomedRange';
 import type { NoteEvent } from '../core/exercises/types';
@@ -152,7 +152,7 @@ function HorizontalNoteStrip({
               right: 0,
               top: i * NOTE_ROW_HEIGHT,
               height: 1,
-              backgroundColor: 'rgba(255,255,255,0.08)',
+              backgroundColor: glowColor(COLORS.textPrimary, 0.08),
             }}
           />
         ))}
@@ -167,7 +167,7 @@ function HorizontalNoteStrip({
               top: 0,
               bottom: 0,
               width: 1,
-              backgroundColor: i % 4 === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
+              backgroundColor: i % 4 === 0 ? glowColor(COLORS.textPrimary, 0.15) : glowColor(COLORS.textPrimary, 0.06),
             }}
           />
         ))}
@@ -195,7 +195,7 @@ function HorizontalNoteStrip({
               }}
             >
               {note.durationBeats * PIXELS_PER_BEAT > 30 && (
-                <Text style={{ fontSize: 11, color: '#fff', fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                <Text style={{ ...TYPOGRAPHY.caption.md, color: COLORS.textPrimary, fontWeight: '700', textShadowColor: glowColor('#000000', 0.6), textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
                   {NOTE_NAMES[note.note % 12]}{Math.floor(note.note / 12) - 1}
                 </Text>
               )}
@@ -223,7 +223,7 @@ function SongSectionPills({
       contentContainerStyle={songStyles.sectionPillsRow}
     >
       {sections.map((section, i) => (
-        <TouchableOpacity
+        <PressableScale
           key={section.id}
           style={[songStyles.sectionPill, i === selectedIndex && songStyles.sectionPillSelected]}
           onPress={() => onSelect(i)}
@@ -236,7 +236,7 @@ function SongSectionPills({
           >
             {section.label}
           </Text>
-        </TouchableOpacity>
+        </PressableScale>
       ))}
     </RNScrollView>
   );
@@ -680,9 +680,9 @@ export function PlayScreen(): React.JSX.Element {
     return (
       <SafeAreaView style={songStyles.container} testID="play-screen">
         <View style={songStyles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <PressableScale onPress={handleBack} style={styles.backButton}>
             <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <View style={songStyles.headerCenter}>
             <Text style={songStyles.headerTitle} numberOfLines={1}>
               {selectedSongTitle}
@@ -691,22 +691,22 @@ export function PlayScreen(): React.JSX.Element {
               {isLoadingSong ? 'Loading...' : songLoadError ?? 'Song unavailable'}
             </Text>
           </View>
-          <TouchableOpacity
+          <PressableScale
             onPress={() => { setSelectedSongTitle(null); setSongLoadError(null); }}
             style={songStyles.closeSongBtn}
           >
             <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
-          </TouchableOpacity>
+          </PressableScale>
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           {isLoadingSong ? (
-            <Text style={{ color: COLORS.textSecondary, ...TYPOGRAPHY.body }}>Loading song...</Text>
+            <Text style={{ color: COLORS.textSecondary, ...TYPOGRAPHY.body.md }}>Loading song...</Text>
           ) : (
-            <TouchableOpacity onPress={() => { setSelectedSongTitle(null); setSongLoadError(null); }}>
-              <Text style={{ color: COLORS.info, ...TYPOGRAPHY.body }}>
+            <PressableScale onPress={() => { setSelectedSongTitle(null); setSongLoadError(null); }}>
+              <Text style={{ color: COLORS.info, ...TYPOGRAPHY.body.md }}>
                 {songLoadError ?? 'Could not load song.'} Tap to dismiss.
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
         </View>
       </SafeAreaView>
@@ -721,9 +721,9 @@ export function PlayScreen(): React.JSX.Element {
       <SafeAreaView style={songStyles.container} testID="play-screen">
         {/* Compact header */}
         <View style={songStyles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <PressableScale onPress={handleBack} style={styles.backButton}>
             <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <View style={songStyles.headerCenter}>
             <Text style={songStyles.headerTitle} numberOfLines={1}>
               {selectedSongTitle}
@@ -732,12 +732,12 @@ export function PlayScreen(): React.JSX.Element {
               {currentSong?.metadata?.artist ?? ''} · {currentSong?.settings?.tempo ?? 120} BPM · {currentSong?.settings?.keySignature ?? 'C'}
             </Text>
           </View>
-          <TouchableOpacity
+          <PressableScale
             onPress={() => { setSelectedSongTitle(null); }}
             style={songStyles.closeSongBtn}
           >
             <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         {/* Section selector */}
@@ -758,44 +758,44 @@ export function PlayScreen(): React.JSX.Element {
         <View style={songStyles.controlsBar}>
           <View style={styles.controlsRow}>
             {!isRecording ? (
-              <TouchableOpacity
+              <PressableScale
                 onPress={startRecording}
                 style={[styles.controlBtn, styles.controlRecord]}
               >
-                <MaterialCommunityIcons name="record-circle" size={18} color="#fff" />
-              </TouchableOpacity>
+                <MaterialCommunityIcons name="record-circle" size={18} color={COLORS.textPrimary} />
+              </PressableScale>
             ) : (
-              <TouchableOpacity
+              <PressableScale
                 onPress={stopRecording}
                 style={[styles.controlBtn, styles.controlStop]}
               >
-                <MaterialCommunityIcons name="stop-circle" size={18} color="#fff" />
-              </TouchableOpacity>
+                <MaterialCommunityIcons name="stop-circle" size={18} color={COLORS.textPrimary} />
+              </PressableScale>
             )}
 
             {recordedNotes.length > 0 && !isRecording && (
               <>
                 {isPlayingBack ? (
-                  <TouchableOpacity
+                  <PressableScale
                     onPress={stopPlayback}
                     style={[styles.controlBtn, styles.controlPlayback]}
                   >
-                    <MaterialCommunityIcons name="stop-circle" size={18} color="#fff" />
-                  </TouchableOpacity>
+                    <MaterialCommunityIcons name="stop-circle" size={18} color={COLORS.textPrimary} />
+                  </PressableScale>
                 ) : (
-                  <TouchableOpacity
+                  <PressableScale
                     onPress={playRecording}
                     style={[styles.controlBtn, styles.controlPlayback]}
                   >
-                    <MaterialCommunityIcons name="play-circle" size={18} color="#fff" />
-                  </TouchableOpacity>
+                    <MaterialCommunityIcons name="play-circle" size={18} color={COLORS.textPrimary} />
+                  </PressableScale>
                 )}
-                <TouchableOpacity
+                <PressableScale
                   onPress={clearRecording}
                   style={[styles.controlBtn, styles.controlClear]}
                 >
                   <MaterialCommunityIcons name="delete" size={18} color={COLORS.textSecondary} />
-                </TouchableOpacity>
+                </PressableScale>
               </>
             )}
           </View>
@@ -830,7 +830,7 @@ export function PlayScreen(): React.JSX.Element {
             <View style={styles.analysisHeader}>
               <MaterialCommunityIcons name="music-note-eighth" size={16} color={COLORS.info} />
               <Text style={styles.analysisTitle}>Analysis</Text>
-              <TouchableOpacity
+              <PressableScale
                 onPress={() => {
                   setAnalysis(null);
                   setAnalysisHidden(true);
@@ -839,7 +839,7 @@ export function PlayScreen(): React.JSX.Element {
                 style={styles.analysisCloseBtn}
               >
                 <MaterialCommunityIcons name="close-circle" size={22} color={COLORS.textMuted} />
-              </TouchableOpacity>
+              </PressableScale>
             </View>
             <Text style={styles.analysisSummary}>{analysis.summary}</Text>
           </View>
@@ -862,9 +862,9 @@ export function PlayScreen(): React.JSX.Element {
     <View style={styles.container} testID="play-screen">
       {/* Top bar — compact for landscape */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton} testID="freeplay-back">
+        <PressableScale onPress={handleBack} style={styles.backButton} testID="freeplay-back">
           <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
-        </TouchableOpacity>
+        </PressableScale>
 
         <Text style={styles.title}>Free Play</Text>
 
@@ -884,28 +884,28 @@ export function PlayScreen(): React.JSX.Element {
 
         {/* Song indicator */}
         {selectedSongTitle ? (
-          <TouchableOpacity
+          <PressableScale
             style={styles.songIndicator}
             onPress={() => setShowSongPicker(true)}
           >
             <MaterialCommunityIcons name="music-note" size={14} color={COLORS.primary} />
             <Text style={styles.songIndicatorText} numberOfLines={1}>{selectedSongTitle}</Text>
-            <TouchableOpacity
+            <PressableScale
               onPress={() => setSelectedSongTitle(null)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <MaterialCommunityIcons name="close" size={14} color={COLORS.textMuted} />
-            </TouchableOpacity>
-          </TouchableOpacity>
+            </PressableScale>
+          </PressableScale>
         ) : (
-          <TouchableOpacity
+          <PressableScale
             style={styles.loadSongBtn}
             onPress={() => setShowSongPicker(true)}
             testID="freeplay-load-song"
           >
             <MaterialCommunityIcons name="music-note-plus" size={16} color={COLORS.primary} />
             <Text style={styles.loadSongBtnText}>Song</Text>
-          </TouchableOpacity>
+          </PressableScale>
         )}
 
         <View style={styles.topBarSpacer} />
@@ -918,49 +918,49 @@ export function PlayScreen(): React.JSX.Element {
         {/* Recording controls — inline in top bar */}
         <View style={styles.controlsRow}>
           {!isRecording ? (
-            <TouchableOpacity
+            <PressableScale
               onPress={startRecording}
               style={[styles.controlBtn, styles.controlRecord]}
               testID="freeplay-record-start"
             >
-              <MaterialCommunityIcons name="record-circle" size={18} color="#fff" />
-            </TouchableOpacity>
+              <MaterialCommunityIcons name="record-circle" size={18} color={COLORS.textPrimary} />
+            </PressableScale>
           ) : (
-            <TouchableOpacity
+            <PressableScale
               onPress={stopRecording}
               style={[styles.controlBtn, styles.controlStop]}
               testID="freeplay-record-stop"
             >
-              <MaterialCommunityIcons name="stop-circle" size={18} color="#fff" />
-            </TouchableOpacity>
+              <MaterialCommunityIcons name="stop-circle" size={18} color={COLORS.textPrimary} />
+            </PressableScale>
           )}
 
           {recordedNotes.length > 0 && !isRecording && (
             <>
               {isPlayingBack ? (
-                <TouchableOpacity
+                <PressableScale
                   onPress={stopPlayback}
                   style={[styles.controlBtn, styles.controlPlayback]}
                   testID="freeplay-record-stop-playback"
                 >
-                  <MaterialCommunityIcons name="stop-circle" size={18} color="#fff" />
-                </TouchableOpacity>
+                  <MaterialCommunityIcons name="stop-circle" size={18} color={COLORS.textPrimary} />
+                </PressableScale>
               ) : (
-                <TouchableOpacity
+                <PressableScale
                   onPress={playRecording}
                   style={[styles.controlBtn, styles.controlPlayback]}
                   testID="freeplay-record-playback"
                 >
-                  <MaterialCommunityIcons name="play-circle" size={18} color="#fff" />
-                </TouchableOpacity>
+                  <MaterialCommunityIcons name="play-circle" size={18} color={COLORS.textPrimary} />
+                </PressableScale>
               )}
-              <TouchableOpacity
+              <PressableScale
                 onPress={clearRecording}
                 style={[styles.controlBtn, styles.controlClear]}
                 testID="freeplay-record-clear"
               >
                 <MaterialCommunityIcons name="delete" size={18} color={COLORS.textSecondary} />
-              </TouchableOpacity>
+              </PressableScale>
             </>
           )}
         </View>
@@ -1024,7 +1024,7 @@ export function PlayScreen(): React.JSX.Element {
           <View style={styles.analysisHeader}>
             <MaterialCommunityIcons name="music-note-eighth" size={16} color={COLORS.info} />
             <Text style={styles.analysisTitle}>Analysis</Text>
-            <TouchableOpacity
+            <PressableScale
               onPress={() => {
                 setAnalysis(null);
                 setAnalysisHidden(true);
@@ -1033,11 +1033,11 @@ export function PlayScreen(): React.JSX.Element {
               style={styles.analysisCloseBtn}
             >
               <MaterialCommunityIcons name="close-circle" size={22} color={COLORS.textMuted} />
-            </TouchableOpacity>
+            </PressableScale>
           </View>
           <Text style={styles.analysisSummary}>{analysis.summary}</Text>
           <View style={styles.analysisActions}>
-            <TouchableOpacity
+            <PressableScale
               style={styles.generateDrillBtn}
               onPress={() => {
                 navigation.navigate('Exercise', {
@@ -1055,7 +1055,7 @@ export function PlayScreen(): React.JSX.Element {
             >
               <MaterialCommunityIcons name="lightning-bolt" size={14} color={COLORS.textPrimary} />
               <Text style={styles.generateDrillText}>Drill</Text>
-            </TouchableOpacity>
+            </PressableScale>
           </View>
         </View>
       )}
@@ -1104,13 +1104,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    backgroundColor: glowColor(COLORS.success, 0.15),
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.full,
   },
   inputBadgeText: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     color: COLORS.success,
     fontWeight: '600',
   },
@@ -1125,7 +1125,7 @@ const styles = StyleSheet.create({
     maxWidth: 180,
   },
   songIndicatorText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     color: COLORS.primary,
     fontWeight: '600',
     flexShrink: 1,
@@ -1140,7 +1140,7 @@ const styles = StyleSheet.create({
     backgroundColor: glowColor(COLORS.primary, 0.08),
   },
   loadSongBtnText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     color: COLORS.primary,
     fontWeight: '600',
   },
@@ -1158,7 +1158,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noteText: {
-    fontSize: 18,
+    ...TYPOGRAPHY.heading.md,
     fontWeight: '800',
     color: COLORS.primary,
     fontFamily: 'monospace',
@@ -1193,11 +1193,11 @@ const styles = StyleSheet.create({
   },
 
   statsText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     color: COLORS.textMuted,
   },
   statsKeyText: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     color: COLORS.info,
     fontWeight: '600',
   },
@@ -1217,7 +1217,7 @@ const styles = StyleSheet.create({
     top: 4,
     left: 4,
     zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: glowColor('#000000', 0.5),
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   handBadgeText: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     fontWeight: '700',
     color: COLORS.textSecondary,
   },
@@ -1260,10 +1260,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   analysisSummary: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption.md,
     color: COLORS.textSecondary,
     marginBottom: 6,
-    lineHeight: 15,
   },
   generateDrillBtn: {
     flexDirection: 'row',
@@ -1275,7 +1274,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
   },
   generateDrillText: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.lg,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
@@ -1323,7 +1322,7 @@ const songStyles = StyleSheet.create({
   closeSongBtn: {
     padding: 4,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.05),
   },
 
   // Section pills
@@ -1351,7 +1350,7 @@ const songStyles = StyleSheet.create({
     fontWeight: '600',
   },
   sectionPillTextSelected: {
-    color: '#fff',
+    color: COLORS.textPrimary,
   },
 
   // Note strip
@@ -1372,17 +1371,17 @@ const songStyles = StyleSheet.create({
   },
   noteLabels: {
     width: 40,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: glowColor('#000000', 0.4),
     justifyContent: 'flex-start',
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.1)',
+    borderRightColor: glowColor(COLORS.textPrimary, 0.1),
   },
   noteLabelRow: {
     justifyContent: 'center',
     paddingLeft: 4,
   },
   noteLabelText: {
-    fontSize: 10,
+    ...TYPOGRAPHY.caption.sm,
     fontWeight: '700',
     fontFamily: 'monospace',
   },
