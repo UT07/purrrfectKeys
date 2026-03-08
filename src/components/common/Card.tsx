@@ -4,13 +4,9 @@
  */
 
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  ViewStyle,
-  StyleProp,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { COLORS, BORDER_RADIUS, SHADOWS, SPACING } from '../../theme/tokens';
+import { PressableScale } from './PressableScale';
 
 export interface CardProps {
   children: React.ReactNode;
@@ -23,9 +19,9 @@ export interface CardProps {
 
 const PADDING = {
   none: 0,
-  small: 8,
-  medium: 12,
-  large: 16,
+  small: SPACING.sm,
+  medium: SPACING.md,
+  large: SPACING.lg,
 };
 
 /**
@@ -59,9 +55,9 @@ export const Card = React.memo(
 
     if (onPress) {
       return (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        <PressableScale onPress={onPress}>
           {Content}
-        </TouchableOpacity>
+        </PressableScale>
       );
     }
 
@@ -73,16 +69,12 @@ Card.displayName = 'Card';
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
+    backgroundColor: COLORS.cardSurface,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
   },
   elevated: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...SHADOWS.sm,
   },
 });

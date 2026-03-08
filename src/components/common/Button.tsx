@@ -3,20 +3,9 @@
  * Reusable button with multiple variants and sizes
  */
 
-import React, { useCallback } from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  ActivityIndicator,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import React from 'react';
+import { View, Text, StyleSheet, ViewStyle, ActivityIndicator } from 'react-native';
+import { PressableScale } from './PressableScale';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline';
 export type ButtonSize = 'small' | 'medium' | 'large';
@@ -71,32 +60,6 @@ export const Button = React.memo(
     style,
     testID,
   }: ButtonProps) => {
-    const scaleValue = useSharedValue(1);
-
-    const handlePressIn = useCallback(() => {
-      scaleValue.value = withTiming(0.95, {
-        duration: 100,
-        easing: Easing.out(Easing.cubic),
-      });
-    }, [scaleValue]);
-
-    const handlePressOut = useCallback(() => {
-      scaleValue.value = withTiming(1, {
-        duration: 100,
-        easing: Easing.out(Easing.cubic),
-      });
-    }, [scaleValue]);
-
-    const handlePress = useCallback(() => {
-      if (!disabled && !loading) {
-        onPress();
-      }
-    }, [disabled, loading, onPress]);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scaleValue.value }],
-    }));
-
     const getBackgroundColor = () => {
       if (disabled) return BTN_COLORS.disabled;
       switch (variant) {
@@ -123,14 +86,13 @@ export const Button = React.memo(
     const textColor = getTextColor();
 
     return (
-      <Animated.View style={[animatedStyle, style]}>
-        <TouchableOpacity
-          onPress={handlePress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          disabled={disabled || loading}
-          activeOpacity={0.8}
-          testID={testID}
+      <PressableScale
+        onPress={onPress}
+        disabled={disabled || loading}
+        testID={testID}
+        style={style}
+      >
+        <View
           style={[
             styles.button,
             {
@@ -159,8 +121,8 @@ export const Button = React.memo(
               {title}
             </Text>
           )}
-        </TouchableOpacity>
-      </Animated.View>
+        </View>
+      </PressableScale>
     );
   }
 );

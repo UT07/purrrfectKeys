@@ -10,6 +10,7 @@ import React from 'react';
 import { View, type ViewStyle, type StyleProp } from 'react-native';
 import { PressableScale } from './PressableScale';
 import {
+  COLORS,
   RARITY,
   type RarityLevel,
   BORDER_RADIUS,
@@ -38,7 +39,7 @@ export function GameCard({
     borderWidth: 1.5,
     borderColor: rarityConfig.borderColor,
     borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: 'rgba(26, 22, 40, 0.85)',
+    backgroundColor: COLORS.cardSurface,
     padding: SPACING.md,
     ...SHADOWS.md,
   };
