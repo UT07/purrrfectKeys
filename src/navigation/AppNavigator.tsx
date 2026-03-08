@@ -25,6 +25,7 @@ import { AccountScreen } from '../screens/AccountScreen';
 import { TierIntroScreen } from '../screens/TierIntroScreen';
 import { CatSwitchScreen } from '../screens/CatSwitchScreen';
 import { CatStudioScreen } from '../screens/CatStudioScreen';
+import { DebugLogScreen } from '../screens/DebugLogScreen';
 import { SkillAssessmentScreen } from '../screens/SkillAssessmentScreen';
 import { DailySessionScreen } from '../screens/DailySessionScreen';
 import { SongLibraryScreen } from '../screens/SongLibraryScreen';
@@ -41,6 +42,8 @@ import { OfflineBanner } from '../components/common/OfflineBanner';
 import { useAuthStore } from '../stores/authStore';
 
 // Types
+import type { Exercise } from '../core/exercises/types';
+
 export type RootStackParamList = {
   Auth: undefined;
   EmailAuth: { isLinking?: boolean } | undefined;
@@ -56,6 +59,8 @@ export type RootStackParamList = {
       suggestedDrillType: string;
       weakNotes: number[];
     };
+    /** Pre-generated bonus drill exercise from WeakSpotDetector */
+    bonusDrillExercise?: Exercise;
   };
   TierIntro: { tier: number; locked?: boolean };
   SkillAssessment: undefined;
@@ -67,6 +72,7 @@ export type RootStackParamList = {
   Account: undefined;
   CatSwitch: undefined;
   CatStudio: undefined;
+  DebugLog: undefined;
   SongPlayer: { songId: string };
   Leaderboard: undefined;
   Friends: undefined;
@@ -183,7 +189,7 @@ export function AppNavigator() {
             <RootStack.Screen
               name="MidiSetup"
               component={MidiSetupScreen}
-              options={{ presentation: 'transparentModal', animation: 'fade', headerShown: true, title: 'MIDI Setup' }}
+              options={{ presentation: 'card', animation: 'slide_from_right', headerShown: false }}
             />
             <RootStack.Screen
               name="MicSetup"
@@ -243,6 +249,11 @@ export function AppNavigator() {
             <RootStack.Screen
               name="CatStudio"
               component={CatStudioScreen}
+              options={{ animation: 'slide_from_bottom' }}
+            />
+            <RootStack.Screen
+              name="DebugLog"
+              component={DebugLogScreen}
               options={{ animation: 'slide_from_bottom' }}
             />
           </>

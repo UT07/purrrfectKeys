@@ -8,7 +8,7 @@
  * - On key release: 150ms fade-out to silence
  * - 4 audio nodes per keypress: 2 oscillators + 1 harmonic gain + 1 envelope
  * - MAX_POLYPHONY = 10 with O(1) oldest-note eviction
- * - Hard auto-stop at 10s as safety net against stuck notes
+ * - Hard auto-stop at 30s as safety net against stuck notes
  *
  * MIDI note to frequency: 440 * 2^((note - 69) / 12)
  *
@@ -26,7 +26,7 @@ import { logger } from '../utils/logger';
 const DEFAULT_VOLUME = 0.5;
 const MAX_POLYPHONY = 10;
 const MIN_NOTE_DURATION = 0.05; // 50ms minimum before release
-const MAX_NOTE_DURATION = 10.0; // Safety net — oscillators auto-stop after 10s if release never fires
+const MAX_NOTE_DURATION = 30.0; // Safety net — oscillators auto-stop after 30s if release never fires
 
 /**
  * ADSR envelope — sustain while key is held
@@ -637,6 +637,49 @@ export class WebAudioEngine implements IAudioEngine {
    */
   getActiveNoteCount(): number {
     return this.activeNotes.size;
+  }
+
+  /**
+   * Play a short metronome click using oscillator synthesis.
+   * @param frequency Click pitch in Hz (1500 for downbeat, 1000 for other beats)
+   * @param volume Click volume 0-1 (scaled by metronomeVolume from settings)
+   */
+  playMetronomeClick(frequency = 1000, volume = 0.3): void {
+    if (!this.context || !this.masterGain) return;
+
+    // Resume suspended context (iOS requires user gesture)
+    if (this.context.state === 'suspended') {
+      this.context.resume();
+    }
+
+    try {
+      const now = this.context.currentTime;
+      const osc = this.context.createOscillator();
+      const gain = this.context.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.value = frequency;
+
+      // Short percussive envelope: instant attack, 30ms exponential decay
+      const clampedVol = Math.max(0.001, Math.min(1.0, volume));
+      gain.gain.setValueAtTime(clampedVol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(now);
+      osc.stop(now + 0.04);
+
+      // Cleanup nodes after they finish
+      setTimeout(() => {
+        try { osc.disconnect(); } catch { /* already disconnected */ }
+        try { gain.disconnect(); } catch { /* already disconnected */ }
+      }, 60);
+    } catch (error) {
+      // Non-critical — metronome click failure should not crash playback
+      logger.warn('[WebAudioEngine] Metronome click failed:', error);
+    }
   }
 
   /**

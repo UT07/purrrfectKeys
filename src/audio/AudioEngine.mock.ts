@@ -74,6 +74,10 @@ export class MockAudioEngine implements IAudioEngine {
     return this.initialized ? 'running' : 'closed';
   }
 
+  playMetronomeClick(_frequency?: number, _volume?: number): void {
+    // No-op in mock
+  }
+
   getActiveNoteCount(): number {
     return this.activeNotes.size;
   }

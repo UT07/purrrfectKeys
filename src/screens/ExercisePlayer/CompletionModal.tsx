@@ -103,6 +103,10 @@ export interface CompletionModalProps {
   onStartDemo?: () => void;
   /** Called when user taps "Review with Salsa" — switches to replay mode */
   onStartReplay?: () => void;
+  /** Called when user taps "Bonus Drill" — navigates to weakness-targeted drill */
+  onBonusDrill?: () => void;
+  /** Description of the weakness pattern for the bonus drill button */
+  bonusDrillDescription?: string;
   isTestMode?: boolean;
   testID?: string;
   gemsEarned?: number;
@@ -124,6 +128,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   onStartTest,
   onStartDemo,
   onStartReplay,
+  onBonusDrill,
+  bonusDrillDescription,
   isTestMode = false,
   testID,
   gemsEarned = 0,
@@ -773,6 +779,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                   size="large"
                   icon={<MaterialCommunityIcons name="replay" size={20} color={COLORS.textSecondary} />}
                   testID="completion-review-replay"
+                />
+              )}
+              {onBonusDrill && (
+                <Button
+                  title={bonusDrillDescription ? `Bonus: ${bonusDrillDescription}` : 'Bonus Drill'}
+                  onPress={onBonusDrill}
+                  variant="secondary"
+                  size="large"
+                  icon={<MaterialCommunityIcons name="target" size={20} color={COLORS.textSecondary} />}
+                  testID="completion-bonus-drill"
                 />
               )}
               {!(isTestMode && !score.isPassed) && (

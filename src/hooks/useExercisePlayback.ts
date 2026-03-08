@@ -37,6 +37,8 @@ export interface UseExercisePlaybackOptions {
   enableAudio?: boolean;
   /** Override input method ('auto' uses settings store preference) */
   inputMethod?: 'auto' | 'midi' | 'mic' | 'touch';
+  /** Override metronome enabled state (defaults to exercise.settings.metronomeEnabled) */
+  metronomeEnabled?: boolean;
 }
 
 export interface UseExercisePlaybackReturn {
@@ -85,6 +87,7 @@ export function useExercisePlayback({
   enableMidi = true,
   enableAudio = true,
   inputMethod,
+  metronomeEnabled,
 }: UseExercisePlaybackOptions): UseExercisePlaybackReturn {
   const audioEngineRef = useRef(createAudioEngine());
   const audioEngine = audioEngineRef.current;
@@ -114,6 +117,7 @@ export function useExercisePlayback({
   const playedNotesRef = useRef<MidiNoteEvent[]>([]); // Ref for scoring (avoids stale closure)
   const realtimeBeatRef = useRef(-exercise.settings.countIn); // 60fps beat position for scoring
   const hasCompletedRef = useRef(false); // Guard against double-completion from rapid interval ticks
+  const lastMetronomeBeatRef = useRef(-999); // Last integer beat where metronome click was played
   // Tracks noteOn indices so noteOff/release can attach durationMs for scoring.
   const noteOnIndexMapRef = useRef<Map<number, number[]>>(new Map());
 
@@ -461,6 +465,24 @@ export function useExercisePlayback({
         useExerciseStore.getState().setCurrentBeat(beat);
       }
 
+      // Metronome click on each integer beat (only during actual exercise, not count-in)
+      const isMetronomeOn = metronomeEnabled ?? exercise.settings.metronomeEnabled ?? false;
+      if (isMetronomeOn && beat >= 0) {
+        const metronomeVolume = useSettingsStore.getState().metronomeVolume;
+        if (metronomeVolume > 0) {
+          const currentWholeBeat = Math.floor(beat);
+          if (currentWholeBeat >= 0 && currentWholeBeat > lastMetronomeBeatRef.current) {
+            lastMetronomeBeatRef.current = currentWholeBeat;
+            const timeSignature = exercise.settings.timeSignature?.[0] ?? 4;
+            const isDownbeat = currentWholeBeat % timeSignature === 0;
+            audioEngineRef.current.playMetronomeClick(
+              isDownbeat ? 1500 : 1000,
+              metronomeVolume,
+            );
+          }
+        }
+      }
+
       // Early completion: if the user has played at least as many pitch-matched
       // notes as the exercise requires AND we've passed the last note's start
       // beat, complete immediately instead of waiting for the duration timeout.
@@ -479,6 +501,7 @@ export function useExercisePlayback({
           startTimeRef.current = Date.now();
           pauseElapsedRef.current = 0;
           hasCrossedZeroRef.current = false;
+          lastMetronomeBeatRef.current = -999; // Reset metronome for loop restart
           playedNotesRef.current = [];
           noteOnIndexMapRef.current.clear();
           realtimeBeatRef.current = -countInBeats;
@@ -500,8 +523,8 @@ export function useExercisePlayback({
     // Including exerciseStore would cause the interval to be torn down and
     // recreated on every store update (e.g. addPlayedNote from mic input),
     // effectively freezing the beat counter.
-     
-  }, [isPlaying, exercise]);
+
+  }, [isPlaying, exercise, metronomeEnabled]);
 
   /**
    * Start playback (fresh start — resets all state)
@@ -511,6 +534,7 @@ export function useExercisePlayback({
     pauseElapsedRef.current = 0;
     hasCrossedZeroRef.current = false;
     hasCompletedRef.current = false; // Allow completion for this new playback
+    lastMetronomeBeatRef.current = -999; // Reset metronome tracking
     playedNotesRef.current = [];
     noteOnIndexMapRef.current.clear();
     realtimeBeatRef.current = -exercise.settings.countIn;

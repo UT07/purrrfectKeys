@@ -375,6 +375,36 @@ export class NativeAudioEngine implements IAudioEngine {
   }
 
   /**
+   * Play a short metronome click using the AudioContext oscillator.
+   * @param frequency Click pitch in Hz (1500 for downbeat, 1000 for other beats)
+   * @param volume Click volume 0-1
+   */
+  playMetronomeClick(frequency = 1000, volume = 0.3): void {
+    if (!this.context || !this.masterGain) return;
+
+    try {
+      const now = this.context.currentTime;
+      const osc = this.context.createOscillator();
+      const gain = this.context.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.value = frequency;
+
+      const clampedVol = Math.max(0.001, Math.min(1.0, volume));
+      gain.gain.setValueAtTime(clampedVol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } catch {
+      // Non-critical — metronome click failure should not crash playback
+    }
+  }
+
+  /**
    * Get count of active notes (for debugging)
    */
   getActiveNoteCount(): number {

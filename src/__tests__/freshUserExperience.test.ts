@@ -63,6 +63,7 @@ jest.mock('../audio/createAudioEngine', () => ({
     playNote: jest.fn(() => ({ note: 60, startTime: 0, release: jest.fn() })),
     releaseNote: jest.fn(),
     releaseAllNotes: jest.fn(),
+    playMetronomeClick: jest.fn(),
   })),
   ensureAudioModeConfigured: jest.fn().mockResolvedValue(undefined),
 }));

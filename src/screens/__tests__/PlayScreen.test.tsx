@@ -57,6 +57,7 @@ jest.mock('../../audio/createAudioEngine', () => ({
     playNote: mockPlayNote,
     releaseNote: mockReleaseNote,
     releaseAllNotes: mockReleaseAllNotes,
+    playMetronomeClick: jest.fn(),
     dispose: jest.fn(),
   })),
 }));

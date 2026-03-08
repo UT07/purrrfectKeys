@@ -23,6 +23,9 @@ export interface IAudioEngine {
   releaseNote(handle: NoteHandle): void;
   releaseAllNotes(): void;
 
+  // Metronome
+  playMetronomeClick(frequency?: number, volume?: number): void;
+
   // Configuration
   setVolume(volume: number): void;
   getLatency(): number;

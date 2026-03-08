@@ -1,5 +1,5 @@
 /**
- * Expo Audio Engine — Round-Robin Sound Pool
+ * Expo Audio Engine — Round-Robin Sound Pool with Real Piano Samples
  *
  * Uses expo-av with a round-robin pool of Audio.Sound objects per note.
  * Each note gets VOICES_PER_NOTE sound objects. On each play, we cycle
@@ -7,8 +7,11 @@
  * This eliminates the stop/play race condition that caused dropped notes.
  * Notes sustain until released (key up stops the sound).
  *
- * Middle C (MIDI 60) = 261.63 Hz is the base note.
- * Other notes use playback rate shifting: rate = 2^((note - 60) / 12)
+ * Samples: 5 octave-spaced piano recordings (C2-C6) from FluidR3 GM soundfont.
+ * Notes between samples use playback rate shifting: rate = 2^((note - baseNote) / 12)
+ * Maximum pitch shift is ±6 semitones, which preserves natural timbre.
+ *
+ * Falls back to procedural WAV synthesis if sample loading fails.
  */
 
 import { Audio, AVPlaybackSource } from 'expo-av';
@@ -16,21 +19,53 @@ import * as FileSystem from 'expo-file-system';
 import type { IAudioEngine, NoteHandle, AudioContextState } from './types';
 import { logger } from '../utils/logger';
 
-const BASE_MIDI_NOTE = 60;
-const BASE_FREQUENCY = 261.63;
-const SAMPLE_RATE = 44100;
-const DURATION = 5.0; // seconds — long enough for sustained key holds
 const VOICES_PER_NOTE = 3; // Round-robin voices per note (3 prevents clicks from rapid re-triggers)
 
 /**
- * Generate a WAV file buffer containing a piano-like tone
- * (sine wave with exponential decay and harmonics)
+ * Real piano sample sources — statically required for Metro bundling.
+ * FluidR3 GM Acoustic Grand Piano, 44.1kHz stereo MP3, ~25KB each.
+ * Octave-spaced: each note covers ±6 semitones via pitch shifting.
  */
-function generatePianoWav(): ArrayBuffer {
-  const numSamples = Math.floor(SAMPLE_RATE * DURATION);
+const SAMPLE_SOURCES: { midiNote: number; source: AVPlaybackSource }[] = [
+  { midiNote: 36, source: require('../../assets/samples/piano-c2.mp3') },
+  { midiNote: 48, source: require('../../assets/samples/piano-c3.mp3') },
+  { midiNote: 60, source: require('../../assets/samples/piano-c4.mp3') },
+  { midiNote: 72, source: require('../../assets/samples/piano-c5.mp3') },
+  { midiNote: 84, source: require('../../assets/samples/piano-c6.mp3') },
+];
+
+/**
+ * Find the nearest sample source for a given MIDI note.
+ * Returns the sample source and the playback rate needed to pitch-shift.
+ */
+function getNearestSample(note: number): { source: AVPlaybackSource; baseNote: number; rate: number } {
+  let nearest = SAMPLE_SOURCES[0];
+  let minDistance = Math.abs(note - nearest.midiNote);
+
+  for (const sample of SAMPLE_SOURCES) {
+    const distance = Math.abs(note - sample.midiNote);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearest = sample;
+    }
+  }
+
+  const rate = Math.pow(2, (note - nearest.midiNote) / 12);
+  return { source: nearest.source, baseNote: nearest.midiNote, rate };
+}
+
+// ── Procedural fallback (used only if real samples fail to load) ──────────
+
+const FALLBACK_BASE_NOTE = 60;
+const FALLBACK_FREQUENCY = 261.63;
+const FALLBACK_SAMPLE_RATE = 44100;
+const FALLBACK_DURATION = 5.0;
+
+function generateFallbackWav(): ArrayBuffer {
+  const numSamples = Math.floor(FALLBACK_SAMPLE_RATE * FALLBACK_DURATION);
   const numChannels = 1;
   const bitsPerSample = 16;
-  const byteRate = SAMPLE_RATE * numChannels * (bitsPerSample / 8);
+  const byteRate = FALLBACK_SAMPLE_RATE * numChannels * (bitsPerSample / 8);
   const blockAlign = numChannels * (bitsPerSample / 8);
   const dataSize = numSamples * blockAlign;
   const headerSize = 44;
@@ -52,16 +87,16 @@ function generatePianoWav(): ArrayBuffer {
   view.setUint32(16, 16, true);
   view.setUint16(20, 1, true);
   view.setUint16(22, numChannels, true);
-  view.setUint32(24, SAMPLE_RATE, true);
+  view.setUint32(24, FALLBACK_SAMPLE_RATE, true);
   view.setUint32(28, byteRate, true);
   view.setUint16(32, blockAlign, true);
   view.setUint16(34, bitsPerSample, true);
   writeString(36, 'data');
   view.setUint32(40, dataSize, true);
 
-  const freq = BASE_FREQUENCY;
+  const freq = FALLBACK_FREQUENCY;
   for (let i = 0; i < numSamples; i++) {
-    const t = i / SAMPLE_RATE;
+    const t = i / FALLBACK_SAMPLE_RATE;
     const envelope = Math.exp(-t * 1.0);
     const attack = Math.min(1.0, t / 0.01);
     const fundamental = Math.sin(2 * Math.PI * freq * t);
@@ -110,14 +145,71 @@ interface NoteVoicePool {
 const PRELOAD_NOTES = [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72];
 
+/** Base frequency for the metronome click WAV. Pitch-shifted via playback rate. */
+const METRONOME_BASE_FREQ = 1000;
+const METRONOME_CLICK_DURATION = 0.035; // 35ms — crisp percussive tick
+
+/**
+ * Generate a short sine-wave click WAV buffer at the base frequency.
+ * Used for the metronome click sound. Pitch-shifted via playback rate.
+ */
+function generateMetronomeClickWav(): ArrayBuffer {
+  const sampleRate = 44100;
+  const numSamples = Math.floor(sampleRate * METRONOME_CLICK_DURATION);
+  const bitsPerSample = 16;
+  const byteRate = sampleRate * (bitsPerSample / 8);
+  const dataSize = numSamples * 2;
+  const headerSize = 44;
+  const totalSize = headerSize + dataSize;
+
+  const buffer = new ArrayBuffer(totalSize);
+  const view = new DataView(buffer);
+
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  };
+
+  writeStr(0, 'RIFF');
+  view.setUint32(4, totalSize - 8, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, bitsPerSample, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    // Exponential decay for crisp percussive feel, instant attack
+    const envelope = Math.exp(-t * 90) * Math.min(1.0, t / 0.001);
+    const sample = Math.sin(2 * Math.PI * METRONOME_BASE_FREQ * t) * envelope * 0.3;
+    const clamped = Math.max(-1, Math.min(1, sample));
+    view.setInt16(headerSize + i * 2, Math.floor(clamped * 32767), true);
+  }
+
+  return buffer;
+}
+
 export class ExpoAudioEngine implements IAudioEngine {
   private initialized = false;
   private volume = 0.5;
-  private soundSource: AVPlaybackSource | null = null;
+  /** Legacy: single fallback source when real samples fail */
+  private fallbackSource: AVPlaybackSource | null = null;
+  /** Whether we're using real multi-sample sources (true) or single fallback WAV (false) */
+  private useRealSamples = false;
   private voicePools: Map<number, NoteVoicePool> = new Map();
   private activeNotes: Set<number> = new Set();
   /** Track which voice is currently playing for each note, so release can stop it */
   private activeVoices: Map<number, Audio.Sound> = new Map();
+  /** Pre-loaded metronome click sound (base frequency, pitch-shifted via rate) */
+  private metronomeSound: Audio.Sound | null = null;
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -129,31 +221,52 @@ export class ExpoAudioEngine implements IAudioEngine {
       // which uses AudioManager (sync) to avoid racing with mic PlayAndRecord mode.
       // Do NOT call Audio.setAudioModeAsync() here — it would clobber the session.
 
-      // Generate and write base WAV
-      const wavStart = Date.now();
-      const wavBuffer = generatePianoWav();
-      logger.log(`[ExpoAudioEngine] WAV generated: ${wavBuffer.byteLength} bytes (${Date.now() - wavStart}ms)`);
-
-      const writeStart = Date.now();
-      const base64 = arrayBufferToBase64(wavBuffer);
-      const cacheDir = FileSystem.cacheDirectory;
-      if (!cacheDir) {
-        throw new Error('FileSystem.cacheDirectory is null');
+      // Try loading real piano samples first
+      let samplesAvailable = false;
+      try {
+        // Test that at least the Middle C sample can be loaded
+        const testSound = await Audio.Sound.createAsync(
+          SAMPLE_SOURCES[2].source, // C4 (Middle C)
+          { shouldPlay: false }
+        );
+        await testSound.sound.unloadAsync();
+        samplesAvailable = true;
+        this.useRealSamples = true;
+        logger.log(`[ExpoAudioEngine] Real piano samples available (FluidR3 GM)`);
+      } catch (sampleError) {
+        logger.warn(`[ExpoAudioEngine] Real samples unavailable, falling back to procedural:`, sampleError);
       }
-      const fileUri = cacheDir + 'piano-tone.wav';
-      await FileSystem.writeAsStringAsync(fileUri, base64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
 
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      logger.log(`[ExpoAudioEngine] WAV written: ${fileUri}, exists=${fileInfo.exists} (${Date.now() - writeStart}ms)`);
+      // Fallback: generate procedural WAV if real samples failed
+      if (!samplesAvailable) {
+        const wavStart = Date.now();
+        const wavBuffer = generateFallbackWav();
+        logger.log(`[ExpoAudioEngine] Fallback WAV generated: ${wavBuffer.byteLength} bytes (${Date.now() - wavStart}ms)`);
 
-      this.soundSource = { uri: fileUri };
+        const writeStart = Date.now();
+        const base64 = arrayBufferToBase64(wavBuffer);
+        const cacheDir = FileSystem.cacheDirectory;
+        if (!cacheDir) {
+          throw new Error('FileSystem.cacheDirectory is null');
+        }
+        const fileUri = cacheDir + 'piano-tone.wav';
+        await FileSystem.writeAsStringAsync(fileUri, base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        logger.log(`[ExpoAudioEngine] Fallback WAV written: ${fileUri}, exists=${fileInfo.exists} (${Date.now() - writeStart}ms)`);
+
+        this.fallbackSource = { uri: fileUri };
+      }
 
       // Pre-create round-robin voice pools
       const poolStart = Date.now();
       await this.preloadVoicePools();
       const poolMs = Date.now() - poolStart;
+
+      // Pre-load metronome click sound
+      await this.preloadMetronomeClick();
 
       this.initialized = true;
 
@@ -161,9 +274,10 @@ export class ExpoAudioEngine implements IAudioEngine {
       const loadedCount = this.voicePools.size;
       const expectedCount = PRELOAD_NOTES.length;
       const totalVoices = loadedCount * VOICES_PER_NOTE;
+      const sampleType = this.useRealSamples ? 'FluidR3 GM piano' : 'procedural synthesis';
       logger.log(
         `[ExpoAudioEngine] Pool health: ${loadedCount}/${expectedCount} notes loaded, ` +
-        `${totalVoices} total voices (${poolMs}ms)`
+        `${totalVoices} total voices (${poolMs}ms) [${sampleType}]`
       );
 
       const totalMs = Date.now() - totalStart;
@@ -199,21 +313,90 @@ export class ExpoAudioEngine implements IAudioEngine {
   }
 
   /**
+   * Pre-load the metronome click WAV as an Audio.Sound object.
+   * Generates a short sine-wave WAV at METRONOME_BASE_FREQ (1000Hz),
+   * writes it to cache, and creates a reusable Audio.Sound.
+   * Pitch shifting for downbeat (1500Hz) is done via playback rate.
+   */
+  private async preloadMetronomeClick(): Promise<void> {
+    try {
+      const wavBuffer = generateMetronomeClickWav();
+      const base64 = arrayBufferToBase64(wavBuffer);
+      const cacheDir = FileSystem.cacheDirectory;
+      if (!cacheDir) return;
+
+      const fileUri = cacheDir + 'metronome-click.wav';
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: fileUri },
+        { shouldPlay: false, volume: 0.3 }
+      );
+      this.metronomeSound = sound;
+      logger.log('[ExpoAudioEngine] Metronome click preloaded');
+    } catch (error) {
+      logger.warn('[ExpoAudioEngine] Metronome click preload failed (non-critical):', error);
+    }
+  }
+
+  /**
+   * Play a short metronome click.
+   * @param frequency Click pitch in Hz (1500 for downbeat, 1000 for other beats)
+   * @param volume Click volume 0-1 (metronomeVolume from settings)
+   */
+  playMetronomeClick(frequency = 1000, volume = 0.3): void {
+    if (!this.metronomeSound) return;
+
+    const clampedVol = Math.max(0, Math.min(1, volume));
+    // Pitch-shift: rate = requestedFreq / baseFreq (e.g. 1500/1000 = 1.5x for downbeat)
+    const rate = Math.max(0.25, Math.min(4.0, frequency / METRONOME_BASE_FREQ));
+
+    this.metronomeSound.replayAsync({
+      positionMillis: 0,
+      volume: clampedVol,
+      rate,
+      shouldPlay: true,
+    }).catch(() => {
+      // Non-critical — metronome click failure should not crash playback
+    });
+  }
+
+  /**
    * Create VOICES_PER_NOTE Audio.Sound objects per note, each pre-configured
    * with the correct playback rate. On play, we just call replayAsync().
+   *
+   * With real samples: each note uses the nearest octave-spaced sample (C2-C6)
+   * and pitch-shifts via playbackRate. Max shift is ±6 semitones.
+   *
+   * With fallback: all notes use the single procedural C4 WAV, shifted by rate.
    */
   private async preloadVoicePools(): Promise<void> {
-    if (!this.soundSource) return;
+    if (!this.useRealSamples && !this.fallbackSource) return;
 
     const loadPromises = PRELOAD_NOTES.map(async (note) => {
       try {
-        const rate = Math.pow(2, (note - BASE_MIDI_NOTE) / 12);
+        let source: AVPlaybackSource;
+        let rate: number;
+
+        if (this.useRealSamples) {
+          // Real samples: find nearest octave sample and compute pitch shift
+          const nearest = getNearestSample(note);
+          source = nearest.source;
+          rate = nearest.rate;
+        } else {
+          // Fallback: single procedural WAV at C4, pitch-shift everything
+          source = this.fallbackSource!;
+          rate = Math.pow(2, (note - FALLBACK_BASE_NOTE) / 12);
+        }
+
         const clampedRate = Math.max(0.25, Math.min(4.0, rate));
         const sounds: Audio.Sound[] = [];
 
         for (let v = 0; v < VOICES_PER_NOTE; v++) {
           const { sound } = await Audio.Sound.createAsync(
-            this.soundSource!,
+            source,
             {
               shouldPlay: false,
               volume: this.volume,
@@ -221,6 +404,14 @@ export class ExpoAudioEngine implements IAudioEngine {
               shouldCorrectPitch: false,
             }
           );
+          // Clean up activeNotes when a pooled voice finishes naturally
+          // (prevents polyphonyScale from permanently decreasing)
+          sound.setOnPlaybackStatusUpdate((status) => {
+            if ('didJustFinish' in status && status.didJustFinish) {
+              this.activeNotes.delete(note);
+              this.activeVoices.delete(note);
+            }
+          });
           sounds.push(sound);
         }
 
@@ -264,7 +455,12 @@ export class ExpoAudioEngine implements IAudioEngine {
     this.voicePools.clear();
     this.activeNotes.clear();
     this.activeVoices.clear();
-    this.soundSource = null;
+    this.fallbackSource = null;
+    this.useRealSamples = false;
+    if (this.metronomeSound) {
+      this.metronomeSound.unloadAsync().catch(() => {});
+      this.metronomeSound = null;
+    }
     this.initialized = false;
     logger.log('[ExpoAudioEngine] Disposed');
   }
@@ -278,8 +474,8 @@ export class ExpoAudioEngine implements IAudioEngine {
    * a fresh voice available (voice 0 may still be fading while voice 1 plays).
    */
   playNote(note: number, velocity: number = 0.8): NoteHandle {
-    if (!this.initialized || !this.soundSource) {
-      logger.warn(`[ExpoAudioEngine] playNote(${note}) skipped: initialized=${this.initialized}, soundSource=${!!this.soundSource}, pools=${this.voicePools.size}`);
+    if (!this.initialized) {
+      logger.warn(`[ExpoAudioEngine] playNote(${note}) skipped: not initialized, pools=${this.voicePools.size}`);
       return {
         note,
         startTime: Date.now() / 1000,
@@ -323,9 +519,15 @@ export class ExpoAudioEngine implements IAudioEngine {
       this.activeNotes.add(note);
     } else {
       // Non-pooled note: create on the fly (higher latency)
-      const rate = Math.pow(2, (note - BASE_MIDI_NOTE) / 12);
-      const clampedRate = Math.max(0.25, Math.min(4.0, rate));
-      this.createAndPlaySound(note, clampedRate, clampedVelocity);
+      if (this.useRealSamples) {
+        const nearest = getNearestSample(note);
+        const clampedRate = Math.max(0.25, Math.min(4.0, nearest.rate));
+        this.createAndPlaySound(note, clampedRate, clampedVelocity, nearest.source);
+      } else if (this.fallbackSource) {
+        const rate = Math.pow(2, (note - FALLBACK_BASE_NOTE) / 12);
+        const clampedRate = Math.max(0.25, Math.min(4.0, rate));
+        this.createAndPlaySound(note, clampedRate, clampedVelocity, this.fallbackSource);
+      }
     }
 
     return {
@@ -338,10 +540,9 @@ export class ExpoAudioEngine implements IAudioEngine {
   private async createAndPlaySound(
     note: number,
     rate: number,
-    velocity: number
+    velocity: number,
+    source: AVPlaybackSource
   ): Promise<void> {
-    if (!this.soundSource) return;
-
     try {
       // Apply polyphony scaling to match pooled path behavior
       const activeCount = this.activeNotes.size;
@@ -349,7 +550,7 @@ export class ExpoAudioEngine implements IAudioEngine {
       const vol = velocity * this.volume * polyphonyScale;
 
       const { sound } = await Audio.Sound.createAsync(
-        this.soundSource,
+        source,
         {
           shouldPlay: true,
           volume: vol,
@@ -416,6 +617,13 @@ export class ExpoAudioEngine implements IAudioEngine {
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
+    // Propagate to all pre-loaded voice pools so future replayAsync() calls
+    // use the new volume without waiting for the next playNote() call.
+    for (const [, pool] of this.voicePools) {
+      for (const sound of pool.sounds) {
+        sound.setVolumeAsync(this.volume).catch(() => {});
+      }
+    }
   }
 
   getLatency(): number {
