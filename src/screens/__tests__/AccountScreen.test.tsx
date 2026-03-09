@@ -118,9 +118,9 @@ describe('AccountScreen', () => {
       expect(getByText('test@example.com')).toBeTruthy();
     });
 
-    it('renders avatar initial from display name', () => {
-      const { getByText } = render(<AccountScreen />);
-      expect(getByText('T')).toBeTruthy();
+    it('renders CatAvatar for authenticated user', () => {
+      const { getByTestId } = render(<AccountScreen />);
+      expect(getByTestId('cat-avatar-mini-meowww')).toBeTruthy();
     });
 
     it('renders back button', () => {

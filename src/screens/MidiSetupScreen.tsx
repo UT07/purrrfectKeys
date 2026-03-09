@@ -15,10 +15,17 @@ import {
   View,
   Text,
   ScrollView,
-  ActivityIndicator,
   Platform,
   StyleSheet,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -26,17 +33,123 @@ import { getMidiInput } from '../input/MidiInput';
 import MidiDeviceManager from '../input/MidiDevice';
 import type { MidiDevice } from '../input/MidiInput';
 import type { MidiNoteEvent } from '../core/exercises/types';
-import { COLORS, BORDER_RADIUS, SHADOWS, TYPOGRAPHY, SPACING } from '../theme/tokens';
+import { COLORS, BORDER_RADIUS, SHADOWS, TYPOGRAPHY, SPACING, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import { logger } from '../utils/logger';
 
 type SetupStep = 'welcome' | 'detecting' | 'select' | 'verify' | 'success';
 
+const STEP_ORDER: SetupStep[] = ['welcome', 'detecting', 'select', 'verify', 'success'];
+const STEP_LABELS = ['Connect', 'Scan', 'Select', 'Test', 'Done'];
+
 interface MidiSetupScreenProps {
   onComplete?: (deviceId: string) => void;
   onCancel?: () => void;
 }
+
+// ─────────────────────────────────────────────────
+// Step Progress Indicator
+// ─────────────────────────────────────────────────
+
+const StepProgressIndicator: React.FC<{ currentStep: SetupStep }> = ({ currentStep }) => {
+  const currentIndex = STEP_ORDER.indexOf(currentStep);
+
+  return (
+    <View style={s.progressContainer}>
+      {STEP_ORDER.map((step, index) => {
+        const isCompleted = index < currentIndex;
+        const isCurrent = index === currentIndex;
+        const isFuture = index > currentIndex;
+
+        return (
+          <React.Fragment key={step}>
+            {/* Connecting line (before each dot except first) */}
+            {index > 0 && (
+              <View
+                style={[
+                  s.progressLine,
+                  {
+                    backgroundColor: index <= currentIndex
+                      ? COLORS.success
+                      : COLORS.cardBorder,
+                  },
+                ]}
+              />
+            )}
+            {/* Dot + label column */}
+            <View style={s.progressDotColumn}>
+              <View
+                style={[
+                  s.progressDot,
+                  isCompleted && s.progressDotCompleted,
+                  isCurrent && s.progressDotCurrent,
+                  isFuture && s.progressDotFuture,
+                ]}
+              >
+                {isCompleted && (
+                  <MaterialCommunityIcons name="check" size={10} color={COLORS.textPrimary} />
+                )}
+              </View>
+              <Text
+                style={[
+                  s.progressLabel,
+                  (isCurrent || isCompleted) && { color: COLORS.textSecondary },
+                ]}
+              >
+                {STEP_LABELS[index]}
+              </Text>
+            </View>
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+};
+
+// ─────────────────────────────────────────────────
+// Pulsing Ring (for detecting step)
+// ─────────────────────────────────────────────────
+
+const PulsingRing: React.FC = () => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.3, { duration: 1000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1.0, { duration: 1000, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+    );
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.2, { duration: 1000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.6, { duration: 1000, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+    );
+  }, [opacity, scale]);
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <View style={s.pulsingContainer}>
+      <Animated.View style={[s.pulsingRing, ringStyle]} />
+      <View style={s.pulsingIconCircle}>
+        <MaterialCommunityIcons name="piano" size={40} color={COLORS.primary} />
+      </View>
+    </View>
+  );
+};
+
+// ─────────────────────────────────────────────────
+// Main Screen
+// ─────────────────────────────────────────────────
 
 export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
   onComplete,
@@ -175,7 +288,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
         )}
 
         {/* Header */}
-        <View style={{ marginBottom: SPACING.xl }}>
+        <View style={{ marginBottom: SPACING.md }}>
           <Text style={s.title}>Connect Your MIDI Keyboard</Text>
           <Text style={s.subtitle}>
             {step === 'welcome' && 'Follow these steps to set up your MIDI keyboard'}
@@ -185,6 +298,9 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
             {step === 'success' && 'Ready to play!'}
           </Text>
         </View>
+
+        {/* Step Progress Indicator */}
+        <StepProgressIndicator currentStep={step} />
 
         {step === 'welcome' && <WelcomeStep onStart={() => { setErrorMessage(null); startDetection(); }} />}
         {step === 'detecting' && <DetectingStep />}
@@ -214,6 +330,10 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
   );
 };
 
+// ─────────────────────────────────────────────────
+// Step 1: Welcome
+// ─────────────────────────────────────────────────
+
 const WelcomeStep: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const instructions =
     Platform.OS === 'ios'
@@ -230,11 +350,20 @@ const WelcomeStep: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
   return (
     <View>
+      {/* Hero Piano Icon */}
+      <View style={s.heroIconContainer}>
+        <View style={s.heroIconCircle}>
+          <MaterialCommunityIcons name="piano" size={80} color={COLORS.primary} />
+        </View>
+      </View>
+
       <View style={s.card}>
         <Text style={s.cardTitle}>Setup Instructions</Text>
         {instructions.map((instruction, index) => (
-          <View key={index} style={{ flexDirection: 'row', marginBottom: index < instructions.length - 1 ? SPACING.md : 0 }}>
-            <Text style={[s.cardText, { marginRight: SPACING.md, fontWeight: '600' }]}>{index + 1}.</Text>
+          <View key={index} style={s.instructionRow}>
+            <View style={s.instructionNumber}>
+              <Text style={s.instructionNumberText}>{index + 1}</Text>
+            </View>
             <Text style={[s.cardText, { flex: 1, lineHeight: 20 }]}>{instruction}</Text>
           </View>
         ))}
@@ -248,21 +377,32 @@ const WelcomeStep: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       </View>
 
       <PressableScale onPress={onStart} style={s.primaryButton} testID="midi-search-devices">
+        <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
         <Text style={s.primaryButtonText}>Search for Devices</Text>
       </PressableScale>
     </View>
   );
 };
 
+// ─────────────────────────────────────────────────
+// Step 2: Detecting
+// ─────────────────────────────────────────────────
+
 const DetectingStep: React.FC = () => (
-  <View style={{ alignItems: 'center', paddingVertical: SPACING.xxl }}>
-    <ActivityIndicator size="large" color={COLORS.primary} />
-    <Text style={[s.subtitle, { marginTop: SPACING.md }]}>Scanning for MIDI devices...</Text>
-    <Text style={[s.cardText, { marginTop: SPACING.sm, color: COLORS.textMuted }]}>
+  <View style={s.detectingContainer}>
+    <PulsingRing />
+    <Text style={[s.subtitle, { marginTop: SPACING.lg, textAlign: 'center' }]}>
+      Scanning for MIDI devices...
+    </Text>
+    <Text style={[s.cardText, { marginTop: SPACING.sm, color: COLORS.textMuted, textAlign: 'center' }]}>
       Make sure your keyboard is connected and powered on
     </Text>
   </View>
 );
+
+// ─────────────────────────────────────────────────
+// Step 3: Select
+// ─────────────────────────────────────────────────
 
 const SelectStep: React.FC<{
   devices: MidiDevice[];
@@ -278,22 +418,32 @@ const SelectStep: React.FC<{
           onPress={() => onSelect(device)}
           style={[
             s.card,
-            { marginBottom: SPACING.sm },
+            { marginBottom: SPACING.sm, flexDirection: 'row', alignItems: 'center' },
             selectedDevice?.id === device.id && { borderColor: COLORS.primary, borderWidth: 2 },
           ]}
         >
-          <Text style={[s.cardTitle, { marginBottom: SPACING.xs }]}>{device.name}</Text>
-          <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }]}>
-            {device.manufacturer} · {device.type.toUpperCase()}
-          </Text>
+          <View style={s.deviceIconCircle}>
+            <MaterialCommunityIcons name="piano" size={24} color={COLORS.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[s.cardTitle, { marginBottom: SPACING.xs }]}>{device.name}</Text>
+            <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }]}>
+              {device.manufacturer} · {device.type.toUpperCase()}
+            </Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
         </PressableScale>
       ))}
     </View>
     <PressableScale onPress={onBack} style={s.secondaryButton}>
-      <Text style={s.secondaryButtonText}>← Back</Text>
+      <Text style={s.secondaryButtonText}>Back</Text>
     </PressableScale>
   </View>
 );
+
+// ─────────────────────────────────────────────────
+// Step 4: Verify
+// ─────────────────────────────────────────────────
 
 const VerifyStep: React.FC<{
   device: MidiDevice;
@@ -305,17 +455,27 @@ const VerifyStep: React.FC<{
   onBack: () => void;
 }> = ({ device, status, noteDetected, onStart, onRetry, onSuccess, onBack }) => (
   <View>
-    <View style={s.card}>
-      <Text style={s.cardTitle}>{device.name}</Text>
-      <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }]}>
-        {device.manufacturer} · {device.type.toUpperCase()}
-      </Text>
+    <View style={[s.card, { flexDirection: 'row', alignItems: 'center' }]}>
+      <View style={s.deviceIconCircle}>
+        <MaterialCommunityIcons name="piano" size={24} color={COLORS.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.cardTitle}>{device.name}</Text>
+        <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }]}>
+          {device.manufacturer} · {device.type.toUpperCase()}
+        </Text>
+      </View>
     </View>
 
     <View style={[s.card, { alignItems: 'center' }]}>
       {status === 'pending' && (
         <>
-          <Text style={[s.cardTitle, { marginBottom: SPACING.md }]}>Play a note on your keyboard</Text>
+          <View style={s.verifyIconCircle}>
+            <MaterialCommunityIcons name="piano" size={36} color={COLORS.textSecondary} />
+          </View>
+          <Text style={[s.cardTitle, { marginBottom: SPACING.sm, textAlign: 'center' }]}>
+            Play a note on your keyboard
+          </Text>
           <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted, textAlign: 'center', marginBottom: SPACING.lg }]}>
             Press any key and we'll detect it to verify the connection works
           </Text>
@@ -323,8 +483,10 @@ const VerifyStep: React.FC<{
       )}
       {status === 'testing' && (
         <>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={[s.subtitle, { marginTop: SPACING.md }]}>Listening for notes...</Text>
+          <PulsingRing />
+          <Text style={[s.subtitle, { marginTop: SPACING.lg, textAlign: 'center' }]}>
+            Listening for notes...
+          </Text>
         </>
       )}
       {status === 'success' && (
@@ -350,36 +512,57 @@ const VerifyStep: React.FC<{
     <View style={{ gap: SPACING.md }}>
       {status === 'pending' && (
         <PressableScale onPress={onStart} style={s.primaryButton}>
+          <MaterialCommunityIcons name="play" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
           <Text style={s.primaryButtonText}>Start Test</Text>
         </PressableScale>
       )}
       {status === 'success' && (
         <PressableScale onPress={onSuccess} style={[s.primaryButton, { backgroundColor: COLORS.success }]}>
+          <MaterialCommunityIcons name="check" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
           <Text style={s.primaryButtonText}>Confirm & Continue</Text>
         </PressableScale>
       )}
       {status === 'failed' && (
         <PressableScale onPress={onRetry} style={[s.primaryButton, { backgroundColor: COLORS.warning }]}>
+          <MaterialCommunityIcons name="refresh" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
           <Text style={s.primaryButtonText}>Try Again</Text>
         </PressableScale>
       )}
       <PressableScale onPress={onBack} style={s.secondaryButton}>
-        <Text style={s.secondaryButtonText}>← Back</Text>
+        <Text style={s.secondaryButtonText}>Back</Text>
       </PressableScale>
     </View>
   </View>
 );
 
+// ─────────────────────────────────────────────────
+// Step 5: Success
+// ─────────────────────────────────────────────────
+
 const SuccessStep: React.FC<{ device: MidiDevice }> = ({ device }) => (
-  <View style={{ alignItems: 'center', paddingVertical: SPACING.xxl }}>
-    <MaterialCommunityIcons name="party-popper" size={48} color={COLORS.starGold} style={{ marginBottom: SPACING.md }} />
-    <Text style={[s.title, { fontSize: 18 }]}>All Set!</Text>
+  <View style={s.successContainer}>
+    {/* Gold glow circle behind party popper */}
+    <View style={s.successGlowCircle}>
+      <MaterialCommunityIcons name="party-popper" size={56} color={COLORS.starGold} />
+    </View>
+
+    {/* Checkmark circle */}
+    <View style={s.successCheckCircle}>
+      <MaterialCommunityIcons name="check-bold" size={20} color={COLORS.textPrimary} />
+    </View>
+
+    <Text style={s.successTitle}>All Set!</Text>
+    <Text style={s.successDeviceName}>{device.name}</Text>
     <Text style={[s.subtitle, { textAlign: 'center', marginBottom: SPACING.lg }]}>
-      Your {device.name} is ready to use
+      is ready to use
     </Text>
     <Text style={{ ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted }}>Redirecting...</Text>
   </View>
 );
+
+// ─────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────
 
 const s = StyleSheet.create({
   outerContainer: {
@@ -431,6 +614,8 @@ const s = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
     marginBottom: SPACING.md,
   },
   primaryButtonText: {
@@ -464,6 +649,181 @@ const s = StyleSheet.create({
     ...TYPOGRAPHY.body.md,
     color: COLORS.error,
     flex: 1,
+  },
+
+  // Progress indicator
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+  },
+  progressDotColumn: {
+    alignItems: 'center',
+    width: 40,
+  },
+  progressDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressDotCompleted: {
+    backgroundColor: COLORS.success,
+  },
+  progressDotCurrent: {
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  progressDotFuture: {
+    borderWidth: 1.5,
+    borderColor: COLORS.cardBorder,
+    backgroundColor: 'transparent',
+  },
+  progressLine: {
+    height: 2,
+    flex: 1,
+    alignSelf: 'center',
+    marginTop: 10, // vertically center with dot
+    marginHorizontal: -2,
+  },
+  progressLabel: {
+    ...TYPOGRAPHY.caption.sm,
+    color: COLORS.textMuted,
+    marginTop: SPACING.xs,
+    textAlign: 'center',
+  },
+
+  // Hero icon (welcome step)
+  heroIconContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  heroIconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: glowColor(COLORS.primary, 0.1),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Instruction rows
+  instructionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.md,
+  },
+  instructionNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: glowColor(COLORS.primary, 0.15),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+    marginTop: 1,
+  },
+  instructionNumberText: {
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '700' as const,
+    color: COLORS.primary,
+  },
+
+  // Pulsing ring (detecting step)
+  detectingContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xxl,
+  },
+  pulsingContainer: {
+    width: 100,
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pulsingRing: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2.5,
+    borderColor: COLORS.primary,
+  },
+  pulsingIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: glowColor(COLORS.primary, 0.12),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Device icon (select/verify steps)
+  deviceIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: glowColor(COLORS.primary, 0.12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+  },
+
+  // Verify step
+  verifyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: glowColor(COLORS.textSecondary, 0.08),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+
+  // Success step
+  successContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xxl,
+  },
+  successGlowCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: glowColor(COLORS.starGold, 0.15),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+    shadowColor: COLORS.starGold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  successCheckCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+    marginTop: -SPACING.sm,
+  },
+  successTitle: {
+    ...TYPOGRAPHY.display.sm,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
+  },
+  successDeviceName: {
+    ...TYPOGRAPHY.heading.lg,
+    color: COLORS.starGold,
+    marginBottom: SPACING.xs,
   },
 });
 

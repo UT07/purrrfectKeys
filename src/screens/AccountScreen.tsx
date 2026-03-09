@@ -466,6 +466,11 @@ export function AccountScreen(): React.ReactElement {
     );
   }
 
+  // Determine linked providers
+  const linkedProviders = user?.providerData?.map((p: { providerId: string }) => p.providerId) ?? [];
+  const isGoogleLinked = linkedProviders.includes('google.com');
+  const isAppleLinked = linkedProviders.includes('apple.com');
+
   // Authenticated user → full account management
   return (
     <View style={styles.container}>
@@ -475,34 +480,33 @@ export function AccountScreen(): React.ReactElement {
         <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
       </PressableScale>
 
+      {/* Centered profile hero */}
       <View style={styles.profileHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{(user?.displayName ?? '?')[0].toUpperCase()}</Text>
-        </View>
-        <View style={styles.profileInfo}>
-          {isEditingName ? (
-            <View style={styles.nameEdit}>
-              <TextInput
-                style={styles.nameInput}
-                value={newName}
-                onChangeText={setNewName}
-                autoFocus
-                maxLength={30}
-              />
-              <PressableScale onPress={handleSaveName}>
+        <CatAvatar catId={selectedCatId ?? 'mini-meowww'} size="large" skipEntryAnimation />
+        {isEditingName ? (
+          <View style={styles.nameEdit}>
+            <TextInput
+              style={styles.nameInput}
+              value={newName}
+              onChangeText={setNewName}
+              autoFocus
+              maxLength={30}
+            />
+            <View style={styles.nameEditActions}>
+              <PressableScale onPress={handleSaveName} style={styles.nameEditBtn}>
                 <Text style={styles.saveText}>Save</Text>
               </PressableScale>
-              <PressableScale onPress={() => setIsEditingName(false)}>
+              <PressableScale onPress={() => setIsEditingName(false)} style={styles.nameEditBtn}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </PressableScale>
             </View>
-          ) : (
-            <PressableScale onPress={() => setIsEditingName(true)}>
-              <Text style={styles.displayName}>{user?.displayName ?? 'Unknown'}</Text>
-            </PressableScale>
-          )}
-          <Text style={styles.email}>{user?.email ?? ''}</Text>
-        </View>
+          </View>
+        ) : (
+          <PressableScale onPress={() => setIsEditingName(true)}>
+            <Text style={styles.displayName}>{user?.displayName ?? 'Unknown'}</Text>
+          </PressableScale>
+        )}
+        <Text style={styles.email}>{user?.email ?? ''}</Text>
       </View>
 
       {error && (
@@ -511,29 +515,65 @@ export function AccountScreen(): React.ReactElement {
         </PressableScale>
       )}
 
+      {/* Profile section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Profile</Text>
         <PressableScale style={styles.row} onPress={() => setIsEditingName(true)}>
-          <Text style={styles.rowText}>Change Display Name</Text>
+          <View style={styles.rowLeft}>
+            <MaterialCommunityIcons name="pencil-outline" size={20} color={COLORS.textSecondary} />
+            <Text style={styles.rowText}>Change Display Name</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.textMuted} />
         </PressableScale>
       </View>
 
+      {/* Linked Accounts section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Linked Accounts</Text>
         <PressableScale style={styles.row} onPress={handleLinkGoogle}>
-          <Text style={styles.rowText}>Google</Text>
-          <Text style={styles.rowAction}>Link Account</Text>
+          <View style={styles.rowLeft}>
+            <MaterialCommunityIcons name="google" size={20} color={COLORS.textSecondary} />
+            <Text style={styles.rowText}>Google</Text>
+          </View>
+          <View style={styles.rowRight}>
+            {isGoogleLinked ? (
+              <View style={styles.linkedBadge}>
+                <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
+                <Text style={styles.linkedText}>Linked</Text>
+              </View>
+            ) : (
+              <Text style={styles.rowAction}>Link</Text>
+            )}
+            <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.textMuted} />
+          </View>
         </PressableScale>
         {Platform.OS === 'ios' && (
           <PressableScale style={styles.row} onPress={handleLinkApple}>
-            <Text style={styles.rowText}>Apple</Text>
-            <Text style={styles.rowAction}>Link Account</Text>
+            <View style={styles.rowLeft}>
+              <MaterialCommunityIcons name="apple" size={20} color={COLORS.textSecondary} />
+              <Text style={styles.rowText}>Apple</Text>
+            </View>
+            <View style={styles.rowRight}>
+              {isAppleLinked ? (
+                <View style={styles.linkedBadge}>
+                  <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
+                  <Text style={styles.linkedText}>Linked</Text>
+                </View>
+              ) : (
+                <Text style={styles.rowAction}>Link</Text>
+              )}
+              <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.textMuted} />
+            </View>
           </PressableScale>
         )}
       </View>
 
-      <View style={styles.dangerSection}>
-        <Text style={styles.sectionTitle}>Danger Zone</Text>
+      {/* Danger Zone section */}
+      <View style={styles.dangerCard}>
+        <View style={styles.dangerTitleRow}>
+          <MaterialCommunityIcons name="shield-alert" size={16} color={COLORS.error} />
+          <Text style={[styles.sectionTitle, styles.dangerSectionTitle]}>Danger Zone</Text>
+        </View>
         <PressableScale
           style={styles.dangerRow}
           onPress={handleSignOut}
@@ -543,16 +583,22 @@ export function AccountScreen(): React.ReactElement {
           {isLoading ? (
             <ActivityIndicator color={COLORS.error} />
           ) : (
-            <Text style={styles.dangerText}>Sign Out</Text>
+            <View style={styles.rowLeft}>
+              <MaterialCommunityIcons name="logout" size={20} color={COLORS.error} />
+              <Text style={styles.dangerText}>Sign Out</Text>
+            </View>
           )}
         </PressableScale>
         <PressableScale
-          style={styles.dangerRow}
+          style={[styles.dangerRow, styles.dangerRowLast]}
           onPress={handleDeleteAccount}
           disabled={isLoading}
           testID="account-delete"
         >
-          <Text style={[styles.dangerText, styles.deleteText]}>Delete Account</Text>
+          <View style={styles.rowLeft}>
+            <MaterialCommunityIcons name="delete-outline" size={20} color={COLORS.error} />
+            <Text style={[styles.dangerText, styles.deleteText]}>Delete Account</Text>
+          </View>
         </PressableScale>
       </View>
     </ScrollView>
@@ -586,25 +632,36 @@ const styles = StyleSheet.create({
   infoBox: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.cardBorder, marginBottom: SPACING.md },
   infoTitle: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary, fontWeight: '600' },
   infoBody: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: SPACING.xs },
-  // Authenticated
-  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xl },
-  profileInfo: { flex: 1 },
-  avatar: { width: 60, height: 60, borderRadius: BORDER_RADIUS.full, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm },
-  avatarText: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary },
-  displayName: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary },
-  email: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: 2 },
-  nameEdit: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  nameInput: { backgroundColor: COLORS.surface, color: COLORS.textPrimary, borderRadius: BORDER_RADIUS.sm, paddingHorizontal: SPACING.md, paddingVertical: 6, ...TYPOGRAPHY.body.md, minWidth: 150, borderWidth: 1, borderColor: COLORS.cardBorder },
+  // Authenticated — centered profile hero
+  profileHeader: { alignItems: 'center', marginBottom: SPACING.xl, gap: SPACING.sm },
+  displayName: { ...TYPOGRAPHY.heading.lg, color: COLORS.textPrimary, textAlign: 'center' },
+  email: { ...TYPOGRAPHY.body.sm, color: COLORS.textSecondary, marginTop: 2, textAlign: 'center' },
+  nameEdit: { alignItems: 'center', gap: SPACING.sm, width: '100%' },
+  nameEditActions: { flexDirection: 'row', gap: SPACING.md, justifyContent: 'center' },
+  nameEditBtn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs },
+  nameInput: { backgroundColor: COLORS.surface, color: COLORS.textPrimary, borderRadius: BORDER_RADIUS.sm, paddingHorizontal: SPACING.md, paddingVertical: 8, ...TYPOGRAPHY.body.md, minWidth: 200, textAlign: 'center', borderWidth: 1, borderColor: COLORS.cardBorder },
   saveText: { ...TYPOGRAPHY.body.md, color: COLORS.primary, fontWeight: '600' },
   cancelText: { ...TYPOGRAPHY.body.md, color: COLORS.textMuted },
+  // Sections
   section: { marginBottom: SPACING.lg },
   sectionTitle: { ...TYPOGRAPHY.special.badge, color: COLORS.textMuted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: SPACING.sm },
+  // Rows with icons
   row: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: COLORS.cardBorder },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   rowText: { ...TYPOGRAPHY.body.md, color: COLORS.textPrimary },
   rowAction: { ...TYPOGRAPHY.body.sm, color: COLORS.primary, fontWeight: '600' },
-  dangerSection: { marginTop: SPACING.md },
-  dangerRow: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, alignItems: 'center', borderWidth: 1, borderColor: glowColor(COLORS.error, 0.15) },
+  // Linked status badge
+  linkedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  linkedText: { ...TYPOGRAPHY.body.sm, color: COLORS.success, fontWeight: '600' },
+  // Danger Zone card
+  dangerCard: { marginTop: SPACING.md, backgroundColor: glowColor(COLORS.error, 0.06), borderRadius: BORDER_RADIUS.lg, borderWidth: 1, borderColor: glowColor(COLORS.error, 0.15), padding: SPACING.md, overflow: 'hidden' },
+  dangerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginBottom: SPACING.sm },
+  dangerSectionTitle: { color: COLORS.error, marginBottom: 0 },
+  dangerRow: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: glowColor(COLORS.error, 0.15) },
+  dangerRowLast: { marginBottom: 0 },
   dangerText: { ...TYPOGRAPHY.body.md, color: COLORS.error, fontWeight: '600' },
   deleteText: { color: COLORS.error },
+  dangerSection: { marginTop: SPACING.md },
   errorText: { ...TYPOGRAPHY.body.sm, color: COLORS.error, textAlign: 'center', marginBottom: SPACING.md },
 });

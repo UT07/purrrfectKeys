@@ -30,8 +30,10 @@ import {
   sendFriendRequest,
   getUserPublicProfile,
 } from '../services/firebase/socialService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
+import { GradientMeshBackground } from '../components/effects';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -42,7 +44,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 let ClipboardModule: { setStringAsync: (s: string) => Promise<boolean> } | null = null;
 try {
-   
+
   ClipboardModule = require('expo-clipboard');
 } catch {
   ClipboardModule = null;
@@ -218,6 +220,7 @@ export function AddFriendScreen(): React.JSX.Element {
   if (isAnonymous) {
     return (
       <SafeAreaView style={styles.container} testID="add-friend-screen">
+        <GradientMeshBackground accent="social" />
         <View style={styles.header}>
           <PressableScale
             onPress={() => navigation.goBack()}
@@ -226,7 +229,12 @@ export function AddFriendScreen(): React.JSX.Element {
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
           </PressableScale>
-          <Text style={styles.headerTitle}>Add Friend</Text>
+          <View style={styles.headerTitleRow}>
+            <View style={styles.headerCatWrap}>
+              <CatAvatar catId={selectedCatId} size="small" skipEntryAnimation />
+            </View>
+            <Text style={styles.headerTitle}>Add Friend</Text>
+          </View>
           <View style={styles.backButton} />
         </View>
         <View style={styles.authGateContainer}>
@@ -249,6 +257,8 @@ export function AddFriendScreen(): React.JSX.Element {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container} testID="add-friend-screen">
+        <GradientMeshBackground accent="social" />
+
         {/* Header */}
         <View style={styles.header}>
           <PressableScale
@@ -258,7 +268,12 @@ export function AddFriendScreen(): React.JSX.Element {
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
           </PressableScale>
-          <Text style={styles.headerTitle}>Add Friend</Text>
+          <View style={styles.headerTitleRow}>
+            <View style={styles.headerCatWrap}>
+              <CatAvatar catId={selectedCatId} size="small" skipEntryAnimation />
+            </View>
+            <Text style={styles.headerTitle}>Add Friend</Text>
+          </View>
           <View style={styles.backButton} />
         </View>
 
@@ -270,6 +285,9 @@ export function AddFriendScreen(): React.JSX.Element {
           </Text>
 
           <View style={styles.codeCard}>
+            <View style={styles.codeCardAvatarWrap}>
+              <CatAvatar catId={selectedCatId} size="small" mood="happy" skipEntryAnimation />
+            </View>
             {isRegistering ? (
               <ActivityIndicator color={COLORS.primary} size="large" />
             ) : friendCode ? (
@@ -281,7 +299,7 @@ export function AddFriendScreen(): React.JSX.Element {
 
           <View style={styles.codeActions}>
             <PressableScale
-              style={[styles.actionButton, copied && styles.actionButtonActive]}
+              style={[styles.copyButton, copied && styles.actionButtonActive]}
               onPress={handleCopy}
               disabled={!friendCode}
             >
@@ -296,7 +314,7 @@ export function AddFriendScreen(): React.JSX.Element {
             </PressableScale>
 
             <PressableScale
-              style={styles.actionButton}
+              style={styles.shareButton}
               onPress={handleShare}
               disabled={!friendCode}
             >
@@ -307,7 +325,11 @@ export function AddFriendScreen(): React.JSX.Element {
         </View>
 
         {/* Divider */}
-        <View style={styles.divider} />
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
         {/* Add Friend Section */}
         <View style={styles.section}>
@@ -317,22 +339,30 @@ export function AddFriendScreen(): React.JSX.Element {
           </Text>
 
           <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              value={inputCode}
-              onChangeText={(text) => {
-                setInputCode(text.replace(/\s/g, '').slice(0, 20));
-                setError(null);
-                setSuccess(null);
-              }}
-              placeholder="username"
-              placeholderTextColor={COLORS.textMuted}
-              maxLength={20}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="done"
-              onSubmitEditing={handleAddFriend}
-            />
+            <View style={styles.inputWrapper}>
+              <MaterialCommunityIcons
+                name="account-search"
+                size={20}
+                color={COLORS.textMuted}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                value={inputCode}
+                onChangeText={(text) => {
+                  setInputCode(text.replace(/\s/g, '').slice(0, 20));
+                  setError(null);
+                  setSuccess(null);
+                }}
+                placeholder="username"
+                placeholderTextColor={COLORS.textMuted}
+                maxLength={20}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={handleAddFriend}
+              />
+            </View>
           </View>
 
           <PressableScale
@@ -346,7 +376,10 @@ export function AddFriendScreen(): React.JSX.Element {
             {isLooking ? (
               <ActivityIndicator color={COLORS.textPrimary} size="small" />
             ) : (
-              <Text style={styles.addButtonText}>Add Friend</Text>
+              <View style={styles.addButtonContent}>
+                <MaterialCommunityIcons name="account-plus" size={20} color={COLORS.textPrimary} />
+                <Text style={styles.addButtonText}>Add Friend</Text>
+              </View>
             )}
           </PressableScale>
 
@@ -391,6 +424,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  headerCatWrap: {
+    width: 28,
+    height: 28,
+    transform: [{ scale: 0.58 }],
+    marginRight: -4,
+  },
   headerTitle: {
     ...TYPOGRAPHY.heading.lg,
     color: COLORS.textPrimary,
@@ -410,16 +454,23 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   codeCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: glowColor(COLORS.primary, 0.06),
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 80,
-    ...SHADOWS.md,
+    minHeight: 110,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  codeCardAvatarWrap: {
+    marginBottom: SPACING.sm,
   },
   codeText: {
     fontFamily: 'monospace',
@@ -439,19 +490,31 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     marginTop: SPACING.md,
   },
-  actionButton: {
+  copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: glowColor(COLORS.primary, 0.1),
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: glowColor(COLORS.primary, 0.2),
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: glowColor(COLORS.info, 0.1),
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.info, 0.2),
   },
   actionButtonActive: {
     borderColor: COLORS.success,
+    backgroundColor: glowColor(COLORS.success, 0.1),
   },
   actionButtonText: {
     ...TYPOGRAPHY.button.md,
@@ -460,26 +523,43 @@ const styles = StyleSheet.create({
   actionButtonTextActive: {
     color: COLORS.success,
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.cardBorder,
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginHorizontal: SPACING.lg,
     marginVertical: SPACING.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.cardBorder,
+  },
+  dividerText: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textMuted,
+    marginHorizontal: SPACING.sm,
   },
   inputRow: {
     marginBottom: SPACING.md,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
+  },
+  inputIcon: {
+    paddingLeft: SPACING.md,
+  },
+  input: {
+    flex: 1,
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     color: COLORS.textPrimary,
     ...TYPOGRAPHY.body.lg,
     fontWeight: '600',
-    textAlign: 'center',
   },
   addButton: {
     backgroundColor: COLORS.primary,
@@ -491,6 +571,11 @@ const styles = StyleSheet.create({
   },
   addButtonDisabled: {
     opacity: 0.5,
+  },
+  addButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   addButtonText: {
     ...TYPOGRAPHY.button.lg,
