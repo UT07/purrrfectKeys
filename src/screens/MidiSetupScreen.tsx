@@ -16,18 +16,19 @@ import {
   Text,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Platform,
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getMidiInput } from '../input/MidiInput';
 import MidiDeviceManager from '../input/MidiDevice';
 import type { MidiDevice } from '../input/MidiInput';
 import type { MidiNoteEvent } from '../core/exercises/types';
 import { COLORS, BORDER_RADIUS, SHADOWS, TYPOGRAPHY, SPACING } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
+import { GradientMeshBackground } from '../components/effects';
 import { logger } from '../utils/logger';
 
 type SetupStep = 'welcome' | 'detecting' | 'select' | 'verify' | 'success';
@@ -51,6 +52,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
     'pending' | 'testing' | 'success' | 'failed'
   >('pending');
   const [testNoteDetected, setTestNoteDetected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGoBack = () => {
     if (onCancel) {
@@ -67,7 +69,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
         logger.log('[MidiSetupScreen] MIDI initialized');
       } catch (error) {
         console.error('[MidiSetupScreen] MIDI init failed:', error);
-        Alert.alert('Error', 'Failed to initialize MIDI. Please check your device.');
+        setErrorMessage('Failed to initialize MIDI. Please check your device.');
       }
     };
     initMidi();
@@ -82,11 +84,11 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
       setAvailableDevices(devices);
 
       if (devices.length === 0) {
-        Alert.alert(
-          'No Devices Found',
-          'Please connect a MIDI keyboard and try again.\n\n' +
-            'iOS: Use Apple Camera Connection Kit\n' +
-            'Android: Use USB OTG adapter or Bluetooth'
+        setErrorMessage(
+          'No devices found. Please connect a MIDI keyboard and try again. ' +
+            (Platform.OS === 'ios'
+              ? 'Use Apple Camera Connection Kit.'
+              : 'Use USB OTG adapter or Bluetooth.')
         );
         setStep('welcome');
       } else if (devices.length === 1) {
@@ -97,7 +99,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
       }
     } catch (error) {
       console.error('[MidiSetupScreen] Detection failed:', error);
-      Alert.alert('Detection Failed', 'Could not access MIDI devices. Try again?');
+      setErrorMessage('Detection failed. Could not access MIDI devices. Try again?');
       setStep('welcome');
     } finally {
       setIsDetecting(false);
@@ -148,16 +150,29 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
   };
 
   return (
-    <ScrollView
-      style={[s.container, { backgroundColor: COLORS.background }]}
-      contentContainerStyle={{ paddingTop: insets.top }}
-      testID="midi-setup-screen"
-    >
+    <View style={[s.outerContainer, { backgroundColor: COLORS.background }]}>
+      <GradientMeshBackground accent="profile" />
+      <ScrollView
+        style={s.container}
+        contentContainerStyle={{ paddingTop: insets.top }}
+        testID="midi-setup-screen"
+      >
       <View style={{ padding: SPACING.lg, paddingBottom: insets.bottom + SPACING.lg }}>
         {/* Back Button */}
         <PressableScale onPress={handleGoBack} style={s.backButton} testID="midi-back">
-          <Text style={s.backButtonText}>← Back</Text>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </PressableScale>
+
+        {/* Error Banner */}
+        {errorMessage && (
+          <View style={s.errorBanner}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color={COLORS.error} />
+            <Text style={s.errorBannerText}>{errorMessage}</Text>
+            <PressableScale onPress={() => setErrorMessage(null)}>
+              <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
+            </PressableScale>
+          </View>
+        )}
 
         {/* Header */}
         <View style={{ marginBottom: SPACING.xl }}>
@@ -171,7 +186,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
           </Text>
         </View>
 
-        {step === 'welcome' && <WelcomeStep onStart={startDetection} />}
+        {step === 'welcome' && <WelcomeStep onStart={() => { setErrorMessage(null); startDetection(); }} />}
         {step === 'detecting' && <DetectingStep />}
         {step === 'select' && (
           <SelectStep
@@ -195,6 +210,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
         {step === 'success' && selectedDevice && <SuccessStep device={selectedDevice} />}
       </View>
     </ScrollView>
+    </View>
   );
 };
 
@@ -313,7 +329,7 @@ const VerifyStep: React.FC<{
       )}
       {status === 'success' && (
         <>
-          <Text style={{ ...TYPOGRAPHY.display.md, marginBottom: SPACING.sm, color: COLORS.success }}>✓</Text>
+          <MaterialCommunityIcons name="check-circle" size={48} color={COLORS.success} style={{ marginBottom: SPACING.sm }} />
           <Text style={[s.cardTitle, { color: COLORS.success }]}>Connection Successful!</Text>
           <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted, marginTop: SPACING.sm }]}>
             {noteDetected ? 'Note received' : 'Waiting for note'}
@@ -322,7 +338,7 @@ const VerifyStep: React.FC<{
       )}
       {status === 'failed' && (
         <>
-          <Text style={{ ...TYPOGRAPHY.display.md, marginBottom: SPACING.sm, color: COLORS.error }}>✗</Text>
+          <MaterialCommunityIcons name="close-circle" size={48} color={COLORS.error} style={{ marginBottom: SPACING.sm }} />
           <Text style={[s.cardTitle, { color: COLORS.error }]}>No notes detected</Text>
           <Text style={[s.cardText, { ...TYPOGRAPHY.caption.lg, color: COLORS.textMuted, marginTop: SPACING.sm, textAlign: 'center' }]}>
             Make sure the keyboard is connected and powered on
@@ -356,7 +372,7 @@ const VerifyStep: React.FC<{
 
 const SuccessStep: React.FC<{ device: MidiDevice }> = ({ device }) => (
   <View style={{ alignItems: 'center', paddingVertical: SPACING.xxl }}>
-    <Text style={{ fontSize: 48, marginBottom: SPACING.md }}>🎉</Text>
+    <MaterialCommunityIcons name="party-popper" size={48} color={COLORS.starGold} style={{ marginBottom: SPACING.md }} />
     <Text style={[s.title, { fontSize: 18 }]}>All Set!</Text>
     <Text style={[s.subtitle, { textAlign: 'center', marginBottom: SPACING.lg }]}>
       Your {device.name} is ready to use
@@ -366,6 +382,9 @@ const SuccessStep: React.FC<{ device: MidiDevice }> = ({ device }) => (
 );
 
 const s = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -429,6 +448,22 @@ const s = StyleSheet.create({
   secondaryButtonText: {
     color: COLORS.textSecondary,
     ...TYPOGRAPHY.button.md,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  errorBannerText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.error,
+    flex: 1,
   },
 });
 

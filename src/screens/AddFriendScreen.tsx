@@ -423,17 +423,15 @@ const styles = StyleSheet.create({
   },
   codeText: {
     fontFamily: 'monospace',
-    fontSize: 36,
-    fontWeight: '800',
+    ...TYPOGRAPHY.display.lg,
     color: COLORS.primary,
-    letterSpacing: 8,
+    letterSpacing: SPACING.sm,
   },
   codeTextMuted: {
     fontFamily: 'monospace',
-    fontSize: 36,
-    fontWeight: '800',
+    ...TYPOGRAPHY.display.lg,
     color: COLORS.textMuted,
-    letterSpacing: 8,
+    letterSpacing: SPACING.sm,
   },
   codeActions: {
     flexDirection: 'row',

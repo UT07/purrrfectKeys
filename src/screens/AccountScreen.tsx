@@ -21,8 +21,10 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAuthStore } from '../stores/authStore';
 import { GoogleAuthProvider, OAuthProvider, EmailAuthProvider } from 'firebase/auth';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
+import { GradientMeshBackground } from '../components/effects';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -363,9 +365,11 @@ export function AccountScreen(): React.ReactElement {
   // Anonymous user → show account linking CTA
   if (isAnonymous) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} testID="account-screen">
+      <View style={styles.container}>
+        <GradientMeshBackground accent="profile" />
+        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} testID="account-screen">
         <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
-          <Text style={styles.backText}>← Account</Text>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </PressableScale>
 
         <View style={styles.anonHero}>
@@ -458,14 +462,17 @@ export function AccountScreen(): React.ReactElement {
 
         {error && <Text style={styles.errorText}>{error}</Text>}
       </ScrollView>
+      </View>
     );
   }
 
   // Authenticated user → full account management
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} testID="account-screen">
+    <View style={styles.container}>
+      <GradientMeshBackground accent="profile" />
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} testID="account-screen">
       <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
-        <Text style={styles.backText}>← Account</Text>
+        <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
       </PressableScale>
 
       <View style={styles.profileHeader}>
@@ -549,11 +556,13 @@ export function AccountScreen(): React.ReactElement {
         </PressableScale>
       </View>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContainer: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: 40 },
   backButton: { marginBottom: SPACING.lg },
   backText: { ...TYPOGRAPHY.body.md, color: COLORS.primary, fontWeight: '600' },

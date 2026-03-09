@@ -19,6 +19,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { useSocialStore } from '../stores/socialStore';
 import { useAuthStore } from '../stores/authStore';
 import { acceptFriendRequest, removeFriendConnection, getFriends, getUserPublicProfile } from '../services/firebase/socialService';
@@ -71,25 +72,6 @@ function activityIconColor(type: ActivityFeedItem['type']): string {
   }
 }
 
-// Emoji mapping for cat avatars (matches cat selection IDs)
-function catEmoji(catId: string): string {
-  const map: Record<string, string> = {
-    'mini-meowww': '\uD83D\uDC31',
-    'jazzy': '\uD83C\uDFB7',
-    'luna': '\uD83C\uDF19',
-    'ballymakawww': '\u2618\uFE0F',
-    'shibu': '\uD83C\uDFCE\uFE0F',
-    'bella': '\uD83D\uDC51',
-    'coco': '\uD83C\uDF6B',
-    'professor-whiskers': '\uD83E\uDDD1\u200D\uD83C\uDF93',
-    'captain-tuna': '\u2693',
-    'midnight': '\uD83C\uDF1A',
-    'duchess': '\uD83D\uDC8E',
-    'chonky-monke': '\uD83D\uDE48',
-  };
-  return map[catId] || '\uD83D\uDC31';
-}
-
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -107,7 +89,9 @@ function PendingRequestRow({
 }): React.JSX.Element {
   return (
     <View style={styles.friendRow}>
-      <Text style={styles.friendEmoji}>{catEmoji(friend.selectedCatId)}</Text>
+      <View style={styles.friendAvatarWrap}>
+        <CatAvatar catId={friend.selectedCatId} size="small" />
+      </View>
       <View style={styles.friendInfo}>
         <Text style={styles.friendName} numberOfLines={1}>
           {friend.displayName || 'Player'}
@@ -143,7 +127,9 @@ function SentRequestRow({
 }): React.JSX.Element {
   return (
     <View style={styles.friendRow}>
-      <Text style={styles.friendEmoji}>{catEmoji(friend.selectedCatId)}</Text>
+      <View style={styles.friendAvatarWrap}>
+        <CatAvatar catId={friend.selectedCatId} size="small" />
+      </View>
       <View style={styles.friendInfo}>
         <Text style={styles.friendName} numberOfLines={1}>
           {friend.displayName || 'Player'}
@@ -168,9 +154,36 @@ function AcceptedFriendRow({
 }: {
   friend: FriendConnection;
 }): React.JSX.Element {
+  const navigation = useNavigation<Nav>();
+
+  const handleChallenge = useCallback(() => {
+    Alert.alert(
+      'Challenge',
+      `Play an exercise and challenge ${friend.displayName || 'Friend'} to beat your score!`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Let\'s Go!',
+          onPress: () => {
+            navigation.navigate('Exercise', {
+              exerciseId: 'ai-mode',
+              aiMode: true,
+              challengeTarget: {
+                uid: friend.uid,
+                displayName: friend.displayName || 'Friend',
+              },
+            });
+          },
+        },
+      ],
+    );
+  }, [friend.uid, friend.displayName, navigation]);
+
   return (
     <View style={styles.friendRow}>
-      <Text style={styles.friendEmoji}>{catEmoji(friend.selectedCatId)}</Text>
+      <View style={styles.friendAvatarWrap}>
+        <CatAvatar catId={friend.selectedCatId} size="small" />
+      </View>
       <View style={styles.friendInfo}>
         <Text style={styles.friendName} numberOfLines={1}>
           {friend.displayName || 'Player'}
@@ -178,14 +191,7 @@ function AcceptedFriendRow({
       </View>
       <PressableScale
         style={styles.challengeButton}
-        onPress={() => {
-          // Navigate to challenge flow — for now just show alert
-          Alert.alert(
-            'Challenge',
-            `Challenge ${friend.displayName || 'Friend'} to beat your score!`,
-            [{ text: 'OK' }],
-          );
-        }}
+        onPress={handleChallenge}
       >
         <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.textPrimary} />
         <Text style={styles.challengeButtonText}>Challenge</Text>
@@ -630,9 +636,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     ...SHADOWS.sm,
   },
-  friendEmoji: {
-    fontSize: 28,
+  friendAvatarWrap: {
+    width: 40,
+    height: 40,
     marginRight: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   friendInfo: {
     flex: 1,
