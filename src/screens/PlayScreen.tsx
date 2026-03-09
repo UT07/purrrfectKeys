@@ -22,6 +22,15 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Keyboard as PianoKeyboard } from '../components/Keyboard/Keyboard';
 import { SongReferencePicker } from '../components/SongReferencePicker';
 import { createAudioEngine } from '../audio/createAudioEngine';
@@ -34,7 +43,7 @@ import { useSongStore } from '../stores/songStore';
 import { analyzeSession, type FreePlayAnalysis } from '../services/FreePlayAnalyzer';
 import { ttsService } from '../services/tts/TTSService';
 import { PressableScale } from '../components/common/PressableScale';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor, shadowGlow } from '../theme/tokens';
 import { computeZoomedRange } from '../components/Keyboard/computeZoomedRange';
 import type { NoteEvent } from '../core/exercises/types';
 import type { SongSection } from '../core/songs/songTypes';
@@ -239,6 +248,99 @@ function SongSectionPills({
         </PressableScale>
       ))}
     </RNScrollView>
+  );
+}
+
+// ============================================================================
+// Animated sub-components
+// ============================================================================
+
+/** Live note display with brief color flash when a new note is detected */
+function NoteFlashDisplay({
+  noteName,
+  testID,
+  containerTestID,
+}: {
+  noteName: string;
+  testID?: string;
+  containerTestID?: string;
+}): React.JSX.Element {
+  const flashOpacity = useSharedValue(0);
+  const prevNoteRef = useRef('');
+
+  useEffect(() => {
+    if (noteName && noteName !== prevNoteRef.current) {
+      prevNoteRef.current = noteName;
+      flashOpacity.value = withSequence(
+        withTiming(1, { duration: 60 }),
+        withTiming(0, { duration: 300, easing: Easing.out(Easing.quad) }),
+      );
+    }
+  }, [noteName, flashOpacity]);
+
+  const flashStyle = useAnimatedStyle(() => ({
+    backgroundColor: `rgba(220, 20, 60, ${flashOpacity.value * 0.25})`,
+  }));
+
+  return (
+    <View style={styles.noteDisplayOuter} testID={containerTestID}>
+      <Animated.View style={[styles.noteDisplay, flashStyle]}>
+        <Text style={styles.noteText} testID={testID}>
+          {noteName || '\u2014'}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+/** Record button with pulsing animation when actively recording */
+function PulsingRecordButton({
+  isRecording,
+  onPress,
+  testID,
+}: {
+  isRecording: boolean;
+  onPress: () => void;
+  testID?: string;
+}): React.JSX.Element {
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (isRecording) {
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1.0, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      pulseScale.value = withTiming(1, { duration: 200 });
+    }
+  }, [isRecording, pulseScale]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  return (
+    <PressableScale onPress={onPress} testID={testID}>
+      <Animated.View
+        style={[
+          styles.controlBtn,
+          isRecording ? styles.controlStop : styles.controlRecord,
+          pulseStyle,
+        ]}
+      >
+        {/* Inner filled circle for record, square for stop */}
+        {isRecording ? (
+          <View style={styles.stopIcon} />
+        ) : (
+          <View style={styles.recordDot} />
+        )}
+      </Animated.View>
+    </PressableScale>
   );
 }
 
@@ -860,124 +962,121 @@ export function PlayScreen(): React.JSX.Element {
   // --------------------------------------------------------------------------
   return (
     <View style={styles.container} testID="play-screen">
-      {/* Top bar — compact for landscape */}
-      <View style={styles.topBar}>
-        <PressableScale onPress={handleBack} style={styles.backButton} testID="freeplay-back">
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
-        </PressableScale>
-
-        <Text style={styles.title}>Free Play</Text>
-
-        {/* Active input method badge */}
-        {activeInput !== 'touch' && (
-          <View style={styles.inputBadge} testID="freeplay-input-badge">
-            <MaterialCommunityIcons
-              name={activeInput === 'midi' ? 'piano' : 'microphone'}
-              size={12}
-              color={COLORS.success}
-            />
-            <Text style={styles.inputBadgeText}>
-              {activeInput === 'midi' ? 'MIDI' : 'Mic'}
-            </Text>
-          </View>
-        )}
-
-        {/* Song indicator */}
-        {selectedSongTitle ? (
-          <PressableScale
-            style={styles.songIndicator}
-            onPress={() => setShowSongPicker(true)}
-          >
-            <MaterialCommunityIcons name="music-note" size={14} color={COLORS.primary} />
-            <Text style={styles.songIndicatorText} numberOfLines={1}>{selectedSongTitle}</Text>
-            <PressableScale
-              onPress={() => setSelectedSongTitle(null)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <MaterialCommunityIcons name="close" size={14} color={COLORS.textMuted} />
-            </PressableScale>
+      {/* Top bar — compact for landscape, with subtle gradient bottom glow */}
+      <View style={styles.topBarWrapper}>
+        <LinearGradient
+          colors={[COLORS.surfaceElevated, COLORS.surface]}
+          style={styles.topBar}
+        >
+          <PressableScale onPress={handleBack} style={styles.backButton} testID="freeplay-back">
+            <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
           </PressableScale>
-        ) : (
-          <PressableScale
-            style={styles.loadSongBtn}
-            onPress={() => setShowSongPicker(true)}
-            testID="freeplay-load-song"
-          >
-            <MaterialCommunityIcons name="music-note-plus" size={16} color={COLORS.primary} />
-            <Text style={styles.loadSongBtnText}>Song</Text>
-          </PressableScale>
-        )}
 
-        <View style={styles.topBarSpacer} />
+          <Text style={styles.title}>Free Play</Text>
 
-        {/* Live note display */}
-        <View style={styles.noteDisplay} testID="freeplay-note-display-container">
-          <Text style={styles.noteText} testID="freeplay-note-display">{currentNoteName || '\u2014'}</Text>
-        </View>
+          {/* Active input method badge */}
+          {activeInput !== 'touch' && (
+            <View style={styles.inputBadge} testID="freeplay-input-badge">
+              <MaterialCommunityIcons
+                name={activeInput === 'midi' ? 'piano' : 'microphone'}
+                size={12}
+                color={COLORS.success}
+              />
+              <Text style={styles.inputBadgeText}>
+                {activeInput === 'midi' ? 'MIDI' : 'Mic'}
+              </Text>
+            </View>
+          )}
 
-        {/* Recording controls — inline in top bar */}
-        <View style={styles.controlsRow}>
-          {!isRecording ? (
+          {/* Song indicator */}
+          {selectedSongTitle ? (
             <PressableScale
-              onPress={startRecording}
-              style={[styles.controlBtn, styles.controlRecord]}
-              testID="freeplay-record-start"
+              style={styles.songIndicator}
+              onPress={() => setShowSongPicker(true)}
             >
-              <MaterialCommunityIcons name="record-circle" size={18} color={COLORS.textPrimary} />
+              <MaterialCommunityIcons name="music-note" size={14} color={COLORS.primary} />
+              <Text style={styles.songIndicatorText} numberOfLines={1}>{selectedSongTitle}</Text>
+              <PressableScale
+                onPress={() => setSelectedSongTitle(null)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <MaterialCommunityIcons name="close" size={14} color={COLORS.textMuted} />
+              </PressableScale>
             </PressableScale>
           ) : (
             <PressableScale
-              onPress={stopRecording}
-              style={[styles.controlBtn, styles.controlStop]}
-              testID="freeplay-record-stop"
+              style={styles.loadSongBtn}
+              onPress={() => setShowSongPicker(true)}
+              testID="freeplay-load-song"
             >
-              <MaterialCommunityIcons name="stop-circle" size={18} color={COLORS.textPrimary} />
+              <MaterialCommunityIcons name="music-note-plus" size={16} color={COLORS.primary} />
+              <Text style={styles.loadSongBtnText}>Song</Text>
             </PressableScale>
           )}
 
-          {recordedNotes.length > 0 && !isRecording && (
-            <>
-              {isPlayingBack ? (
-                <PressableScale
-                  onPress={stopPlayback}
-                  style={[styles.controlBtn, styles.controlPlayback]}
-                  testID="freeplay-record-stop-playback"
-                >
-                  <MaterialCommunityIcons name="stop-circle" size={18} color={COLORS.textPrimary} />
-                </PressableScale>
-              ) : (
-                <PressableScale
-                  onPress={playRecording}
-                  style={[styles.controlBtn, styles.controlPlayback]}
-                  testID="freeplay-record-playback"
-                >
-                  <MaterialCommunityIcons name="play-circle" size={18} color={COLORS.textPrimary} />
-                </PressableScale>
-              )}
-              <PressableScale
-                onPress={clearRecording}
-                style={[styles.controlBtn, styles.controlClear]}
-                testID="freeplay-record-clear"
-              >
-                <MaterialCommunityIcons name="delete" size={18} color={COLORS.textSecondary} />
-              </PressableScale>
-            </>
-          )}
-        </View>
+          <View style={styles.topBarSpacer} />
 
-        {/* Stats */}
-        <Text style={styles.statsText}>{sessionNoteCount} notes</Text>
-        {analysis?.detectedKey && (
-          <Text style={styles.statsKeyText}>{analysis.detectedKey}</Text>
-        )}
+          {/* Live note display — animated flash on new note */}
+          <NoteFlashDisplay
+            noteName={currentNoteName}
+            testID="freeplay-note-display"
+            containerTestID="freeplay-note-display-container"
+          />
+
+          {/* Recording controls — inline in top bar */}
+          <View style={styles.controlsRow}>
+            <PulsingRecordButton
+              isRecording={isRecording}
+              onPress={isRecording ? stopRecording : startRecording}
+              testID={isRecording ? 'freeplay-record-stop' : 'freeplay-record-start'}
+            />
+
+            {recordedNotes.length > 0 && !isRecording && (
+              <>
+                {isPlayingBack ? (
+                  <PressableScale
+                    onPress={stopPlayback}
+                    style={[styles.controlBtn, styles.controlPlayStop]}
+                    testID="freeplay-record-stop-playback"
+                  >
+                    <MaterialCommunityIcons name="stop" size={16} color={COLORS.error} />
+                  </PressableScale>
+                ) : (
+                  <PressableScale
+                    onPress={playRecording}
+                    style={[styles.controlBtn, styles.controlPlayback]}
+                    testID="freeplay-record-playback"
+                  >
+                    <MaterialCommunityIcons name="play" size={16} color={COLORS.success} />
+                  </PressableScale>
+                )}
+                <PressableScale
+                  onPress={clearRecording}
+                  style={[styles.controlBtn, styles.controlClear]}
+                  testID="freeplay-record-clear"
+                >
+                  <MaterialCommunityIcons name="trash-can-outline" size={16} color={COLORS.textMuted} />
+                </PressableScale>
+              </>
+            )}
+          </View>
+
+          {/* Stats */}
+          <Text style={styles.statsText}>{sessionNoteCount} notes</Text>
+          {analysis?.detectedKey && (
+            <Text style={styles.statsKeyText}>{analysis.detectedKey}</Text>
+          )}
+        </LinearGradient>
+        {/* Glow line under top bar */}
+        <View style={styles.topBarGlow} />
       </View>
 
       {/* Side-by-side keyboards */}
       <View style={styles.keyboardRow}>
         {/* Left hand keyboard — lower octaves */}
         <View style={styles.keyboardHalf}>
-          <View style={styles.handBadge}>
-            <Text style={styles.handBadgeText}>L</Text>
+          <View style={[styles.handBadge, styles.handBadgeLeft]}>
+            <Text style={[styles.handBadgeText, styles.handBadgeTextLeft]}>L</Text>
           </View>
           <PianoKeyboard
             startNote={LEFT_KB_START}
@@ -999,8 +1098,8 @@ export function PlayScreen(): React.JSX.Element {
 
         {/* Right hand keyboard — higher octaves */}
         <View style={styles.keyboardHalf}>
-          <View style={styles.handBadge}>
-            <Text style={styles.handBadgeText}>R</Text>
+          <View style={[styles.handBadge, styles.handBadgeRight]}>
+            <Text style={[styles.handBadgeText, styles.handBadgeTextRight]}>R</Text>
           </View>
           <PianoKeyboard
             startNote={RIGHT_KB_START}
@@ -1021,8 +1120,15 @@ export function PlayScreen(): React.JSX.Element {
       {/* Free play analysis card — appears after 2s of silence */}
       {analysis && !analysisHidden && (
         <View style={styles.analysisCard} testID="freeplay-analysis-card">
+          {/* Gradient accent line at top */}
+          <LinearGradient
+            colors={[COLORS.info, glowColor(COLORS.info, 0)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.analysisAccentLine}
+          />
           <View style={styles.analysisHeader}>
-            <MaterialCommunityIcons name="music-note-eighth" size={16} color={COLORS.info} />
+            <MaterialCommunityIcons name="creation" size={16} color={COLORS.info} />
             <Text style={styles.analysisTitle}>Analysis</Text>
             <PressableScale
               onPress={() => {
@@ -1053,8 +1159,15 @@ export function PlayScreen(): React.JSX.Element {
               }}
               testID="freeplay-generate-drill"
             >
-              <MaterialCommunityIcons name="lightning-bolt" size={14} color={COLORS.textPrimary} />
-              <Text style={styles.generateDrillText}>Drill</Text>
+              <LinearGradient
+                colors={[COLORS.info, '#1565C0']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.generateDrillGradient}
+              >
+                <MaterialCommunityIcons name="lightning-bolt" size={14} color={COLORS.textPrimary} />
+                <Text style={styles.generateDrillText}>Drill</Text>
+              </LinearGradient>
             </PressableScale>
           </View>
         </View>
@@ -1081,24 +1194,31 @@ const styles = StyleSheet.create({
   },
 
   // ── Top bar ─────────────────────────────────────────────────────────────
+  topBarWrapper: {
+    // Wrapper holds gradient bar + glow line
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.cardBorder,
     gap: SPACING.sm,
-    height: 40,
+    height: 44,
+  },
+  topBarGlow: {
+    height: 2,
+    backgroundColor: glowColor(COLORS.primary, 0.25),
+    // Subtle glow effect via shadow
+    ...(shadowGlow(COLORS.primary, 8) as Record<string, unknown>),
   },
   backButton: {
     padding: 2,
   },
   title: {
-    ...TYPOGRAPHY.body.md,
-    fontWeight: '700',
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '800',
     color: COLORS.textPrimary,
+    letterSpacing: 0.5,
   },
   inputBadge: {
     flexDirection: 'row',
@@ -1147,18 +1267,26 @@ const styles = StyleSheet.create({
   topBarSpacer: {
     flex: 1,
   },
+
+  // ── Note display (enlarged with flash animation) ───────────────────────
+  noteDisplayOuter: {
+    // testID container is on NoteFlashDisplay — this wraps it for layout
+  },
   noteDisplay: {
     backgroundColor: COLORS.cardSurface,
     borderRadius: BORDER_RADIUS.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
     borderWidth: 2,
     borderColor: COLORS.primary,
-    minWidth: 52,
+    minWidth: 64,
+    minHeight: 36,
     alignItems: 'center',
+    justifyContent: 'center',
+    ...(shadowGlow(COLORS.primary, 6) as Record<string, unknown>),
   },
   noteText: {
-    ...TYPOGRAPHY.heading.md,
+    ...TYPOGRAPHY.heading.lg,
     fontWeight: '800',
     color: COLORS.primary,
     fontFamily: 'monospace',
@@ -1168,7 +1296,7 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   controlBtn: {
     width: 32,
@@ -1178,13 +1306,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   controlRecord: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: glowColor(COLORS.error, 0.15),
+    borderWidth: 2,
+    borderColor: COLORS.error,
   },
   controlStop: {
     backgroundColor: COLORS.error,
+    borderWidth: 2,
+    borderColor: COLORS.error,
+  },
+  // Inner red filled circle for record indication
+  recordDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: COLORS.error,
+  },
+  // Inner square for stop indication
+  stopIcon: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    backgroundColor: COLORS.textPrimary,
   },
   controlPlayback: {
-    backgroundColor: COLORS.success,
+    backgroundColor: glowColor(COLORS.success, 0.15),
+    borderWidth: 1.5,
+    borderColor: COLORS.success,
+  },
+  controlPlayStop: {
+    backgroundColor: glowColor(COLORS.error, 0.15),
+    borderWidth: 1.5,
+    borderColor: COLORS.error,
   },
   controlClear: {
     backgroundColor: COLORS.cardSurface,
@@ -1214,20 +1367,33 @@ const styles = StyleSheet.create({
   },
   handBadge: {
     position: 'absolute',
-    top: 4,
-    left: 4,
+    top: 6,
+    left: 6,
     zIndex: 10,
-    backgroundColor: glowColor('#000000', 0.5),
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  handBadgeLeft: {
+    backgroundColor: glowColor(COLORS.info, 0.2),
+    borderColor: glowColor(COLORS.info, 0.4),
+  },
+  handBadgeRight: {
+    backgroundColor: glowColor(COLORS.warning, 0.2),
+    borderColor: glowColor(COLORS.warning, 0.4),
   },
   handBadgeText: {
-    ...TYPOGRAPHY.caption.sm,
-    fontWeight: '700',
-    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '800',
+  },
+  handBadgeTextLeft: {
+    color: COLORS.info,
+  },
+  handBadgeTextRight: {
+    color: COLORS.warning,
   },
   divider: {
     width: 2,
@@ -1236,22 +1402,34 @@ const styles = StyleSheet.create({
 
   // ── Analysis overlay ──────────────────────────────────────────────────
   analysisCard: {
-    ...SHADOWS.md,
+    ...SHADOWS.lg,
     position: 'absolute',
     bottom: 80,
     right: SPACING.md,
-    width: 220,
+    width: 230,
     backgroundColor: COLORS.cardSurface,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.sm,
+    paddingTop: SPACING.sm + 3, // extra for accent line
     borderWidth: 1,
-    borderColor: glowColor(COLORS.info, 0.3),
+    borderColor: glowColor(COLORS.info, 0.25),
+    overflow: 'hidden',
+    ...(shadowGlow(COLORS.info, 10) as Record<string, unknown>),
+  },
+  analysisAccentLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderTopLeftRadius: BORDER_RADIUS.md,
+    borderTopRightRadius: BORDER_RADIUS.md,
   },
   analysisHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   analysisTitle: {
     ...TYPOGRAPHY.body.sm,
@@ -1262,15 +1440,20 @@ const styles = StyleSheet.create({
   analysisSummary: {
     ...TYPOGRAPHY.caption.md,
     color: COLORS.textSecondary,
-    marginBottom: 6,
+    marginBottom: 8,
+    lineHeight: 18,
   },
   generateDrillBtn: {
+    flex: 1,
+    borderRadius: BORDER_RADIUS.sm,
+    overflow: 'hidden',
+  },
+  generateDrillGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    backgroundColor: COLORS.info,
-    paddingVertical: 6,
+    gap: 5,
+    paddingVertical: 7,
     borderRadius: BORDER_RADIUS.sm,
   },
   generateDrillText: {

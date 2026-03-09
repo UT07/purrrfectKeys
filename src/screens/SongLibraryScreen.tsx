@@ -40,8 +40,18 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 // ---------------------------------------------------------------------------
-// Genre data
+// Genre visual config: icon + accent color per genre
 // ---------------------------------------------------------------------------
+
+const GENRE_CONFIG: Record<string, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
+  all:       { icon: 'music-note',           color: COLORS.primary },
+  classical: { icon: 'music-clef-treble',    color: '#CE93D8' },  // soft purple
+  folk:      { icon: 'guitar-acoustic',      color: '#66BB6A' },  // warm green
+  pop:       { icon: 'microphone-variant',   color: '#FF7043' },  // coral
+  film:      { icon: 'filmstrip',            color: '#42A5F5' },  // sky blue
+  game:      { icon: 'gamepad-variant',      color: '#AB47BC' },  // vivid purple
+  holiday:   { icon: 'snowflake',            color: '#4FC3F7' },  // ice blue
+};
 
 const GENRES: Array<{ label: string; value: SongGenre | 'all' }> = [
   { label: 'All', value: 'all' },
@@ -61,20 +71,39 @@ const DIFFICULTIES = [1, 2, 3, 4, 5] as const;
 
 function GenrePill({
   label,
+  value,
   isActive,
   onPress,
 }: {
   label: string;
+  value: string;
   isActive: boolean;
   onPress: () => void;
 }) {
+  const cfg = GENRE_CONFIG[value] ?? GENRE_CONFIG.all;
+  const accentColor = cfg.color;
+
   return (
     <PressableScale
-      style={[styles.genrePill, isActive && styles.genrePillActive]}
+      style={[
+        styles.genrePill,
+        isActive && {
+          backgroundColor: glowColor(accentColor, 0.15),
+          borderColor: accentColor,
+        },
+      ]}
       onPress={onPress}
       testID={`genre-${label.toLowerCase()}`}
     >
-      <Text style={[styles.genrePillText, isActive && styles.genrePillTextActive]}>
+      {/* Left accent bar */}
+      <View style={[styles.genreAccentBar, { backgroundColor: accentColor }]} />
+      <MaterialCommunityIcons
+        name={cfg.icon}
+        size={14}
+        color={isActive ? accentColor : COLORS.textMuted}
+        style={{ marginRight: 4 }}
+      />
+      <Text style={[styles.genrePillText, isActive && { color: COLORS.textPrimary, fontWeight: '600' as const }]}>
         {label}
       </Text>
     </PressableScale>
@@ -204,19 +233,22 @@ function NewBadge() {
 }
 
 // ---------------------------------------------------------------------------
-// Difficulty Star Crystals
+// Difficulty Dots (1-5 filled circles)
 // ---------------------------------------------------------------------------
 
-function DifficultyStarCrystals({ difficulty }: { difficulty: number }) {
-  const color = DIFFICULTY_STAR_COLORS[difficulty] ?? COLORS.starGold;
+function DifficultyDots({ difficulty }: { difficulty: number }) {
+  const filledColor = DIFFICULTY_STAR_COLORS[difficulty] ?? COLORS.starGold;
   return (
-    <View style={styles.difficultyStars}>
-      {Array.from({ length: difficulty }, (_, i) => (
-        <MaterialCommunityIcons
+    <View style={styles.difficultyDots}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <View
           key={i}
-          name="star-four-points"
-          size={13}
-          color={color}
+          style={[
+            styles.difficultyDot,
+            {
+              backgroundColor: i < difficulty ? filledColor : COLORS.cardBorder,
+            },
+          ]}
         />
       ))}
     </View>
@@ -233,10 +265,17 @@ function SongCard({
   onPress: () => void;
 }) {
   const isNew = mastery === 'none';
+  const genreCfg = GENRE_CONFIG[summary.metadata.genre] ?? GENRE_CONFIG.all;
+  const genreAccent = genreCfg.color;
+
   return (
     <Animated.View entering={FadeIn.duration(300)}>
       <PressableScale
-        style={[styles.songCard, SHADOWS.sm as Record<string, unknown>]}
+        style={[
+          styles.songCard,
+          SHADOWS.sm as Record<string, unknown>,
+          { borderLeftWidth: 3, borderLeftColor: genreAccent },
+        ]}
         onPress={onPress}
         testID={`song-card-${summary.id}`}
       >
@@ -245,10 +284,18 @@ function SongCard({
             <Text style={styles.songTitle} numberOfLines={1}>{summary.metadata.title}</Text>
             <Text style={styles.songArtist} numberOfLines={1}>{summary.metadata.artist}</Text>
             <View style={styles.songMeta}>
-              <View style={styles.genreChip}>
-                <Text style={styles.genreChipText}>{summary.metadata.genre}</Text>
+              <View style={[styles.genreChip, { backgroundColor: glowColor(genreAccent, 0.12) }]}>
+                <MaterialCommunityIcons
+                  name={genreCfg.icon}
+                  size={10}
+                  color={genreAccent}
+                  style={{ marginRight: 3 }}
+                />
+                <Text style={[styles.genreChipText, { color: genreAccent }]}>
+                  {summary.metadata.genre}
+                </Text>
               </View>
-              <DifficultyStarCrystals difficulty={summary.metadata.difficulty} />
+              <DifficultyDots difficulty={summary.metadata.difficulty} />
               <Text style={styles.durationText}>
                 {Math.floor(summary.metadata.durationSeconds / 60)}:{String(summary.metadata.durationSeconds % 60).padStart(2, '0')}
               </Text>
@@ -384,6 +431,7 @@ export function SongLibraryScreen() {
 
   const [requestModalVisible, setRequestModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const isInitialMount = useRef(true);
 
   // Load on mount
@@ -478,6 +526,7 @@ export function SongLibraryScreen() {
         renderItem={({ item }) => (
           <GenrePill
             label={item.label}
+            value={item.value}
             isActive={activeGenre === item.value}
             onPress={() => handleGenrePress(item.value)}
           />
@@ -488,16 +537,30 @@ export function SongLibraryScreen() {
       />
 
       {/* Search bar */}
-      <View style={styles.searchContainer}>
-        <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textMuted} />
+      <View style={[
+        styles.searchContainer,
+        searchFocused && { borderColor: COLORS.primary },
+      ]}>
+        <MaterialCommunityIcons
+          name="magnify"
+          size={20}
+          color={searchFocused ? COLORS.primary : COLORS.textMuted}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search songs..."
           placeholderTextColor={COLORS.textMuted}
           value={searchText}
           onChangeText={setSearchText}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           testID="search-input"
         />
+        {searchText.length > 0 && (
+          <PressableScale onPress={() => setSearchText('')} style={{ padding: 4 }}>
+            <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
+          </PressableScale>
+        )}
       </View>
 
       {/* Difficulty filter */}
@@ -598,27 +661,30 @@ const styles = StyleSheet.create({
   genreCarousel: {
     paddingHorizontal: SPACING.lg,
     paddingRight: SPACING.xl,
-    gap: SPACING.xs,
+    gap: SPACING.sm,
   },
   genrePill: {
-    paddingHorizontal: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 0,
+    paddingRight: SPACING.md,
     paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.md,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
+    overflow: 'hidden',
   },
-  genrePillActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  genreAccentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+    borderTopLeftRadius: BORDER_RADIUS.md,
+    borderBottomLeftRadius: BORDER_RADIUS.md,
+    marginRight: SPACING.sm,
   },
   genrePillText: {
     ...TYPOGRAPHY.body.sm,
     color: COLORS.textSecondary,
-  },
-  genrePillTextActive: {
-    color: COLORS.background,
-    fontWeight: '600',
   },
 
   // Search
@@ -714,18 +780,25 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   genreChip: {
-    backgroundColor: COLORS.surfaceElevated,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.sm,
   },
   genreChipText: {
     ...TYPOGRAPHY.caption.sm,
-    color: COLORS.primary,
     textTransform: 'capitalize',
   },
-  difficultyStars: {
+  difficultyDots: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  difficultyDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   durationText: {
     ...TYPOGRAPHY.caption.sm,
