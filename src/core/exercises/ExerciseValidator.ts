@@ -363,3 +363,6 @@ export function getExpectedNoteSequence(exercise: Exercise): number[] {
   return exercise.notes.map((n) => n.note);
 }
 
+// Re-export the type-aware scoring dispatcher
+export { scoreExerciseByType } from './scoringStrategies';
+
