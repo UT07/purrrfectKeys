@@ -31,6 +31,15 @@ jest.mock('expo-haptics', () => ({
   NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
 }));
 
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  scheduleNotificationAsync: jest.fn(() => Promise.resolve('mock-id')),
+  cancelAllScheduledNotificationsAsync: jest.fn(() => Promise.resolve()),
+  SchedulableTriggerInputTypes: { DAILY: 'daily' },
+}));
+
 jest.mock('@react-native-community/netinfo', () => ({
   useNetInfo: jest.fn(() => ({ isConnected: true, isInternetReachable: true })),
   addEventListener: jest.fn(() => jest.fn()),
@@ -65,6 +74,13 @@ jest.mock('@react-navigation/native', () => {
       params: {},
     }),
     useIsFocused: () => true,
+    useFocusEffect: (cb) => {
+      const React = require('react');
+      React.useEffect(() => {
+        const cleanup = cb();
+        return typeof cleanup === 'function' ? cleanup : undefined;
+      }, []);
+    },
     NavigationContainer: ({ children }) => children,
   };
 });
@@ -193,8 +209,17 @@ jest.mock('firebase/auth', () => ({
   signInAnonymously: jest.fn(() => Promise.resolve({ user: { uid: 'test-uid' } })),
   signInWithEmailAndPassword: jest.fn(),
   createUserWithEmailAndPassword: jest.fn(),
+  signInWithCredential: jest.fn(),
+  reauthenticateWithCredential: jest.fn(),
   signOut: jest.fn(() => Promise.resolve()),
+  deleteUser: jest.fn(() => Promise.resolve()),
+  updateProfile: jest.fn(() => Promise.resolve()),
+  sendPasswordResetEmail: jest.fn(() => Promise.resolve()),
+  linkWithCredential: jest.fn(),
   onAuthStateChanged: jest.fn(() => jest.fn()),
+  EmailAuthProvider: { credential: jest.fn() },
+  GoogleAuthProvider: { credential: jest.fn() },
+  OAuthProvider: jest.fn(() => ({ credential: jest.fn() })),
 }));
 
 jest.mock('firebase/firestore', () => ({

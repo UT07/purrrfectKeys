@@ -41,6 +41,7 @@ import { useLearnerProfileStore } from './learnerProfileStore';
 import { useSocialStore } from './socialStore';
 import { useLeagueStore } from './leagueStore';
 import { logger } from '../utils/logger';
+import { AnalyticsService, analyticsEvents } from '../services/analytics/PostHog';
 
 // ============================================================================
 // Types
@@ -239,6 +240,16 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
  * Runs asynchronously — errors are logged but don't block the UI.
  */
 async function triggerPostSignInSync(): Promise<void> {
+  // Pull display name from Firebase Auth user to settingsStore (cross-device sync)
+  try {
+    const authState = useAuthStore.getState();
+    if (authState.user?.displayName) {
+      useSettingsStore.getState().setDisplayName(authState.user.displayName);
+    }
+  } catch (err) {
+    logger.warn('[Auth] Display name sync failed:', err);
+  }
+
   try {
     const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
     await migrateLocalToCloud();
@@ -335,6 +346,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const result = await firebaseSignInAnonymously(auth);
       logger.log('[Auth] signInAnonymously success, uid:', result.user.uid);
+      analyticsEvents.auth.signIn('anonymous');
+      AnalyticsService.identifyUser(result.user.uid);
       set({
         user: result.user,
         isAuthenticated: true,
@@ -369,6 +382,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
+      analyticsEvents.auth.signIn('email');
+      AnalyticsService.identifyUser(result.user.uid, { email: result.user.email });
       set({
         user: result.user,
         isAuthenticated: true,
@@ -399,6 +414,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         useSettingsStore.getState().setDisplayName(displayName);
       } catch { /* settings sync is best-effort */ }
 
+      analyticsEvents.auth.signUp('email');
+      AnalyticsService.identifyUser(result.user.uid, { email, displayName });
       set({
         user: result.user,
         isAuthenticated: true,
@@ -439,6 +456,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Non-critical: display name restoration failure doesn't block sign-in
       }
 
+      analyticsEvents.auth.signIn('google');
+      AnalyticsService.identifyUser(result.user.uid, { email: result.user.email });
       set({
         user: result.user,
         isAuthenticated: true,
@@ -463,6 +482,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const credential = provider.credential({ idToken: identityToken, rawNonce: nonce });
       const result = await signInWithCredential(auth, credential);
 
+      analyticsEvents.auth.signIn('apple');
+      AnalyticsService.identifyUser(result.user.uid);
       set({
         user: result.user,
         isAuthenticated: true,
@@ -573,15 +594,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { user: anonUser, isAnonymous } = get();
 
-      // Delete the anonymous Firebase Auth user for GDPR compliance
+      // Sign in with the new credential FIRST — if this fails, anonymous data is preserved
+      const result = await signInWithCredential(auth, credential);
+
+      // Sign-in succeeded — now safe to clean up anonymous user and local data
       if (anonUser && isAnonymous) {
+        // Best-effort delete of the anonymous Firebase Auth user
         try {
           await deleteUser(anonUser);
-          logger.log('[Auth] Anonymous user deleted before sign-in replacement');
+          logger.log('[Auth] Anonymous user deleted after successful sign-in replacement');
         } catch (err) {
-          // If deletion fails (e.g. requires-recent-login), just sign out instead
-          logger.warn('[Auth] Could not delete anonymous user, signing out:', err);
-          await firebaseSignOut(auth).catch(() => {});
+          // Non-critical: anonymous user will be garbage collected by Firebase eventually
+          logger.warn('[Auth] Could not delete anonymous user (non-critical):', err);
         }
       }
 
@@ -589,9 +613,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       cancelAllPendingSaves();
       await PersistenceManager.clearAll();
       resetAllStores();
-
-      // Sign in with the existing account's credential
-      const result = await signInWithCredential(auth, credential);
 
       // Restore display name from Firestore if available
       try {
@@ -626,6 +647,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await firebaseSignOut(auth);
       signOutSucceeded = true;
+      analyticsEvents.auth.signOut();
+      AnalyticsService.reset();
 
       cancelAllPendingSaves();
 

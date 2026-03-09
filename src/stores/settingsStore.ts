@@ -236,6 +236,16 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     if (trimmed.length === 0) return;
     set({ displayName: trimmed });
     PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), displayName: trimmed });
+
+    // Fire-and-forget sync to Firebase Auth profile (non-anonymous users only)
+    try {
+      const { useAuthStore } = require('./authStore');
+      const { user, isAnonymous } = useAuthStore.getState();
+      if (user && !isAnonymous) {
+        const { updateProfile } = require('firebase/auth');
+        updateProfile(user, { displayName: trimmed }).catch(() => {});
+      }
+    } catch { /* Firebase sync is best-effort */ }
   },
 
   setAvatarEmoji: (emoji: string) => {

@@ -4,7 +4,7 @@
  * Duolingo-style gamification polish: progress ring, gradient stats, horizontal achievements
  */
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,7 @@ import {
   ScrollView,
   Alert,
   TextInput,
-  Modal,
   Platform,
-  Animated as RNAnimated,
 } from 'react-native';
 import { PressableScale } from '../components/common/PressableScale';
 import { useNavigation } from '@react-navigation/native';
@@ -30,21 +28,21 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
-  interpolateColor,
 } from 'react-native-reanimated';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAchievementStore } from '../stores/achievementStore';
 import { useGemStore } from '../stores/gemStore';
+import { useLearnerProfileStore } from '../stores/learnerProfileStore';
+import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { useCatEvolutionStore, xpToNextStage } from '../stores/catEvolutionStore';
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import { ACHIEVEMENTS } from '../core/achievements/achievements';
 import type { Achievement } from '../core/achievements/achievements';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { CAT_CHARACTERS, getCatById } from '../components/Mascot/catCharacters';
-import { StreakFlame } from '../components/StreakFlame';
 import { getLevelProgress } from '../core/progression/XpSystem';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, glowColor, shadowGlow } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -61,87 +59,6 @@ const VOLUME_OPTIONS = [
   { label: '100%', value: 1.0 },
 ];
 
-/** Stat card accent colors for gradient overlays */
-const STAT_ACCENTS = {
-  level: glowColor(COLORS.primary, 0.2),
-  xp: glowColor(COLORS.starGold, 0.2),
-  streak: glowColor(COLORS.warning, 0.2),
-  lessons: glowColor(COLORS.success, 0.2),
-} as const;
-
-const STAT_ACCENT_BORDERS = {
-  level: glowColor(COLORS.primary, 0.45),
-  xp: glowColor(COLORS.starGold, 0.45),
-  streak: glowColor(COLORS.warning, 0.45),
-  lessons: glowColor(COLORS.success, 0.45),
-} as const;
-
-const STAT_ICON_COLORS = {
-  level: COLORS.primary,
-  xp: COLORS.starGold,
-  streak: COLORS.warning,
-  lessons: COLORS.success,
-} as const;
-
-type StatAccentKey = keyof typeof STAT_ACCENTS;
-
-/** Shield background icon for each stat badge */
-const STAT_SHIELD_ICONS: Record<StatAccentKey, IconName> = {
-  level: 'shield-star',
-  xp: 'shield-star-outline',
-  streak: 'shield-half-full',
-  lessons: 'shield-check',
-} as const;
-
-interface StatItem {
-  icon: IconName;
-  label: string;
-  value: number;
-  accentKey: StatAccentKey;
-  useFlame?: boolean;
-}
-
-/** Hook for animated count-up from 0 to target value */
-function useCountUp(target: number, duration: number = 800): RNAnimated.Value {
-  const animValue = useRef(new RNAnimated.Value(0)).current;
-
-  useEffect(() => {
-    animValue.setValue(0);
-    const animation = RNAnimated.timing(animValue, {
-      toValue: target,
-      duration,
-      useNativeDriver: false,
-    });
-
-    animation.start();
-
-    return () => {
-      animation.stop();
-      animValue.stopAnimation();
-    };
-  }, [animValue, target, duration]);
-
-  return animValue;
-}
-
-/** Animated stat value text that counts up from 0 */
-function AnimatedStatValue({ value, color }: { value: number; color: string }): React.ReactElement {
-  const animValue = useCountUp(value);
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    const listenerId = animValue.addListener(({ value: v }) => {
-      setDisplayValue(Math.round(v));
-    });
-    return () => {
-      animValue.removeListener(listenerId);
-    };
-  }, [animValue]);
-
-  return (
-    <Text style={[styles.statValue, { color }]}>{displayValue}</Text>
-  );
-}
 
 /** Animated shimmer pulse wrapper for unlocked achievements */
 function ShimmerBadge({ children, isUnlocked }: { children: React.ReactNode; isUnlocked: boolean }): React.ReactElement {
@@ -173,35 +90,16 @@ function ShimmerBadge({ children, isUnlocked }: { children: React.ReactNode; isU
   );
 }
 
-/** Animated streak badge with cycling orange-to-red color */
-function StreakStatBadge({ value }: { value: number }): React.ReactElement {
-  const colorProgress = useSharedValue(0);
 
-  useEffect(() => {
-    colorProgress.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-  }, [colorProgress]);
-
-  const colorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      colorProgress.value,
-      [0, 0.5, 1],
-      [COLORS.streakFlameWarm, COLORS.streakFlameMedium, COLORS.streakFlameHot],
-    ),
-  }));
-
+/** Personal journey stat tile */
+function JourneyStat({ icon, label, value, color }: { icon: IconName; label: string; value: string; color: string }) {
   return (
-    <View style={styles.streakBadgeContainer}>
-      <StreakFlame streak={value} showCount={false} size="medium" />
-      <Animated.Text style={[styles.streakBadgeValue, colorStyle]}>
-        {value}
-      </Animated.Text>
+    <View style={styles.journeyTile}>
+      <View style={[styles.journeyIconDot, { backgroundColor: glowColor(color, 0.15) }]}>
+        <MaterialCommunityIcons name={icon} size={18} color={color} />
+      </View>
+      <Text style={[styles.journeyValue, { color }]}>{value}</Text>
+      <Text style={styles.journeyLabel}>{label}</Text>
     </View>
   );
 }
@@ -433,17 +331,24 @@ export function ProfileScreen(): React.ReactElement {
   // Level progress
   const levelProgress = getLevelProgress(totalXp);
 
-  // Calculate total lessons completed
-  const completedLessons = Object.values(lessonProgress).filter(
-    (lesson) => lesson.status === 'completed'
-  ).length;
-
-  const stats: StatItem[] = [
-    { icon: 'trophy', label: 'Level', value: level, accentKey: 'level' },
-    { icon: 'star', label: 'Total XP', value: totalXp, accentKey: 'xp' },
-    { icon: 'fire', label: 'Day Streak', value: streakData.currentStreak, accentKey: 'streak', useFlame: true },
-    { icon: 'book-open', label: 'Lessons Done', value: completedLessons, accentKey: 'lessons' },
-  ];
+  // Personal journey data
+  const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
+  const totalSkills = SKILL_TREE.length;
+  const totalStars = useMemo(() =>
+    Object.values(lessonProgress).reduce(
+      (sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0
+    ), [lessonProgress]);
+  const totalExercisesCompleted = useMemo(() => {
+    let count = 0;
+    for (const lp of Object.values(lessonProgress)) {
+      count += Object.values(lp.exerciseScores).filter(s => s.completedAt != null).length;
+    }
+    return count;
+  }, [lessonProgress]);
+  const totalPracticeMinutes = useMemo(() => {
+    const { dailyGoalData: goalData } = useProgressStore.getState();
+    return Object.values(goalData).reduce((sum, d) => sum + (d.minutesPracticed ?? 0), 0);
+  }, []);
 
   // Goal line height for the chart
   const goalLineHeight = dailyGoalMinutes > 0
@@ -501,12 +406,36 @@ export function ProfileScreen(): React.ReactElement {
             {levelProgress.xpToNextLevel} XP to next
           </Text>
 
-          <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }}>
-            <View style={styles.nameRow}>
-              <Text style={styles.username}>{displayName}</Text>
-              <MaterialCommunityIcons name="pencil-outline" size={16} color={COLORS.textMuted} />
+          {showNameEditor ? (
+            <View style={styles.inlineNameEdit} testID="name-editor">
+              <TextInput
+                style={styles.inlineNameInput}
+                value={editingName}
+                onChangeText={setEditingName}
+                maxLength={30}
+                autoFocus
+                selectTextOnFocus
+                placeholder="Your name"
+                placeholderTextColor={COLORS.textMuted}
+                returnKeyType="done"
+                onSubmitEditing={handleSaveName}
+                onBlur={handleSaveName}
+                testID="name-input"
+              />
+              <PressableScale onPress={handleSaveName} style={styles.inlineNameSave} testID="name-save-btn">
+                <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
+              </PressableScale>
             </View>
-          </PressableScale>
+          ) : (
+            <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }} testID="name-display">
+              <View style={styles.nameRow}>
+                <Text style={styles.username}>{displayName}</Text>
+                <View style={styles.nameEditBtn}>
+                  <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
+                </View>
+              </View>
+            </PressableScale>
+          )}
           <Text style={styles.subtitle}>
             Level {level} Pianist {selectedCat.personality ? `\u00B7 ${selectedCat.name}` : ''}
           </Text>
@@ -532,66 +461,31 @@ export function ProfileScreen(): React.ReactElement {
 
         {activeTab === 'me' && (
         <>
-        {/* Stats Grid — game-style shield badges */}
-        <View style={styles.statsGrid}>
-          {stats.map((stat) => {
-            const accentColor = STAT_ICON_COLORS[stat.accentKey];
-            return (
-              <LinearGradient
-                key={stat.label}
-                colors={[...GRADIENTS.cardWarm]}
-                style={[
-                  styles.statCard,
-                  { borderColor: STAT_ACCENT_BORDERS[stat.accentKey] },
-                  shadowGlow(accentColor, 8) as Record<string, unknown>,
-                ]}
-              >
-                <View style={[styles.statAccentOverlay, { backgroundColor: STAT_ACCENTS[stat.accentKey] }]} />
-                {/* Shield background watermark */}
-                <View style={styles.shieldWatermark}>
-                  <MaterialCommunityIcons
-                    name={STAT_SHIELD_ICONS[stat.accentKey]}
-                    size={64}
-                    color={glowColor(accentColor, 0.08)}
-                  />
-                </View>
-                {stat.useFlame ? (
-                  <StreakStatBadge value={stat.value} />
-                ) : (
-                  <>
-                    <MaterialCommunityIcons
-                      name={stat.icon}
-                      size={28}
-                      color={accentColor}
-                    />
-                    <AnimatedStatValue value={stat.value} color={COLORS.textPrimary} />
-                  </>
-                )}
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </LinearGradient>
-            );
-          })}
-          {/* Gem balance badge */}
-          <LinearGradient
-            colors={[...GRADIENTS.cardWarm]}
-            style={[
-              styles.statCard,
-              { borderColor: glowColor(COLORS.starGold, 0.45) },
-              shadowGlow(COLORS.gemGold, 8) as Record<string, unknown>,
-            ]}
-          >
-            <View style={[styles.statAccentOverlay, { backgroundColor: glowColor(COLORS.starGold, 0.2) }]} />
-            <View style={styles.shieldWatermark}>
-              <MaterialCommunityIcons
-                name="shield-star-outline"
-                size={64}
-                color={glowColor(COLORS.gemGold, 0.08)}
-              />
-            </View>
-            <MaterialCommunityIcons name="diamond-stone" size={28} color={COLORS.gemGold} />
-            <AnimatedStatValue value={gems} color={COLORS.textPrimary} />
-            <Text style={styles.statLabel}>Gems</Text>
-          </LinearGradient>
+        {/* Quick identity pills: Streak + Gems */}
+        <View style={styles.quickPillRow}>
+          <View style={styles.streakPill}>
+            <MaterialCommunityIcons name="fire" size={16} color={COLORS.starGold} />
+            <Text style={styles.streakPillText}>{streakData.currentStreak}</Text>
+          </View>
+          <View style={styles.gemPill}>
+            <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
+            <Text style={styles.gemPillText}>{gems}</Text>
+          </View>
+          <View style={styles.starPill}>
+            <MaterialCommunityIcons name="star" size={16} color={COLORS.starGold} />
+            <Text style={styles.starPillText}>{totalStars}</Text>
+          </View>
+        </View>
+
+        {/* Your Journey — personal milestones */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Journey</Text>
+          <View style={styles.journeyGrid}>
+            <JourneyStat icon="fire" label="Best Streak" value={`${streakData.longestStreak} days`} color={COLORS.warning} />
+            <JourneyStat icon="clock-outline" label="Total Practice" value={totalPracticeMinutes >= 60 ? `${Math.floor(totalPracticeMinutes / 60)}h ${totalPracticeMinutes % 60}m` : `${totalPracticeMinutes} min`} color={COLORS.info} />
+            <JourneyStat icon="brain" label="Skills Mastered" value={`${masteredSkills.length} / ${totalSkills}`} color={COLORS.evolutionGlow} />
+            <JourneyStat icon="music-note-eighth" label="Exercises Done" value={`${totalExercisesCompleted}`} color={COLORS.primary} />
+          </View>
         </View>
 
         {/* Evolution Progress */}
@@ -914,35 +808,6 @@ export function ProfileScreen(): React.ReactElement {
         )}
       </ScrollView>
 
-      {/* Name Editor Modal */}
-      <Modal visible={showNameEditor} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Edit Name</Text>
-            <TextInput
-              style={styles.nameInput}
-              value={editingName}
-              onChangeText={setEditingName}
-              maxLength={30}
-              autoFocus
-              selectTextOnFocus
-              placeholder="Your name"
-              placeholderTextColor={COLORS.textMuted}
-              returnKeyType="done"
-              onSubmitEditing={handleSaveName}
-            />
-            <View style={styles.modalActions}>
-              <PressableScale style={styles.modalCancel} onPress={() => setShowNameEditor(false)}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </PressableScale>
-              <PressableScale style={styles.modalSave} onPress={handleSaveName}>
-                <Text style={styles.modalSaveText}>Save</Text>
-              </PressableScale>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
     </SafeAreaView>
   );
 }
@@ -1058,56 +923,97 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontWeight: '600' as const,
   },
-  // Stats grid — shield badge style
-  statsGrid: {
+  // Quick pill row (streak + gems + stars)
+  quickPillRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.starGold, 0.2),
+  },
+  streakPillText: {
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
+    color: COLORS.starGold,
+  },
+  gemPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: glowColor(COLORS.gemGold, 0.1),
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.gemGold, 0.2),
+  },
+  gemPillText: {
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
+    color: COLORS.gemGold,
+  },
+  starPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.starGold, 0.2),
+  },
+  starPillText: {
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
+    color: COLORS.starGold,
+  },
+  // Journey milestones
+  journeyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: SPACING.md,
-    gap: SPACING.md - 4,
+    gap: SPACING.sm,
   },
-  statCard: {
-    ...SHADOWS.md,
-    flex: 1,
-    minWidth: '45%',
-    padding: SPACING.lg - 2,
-    borderRadius: BORDER_RADIUS.lg,
+  journeyTile: {
+    width: '47%' as unknown as number,
+    flexGrow: 1,
     alignItems: 'center',
-    borderWidth: 1.5,
-    overflow: 'hidden',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.05),
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.textPrimary, 0.08),
+    gap: 4,
   },
-  statAccentOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: BORDER_RADIUS.lg,
-  },
-  shieldWatermark: {
-    position: 'absolute',
-    right: -4,
-    bottom: -6,
-    opacity: 1,
-  },
-  statValue: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '900' as const,
-    marginTop: SPACING.xs,
-  },
-  statLabel: {
-    ...TYPOGRAPHY.caption.lg,
-    fontWeight: '600' as const,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-  },
-  // Streak badge
-  streakBadgeContainer: {
+  journeyIconDot: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 2,
   },
-  streakBadgeValue: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '900' as const,
+  journeyValue: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '800' as const,
+  },
+  journeyLabel: {
+    ...TYPOGRAPHY.caption.sm,
+    color: COLORS.textMuted,
   },
   // Sections
   section: {
@@ -1319,67 +1225,41 @@ const styles = StyleSheet.create({
   achievementBadgeLabelLocked: {
     color: COLORS.textMuted,
   },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: glowColor('#000000', 0.7),
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xl,
-  },
-  modalCard: {
-    ...SHADOWS.lg,
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    width: '100%',
-    maxWidth: 340,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
-  },
-  modalTitle: {
-    ...TYPOGRAPHY.heading.lg,
-    fontWeight: '800' as const,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
-  },
-  nameInput: {
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
-    borderRadius: BORDER_RADIUS.sm,
-    padding: SPACING.md - 4,
-    ...TYPOGRAPHY.heading.sm,
-    fontWeight: '400' as const,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.cardSurface,
-    marginBottom: SPACING.md,
-  },
-  modalActions: {
+  // Inline name editing
+  inlineNameEdit: {
     flexDirection: 'row',
-    gap: SPACING.md - 4,
-  },
-  modalCancel: {
-    flex: 1,
-    paddingVertical: SPACING.md - 4,
-    borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: COLORS.cardSurface,
     alignItems: 'center',
+    gap: 6,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
   },
-  modalCancelText: {
-    ...TYPOGRAPHY.button.lg,
-    color: COLORS.textSecondary,
-  },
-  modalSave: {
+  inlineNameInput: {
     flex: 1,
-    paddingVertical: SPACING.md - 4,
+    ...TYPOGRAPHY.heading.sm,
+    fontWeight: '600' as const,
+    color: COLORS.textPrimary,
+    backgroundColor: glowColor('#FFFFFF', 0.08),
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.3),
     borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs + 2,
+  },
+  inlineNameSave: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  modalSaveText: {
-    ...TYPOGRAPHY.button.lg,
-    color: COLORS.textPrimary,
+  nameEditBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: glowColor('#FFFFFF', 0.12),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Evolution progress
   evolutionCard: {

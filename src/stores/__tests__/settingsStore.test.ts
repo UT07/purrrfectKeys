@@ -275,4 +275,51 @@ describe('Settings Store', () => {
       });
     });
   });
+
+  describe('Display Name', () => {
+    it('should set display name and trim whitespace', () => {
+      useSettingsStore.getState().setDisplayName('  Alice  ');
+      expect(useSettingsStore.getState().displayName).toBe('Alice');
+    });
+
+    it('should reject empty display name', () => {
+      useSettingsStore.getState().setDisplayName('TestUser');
+      useSettingsStore.getState().setDisplayName('   ');
+      expect(useSettingsStore.getState().displayName).toBe('TestUser');
+    });
+
+    it('should truncate display name to 30 characters', () => {
+      const longName = 'A'.repeat(50);
+      useSettingsStore.getState().setDisplayName(longName);
+      expect(useSettingsStore.getState().displayName.length).toBeLessThanOrEqual(30);
+    });
+
+    it('should fire-and-forget sync to Firebase Auth when user is authenticated', () => {
+      // The global jest.setup.js mocks firebase/auth with updateProfile as jest.fn()
+      const firebaseAuth = require('firebase/auth');
+      firebaseAuth.updateProfile.mockClear();
+
+      // Set up authStore with a non-anonymous user
+      const { useAuthStore } = require('../authStore');
+      const mockUser = { uid: 'test-uid', displayName: 'OldName' };
+      useAuthStore.setState({ user: mockUser, isAnonymous: false });
+
+      useSettingsStore.getState().setDisplayName('NewName');
+      expect(useSettingsStore.getState().displayName).toBe('NewName');
+      expect(firebaseAuth.updateProfile).toHaveBeenCalledWith(mockUser, { displayName: 'NewName' });
+    });
+
+    it('should not sync to Firebase Auth for anonymous users', () => {
+      const firebaseAuth = require('firebase/auth');
+      firebaseAuth.updateProfile.mockClear();
+
+      // Set up authStore with an anonymous user
+      const { useAuthStore } = require('../authStore');
+      useAuthStore.setState({ user: { uid: 'anon' }, isAnonymous: true });
+
+      useSettingsStore.getState().setDisplayName('AnonName');
+      expect(useSettingsStore.getState().displayName).toBe('AnonName');
+      expect(firebaseAuth.updateProfile).not.toHaveBeenCalled();
+    });
+  });
 });

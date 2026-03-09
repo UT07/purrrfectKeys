@@ -121,6 +121,7 @@ let mockLearnerProfileState: any = {
   tempoRange: { min: 40, max: 80 },
   weakNotes: [],
   weakSkills: [],
+  masteredSkills: ['basic-rhythm', 'middle-c'],
   totalExercisesCompleted: 0,
   lastAssessmentDate: '',
   assessmentScore: 0,
@@ -147,6 +148,7 @@ let mockAuthState: any = {
   signInAnonymously: jest.fn(),
   signOut: jest.fn(),
   clearError: jest.fn(),
+  updateDisplayName: jest.fn(() => Promise.resolve()),
 };
 jest.mock('../../stores/authStore', () => ({
   useAuthStore: Object.assign(
@@ -190,16 +192,9 @@ jest.mock('../../components/Mascot/CatAvatar', () => {
 });
 
 
-jest.mock('../../components/StreakFlame', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return {
-    StreakFlame: (props: any) =>
-      React.createElement(View, { testID: 'streak-flame', ...props },
-        React.createElement(Text, null, 'streak:' + props.streak)
-      ),
-  };
-});
+jest.mock('../../components/StreakFlame', () => ({
+  StreakFlame: () => null,
+}));
 
 jest.mock('../../components/Mascot/catCharacters', () => ({
   CAT_CHARACTERS: [
@@ -375,21 +370,14 @@ describe('ProfileScreen', () => {
     expect(getByText(/Level 3 Pianist/)).toBeTruthy();
   });
 
-  it('shows total XP in stats grid', () => {
-    const { getByText } = render(<ProfileScreen />);
-    expect(getByText('Total XP')).toBeTruthy();
-  });
-
-  it('shows streak information via stat card and StreakFlame', () => {
-    const { getByText, getAllByTestId } = render(<ProfileScreen />);
-    expect(getByText('Day Streak')).toBeTruthy();
-    const flames = getAllByTestId('streak-flame');
-    expect(flames.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('shows XP to next level text', () => {
+  it('shows level progress ring with XP to next', () => {
     const { getByText } = render(<ProfileScreen />);
     expect(getByText('200 XP to next')).toBeTruthy();
+  });
+
+  it('shows streak count in quick pill row', () => {
+    const { getByText } = render(<ProfileScreen />);
+    expect(getByText('5')).toBeTruthy();
   });
 
   it('shows settings section with Daily Goal option after switching tab', () => {
@@ -460,13 +448,13 @@ describe('ProfileScreen', () => {
     expect(getByText('0 min total')).toBeTruthy();
   });
 
-  it('shows stat labels for all four stat cards', () => {
-    const { getAllByText, getByText } = render(<ProfileScreen />);
-    // 'Level' appears in multiple places (stat card label, subtitle, progress ring)
-    expect(getAllByText(/^Level$/).length).toBeGreaterThanOrEqual(1);
-    expect(getByText('Total XP')).toBeTruthy();
-    expect(getByText('Day Streak')).toBeTruthy();
-    expect(getByText('Lessons Done')).toBeTruthy();
+  it('shows journey milestones and quick pills', () => {
+    const { getByText } = render(<ProfileScreen />);
+    expect(getByText('Your Journey')).toBeTruthy();
+    expect(getByText('Best Streak')).toBeTruthy();
+    expect(getByText('Total Practice')).toBeTruthy();
+    expect(getByText('Skills Mastered')).toBeTruthy();
+    expect(getByText('Exercises Done')).toBeTruthy();
   });
 
   it('navigates to MIDI Setup when MIDI Setup setting is pressed', () => {
@@ -479,5 +467,33 @@ describe('ProfileScreen', () => {
   it('shows cat personality in subtitle', () => {
     const { getAllByText } = render(<ProfileScreen />);
     expect(getAllByText(/Mini Meowww/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  describe('Display Name Editing', () => {
+    it('shows tappable display name field', () => {
+      const { getByTestId } = render(<ProfileScreen />);
+      expect(getByTestId('name-display')).toBeTruthy();
+    });
+
+    it('tapping display name enters edit mode with text input', () => {
+      const { getByTestId, queryByTestId } = render(<ProfileScreen />);
+      expect(queryByTestId('name-input')).toBeNull();
+
+      fireEvent.press(getByTestId('name-display'));
+
+      expect(getByTestId('name-input')).toBeTruthy();
+      expect(getByTestId('name-save-btn')).toBeTruthy();
+    });
+
+    it('confirming edit calls setDisplayName with new value', () => {
+      const { getByTestId } = render(<ProfileScreen />);
+      fireEvent.press(getByTestId('name-display'));
+
+      const input = getByTestId('name-input');
+      fireEvent.changeText(input, 'NewName');
+      fireEvent.press(getByTestId('name-save-btn'));
+
+      expect(mockSettingsState.setDisplayName).toHaveBeenCalledWith('NewName');
+    });
   });
 });
