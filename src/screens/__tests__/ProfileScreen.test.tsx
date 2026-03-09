@@ -392,26 +392,29 @@ describe('ProfileScreen', () => {
     expect(getByText('200 XP to next')).toBeTruthy();
   });
 
-  it('shows settings section with Daily Goal option', () => {
+  it('shows settings section with Daily Goal option after switching tab', () => {
     const { getByText } = render(<ProfileScreen />);
-    expect(getByText('Settings')).toBeTruthy();
+    fireEvent.press(getByText('Settings'));
     expect(getByText('Daily Goal')).toBeTruthy();
     expect(getByText('15 min')).toBeTruthy();
   });
 
-  it('shows volume setting', () => {
+  it('shows volume setting in Settings tab', () => {
     const { getByText } = render(<ProfileScreen />);
+    fireEvent.press(getByText('Settings'));
     expect(getByText('Volume')).toBeTruthy();
     expect(getByText('80%')).toBeTruthy();
   });
 
-  it('shows MIDI Setup setting', () => {
+  it('shows MIDI Setup setting in Settings tab', () => {
     const { getByText } = render(<ProfileScreen />);
+    fireEvent.press(getByText('Settings'));
     expect(getByText('MIDI Setup')).toBeTruthy();
   });
 
   it('Account button navigates to AccountScreen', () => {
     const { getByText } = render(<ProfileScreen />);
+    fireEvent.press(getByText('Settings'));
     fireEvent.press(getByText('Account'));
     expect(mockNavigate).toHaveBeenCalledWith('Account');
   });
@@ -440,8 +443,9 @@ describe('ProfileScreen', () => {
     expect(getByText('Perfectionist')).toBeTruthy();
   });
 
-  it('shows About setting', () => {
+  it('shows About setting in Settings tab', () => {
     const { getByText } = render(<ProfileScreen />);
+    fireEvent.press(getByText('Settings'));
     expect(getByText('About')).toBeTruthy();
   });
 
@@ -467,6 +471,7 @@ describe('ProfileScreen', () => {
 
   it('navigates to MIDI Setup when MIDI Setup setting is pressed', () => {
     const { getByText } = render(<ProfileScreen />);
+    fireEvent.press(getByText('Settings'));
     fireEvent.press(getByText('MIDI Setup'));
     expect(mockNavigate).toHaveBeenCalledWith('MidiSetup');
   });

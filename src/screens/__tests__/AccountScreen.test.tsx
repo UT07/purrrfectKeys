@@ -124,13 +124,13 @@ describe('AccountScreen', () => {
     });
 
     it('renders back button', () => {
-      const { getByText } = render(<AccountScreen />);
-      expect(getByText('← Account')).toBeTruthy();
+      const { getByTestId } = render(<AccountScreen />);
+      expect(getByTestId('account-back')).toBeTruthy();
     });
 
     it('navigates back when pressing back button', () => {
-      const { getByText } = render(<AccountScreen />);
-      fireEvent.press(getByText('← Account'));
+      const { getByTestId } = render(<AccountScreen />);
+      fireEvent.press(getByTestId('account-back'));
       expect(mockGoBack).toHaveBeenCalledTimes(1);
     });
 
@@ -256,8 +256,8 @@ describe('AccountScreen', () => {
     });
 
     it('shows back button', () => {
-      const { getByText } = render(<AccountScreen />);
-      expect(getByText('← Account')).toBeTruthy();
+      const { getByTestId } = render(<AccountScreen />);
+      expect(getByTestId('account-back')).toBeTruthy();
     });
 
     it('displays error text when error exists', () => {
