@@ -12,7 +12,7 @@
 
 import { useEffect, useCallback, useRef, useState } from 'react';
 import type { Exercise, MidiNoteEvent, ExerciseScore } from '@/core/exercises/types';
-import { scoreExercise } from '@/core/exercises/ExerciseValidator';
+import { scoreExerciseByType } from '@/core/exercises/ExerciseValidator';
 import { InputManager, INPUT_LATENCY_COMPENSATION_MS } from '@/input/InputManager';
 import type { ActiveInputMethod } from '@/input/InputManager';
 import { createAudioEngine, ensureAudioModeConfigured } from '@/audio/createAudioEngine';
@@ -128,7 +128,10 @@ export function useExercisePlayback({
 
   // Echo dedup: tracks recent touch notes (MIDI note → timestamp) so mic events
   // that are speaker echoes of touch can be skipped in auto mode.
-  const recentTouchNotesRef = useRef<Map<number, number>>(new Map());
+  // Timestamp of the most recent touch event — used to suppress ALL mic events
+  // within the echo window. Speaker output causes the mic to detect wrong pitches
+  // (harmonics, octave errors), so per-note matching doesn't work. Blanket suppress.
+  const lastTouchTimestampRef = useRef<number>(0);
 
   const trackNoteOnIndex = useCallback((note: number, index: number) => {
     const stack = noteOnIndexMapRef.current.get(note) ?? [];
@@ -333,12 +336,13 @@ export function useExercisePlayback({
 
         // Echo dedup: In auto mode (mic active + touch enabled), when the user taps
         // the on-screen keyboard, the speaker plays a note that the mic picks up
-        // ~100-200ms later. Skip mic events that match a recent touch note.
+        // ~100-200ms later. The mic often detects a WRONG pitch (harmonics, octave
+        // errors from speaker distortion), so per-note matching doesn't work.
+        // Instead, suppress ALL mic events for 400ms after any touch event.
         if (source === 'mic') {
-          const lastTouchTime = recentTouchNotesRef.current.get(midiEvent.note);
-          if (lastTouchTime && Date.now() - lastTouchTime < 300) {
-            recentTouchNotesRef.current.delete(midiEvent.note); // One-shot dedup
-            return; // Skip — this is a speaker echo of a touch event
+          const timeSinceTouch = Date.now() - lastTouchTimestampRef.current;
+          if (timeSinceTouch < 400) {
+            return; // Skip — likely speaker echo from recent touch
           }
         }
 
@@ -713,7 +717,7 @@ export function useExercisePlayback({
       }
     }
 
-    const score = scoreExercise(scoringExercise, adjustedNotes, previousHighScore);
+    const score = scoreExerciseByType(scoringExercise, adjustedNotes, previousHighScore);
     useExerciseStore.getState().setScore(score);
     // Sync playedNotes state for post-exercise display
     setPlayedNotes([...playedNotesRef.current]);
@@ -753,14 +757,14 @@ export function useExercisePlayback({
       // In explicit mic mode, block touch events — the mic pipeline handles
       // detection with proper latency compensation.
       // In auto mode (mic active), allow touch events — they have priority over
-      // mic detection. Record the note in the echo dedup map so the mic event
-      // (speaker echo arriving ~100-200ms later) can be skipped.
+      // mic detection. Record the timestamp so ALL mic events within the echo
+      // window (400ms) are suppressed — speaker output causes wrong-pitch detection.
       const currentInputMethod = inputManagerRef.current?.activeMethod;
       if (currentInputMethod === 'mic') {
         const preferred = useSettingsStore.getState().preferredInputMethod;
         if (preferred === 'mic') return; // Explicit mic — block touch entirely
-        // Auto mode — allow touch, record for echo dedup
-        recentTouchNotesRef.current.set(note, Date.now());
+        // Auto mode — allow touch, stamp for blanket echo suppression
+        lastTouchTimestampRef.current = Date.now();
       }
 
       const midiEvent: MidiNoteEvent = {
