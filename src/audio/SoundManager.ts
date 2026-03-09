@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
+import type { AVPlaybackSource } from 'expo-av';
 
-import { generateAllSoundUris } from './generateUiSounds';
 import { logger } from '../utils/logger';
 
 let Haptics: typeof import('expo-haptics') | null = null;
@@ -80,7 +80,41 @@ const SOUND_HAPTICS: Record<SoundName, HapticType> = {
   meow_celebrate: 'medium',
 };
 
-// Sound URIs are generated procedurally at preload time (no .wav files needed)
+/**
+ * Static require registry for CC0 sound assets (Kenney.nl).
+ * Each require() is resolved at bundle time by Metro.
+ */
+const SOUND_ASSETS: Record<SoundName, AVPlaybackSource> = {
+  // UI
+  button_press: require('../../assets/sounds/button_press.wav'),
+  toggle_on: require('../../assets/sounds/toggle_on.wav'),
+  toggle_off: require('../../assets/sounds/toggle_off.wav'),
+  swipe: require('../../assets/sounds/swipe.wav'),
+  back_navigate: require('../../assets/sounds/back_navigate.wav'),
+  // Gameplay
+  note_correct: require('../../assets/sounds/note_correct.wav'),
+  note_perfect: require('../../assets/sounds/note_perfect.wav'),
+  note_miss: require('../../assets/sounds/note_miss.wav'),
+  combo_5: require('../../assets/sounds/combo_5.wav'),
+  combo_10: require('../../assets/sounds/combo_10.wav'),
+  combo_20: require('../../assets/sounds/combo_20.wav'),
+  combo_break: require('../../assets/sounds/combo_break.wav'),
+  countdown_tick: require('../../assets/sounds/countdown_tick.wav'),
+  countdown_go: require('../../assets/sounds/countdown_go.wav'),
+  // Rewards
+  star_earn: require('../../assets/sounds/star_earn.wav'),
+  gem_clink: require('../../assets/sounds/gem_clink.wav'),
+  xp_tick: require('../../assets/sounds/xp_tick.wav'),
+  level_up: require('../../assets/sounds/level_up.wav'),
+  chest_open: require('../../assets/sounds/chest_open.wav'),
+  evolution_start: require('../../assets/sounds/evolution_start.wav'),
+  exercise_complete: require('../../assets/sounds/exercise_complete.wav'),
+  // Cat (placeholder — swap with real cat sounds from Freesound)
+  meow_greeting: require('../../assets/sounds/meow_greeting.wav'),
+  purr_happy: require('../../assets/sounds/purr_happy.wav'),
+  meow_sad: require('../../assets/sounds/meow_sad.wav'),
+  meow_celebrate: require('../../assets/sounds/meow_celebrate.wav'),
+};
 
 interface LoadedSound {
   sound: Audio.Sound;
@@ -88,6 +122,7 @@ interface LoadedSound {
 
 /**
  * SoundManager — fire-and-forget UI sound effects + haptic feedback.
+ * Loads real CC0 audio files from assets/sounds/ (Kenney.nl).
  * Separate from the piano AudioEngine (different volume, different purpose).
  */
 export class SoundManager {
@@ -119,28 +154,31 @@ export class SoundManager {
     // which uses AudioManager (sync) to avoid racing with mic PlayAndRecord mode.
     // Do NOT call Audio.setAudioModeAsync() here — it would clobber the session.
 
-    // Generate all sound URIs procedurally (no .wav files needed)
-    const uris = generateAllSoundUris();
-    const entries = Object.entries(uris) as [SoundName, string][];
+    const entries = Object.entries(SOUND_ASSETS) as [SoundName, AVPlaybackSource][];
 
     const results = await Promise.allSettled(
-      entries.map(async ([name, uri]) => {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri },
-          { volume: this.volume, shouldPlay: false },
-        );
-        this.sounds.set(name, { sound });
+      entries.map(async ([name, source]) => {
+        try {
+          const { sound } = await Audio.Sound.createAsync(
+            source,
+            { volume: this.volume, shouldPlay: false },
+          );
+          this.sounds.set(name, { sound });
+        } catch (err) {
+          logger.warn(`[SoundManager] Failed to preload '${name}':`, err);
+        }
       }),
     );
 
     // Log failures but don't crash
     for (const r of results) {
       if (r.status === 'rejected') {
-        logger.warn('[SoundManager] Failed to preload sound:', r.reason);
+        logger.warn('[SoundManager] Preload rejected:', r.reason);
       }
     }
 
     this.preloaded = true;
+    logger.log(`[SoundManager] Preloaded ${this.sounds.size}/${entries.length} sounds`);
   }
 
   /**

@@ -1,17 +1,15 @@
 /**
- * StreakFlame - Premium multi-layered SVG flame with animated flicker
+ * StreakFlame — Streak counter styled as a pill badge
  *
- * Three visual tiers based on streak length:
- * - Warm (1-6 days): Orange/yellow flame, gentle pulse
- * - Medium (7-29 days): Deep orange flame, moderate pulse
- * - Hot (30+ days): Red/crimson flame, intense pulse with stronger glow
+ * Matches the Lv/XP badge visual language on HomeScreen.
+ * Uses the app's crimson+gold palette instead of clashing orange.
+ * Standalone flame mode available via showCount={false}.
  *
- * The flame uses 3 SVG path layers (outer → middle → core) with
- * gradient fills for a rich, non-flat look.
+ * Three color tiers: warm (1-6d), medium (7-29d), hot (30+d)
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,8 +18,8 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Defs, LinearGradient, Stop, RadialGradient } from 'react-native-svg';
-import { COLORS, TYPOGRAPHY, glowColor } from '../theme/tokens';
+import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { COLORS, TYPOGRAPHY, BORDER_RADIUS, glowColor } from '../theme/tokens';
 
 interface StreakFlameProps {
   streak: number;
@@ -29,182 +27,136 @@ interface StreakFlameProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-interface FlameColors {
-  outer: [string, string];     // gradient top → bottom
-  middle: [string, string];
-  core: [string, string];
-  glow: string;
-  text: string;
+interface TierColors {
+  outer: [string, string];
+  inner: [string, string];
+  accent: string; // for pill text + border tint
 }
 
-const FLAME_WARM: FlameColors = {
-  outer: ['#FF8C00', '#FF6B00'],
-  middle: ['#FFA726', '#FF8C00'],
-  core: ['#FFD54F', '#FFAB40'],
-  glow: glowColor('#FF9800', 0.25),
-  text: COLORS.streakFlameWarm,
+// Crimson/gold palette — matches the app's existing tokens
+const TIER_WARM: TierColors = {
+  outer: ['#DC143C', '#8B0000'],
+  inner: ['#FFD700', '#FFA500'],
+  accent: COLORS.starGold,
 };
 
-const FLAME_MEDIUM: FlameColors = {
-  outer: ['#FF5722', '#E64A19'],
-  middle: ['#FF7043', '#FF5722'],
-  core: ['#FFAB40', '#FF8C00'],
-  glow: glowColor('#FF6B00', 0.35),
-  text: COLORS.streakFlameMedium,
+const TIER_MEDIUM: TierColors = {
+  outer: ['#C62828', '#7F0000'],
+  inner: ['#FFD54F', '#FF8F00'],
+  accent: '#FFB300',
 };
 
-const FLAME_HOT: FlameColors = {
-  outer: ['#D32F2F', '#B71C1C'],
-  middle: ['#FF5252', '#D32F2F'],
-  core: ['#FFAB40', '#FF6D00'],
-  glow: glowColor('#FF4500', 0.45),
-  text: COLORS.streakFlameHot,
+const TIER_HOT: TierColors = {
+  outer: ['#B71C1C', '#4A0000'],
+  inner: ['#FFD700', '#FF6F00'],
+  accent: '#FFD700',
 };
 
-function getFlameConfig(streak: number, sizeOverride?: 'small' | 'medium' | 'large') {
-  const sizes = { small: 28, medium: 40, large: 56 };
-  const iconSize = sizeOverride ? sizes[sizeOverride] : streak >= 30 ? 56 : streak >= 7 ? 40 : 28;
-  const colors = streak >= 30 ? FLAME_HOT : streak >= 7 ? FLAME_MEDIUM : FLAME_WARM;
-  const intensity = streak >= 30 ? 1.12 : streak >= 7 ? 1.08 : 1.04;
+const ICON_SIZES = { small: 18, medium: 28, large: 36 } as const;
 
-  return { iconSize, colors, intensity };
+function getConfig(streak: number, sizeKey: 'small' | 'medium' | 'large' = 'small') {
+  const tier = streak >= 30 ? TIER_HOT : streak >= 7 ? TIER_MEDIUM : TIER_WARM;
+  const iconSize = ICON_SIZES[sizeKey];
+  const pulse = streak >= 30 ? 1.08 : streak >= 7 ? 1.05 : 1.03;
+  return { iconSize, tier, pulse };
 }
 
-/**
- * Multi-layered SVG flame with 3 path layers + radial glow.
- * viewBox is 24x32 — taller than wide for a natural flame shape.
- */
-function FlameSvg({ size, colors }: { size: number; colors: FlameColors }): React.JSX.Element {
+/** Compact flame icon — 2 layers, reads well from 18-36px */
+function FlameSvg({ size, colors }: { size: number; colors: TierColors }): React.JSX.Element {
+  const h = size * (32 / 24);
   return (
-    <Svg width={size} height={size * 1.33} viewBox="0 0 24 32">
+    <Svg width={size} height={h} viewBox="0 0 24 32">
       <Defs>
-        <LinearGradient id="outerGrad" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id="fo" x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={colors.outer[0]} />
           <Stop offset="1" stopColor={colors.outer[1]} />
         </LinearGradient>
-        <LinearGradient id="midGrad" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={colors.middle[0]} />
-          <Stop offset="1" stopColor={colors.middle[1]} />
+        <LinearGradient id="fi" x1="0" y1="0.2" x2="0" y2="1">
+          <Stop offset="0" stopColor={colors.inner[0]} />
+          <Stop offset="1" stopColor={colors.inner[1]} />
         </LinearGradient>
-        <LinearGradient id="coreGrad" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={colors.core[0]} />
-          <Stop offset="1" stopColor={colors.core[1]} />
-        </LinearGradient>
-        <RadialGradient id="glowGrad" cx="12" cy="20" rx="14" ry="18" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor={colors.outer[0]} stopOpacity="0.3" />
-          <Stop offset="1" stopColor={colors.outer[0]} stopOpacity="0" />
-        </RadialGradient>
       </Defs>
 
-      {/* Ambient glow */}
-      <Path d="M-2 8 Q12 -4 26 8 Q26 36 12 36 Q-2 36 -2 8Z" fill="url(#glowGrad)" />
-
-      {/* Outer flame — widest, deepest color */}
+      {/* Outer flame silhouette */}
       <Path
-        d="M12 2 Q16 6 18 10 Q21 15 20 20 Q19 25 17 27 Q14 30 12 30 Q10 30 7 27 Q5 25 4 20 Q3 15 6 10 Q8 6 12 2Z"
-        fill="url(#outerGrad)"
+        d="M13 0 Q23 10, 22 18 Q21 30, 12 32 Q3 30, 2 18 Q1 10, 13 0 Z"
+        fill="url(#fo)"
       />
 
-      {/* Middle flame — medium width */}
+      {/* Inner bright core */}
       <Path
-        d="M12 6 Q15 9 16.5 13 Q18 17 17 21 Q16 24 14.5 26 Q13 27 12 27 Q11 27 9.5 26 Q8 24 7 21 Q6 17 7.5 13 Q9 9 12 6Z"
-        fill="url(#midGrad)"
-      />
-
-      {/* Inner core — brightest, narrowest */}
-      <Path
-        d="M12 11 Q13.5 14 14 16.5 Q14.5 19 14 22 Q13.5 24 12 25 Q10.5 24 10 22 Q9.5 19 10 16.5 Q10.5 14 12 11Z"
-        fill="url(#coreGrad)"
+        d="M13 8 Q18 15, 17 21 Q16 28, 12 29 Q8 28, 7 21 Q6 15, 13 8 Z"
+        fill="url(#fi)"
       />
     </Svg>
   );
 }
 
-export function StreakFlame({ streak, showCount = true, size }: StreakFlameProps): React.ReactElement | null {
-  const config = useMemo(() => getFlameConfig(streak, size), [streak, size]);
+export function StreakFlame({ streak, showCount = true, size = 'small' }: StreakFlameProps): React.ReactElement | null {
+  const config = useMemo(() => getConfig(streak, size), [streak, size]);
   const scale = useSharedValue(1);
-  const glowScale = useSharedValue(1);
 
   useEffect(() => {
     if (streak <= 0) return;
-
-    // Flame body: gentle scale pulse
     scale.value = withRepeat(
       withSequence(
-        withTiming(config.intensity, { duration: 500, easing: Easing.inOut(Easing.sin) }),
-        withTiming(1, { duration: 500, easing: Easing.inOut(Easing.sin) }),
+        withTiming(config.pulse, { duration: 800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 800, easing: Easing.inOut(Easing.sin) }),
       ),
       -1,
       true,
     );
+  }, [streak, scale, config.pulse]);
 
-    // Glow: slightly offset timing for organic feel
-    glowScale.value = withRepeat(
-      withSequence(
-        withTiming(1.15, { duration: 600, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0.95, { duration: 600, easing: Easing.inOut(Easing.sin) }),
-      ),
-      -1,
-      true,
-    );
-  }, [streak, scale, glowScale, config.intensity]);
-
-  const flameStyle = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: glowScale.value }],
-    opacity: glowScale.value * 0.7,
   }));
 
   if (streak <= 0) return null;
 
-  const glowDiameter = config.iconSize * 1.8;
-
-  return (
-    <View style={styles.container}>
-      {/* Glow halo behind the flame */}
-      <Animated.View
-        style={[
-          styles.glow,
-          {
-            backgroundColor: config.colors.glow,
-            width: glowDiameter,
-            height: glowDiameter,
-            borderRadius: glowDiameter / 2,
-          },
-          glowStyle,
-        ]}
-      />
-
-      {/* Animated flame */}
-      <Animated.View style={[styles.flameWrap, flameStyle]}>
-        <FlameSvg size={config.iconSize} colors={config.colors} />
+  // Standalone flame (no pill) when showCount is false
+  if (!showCount) {
+    return (
+      <Animated.View style={[styles.standalone, animatedStyle]}>
+        <FlameSvg size={config.iconSize} colors={config.tier} />
       </Animated.View>
+    );
+  }
 
-      {showCount && (
-        <Text style={[styles.count, { color: config.colors.text }]}>{streak}</Text>
-      )}
-    </View>
+  // Pill badge — matches Lv/XP badge style on HomeScreen
+  return (
+    <Animated.View
+      style={[
+        styles.pill,
+        {
+          backgroundColor: glowColor(config.tier.accent, 0.1),
+          borderColor: glowColor(config.tier.accent, 0.2),
+        },
+        animatedStyle,
+      ]}
+    >
+      <FlameSvg size={config.iconSize} colors={config.tier} />
+      <Text style={[styles.count, { color: config.tier.accent }]}>{streak}</Text>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  standalone: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flameWrap: {
+  pill: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  glow: {
-    position: 'absolute',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
   },
   count: {
-    ...TYPOGRAPHY.body.md,
-    fontWeight: '800',
-    marginTop: 2,
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700',
   },
 });

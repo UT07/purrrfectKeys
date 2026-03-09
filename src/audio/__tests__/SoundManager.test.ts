@@ -1,13 +1,5 @@
 import { SoundManager } from '../SoundManager';
 
-// Mock procedural sound generator
-jest.mock('../generateUiSounds', () => ({
-  generateAllSoundUris: jest.fn(() => ({
-    button_press: 'data:audio/wav;base64,AAAA',
-    note_correct: 'data:audio/wav;base64,AAAA',
-  })),
-}));
-
 // Mock expo-av
 jest.mock('expo-av', () => ({
   Audio: {
@@ -36,6 +28,7 @@ describe('SoundManager', () => {
   let manager: SoundManager;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     manager = new SoundManager();
   });
 
@@ -79,6 +72,13 @@ describe('SoundManager', () => {
 
   it('preload resolves without error', async () => {
     await expect(manager.preload()).resolves.not.toThrow();
+  });
+
+  it('preload loads all 26 sound assets', async () => {
+    const { Audio } = require('expo-av');
+    await manager.preload();
+    // 25 SoundName entries
+    expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(25);
   });
 
   it('play triggers correct haptic type per sound category', () => {
