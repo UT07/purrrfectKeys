@@ -443,8 +443,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </View>
 
             {/* Goal progress text */}
-            <View style={styles.goalTextRow}>
-              <Text style={styles.goalLabel}>Daily Goal</Text>
+            <View style={[styles.goalTextRow, dailyGoalProgress >= 1 && styles.goalTextRowComplete]}>
+              <View style={styles.goalLabelRow}>
+                <MaterialCommunityIcons name="target" size={16} color={dailyGoalProgress >= 1 ? COLORS.starGold : COLORS.textSecondary} />
+                <Text style={[styles.goalLabel, dailyGoalProgress >= 1 && { color: COLORS.starGold }]}>Daily Goal</Text>
+              </View>
               <Text style={[styles.goalValue, dailyGoalProgress >= 1 && { color: COLORS.success }]}>
                 {minutesPracticedToday}/{dailyGoalMinutes} min
               </Text>
@@ -535,15 +538,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Free Play */}
         <Animated.View style={[styles.section, staggerStyle(6)]}>
           <PressableScale haptic onPress={() => navigation.navigate('FreePlay')}>
-            <View style={styles.freePlayCard} testID="free-play-card">
-              <View style={styles.freePlayIconContainer}>
-                <MaterialCommunityIcons name="piano" size={28} color={COLORS.primary} />
+            <View style={styles.freePlayOuter}>
+              <View style={styles.freePlayCard} testID="free-play-card">
+                {/* Background music note decorations */}
+                <View style={styles.freePlayNoteDecor1}>
+                  <MaterialCommunityIcons name="music-note" size={10} color={COLORS.primary} />
+                </View>
+                <View style={styles.freePlayNoteDecor2}>
+                  <MaterialCommunityIcons name="music-note" size={10} color={COLORS.primary} />
+                </View>
+                <View style={styles.freePlayNoteDecor3}>
+                  <MaterialCommunityIcons name="music-note" size={10} color={COLORS.primary} />
+                </View>
+                {/* Inner tint overlay */}
+                <View style={styles.freePlayTintOverlay} pointerEvents="none" />
+                <View style={styles.freePlayIconOuter}>
+                  <View style={styles.freePlayIconContainer}>
+                    <MaterialCommunityIcons name="piano" size={28} color={COLORS.primary} />
+                  </View>
+                  {/* Keyboard badge */}
+                  <View style={styles.freePlayIconBadge}>
+                    <MaterialCommunityIcons name="keyboard-outline" size={10} color={COLORS.textPrimary} />
+                  </View>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.freePlayTitle}>Free Play</Text>
+                  <Text style={styles.freePlaySubtitle}>Practice freely on the keyboard</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.freePlayTitle}>Free Play</Text>
-                <Text style={styles.freePlaySubtitle}>Practice freely on the keyboard</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
             </View>
           </PressableScale>
         </Animated.View>
@@ -588,8 +611,10 @@ HomeScreen.displayName = 'HomeScreen';
 /** Stat pill component for the quick stats row */
 function StatPill({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
   return (
-    <View style={styles.statPill}>
-      <MaterialCommunityIcons name={icon as any} size={18} color={color} />
+    <View style={[styles.statPill, { borderTopColor: color, borderTopWidth: 3, backgroundColor: glowColor(color, 0.06) }]}>
+      <View style={[styles.statPillIconRing, { backgroundColor: glowColor(color, 0.15) }]}>
+        <MaterialCommunityIcons name={icon as any} size={14} color={color} />
+      </View>
       <Text style={[styles.statPillValue, { color }]}>{value}</Text>
       <Text style={styles.statPillLabel}>{label}</Text>
     </View>
@@ -785,6 +810,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  goalTextRowComplete: {
+    backgroundColor: glowColor(COLORS.starGold, 0.08),
+  },
+  goalLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   goalLabel: {
     ...TYPOGRAPHY.body.md,
@@ -942,14 +977,24 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.sm + 2,
+    paddingBottom: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
-    gap: 2,
+    gap: 4,
+    overflow: 'hidden',
+  },
+  statPillIconRing: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statPillValue: {
-    ...TYPOGRAPHY.heading.md,
+    fontSize: 24,
+    lineHeight: 28,
     fontWeight: '800' as const,
   },
   statPillLabel: {
@@ -958,28 +1003,82 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   // Free Play card
+  freePlayOuter: {
+    borderRadius: BORDER_RADIUS.lg + 2,
+    borderWidth: 2,
+    borderColor: glowColor(COLORS.primary, 0.3),
+    ...SHADOWS.md,
+  },
   freePlayCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
     padding: SPACING.md,
     gap: SPACING.md,
-    ...SHADOWS.sm,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  freePlayTintOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: glowColor(COLORS.primary, 0.04),
+    opacity: 1,
+  },
+  freePlayNoteDecor1: {
+    position: 'absolute',
+    top: 10,
+    right: 60,
+    opacity: 0.08,
+  },
+  freePlayNoteDecor2: {
+    position: 'absolute',
+    bottom: 8,
+    right: 90,
+    opacity: 0.08,
+  },
+  freePlayNoteDecor3: {
+    position: 'absolute',
+    top: 6,
+    right: 120,
+    opacity: 0.08,
+  },
+  freePlayIconOuter: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: glowColor(COLORS.primary, 0.25),
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   freePlayIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: glowColor(COLORS.primary, 0.12),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  freePlayIconBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   freePlayTitle: {
     ...TYPOGRAPHY.body.md,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
+    fontSize: 15,
     color: COLORS.textPrimary,
   },
   freePlaySubtitle: {

@@ -9,7 +9,7 @@
  * Auth gate: anonymous users see a sign-in prompt instead.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -19,23 +19,25 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/authStore';
 import { useSocialStore } from '../stores/socialStore';
 import { useLeagueStore } from '../stores/leagueStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { getFriends, getUserPublicProfile } from '../services/firebase/socialService';
+import { getFriends, getUserPublicProfile, getChallengesForUser } from '../services/firebase/socialService';
+import { sendLocalNotification } from '../services/notificationService';
 import {
   getCurrentLeagueMembership,
   assignToLeague,
   getLeagueStandings,
 } from '../services/firebase/leagueService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
-import { LEAGUE_TIER_CONFIG } from '../theme/leagueTiers';
+import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
+import { CatAvatar } from '../components/Mascot';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -47,19 +49,23 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 function AuthGate({ onSignIn }: { onSignIn: () => void }): React.JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
+      <GradientMeshBackground accent="social" />
       <View style={styles.authGateContainer}>
         <MaterialCommunityIcons
-          name="account-group"
-          size={80}
+          name="shield-sword"
+          size={96}
           color={COLORS.textMuted}
         />
-        <Text style={styles.authGateTitle}>Social Features</Text>
+        <Text style={styles.authGateTitle}>The Arena</Text>
         <Text style={styles.authGateSubtitle}>
           Sign in to unlock leagues, friends, and challenges
         </Text>
-        <PressableScale onPress={onSignIn} style={styles.authGateButton}>
-          <Text style={styles.authGateButtonText}>Sign In</Text>
-        </PressableScale>
+        <View style={styles.authGateCtaCard}>
+          <PressableScale onPress={onSignIn} style={styles.authGateButton}>
+            <MaterialCommunityIcons name="login" size={20} color={COLORS.textPrimary} />
+            <Text style={styles.authGateButtonText}>Sign In</Text>
+          </PressableScale>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -111,7 +117,12 @@ function LeagueCard(): React.JSX.Element {
 
   if (!membership) {
     return (
-      <View style={[styles.card, styles.leagueCard]}>
+      <View style={[styles.card, styles.leagueCard, styles.leagueCardNoMembership]}>
+        {/* Trophy watermark */}
+        <View style={styles.trophyWatermark} pointerEvents="none">
+          <MaterialCommunityIcons name="trophy" size={120} color={COLORS.textPrimary} />
+        </View>
+
         <View style={styles.leagueHeader}>
           <MaterialCommunityIcons
             name="shield-outline"
@@ -125,14 +136,14 @@ function LeagueCard(): React.JSX.Element {
         </Text>
         <PressableScale
           onPress={handleJoinLeague}
-          style={[styles.joinLeagueButton, isJoining && styles.joinLeagueButtonDisabled]}
+          style={[styles.joinLeagueButton, styles.joinLeagueButtonGlow, isJoining && styles.joinLeagueButtonDisabled]}
           testID="social-join-league"
         >
           {isJoining ? (
             <ActivityIndicator color={COLORS.textPrimary} size="small" />
           ) : (
             <>
-              <MaterialCommunityIcons name="shield-plus" size={18} color={COLORS.textPrimary} />
+              <MaterialCommunityIcons name="shield-plus" size={20} color={COLORS.textPrimary} />
               <Text style={styles.joinLeagueButtonText}>Join This Week's League</Text>
             </>
           )}
@@ -176,19 +187,33 @@ function LeagueCard(): React.JSX.Element {
 
       <View style={styles.leagueStats}>
         <View style={styles.leagueStat}>
-          <Text style={styles.leagueStatValue}>#{membership.rank}</Text>
+          <View style={styles.rankRow}>
+            {membership.rank <= 3 && (
+              <MaterialCommunityIcons
+                name="crown"
+                size={16}
+                color={PODIUM_MEDAL_COLORS[membership.rank] ?? COLORS.starGold}
+              />
+            )}
+            <Text style={[
+              styles.leagueStatValueLarge,
+              membership.rank <= 3 && { color: PODIUM_MEDAL_COLORS[membership.rank] ?? COLORS.starGold },
+            ]}>
+              #{membership.rank}
+            </Text>
+          </View>
           <Text style={styles.leagueStatLabel}>Rank</Text>
         </View>
         <View style={styles.leagueStatDivider} />
         <View style={styles.leagueStat}>
-          <Text style={styles.leagueStatValue}>
+          <Text style={styles.leagueStatValueLarge}>
             {membership.weeklyXp.toLocaleString()}
           </Text>
           <Text style={styles.leagueStatLabel}>Weekly XP</Text>
         </View>
         <View style={styles.leagueStatDivider} />
         <View style={styles.leagueStat}>
-          <Text style={styles.leagueStatValue}>{membership.totalMembers}</Text>
+          <Text style={styles.leagueStatValueLarge}>{membership.totalMembers}</Text>
           <Text style={styles.leagueStatLabel}>Members</Text>
         </View>
       </View>
@@ -233,8 +258,18 @@ function FriendsSection(): React.JSX.Element {
     navigation.navigate('AddFriend');
   }, [navigation]);
 
+  const acceptedFriends = useMemo(
+    () => friends.filter((f) => f.status === 'accepted'),
+    [friends],
+  );
+
+  const previewFriends = acceptedFriends.slice(0, 3);
+
   return (
     <View style={[styles.card, styles.friendsCard]}>
+      {/* Left accent bar */}
+      <View style={styles.friendsAccentBar} />
+
       <View style={styles.sectionHeader}>
         <MaterialCommunityIcons
           name="account-multiple"
@@ -249,14 +284,25 @@ function FriendsSection(): React.JSX.Element {
         )}
       </View>
 
-      <Text style={styles.friendsCount}>
-        {acceptedCount} {acceptedCount === 1 ? 'friend' : 'friends'}
-        {pendingCount > 0 && (
-          <Text style={styles.pendingText}>
-            {' '} ({pendingCount} pending)
-          </Text>
+      <View style={styles.friendsInfoRow}>
+        {previewFriends.length > 0 && (
+          <View style={styles.friendAvatarStack}>
+            {previewFriends.map((f, i) => (
+              <View key={f.uid} style={[styles.friendAvatarWrapper, { marginLeft: i > 0 ? -12 : 0, zIndex: previewFriends.length - i }]}>
+                <CatAvatar catId={f.selectedCatId || 'mini-meowww'} size="small" skipEntryAnimation />
+              </View>
+            ))}
+          </View>
         )}
-      </Text>
+        <Text style={styles.friendsCount}>
+          {acceptedCount} {acceptedCount === 1 ? 'friend' : 'friends'}
+          {pendingCount > 0 && (
+            <Text style={styles.pendingText}>
+              {' '} ({pendingCount} pending)
+            </Text>
+          )}
+        </Text>
+      </View>
 
       <View style={styles.friendsActions}>
         <PressableScale
@@ -299,9 +345,11 @@ function FriendsSection(): React.JSX.Element {
 
 function ChallengeCard({
   challenge,
+  myUid,
 }: {
   challenge: {
     id: string;
+    fromUid: string;
     fromDisplayName: string;
     exerciseTitle: string;
     fromScore: number;
@@ -309,7 +357,10 @@ function ChallengeCard({
     status: 'pending' | 'completed' | 'expired';
     expiresAt: number;
   };
+  myUid: string;
 }): React.JSX.Element {
+  const iAmSender = challenge.fromUid === myUid;
+
   const timeLeft = useMemo(() => {
     const remaining = challenge.expiresAt - Date.now();
     if (remaining <= 0) return 'Expired';
@@ -326,10 +377,29 @@ function ChallengeCard({
         ? COLORS.textMuted
         : COLORS.warning;
 
+  const borderLeftColor =
+    challenge.status === 'completed'
+      ? COLORS.success
+      : challenge.status === 'expired'
+        ? COLORS.textMuted
+        : COLORS.warning;
+
+  // Scores from the viewer's perspective
+  const myScore = iAmSender ? challenge.fromScore : challenge.toScore;
+  const theirScore = iAmSender ? challenge.toScore : challenge.fromScore;
+
+  // Who won?
+  const myWins = myScore != null && theirScore != null && myScore > theirScore;
+  const theyWin = myScore != null && theirScore != null && theirScore > myScore;
+
   return (
-    <View style={styles.challengeCard}>
+    <View style={[
+      styles.challengeCard,
+      { borderLeftWidth: 3, borderLeftColor },
+      { backgroundColor: glowColor(borderLeftColor, 0.06) },
+    ]}>
       <View style={styles.challengeHeader}>
-        <MaterialCommunityIcons name="sword-cross" size={20} color={COLORS.warning} />
+        <MaterialCommunityIcons name="sword-cross" size={22} color={COLORS.warning} />
         <Text style={styles.challengeTitle} numberOfLines={1}>
           {challenge.exerciseTitle}
         </Text>
@@ -339,19 +409,32 @@ function ChallengeCard({
         vs. {challenge.fromDisplayName}
       </Text>
 
-      <View style={styles.challengeScores}>
-        <Text style={styles.challengeScore}>
-          Their score: {challenge.fromScore}%
-        </Text>
-        {challenge.toScore !== null ? (
-          <Text style={styles.challengeScore}>
-            Your score: {challenge.toScore}%
+      <View style={styles.challengeScoresRow}>
+        <View style={styles.challengeScoreBox}>
+          <Text style={styles.challengeScoreLabel}>You</Text>
+          <Text style={[
+            styles.challengeScoreValue,
+            myWins && { color: COLORS.success },
+          ]}>
+            {myScore != null ? `${myScore}%` : '—'}
           </Text>
-        ) : (
-          <Text style={[styles.challengeScore, { color: COLORS.warning }]}>
-            Not played yet
-          </Text>
-        )}
+        </View>
+        <Text style={styles.challengeVsText}>VS</Text>
+        <View style={styles.challengeScoreBox}>
+          <Text style={styles.challengeScoreLabel}>Them</Text>
+          {theirScore != null ? (
+            <Text style={[
+              styles.challengeScoreValue,
+              theyWin && { color: COLORS.success },
+            ]}>
+              {theirScore}%
+            </Text>
+          ) : (
+            <Text style={[styles.challengeScoreValue, { color: COLORS.warning, fontSize: 14 }]}>
+              Pending
+            </Text>
+          )}
+        </View>
       </View>
 
       <View style={styles.challengeFooter}>
@@ -374,6 +457,7 @@ function ChallengeCard({
 
 function ActiveChallengesSection(): React.JSX.Element {
   const challenges = useSocialStore((s) => s.challenges);
+  const myUid = useAuthStore((s) => s.user?.uid) ?? '';
 
   const activeChallenges = useMemo(
     () => challenges.filter((c) => c.status === 'pending' || c.status === 'completed'),
@@ -397,7 +481,7 @@ function ActiveChallengesSection(): React.JSX.Element {
         </Text>
       ) : (
         activeChallenges.map((challenge) => (
-          <ChallengeCard key={challenge.id} challenge={challenge} />
+          <ChallengeCard key={challenge.id} challenge={challenge} myUid={myUid} />
         ))
       )}
     </View>
@@ -413,66 +497,91 @@ export function SocialScreen(): React.JSX.Element {
   const user = useAuthStore((s) => s.user);
   const isAnonymous = useAuthStore((s) => s.isAnonymous);
   const setFriends = useSocialStore((s) => s.setFriends);
+  const setChallenges = useSocialStore((s) => s.setChallenges);
   const setMembership = useLeagueStore((s) => s.setMembership);
   const setStandings = useLeagueStore((s) => s.setStandings);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Sync friends + league from Firestore on mount
-  useEffect(() => {
-    if (!user?.uid || isAnonymous) return;
-    let cancelled = false;
-    let hadError = false;
+  // Sync friends + league + challenges from Firestore on mount and on tab focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.uid || isAnonymous) return;
+      let cancelled = false;
+      let hadError = false;
 
-    (async () => {
-      // Sync friends
-      try {
-        const remoteFriends = await getFriends(user.uid);
-        if (!cancelled && remoteFriends.length > 0) {
-          const enriched = await Promise.all(
-            remoteFriends.map(async (f) => {
-              if (f.displayName && f.displayName !== 'Friend' && f.displayName !== 'Player') {
-                return f;
-              }
-              try {
-                const profile = await getUserPublicProfile(f.uid);
-                if (profile) {
-                  return { ...f, displayName: profile.displayName, selectedCatId: profile.selectedCatId || f.selectedCatId };
+      (async () => {
+        // Sync friends
+        try {
+          const remoteFriends = await getFriends(user.uid);
+          if (!cancelled && remoteFriends.length > 0) {
+            const enriched = await Promise.all(
+              remoteFriends.map(async (f) => {
+                if (f.displayName && f.displayName !== 'Friend' && f.displayName !== 'Player') {
+                  return f;
                 }
-              } catch {
-                // keep original
-              }
-              return f;
-            }),
-          );
-          if (!cancelled) setFriends(enriched);
-        }
-      } catch {
-        hadError = true;
-      }
-
-      // Sync league membership + standings
-      try {
-        const m = await getCurrentLeagueMembership(user.uid);
-        if (!cancelled && m) {
-          setMembership(m);
-          try {
-            const s = await getLeagueStandings(m.leagueId);
-            if (!cancelled) setStandings(s);
-          } catch {
-            // standings fetch failed — not critical
+                try {
+                  const profile = await getUserPublicProfile(f.uid);
+                  if (profile) {
+                    return { ...f, displayName: profile.displayName, selectedCatId: profile.selectedCatId || f.selectedCatId };
+                  }
+                } catch {
+                  // keep original
+                }
+                return f;
+              }),
+            );
+            if (!cancelled) setFriends(enriched);
           }
+        } catch {
+          hadError = true;
         }
-      } catch {
-        hadError = true;
-      }
 
-      if (!cancelled && hadError) {
-        setSyncError('Some data may be outdated. Check your connection.');
-      }
-    })();
+        // Sync challenges
+        try {
+          const remoteChallenges = await getChallengesForUser(user.uid);
+          if (!cancelled) {
+            // Detect new pending challenges addressed to this user
+            const existingIds = new Set(useSocialStore.getState().challenges.map((c) => c.id));
+            const newIncoming = remoteChallenges.filter(
+              (c) => c.status === 'pending' && c.toUid === user.uid && !existingIds.has(c.id),
+            );
+            setChallenges(remoteChallenges);
+            // Fire a local notification for each new incoming challenge
+            for (const c of newIncoming) {
+              sendLocalNotification(
+                'New Challenge!',
+                `${c.fromDisplayName} challenged you on "${c.exerciseTitle}" with ${c.fromScore}%`,
+              );
+            }
+          }
+        } catch {
+          hadError = true;
+        }
 
-    return () => { cancelled = true; };
-  }, [user?.uid, isAnonymous, setFriends, setMembership, setStandings]);
+        // Sync league membership + standings
+        try {
+          const m = await getCurrentLeagueMembership(user.uid);
+          if (!cancelled && m) {
+            setMembership(m);
+            try {
+              const s = await getLeagueStandings(m.leagueId);
+              if (!cancelled) setStandings(s);
+            } catch {
+              // standings fetch failed — not critical
+            }
+          }
+        } catch {
+          hadError = true;
+        }
+
+        if (!cancelled && hadError) {
+          setSyncError('Some data may be outdated. Check your connection.');
+        }
+      })();
+
+      return () => { cancelled = true; };
+    }, [user?.uid, isAnonymous, setFriends, setChallenges, setMembership, setStandings]),
+  );
 
   const handleSignIn = useCallback(() => {
     navigation.navigate('Account');
@@ -491,7 +600,13 @@ export function SocialScreen(): React.JSX.Element {
         showsVerticalScrollIndicator={false}
         testID="social-scroll"
       >
-        <Text style={styles.screenTitle}>The Arena</Text>
+        <View style={styles.screenTitleRow}>
+          <MaterialCommunityIcons name="shield-sword" size={32} color={COLORS.primary} />
+          <View>
+            <Text style={styles.screenTitle}>The Arena</Text>
+            <Text style={styles.screenSubtitle}>Compete, challenge, conquer</Text>
+          </View>
+        </View>
 
         {syncError && (
           <View style={styles.syncErrorBanner}>
@@ -524,10 +639,22 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     paddingBottom: SPACING.xxl,
   },
-  screenTitle: {
-    ...TYPOGRAPHY.display.md,
-    color: COLORS.textPrimary,
+  screenTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
     marginBottom: SPACING.lg,
+  },
+  screenTitle: {
+    ...TYPOGRAPHY.display.lg,
+    color: COLORS.textPrimary,
+  },
+  screenSubtitle: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textMuted,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginTop: 2,
   },
 
   // Auth gate
@@ -538,7 +665,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
   },
   authGateTitle: {
-    ...TYPOGRAPHY.display.sm,
+    ...TYPOGRAPHY.display.md,
     color: COLORS.textPrimary,
     marginTop: SPACING.lg,
   },
@@ -549,10 +676,27 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     marginBottom: SPACING.xl,
   },
+  authGateCtaCard: {
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.3),
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.sm,
+    backgroundColor: glowColor(COLORS.primary, 0.06),
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: COLORS.primary,
+      shadowOpacity: 0.25,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 0 },
+    } : { elevation: 6 }),
+  },
   authGateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
     backgroundColor: COLORS.primary,
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
+    paddingHorizontal: SPACING.xxl,
     borderRadius: BORDER_RADIUS.lg,
   },
   authGateButtonText: {
@@ -584,12 +728,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: glowColor('#FFFFFF', 0.08),
     padding: SPACING.md,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
 
   // League card
   leagueCard: {
     borderWidth: 1.5,
+  },
+  leagueCardNoMembership: {
+    overflow: 'hidden',
+  },
+  trophyWatermark: {
+    position: 'absolute',
+    right: -10,
+    top: -10,
+    opacity: 0.05,
   },
   leagueHeader: {
     flexDirection: 'row',
@@ -630,12 +783,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    minHeight: 48,
+    minHeight: 52,
+  },
+  joinLeagueButtonGlow: {
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.5),
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: COLORS.primary,
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 0 },
+    } : { elevation: 6 }),
   },
   joinLeagueButtonDisabled: {
     opacity: 0.6,
@@ -669,6 +832,15 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.heading.lg,
     color: COLORS.textPrimary,
   },
+  leagueStatValueLarge: {
+    ...TYPOGRAPHY.display.sm,
+    color: COLORS.textPrimary,
+  },
+  rankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   leagueStatLabel: {
     ...TYPOGRAPHY.caption.lg,
     color: COLORS.textSecondary,
@@ -676,7 +848,7 @@ const styles = StyleSheet.create({
   },
   leagueStatDivider: {
     width: 1,
-    height: 32,
+    height: 36,
     backgroundColor: glowColor('#FFFFFF', 0.08),
   },
 
@@ -694,11 +866,44 @@ const styles = StyleSheet.create({
   },
 
   // Friends card
-  friendsCard: {},
+  friendsCard: {
+    overflow: 'hidden',
+    paddingLeft: SPACING.md + 3, // extra for accent bar
+  },
+  friendsAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: COLORS.primary,
+    borderTopLeftRadius: BORDER_RADIUS.lg,
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+  },
+  friendsInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  friendAvatarStack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendAvatarWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 2,
+    borderColor: COLORS.cardSurface,
+    overflow: 'hidden',
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   friendsCount: {
     ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
   },
   pendingText: {
     color: COLORS.warning,
@@ -772,23 +977,44 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   challengeTitle: {
-    ...TYPOGRAPHY.heading.sm,
+    ...TYPOGRAPHY.heading.md,
     color: COLORS.textPrimary,
     flex: 1,
   },
   challengeOpponent: {
     ...TYPOGRAPHY.body.sm,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
-  challengeScores: {
+  challengeScoresRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: glowColor('#FFFFFF', 0.03),
+    borderRadius: BORDER_RADIUS.sm,
   },
-  challengeScore: {
-    ...TYPOGRAPHY.body.sm,
-    color: COLORS.textSecondary,
+  challengeScoreBox: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  challengeScoreLabel: {
+    ...TYPOGRAPHY.caption.lg,
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  challengeScoreValue: {
+    ...TYPOGRAPHY.display.sm,
+    color: COLORS.textPrimary,
+  },
+  challengeVsText: {
+    ...TYPOGRAPHY.heading.sm,
+    color: COLORS.textMuted,
+    fontWeight: '800',
   },
   challengeFooter: {
     flexDirection: 'row',

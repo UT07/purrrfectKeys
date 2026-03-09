@@ -76,6 +76,21 @@ function activityIconColor(type: ActivityFeedItem['type']): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
+function statusColor(status: FriendConnection['status']): string {
+  switch (status) {
+    case 'pending_incoming': return COLORS.warning;
+    case 'pending_outgoing': return COLORS.info;
+    case 'accepted': return COLORS.success;
+    default: return COLORS.textMuted;
+  }
+}
+
+function sectionHeaderIcon(title: string): string {
+  if (title.startsWith('Incoming')) return 'inbox-arrow-down';
+  if (title.startsWith('Sent')) return 'send';
+  return 'account-group';
+}
+
 function PendingRequestRow({
   friend,
   onAccept,
@@ -87,10 +102,14 @@ function PendingRequestRow({
   onDecline: () => void;
   isProcessing: boolean;
 }): React.JSX.Element {
+  const borderColor = statusColor(friend.status);
   return (
     <View style={styles.friendRow}>
-      <View style={styles.friendAvatarWrap}>
-        <CatAvatar catId={friend.selectedCatId} size="small" />
+      <View style={[styles.friendRowAccent, { backgroundColor: borderColor }]} />
+      <View style={[styles.friendAvatarRing, { borderColor }]}>
+        <View style={styles.friendAvatarWrap}>
+          <CatAvatar catId={friend.selectedCatId} size="small" />
+        </View>
       </View>
       <View style={styles.friendInfo}>
         <Text style={styles.friendName} numberOfLines={1}>
@@ -125,10 +144,14 @@ function SentRequestRow({
   onCancel: () => void;
   isProcessing: boolean;
 }): React.JSX.Element {
+  const borderColor = statusColor(friend.status);
   return (
     <View style={styles.friendRow}>
-      <View style={styles.friendAvatarWrap}>
-        <CatAvatar catId={friend.selectedCatId} size="small" />
+      <View style={[styles.friendRowAccent, { backgroundColor: borderColor }]} />
+      <View style={[styles.friendAvatarRing, { borderColor }]}>
+        <View style={styles.friendAvatarWrap}>
+          <CatAvatar catId={friend.selectedCatId} size="small" />
+        </View>
       </View>
       <View style={styles.friendInfo}>
         <Text style={styles.friendName} numberOfLines={1}>
@@ -179,10 +202,14 @@ function AcceptedFriendRow({
     );
   }, [friend.uid, friend.displayName, navigation]);
 
+  const borderColor = statusColor(friend.status);
   return (
     <View style={styles.friendRow}>
-      <View style={styles.friendAvatarWrap}>
-        <CatAvatar catId={friend.selectedCatId} size="small" />
+      <View style={[styles.friendRowAccent, { backgroundColor: borderColor }]} />
+      <View style={[styles.friendAvatarRing, { borderColor }]}>
+        <View style={styles.friendAvatarWrap}>
+          <CatAvatar catId={friend.selectedCatId} size="small" />
+        </View>
       </View>
       <View style={styles.friendInfo}>
         <Text style={styles.friendName} numberOfLines={1}>
@@ -193,29 +220,35 @@ function AcceptedFriendRow({
         style={styles.challengeButton}
         onPress={handleChallenge}
       >
-        <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.textPrimary} />
+        <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.primaryLight} />
         <Text style={styles.challengeButtonText}>Challenge</Text>
       </PressableScale>
     </View>
   );
 }
 
-function ActivityRow({ item }: { item: ActivityFeedItem }): React.JSX.Element {
+function ActivityRow({ item, isLast }: { item: ActivityFeedItem; isLast: boolean }): React.JSX.Element {
   const iconName = activityIcon(item.type);
   const iconColor = activityIconColor(item.type);
 
   return (
-    <View style={styles.activityRow}>
-      <View style={[styles.activityIcon, { backgroundColor: glowColor(iconColor, 0.13) }]}>
-        <MaterialCommunityIcons name={iconName as never} size={18} color={iconColor} />
+    <View style={styles.activityRowOuter}>
+      {/* Timeline line */}
+      <View style={styles.timelineColumn}>
+        <View style={[styles.activityIcon, { backgroundColor: glowColor(iconColor, 0.13) }]}>
+          <MaterialCommunityIcons name={iconName as never} size={20} color={iconColor} />
+        </View>
+        {!isLast && <View style={styles.timelineLine} />}
       </View>
-      <View style={styles.activityContent}>
-        <Text style={styles.activityText} numberOfLines={2}>
-          <Text style={styles.activityFriendName}>{item.friendDisplayName}</Text>
-          {' '}
-          {item.detail}
-        </Text>
-        <Text style={styles.activityTime}>{getRelativeTime(item.timestamp)}</Text>
+      <View style={styles.activityCard}>
+        <View style={styles.activityContent}>
+          <Text style={styles.activityText} numberOfLines={2}>
+            <Text style={styles.activityFriendName}>{item.friendDisplayName}</Text>
+            {' '}
+            <Text style={styles.activityAction}>{item.detail}</Text>
+          </Text>
+          <Text style={styles.activityTime}>{getRelativeTime(item.timestamp)}</Text>
+        </View>
       </View>
     </View>
   );
@@ -356,7 +389,9 @@ export function FriendsScreen(): React.JSX.Element {
     if (!hasAnyFriends) {
       return (
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="account-group-outline" size={48} color={COLORS.textMuted} />
+          <View style={styles.emptyIconCircle}>
+            <MaterialCommunityIcons name="account-group-outline" size={64} color={COLORS.textMuted} />
+          </View>
           <Text style={styles.emptyTitle}>No friends yet</Text>
           <Text style={styles.emptySubtitle}>
             Add friends to see their progress and challenge them!
@@ -408,6 +443,13 @@ export function FriendsScreen(): React.JSX.Element {
           if (item.type === 'header') {
             return (
               <View style={styles.sectionHeader}>
+                <View style={styles.sectionHeaderAccent} />
+                <MaterialCommunityIcons
+                  name={sectionHeaderIcon(item.title) as never}
+                  size={14}
+                  color={COLORS.primary}
+                  style={styles.sectionHeaderIcon}
+                />
                 <Text style={styles.sectionHeaderText}>{item.title}</Text>
               </View>
             );
@@ -446,7 +488,9 @@ export function FriendsScreen(): React.JSX.Element {
     if (activityFeed.length === 0) {
       return (
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="timeline-text-outline" size={48} color={COLORS.textMuted} />
+          <View style={styles.emptyIconCircle}>
+            <MaterialCommunityIcons name="timeline-text-outline" size={64} color={COLORS.textMuted} />
+          </View>
           <Text style={styles.emptyTitle}>No activity yet</Text>
           <Text style={styles.emptySubtitle}>
             Add friends to see their activity here
@@ -460,7 +504,7 @@ export function FriendsScreen(): React.JSX.Element {
         data={activityFeed}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => <ActivityRow item={item} />}
+        renderItem={({ item, index }) => <ActivityRow item={item} isLast={index === activityFeed.length - 1} />}
       />
     );
   }, [activityFeed]);
@@ -494,35 +538,51 @@ export function FriendsScreen(): React.JSX.Element {
       {/* Tab Toggle */}
       <View style={styles.tabBar}>
         <PressableScale
-          style={[styles.tab, activeTab === 'friends' && styles.tabActive]}
+          style={styles.tab}
           onPress={() => setActiveTab('friends')}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'friends' && styles.tabTextActive,
-            ]}
-          >
-            Friends
-          </Text>
-          {(pendingIncoming.length + pendingOutgoing.length) > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{pendingIncoming.length + pendingOutgoing.length}</Text>
-            </View>
-          )}
+          <View style={styles.tabInner}>
+            <MaterialCommunityIcons
+              name="account-group"
+              size={18}
+              color={activeTab === 'friends' ? COLORS.primary : COLORS.textMuted}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'friends' && styles.tabTextActive,
+              ]}
+            >
+              Friends
+            </Text>
+            {(pendingIncoming.length + pendingOutgoing.length) > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pendingIncoming.length + pendingOutgoing.length}</Text>
+              </View>
+            )}
+          </View>
+          {activeTab === 'friends' && <View style={styles.tabAccentBar} />}
         </PressableScale>
         <PressableScale
-          style={[styles.tab, activeTab === 'activity' && styles.tabActive]}
+          style={styles.tab}
           onPress={() => setActiveTab('activity')}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'activity' && styles.tabTextActive,
-            ]}
-          >
-            Activity
-          </Text>
+          <View style={styles.tabInner}>
+            <MaterialCommunityIcons
+              name="timeline-clock"
+              size={18}
+              color={activeTab === 'activity' ? COLORS.primary : COLORS.textMuted}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'activity' && styles.tabTextActive,
+              ]}
+            >
+              Activity
+            </Text>
+          </View>
+          {activeTab === 'activity' && <View style={styles.tabAccentBar} />}
         </PressableScale>
       </View>
 
@@ -553,6 +613,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: glowColor('#FFFFFF', 0.06),
   },
   backButton: {
     width: 40,
@@ -569,29 +632,42 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     marginHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
     marginBottom: SPACING.md,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     padding: 3,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
   tab: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    overflow: 'hidden',
+  },
+  tabInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
     gap: SPACING.xs,
+    paddingBottom: SPACING.xs,
   },
-  tabActive: {
-    backgroundColor: COLORS.surfaceElevated,
+  tabAccentBar: {
+    width: '60%',
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: COLORS.primary,
   },
   tabText: {
     ...TYPOGRAPHY.button.md,
     color: COLORS.textMuted,
   },
   tabTextActive: {
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
   },
   badge: {
     backgroundColor: COLORS.primary,
@@ -614,8 +690,20 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   },
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: SPACING.sm,
     marginBottom: SPACING.xs,
+  },
+  sectionHeaderAccent: {
+    width: 2,
+    height: 16,
+    borderRadius: 1,
+    backgroundColor: COLORS.primary,
+    marginRight: SPACING.sm,
+  },
+  sectionHeaderIcon: {
+    marginRight: SPACING.xs,
   },
   sectionHeaderText: {
     ...TYPOGRAPHY.caption.lg,
@@ -633,13 +721,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
     padding: SPACING.md,
+    paddingLeft: SPACING.md + 3,
     marginBottom: SPACING.sm,
+    overflow: 'hidden',
     ...SHADOWS.sm,
   },
-  friendAvatarWrap: {
-    width: 40,
-    height: 40,
+  friendRowAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderTopLeftRadius: BORDER_RADIUS.md,
+    borderBottomLeftRadius: BORDER_RADIUS.md,
+  },
+  friendAvatarRing: {
+    width: 44,
+    height: 44,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: SPACING.md,
+  },
+  friendAvatarWrap: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -705,34 +812,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    backgroundColor: COLORS.primary,
+    backgroundColor: glowColor(COLORS.primary, 0.2),
     borderRadius: BORDER_RADIUS.sm,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.4),
   },
   challengeButtonText: {
     ...TYPOGRAPHY.button.sm,
-    color: COLORS.textPrimary,
+    color: COLORS.primaryLight,
   },
 
   // Activity
-  activityRow: {
+  activityRowOuter: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
+    marginBottom: 0,
+  },
+  timelineColumn: {
+    width: 48,
+    alignItems: 'center',
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: glowColor(COLORS.textMuted, 0.25),
+    marginTop: 2,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityCard: {
+    flex: 1,
     backgroundColor: COLORS.cardSurface,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
-  },
-  activityIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: BORDER_RADIUS.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
+    marginLeft: SPACING.sm,
   },
   activityContent: {
     flex: 1,
@@ -743,6 +866,10 @@ const styles = StyleSheet.create({
   },
   activityFriendName: {
     fontWeight: '700',
+  },
+  activityAction: {
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   activityTime: {
     ...TYPOGRAPHY.caption.lg,
@@ -756,6 +883,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: glowColor(COLORS.primary, 0.08),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyTitle: {
     ...TYPOGRAPHY.heading.md,
@@ -772,11 +907,13 @@ const styles = StyleSheet.create({
   emptyActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: SPACING.sm,
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    minWidth: 200,
   },
   emptyActionText: {
     ...TYPOGRAPHY.button.md,
