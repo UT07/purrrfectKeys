@@ -12,7 +12,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
 import Animated, {
@@ -36,7 +35,8 @@ import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { hasTierMasteryTestPassed } from '../core/curriculum/tierMasteryTest';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -404,7 +404,7 @@ function PathConnections({
       <Path
         key={`path-${i}`}
         d={d}
-        stroke={isCompleted ? 'rgba(255, 215, 0, 0.25)' : `${tierTheme.pathColor}30`}
+        stroke={isCompleted ? glowColor(COLORS.starGold, 0.25) : glowColor(tierTheme.pathColor, 0.19)}
         strokeWidth={3}
         strokeLinecap="round"
         fill="none"
@@ -466,9 +466,8 @@ function PathNode({
         },
       ]}
     >
-      <TouchableOpacity
+      <PressableScale
         onPress={onPress}
-        activeOpacity={0.7}
         testID={nodeTestID}
         style={{ alignItems: 'center' }}
       >
@@ -529,7 +528,7 @@ function PathNode({
             <Text style={styles.testChipText}>TEST</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </PressableScale>
 
       {/* Cat companion for this tier */}
       <View style={[
@@ -569,7 +568,7 @@ function SectionBanner({
   return (
     <View style={[styles.sectionBanner, { top: y }]}>
       <View style={styles.sectionBannerLine} />
-      <View style={[styles.sectionBannerPill, { borderColor: `${section.color}40` }]}>
+      <View style={[styles.sectionBannerPill, { borderColor: glowColor(section.color, 0.25) }]}>
         <MaterialCommunityIcons
           name={section.icon as any}
           size={14}
@@ -611,7 +610,7 @@ function TierThemeLabel({ tier, y }: { tier: number; y: number }) {
   const theme = TIER_THEMES[tier] ?? DEFAULT_TIER_THEME;
   return (
     <View style={[styles.tierThemeLabel, { top: y }]} testID={`tier-theme-label-${tier}`}>
-      <Text style={[styles.tierThemeLabelText, { color: `${theme.nodeColor}80` }]}>
+      <Text style={[styles.tierThemeLabelText, { color: glowColor(theme.nodeColor, 0.50) }]}>
         {theme.emoji} {theme.label}
       </Text>
     </View>
@@ -685,9 +684,9 @@ export function LevelMapScreen() {
       >
         <View style={styles.headerTopRow}>
           {canGoBack ? (
-            <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="level-map-back">
+            <PressableScale onPress={handleGoBack} style={styles.backButton} testID="level-map-back">
               <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-            </TouchableOpacity>
+            </PressableScale>
           ) : (
             <View style={styles.backButton} />
           )}
@@ -782,13 +781,13 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: glowColor('#FFFFFF', 0.08),
   },
   title: { ...TYPOGRAPHY.display.md, color: COLORS.textPrimary },
   headerStats: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.sm, justifyContent: 'center' },
   headerBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: glowColor('#FFFFFF', 0.05),
     paddingHorizontal: 10, paddingVertical: 4, borderRadius: BORDER_RADIUS.full,
   },
   headerBadgeText: { ...TYPOGRAPHY.body.md, fontWeight: '700', color: COLORS.textSecondary },
@@ -827,9 +826,9 @@ const styles = StyleSheet.create({
   // TEST chip
   testChip: {
     flexDirection: 'row', alignItems: 'center',
-    gap: 2, marginTop: 4, backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    paddingHorizontal: 8, paddingVertical: 2, borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1, borderColor: 'rgba(255, 215, 0, 0.3)',
+    gap: 2, marginTop: SPACING.xs, backgroundColor: glowColor(COLORS.starGold, 0.15),
+    paddingHorizontal: SPACING.sm, paddingVertical: 2, borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1, borderColor: glowColor(COLORS.starGold, 0.3),
   },
   testChipText: {
     ...TYPOGRAPHY.special.badge, fontWeight: '800',
@@ -852,12 +851,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
     paddingHorizontal: SPACING.lg, height: SECTION_BANNER_HEIGHT,
   },
-  sectionBannerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.06)' },
+  sectionBannerLine: { flex: 1, height: 1, backgroundColor: glowColor('#FFFFFF', 0.06) },
   sectionBannerPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderWidth: 1, borderRadius: BORDER_RADIUS.full,
     paddingHorizontal: 12, paddingVertical: 5,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: glowColor('#FFFFFF', 0.03),
   },
   sectionLabel: {
     ...TYPOGRAPHY.caption.lg, fontWeight: '700',
@@ -866,7 +865,7 @@ const styles = StyleSheet.create({
   sectionRewardBadge: { marginLeft: 4 },
   sectionRewardLocked: {
     width: 20, height: 20, borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: glowColor('#FFFFFF', 0.05),
     alignItems: 'center', justifyContent: 'center',
   },
 

@@ -29,7 +29,7 @@ import { useLeagueStore } from '../stores/leagueStore';
 import type { LeagueStandingEntry } from '../stores/leagueStore';
 import { useAuthStore } from '../stores/authStore';
 import { getLeagueStandings } from '../services/firebase/leagueService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
@@ -101,7 +101,7 @@ function PodiumPedestal({
 
       {/* Pedestal block */}
       <LinearGradient
-        colors={[medalColor + '40', medalColor + '15']}
+        colors={[glowColor(medalColor, 0.25), glowColor(medalColor, 0.08)]}
         style={[styles.podiumBlock, { height }]}
       >
         <Text style={[styles.podiumRank, { color: medalColor }]}>{place}</Text>
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.cardBorder,
   },
   rowCurrentUser: {
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: glowColor(COLORS.primary, 0.06),
     borderColor: COLORS.primary,
     borderWidth: 1,
     borderRadius: BORDER_RADIUS.md,
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.xs,
   },
   rowTopThree: {
-    paddingVertical: SPACING.md + 2,
+    paddingVertical: SPACING.md,
   },
 
   // Rank
@@ -616,10 +616,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.error + '15',
+    backgroundColor: glowColor(COLORS.error, 0.08),
     borderRadius: BORDER_RADIUS.sm,
     borderWidth: 1,
-    borderColor: COLORS.error + '30',
+    borderColor: glowColor(COLORS.error, 0.19),
   },
   errorBannerText: {
     ...TYPOGRAPHY.body.sm,
@@ -691,15 +691,15 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: COLORS.primary + '40',
-    backgroundColor: COLORS.primary + '10',
+    borderTopColor: glowColor(COLORS.primary, 0.25),
+    backgroundColor: glowColor(COLORS.primary, 0.06),
     gap: SPACING.sm,
   },
   pinnedRank: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.primary + '30',
+    backgroundColor: glowColor(COLORS.primary, 0.19),
     justifyContent: 'center',
     alignItems: 'center',
   },

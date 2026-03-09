@@ -32,7 +32,7 @@ import {
   assignToLeague,
   getLeagueStandings,
 } from '../services/firebase/leagueService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import { LEAGUE_TIER_CONFIG } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
@@ -157,7 +157,7 @@ function LeagueCard(): React.JSX.Element {
       },
     ]}>
       <View style={styles.leagueHeader}>
-        <View style={[styles.tierBadge, { backgroundColor: config.color + '25' }]}>
+        <View style={[styles.tierBadge, { backgroundColor: glowColor(config.color, 0.15) }]}>
           <MaterialCommunityIcons
             name={config.icon}
             size={32}
@@ -195,7 +195,7 @@ function LeagueCard(): React.JSX.Element {
 
       <PressableScale
         onPress={handleViewLeaderboard}
-        style={[styles.actionButton, { backgroundColor: config.color + '20' }]}
+        style={[styles.actionButton, { backgroundColor: glowColor(config.color, 0.13) }]}
         testID="social-view-leaderboard"
       >
         <MaterialCommunityIcons name="trophy" size={18} color={config.color} />
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.warning + '15',
+    backgroundColor: glowColor(COLORS.warning, 0.08),
     borderRadius: BORDER_RADIUS.sm,
     marginBottom: SPACING.md,
   },
@@ -579,10 +579,10 @@ const styles = StyleSheet.create({
 
   // Card base — glassmorphism
   card: {
-    backgroundColor: 'rgba(24, 24, 24, 0.75)',
+    backgroundColor: glowColor(COLORS.cardSurface, 0.75),
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: glowColor('#FFFFFF', 0.08),
     padding: SPACING.md,
     marginBottom: SPACING.md,
   },
@@ -656,9 +656,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopColor: glowColor('#FFFFFF', 0.08),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: glowColor('#FFFFFF', 0.08),
     marginBottom: SPACING.md,
   },
   leagueStat: {
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
   leagueStatDivider: {
     width: 1,
     height: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: glowColor('#FFFFFF', 0.08),
   },
 
   // Section header
@@ -723,15 +723,15 @@ const styles = StyleSheet.create({
   },
   friendsActionButton: {
     flex: 1,
-    backgroundColor: 'rgba(220, 20, 60, 0.12)',
+    backgroundColor: glowColor(COLORS.primary, 0.12),
     borderWidth: 1,
-    borderColor: 'rgba(220, 20, 60, 0.2)',
+    borderColor: glowColor(COLORS.primary, 0.2),
   },
   addFriendButton: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: glowColor('#FFFFFF', 0.06),
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: glowColor('#FFFFFF', 0.08),
   },
 
   // Action button (shared)
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     gap: SPACING.xs,
@@ -758,12 +758,12 @@ const styles = StyleSheet.create({
 
   // Individual challenge card
   challengeCard: {
-    backgroundColor: 'rgba(28, 28, 28, 0.8)',
+    backgroundColor: glowColor(COLORS.surfaceElevated, 0.8),
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: glowColor('#FFFFFF', 0.05),
   },
   challengeHeader: {
     flexDirection: 'row',
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+    borderTopColor: glowColor('#FFFFFF', 0.06),
     paddingTop: SPACING.sm,
   },
   challengeStatus: {

@@ -89,7 +89,7 @@ import type { WeakPattern } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
 import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
 import { midiToNoteName } from '../../core/music/MusicTheory';
-import { COLORS } from '../../theme/tokens';
+import { COLORS, glowColor } from '../../theme/tokens';
 import { suggestDrill } from '../../services/FreePlayAnalyzer';
 import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
 import { getTemplateForSkill, getTemplateExercise } from '../../content/templateExercises';
@@ -1227,11 +1227,42 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [salsaIntroText, setSalsaIntroText] = useState('');
   const [salsaIntroTip, setSalsaIntroTip] = useState('');
 
-  // Effective beat: during demo, use demo beat; otherwise use playback hook's beat.
+  // Effective beat: during demo, use demo beat; during replay, use replay beat;
+  // otherwise use playback hook's beat.
   // Negative beats (count-in) are passed through so VerticalPianoRoll can animate
   // the Tetris-style cascade: notes start above the visible area and fall into view.
-  const rawBeat = isDemoPlaying ? demoBeat : currentBeat;
+  const rawBeat = isDemoPlaying ? demoBeat : playerMode === 'replay' ? replayBeat : currentBeat;
   const effectiveBeat = rawBeat;
+
+  // Build note color overrides for replay mode — maps note index → hex color
+  const replayNoteColors = useMemo(() => {
+    if (playerMode !== 'replay' || !replayPlan) return undefined;
+    const COLOR_MAP: Record<string, string> = {
+      green: '#4CAF50',
+      yellow: '#FFC107',
+      red: '#F44336',
+      grey: '#9E9E9E',
+      purple: '#9C27B0',
+    };
+    const map = new Map<number, string>();
+    replayPlan.entries.forEach((entry, i) => {
+      const hex = COLOR_MAP[entry.color];
+      if (hex) map.set(i, hex);
+    });
+    return map;
+  }, [playerMode, replayPlan]);
+
+  // During replay, highlight keys that are currently "sounding" based on replayBeat
+  const replayHighlightedKeys = useMemo(() => {
+    if (playerMode !== 'replay') return undefined;
+    const active = new Set<number>();
+    for (const note of exercise.notes) {
+      if (replayBeat >= note.startBeat && replayBeat < note.startBeat + note.durationBeats) {
+        active.add(note.note);
+      }
+    }
+    return active;
+  }, [playerMode, replayBeat, exercise.notes]);
 
   // Update keyboard range based on active window (sticky, low-jitter).
   // Clamp to 0 for keyboard range since exercise notes always have non-negative startBeat.
@@ -2473,10 +2504,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
       {/* Vertical stack — top bar, piano roll, keyboard */}
       <View style={styles.mainColumn}>
-        {/* Glassmorphism top bar: exit + score + play/pause */}
-        <GlassmorphismCard
-          tint="rgba(10, 10, 10, 0.75)"
-          borderColor="rgba(255, 255, 255, 0.06)"
+        {/* Glassmorphism top bar: exit + score + play/pause — hidden during replay */}
+        {playerMode !== 'replay' && <GlassmorphismCard
+          tint={glowColor(COLORS.background, 0.75)}
+          borderColor={glowColor('#FFFFFF', 0.06)}
           borderRadius={16}
           style={styles.topBar}
         >
@@ -2556,10 +2587,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
             </Text>
           </TouchableOpacity>
-        </GlassmorphismCard>
+        </GlassmorphismCard>}
 
-        {/* Secondary controls — visible when not playing or paused */}
-        {(!isPlaying || isPaused) && (
+        {/* Secondary controls — visible when not playing or paused, hidden during replay */}
+        {playerMode !== 'replay' && (!isPlaying || isPaused) && (
           <View style={styles.secondaryBar} testID="secondary-controls">
             <HintDisplay
               hints={testMode ? { beforeStart: 'Mastery test — play from memory!', commonMistakes: [], successMessage: '' } : exercise.hints}
@@ -2627,9 +2658,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               containerHeight={pianoRollDims.height}
               midiMin={keyboardStartNote}
               midiMax={keyboardStartNote + keyboardOctaveCount * 12}
-              ghostNotes={ghostNotesEnabled ? exercise.notes : undefined}
+              ghostNotes={playerMode !== 'replay' && ghostNotesEnabled ? exercise.notes : undefined}
               ghostBeatOffset={2}
               timingGracePeriodMs={exercise.scoring.timingGracePeriodMs}
+              noteColorOverrides={replayNoteColors}
               testID="exercise-piano-roll"
             />
           )}
@@ -2645,8 +2677,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           )}
         </View>
 
-        {/* Timing feedback overlay between piano roll and keyboard */}
-        {feedback.type && (
+        {/* Timing feedback overlay between piano roll and keyboard — hidden during replay */}
+        {playerMode !== 'replay' && feedback.type && (
           <View style={styles.feedbackOverlay}>
             <FeedbackText
               type={feedback.type}
@@ -2667,10 +2699,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               splitPoint={splitPoint}
               onNoteOn={handleKeyDown}
               onNoteOff={handleKeyUp}
-              highlightedNotes={isDemoPlaying ? demoActiveNotes : highlightedKeys}
-              expectedNotes={expectedNotes}
-              enabled={!isMicExclusive}
-              hapticEnabled={true}
+              highlightedNotes={replayHighlightedKeys ?? (isDemoPlaying ? demoActiveNotes : highlightedKeys)}
+              expectedNotes={playerMode === 'replay' ? new Set<number>() : expectedNotes}
+              enabled={playerMode !== 'replay' && !isMicExclusive}
+              hapticEnabled={playerMode !== 'replay'}
               showLabels={true}
               keyHeight={singleKeyHeight}
               focusNoteLeft={focusNoteLeft}
@@ -2683,10 +2715,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               octaveCount={keyboardOctaveCount}
               onNoteOn={handleKeyDown}
               onNoteOff={handleKeyUp}
-              highlightedNotes={isDemoPlaying ? demoActiveNotes : highlightedKeys}
-              expectedNotes={expectedNotes}
-              enabled={!isMicExclusive}
-              hapticEnabled={true}
+              highlightedNotes={replayHighlightedKeys ?? (isDemoPlaying ? demoActiveNotes : highlightedKeys)}
+              expectedNotes={playerMode === 'replay' ? new Set<number>() : expectedNotes}
+              enabled={playerMode !== 'replay' && !isMicExclusive}
+              hapticEnabled={playerMode !== 'replay'}
               showLabels={true}
               scrollable={true}
               scrollEnabled={false}
@@ -2754,7 +2786,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         <ExerciseLoadingScreen
           visible={showLoadingScreen}
           exerciseReady={exerciseReady}
-          onReady={() => setShowLoadingScreen(false)}
+          onReady={() => {
+            setShowLoadingScreen(false);
+            // Skip the SalsaIntro — loading screen already showed Salsa's coaching
+            setShowIntro(false);
+            handleStart();
+          }}
         />
       )}
 
@@ -2892,11 +2929,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   errorBanner: {
-    backgroundColor: 'rgba(255, 152, 0, 0.15)',
+    backgroundColor: glowColor(COLORS.warning, 0.15),
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 152, 0, 0.3)',
+    borderBottomColor: glowColor(COLORS.warning, 0.3),
   },
   errorText: {
     color: COLORS.warning,
@@ -2945,11 +2982,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: glowColor('#000000', 0.9),
   },
   missFlash: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 0, 0, 0.12)',
+    backgroundColor: glowColor(COLORS.error, 0.12),
     zIndex: 4,
   },
   keyboardContainer: {
@@ -2968,7 +3005,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
   },
   metronomePillActive: {
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    backgroundColor: glowColor(COLORS.primary, 0.15),
     borderColor: COLORS.primary,
   },
   speedPill: {
@@ -2980,7 +3017,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cardBorder,
   },
   speedPillActive: {
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    backgroundColor: glowColor(COLORS.primary, 0.15),
     borderColor: COLORS.primary,
   },
   speedPillText: {
@@ -2997,9 +3034,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    backgroundColor: glowColor(COLORS.primary, 0.15),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(220, 20, 60, 0.3)',
+    borderBottomColor: glowColor(COLORS.primary, 0.3),
     gap: 12,
   },
   demoBannerText: {
@@ -3011,7 +3048,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(220, 20, 60, 0.3)',
+    backgroundColor: glowColor(COLORS.primary, 0.3),
   },
   tryNowButtonText: {
     color: COLORS.textPrimary,
@@ -3026,9 +3063,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
-    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    backgroundColor: glowColor(COLORS.success, 0.15),
     borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    borderColor: glowColor(COLORS.success, 0.3),
   },
   inputBadgeText: {
     fontSize: 11,
@@ -3045,7 +3082,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: 'rgba(225, 190, 231, 0.15)',
+    backgroundColor: glowColor('#E1BEE7', 0.15),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -3060,7 +3097,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     paddingTop: 48,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: COLORS.surfaceOverlay,
     zIndex: 200,
   },
   replayExitButton: {

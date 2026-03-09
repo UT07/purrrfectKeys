@@ -13,7 +13,6 @@ import {
   StyleSheet,
   SafeAreaView,
   FlatList,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -23,7 +22,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSocialStore } from '../stores/socialStore';
 import { useAuthStore } from '../stores/authStore';
 import { acceptFriendRequest, removeFriendConnection, getFriends, getUserPublicProfile } from '../services/firebase/socialService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import type { FriendConnection, ActivityFeedItem } from '../stores/types';
@@ -120,12 +119,12 @@ function PendingRequestRow({
           <ActivityIndicator color={COLORS.primary} size="small" />
         ) : (
           <>
-            <TouchableOpacity style={styles.acceptButton} onPress={onAccept}>
+            <PressableScale style={styles.acceptButton} onPress={onAccept}>
               <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.declineButton} onPress={onDecline}>
+            </PressableScale>
+            <PressableScale style={styles.declineButton} onPress={onDecline}>
               <MaterialCommunityIcons name="close" size={18} color={COLORS.textSecondary} />
-            </TouchableOpacity>
+            </PressableScale>
           </>
         )}
       </View>
@@ -155,9 +154,9 @@ function SentRequestRow({
         {isProcessing ? (
           <ActivityIndicator color={COLORS.primary} size="small" />
         ) : (
-          <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+          <PressableScale style={styles.cancelButton} onPress={onCancel}>
             <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          </PressableScale>
         )}
       </View>
     </View>
@@ -201,7 +200,7 @@ function ActivityRow({ item }: { item: ActivityFeedItem }): React.JSX.Element {
 
   return (
     <View style={styles.activityRow}>
-      <View style={[styles.activityIcon, { backgroundColor: `${iconColor}20` }]}>
+      <View style={[styles.activityIcon, { backgroundColor: glowColor(iconColor, 0.13) }]}>
         <MaterialCommunityIcons name={iconName as never} size={18} color={iconColor} />
       </View>
       <View style={styles.activityContent}>
@@ -468,27 +467,27 @@ export function FriendsScreen(): React.JSX.Element {
     <SafeAreaView style={styles.container} testID="friends-screen">
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <PressableScale
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           testID="friends-back"
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-        </TouchableOpacity>
+        </PressableScale>
         <Text style={styles.headerTitle}>Friends</Text>
-        <TouchableOpacity
+        <PressableScale
           onPress={() => navigation.navigate('AddFriend')}
           style={styles.backButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <MaterialCommunityIcons name="account-plus" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
       {/* Tab Toggle */}
       <View style={styles.tabBar}>
-        <TouchableOpacity
+        <PressableScale
           style={[styles.tab, activeTab === 'friends' && styles.tabActive]}
           onPress={() => setActiveTab('friends')}
         >
@@ -505,8 +504,8 @@ export function FriendsScreen(): React.JSX.Element {
               <Text style={styles.badgeText}>{pendingIncoming.length + pendingOutgoing.length}</Text>
             </View>
           )}
-        </TouchableOpacity>
-        <TouchableOpacity
+        </PressableScale>
+        <PressableScale
           style={[styles.tab, activeTab === 'activity' && styles.tabActive]}
           onPress={() => setActiveTab('activity')}
         >
@@ -518,7 +517,7 @@ export function FriendsScreen(): React.JSX.Element {
           >
             Activity
           </Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
       {/* Tab Content */}
@@ -574,7 +573,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.sm,
     gap: SPACING.xs,
   },
@@ -674,8 +673,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
     borderRadius: BORDER_RADIUS.sm,
-    paddingVertical: SPACING.xs + 2,
-    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
   },
   cancelButtonText: {
     ...TYPOGRAPHY.button.sm,
@@ -698,8 +697,8 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.sm,
-    paddingVertical: SPACING.xs + 2,
-    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
   },
   challengeButtonText: {
     ...TYPOGRAPHY.button.sm,
@@ -766,7 +765,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
   },
   emptyActionText: {
