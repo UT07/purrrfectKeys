@@ -19,12 +19,12 @@ import {
   Animated,
   Platform,
   AccessibilityInfo,
-  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { PressableScale } from '../../components/common/PressableScale';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
 import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
 import { VerticalPianoRoll } from '../../components/PianoRoll/VerticalPianoRoll';
@@ -36,7 +36,8 @@ import { getExercise, getNextExerciseId, getLessonIdForExercise, getLesson, getL
 import { getNextExerciseForSkill, getNextExercise as getNextAIExercise, fillBuffer, fillBufferForSkills, getBufferSize, BUFFER_MIN_THRESHOLD } from '../../services/exerciseBufferManager';
 import { recordPracticeSession as calculateStreakUpdate } from '../../core/progression/XpSystem';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
-import type { Exercise, ExerciseScore, MidiNoteEvent } from '../../core/exercises/types';
+import type { Exercise, ExerciseScore, MidiNoteEvent, ExerciseType } from '../../core/exercises/types';
+import { getExerciseType } from '../../core/exercises/types';
 import { ScoreDisplay } from './ScoreDisplay';
 import { ExerciseControls } from './ExerciseControls';
 import { HintDisplay } from './HintDisplay';
@@ -64,6 +65,10 @@ import type { PlaybackSpeed } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 import { DemoPlaybackService } from '../../services/demoPlayback';
 import { createAudioEngine } from '../../audio/createAudioEngine';
+import { ttsService } from '../../services/tts/TTSService';
+import { createChallenge } from '../../services/firebase/socialService';
+import { useSocialStore } from '../../stores/socialStore';
+import { useAuthStore } from '../../stores/authStore';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
 import { ExerciseLoadingScreen } from './ExerciseLoadingScreen';
 import { SalsaIntro } from './SalsaIntro';
@@ -74,6 +79,12 @@ import { ComboGlow } from './ComboGlow';
 import { FeedbackText } from './FeedbackText';
 import { HitParticles } from './HitParticles';
 import { ScreenShake, type ScreenShakeRef } from '../../components/effects';
+import { RhythmTapZone } from './RhythmTapZone';
+import { ListenPhaseOverlay } from './ListenPhaseOverlay';
+import { ChordPrompt, deriveChordName } from './ChordPrompt';
+import { SightReadingOverlay } from './SightReadingOverlay';
+import { CallResponsePhase } from './CallResponsePhase';
+import type { CallResponsePhaseType } from './CallResponsePhase';
 import { GlassmorphismCard } from '../../components/effects';
 import { buildReplayPlan } from '../../services/replayCoachingService';
 import { getIntroData } from '../../services/replayCoachingService';
@@ -94,6 +105,7 @@ import { suggestDrill } from '../../services/FreePlayAnalyzer';
 import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
 import { getTemplateForSkill, getTemplateExercise } from '../../content/templateExercises';
 import { getChestType, getChestReward } from '../../core/rewards/chestSystem';
+import { analyticsEvents } from '../../services/analytics/PostHog';
 
 /**
  * Timing tolerance multiplier per input method — mirrors InputManager's
@@ -236,6 +248,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const testMode = route.params?.testMode ?? false;
   const aiMode = route.params?.aiMode ?? false;
   const skillIdParam = route.params?.skillId ?? null;
+  const challengeTarget = route.params?.challengeTarget ?? null;
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
@@ -565,6 +578,27 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     return ex;
   }, [rawExercise, playbackSpeed, abilityConfig]);
 
+  // ─── Exercise type branching ────────────────────────────────────────
+  const exerciseType: ExerciseType = getExerciseType(exercise);
+  const isSightReading = exerciseType === 'sightReading';
+
+  // Chord prompt state (chordId type)
+  const currentChordName = useMemo(() => {
+    if (exerciseType !== 'chordId' || exercise.notes.length === 0) return '';
+    // Group notes by startBeat — each group is a chord to identify
+    const firstBeat = exercise.notes[0].startBeat;
+    const chordNotes = exercise.notes
+      .filter((n) => n.startBeat === firstBeat)
+      .map((n) => n.note);
+    return deriveChordName(chordNotes);
+  }, [exerciseType, exercise.notes]);
+  const [chordCorrect, setChordCorrect] = useState(false);
+  // setChordCorrect will be used when chord validation is wired in
+  void setChordCorrect;
+
+  // Call/response phase state
+  const [callResponsePhase, setCallResponsePhase] = useState<CallResponsePhaseType>('call');
+
   // Keep exerciseRef in sync so completion callback always has current exercise
   useEffect(() => {
     exerciseRef.current = exercise;
@@ -576,6 +610,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   useEffect(() => {
     if (aiMode && !exerciseReady) return;
     useExerciseStore.getState().setCurrentExercise(exercise);
+    analyticsEvents.exercise.started(exercise.id, exercise.metadata.title);
   }, [aiMode, exerciseReady, exercise.id]);
 
   const cycleSpeed = useCallback(() => {
@@ -723,6 +758,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Set finalScore AFTER ability boosts so CompletionModal shows the correct values
     setFinalScore(score);
+
+    // Analytics: track exercise completion
+    const failCount = useExerciseStore.getState().failCount;
+    analyticsEvents.exercise.completed(ex.id, score.overall, failCount + 1);
+    if (!score.isPassed) {
+      analyticsEvents.exercise.failed(ex.id, failCount + 1);
+    }
 
     // Build replay plan in background (parallel with CompletionModal animation)
     // Plan is ready by the time user taps "Review with Salsa"
@@ -1148,6 +1190,31 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       logger.warn('[ExercisePlayer] Bonus drill detection failed:', err);
     }
 
+    // --- Friend challenge creation ---
+    if (challengeTarget) {
+      const authUser = useAuthStore.getState().user;
+      if (authUser) {
+        const challengeDoc = {
+          id: `challenge-${authUser.uid}-${challengeTarget.uid}-${Date.now()}`,
+          fromUid: authUser.uid,
+          fromDisplayName: authUser.displayName ?? 'Player',
+          fromCatId: useSettingsStore.getState().selectedCatId ?? 'mini-meowww',
+          toUid: challengeTarget.uid,
+          exerciseId: ex.id,
+          exerciseTitle: ex.metadata.title,
+          fromScore: score.overall,
+          toScore: null,
+          status: 'pending' as const,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 48 * 60 * 60 * 1000, // 48h
+        };
+        useSocialStore.getState().addChallenge(challengeDoc);
+        createChallenge(challengeDoc).catch((err) => {
+          logger.warn('[ExercisePlayer] Failed to create challenge:', err);
+        });
+      }
+    }
+
     // Always show full CompletionModal with AI coaching, score ring, cat dialogue.
     // CompletionModal handles all scenarios: pass, fail, retry, next exercise, lesson complete.
     setShowCompletion(true);
@@ -1157,7 +1224,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         `Exercise complete! Score: ${score.overall}%`
       );
     }
-  }, [onExerciseComplete, abilityConfig]);
+  }, [onExerciseComplete, abilityConfig, challengeTarget]);
 
   // Metronome toggle — defaults to exercise setting, user can toggle during play
   const [metronomeOn, setMetronomeOn] = useState(exercise.settings.metronomeEnabled ?? true);
@@ -1218,9 +1285,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [replayOverlayMode, setReplayOverlayMode] = useState<'hidden' | 'pill' | 'card'>('hidden');
   const [replayPillText, setReplayPillText] = useState('');
   const [replayCardText, setReplayCardText] = useState('');
-  const replayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const replayPauseIndexRef = useRef(0);
-  const replayCommentIndexRef = useRef(0);
 
   // Salsa intro state (pre-exercise coaching)
   const [salsaIntroTier, setSalsaIntroTier] = useState<1 | 2 | 3 | null>(null);
@@ -1564,6 +1628,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     } else {
       pausePlayback();
       setIsPaused(true);
+      analyticsEvents.exercise.paused(exercise.id, currentBeat);
     }
 
     if (Platform.OS === 'web') {
@@ -1870,8 +1935,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (externalNoteCount <= lastProcessedExternalCountRef.current) return;
     lastProcessedExternalCountRef.current = externalNoteCount;
 
-    // Highlight the key
-    setHighlightedKeys((prev) => new Set([...prev, externalNote.note]));
+    // Highlight the key.
+    // For mic (monophonic), replace all highlights — only one note can be active at a time.
+    // This prevents harmonic flukes from lighting up multiple keys simultaneously.
+    const isMicMono = activeInputMethodRef.current === 'mic';
+    if (isMicMono) {
+      setHighlightedKeys(new Set([externalNote.note]));
+    } else {
+      setHighlightedKeys((prev) => new Set([...prev, externalNote.note]));
+    }
 
     // Auto-release highlight after 300ms (external inputs don't have noteOff keyboard events)
     const releaseTimer = setTimeout(() => {
@@ -2007,99 +2079,79 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    * Retry the current exercise after failing
    */
   const handleRetry = useCallback(() => {
+    analyticsEvents.replay.skipped(exercise.id);
     setShowCompletion(false);
     setFinalScore(null);
     handleRestart();
-  }, [handleRestart]);
+  }, [handleRestart, exercise.id]);
 
   /**
    * Start replay mode — Salsa's coaching review of the exercise
    */
   const startReplay = useCallback(() => {
     if (!replayPlan) return;
+    analyticsEvents.replay.triggered(exercise.id, finalScore?.overall ?? 0, false);
     setShowCompletion(false);
     setPlayerMode('replay');
     setReplayBeat(0);
     setReplayPaused(false);
     setReplayOverlayMode('hidden');
-    replayPauseIndexRef.current = 0;
-    replayCommentIndexRef.current = 0;
 
-    // Start a simple beat timer that drives the replay forward
-    const bpm = exercise.settings.tempo;
-    const msPerBeat = 60000 / bpm;
-    let beatAccum = 0;
-
-    if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-
-    const tick = () => {
-      if (!mountedRef.current) return;
-
-      // Check for pause points at current beat
-      const plan = replayPlan;
-      const pauseIdx = replayPauseIndexRef.current;
-      if (pauseIdx < plan.pausePoints.length) {
-        const pp = plan.pausePoints[pauseIdx];
-        if (beatAccum >= pp.beatPosition) {
-          // Pause at this point
-          setReplayPaused(true);
-          setReplayOverlayMode('card');
-          setReplayCardText(pp.explanation);
-          replayPauseIndexRef.current = pauseIdx + 1;
-          if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-          return;
-        }
-      }
-
-      // Check for continuous comments
-      const commentIdx = replayCommentIndexRef.current;
-      if (commentIdx < plan.comments.length) {
-        const comment = plan.comments[commentIdx];
-        if (beatAccum >= comment.beatPosition) {
-          setReplayOverlayMode('pill');
-          setReplayPillText(comment.text);
-          replayCommentIndexRef.current = commentIdx + 1;
-          // Auto-hide pill after 2 seconds
-          setTimeout(() => {
-            if (mountedRef.current) setReplayOverlayMode('hidden');
-          }, 2000);
-        }
-      }
-
-      // Determine speed (1x near mistakes, 2x through clean sections)
-      let speed = 1;
-      if (plan.speedZones.length > 0) {
-        const zone = plan.speedZones.find(z => beatAccum >= z.fromBeat && beatAccum < z.toBeat);
-        if (zone?.zone === 'fast') speed = 2;
-      }
-
-      beatAccum += 0.25 * speed; // quarter-beat increments
-      setReplayBeat(beatAccum);
-
-      // Check if replay is complete
-      if (beatAccum >= plan.totalBeats) {
-        if (replayTimerRef.current) clearInterval(replayTimerRef.current);
+    const audioEngine = createAudioEngine();
+    demoServiceRef.current.startReplay(replayPlan, exercise.settings.tempo, audioEngine, {
+      onBeatUpdate: (beat) => setReplayBeat(beat),
+      onPausePoint: (pp) => {
         setReplayPaused(true);
         setReplayOverlayMode('card');
-        setReplayCardText(plan.summary);
-      }
-    };
-
-    replayTimerRef.current = setInterval(tick, msPerBeat / 4);
+        setReplayCardText(pp.explanation);
+        ttsService.speak(pp.explanation, { catId: 'salsa' });
+      },
+      onComment: (comment) => {
+        setReplayOverlayMode('pill');
+        setReplayPillText(comment.text);
+        setTimeout(() => {
+          if (mountedRef.current) setReplayOverlayMode('hidden');
+        }, 2000);
+      },
+      onComplete: () => {
+        setReplayPaused(true);
+        setReplayOverlayMode('card');
+        setReplayCardText(replayPlan.summary);
+      },
+    });
   }, [replayPlan, exercise.settings.tempo]);
 
   /**
-   * Stop replay and return to CompletionModal
+   * Stop replay. If replay finished naturally, navigate away.
+   * If user exits mid-replay, return to CompletionModal.
    */
-  const stopReplay = useCallback(() => {
-    if (replayTimerRef.current) {
-      clearInterval(replayTimerRef.current);
-      replayTimerRef.current = null;
-    }
+  const stopReplay = useCallback((replayFinished = false) => {
+    demoServiceRef.current.stop();
+    ttsService.stop();
     setPlayerMode('exercise');
     setReplayOverlayMode('hidden');
-    setShowCompletion(true);
-  }, []);
+
+    if (replayFinished) {
+      // Replay completed — navigate to next exercise or back home
+      if (nextExerciseId && !aiMode) {
+        stopPlayback();
+        exerciseStore.clearSession();
+        setTimeout(() => {
+          if (mountedRef.current) {
+            (navigation as any).replace('Exercise', {
+              exerciseId: nextExerciseId,
+              ...(skillIdParam ? { skillId: skillIdParam } : {}),
+            });
+          }
+        }, 100);
+      } else {
+        handleExit();
+      }
+    } else {
+      // User exited early — show CompletionModal again
+      setShowCompletion(true);
+    }
+  }, [nextExerciseId, aiMode, stopPlayback, exerciseStore, navigation, skillIdParam, handleExit]);
 
   /**
    * Resume replay after a pause point
@@ -2107,83 +2159,26 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const resumeReplay = useCallback(() => {
     setReplayPaused(false);
     setReplayOverlayMode('hidden');
+    ttsService.stop();
 
     if (!replayPlan) return;
 
-    // If replay completed (at totalBeats), exit replay
     if (replayBeat >= replayPlan.totalBeats) {
-      stopReplay();
+      // Replay finished — navigate away instead of re-showing CompletionModal
+      stopReplay(true);
       return;
     }
 
-    // Restart the beat timer from current position
-    const bpm = exercise.settings.tempo;
-    const msPerBeat = 60000 / bpm;
-    let beatAccum = replayBeat;
-
-    if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-
-    replayTimerRef.current = setInterval(() => {
-      if (!mountedRef.current) return;
-
-      const plan = replayPlan;
-      const pauseIdx = replayPauseIndexRef.current;
-      if (pauseIdx < plan.pausePoints.length) {
-        const pp = plan.pausePoints[pauseIdx];
-        if (beatAccum >= pp.beatPosition) {
-          setReplayPaused(true);
-          setReplayOverlayMode('card');
-          setReplayCardText(pp.explanation);
-          replayPauseIndexRef.current = pauseIdx + 1;
-          if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-          return;
-        }
-      }
-
-      const commentIdx = replayCommentIndexRef.current;
-      if (commentIdx < plan.comments.length) {
-        const comment = plan.comments[commentIdx];
-        if (beatAccum >= comment.beatPosition) {
-          setReplayOverlayMode('pill');
-          setReplayPillText(comment.text);
-          replayCommentIndexRef.current = commentIdx + 1;
-          setTimeout(() => {
-            if (mountedRef.current) setReplayOverlayMode('hidden');
-          }, 2000);
-        }
-      }
-
-      let speed = 1;
-      if (plan.speedZones.length > 0) {
-        const zone = plan.speedZones.find(z => beatAccum >= z.fromBeat && beatAccum < z.toBeat);
-        if (zone?.zone === 'fast') speed = 2;
-      }
-
-      beatAccum += 0.25 * speed;
-      setReplayBeat(beatAccum);
-
-      if (beatAccum >= plan.totalBeats) {
-        if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-        setReplayPaused(true);
-        setReplayOverlayMode('card');
-        setReplayCardText(plan.summary);
-      }
-    }, msPerBeat / 4);
-  }, [replayPlan, replayBeat, exercise.settings.tempo, stopReplay]);
+    demoServiceRef.current.resumeReplay();
+  }, [replayPlan, replayBeat, stopReplay]);
 
   /**
    * Seek to a specific beat in the replay timeline
    */
   const handleReplaySeek = useCallback((beat: number) => {
     setReplayBeat(beat);
-    // Reset pause/comment indices to find next ones after the seek position
-    if (replayPlan) {
-      replayPauseIndexRef.current = replayPlan.pausePoints.findIndex(p => p.beatPosition > beat);
-      if (replayPauseIndexRef.current === -1) replayPauseIndexRef.current = replayPlan.pausePoints.length;
-      replayCommentIndexRef.current = replayPlan.comments.findIndex(c => c.beatPosition > beat);
-      if (replayCommentIndexRef.current === -1) replayCommentIndexRef.current = replayPlan.comments.length;
-    }
-  }, [replayPlan]);
+    demoServiceRef.current.seekReplay(beat);
+  }, []);
 
   /**
    * Toggle replay play/pause
@@ -2193,19 +2188,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       resumeReplay();
     } else {
       setReplayPaused(true);
-      if (replayTimerRef.current) {
-        clearInterval(replayTimerRef.current);
-        replayTimerRef.current = null;
-      }
+      demoServiceRef.current.stop();
     }
   }, [replayPaused, resumeReplay]);
-
-  // Clean up replay timer on unmount
-  useEffect(() => {
-    return () => {
-      if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-    };
-  }, []);
 
   /**
    * Navigate to the next exercise in the lesson
@@ -2496,9 +2481,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       {isDemoPlaying && (
         <View style={styles.demoBanner} testID="demo-banner">
           <Text style={styles.demoBannerText}>Watching Demo</Text>
-          <TouchableOpacity onPress={stopDemo} style={styles.tryNowButton}>
+          <PressableScale onPress={stopDemo} style={styles.tryNowButton} soundOnPress={false}>
             <Text style={styles.tryNowButtonText}>Try Now</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       )}
 
@@ -2523,19 +2508,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           />
 
           {/* Metronome toggle */}
-          <TouchableOpacity
+          <PressableScale
             onPress={() => setMetronomeOn((prev) => !prev)}
             style={[styles.metronomePill, metronomeOn && styles.metronomePillActive]}
             testID="metronome-toggle"
             accessibilityLabel={metronomeOn ? 'Metronome on. Tap to turn off.' : 'Metronome off. Tap to turn on.'}
             accessibilityRole="switch"
+            soundOnPress={false}
           >
             <MaterialCommunityIcons
               name="metronome"
               size={16}
               color={metronomeOn ? COLORS.primary : COLORS.textSecondary}
             />
-          </TouchableOpacity>
+          </PressableScale>
 
           <View style={{ flex: 1 }}>
             <ScoreDisplay
@@ -2578,15 +2564,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           )}
 
           {/* Speed pill — always visible, active styling when slowed */}
-          <TouchableOpacity
+          <PressableScale
             onPress={cycleSpeed}
             style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
             testID="speed-selector"
+            soundOnPress={false}
           >
             <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
               {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
             </Text>
-          </TouchableOpacity>
+          </PressableScale>
         </GlassmorphismCard>}
 
         {/* Secondary controls — visible when not playing or paused, hidden during replay */}
@@ -2604,41 +2591,49 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             <View style={{ flex: 1 }} />
 
             {/* Speed selector */}
-            <TouchableOpacity
+            <PressableScale
               onPress={cycleSpeed}
               style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
               testID="speed-selector-full"
               accessibilityLabel={`Playback speed ${playbackSpeed}x. Tap to change.`}
+              soundOnPress={false}
             >
               <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
                 {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
 
             {/* Demo button */}
-            <TouchableOpacity
+            <PressableScale
               onPress={isDemoPlaying ? stopDemo : startDemo}
               style={[styles.speedPill, isDemoPlaying && styles.speedPillActive]}
               testID="demo-button"
+              soundOnPress={false}
             >
               <Text style={[styles.speedPillText, isDemoPlaying && styles.speedPillTextActive]}>
                 {isDemoPlaying ? 'Stop' : 'Demo'}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
 
             {/* Ghost notes toggle — visible after demo watched */}
             {demoWatched && (
-              <TouchableOpacity
+              <PressableScale
                 onPress={() => useExerciseStore.getState().setGhostNotesEnabled(!ghostNotesEnabled)}
                 style={[styles.speedPill, ghostNotesEnabled && styles.speedPillActive]}
                 testID="ghost-toggle"
+                soundOnPress={false}
               >
                 <Text style={[styles.speedPillText, ghostNotesEnabled && styles.speedPillTextActive]}>
                   Ghost
                 </Text>
-              </TouchableOpacity>
+              </PressableScale>
             )}
           </View>
+        )}
+
+        {/* Sight reading badge */}
+        {isSightReading && (
+          <SightReadingOverlay testID="sight-reading-badge" />
         )}
 
         {/* Center: Vertical piano roll fills remaining vertical space */}
@@ -2675,7 +2670,25 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               />
             </View>
           )}
+
+          {/* Ear training: listen overlay during demo */}
+          {exerciseType === 'earTraining' && isDemoPlaying && (
+            <ListenPhaseOverlay
+              isListening={isDemoPlaying}
+              onDismiss={() => {}}
+              testID="ear-training-overlay"
+            />
+          )}
         </View>
+
+        {/* Call/response phase indicator */}
+        {exerciseType === 'callResponse' && (
+          <CallResponsePhase
+            phase={callResponsePhase}
+            onPhaseChange={setCallResponsePhase}
+            testID="call-response-phase"
+          />
+        )}
 
         {/* Timing feedback overlay between piano roll and keyboard — hidden during replay */}
         {playerMode !== 'replay' && feedback.type && (
@@ -2689,7 +2702,23 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           </View>
         )}
 
-        {/* Bottom: Full-width keyboard (split or normal) */}
+        {/* Chord prompt (chordId exercises) */}
+        {exerciseType === 'chordId' && (
+          <ChordPrompt
+            chordName={currentChordName}
+            isCorrect={chordCorrect}
+            testID="chord-prompt"
+          />
+        )}
+
+        {/* Bottom: Full-width keyboard (split or normal), or RhythmTapZone for rhythm exercises */}
+        {exerciseType === 'rhythm' ? (
+          <RhythmTapZone
+            onTap={() => handleKeyDown({ type: 'noteOn', note: 60, velocity: 100, timestamp: Date.now(), channel: 0 })}
+            enabled={isPlaying && !isPaused && playerMode !== 'replay'}
+            testID="rhythm-tap-zone"
+          />
+        ) : (
         <View
           style={[styles.keyboardContainer, { height: keyboardMode === 'split' ? singleKeyHeight * 2 + 4 : singleKeyHeight }]}
         >
@@ -2701,9 +2730,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               onNoteOff={handleKeyUp}
               highlightedNotes={replayHighlightedKeys ?? (isDemoPlaying ? demoActiveNotes : highlightedKeys)}
               expectedNotes={playerMode === 'replay' ? new Set<number>() : expectedNotes}
-              enabled={playerMode !== 'replay' && !isMicExclusive}
+              enabled={playerMode !== 'replay' && !isMicExclusive && !(exerciseType === 'callResponse' && callResponsePhase === 'call')}
               hapticEnabled={playerMode !== 'replay'}
-              showLabels={true}
+              showLabels={!isSightReading}
               keyHeight={singleKeyHeight}
               focusNoteLeft={focusNoteLeft}
               focusNoteRight={focusNoteRight}
@@ -2717,9 +2746,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               onNoteOff={handleKeyUp}
               highlightedNotes={replayHighlightedKeys ?? (isDemoPlaying ? demoActiveNotes : highlightedKeys)}
               expectedNotes={playerMode === 'replay' ? new Set<number>() : expectedNotes}
-              enabled={playerMode !== 'replay' && !isMicExclusive}
+              enabled={playerMode !== 'replay' && !isMicExclusive && !(exerciseType === 'callResponse' && callResponsePhase === 'call')}
               hapticEnabled={playerMode !== 'replay'}
-              showLabels={true}
+              showLabels={!isSightReading}
               scrollable={true}
               scrollEnabled={false}
               focusNote={nextExpectedNote}
@@ -2728,6 +2757,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             />
           )}
         </View>
+        )}
       </View>
       </ScreenShake>
 
@@ -2807,7 +2837,29 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           }}
           onRequestDemo={salsaIntroTier === 3 ? () => {
             setShowIntro(false);
-            startDemo();
+            const maxBeat = 16;
+            const miniExercise = {
+              notes: exercise.notes.filter(n => n.startBeat < maxBeat),
+              settings: exercise.settings,
+            };
+
+            setIsDemoPlaying(true);
+            useExerciseStore.getState().setDemoWatched(true);
+            const audioEngine = createAudioEngine();
+            demoServiceRef.current.start(
+              miniExercise,
+              audioEngine,
+              0.8,
+              (beat) => {
+                setDemoBeat(beat);
+                useExerciseStore.getState().setCurrentBeat(beat);
+              },
+              (notes) => setDemoActiveNotes(notes),
+              () => {
+                setIsDemoPlaying(false);
+                setDemoActiveNotes(new Set());
+              },
+            );
           } : undefined}
         />
       )}
@@ -2854,6 +2906,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           onStartReplay={replayPlan ? startReplay : undefined}
           onBonusDrill={bonusDrillPattern ? handleBonusDrill : undefined}
           bonusDrillDescription={bonusDrillPattern?.description}
+          challengeSentTo={challengeTarget?.displayName}
         />
       )}
 
@@ -2862,14 +2915,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         <>
           {/* Replay top bar */}
           <View style={styles.replayTopBar}>
-            <TouchableOpacity
-              onPress={stopReplay}
+            <PressableScale
+              onPress={() => stopReplay(false)}
               style={styles.replayExitButton}
               testID="replay-exit"
+              soundOnPress={false}
             >
               <MaterialCommunityIcons name="close" size={20} color={COLORS.textPrimary} />
               <Text style={styles.replayExitText}>Exit Review</Text>
-            </TouchableOpacity>
+            </PressableScale>
             <Text style={styles.replayTitle}>Salsa&apos;s Review</Text>
             <View style={{ width: 100 }} />
           </View>
@@ -2893,7 +2947,36 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             pillText={replayPillText}
             cardText={replayCardText}
             onShowCorrect={() => {
-              // Show correct version — for now just resume
+              const currentPP = replayPlan.pausePoints.find(
+                pp => pp.beatPosition <= replayBeat + 0.5 && !replayPlan.pausePoints.some(
+                  other => other.beatPosition > pp.beatPosition && other.beatPosition <= replayBeat + 0.5
+                )
+              );
+
+              if (currentPP && currentPP.showCorrectFromBeat != null && currentPP.showCorrectToBeat != null) {
+                const miniNotes = exercise.notes.filter(
+                  n => n.startBeat >= currentPP.showCorrectFromBeat &&
+                       n.startBeat < currentPP.showCorrectToBeat
+                ).map(n => ({
+                  ...n,
+                  startBeat: n.startBeat - currentPP.showCorrectFromBeat,
+                }));
+
+                if (miniNotes.length > 0) {
+                  ttsService.stop();
+                  setReplayOverlayMode('hidden');
+                  const audioEngine = createAudioEngine();
+                  demoServiceRef.current.start(
+                    { notes: miniNotes, settings: exercise.settings },
+                    audioEngine,
+                    0.7,
+                    (beat) => setReplayBeat(currentPP.showCorrectFromBeat + beat),
+                    undefined,
+                    () => resumeReplay(),
+                  );
+                  return;
+                }
+              }
               resumeReplay();
             }}
             onContinue={resumeReplay}
