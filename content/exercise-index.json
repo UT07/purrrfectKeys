@@ -1,0 +1,571 @@
+{
+  "version": 2,
+  "generatedAt": "2026-03-09T19:32:43.950Z",
+  "exercises": [
+    {
+      "id": "lesson-01-ex-01",
+      "lessonId": "lesson-01",
+      "title": "Find Middle C",
+      "difficulty": 1,
+      "skills": [
+        "right-hand",
+        "note-finding",
+        "middle-c"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-01-ex-02",
+      "lessonId": "lesson-01",
+      "title": "Keyboard Geography",
+      "difficulty": 1,
+      "skills": [
+        "orientation",
+        "keyboard-navigation",
+        "note-finding"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-01-ex-03",
+      "lessonId": "lesson-01",
+      "title": "White Keys Pattern",
+      "difficulty": 1,
+      "skills": [
+        "orientation",
+        "note-names",
+        "white-keys"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-01-test",
+      "lessonId": "lesson-01",
+      "title": "Lesson 1 Mastery Test",
+      "difficulty": 1,
+      "skills": [
+        "orientation",
+        "note-identification",
+        "keyboard-navigation"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-02-ex-01",
+      "lessonId": "lesson-02",
+      "title": "C-D-E Simple Pattern",
+      "difficulty": 1,
+      "skills": [
+        "right-hand",
+        "quarter-notes",
+        "c-major",
+        "finger-placement"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-02-ex-02",
+      "lessonId": "lesson-02",
+      "title": "C-D-E-F-G Extended",
+      "difficulty": 1,
+      "skills": [
+        "right-hand",
+        "quarter-notes",
+        "c-major",
+        "finger-crossing"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-02-ex-03",
+      "lessonId": "lesson-02",
+      "title": "C Major Scale (Octave)",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "c-major",
+        "scale-technique",
+        "finger-crossing"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-02-ex-04",
+      "lessonId": "lesson-02",
+      "title": "Mary Had a Little Lamb (Intro)",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "melody",
+        "c-major",
+        "quarter-notes"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-02-ex-05",
+      "lessonId": "lesson-02",
+      "title": "Broken C Chord (Arpeggio)",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "arpeggios",
+        "chord-knowledge",
+        "c-major"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-02-ex-06",
+      "lessonId": "lesson-02",
+      "title": "Twinkle Twinkle Little Star",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "melody",
+        "c-major",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-02-ex-07",
+      "lessonId": "lesson-02",
+      "title": "Eighth Note Drill",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "eighth-notes",
+        "rhythm-precision",
+        "finger-dexterity"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-02-ex-08",
+      "lessonId": "lesson-02",
+      "title": "C Position Review",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "c-position",
+        "mixed-rhythms",
+        "finger-placement"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-02-test",
+      "lessonId": "lesson-02",
+      "title": "Lesson 2 Mastery Test",
+      "difficulty": 1,
+      "skills": [
+        "right-hand",
+        "c-major",
+        "melodies",
+        "quarter-notes"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-03-ex-01",
+      "lessonId": "lesson-03",
+      "title": "Left Hand C Position",
+      "difficulty": 1,
+      "skills": [
+        "left-hand",
+        "c-position",
+        "finger-placement",
+        "note-finding"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-03-ex-02",
+      "lessonId": "lesson-03",
+      "title": "Left Hand Scale Descending",
+      "difficulty": 1,
+      "skills": [
+        "left-hand",
+        "scales",
+        "c-major",
+        "finger-placement"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-03-ex-03",
+      "lessonId": "lesson-03",
+      "title": "Bass Notes Exploration",
+      "difficulty": 2,
+      "skills": [
+        "left-hand",
+        "bass-notes",
+        "low-register",
+        "accompaniment"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-03-ex-04",
+      "lessonId": "lesson-03",
+      "title": "Broken F Chord (Left Hand)",
+      "difficulty": 2,
+      "skills": [
+        "left-hand",
+        "arpeggios",
+        "chord-knowledge",
+        "accompaniment"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-03-ex-05",
+      "lessonId": "lesson-03",
+      "title": "Steady Bass Pattern",
+      "difficulty": 2,
+      "skills": [
+        "left-hand",
+        "accompaniment",
+        "rhythm-consistency",
+        "bass-pattern"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-03-test",
+      "lessonId": "lesson-03",
+      "title": "Lesson 3 Mastery Test",
+      "difficulty": 1,
+      "skills": [
+        "left-hand",
+        "bass-notes",
+        "accompaniment"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-04-ex-01",
+      "lessonId": "lesson-04",
+      "title": "Melody and Bass Together",
+      "difficulty": 2,
+      "skills": [
+        "both-hands",
+        "coordination",
+        "melody",
+        "accompaniment"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-04-ex-02",
+      "lessonId": "lesson-04",
+      "title": "Mary Had a Little Lamb (Full)",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "coordination",
+        "melody",
+        "accompaniment",
+        "song-arrangement"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-04-ex-03",
+      "lessonId": "lesson-04",
+      "title": "Hand Independence Drill",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "independence",
+        "rhythm",
+        "coordination"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-04-ex-04",
+      "lessonId": "lesson-04",
+      "title": "Ode to Joy (Introduction)",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "coordination",
+        "melody",
+        "classic-music",
+        "accompaniment"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-04-ex-05",
+      "lessonId": "lesson-04",
+      "title": "Blocked C and F Chords",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "chord-playing",
+        "harmony",
+        "simultaneous-notes"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-04-ex-06",
+      "lessonId": "lesson-04",
+      "title": "Both Hands Review",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "coordination",
+        "rhythm",
+        "independence",
+        "technique"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-04-test",
+      "lessonId": "lesson-04",
+      "title": "Lesson 4 Mastery Test",
+      "difficulty": 2,
+      "skills": [
+        "both-hands",
+        "coordination",
+        "hand-independence"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-05-ex-01",
+      "lessonId": "lesson-05",
+      "title": "Scale Technique (Right Hand)",
+      "difficulty": 2,
+      "skills": [
+        "scales",
+        "finger-crossing",
+        "technique",
+        "right-hand"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-05-ex-02",
+      "lessonId": "lesson-05",
+      "title": "Parallel Scale Motion (Both Hands)",
+      "difficulty": 3,
+      "skills": [
+        "scales",
+        "parallel-motion",
+        "both-hands",
+        "coordination"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-05-ex-03",
+      "lessonId": "lesson-05",
+      "title": "Scale Speed Drill",
+      "difficulty": 3,
+      "skills": [
+        "scales",
+        "finger-dexterity",
+        "speed",
+        "right-hand",
+        "sixteen-notes"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-05-ex-04",
+      "lessonId": "lesson-05",
+      "title": "C Major Scale Mastery Review",
+      "difficulty": 3,
+      "skills": [
+        "scales",
+        "technique",
+        "both-hands",
+        "musical-expression"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-05-test",
+      "lessonId": "lesson-05",
+      "title": "Lesson 5 Mastery Test",
+      "difficulty": 2,
+      "skills": [
+        "scales",
+        "finger-crossing",
+        "speed",
+        "technique"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-06-ex-01",
+      "lessonId": "lesson-06",
+      "title": "Jingle Bells (Right Hand)",
+      "difficulty": 2,
+      "skills": [
+        "right-hand",
+        "melody",
+        "song",
+        "quarter-notes",
+        "music-history"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-06-ex-02",
+      "lessonId": "lesson-06",
+      "title": "Happy Birthday",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "melody",
+        "song",
+        "coordination",
+        "classic-tune"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-06-ex-03",
+      "lessonId": "lesson-06",
+      "title": "Amazing Grace",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "melody",
+        "song",
+        "legato",
+        "musical-expression"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-06-ex-04",
+      "lessonId": "lesson-06",
+      "title": "Contemporary Melody (Let It Go Style)",
+      "difficulty": 3,
+      "skills": [
+        "both-hands",
+        "melody",
+        "contemporary-music",
+        "coordination",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-06-test",
+      "lessonId": "lesson-06",
+      "title": "Lesson 6 Mastery Test",
+      "difficulty": 2,
+      "skills": [
+        "songs",
+        "melodies",
+        "expression",
+        "rhythm"
+      ],
+      "type": "test",
+      "order": 99
+    }
+  ],
+  "lessons": [
+    {
+      "id": "lesson-01",
+      "title": "Getting Started",
+      "difficulty": 1,
+      "exerciseCount": 3,
+      "unlockRequirement": null
+    },
+    {
+      "id": "lesson-02",
+      "title": "Right Hand Basics",
+      "difficulty": 1,
+      "exerciseCount": 8,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-01"
+      }
+    },
+    {
+      "id": "lesson-03",
+      "title": "Left Hand Basics",
+      "difficulty": 1,
+      "exerciseCount": 5,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-02"
+      }
+    },
+    {
+      "id": "lesson-04",
+      "title": "Both Hands Together",
+      "difficulty": 2,
+      "exerciseCount": 6,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-03"
+      }
+    },
+    {
+      "id": "lesson-05",
+      "title": "C Major Scale Mastery",
+      "difficulty": 2,
+      "exerciseCount": 4,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-04"
+      }
+    },
+    {
+      "id": "lesson-06",
+      "title": "Simple Songs Collection",
+      "difficulty": 2,
+      "exerciseCount": 4,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-05"
+      }
+    }
+  ]
+}

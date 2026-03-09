@@ -344,7 +344,7 @@ export function getExercisesBySkill(skillId: string): ExerciseIndexEntry[] {
 /**
  * Get all exercises of a given type ('play' or 'test').
  */
-export function getExercisesByType(type: string): ExerciseIndexEntry[] {
+export function getExercisesByType(type: ExerciseType | 'test'): ExerciseIndexEntry[] {
   return _exercisesByType.get(type) ?? [];
 }
 
