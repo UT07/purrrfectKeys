@@ -410,6 +410,7 @@ export function ProfileScreen(): React.ReactElement {
   const totalWeekMinutes = weeklyPractice.reduce((sum, d) => sum + d.minutes, 0);
   const maxDayMinutes = Math.max(...weeklyPractice.map(d => d.minutes), 1);
 
+  const [activeTab, setActiveTab] = useState<'me' | 'settings'>('me');
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showVolumePicker, setShowVolumePicker] = useState(false);
   const [showInputPicker, setShowInputPicker] = useState(false);
@@ -511,6 +512,26 @@ export function ProfileScreen(): React.ReactElement {
           </Text>
         </LinearGradient>
 
+        {/* Tab Toggle */}
+        <View style={styles.tabRow}>
+          <PressableScale
+            onPress={() => setActiveTab('me')}
+            style={[styles.tab, activeTab === 'me' && styles.tabActive]}
+          >
+            <MaterialCommunityIcons name="account" size={18} color={activeTab === 'me' ? COLORS.textPrimary : COLORS.textMuted} />
+            <Text style={[styles.tabText, activeTab === 'me' && styles.tabTextActive]}>Me</Text>
+          </PressableScale>
+          <PressableScale
+            onPress={() => setActiveTab('settings')}
+            style={[styles.tab, activeTab === 'settings' && styles.tabActive]}
+          >
+            <MaterialCommunityIcons name="cog" size={18} color={activeTab === 'settings' ? COLORS.textPrimary : COLORS.textMuted} />
+            <Text style={[styles.tabText, activeTab === 'settings' && styles.tabTextActive]}>Settings</Text>
+          </PressableScale>
+        </View>
+
+        {activeTab === 'me' && (
+        <>
         {/* Stats Grid — game-style shield badges */}
         <View style={styles.statsGrid}>
           {stats.map((stat) => {
@@ -684,7 +705,11 @@ export function ProfileScreen(): React.ReactElement {
 
         {/* Achievements as horizontal scroll */}
         <AchievementsSection />
+        </>
+        )}
 
+        {activeTab === 'settings' && (
+        <>
         {/* Settings Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
@@ -885,6 +910,8 @@ export function ProfileScreen(): React.ReactElement {
             </PressableScale>
           )}
         </View>
+        </>
+        )}
       </ScrollView>
 
       {/* Name Editor Modal */}
@@ -1000,6 +1027,36 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: COLORS.textMuted,
     marginTop: SPACING.xs,
+  },
+  // Tab toggle
+  tabRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.surface,
+  },
+  tabActive: {
+    backgroundColor: glowColor(COLORS.primary, 0.15),
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.3),
+  },
+  tabText: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textMuted,
+  },
+  tabTextActive: {
+    color: COLORS.textPrimary,
+    fontWeight: '600' as const,
   },
   // Stats grid — shield badge style
   statsGrid: {
