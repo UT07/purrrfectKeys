@@ -29,7 +29,7 @@ import { useLeagueStore } from '../stores/leagueStore';
 import type { LeagueStandingEntry } from '../stores/leagueStore';
 import { useAuthStore } from '../stores/authStore';
 import { getLeagueStandings } from '../services/firebase/leagueService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor, shadowGlow } from '../theme/tokens';
 import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
@@ -46,9 +46,9 @@ const DEMOTION_FROM_BOTTOM = 5;
 // Podium — Top 3 hero section with cat avatars
 // ---------------------------------------------------------------------------
 
-const PODIUM_HEIGHTS = [80, 100, 60]; // 2nd, 1st, 3rd pedestal heights
-const PODIUM_MEDAL_SIZES = { 1: 22, 2: 18, 3: 16 };
-const PODIUM_CAT_SIZES = { 1: 72, 2: 56, 3: 56 };
+const PODIUM_HEIGHTS = [80, 120, 56]; // 2nd, 1st, 3rd pedestal heights (more dramatic #1)
+const PODIUM_MEDAL_SIZES = { 1: 26, 2: 18, 3: 16 };
+const PODIUM_CAT_SIZES = { 1: 76, 2: 56, 3: 56 };
 
 function PodiumPedestal({
   entry,
@@ -70,8 +70,24 @@ function PodiumPedestal({
       entering={FadeInUp.delay(place === 1 ? 200 : place === 2 ? 100 : 300).duration(400)}
       style={styles.podiumSlot}
     >
+      {/* Crown icon above #1 */}
+      {place === 1 && (
+        <MaterialCommunityIcons
+          name="crown"
+          size={32}
+          color={COLORS.starGold}
+          style={styles.podiumCrown}
+        />
+      )}
+
       {/* Cat avatar */}
-      <View style={[styles.podiumAvatar, isCurrentUser && styles.podiumAvatarCurrent]}>
+      <View
+        style={[
+          styles.podiumAvatar,
+          isCurrentUser && styles.podiumAvatarCurrent,
+          place === 1 && styles.podiumAvatarFirst,
+        ]}
+      >
         <CatAvatar
           catId={entry.selectedCatId ?? 'mini-meowww'}
           size={catSize > 60 ? 'medium' : 'small'}
@@ -80,13 +96,15 @@ function PodiumPedestal({
         />
       </View>
 
-      {/* Medal */}
-      <MaterialCommunityIcons
-        name="medal"
-        size={PODIUM_MEDAL_SIZES[place]}
-        color={medalColor}
-        style={styles.podiumMedal}
-      />
+      {/* Medal with glow on #1 */}
+      <View style={place === 1 ? styles.podiumMedalGlow : undefined}>
+        <MaterialCommunityIcons
+          name="medal"
+          size={PODIUM_MEDAL_SIZES[place]}
+          color={medalColor}
+          style={styles.podiumMedal}
+        />
+      </View>
 
       {/* Name */}
       <Text
@@ -156,10 +174,21 @@ function StandingsRow({
       ? COLORS.error
       : 'transparent';
 
+  // Rank text color: gold for #1, silver for #2, bronze for #3
+  const rankColor =
+    entry.rank === 1
+      ? COLORS.starGold
+      : entry.rank === 2
+        ? '#C0C0C0'
+        : entry.rank === 3
+          ? '#CD7F32'
+          : COLORS.textSecondary;
+
   return (
     <View
       style={[
         styles.row,
+        isTopThree && styles.rowTopThreeGold,
         isCurrentUser && styles.rowCurrentUser,
         { borderLeftColor: zoneBorderColor, borderLeftWidth: 3 },
         isTopThree && styles.rowTopThree,
@@ -174,8 +203,25 @@ function StandingsRow({
             color={PODIUM_MEDAL_COLORS[entry.rank]}
           />
         ) : (
-          <Text style={styles.rankText}>{entry.rank}</Text>
+          <Text
+            style={[
+              styles.rankText,
+              { color: rankColor },
+              entry.rank <= 3 && styles.rankTextTopThree,
+            ]}
+          >
+            {entry.rank}
+          </Text>
         )}
+      </View>
+
+      {/* Small cat avatar */}
+      <View style={styles.rowAvatar}>
+        <CatAvatar
+          catId={entry.selectedCatId ?? 'mini-meowww'}
+          size="small"
+          skipEntryAnimation
+        />
       </View>
 
       {/* User info */}
@@ -361,6 +407,8 @@ export function LeaderboardScreen(): React.JSX.Element {
         </View>
         <View style={styles.headerSpacer} />
       </View>
+      {/* Tier accent line */}
+      <View style={[styles.headerAccentLine, { backgroundColor: config.color }]} />
 
       {/* Podium hero section for top 3 */}
       {standings.length > 0 && (
@@ -370,12 +418,12 @@ export function LeaderboardScreen(): React.JSX.Element {
       {/* Zone legend */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS.success }]} />
-          <Text style={styles.legendText}>Promotion zone</Text>
+          <MaterialCommunityIcons name="shield-check" size={16} color={COLORS.success} />
+          <Text style={[styles.legendText, { color: COLORS.success }]}>Move Up</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS.error }]} />
-          <Text style={styles.legendText}>Demotion zone</Text>
+          <MaterialCommunityIcons name="shield-alert" size={16} color={COLORS.error} />
+          <Text style={[styles.legendText, { color: COLORS.error }]}>At Risk</Text>
         </View>
       </View>
 
@@ -422,7 +470,12 @@ export function LeaderboardScreen(): React.JSX.Element {
         const me = standings.find((s) => s.uid === currentUserUid);
         if (!me) return null;
         return (
-          <View style={styles.pinnedFooter}>
+          <LinearGradient
+            colors={[glowColor(COLORS.primary, 0.12), glowColor(COLORS.primary, 0.04)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.pinnedFooter}
+          >
             <View style={styles.pinnedRank}>
               <Text style={styles.pinnedRankText}>{currentUserRank}</Text>
             </View>
@@ -431,14 +484,17 @@ export function LeaderboardScreen(): React.JSX.Element {
               size="small"
               skipEntryAnimation
             />
+            <View style={styles.pinnedYouBadge}>
+              <Text style={styles.pinnedYouBadgeText}>You</Text>
+            </View>
             <Text style={styles.pinnedName} numberOfLines={1}>
-              {me.displayName} (You)
+              {me.displayName}
             </Text>
             <View style={styles.pinnedXp}>
               <Text style={styles.pinnedXpValue}>{me.weeklyXp.toLocaleString()}</Text>
               <Text style={styles.pinnedXpLabel}>XP</Text>
             </View>
-          </View>
+          </LinearGradient>
         );
       })()}
     </SafeAreaView>
@@ -461,8 +517,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.cardBorder,
+  },
+  headerAccentLine: {
+    height: 2,
+    width: '100%',
+    opacity: 0.6,
   },
   backButton: {
     padding: SPACING.xs,
@@ -503,14 +562,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.xs,
   },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
   legendText: {
     ...TYPOGRAPHY.caption.lg,
     color: COLORS.textSecondary,
+    fontWeight: '600',
   },
 
   // Standings list
@@ -528,15 +583,19 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.cardBorder,
   },
   rowCurrentUser: {
-    backgroundColor: glowColor(COLORS.primary, 0.06),
+    backgroundColor: glowColor(COLORS.primary, 0.1),
     borderColor: COLORS.primary,
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: BORDER_RADIUS.md,
     marginHorizontal: SPACING.sm,
     marginVertical: SPACING.xs,
+    ...SHADOWS.sm,
   },
   rowTopThree: {
     paddingVertical: SPACING.md,
+  },
+  rowTopThreeGold: {
+    backgroundColor: glowColor(COLORS.starGold, 0.04),
   },
 
   // Rank
@@ -550,11 +609,24 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontWeight: '600',
   },
+  rankTextTopThree: {
+    fontWeight: '800',
+    fontSize: 18,
+  },
+
+  // Row cat avatar
+  rowAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginRight: SPACING.xs,
+  },
 
   // User info
   userInfo: {
     flex: 1,
-    marginHorizontal: SPACING.md,
+    marginHorizontal: SPACING.sm,
   },
   displayName: {
     ...TYPOGRAPHY.body.lg,
@@ -632,7 +704,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    paddingTop: SPACING.lg,
+    paddingTop: SPACING.xl,
     paddingBottom: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderBottomWidth: 1,
@@ -642,6 +714,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     maxWidth: 120,
+  },
+  podiumCrown: {
+    marginBottom: SPACING.xs,
+    ...shadowGlow(COLORS.starGold, 8),
   },
   podiumAvatar: {
     borderRadius: 999,
@@ -654,8 +730,16 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     ...SHADOWS.md,
   },
+  podiumAvatarFirst: {
+    borderWidth: 3,
+    borderColor: COLORS.starGold,
+    ...shadowGlow(COLORS.starGold, 12),
+  },
   podiumMedal: {
     marginBottom: 2,
+  },
+  podiumMedalGlow: {
+    ...shadowGlow(COLORS.starGold, 10),
   },
   podiumName: {
     ...TYPOGRAPHY.caption.lg,
@@ -708,6 +792,17 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '800',
   },
+  pinnedYouBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  pinnedYouBadgeText: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.textPrimary,
+    fontWeight: '700',
+  },
   pinnedName: {
     flex: 1,
     ...TYPOGRAPHY.body.md,
@@ -719,7 +814,8 @@ const styles = StyleSheet.create({
   },
   pinnedXpValue: {
     ...TYPOGRAPHY.heading.sm,
-    color: COLORS.primary,
+    color: COLORS.starGold,
+    fontWeight: '800',
   },
   pinnedXpLabel: {
     ...TYPOGRAPHY.caption.sm,

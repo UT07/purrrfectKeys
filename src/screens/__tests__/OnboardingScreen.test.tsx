@@ -352,30 +352,30 @@ describe('OnboardingScreen', () => {
   });
 
   // -----------------------------------------------------------------------
-  // 2. All emoji icons render as text (not garbled unicode)
+  // 2. All MaterialCommunityIcons render correctly (replaced emoji icons)
   // -----------------------------------------------------------------------
-  describe('Emoji rendering', () => {
-    it('renders feature emoji icons as actual text characters', () => {
+  describe('Icon rendering', () => {
+    it('renders feature icons as MaterialCommunityIcons on step 1', () => {
       const { getByText } = render(<OnboardingScreen />);
 
-      // Step 1 feature icons
-      expect(getByText('\u26A1')).toBeTruthy();        // lightning
-      expect(getByText('\uD83C\uDFAF')).toBeTruthy(); // target
-      expect(getByText('\uD83D\uDD25')).toBeTruthy(); // fire
+      // Step 1 feature icons (rendered as text by the jest mock)
+      expect(getByText('lightning-bolt')).toBeTruthy();
+      expect(getByText('target')).toBeTruthy();
+      expect(getByText('fire')).toBeTruthy();
     });
 
-    it('renders experience level emoji icons on step 2', () => {
+    it('renders experience level icons on step 2', () => {
       const { getByText } = render(<OnboardingScreen />);
 
       // Advance to step 2
       fireEvent.press(getByText('Get Started'));
 
-      expect(getByText('\uD83C\uDF31')).toBeTruthy(); // seedling
-      expect(getByText('\uD83D\uDCDA')).toBeTruthy(); // books
-      expect(getByText('\uD83C\uDFBC')).toBeTruthy(); // musical score
+      expect(getByText('sprout')).toBeTruthy();
+      expect(getByText('book-open-variant')).toBeTruthy();
+      expect(getByText('music-note-eighth')).toBeTruthy();
     });
 
-    it('renders equipment check emoji icons on step 3', () => {
+    it('renders equipment check icons on step 3', () => {
       const { getByText } = render(<OnboardingScreen />);
 
       // Advance to step 2, select beginner, advance to step 3
@@ -383,11 +383,12 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Complete Beginner'));
       fireEvent.press(getByText('Next'));
 
-      expect(getByText('\u2328\uFE0F')).toBeTruthy(); // keyboard
-      expect(getByText('\uD83D\uDCF1')).toBeTruthy(); // mobile phone
+      expect(getByText('piano')).toBeTruthy();
+      expect(getByText('microphone')).toBeTruthy();
+      expect(getByText('cellphone')).toBeTruthy();
     });
 
-    it('renders goal setting emoji icons on step 4', () => {
+    it('renders goal setting icons on step 4', () => {
       const { getByText } = render(<OnboardingScreen />);
 
       // Navigate to step 4
@@ -397,9 +398,9 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText("On-Screen Keyboard"));
       fireEvent.press(getByText('Next'));
 
-      expect(getByText('\uD83C\uDFB5')).toBeTruthy(); // musical note
-      expect(getByText('\uD83C\uDFAF')).toBeTruthy(); // target
-      expect(getByText('\uD83D\uDE80')).toBeTruthy(); // rocket
+      expect(getByText('music-note')).toBeTruthy();
+      expect(getByText('bullseye-arrow')).toBeTruthy();
+      expect(getByText('rocket-launch')).toBeTruthy();
     });
   });
 

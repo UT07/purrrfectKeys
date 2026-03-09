@@ -28,8 +28,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -42,7 +45,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
 import { checkUsernameAvailable, isValidUsername } from '../services/firebase/socialService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor, shadowGlow } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 
 // ---------------------------------------------------------------------------
@@ -106,12 +109,14 @@ function AnimatedStepWrapper({
   const translateX = useSharedValue(
     direction === 'forward' ? SLIDE_OFFSET : -SLIDE_OFFSET,
   );
+  const scale = useSharedValue(0.95);
 
   React.useEffect(() => {
     // Reset to entry position when direction changes (new step)
     const entryX = direction === 'forward' ? SLIDE_OFFSET : -SLIDE_OFFSET;
     opacity.value = 0;
     translateX.value = entryX;
+    scale.value = 0.95;
 
     opacity.value = withTiming(1, {
       duration: SLIDE_DURATION,
@@ -121,11 +126,15 @@ function AnimatedStepWrapper({
       duration: SLIDE_DURATION,
       easing: Easing.out(Easing.cubic),
     });
-  }, [direction, opacity, translateX]);
+    scale.value = withTiming(1, {
+      duration: SLIDE_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [direction, opacity, translateX, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ translateX: translateX.value }],
+    transform: [{ translateX: translateX.value }, { scale: scale.value }],
   }));
 
   return (
@@ -151,7 +160,9 @@ function WelcomeStep({
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-1">
       <View style={styles.iconContainer}>
-        <CatAvatar catId={catInfo.catId} size="large" skipEntryAnimation />
+        <View style={styles.welcomeGlowRing}>
+          <CatAvatar catId={catInfo.catId} size="large" skipEntryAnimation />
+        </View>
       </View>
       <Text style={styles.stepTitle}>Welcome to Purrrfect Keys</Text>
       <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
@@ -159,9 +170,24 @@ function WelcomeStep({
         Learn piano in 5 minutes a day with AI-powered feedback
       </Text>
       <View style={styles.featureList}>
-        <FeatureItem icon="⚡" text="Real-time feedback on your playing" />
-        <FeatureItem icon="🎯" text="Personalized learning path" />
-        <FeatureItem icon="🔥" text="Build daily practice habits" />
+        <FeatureItem
+          iconName="lightning-bolt"
+          iconColor={COLORS.starGold}
+          iconBg={glowColor('#FFD700', 0.12)}
+          text="Real-time feedback on your playing"
+        />
+        <FeatureItem
+          iconName="target"
+          iconColor={COLORS.primary}
+          iconBg={glowColor(COLORS.primary, 0.12)}
+          text="Personalized learning path"
+        />
+        <FeatureItem
+          iconName="fire"
+          iconColor={COLORS.streakFlame}
+          iconBg={glowColor(COLORS.streakFlame, 0.12)}
+          text="Build daily practice habits"
+        />
       </View>
       <Button
         title="Get Started"
@@ -204,7 +230,8 @@ function ExperienceLevelStep({
 
       <View style={styles.optionsList}>
         <OptionCard
-          icon="🌱"
+          iconName="sprout"
+          iconColor="#4CAF50"
           title="Complete Beginner"
           description="Never touched a piano before"
           selected={value === 'beginner'}
@@ -212,7 +239,8 @@ function ExperienceLevelStep({
           testID="onboarding-experience-beginner"
         />
         <OptionCard
-          icon="📚"
+          iconName="book-open-variant"
+          iconColor="#42A5F5"
           title="I Know Some Basics"
           description="Can play simple melodies"
           selected={value === 'intermediate'}
@@ -220,7 +248,8 @@ function ExperienceLevelStep({
           testID="onboarding-experience-intermediate"
         />
         <OptionCard
-          icon="🎼"
+          iconName="music-note-eighth"
+          iconColor="#CE93D8"
           title="Returning Player"
           description="Played before, want to restart"
           selected={value === 'returning'}
@@ -271,7 +300,8 @@ function EquipmentCheckStep({
 
       <View style={styles.midiOptions}>
         <OptionCard
-          icon="⌨️"
+          iconName="piano"
+          iconColor="#FFD700"
           title="MIDI Keyboard"
           description="USB or Bluetooth connected — best experience"
           selected={value === 'midi'}
@@ -279,7 +309,8 @@ function EquipmentCheckStep({
           testID="onboarding-input-midi"
         />
         <OptionCard
-          icon="🎤"
+          iconName="microphone"
+          iconColor="#FF6B35"
           title="Microphone"
           description="Play a real piano or sing — the app listens"
           selected={value === 'mic'}
@@ -287,7 +318,8 @@ function EquipmentCheckStep({
           testID="onboarding-input-mic"
         />
         <OptionCard
-          icon="📱"
+          iconName="cellphone"
+          iconColor="#4FC3F7"
           title="On-Screen Keyboard"
           description="Tap to play — no equipment needed"
           selected={value === 'touch'}
@@ -338,7 +370,8 @@ function GoalSettingStep({
 
       <View style={styles.optionsList}>
         <OptionCard
-          icon="🎵"
+          iconName="music-note"
+          iconColor="#FFD700"
           title="Play My Favorite Songs"
           description="Learn recognizable melodies quickly"
           selected={value === 'songs'}
@@ -346,7 +379,8 @@ function GoalSettingStep({
           testID="onboarding-goal-songs"
         />
         <OptionCard
-          icon="🎯"
+          iconName="bullseye-arrow"
+          iconColor={COLORS.primary}
           title="Learn Proper Technique"
           description="Build solid fundamentals for long-term growth"
           selected={value === 'technique'}
@@ -354,7 +388,8 @@ function GoalSettingStep({
           testID="onboarding-goal-technique"
         />
         <OptionCard
-          icon="🚀"
+          iconName="rocket-launch"
+          iconColor="#CE93D8"
           title="Just Explore & Have Fun"
           description="No pressure, let's experiment!"
           selected={value === 'exploration'}
@@ -526,9 +561,17 @@ function UsernameStep({
       <View style={styles.usernameInputContainer}>
         <Text style={styles.inputLabel}>Username</Text>
         <View style={styles.usernameInputRow}>
+          <View style={styles.usernameInputIconLeft}>
+            <MaterialCommunityIcons
+              name="account-circle-outline"
+              size={20}
+              color={COLORS.textMuted}
+            />
+          </View>
           <TextInput
             style={[
               styles.usernameInput,
+              styles.usernameInputWithIcon,
               validationError ? styles.usernameInputError : null,
               isAvailable === true && username && username.length >= 3 ? styles.usernameInputSuccess : null,
             ]}
@@ -550,15 +593,26 @@ function UsernameStep({
             />
           )}
           {!isChecking && isAvailable === true && username && username.length >= 3 && (
-            <Text style={styles.usernameAvailable}>✓</Text>
+            <View style={styles.usernameAvailableIcon}>
+              <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.success} />
+            </View>
           )}
         </View>
-        {validationError && (
-          <Text style={styles.usernameErrorText}>{validationError}</Text>
-        )}
-        {!validationError && isAvailable === true && username && username.length >= 3 && (
-          <Text style={styles.usernameSuccessText}>Username available!</Text>
-        )}
+        <View style={styles.usernameMetaRow}>
+          {validationError ? (
+            <Text style={styles.usernameErrorText}>{validationError}</Text>
+          ) : !validationError && isAvailable === true && username && username.length >= 3 ? (
+            <View style={styles.usernameSuccessRow}>
+              <MaterialCommunityIcons name="check-circle" size={14} color={COLORS.success} />
+              <Text style={styles.usernameSuccessText}>Username available!</Text>
+            </View>
+          ) : (
+            <View />
+          )}
+          <Text style={styles.usernameCharCount}>
+            {(username ?? '').length}/20
+          </Text>
+        </View>
       </View>
 
       {/* Display name input */}
@@ -593,6 +647,13 @@ function UsernameStep({
 // Cat Selection Card
 // ---------------------------------------------------------------------------
 
+/** Map cat personality to trait tags */
+const CAT_TRAIT_TAGS: Record<string, string[]> = {
+  'mini-meowww': ['Precise', 'Expressive', 'Tiny'],
+  jazzy: ['Smooth', 'Improviser', 'Cool'],
+  luna: ['Mysterious', 'Creative', 'Nocturnal'],
+};
+
 function CatSelectionCard({
   cat,
   selected,
@@ -602,21 +663,55 @@ function CatSelectionCard({
   selected: boolean;
   onSelect: () => void;
 }): React.ReactElement {
+  const traits = CAT_TRAIT_TAGS[cat.id] ?? [];
+
   return (
     <View
       style={[
         styles.catCard,
         { borderColor: selected ? cat.color : COLORS.cardBorder },
-        selected && { backgroundColor: glowColor(cat.color, 0.08) },
+        selected && {
+          backgroundColor: glowColor(cat.color, 0.08),
+          ...shadowGlow(cat.color, 10),
+        },
       ]}
       testID={`onboarding-cat-${cat.id}`}
     >
+      {/* Selected sparkle badge */}
+      {selected && (
+        <View style={styles.catSparkle}>
+          <MaterialCommunityIcons name="star-four-points" size={20} color={cat.color} />
+        </View>
+      )}
+
+      {/* Gradient overlay when selected */}
+      {selected && (
+        <LinearGradient
+          colors={[glowColor(cat.color, 0.12), 'transparent']}
+          style={styles.catCardGradientOverlay}
+        />
+      )}
+
       <View style={styles.catCardAvatar}>
         <CatAvatar catId={cat.id} size="large" skipEntryAnimation />
       </View>
 
       <Text style={styles.catCardName}>{cat.name}</Text>
       <Text style={styles.catCardPersonality}>{cat.personality}</Text>
+
+      {/* Personality trait tags */}
+      {traits.length > 0 && (
+        <View style={styles.catTraitsRow}>
+          {traits.map((trait) => (
+            <View
+              key={trait}
+              style={[styles.catTraitPill, { backgroundColor: glowColor(cat.color, 0.15) }]}
+            >
+              <Text style={[styles.catTraitText, { color: cat.color }]}>{trait}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={[styles.catCardBadge, { backgroundColor: glowColor(cat.color, 0.19) }]}>
         <Text style={[styles.catCardBadgeText, { color: cat.color }]}>
@@ -645,10 +740,22 @@ function CatSelectionCard({
 // Feature Item Component
 // ---------------------------------------------------------------------------
 
-function FeatureItem({ icon, text }: { icon: string; text: string }): React.ReactElement {
+function FeatureItem({
+  iconName,
+  iconColor,
+  iconBg,
+  text,
+}: {
+  iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  iconColor: string;
+  iconBg: string;
+  text: string;
+}): React.ReactElement {
   return (
     <View style={styles.featureItem}>
-      <Text style={styles.featureIcon}>{icon}</Text>
+      <View style={[styles.featureIconCircle, { backgroundColor: iconBg }]}>
+        <MaterialCommunityIcons name={iconName} size={20} color={iconColor} />
+      </View>
       <Text style={styles.featureText}>{text}</Text>
     </View>
   );
@@ -659,14 +766,16 @@ function FeatureItem({ icon, text }: { icon: string; text: string }): React.Reac
 // ---------------------------------------------------------------------------
 
 function OptionCard({
-  icon,
+  iconName,
+  iconColor,
   title,
   description,
   selected,
   onPress,
   testID,
 }: {
-  icon: string;
+  iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  iconColor: string;
   title: string;
   description: string;
   selected: boolean;
@@ -676,13 +785,19 @@ function OptionCard({
   return (
     <Card
       onPress={onPress}
-      style={[styles.optionCard, selected && styles.optionCardSelected]}
+      style={[
+        styles.optionCard,
+        selected && styles.optionCardSelected,
+        selected && shadowGlow(COLORS.primary, 8),
+      ]}
       elevated
       padding="medium"
       testID={testID}
     >
       <View style={styles.optionContent}>
-        <Text style={styles.optionIcon}>{icon}</Text>
+        <View style={[styles.optionIconCircle, { backgroundColor: glowColor(iconColor, 0.15) }]}>
+          <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
+        </View>
         <View style={styles.optionText}>
           <Text style={styles.optionTitle}>{title}</Text>
           <Text style={styles.optionDescription}>{description}</Text>
@@ -693,7 +808,9 @@ function OptionCard({
             selected && styles.optionCheckboxSelected,
           ]}
         >
-          {selected && <Text style={styles.checkmark}>{'\u2713'}</Text>}
+          {selected && (
+            <MaterialCommunityIcons name="check" size={16} color={COLORS.textPrimary} />
+          )}
         </View>
       </View>
     </Card>
@@ -703,6 +820,56 @@ function OptionCard({
 // ---------------------------------------------------------------------------
 // Progress Bar with Cat Avatar
 // ---------------------------------------------------------------------------
+
+function StepDots({ currentStep }: { currentStep: number }): React.ReactElement {
+  const pulseScale = useSharedValue(1);
+
+  React.useEffect(() => {
+    pulseScale.value = withRepeat(
+      withSequence(
+        withTiming(1.3, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    );
+  }, [pulseScale]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  return (
+    <View style={styles.stepDotsRow}>
+      {Array.from({ length: TOTAL_STEPS }, (_, i) => {
+        const stepNum = i + 1;
+        const isCompleted = stepNum < currentStep;
+        const isCurrent = stepNum === currentStep;
+        const isFuture = stepNum > currentStep;
+
+        if (isCurrent) {
+          return (
+            <Animated.View
+              key={stepNum}
+              style={[styles.stepDotCurrent, pulseStyle]}
+            />
+          );
+        }
+
+        return (
+          <View
+            key={stepNum}
+            style={[
+              styles.stepDot,
+              isCompleted && styles.stepDotCompleted,
+              isFuture && styles.stepDotFuture,
+            ]}
+          />
+        );
+      })}
+    </View>
+  );
+}
 
 function ProgressBar({ step }: { step: number }): React.ReactElement {
   const fillFraction = useSharedValue(step / TOTAL_STEPS);
@@ -748,6 +915,9 @@ function ProgressBar({ step }: { step: number }): React.ReactElement {
           />
         </Animated.View>
       </View>
+
+      {/* Step indicator dots */}
+      <StepDots currentStep={step} />
     </View>
   );
 }
@@ -1001,13 +1171,54 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
+  // Step dots
+  stepDotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.primary,
+  },
+  stepDotCompleted: {
+    backgroundColor: COLORS.primary,
+  },
+  stepDotCurrent: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.primary,
+  },
+  stepDotFuture: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: COLORS.textMuted,
+  },
+
   // Steps
   stepContainer: {
     width: '100%',
+    paddingTop: SPACING.sm,
   },
   iconContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
+  },
+  welcomeGlowRing: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: glowColor(COLORS.primary, 0.08),
+    borderWidth: 2,
+    borderColor: glowColor(COLORS.primary, 0.2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadowGlow(COLORS.primary, 16),
   },
   stepTitle: {
     ...TYPOGRAPHY.display.sm,
@@ -1020,7 +1231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   catIntro: {
     ...TYPOGRAPHY.body.md,
@@ -1031,28 +1242,32 @@ const styles = StyleSheet.create({
   stepSubtitle: {
     ...TYPOGRAPHY.body.lg,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.xxl,
     textAlign: 'center',
   },
   stepDescription: {
     ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
     textAlign: 'center',
   },
 
   // Feature list
   featureList: {
-    marginBottom: SPACING.xl,
-    gap: SPACING.md,
+    marginBottom: SPACING.xxl,
+    gap: SPACING.lg,
   },
   featureItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: SPACING.md,
   },
-  featureIcon: {
-    fontSize: 20,
+  featureIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   featureText: {
     flex: 1,
@@ -1062,11 +1277,11 @@ const styles = StyleSheet.create({
 
   // Option cards
   optionsList: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
     gap: SPACING.md,
   },
   midiOptions: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
     gap: SPACING.md,
   },
   optionCard: {
@@ -1083,8 +1298,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.md,
   },
-  optionIcon: {
-    fontSize: 32,
+  optionIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionText: {
     flex: 1,
@@ -1112,15 +1331,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
-  checkmark: {
-    ...TYPOGRAPHY.body.md,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-  },
 
   // Buttons
   button: {
-    marginTop: SPACING.md,
+    marginTop: SPACING.lg,
   },
   backButtonContainer: {
     paddingHorizontal: SPACING.lg,
@@ -1131,19 +1345,35 @@ const styles = StyleSheet.create({
 
   // Cat selection cards
   catCardsContainer: {
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.md,
     gap: SPACING.md,
   },
   catCard: {
-    width: SCREEN_WIDTH * 0.6,
+    width: SCREEN_WIDTH * 0.65,
     backgroundColor: COLORS.cardSurface,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,
-    padding: SPACING.md,
+    padding: SPACING.lg,
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  catCardGradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    borderTopLeftRadius: BORDER_RADIUS.lg,
+    borderTopRightRadius: BORDER_RADIUS.lg,
+  },
+  catSparkle: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    zIndex: 2,
   },
   catCardAvatar: {
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   catCardName: {
     ...TYPOGRAPHY.heading.md,
@@ -1158,20 +1388,36 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     textAlign: 'center',
   },
+  catTraitsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.md,
+  },
+  catTraitPill: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  catTraitText: {
+    ...TYPOGRAPHY.caption.sm,
+    fontWeight: '600',
+  },
   catCardBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.full,
     marginBottom: SPACING.md,
   },
   catCardBadgeText: {
-    ...TYPOGRAPHY.caption.md,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '700',
     textAlign: 'center',
   },
   catChooseButton: {
     width: '100%',
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
     borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
   },
@@ -1193,17 +1439,22 @@ const styles = StyleSheet.create({
 
   // Username step
   usernameInputContainer: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   inputLabel: {
     ...TYPOGRAPHY.body.sm,
     fontWeight: '600',
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   usernameInputRow: {
     position: 'relative',
     justifyContent: 'center',
+  },
+  usernameInputIconLeft: {
+    position: 'absolute',
+    left: SPACING.md,
+    zIndex: 1,
   },
   usernameInput: {
     backgroundColor: COLORS.surface,
@@ -1216,6 +1467,9 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     ...TYPOGRAPHY.body.md,
   },
+  usernameInputWithIcon: {
+    paddingLeft: 44,
+  },
   usernameInputError: {
     borderColor: COLORS.error,
   },
@@ -1226,22 +1480,32 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: SPACING.md,
   },
-  usernameAvailable: {
+  usernameAvailableIcon: {
     position: 'absolute',
     right: SPACING.md,
-    fontSize: 18,
-    color: COLORS.success,
-    fontWeight: '700',
+  },
+  usernameMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  usernameSuccessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   usernameErrorText: {
     ...TYPOGRAPHY.caption.md,
     color: COLORS.error,
-    marginTop: SPACING.xs,
   },
   usernameSuccessText: {
     ...TYPOGRAPHY.caption.md,
     color: COLORS.success,
-    marginTop: SPACING.xs,
+  },
+  usernameCharCount: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.textMuted,
   },
 });
 
