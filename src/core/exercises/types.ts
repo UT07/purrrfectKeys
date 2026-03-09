@@ -3,6 +3,9 @@
  * These are platform-agnostic and contain no React imports
  */
 
+/** The 6 exercise interaction types */
+export type ExerciseType = 'play' | 'rhythm' | 'earTraining' | 'chordId' | 'sightReading' | 'callResponse';
+
 export interface NoteEvent {
   note: number; // MIDI note number (0-127)
   startBeat: number; // Beat position (float for subdivisions)
@@ -63,6 +66,7 @@ export interface DisplaySettings {
 export interface Exercise {
   id: string;
   version: number;
+  type?: ExerciseType; // undefined defaults to 'play' for backward compat
   metadata: ExerciseMetadata;
   settings: ExerciseSettings;
   notes: NoteEvent[];
@@ -151,4 +155,9 @@ export interface LessonProgress {
 export interface TimingResult {
   score: number; // 0-100
   status: 'perfect' | 'good' | 'ok' | 'early' | 'late' | 'missed';
+}
+
+/** Resolve exercise type (backward-compatible default to 'play') */
+export function getExerciseType(exercise: Exercise): ExerciseType {
+  return exercise.type ?? 'play';
 }

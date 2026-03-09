@@ -2,9 +2,14 @@
  * Content Loader
  * Static registry for exercise and lesson JSON content.
  * Metro requires static require() strings — no dynamic imports.
+ *
+ * The EXERCISE_INDEX (loaded from content/exercise-index.json) provides
+ * lightweight metadata for all exercises without loading full content.
+ * Use getExerciseMetadata() / getExercisesForLesson() / getExercisesBySkill()
+ * for fast lookups. Use getExercise() when you need the full Exercise object.
  */
 
-import type { Exercise } from '../core/exercises/types';
+import type { Exercise, ExerciseType } from '../core/exercises/types';
 import { logger } from '../utils/logger';
 
 // ============================================================================
@@ -34,6 +39,74 @@ export interface LessonManifest {
   } | null;
   xpReward: number;
   estimatedMinutes: number;
+}
+
+// ============================================================================
+// Exercise index types (matches content/exercise-index.json)
+// ============================================================================
+
+export interface ExerciseIndexEntry {
+  id: string;
+  lessonId: string;
+  title: string;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  skills: string[];
+  type: ExerciseType | 'test';
+  order: number;
+}
+
+export interface LessonIndexEntry {
+  id: string;
+  title: string;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  exerciseCount: number;
+  unlockRequirement: { type: string; lessonId: string } | null;
+}
+
+interface ExerciseIndexFile {
+  version: number;
+  generatedAt: string;
+  exercises: ExerciseIndexEntry[];
+  lessons: LessonIndexEntry[];
+}
+
+// ============================================================================
+// Exercise index (lightweight metadata — no full exercise content)
+// ============================================================================
+
+const EXERCISE_INDEX: ExerciseIndexFile = require('../../content/exercise-index.json');
+
+// Pre-built lookup maps for O(1) access
+const _exerciseMetadataById: Map<string, ExerciseIndexEntry> = new Map();
+const _exercisesByLesson: Map<string, ExerciseIndexEntry[]> = new Map();
+const _exercisesBySkill: Map<string, ExerciseIndexEntry[]> = new Map();
+const _exercisesByType: Map<string, ExerciseIndexEntry[]> = new Map();
+const _lessonIndexById: Map<string, LessonIndexEntry> = new Map();
+
+// Build lookup maps once at module load
+for (const entry of EXERCISE_INDEX.exercises) {
+  _exerciseMetadataById.set(entry.id, entry);
+
+  // By lesson
+  const lessonList = _exercisesByLesson.get(entry.lessonId) ?? [];
+  lessonList.push(entry);
+  _exercisesByLesson.set(entry.lessonId, lessonList);
+
+  // By skill
+  for (const skill of entry.skills) {
+    const skillList = _exercisesBySkill.get(skill) ?? [];
+    skillList.push(entry);
+    _exercisesBySkill.set(skill, skillList);
+  }
+
+  // By type
+  const typeList = _exercisesByType.get(entry.type) ?? [];
+  typeList.push(entry);
+  _exercisesByType.set(entry.type, typeList);
+}
+
+for (const lesson of EXERCISE_INDEX.lessons) {
+  _lessonIndexById.set(lesson.id, lesson);
 }
 
 // ============================================================================
@@ -220,4 +293,82 @@ export function isPostCurriculum(lessonProgress: Record<string, { status: string
   return LESSON_ORDER.every(
     (lessonId) => lessonProgress[lessonId]?.status === 'completed'
   );
+}
+
+// ============================================================================
+// Index-based API (scalable metadata lookups — no full exercise loading)
+// ============================================================================
+
+/**
+ * Get lightweight metadata for an exercise from the index.
+ * Returns null if the exercise is not in the index.
+ * This is much cheaper than getExercise() — no full JSON parse.
+ */
+export function getExerciseMetadata(exerciseId: string): ExerciseIndexEntry | null {
+  return _exerciseMetadataById.get(exerciseId) ?? null;
+}
+
+/**
+ * Get exercise metadata list for all exercises in a lesson.
+ * Returns entries sorted by order. Includes test exercises.
+ */
+export function getExercisesForLesson(lessonId: string): ExerciseIndexEntry[] {
+  const entries = _exercisesByLesson.get(lessonId);
+  if (!entries) return [];
+  return [...entries].sort((a, b) => a.order - b.order);
+}
+
+/**
+ * Get all lessons from the index (lightweight — no full manifest loading).
+ * Returns lessons in index order (which matches LESSON_ORDER).
+ */
+export function getAllLessons(): LessonIndexEntry[] {
+  return [...EXERCISE_INDEX.lessons];
+}
+
+/**
+ * Get total lesson count from the index.
+ */
+export function getLessonCount(): number {
+  return EXERCISE_INDEX.lessons.length;
+}
+
+/**
+ * Get all exercises that teach a given skill.
+ * Matches against the skills array in exercise metadata.
+ */
+export function getExercisesBySkill(skillId: string): ExerciseIndexEntry[] {
+  return _exercisesBySkill.get(skillId) ?? [];
+}
+
+/**
+ * Get all exercises of a given type ('play' or 'test').
+ */
+export function getExercisesByType(type: string): ExerciseIndexEntry[] {
+  return _exercisesByType.get(type) ?? [];
+}
+
+/**
+ * Get a lesson from the index by ID (lightweight — no full manifest).
+ */
+export function getLessonFromIndex(lessonId: string): LessonIndexEntry | null {
+  return _lessonIndexById.get(lessonId) ?? null;
+}
+
+/**
+ * Get the exercise index version number.
+ */
+export function getExerciseIndexVersion(): number {
+  return EXERCISE_INDEX.version;
+}
+
+/**
+ * Get the lesson ID for an exercise using the index (O(1) lookup).
+ * Falls back to the lesson registry scan if not found in index.
+ */
+export function getLessonIdForExerciseFromIndex(exerciseId: string): string | null {
+  const entry = _exerciseMetadataById.get(exerciseId);
+  if (entry) return entry.lessonId;
+  // Fall back to registry scan for exercises not in index (e.g. AI-generated)
+  return getLessonIdForExercise(exerciseId);
 }
