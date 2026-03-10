@@ -461,10 +461,20 @@ function ActiveChallengesSection(): React.JSX.Element {
   const challenges = useSocialStore((s) => s.challenges);
   const myUid = useAuthStore((s) => s.user?.uid) ?? '';
 
-  const activeChallenges = useMemo(
-    () => challenges.filter((c) => c.status === 'pending' || c.status === 'completed'),
-    [challenges],
-  );
+  const friends = useSocialStore((s) => s.friends);
+  const friendUids = useMemo(() => new Set(friends.map((f) => f.uid)), [friends]);
+
+  const activeChallenges = useMemo(() => {
+    const now = Date.now();
+    return challenges.filter((c) => {
+      // Auto-expire challenges past their deadline
+      if (c.status === 'pending' && c.expiresAt > 0 && c.expiresAt < now) return false;
+      // Hide challenges from removed friends
+      const otherUid = c.fromUid === myUid ? c.toUid : c.fromUid;
+      if (!friendUids.has(otherUid)) return false;
+      return c.status === 'pending' || c.status === 'completed';
+    });
+  }, [challenges, myUid, friendUids]);
 
   return (
     <View style={[styles.card, styles.challengesCard]}>

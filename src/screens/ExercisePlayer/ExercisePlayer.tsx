@@ -1233,7 +1233,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           toScore: null,
           status: 'pending' as const,
           createdAt: Date.now(),
-          expiresAt: Date.now() + 48 * 60 * 60 * 1000, // 48h
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
         };
         useSocialStore.getState().addChallenge(challengeDoc);
         createChallenge(challengeDoc).catch((err) => {

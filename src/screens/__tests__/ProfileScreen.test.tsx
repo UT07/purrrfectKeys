@@ -370,10 +370,10 @@ describe('ProfileScreen', () => {
     expect(getByText('Lv. 3')).toBeTruthy();
   });
 
-  it('shows XP tooltip on ring tap', () => {
-    const { getByTestId, getByText } = render(<ProfileScreen />);
+  it('ring tap navigates to CatSwitchScreen', () => {
+    const { getByTestId } = render(<ProfileScreen />);
     fireEvent.press(getByTestId('profile-level-ring'));
-    expect(getByText(/200 XP to level/)).toBeTruthy();
+    expect(mockNavigate).toHaveBeenCalledWith('CatSwitch');
   });
 
   it('shows streak count in quick pill row', () => {
@@ -408,10 +408,9 @@ describe('ProfileScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Account');
   });
 
-  it('Tap to change navigates to CatSwitchScreen', () => {
-    const { getByTestId } = render(<ProfileScreen />);
-    fireEvent.press(getByTestId('profile-open-cat-switch'));
-    expect(mockNavigate).toHaveBeenCalledWith('CatSwitch');
+  it('shows cat musicSkill in subtitle', () => {
+    const { getByText } = render(<ProfileScreen />);
+    expect(getByText(/Precision & Expression/)).toBeTruthy();
   });
 
   it('shows achievements section with count', () => {

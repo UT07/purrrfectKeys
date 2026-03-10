@@ -112,8 +112,8 @@ export function useMicroAnimations(
 
     tailRotate.value = withRepeat(
       withSequence(
-        withTiming(8, { duration: halfDur, easing: Easing.inOut(Easing.sin) }),
-        withTiming(-8, { duration: halfDur, easing: Easing.inOut(Easing.sin) }),
+        withTiming(4, { duration: halfDur, easing: Easing.inOut(Easing.sin) }),
+        withTiming(-4, { duration: halfDur, easing: Easing.inOut(Easing.sin) }),
       ),
       -1,
       true,
@@ -132,15 +132,15 @@ export function useMicroAnimations(
 
         if (isDouble) {
           eyeScaleY.value = withSequence(
-            withTiming(0.1, { duration: 60 }),
-            withTiming(1, { duration: 60 }),
-            withTiming(0.1, { duration: 60 }),
-            withTiming(1, { duration: 60 }),
+            withTiming(0.15, { duration: 50 }),
+            withTiming(1, { duration: 80 }),
+            withTiming(0.15, { duration: 50 }),
+            withTiming(1, { duration: 80 }),
           );
         } else {
           eyeScaleY.value = withSequence(
-            withTiming(0.1, { duration: 75 }),
-            withTiming(1, { duration: 75 }),
+            withTiming(0.15, { duration: 55 }),
+            withTiming(1, { duration: 85 }),
           );
         }
 

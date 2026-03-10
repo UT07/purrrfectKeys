@@ -413,47 +413,49 @@ export function KeysieSvg({
   const pattern = visuals?.pattern ?? 'solid';
 
   // SVG pivot points in the 100×100 viewBox for transform origin compensation.
-  // Without these, AnimatedG transforms default to (0,0) causing visible drift.
+  // AnimatedG style transforms operate in rendered pixel space, not viewBox space.
+  // We must scale viewBox coordinates by (pixelSize / 100) for correct pivots.
   const TAIL_PIVOT_X = 65;
   const TAIL_PIVOT_Y = 75;
   const EAR_PIVOT_X = 50;
   const EAR_PIVOT_Y = 12;
   const EYE_CENTER_Y = 36;
+  const vbScale = px / 100; // viewBox-to-pixel scale factor
 
   // Pre-compute animated styles via useAnimatedStyle (avoids inline .value access
   // which triggers Reanimated Babel plugin issues in test environments)
   const tailStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
     return { transform: [
-      { translateX: TAIL_PIVOT_X },
-      { translateY: TAIL_PIVOT_Y },
+      { translateX: TAIL_PIVOT_X * vbScale },
+      { translateY: TAIL_PIVOT_Y * vbScale },
       { rotate: `${microAnimations.tailRotate.value}deg` },
-      { translateX: -TAIL_PIVOT_X },
-      { translateY: -TAIL_PIVOT_Y },
+      { translateX: -TAIL_PIVOT_X * vbScale },
+      { translateY: -TAIL_PIVOT_Y * vbScale },
     ] };
   });
   const bodyStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
     return { transform: [
-      { translateY: microAnimations.breathTranslateY.value },
+      { translateY: microAnimations.breathTranslateY.value * vbScale },
       { scaleY: microAnimations.breathScale.value },
     ] };
   });
   const earStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
     return { transform: [
-      { translateX: EAR_PIVOT_X },
-      { translateY: EAR_PIVOT_Y },
+      { translateX: EAR_PIVOT_X * vbScale },
+      { translateY: EAR_PIVOT_Y * vbScale },
       { rotate: `${microAnimations.leftEarRotate.value}deg` },
-      { translateX: -EAR_PIVOT_X },
-      { translateY: -EAR_PIVOT_Y },
+      { translateX: -EAR_PIVOT_X * vbScale },
+      { translateY: -EAR_PIVOT_Y * vbScale },
     ] };
   });
   const eyeStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
     const sy = microAnimations.eyeScaleY.value;
     return { transform: [
-      { translateY: EYE_CENTER_Y * (1 - sy) },
+      { translateY: EYE_CENTER_Y * (1 - sy) * vbScale },
       { scaleY: sy },
     ] };
   });

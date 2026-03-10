@@ -35,7 +35,7 @@ export interface ChallengeFriendSheetProps {
   score: number;
 }
 
-const CHALLENGE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CHALLENGE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export function ChallengeFriendSheet({
   visible,

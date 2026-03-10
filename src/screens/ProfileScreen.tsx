@@ -261,7 +261,7 @@ export function ProfileScreen(): React.ReactElement {
   const maxDayMinutes = Math.max(...weeklyPractice.map(d => d.minutes), 1);
 
   const [activeTab, setActiveTab] = useState<'me' | 'settings'>('me');
-  const [showXpTooltip, setShowXpTooltip] = useState(false);
+
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showVolumePicker, setShowVolumePicker] = useState(false);
   const [showInputPicker, setShowInputPicker] = useState(false);
@@ -350,10 +350,10 @@ export function ProfileScreen(): React.ReactElement {
           colors={[glowColor(catColor, 0.13), 'transparent', 'transparent']}
           style={styles.header}
         >
-          {/* Level XP ring with cat avatar inside — tap for XP detail */}
+          {/* Level XP ring with cat avatar inside — tap to open cat gallery */}
           <PressableScale
             style={styles.ringContainer}
-            onPress={() => setShowXpTooltip((v) => !v)}
+            onPress={() => navigation.navigate('CatSwitch')}
             testID="profile-level-ring"
           >
             <Svg width={RING_SIZE} height={RING_SIZE}>
@@ -381,17 +381,10 @@ export function ProfileScreen(): React.ReactElement {
                 origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
               />
             </Svg>
-            <View style={styles.avatarInRing}>
-              <CatAvatar catId={selectedCatId} size="large" evolutionStage={evolutionStage} />
+            <View style={styles.avatarInRing} pointerEvents="none">
+              <CatAvatar catId={selectedCatId} size="large" evolutionStage={evolutionStage} showTooltipOnTap={false} />
             </View>
           </PressableScale>
-          {/* Inline XP tooltip — shown on ring tap */}
-          {showXpTooltip && (
-            <Text style={styles.xpTooltip}>
-              {levelProgress.xpToNextLevel} XP to level {level + 1}
-            </Text>
-          )}
-
           {/* All stat pills in one row */}
           <View style={styles.heroPills}>
             <View style={styles.heroPill}>
@@ -450,12 +443,7 @@ export function ProfileScreen(): React.ReactElement {
           {username ? (
             <Text style={styles.usernameSubtext}>@{username}</Text>
           ) : null}
-          <PressableScale
-            onPress={() => navigation.navigate('CatSwitch')}
-            testID="profile-open-cat-switch"
-          >
-            <Text style={styles.changeCatLink}>{selectedCat.name} &middot; Tap to change</Text>
-          </PressableScale>
+          <Text style={styles.changeCatLink}>{selectedCat.name} &middot; {selectedCat.musicSkill}</Text>
         </LinearGradient>
 
         {/* Tab Toggle */}
