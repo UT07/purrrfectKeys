@@ -157,6 +157,7 @@ jest.mock('../../screens/SongPlayerScreen', () => {
 
 jest.mock('@react-navigation/native', () => {
   const RN = require('react-native');
+  const React = require('react');
   const actual = jest.requireActual('@react-navigation/native');
   return {
     ...actual,
@@ -168,6 +169,12 @@ jest.mock('@react-navigation/native', () => {
       addListener: jest.fn(() => jest.fn()),
     }),
     useRoute: () => ({ params: {} }),
+    useFocusEffect: (cb: () => (() => void) | void) => {
+      React.useEffect(() => {
+        const cleanup = cb();
+        return typeof cleanup === 'function' ? cleanup : undefined;
+      }, []);
+    },
     NavigationContainer: ({ children }: any) => (
       <RN.View testID="navigation-container">{children}</RN.View>
     ),

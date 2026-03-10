@@ -12,6 +12,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { COLORS as THEME_COLORS, glowColor } from '../../theme/tokens';
 
 export type BadgeVariant = 'primary' | 'success' | 'danger' | 'warning';
 export type BadgeSize = 'small' | 'medium' | 'large';
@@ -24,22 +25,22 @@ export interface BadgeProps {
   textStyle?: StyleProp<TextStyle>;
 }
 
-const COLORS = {
+const BADGE_COLORS = {
   primary: {
-    background: 'rgba(220, 20, 60, 0.15)',
-    text: '#DC143C',
+    background: glowColor(THEME_COLORS.primary, 0.15),
+    text: THEME_COLORS.primary,
   },
   success: {
-    background: 'rgba(76, 175, 80, 0.15)',
-    text: '#4CAF50',
+    background: glowColor(THEME_COLORS.success, 0.15),
+    text: THEME_COLORS.success,
   },
   danger: {
-    background: 'rgba(244, 67, 54, 0.15)',
-    text: '#F44336',
+    background: glowColor(THEME_COLORS.error, 0.15),
+    text: THEME_COLORS.error,
   },
   warning: {
-    background: 'rgba(255, 152, 0, 0.15)',
-    text: '#FF9800',
+    background: glowColor(THEME_COLORS.warning, 0.15),
+    text: THEME_COLORS.warning,
   },
 };
 
@@ -61,7 +62,7 @@ export const Badge = React.memo(
     style,
     textStyle,
   }: BadgeProps) => {
-    const colors = COLORS[variant];
+    const colors = BADGE_COLORS[variant];
     const sizeStyle = SIZES[size];
 
     return (

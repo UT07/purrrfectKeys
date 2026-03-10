@@ -8,7 +8,7 @@
  */
 
 import { create } from 'zustand';
-import type { LeagueMembership } from './types';
+import type { LeagueMembership, LeagueTier } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 
 /**
@@ -46,8 +46,12 @@ export interface LeagueStandingEntry {
   rank: number;
 }
 
+export type TierTransition = 'promoted' | 'demoted' | 'same' | null;
+
 export interface LeagueStoreState {
   membership: LeagueMembership | null;
+  previousTier: LeagueTier | null;
+  tierTransition: TierTransition;
   standings: LeagueStandingEntry[];
   isLoadingStandings: boolean;
 
@@ -56,17 +60,32 @@ export interface LeagueStoreState {
   setStandings: (standings: LeagueStandingEntry[]) => void;
   setLoadingStandings: (loading: boolean) => void;
   updateWeeklyXp: (xp: number) => void;
+  clearTierTransition: () => void;
   reset: () => void;
 }
 
-type LeagueData = Pick<LeagueStoreState, 'membership'>;
+type LeagueData = Pick<LeagueStoreState, 'membership' | 'previousTier'>;
 
 const defaultData: LeagueData = {
   membership: null,
+  previousTier: null,
 };
 
-const defaultState: Omit<LeagueStoreState, 'setMembership' | 'setStandings' | 'setLoadingStandings' | 'updateWeeklyXp' | 'reset'> = {
+const TIER_ORDER: readonly LeagueTier[] = ['bronze', 'silver', 'gold', 'diamond'];
+
+function computeTierTransition(oldTier: LeagueTier | null, newTier: LeagueTier | null): TierTransition {
+  if (oldTier == null || newTier == null || oldTier === newTier) return null;
+  const oldIndex = TIER_ORDER.indexOf(oldTier);
+  const newIndex = TIER_ORDER.indexOf(newTier);
+  if (newIndex > oldIndex) return 'promoted';
+  if (newIndex < oldIndex) return 'demoted';
+  return null;
+}
+
+const defaultState: Omit<LeagueStoreState, 'setMembership' | 'setStandings' | 'setLoadingStandings' | 'updateWeeklyXp' | 'clearTierTransition' | 'reset'> = {
   membership: null,
+  previousTier: null,
+  tierTransition: null,
   standings: [],
   isLoadingStandings: false,
 };
@@ -77,8 +96,16 @@ export const useLeagueStore = create<LeagueStoreState>((set, get) => ({
   ...defaultState,
 
   setMembership: (membership: LeagueMembership | null) => {
-    set({ membership });
-    debouncedSave({ membership });
+    const current = get().membership;
+    const oldTier = current?.tier ?? null;
+    const newTier = membership?.tier ?? null;
+    const transition = computeTierTransition(oldTier, newTier);
+    set({
+      membership,
+      previousTier: oldTier ?? get().previousTier,
+      tierTransition: transition,
+    });
+    debouncedSave({ membership, previousTier: oldTier ?? get().previousTier });
   },
 
   setStandings: (standings: LeagueStandingEntry[]) => {
@@ -90,14 +117,18 @@ export const useLeagueStore = create<LeagueStoreState>((set, get) => ({
   },
 
   updateWeeklyXp: (xp: number) => {
-    const { membership } = get();
+    const { membership, previousTier } = get();
     if (!membership) return;
     // Reset XP if we've crossed into a new week since the membership was stored
     const fresh = resetWeeklyXpIfStale(membership);
     if (!fresh) return;
     const updated = { ...fresh, weeklyXp: xp };
     set({ membership: updated });
-    debouncedSave({ membership: updated });
+    debouncedSave({ membership: updated, previousTier });
+  },
+
+  clearTierTransition: () => {
+    set({ tierTransition: null });
   },
 
   reset: () => {
@@ -111,5 +142,11 @@ export async function hydrateLeagueStore(): Promise<void> {
   const data = await PersistenceManager.loadState<LeagueData>(STORAGE_KEYS.LEAGUE, defaultData);
   // Reset weekly XP if the persisted membership belongs to a previous week
   const membership = resetWeeklyXpIfStale(data.membership ?? null);
-  useLeagueStore.setState({ membership, standings: [], isLoadingStandings: false });
+  useLeagueStore.setState({
+    membership,
+    previousTier: data.previousTier ?? null,
+    tierTransition: null,
+    standings: [],
+    isLoadingStandings: false,
+  });
 }

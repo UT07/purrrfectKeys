@@ -16,6 +16,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { soundManager } from '../../audio/SoundManager';
+import { COLORS, glowColor } from '../../theme/tokens';
 
 export type AchievementType = 'xp' | 'streak' | 'level-up' | 'star';
 
@@ -27,10 +28,10 @@ export interface AchievementToastProps {
 }
 
 const TOAST_COLORS: Record<AchievementType, { bg: string; border: string }> = {
-  xp: { bg: 'rgba(255, 215, 0, 0.15)', border: 'rgba(255, 215, 0, 0.3)' },
-  streak: { bg: 'rgba(255, 152, 0, 0.15)', border: 'rgba(255, 152, 0, 0.3)' },
-  'level-up': { bg: 'rgba(220, 20, 60, 0.2)', border: 'rgba(220, 20, 60, 0.4)' },
-  star: { bg: 'rgba(76, 175, 80, 0.15)', border: 'rgba(76, 175, 80, 0.3)' },
+  xp: { bg: glowColor(COLORS.starGold, 0.15), border: glowColor(COLORS.starGold, 0.3) },
+  streak: { bg: glowColor(COLORS.warning, 0.15), border: glowColor(COLORS.warning, 0.3) },
+  'level-up': { bg: glowColor(COLORS.primary, 0.2), border: glowColor(COLORS.primary, 0.4) },
+  star: { bg: glowColor(COLORS.success, 0.15), border: glowColor(COLORS.success, 0.3) },
 };
 
 const TOAST_ICONS: Record<AchievementType, string> = {

@@ -14,6 +14,7 @@ import { View, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { midiToNoteName } from '@/core/music/MusicTheory';
 import type { NoteEvent } from '@/core/exercises/types';
+import { glowColor as hexGlow } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Exported constants
@@ -328,8 +329,8 @@ export const VerticalPianoRoll = React.memo(
           gradientBottom = overrideColor;
           borderColor = overrideColor;
           // Use override color at lower opacity for glow effects
-          glowColor = overrideColor + '59'; // ~35% opacity
-          haloColor = overrideColor + '26'; // ~15% opacity
+          glowColor = hexGlow(overrideColor, 0.35);
+          haloColor = hexGlow(overrideColor, 0.15);
         }
 
         const noteName = midiToNoteName(note.note);

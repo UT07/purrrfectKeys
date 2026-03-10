@@ -66,10 +66,13 @@ export async function generateAndSaveSong(
       }
     }
   } catch (cfError) {
-    logger.warn('[SongGen] Cloud Function unavailable, falling back to direct API. Deploy functions to secure API key:', (cfError as Error)?.message ?? cfError);
+    logger.warn('[SongGen] Cloud Function unavailable, falling back to direct API:', (cfError as Error)?.message ?? cfError);
   }
 
-  // Fall back to direct Gemini API call
+  // Fall back to direct Gemini API call (only in __DEV__ to avoid exposing API key in production)
+  if (!__DEV__) {
+    return null;
+  }
   // Rate limit check
   const today = new Date().toISOString().split('T')[0];
   const count = await getUserSongRequestCount(uid, today);

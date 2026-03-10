@@ -41,6 +41,19 @@ jest.mock('../../../content/loadingTips', () => ({
   getRandomLoadingTip: jest.fn(() => 'Relax your shoulders!'),
 }));
 
+// Mock TTS so that speak() immediately calls onDone (speech finished)
+jest.mock('../../../services/tts/TTSService', () => ({
+  ttsService: {
+    speak: jest.fn((_text: string, options?: { onDone?: () => void }) => {
+      // Simulate speech completing immediately
+      options?.onDone?.();
+      return Promise.resolve();
+    }),
+    stop: jest.fn(),
+    isSpeaking: jest.fn(() => false),
+  },
+}));
+
 describe('ExerciseLoadingScreen', () => {
   beforeEach(() => {
     jest.useFakeTimers();

@@ -541,12 +541,15 @@ export class SyncManager {
         logger.log(`[Sync] Cat evolution merged: ${mergedOwned.size} total cats`);
       }
 
-      // Merge gems: take higher balance
+      // Merge gems: take higher balance (direct setState, not earnGems, to avoid
+      // inflating totalGemsEarned and transaction log on every sync pull)
       if (remoteGems) {
         const localGems = useGemStore.getState();
         if (remoteGems.gems > localGems.gems) {
-          const diff = remoteGems.gems - localGems.gems;
-          useGemStore.getState().earnGems(diff, 'cloud-sync');
+          useGemStore.setState({
+            gems: remoteGems.gems,
+            totalGemsEarned: Math.max(localGems.totalGemsEarned, remoteGems.totalGemsEarned ?? localGems.totalGemsEarned),
+          });
           didMerge = true;
           logger.log(`[Sync] Merged remote gems: ${remoteGems.gems} (local was ${localGems.gems})`);
         }

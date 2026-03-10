@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   // ─ Tier 2 & 3: Full overlay ──────────
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.surfaceOverlay,
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,

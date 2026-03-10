@@ -345,34 +345,43 @@ function buildExerciseFromHints(
   const difficulty = hints.minDifficulty ?? 1;
   const keySignature = hints.keySignature ?? 'C major';
 
-  // Build a simple ascending-descending pattern from the available notes
+  const handProp = (note: number) =>
+    hand !== 'both' ? { hand } : { hand: note < 60 ? 'left' as const : 'right' as const };
+
+  // Build a pattern from the available notes
   const noteSequence: NoteEvent[] = [];
   let beat = 0;
 
-  // Ascending
-  for (const note of midi) {
-    noteSequence.push({
-      note,
-      startBeat: beat,
-      durationBeats: 1,
-      ...(hand !== 'both' && { hand }),
-      ...(hand === 'both' && { hand: note < 60 ? 'left' as const : 'right' as const }),
-    });
-    beat += 1;
-  }
-
-  // Descending (skip first and last to avoid repetition)
-  if (midi.length > 2) {
-    const descending = [...midi].reverse().slice(1, -1);
-    for (const note of descending) {
-      noteSequence.push({
-        note,
-        startBeat: beat,
-        durationBeats: 1,
-        ...(hand !== 'both' && { hand }),
-        ...(hand === 'both' && { hand: note < 60 ? 'left' as const : 'right' as const }),
-      });
+  if (midi.length === 1) {
+    // Single-note skill (e.g. "find-middle-c") — create a rhythmic repetition pattern
+    const n = midi[0];
+    const pattern = [1, 1, 1, 1, 2, 1, 1, 2]; // 10 beats total, 8 notes
+    for (const dur of pattern) {
+      noteSequence.push({ note: n, startBeat: beat, durationBeats: dur, ...handProp(n) });
+      beat += dur;
+    }
+  } else {
+    // Ascending
+    for (const note of midi) {
+      noteSequence.push({ note, startBeat: beat, durationBeats: 1, ...handProp(note) });
       beat += 1;
+    }
+
+    // Descending (skip first and last to avoid repetition)
+    if (midi.length > 2) {
+      const descending = [...midi].reverse().slice(1, -1);
+      for (const note of descending) {
+        noteSequence.push({ note, startBeat: beat, durationBeats: 1, ...handProp(note) });
+        beat += 1;
+      }
+    }
+
+    // If still under 6 notes, repeat ascending to fill
+    if (noteSequence.length < 6) {
+      for (const note of midi) {
+        noteSequence.push({ note, startBeat: beat, durationBeats: 1, ...handProp(note) });
+        beat += 1;
+      }
     }
   }
 

@@ -49,6 +49,7 @@ export function GameCard({
       <PressableScale
         onPress={onPress}
         glowOnPress
+        glowColor={rarityConfig.borderColor}
         testID={testID}
         style={[cardStyle, style]}
       >

@@ -29,6 +29,7 @@ import { CatAvatar } from './CatAvatar';
 import { getCatById, getDefaultCat } from './catCharacters';
 import { useCatEvolutionStore } from '@/stores/catEvolutionStore';
 import { reactionToPose, REACTIONS } from './animations/catAnimations';
+import { glowColor } from '@/theme/tokens';
 
 export type BuddyReaction =
   | 'idle'
@@ -172,7 +173,7 @@ export function ExerciseBuddy({
 
       {/* Combo counter */}
       {comboCount >= 2 && (
-        <View style={[styles.comboBadge, { backgroundColor: cat.color + 'CC' }]}>
+        <View style={[styles.comboBadge, { backgroundColor: glowColor(cat.color, 0.80) }]}>
           <Text style={styles.comboText}>{comboCount}x</Text>
         </View>
       )}

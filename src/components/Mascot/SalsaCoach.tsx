@@ -21,7 +21,7 @@ import { SALSA_COACH } from './catCharacters';
 import { CatAvatar } from './CatAvatar';
 import type { MascotMood } from './types';
 import type { CatPose } from './animations/catAnimations';
-import { COLORS, SPACING, BORDER_RADIUS } from '@/theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '@/theme/tokens';
 import { ttsService } from '@/services/tts/TTSService';
 
 /** Salsa's accent color */
@@ -117,8 +117,8 @@ export function SalsaCoach({
             width: dimension,
             height: dimension,
             borderRadius: dimension / 2,
-            borderColor: SALSA_COACH.color + '60',
-            backgroundColor: SALSA_COACH.color + '18',
+            borderColor: glowColor(SALSA_COACH.color, 0.38),
+            backgroundColor: glowColor(SALSA_COACH.color, 0.09),
           },
         ]}
       >
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     flex: 1,
     borderWidth: 1,
-    borderColor: SALSA_ACCENT + '30',
+    borderColor: glowColor(SALSA_ACCENT, 0.19),
   },
   bubbleText: {
     color: COLORS.textPrimary,

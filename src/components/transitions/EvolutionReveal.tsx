@@ -30,7 +30,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CatAvatar } from '../Mascot/CatAvatar';
 import { getCatById } from '../Mascot/catCharacters';
 import type { EvolutionStage, CatAbility } from '../../stores/types';
-import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '../../theme/tokens';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -171,9 +171,9 @@ export function EvolutionReveal({
       {phase === 'ability' && newAbility && (
         <Animated.View
           entering={FadeInDown.delay(100).springify().damping(12)}
-          style={[styles.abilityCard, { borderColor: accentColor + '60' }]}
+          style={[styles.abilityCard, { borderColor: glowColor(accentColor, 0.38) }]}
         >
-          <View style={[styles.abilityIconCircle, { backgroundColor: accentColor + '25' }]}>
+          <View style={[styles.abilityIconCircle, { backgroundColor: glowColor(accentColor, 0.15) }]}>
             <MaterialCommunityIcons
               name={newAbility.icon as any}
               size={24}

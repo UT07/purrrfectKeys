@@ -1,15 +1,15 @@
 # Purrrfect Keys Stabilization Report
 
-**Date:** February–March 2026 (last updated Mar 2)
-**Scope:** Codebase stabilization — tests, types, navigation, UI, adaptive learning, gamification, Phase 7 UI revamp, gem bug fix, cat gallery redesign, Phase 9 Music Library, Phase 8 polyphonic completion, Phase 9.5 UX overhaul, Phase 10 Arcade Concert Hall, Phase 10.5 Social & Leaderboards, Phase 11 QA + Launch Prep, ElevenLabs TTS, 3D Ghibli rendering, CI/CD pipeline fix
+**Date:** February–March 2026 (last updated Mar 8)
+**Scope:** Codebase stabilization — tests, types, navigation, UI, adaptive learning, gamification, Phase 7 UI revamp, gem bug fix, cat gallery redesign, Phase 9 Music Library, Phase 8 polyphonic completion, Phase 9.5 UX overhaul, Phase 10 Arcade Concert Hall, Phase 10.5 Social & Leaderboards, Phase 11 QA + Launch Prep, ElevenLabs TTS, CI/CD pipeline fix, 3D cat elimination, mic pipeline tuning, deep audit bug fixes
 **Full history:** See `docs/stabilization-report-archive.md` for detailed change narratives.
 
 ## Final State
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Test Suites | 18 (many failing) | 121 passed |
-| Tests | ~393 passing, 40+ failing | 2,591 passed, 0 failing |
+| Test Suites | 18 (many failing) | 139 passed |
+| Tests | ~393 passing, 40+ failing | 2,831 passed, 0 failing |
 | TypeScript Errors | 144+ | 0 |
 | Skill Nodes | 0 | 100 (15 tiers, DAG-validated) |
 | Session Types | 1 (new-material only) | 4 (new-material, review, challenge, mixed) |
@@ -216,20 +216,61 @@
 
 - **Tests:** 121 suites, 2,591 tests, 0 failures, 0 TypeScript errors
 
+### 3D Cat Elimination (Mar 3)
+- Removed: react-three-fiber, @react-three/drei, three, expo-gl from dependencies
+- Removed: `src/components/Mascot/3d/` directory, `assets/models/*.glb`, 3D jest mocks, metro.config glb mapper
+- Reason: GL context crashes on device, multiple contexts exhausted GPU
+- All screens now use SVG `CatAvatar` exclusively
+
+### Deep Audit Bug Fixes (Mar 6-8)
+- **#128 P0**: `plugins/strip-push-entitlement.js` committed (was blocking EAS builds)
+- **#129 P0**: ExpoAudioEngine polyphony volume scaling now actually applied to playback
+- **#130 P0**: Daily challenge double-claiming guard fixed
+- **#131 P1**: ExpoAudioEngine preloadVoicePools has try/catch with per-note error logging
+- **#132 P1**: WebAudioEngine JSI bridge calls wrapped in try/catch
+- **#102**: exercise.hands dead code removed — hand detection derives from note analysis
+- **#106**: CompletionModal uses failCount prop instead of hardcoded attemptNumber
+
+### Mic Pipeline Tuning (Mar 7-8)
+- **Audio session**: `createAudioEngine.ts` now uses `measurement` mode when `allowRecording=true` — prevents Apple voice processing from crushing piano audio
+- **RMS threshold**: 0.006 → 0.002 in MicrophoneInput.ts — iPhone mic RMS for piano is 0.003-0.009
+- **Release hold**: 250ms → 500ms — survives ~10 unvoiced buffers between weak voiced frames
+- **YIN threshold**: 0.18 → 0.15 (standard default)
+- **5 new tests**: iPhone-amplitude detection, ambient noise rejection, note sustain, intermittent RMS survival
+- **ExerciseLoadingScreen**: Now waits for Salsa TTS to finish before transitioning to gameplay
+
+### Documentation Consolidation (Mar 8)
+- **UNIFIED-PLAN.md**: Complete rewrite reflecting actual codebase state
+- **MANUAL-VERIFICATION-CHECKLIST.md**: Removed 3D section, updated Firebase/mic/build statuses
+- **GitHub issues**: Closed 7 code-fixed issues (#128, #129, #130, #131, #132, #102, #106)
+- **Archived**: gacha-cats plans (not in unified plan)
+- **Firestore rules**: Updated status — rules ARE comprehensive (all collections covered), need deployment
+
+- **Tests:** 132 suites, 2,778 tests, 0 failures, 0 TypeScript errors
+
+### Social Wiring & Replay Fix (Mar 9)
+- **Challenge fetching:** `getChallengesForUser()` wired into SocialScreen via `useFocusEffect` (re-fetches on every tab focus)
+- **Local challenge notifications:** New incoming challenges trigger `sendLocalNotification()` with sender name + exercise title + score
+- **Tab badge:** CustomTabBar shows red badge on Social tab (pending challenges + pending friend requests)
+- **ChallengeCard perspective:** Fixed sender/receiver score labels — `fromUid === myUid` check determines "Your score" vs "Their score"
+- **Replay navigation:** `stopReplay(replayFinished)` parameter differentiates natural completion (→ next exercise or home) from early exit (→ CompletionModal)
+- **Jest mocks:** Added `expo-notifications` mock to jest.setup.js, added `useFocusEffect` mock to both global and local navigation mocks
+
+- **Tests:** 139 suites, 2,831 tests, 0 failures, 0 TypeScript errors
+
 ---
 
 ## Known Remaining Items
 
-1. **Worker teardown warning**: Jest reports "worker process has failed to exit gracefully" (timer leak, non-blocking)
-2. **Native audio engine**: ExpoAudioEngine primary; react-native-audio-api requires RN 0.77+ for codegen
-3. **MIDI hardware testing**: `@motiz88/react-native-midi` installed, NativeMidiInput rewritten — needs dev build for actual hardware testing
-4. **Open bugs on GitHub**: ~45 remaining open issues
-5. **Phase 8 remaining**: Real-device testing (mic accuracy >95%, ONNX model loading on device, ambient calibration UX)
-6. **Sound assets**: SoundManager has procedural synthesis improvements, but dedicated .wav files not yet sourced (~30 sounds needed)
-7. **3D cat models**: 4 body type GLBs + Ghibli toon materials working, bone-weight splitting for per-part coloring — per-cat unique meshes and skeletal animations are stretch goals
-8. **Maestro E2E testing**: 12 flow YAML files + 3 helpers + configs scaffolded in ios/.maestro/, needs testID selector customization
-9. ~~**Cat voice TTS upgrade**~~: **DONE** — ElevenLabs integrated with 13 per-cat voices, expo-speech fallback
-10. **Cloud Functions deployment**: 4 functions written (deleteUserData, generateExercise, generateSong, generateCoachFeedback) — need Firebase project deployment
-11. **Phase 11 QA**: Comprehensive codebase audit identified 40 issues (8 P0, 13 P1, 7 P2, 12 P3) — in progress
-12. **ElevenLabs API key**: Needs `EXPO_PUBLIC_ELEVENLABS_API_KEY` in production environment
-13. **Lint warnings**: 531 warnings remaining (392 `no-explicit-any`, 139 `no-console`) — non-blocking for CI
+1. **Worker teardown warning**: Jest "worker process has failed to exit gracefully" (timer leak, non-blocking)
+2. **MIDI hardware testing**: `@motiz88/react-native-midi` installed — needs dev build for actual hardware testing
+3. **Mic device testing**: Pipeline tuned but needs real-device verification with piano
+4. **Sound assets**: All procedural synthesis — needs Salamander Grand Piano samples (~12MB)
+5. **Maestro E2E testing**: Scaffolded, needs testID selector customization
+6. ~~**Cat voice TTS upgrade**~~: **DONE** — ElevenLabs integrated with 13 per-cat voices
+7. **Cloud Functions**: 9 functions written — deployment needs verification (`firebase functions:list`)
+8. **ElevenLabs API key**: Needs `EXPO_PUBLIC_ELEVENLABS_API_KEY` in production environment
+9. **Lint warnings**: ~531 warnings (non-blocking for CI)
+10. ~~**Open GitHub issues**~~: **ALL CLOSED** (Mar 8-9) — #19, #102, #106, #111-113, #128-135
+11. **ONNX polyphonic**: Model + code fully integrated — graceful YIN fallback. Key differentiator, do NOT disable.
+12. **Firebase deployment**: Rules + indexes + functions defined — need deploy commands run

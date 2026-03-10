@@ -4,12 +4,13 @@
  */
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
+import { COLORS, glowColor } from '../../theme/tokens';
 
 interface GlassmorphismCardProps {
   children: React.ReactNode;
-  /** Background tint color (default: rgba(255,255,255,0.08)) */
+  /** Background tint color */
   tint?: string;
-  /** Border color (default: rgba(255,255,255,0.12)) */
+  /** Border color */
   borderColor?: string;
   /** Border radius (default: 16) */
   borderRadius?: number;
@@ -18,8 +19,8 @@ interface GlassmorphismCardProps {
 
 export function GlassmorphismCard({
   children,
-  tint = 'rgba(255,255,255,0.08)',
-  borderColor = 'rgba(255,255,255,0.12)',
+  tint = glowColor(COLORS.textPrimary, 0.08),
+  borderColor = glowColor(COLORS.textPrimary, 0.12),
   borderRadius = 16,
   style,
 }: GlassmorphismCardProps) {

@@ -144,6 +144,8 @@ describe('geminiExerciseService', () => {
         notes: [
           { note: 48, startBeat: 0, durationBeats: 1 },
           { note: 72, startBeat: 1, durationBeats: 1 }, // exactly 24 semitones
+          { note: 60, startBeat: 2, durationBeats: 1 },
+          { note: 64, startBeat: 3, durationBeats: 1 },
         ],
         settings: {
           tempo: 140,
@@ -184,7 +186,8 @@ describe('geminiExerciseService', () => {
         notes: [
           { note: 36, startBeat: 0, durationBeats: 1 },
           { note: 60, startBeat: 1, durationBeats: 1 },
-          { note: 96, startBeat: 2, durationBeats: 1 },
+          { note: 72, startBeat: 2, durationBeats: 1 },
+          { note: 96, startBeat: 3, durationBeats: 1 },
         ],
         settings: {
           tempo: 60, // slow tempo allows the 36-semitone jump

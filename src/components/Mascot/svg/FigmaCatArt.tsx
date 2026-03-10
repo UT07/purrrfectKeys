@@ -7,6 +7,7 @@ import { Path, Circle, Ellipse, G } from 'react-native-svg';
 import Animated from 'react-native-reanimated';
 import type { useAnimatedStyle } from 'react-native-reanimated';
 import type { GProps } from 'react-native-svg';
+import { renderAccessories } from './CatAccessories';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const AnimatedG = Animated.createAnimatedComponent(G) as React.ComponentType<
@@ -137,13 +138,20 @@ function miniMeowwwGroups(): CatGroups {
         <Path d="M 47 47 Q 47 49, 49 48.5 Q 50 49.5, 51 48.5 Q 53 49, 53 47" fill="none" stroke="#1A1A2E" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
         {/* Tiny fang */}
         <Path d="M 48 47.5 L 47.8 49 L 48.5 48" fill="#FFFFFF" stroke="#E0E0E8" strokeWidth="0.2" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="46" r="0.7" fill="#E0E0F0" opacity="0.6" />
+        <Circle cx="40" cy="48" r="0.7" fill="#E0E0F0" opacity="0.6" />
+        <Circle cx="40" cy="50" r="0.7" fill="#E0E0F0" opacity="0.6" />
+        <Circle cx="60" cy="46" r="0.7" fill="#E0E0F0" opacity="0.6" />
+        <Circle cx="60" cy="48" r="0.7" fill="#E0E0F0" opacity="0.6" />
+        <Circle cx="60" cy="50" r="0.7" fill="#E0E0F0" opacity="0.6" />
         {/* Whiskers */}
-        <Path d="M 40 46 Q 28 43, 18 42" stroke="#1A1A2E" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 40 48 Q 28 48, 18 48" stroke="#1A1A2E" strokeWidth="0.5" opacity="0.45" strokeLinecap="round" />
-        <Path d="M 40 50 Q 28 52, 18 54" stroke="#1A1A2E" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 46 Q 72 43, 82 42" stroke="#1A1A2E" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 48 Q 72 48, 82 48" stroke="#1A1A2E" strokeWidth="0.5" opacity="0.45" strokeLinecap="round" />
-        <Path d="M 60 50 Q 72 52, 82 54" stroke="#1A1A2E" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 40 46 Q 28 43, 18 42" stroke="#E0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 48 Q 28 48, 18 48" stroke="#E0E0F0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 40 50 Q 28 52, 18 54" stroke="#E0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 46 Q 72 43, 82 42" stroke="#E0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 48 Q 72 48, 82 48" stroke="#E0E0F0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 50 Q 72 52, 82 54" stroke="#E0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
         {/* Blush */}
         <Ellipse cx="34" cy="44" rx="4.5" ry="3" fill="#FF6B8A" opacity="0.25" />
         <Ellipse cx="66" cy="44" rx="4.5" ry="3" fill="#FF6B8A" opacity="0.25" />
@@ -243,11 +251,16 @@ function jazzyGroups(): CatGroups {
         {/* Smirk + fang */}
         <Path d="M 47 47.5 Q 50 49.5, 55 47.5" fill="none" stroke="#4A5A78" strokeWidth="0.9" strokeLinecap="round" />
         <Path d="M 54 47.5 L 53.8 49.5 L 54.8 48.2" fill="#FFFFFF" stroke="#D0D0D8" strokeWidth="0.2" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="46" r="0.7" fill="#D0D8E8" opacity="0.6" />
+        <Circle cx="40" cy="48" r="0.7" fill="#D0D8E8" opacity="0.6" />
+        <Circle cx="60" cy="46" r="0.7" fill="#D0D8E8" opacity="0.6" />
+        <Circle cx="60" cy="48" r="0.7" fill="#D0D8E8" opacity="0.6" />
         {/* Whiskers */}
-        <Path d="M 40 46 Q 28 46, 18 48" stroke="#4A5A78" strokeWidth="0.5" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 40 48 Q 28 49, 18 52" stroke="#4A5A78" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 46 Q 72 46, 82 48" stroke="#4A5A78" strokeWidth="0.5" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 48 Q 72 49, 82 52" stroke="#4A5A78" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 40 46 Q 28 46, 18 48" stroke="#D0D8E8" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 48 Q 28 49, 18 52" stroke="#D0D8E8" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 46 Q 72 46, 82 48" stroke="#D0D8E8" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 48 Q 72 49, 82 52" stroke="#D0D8E8" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
       </G>
     ),
   };
@@ -337,11 +350,16 @@ function lunaGroups(): CatGroups {
         <Path d="M 50 44 L 48.5 46.5 L 51.5 46.5 Z" fill="#8A7098" />
         {/* Serene smile */}
         <Path d="M 47 48 Q 50 49.5, 53 48" fill="none" stroke="#6A7588" strokeWidth="0.8" strokeLinecap="round" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="46" r="0.7" fill="#D0D0E0" opacity="0.6" />
+        <Circle cx="40" cy="48" r="0.7" fill="#D0D0E0" opacity="0.6" />
+        <Circle cx="60" cy="46" r="0.7" fill="#D0D0E0" opacity="0.6" />
+        <Circle cx="60" cy="48" r="0.7" fill="#D0D0E0" opacity="0.6" />
         {/* Whiskers */}
-        <Path d="M 40 46 Q 28 44, 18 43" stroke="#6A7588" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 40 48 Q 28 47, 18 46" stroke="#6A7588" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 46 Q 72 44, 82 43" stroke="#6A7588" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 48 Q 72 47, 82 46" stroke="#6A7588" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 40 46 Q 28 44, 18 43" stroke="#D0D0E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 48 Q 28 47, 18 46" stroke="#D0D0E0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 46 Q 72 44, 82 43" stroke="#D0D0E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 48 Q 72 47, 82 46" stroke="#D0D0E0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
         {/* Moon crescent */}
         <G opacity="0.35">
           <Path d="M 18 14 C 22 12, 22 20, 18 18 C 14 16, 14 12, 18 14 Z" fill="#5BA8FF" />
@@ -443,11 +461,16 @@ function biscuitGroups(): CatGroups {
         {/* Big happy open smile */}
         <Path d="M 46 47 Q 48 51, 50 51 Q 52 51, 54 47" fill="#FF8FAB" stroke="#E0A090" strokeWidth="0.7" />
         <Ellipse cx="50" cy="50" rx="1.8" ry="1.2" fill="#FF6090" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="47" r="0.7" fill="#FFF0E0" opacity="0.6" />
+        <Circle cx="40" cy="49" r="0.7" fill="#FFF0E0" opacity="0.6" />
+        <Circle cx="60" cy="47" r="0.7" fill="#FFF0E0" opacity="0.6" />
+        <Circle cx="60" cy="49" r="0.7" fill="#FFF0E0" opacity="0.6" />
         {/* Whiskers */}
-        <Path d="M 40 47 Q 30 45, 22 45" stroke="#E0B898" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 40 49 Q 30 49, 22 50" stroke="#E0B898" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 47 Q 70 45, 78 45" stroke="#E0B898" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 49 Q 70 49, 78 50" stroke="#E0B898" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+        <Path d="M 40 47 Q 30 45, 22 45" stroke="#FFF0E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 49 Q 30 49, 22 50" stroke="#FFF0E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 47 Q 70 45, 78 45" stroke="#FFF0E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 49 Q 70 49, 78 50" stroke="#FFF0E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
         {/* Blush */}
         <Ellipse cx="30" cy="44" rx="5" ry="3.5" fill="#FFB0C8" opacity="0.3" />
         <Ellipse cx="70" cy="44" rx="5" ry="3.5" fill="#FFB0C8" opacity="0.3" />
@@ -537,13 +560,20 @@ function ballymakawwwGroups(): CatGroups {
         <Path d="M 44 47 Q 46 44, 50 44 Q 54 44, 56 47 Q 54 53, 50 53.5 Q 46 53, 44 47 Z" fill="#CC3030" stroke="#A02020" strokeWidth="0.4" />
         <Ellipse cx="50" cy="51.5" rx="3.5" ry="2" fill="#FF5050" />
         <Path d="M 44.5 47 L 43.5 49.5 L 45.5 48" fill="#FFFFFF" stroke="#E0E0E8" strokeWidth="0.15" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="47" r="0.8" fill="#FFF0D0" opacity="0.6" />
+        <Circle cx="40" cy="49" r="0.8" fill="#FFF0D0" opacity="0.6" />
+        <Circle cx="40" cy="51" r="0.8" fill="#FFF0D0" opacity="0.6" />
+        <Circle cx="60" cy="47" r="0.8" fill="#FFF0D0" opacity="0.6" />
+        <Circle cx="60" cy="49" r="0.8" fill="#FFF0D0" opacity="0.6" />
+        <Circle cx="60" cy="51" r="0.8" fill="#FFF0D0" opacity="0.6" />
         {/* Thick bristling whiskers */}
-        <Path d="M 40 47 Q 26 43, 14 41" stroke="#C06A28" strokeWidth="0.7" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 40 49 Q 26 47, 14 46" stroke="#C06A28" strokeWidth="0.7" opacity="0.5" strokeLinecap="round" />
-        <Path d="M 40 51 Q 26 51, 14 52" stroke="#C06A28" strokeWidth="0.7" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 47 Q 74 43, 86 41" stroke="#C06A28" strokeWidth="0.7" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 49 Q 74 47, 86 46" stroke="#C06A28" strokeWidth="0.7" opacity="0.5" strokeLinecap="round" />
-        <Path d="M 60 51 Q 74 51, 86 52" stroke="#C06A28" strokeWidth="0.7" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 40 47 Q 26 43, 14 41" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 40 49 Q 26 47, 14 46" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.7" strokeLinecap="round" />
+        <Path d="M 40 51 Q 26 51, 14 52" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 47 Q 74 43, 86 41" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 49 Q 74 47, 86 46" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.7" strokeLinecap="round" />
+        <Path d="M 60 51 Q 74 51, 86 52" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.65" strokeLinecap="round" />
         {/* Blush */}
         <Ellipse cx="30" cy="44" rx="5" ry="3" fill="#FFB07C" opacity="0.3" />
         <Ellipse cx="70" cy="44" rx="5" ry="3" fill="#FFB07C" opacity="0.3" />
@@ -636,11 +666,16 @@ function ariaGroups(): CatGroups {
         <Path d="M 50 44 L 48.5 46.5 L 51.5 46.5 Z" fill="#C09040" />
         {/* Knowing smile */}
         <Path d="M 47 48 Q 50 49.5, 53 48" fill="none" stroke="#B88A38" strokeWidth="0.8" strokeLinecap="round" />
-        {/* Thin whiskers */}
-        <Path d="M 40 46 Q 28 44, 18 43" stroke="#B88A38" strokeWidth="0.4" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 40 48 Q 28 47, 18 47" stroke="#B88A38" strokeWidth="0.4" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 46 Q 72 44, 82 43" stroke="#B88A38" strokeWidth="0.4" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 60 48 Q 72 47, 82 47" stroke="#B88A38" strokeWidth="0.4" opacity="0.35" strokeLinecap="round" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="46" r="0.7" fill="#FFF8E0" opacity="0.6" />
+        <Circle cx="40" cy="48" r="0.7" fill="#FFF8E0" opacity="0.6" />
+        <Circle cx="60" cy="46" r="0.7" fill="#FFF8E0" opacity="0.6" />
+        <Circle cx="60" cy="48" r="0.7" fill="#FFF8E0" opacity="0.6" />
+        {/* Whiskers */}
+        <Path d="M 40 46 Q 28 44, 18 43" stroke="#FFF8E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 48 Q 28 47, 18 47" stroke="#FFF8E0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 46 Q 72 44, 82 43" stroke="#FFF8E0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 48 Q 72 47, 82 47" stroke="#FFF8E0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
         {/* Gold sparkles */}
         <G opacity="0.45">
           <Path d="M 80 14 L 80.5 15.5 L 82 16 L 80.5 16.5 L 80 18 L 79.5 16.5 L 78 16 L 79.5 15.5 Z" fill="#FFBE44" />
@@ -736,11 +771,16 @@ function tempoGroups(): CatGroups {
         <Path d="M 43 47 Q 45 44, 48 44 Q 53 44, 55 47 Q 53 52, 48 52.5 Q 43 52, 43 47 Z" fill="#CC3020" stroke="#A02010" strokeWidth="0.4" />
         <Ellipse cx="48" cy="50.5" rx="2.5" ry="1.5" fill="#FF5040" />
         <Path d="M 43.5 47 L 43 49 L 44.5 47.5" fill="#FFFFFF" stroke="#E0E0E8" strokeWidth="0.15" />
+        {/* Whisker dots */}
+        <Circle cx="39" cy="46" r="0.7" fill="#FFE8D0" opacity="0.6" />
+        <Circle cx="39" cy="48" r="0.7" fill="#FFE8D0" opacity="0.6" />
+        <Circle cx="57" cy="46" r="0.7" fill="#FFE8D0" opacity="0.6" />
+        <Circle cx="57" cy="48" r="0.7" fill="#FFE8D0" opacity="0.6" />
         {/* Whiskers — blown back */}
-        <Path d="M 39 46 Q 26 42, 14 40" stroke="#C05030" strokeWidth="0.5" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 39 48 Q 26 45, 14 43" stroke="#C05030" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 57 46 Q 70 42, 82 40" stroke="#C05030" strokeWidth="0.5" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 57 48 Q 70 45, 82 43" stroke="#C05030" strokeWidth="0.5" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 39 46 Q 26 42, 14 40" stroke="#FFE8D0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 39 48 Q 26 45, 14 43" stroke="#FFE8D0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 57 46 Q 70 42, 82 40" stroke="#FFE8D0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 57 48 Q 70 45, 82 43" stroke="#FFE8D0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
         {/* Speed sparks */}
         <G opacity="0.35">
           <Path d="M 10 28 L 6 28" stroke="#FF6B20" strokeWidth="1.2" strokeLinecap="round" />
@@ -830,11 +870,16 @@ function shibuGroups(): CatGroups {
         <Path d="M 50 44 L 48.5 46.5 L 51.5 46.5 Z" fill="#D8B8A0" />
         {/* Peaceful smile */}
         <Path d="M 47 48 Q 50 49.5, 53 48" fill="none" stroke="#D0B8A0" strokeWidth="0.7" strokeLinecap="round" />
-        {/* Still whiskers */}
-        <Path d="M 40 47 Q 28 46, 20 46" stroke="#D8C8B8" strokeWidth="0.4" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 40 49 Q 28 49, 20 49" stroke="#D8C8B8" strokeWidth="0.4" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 60 47 Q 72 46, 80 46" stroke="#D8C8B8" strokeWidth="0.4" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 60 49 Q 72 49, 80 49" stroke="#D8C8B8" strokeWidth="0.4" opacity="0.3" strokeLinecap="round" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="47" r="0.7" fill="#FFFFFF" opacity="0.55" />
+        <Circle cx="40" cy="49" r="0.7" fill="#FFFFFF" opacity="0.55" />
+        <Circle cx="60" cy="47" r="0.7" fill="#FFFFFF" opacity="0.55" />
+        <Circle cx="60" cy="49" r="0.7" fill="#FFFFFF" opacity="0.55" />
+        {/* Whiskers */}
+        <Path d="M 40 47 Q 28 46, 20 46" stroke="#FFFFFF" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
+        <Path d="M 40 49 Q 28 49, 20 49" stroke="#FFFFFF" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
+        <Path d="M 60 47 Q 72 46, 80 46" stroke="#FFFFFF" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
+        <Path d="M 60 49 Q 72 49, 80 49" stroke="#FFFFFF" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
         {/* Blush */}
         <Ellipse cx="32" cy="44" rx="4" ry="2.5" fill="#FFD0B8" opacity="0.25" />
         <Ellipse cx="68" cy="44" rx="4" ry="2.5" fill="#FFD0B8" opacity="0.25" />
@@ -931,11 +976,16 @@ function bellaGroups(): CatGroups {
         <Path d="M 50 44 L 48.5 46.5 L 51.5 46.5 Z" fill="#FFB0C0" />
         {/* Regal smile */}
         <Path d="M 47 48 Q 50 49.5, 53 48" fill="none" stroke="#D0D0D8" strokeWidth="0.7" strokeLinecap="round" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="47" r="0.7" fill="#B8B8CC" opacity="0.6" />
+        <Circle cx="40" cy="49" r="0.7" fill="#B8B8CC" opacity="0.6" />
+        <Circle cx="60" cy="47" r="0.7" fill="#B8B8CC" opacity="0.6" />
+        <Circle cx="60" cy="49" r="0.7" fill="#B8B8CC" opacity="0.6" />
         {/* Whiskers */}
-        <Path d="M 40 47 Q 28 45, 18 44" stroke="#D0D0D8" strokeWidth="0.35" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 40 49 Q 28 48, 18 48" stroke="#D0D0D8" strokeWidth="0.35" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 60 47 Q 72 45, 82 44" stroke="#D0D0D8" strokeWidth="0.35" opacity="0.3" strokeLinecap="round" />
-        <Path d="M 60 49 Q 72 48, 82 48" stroke="#D0D0D8" strokeWidth="0.35" opacity="0.3" strokeLinecap="round" />
+        <Path d="M 40 47 Q 28 45, 18 44" stroke="#B8B8CC" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
+        <Path d="M 40 49 Q 28 48, 18 48" stroke="#B8B8CC" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
+        <Path d="M 60 47 Q 72 45, 82 44" stroke="#B8B8CC" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
+        <Path d="M 60 49 Q 72 48, 82 48" stroke="#B8B8CC" strokeWidth="1" opacity="0.55" strokeLinecap="round" />
         {/* Blush */}
         <Ellipse cx="30" cy="44" rx="5" ry="3" fill="#FFD0DC" opacity="0.25" />
         <Ellipse cx="70" cy="44" rx="5" ry="3" fill="#FFD0DC" opacity="0.25" />
@@ -1030,11 +1080,16 @@ function sableGroups(): CatGroups {
         {/* Dramatic smirk + fang */}
         <Path d="M 47 47.5 Q 50 49, 55 47" fill="none" stroke="#3A2018" strokeWidth="0.8" strokeLinecap="round" />
         <Path d="M 54 47 L 53.8 49 L 55 48" fill="#FFFFFF" stroke="#D0D0D0" strokeWidth="0.15" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="47" r="0.7" fill="#E0D0C0" opacity="0.6" />
+        <Circle cx="40" cy="49" r="0.7" fill="#E0D0C0" opacity="0.6" />
+        <Circle cx="60" cy="47" r="0.7" fill="#E0D0C0" opacity="0.6" />
+        <Circle cx="60" cy="49" r="0.7" fill="#E0D0C0" opacity="0.6" />
         {/* Whiskers — angled down */}
-        <Path d="M 40 47 Q 28 49, 18 52" stroke="#3A2018" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 40 49 Q 28 52, 18 56" stroke="#3A2018" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 47 Q 72 49, 82 52" stroke="#3A2018" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 49 Q 72 52, 82 56" stroke="#3A2018" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 40 47 Q 28 49, 18 52" stroke="#E0D0C0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 49 Q 28 52, 18 56" stroke="#E0D0C0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 47 Q 72 49, 82 52" stroke="#E0D0C0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 49 Q 72 52, 82 56" stroke="#E0D0C0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
         {/* Purple sparkles */}
         <G opacity="0.35">
           <Path d="M 84 16 L 84.5 17.5 L 86 18 L 84.5 18.5 L 84 20 L 83.5 18.5 L 82 18 L 83.5 17.5 Z" fill="#C060FF" />
@@ -1127,13 +1182,20 @@ function codaGroups(): CatGroups {
         <Path d="M 50 44 L 48.5 46.5 L 51.5 46.5 Z" fill="#506878" />
         {/* Dignified expression */}
         <Path d="M 47 48 Q 50 49, 53 48" fill="none" stroke="#506878" strokeWidth="0.7" strokeLinecap="round" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="47" r="0.7" fill="#D0E0F0" opacity="0.6" />
+        <Circle cx="40" cy="49" r="0.7" fill="#D0E0F0" opacity="0.6" />
+        <Circle cx="40" cy="51" r="0.7" fill="#D0E0F0" opacity="0.6" />
+        <Circle cx="60" cy="47" r="0.7" fill="#D0E0F0" opacity="0.6" />
+        <Circle cx="60" cy="49" r="0.7" fill="#D0E0F0" opacity="0.6" />
+        <Circle cx="60" cy="51" r="0.7" fill="#D0E0F0" opacity="0.6" />
         {/* Whiskers */}
-        <Path d="M 40 47 Q 28 45, 18 44" stroke="#506878" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 40 49 Q 28 48, 18 48" stroke="#506878" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 40 51 Q 28 51, 18 52" stroke="#506878" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 47 Q 72 45, 82 44" stroke="#506878" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 49 Q 72 48, 82 48" stroke="#506878" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 51 Q 72 51, 82 52" stroke="#506878" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+        <Path d="M 40 47 Q 28 45, 18 44" stroke="#D0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 49 Q 28 48, 18 48" stroke="#D0E0F0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 40 51 Q 28 51, 18 52" stroke="#D0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 47 Q 72 45, 82 44" stroke="#D0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 49 Q 72 48, 82 48" stroke="#D0E0F0" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 51 Q 72 51, 82 52" stroke="#D0E0F0" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
         {/* Music note */}
         <G opacity="0.3">
           <Path d="M 82 14 L 82 20" stroke="#44AAFF" strokeWidth="0.7" strokeLinecap="round" />
@@ -1235,11 +1297,16 @@ function chonkyMonkeGroups(): CatGroups {
         {/* Big happy grin */}
         <Path d="M 44 43.5 Q 46 40, 50 40 Q 54 40, 56 43.5 Q 54 49, 50 49.5 Q 46 49, 44 43.5 Z" fill="#E05020" stroke="#C04018" strokeWidth="0.4" />
         <Ellipse cx="50" cy="47.5" rx="3.5" ry="2" fill="#FF5040" />
+        {/* Whisker dots */}
+        <Circle cx="39" cy="43" r="0.8" fill="#FFF0D0" opacity="0.65" />
+        <Circle cx="39" cy="45" r="0.8" fill="#FFF0D0" opacity="0.65" />
+        <Circle cx="61" cy="43" r="0.8" fill="#FFF0D0" opacity="0.65" />
+        <Circle cx="61" cy="45" r="0.8" fill="#FFF0D0" opacity="0.65" />
         {/* Whiskers */}
-        <Path d="M 39 43 Q 26 40, 16 39" stroke="#D07820" strokeWidth="0.6" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 39 45 Q 26 44, 16 43" stroke="#D07820" strokeWidth="0.6" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 61 43 Q 74 40, 84 39" stroke="#D07820" strokeWidth="0.6" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 61 45 Q 74 44, 84 43" stroke="#D07820" strokeWidth="0.6" opacity="0.4" strokeLinecap="round" />
+        <Path d="M 39 43 Q 26 40, 16 39" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 39 45 Q 26 44, 16 43" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.7" strokeLinecap="round" />
+        <Path d="M 61 43 Q 74 40, 84 39" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 61 45 Q 74 44, 84 43" stroke="#FFF0D0" strokeWidth="1.2" opacity="0.7" strokeLinecap="round" />
         {/* Blush */}
         <Ellipse cx="28" cy="42" rx="5.5" ry="3.5" fill="#FFB74D" opacity="0.3" />
         <Ellipse cx="72" cy="42" rx="5.5" ry="3.5" fill="#FFB74D" opacity="0.3" />
@@ -1337,13 +1404,20 @@ function salsaGroups(): CatGroups {
         <Path d="M 50 44 L 48.5 46.5 L 51.5 46.5 Z" fill="#FF5252" />
         {/* Warm confident smile */}
         <Path d="M 45 48 Q 48 51, 50 51 Q 52 51, 55 48" fill="none" stroke="#303040" strokeWidth="0.9" strokeLinecap="round" />
+        {/* Whisker dots */}
+        <Circle cx="40" cy="46" r="0.7" fill="#D8D8E8" opacity="0.6" />
+        <Circle cx="40" cy="48" r="0.7" fill="#D8D8E8" opacity="0.6" />
+        <Circle cx="40" cy="50" r="0.7" fill="#D8D8E8" opacity="0.6" />
+        <Circle cx="60" cy="46" r="0.7" fill="#D8D8E8" opacity="0.6" />
+        <Circle cx="60" cy="48" r="0.7" fill="#D8D8E8" opacity="0.6" />
+        <Circle cx="60" cy="50" r="0.7" fill="#D8D8E8" opacity="0.6" />
         {/* Whiskers — upturned */}
-        <Path d="M 40 46 Q 28 43, 18 42" stroke="#303040" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 40 48 Q 28 46, 18 45" stroke="#303040" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 40 50 Q 28 48, 18 47" stroke="#303040" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 46 Q 72 43, 82 42" stroke="#303040" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
-        <Path d="M 60 48 Q 72 46, 82 45" stroke="#303040" strokeWidth="0.45" opacity="0.4" strokeLinecap="round" />
-        <Path d="M 60 50 Q 72 48, 82 47" stroke="#303040" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+        <Path d="M 40 46 Q 28 43, 18 42" stroke="#D8D8E8" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 40 48 Q 28 46, 18 45" stroke="#D8D8E8" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 40 50 Q 28 48, 18 47" stroke="#D8D8E8" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 46 Q 72 43, 82 42" stroke="#D8D8E8" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+        <Path d="M 60 48 Q 72 46, 82 45" stroke="#D8D8E8" strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+        <Path d="M 60 50 Q 72 48, 82 47" stroke="#D8D8E8" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
         {/* Red blush */}
         <Ellipse cx="30" cy="44" rx="4.5" ry="3" fill="#FF5252" opacity="0.2" />
         <Ellipse cx="70" cy="44" rx="4.5" ry="3" fill="#FF5252" opacity="0.2" />
@@ -1359,7 +1433,16 @@ function salsaGroups(): CatGroups {
 // ============================================================
 // ANIMATION WRAPPER + DISPATCH TABLE + EXPORT
 // ============================================================
-function wrapWithAnimations(groups: CatGroups, animStyles?: MicroAnimatedStyles): ReactElement {
+function wrapWithAnimations(
+  groups: CatGroups,
+  animStyles?: MicroAnimatedStyles,
+  extraAccessoryNames?: string[],
+  accent?: string,
+): ReactElement {
+  const accessoryOverlay = extraAccessoryNames && extraAccessoryNames.length > 0 && accent
+    ? renderAccessories(extraAccessoryNames, accent)
+    : null;
+
   if (!animStyles) {
     return (
       <G>
@@ -1370,6 +1453,7 @@ function wrapWithAnimations(groups: CatGroups, animStyles?: MicroAnimatedStyles)
         {groups.ears}
         {groups.eyes}
         {groups.faceNonEyes}
+        {accessoryOverlay}
       </G>
     );
   }
@@ -1401,6 +1485,7 @@ function wrapWithAnimations(groups: CatGroups, animStyles?: MicroAnimatedStyles)
           </AnimatedG>
         </G>
       )}
+      {accessoryOverlay}
     </G>
   );
 }
@@ -1424,8 +1509,10 @@ const FIGMA_RENDERERS: Record<string, () => CatGroups> = {
 export function renderFigmaCat(
   catId: string,
   animStyles?: MicroAnimatedStyles,
+  extraAccessoryNames?: string[],
+  accent?: string,
 ): ReactElement | null {
   const getGroups = FIGMA_RENDERERS[catId];
   if (!getGroups) return null;
-  return wrapWithAnimations(getGroups(), animStyles);
+  return wrapWithAnimations(getGroups(), animStyles, extraAccessoryNames, accent);
 }

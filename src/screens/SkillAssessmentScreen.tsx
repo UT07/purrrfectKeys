@@ -29,7 +29,7 @@ import { createAudioEngine } from '../audio/createAudioEngine';
 import { configureAudioSessionForRecording } from '../input/AudioCapture';
 import type { NoteHandle } from '../audio/types';
 import { getRandomCatMessage } from '../content/catDialogue';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
 import type { NoteEvent, MidiNoteEvent } from '../core/exercises/types';
 import { InputManager, type ActiveInputMethod } from '../input/InputManager';
 import { logger } from '../utils/logger';
@@ -1203,11 +1203,11 @@ const styles = StyleSheet.create({
   },
   scoreCirclePassed: {
     borderColor: COLORS.success,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    backgroundColor: glowColor(COLORS.success, 0.1),
   },
   scoreCircleFailed: {
     borderColor: COLORS.error,
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    backgroundColor: glowColor(COLORS.error, 0.1),
   },
   scoreText: {
     ...TYPOGRAPHY.display.lg,
@@ -1267,10 +1267,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roundScoreDotPass: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    backgroundColor: glowColor(COLORS.success, 0.2),
   },
   roundScoreDotFail: {
-    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+    backgroundColor: glowColor(COLORS.error, 0.2),
   },
   roundScoreDotText: {
     ...TYPOGRAPHY.caption.lg,
@@ -1278,14 +1278,14 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   startingAtCard: {
-    backgroundColor: COLORS.primary + '20',
+    backgroundColor: glowColor(COLORS.primary, 0.13),
     borderRadius: BORDER_RADIUS.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     alignItems: 'center',
     marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: COLORS.primary + '40',
+    borderColor: glowColor(COLORS.primary, 0.25),
   },
   startingAtLabel: {
     ...TYPOGRAPHY.body.md,
@@ -1302,7 +1302,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   inputBadge: {
-    backgroundColor: COLORS.primary + '30',
+    backgroundColor: glowColor(COLORS.primary, 0.19),
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.full,

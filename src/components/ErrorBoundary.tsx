@@ -5,7 +5,8 @@
 
 import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { PressableScale } from './common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
 
 interface Props {
@@ -60,9 +61,9 @@ export class ErrorBoundary extends Component<Props, State> {
             </ScrollView>
           )}
 
-          <TouchableOpacity style={styles.button} onPress={this.handleReset}>
+          <PressableScale style={styles.button} onPress={this.handleReset}>
             <Text style={styles.buttonText}>Try Again</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       </View>
     );

@@ -11,6 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS, glowColor } from '../../theme/tokens';
 
 export interface StreakDisplayProps {
   currentStreak: number; // Current streak count
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D0D0D',
   },
   containerAtRisk: {
-    backgroundColor: 'rgba(220, 20, 60, 0.05)',
+    backgroundColor: glowColor(COLORS.primary, 0.05),
   },
   streakCard: {
     flexDirection: 'row',
@@ -240,10 +241,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: 'rgba(79, 195, 247, 0.1)',
+    backgroundColor: glowColor(COLORS.gemDiamond, 0.1),
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(79, 195, 247, 0.3)',
+    borderColor: glowColor(COLORS.gemDiamond, 0.3),
   },
   freezeText: {
     marginLeft: 8,

@@ -6,7 +6,8 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { PressableScale } from './common/PressableScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   getMonthlyChallengeForMonth,
@@ -107,11 +108,11 @@ export function MonthlyChallengeCard({
               <Text style={styles.completedText}>Claimed!</Text>
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={onPress} activeOpacity={0.7}>
+            <PressableScale style={styles.playButton} onPress={onPress}>
               <Text style={styles.playButtonText}>
                 {progress >= challenge.exercisesRequired ? 'Claim Reward' : 'Play Now'}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
         </View>
       </View>

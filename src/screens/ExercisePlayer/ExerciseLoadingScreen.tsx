@@ -21,6 +21,8 @@ import { ttsService } from '../../services/tts/TTSService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../theme/tokens';
 
 const MIN_DISPLAY_MS = 1000;
+/** Safety cap — dismiss even if TTS hangs (e.g. ElevenLabs timeout) */
+const MAX_SPEECH_WAIT_MS = 15000;
 
 export interface ExerciseLoadingScreenProps {
   /** Controls visibility — returns null when false */
@@ -37,6 +39,7 @@ export function ExerciseLoadingScreen({
   onReady,
 }: ExerciseLoadingScreenProps): React.ReactElement | null {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+  const [speechDone, setSpeechDone] = useState(false);
 
   // Decide once on mount whether to show a fun fact or a loading tip (50/50)
   const showFunFact = useMemo(() => Math.random() < 0.5, []);
@@ -44,13 +47,19 @@ export function ExerciseLoadingScreen({
   const loadingTip = useMemo(() => (showFunFact ? '' : getRandomLoadingTip()), [showFunFact]);
 
   // Speak the displayed tip/fact via TTS (delay to let animation settle)
+  // Wait for speech to finish before allowing screen dismissal
   const hasSpokenRef = useRef(false);
   const spokenText = showFunFact ? funFact?.text : loadingTip;
   useEffect(() => {
     if (!spokenText || hasSpokenRef.current) return;
     hasSpokenRef.current = true;
     const timer = setTimeout(() => {
-      ttsService.speak(spokenText, { catId: 'salsa' });
+      ttsService.speak(spokenText, {
+        catId: 'salsa',
+        onDone: () => setSpeechDone(true),
+        onStopped: () => setSpeechDone(true),
+        onError: () => setSpeechDone(true),
+      });
     }, 600);
     return () => {
       clearTimeout(timer);
@@ -59,18 +68,34 @@ export function ExerciseLoadingScreen({
     };
   }, [spokenText]);
 
+  // If TTS never starts (empty text, TTS unavailable), mark speech as done immediately
+  useEffect(() => {
+    if (!spokenText) {
+      setSpeechDone(true);
+    }
+  }, [spokenText]);
+
+  // Safety cap: don't wait for TTS forever (e.g. ElevenLabs network timeout)
+  useEffect(() => {
+    const timer = setTimeout(() => setSpeechDone(true), MAX_SPEECH_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Minimum display timer
   useEffect(() => {
     const timer = setTimeout(() => setMinTimeElapsed(true), MIN_DISPLAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  // Dismiss once both conditions are met
+  // Dismiss once ALL three conditions are met:
+  // 1. Minimum display time elapsed (1s)
+  // 2. Exercise data ready (AI generation complete)
+  // 3. Salsa finished speaking (or TTS failed/unavailable)
   useEffect(() => {
-    if (minTimeElapsed && exerciseReady) {
+    if (minTimeElapsed && exerciseReady && speechDone) {
       onReady();
     }
-  }, [minTimeElapsed, exerciseReady, onReady]);
+  }, [minTimeElapsed, exerciseReady, speechDone, onReady]);
 
   if (!visible) return null;
 

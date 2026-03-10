@@ -63,14 +63,18 @@ JSON SCHEMA:
 // --- Prompt builders ---
 
 export function buildReplayPrompt(
-  exerciseTitle: string,
+  _exerciseTitle: string,
   difficulty: number,
   details: NoteScore[],
   overallScore: number,
 ): string {
-  let prompt = `The student just played "${exerciseTitle}" (difficulty ${difficulty}/5). Overall score: ${overallScore}%.\n\nPer-note results:\n`;
-
+  // Derive the actual key from note data rather than relying on the exercise title,
+  // which may not match AI-generated exercises (e.g. title says "C practice" but notes use A).
   const nonExtra = details.filter((d) => !d.isExtraNote);
+  const uniqueNotes = [...new Set(nonExtra.map((d) => midiToName(d.expected.note)))];
+  const notesList = uniqueNotes.slice(0, 8).join(', ');
+  let prompt = `The student just played an exercise (difficulty ${difficulty}/5, notes: ${notesList}). Overall score: ${overallScore}%.\n\nPer-note results:\n`;
+
   for (const d of nonExtra) {
     const expected = midiToName(d.expected.note);
     const beat = d.expected.startBeat;

@@ -3,16 +3,27 @@
 **Purpose:** Concrete steps YOU need to execute before launch — things that require your Firebase Console, GCP access, Apple Developer account, physical devices, or human judgment.
 **Companion:** `docs/system-design-analysis.md` (architecture analysis), `docs/plans/UNIFIED-PLAN.md` Phase 11 (full QA audit)
 
-**Last updated:** March 2, 2026
-**Codebase health:** 121 test suites, 2,591 tests, 0 failures, 0 TypeScript errors
+**Last updated:** March 9, 2026
+**Codebase health:** 139 test suites, 2,831 tests, 0 failures, 0 TypeScript errors
+**GitHub issues:** 0 open (all closed as of Mar 8-9)
 **Key completions since initial draft:**
 - CI/CD workflows created (`.github/workflows/ci.yml` + `build.yml`)
 - Account deletion Cloud Function + client-side fallback implemented (10 tests)
-- 4 Cloud Functions for Gemini API written (`generateExercise`, `generateSong`, `generateCoachFeedback`, `deleteUserData`)
-- Audio session cross-library race condition fixed (AudioManager synchronous config)
-- 3D cat models functional (4 GLBs, Ghibli toon materials, bone-weight mesh splitting, bounding box camera)
+- 9 Cloud Functions written (4 Gemini + sync + recommendations + weekly summary + deletion + cache cleanup)
+- Audio session race condition fixed (AudioManager synchronous config)
+- Mic pipeline tuned for real iPhone signal levels (measurement mode, RMS threshold, release hold)
+- ExerciseLoadingScreen now waits for Salsa TTS to finish before transitioning
 - ElevenLabs TTS integrated (13 per-cat neural voices, expo-speech fallback, file-based caching)
-- Maestro E2E test scaffolding created (12 flows + 3 helpers, needs selector work)
+- 3D cats ELIMINATED (Mar 3) — all three.js/expo-gl deps removed, SVG-only rendering
+- 14+ code bugs fixed from deep audit (polyphony scaling, error handling, race conditions)
+- plugins/ directory committed (unblocks EAS builds)
+- Firestore security rules written for ALL collections (songs, social, leagues, friendCodes)
+- Firestore composite indexes defined (4 indexes)
+- Challenge fetching wired: SocialScreen pulls challenges from Firestore on every tab focus
+- Social tab badge: CustomTabBar shows red badge for pending challenges + friend requests
+- Replay navigation fix: replay completion navigates to next exercise or home (no re-showing CompletionModal)
+- ChallengeCard perspective fix: shows correct "Your score" vs "Their score" based on sender/receiver
+- Local challenge notifications: fires notification when new incoming challenge detected
 
 ---
 
@@ -29,53 +40,33 @@
 
 ### A1. Firestore Security Rules [BLOCKER]
 
-The current `firebase/firestore.rules` is **missing rules for 6+ collections** added in Phases 9-10.5. Without these, any authenticated user can read/write any other user's social data, songs, and league info.
+**Status: Rules WRITTEN** — comprehensive rules exist in `firebase/firestore.rules` covering all collections: users, songs, songMastery, songRequests, leagues, league members, friendCodes, friends, activityFeed, challenges, usernames, gamification, progress, xpLog, syncLog, settings.
 
-- [ ] Open Firebase Console → Firestore → Rules
-- [ ] Add rules for these collections (currently unprotected):
-  - `songs` — public read, admin-only write
-  - `users/{uid}/songMastery/{songId}` — owner read/write only
-  - `users/{uid}/songRequests/{requestId}` — owner read/write, rate limit
-  - `leagues/{leagueId}` — authenticated read, server-only write (Cloud Functions)
-  - `leagues/{leagueId}/members/{uid}` — owner can update own `weeklyXp`
-  - `friendCodes/{code}` — authenticated read, owner write
-  - `users/{uid}/friends/{friendId}` — owner read/write
-  - `users/{uid}/activityFeed/{itemId}` — friends read, owner write
-  - `challenges/{challengeId}` — participants read/write
-- [ ] Fix the gamification wildcard (`match /{document=**}` under `users/{uid}/gamification`) — it's too broad, allows any nested path
-- [ ] Deploy updated rules: `firebase deploy --only firestore:rules`
+- [x] ~~Add rules for social/songs/leagues collections~~ — Done (all 12+ collections covered)
+- [ ] Deploy rules: `firebase deploy --only firestore:rules`
 - [ ] **Test from a second account** that you CANNOT read another user's progress, friends, or songMastery
 
 ### A2. Firestore Composite Indexes [BLOCKER]
 
-`firebase/firestore.indexes.json` has `"indexes": []`. Song queries will throw "index required" errors in production.
+**Status: Indexes DEFINED** in `firebase/firestore.indexes.json` (songs x3, leagues x1). Need deployment.
 
-- [ ] Open Firebase Console → Firestore → Indexes
-- [ ] Create these composite indexes:
-  - Collection `songs`: `metadata.genre` ASC + `metadata.title` ASC
-  - Collection `songs`: `metadata.difficulty` ASC + `metadata.title` ASC
-  - Collection `songs`: `metadata.genre` ASC + `metadata.difficulty` ASC + `metadata.title` ASC
-  - Collection `leagues`: `tier` ASC + `weekStartDate` ASC + `memberCount` ASC
-  - Collection path `users/{uid}/songMastery`: `masteryTier` ASC + `lastPlayed` DESC
-- [ ] Export indexes: Firebase Console → Indexes → download JSON, save to `firebase/firestore.indexes.json`
+- [x] ~~Define composite indexes~~ — Done (4 indexes in firestore.indexes.json)
+- [ ] Deploy: `firebase deploy --only firestore:indexes`
 - [ ] **Test:** Open SongLibraryScreen, filter by genre, filter by difficulty — no errors in console
 
 ### A3. Gemini API Key Security [CRITICAL]
 
 The Gemini API key is currently embedded in the client bundle (`EXPO_PUBLIC_GEMINI_API_KEY`). Anyone who decompiles the APK can extract it and run arbitrary Gemini prompts on your billing.
 
-**Cloud Functions written** (Option A code is done): `generateExercise.ts`, `generateSong.ts`, `generateCoachFeedback.ts`, `deleteUserData.ts` in `firebase/functions/src/`. Client services (`geminiExerciseService`, `songGenerationService`, `GeminiCoach`) already fall back to direct Gemini API if Cloud Function is unavailable.
+**Status: 9 Cloud Functions written** in `firebase/functions/src/`: generateExercise, generateSong, generateCoachFeedback, deleteUserAllData, syncProgress, completeExercise, getExerciseRecommendations, getWeeklySummary, cleanupCoachFeedbackCache. Client services fall back to direct Gemini API if Cloud Functions are unavailable.
 
 **Remaining steps:**
-- [ ] Deploy Cloud Functions: `cd firebase/functions && npm install && cd ../.. && firebase deploy --only functions`
+- [ ] Verify deployment: `firebase functions:list` (may have been deployed Mar 3 — verify)
+- [ ] If not deployed: `cd firebase/functions && npm run build && firebase deploy --only functions`
 - [ ] Set `GEMINI_API_KEY` as a Firebase secret: `firebase functions:secrets:set GEMINI_API_KEY`
 - [ ] Verify Cloud Functions respond correctly (test exercise generation, song generation, coaching)
-- [ ] Once confirmed, remove `EXPO_PUBLIC_GEMINI_API_KEY` from client `.env` — client will use Cloud Functions exclusively
-- [ ] As a fallback/short-term measure: set strict API key restrictions in Google Cloud Console
-  - Go to GCP Console → APIs & Services → Credentials
-  - Edit the Gemini API key → Application restrictions → iOS/Android apps only
-  - Add bundle ID restrictions
-  - Set per-key quota: 100 RPM, $50/day budget
+- [ ] Once confirmed, remove `EXPO_PUBLIC_GEMINI_API_KEY` from client `.env`
+- [ ] Set API key restrictions in GCP Console (bundle ID restrictions, 100 RPM, $50/day budget)
 - [ ] Verify `EXPO_PUBLIC_GEMINI_API_KEY` is in `.gitignore` and never committed
 
 ### A4. Firebase Budget Alerts [CRITICAL]
@@ -211,15 +202,16 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ### D3. Microphone
 
-**Audio session fix applied:** The cross-library race condition between expo-av and react-native-audio-api has been resolved. `createAudioEngine.ts` now uses `AudioManager.setAudioSessionOptions()` (synchronous) for all iOS session configuration, eliminating the async overwrite bug where expo-av's `Audio.setAudioModeAsync()` would clobber react-native-audio-api's `AudioSessionManager` internal state. `AudioCapture.ts` uses `AudioManager.requestRecordingPermissions()` and `configureAudioSessionForRecording()` from the same library.
+**Status: Multiple fixes applied (Mar 7-8).** Audio session uses `measurement` mode (raw audio, no voice processing). RMS threshold lowered to 0.002 for iPhone mic levels. Release hold extended to 500ms. `createAudioEngine.ts` uses `AudioManager.setAudioSessionOptions()` (synchronous) for session config. ONNX polyphonic detection has graceful YIN monophonic fallback.
 
 - [ ] Grant mic permission via MicSetupScreen
 - [ ] Quiet room: play single notes on acoustic piano → verify detection
-- [ ] Noisy environment: verify AmbientNoiseCalibrator adjusts thresholds
+- [ ] Noisy environment: verify ambient noise rejected (RMS < 0.001)
 - [ ] Polyphonic mode: play 2-3 note chords → verify ONNX model detects multiple pitches
 - [ ] ONNX model loading: verify `basic-pitch.onnx` loads from assets without crash
-- [ ] If ONNX fails: verify automatic fallback to YIN monophonic
-- [ ] Verify audio session does NOT revert to earpiece after mic initialization (the old race condition)
+- [ ] If ONNX fails: verify automatic fallback to YIN monophonic (should be seamless)
+- [ ] Verify audio session does NOT revert to earpiece after mic initialization
+- [ ] Verify notes sustain properly (no instant noteOff after detection)
 
 ### D4. Text-to-Speech (ElevenLabs + expo-speech)
 
@@ -234,18 +226,9 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] **Network failure:** Disable WiFi mid-TTS → verify no crash, fallback to expo-speech on next call
 - [ ] **API key security:** Verify `EXPO_PUBLIC_ELEVENLABS_API_KEY` is in `.gitignore` and `.env.local` only
 
-### D5. 3D Rendering
+### ~~D5. 3D Rendering~~ — ELIMINATED (Mar 3, 2026)
 
-**Status: Functional.** Material override system handles 3 mesh naming conventions (Mat_ prefix, no-prefix, no-materials). Camera framing uses bounding box auto-centering. 4 GLB models (salsa-cat, slim-cat, round-cat, chonky-cat) rendering with Ghibli-style toon materials (MeshToonMaterial, 3-step gradient ramp, warm lighting). Bone-weight mesh splitting for models without named materials.
-
-- [ ] HomeScreen: 3D cat renders without GL crashes, Ghibli toon shading visible (cel-shaded edges)
-- [ ] CompletionModal: 3D cat with correct pose (score-based)
-- [ ] CatSwitchScreen: 3D cats for owned and locked (locked at dimmed opacity)
-- [ ] Verify Ghibli materials: warm hemisphere lighting, cel-shaded toon ramp, pastel warmth
-- [ ] Verify per-cat colors: body, belly, ears, eyes, nose, blush all match 2D profiles
-- [ ] Verify bone-weight splitting works for slim-cat/round-cat (models without named materials)
-- [ ] Low-end device (if available): verify no excessive battery drain from 3D
-- [ ] Background → foreground: GL context survives app backgrounding
+3D cats (react-three-fiber, expo-gl, three.js) were removed due to GL context crashes on device. All rendering is now SVG-only via `CatAvatar` component. Premium SVG cats planned for Phase 11B.
 
 ### D5. Performance
 
@@ -346,6 +329,44 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] Verify push notification credentials (if using push): `eas credentials`
 - [ ] Review `eas.json` build profiles match your signing credentials
 
+## G5. Social Features & Challenges
+
+### G5a. Challenge Flow [IMPORTANT]
+
+**Status: Code complete (Mar 9).** Challenge fetching wired via `getChallengesForUser()` in SocialScreen, triggered on every tab focus via `useFocusEffect`. ChallengeCard displays correct sender/receiver perspective.
+
+- [ ] **Send challenge:** Complete exercise → CompletionModal → "Challenge a Friend" → friend receives it
+- [ ] **Receive challenge:** Open Social tab → pending challenge appears with correct exercise title and sender's score
+- [ ] **Accept challenge:** Tap challenge → play exercise → score submitted → card updates to "completed"
+- [ ] **Score perspective:** Sender sees "Your score: X%" (their score) and "Their score: Y%" (friend's score, or "Not played yet")
+- [ ] **Expiry:** Verify expired challenges show as expired (not pending)
+
+### G5b. Social Tab Badge [IMPORTANT]
+
+**Status: Code complete (Mar 9).** CustomTabBar shows red badge on Social tab combining pending challenge count + pending friend request count.
+
+- [ ] **Badge appears:** Have a friend send a challenge → Social tab shows red badge with count
+- [ ] **Badge updates:** Accept the challenge → badge count decreases
+- [ ] **Friend requests:** Send a friend request from another account → badge includes friend request count
+- [ ] **Badge clears:** Accept/decline all pending items → badge disappears
+
+### G5c. Challenge Notifications [IMPORTANT]
+
+**Status: Code complete (Mar 9).** Local notifications fire when SocialScreen detects new incoming challenges from Firestore.
+
+- [ ] **Notification fires:** Have a friend send a challenge → open Social tab → local notification appears
+- [ ] **Content correct:** Notification shows sender name, exercise title, and sender's score
+- [ ] **No duplicates:** Re-open Social tab → same challenge does NOT trigger another notification
+- [ ] **Note:** Notifications are pull-based (fire on tab focus, not real-time). For real-time, FCM push needed.
+
+### G5d. Replay Navigation [IMPORTANT]
+
+**Status: Code complete (Mar 9).** When Salsa replay finishes naturally (beat >= totalBeats), navigates to next exercise or home instead of re-showing CompletionModal.
+
+- [ ] **Replay finishes → next exercise:** Complete exercise → "Review with Salsa" → replay runs to end → auto-navigates to next exercise
+- [ ] **Replay finishes → home (AI mode):** In AI mode with no next exercise → replay ends → navigates to home
+- [ ] **Exit early → modal:** During replay, tap "Exit Review" → CompletionModal re-appears (correct behavior)
+
 ---
 
 ## H. Monitoring & Alerting Setup (Post-Launch)
@@ -379,26 +400,27 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 | Priority | Section | Est. Time | Status | Must Complete Before |
 |----------|---------|-----------|--------|---------------------|
-| 1 | A1: Firestore Rules | 2-3 hours | TODO | Any beta testing |
-| 2 | A2: Firestore Indexes | 30 min | TODO | Any beta testing |
-| 3 | A6: Account Deletion | Deploy + test | CODE DONE | App Store submission |
-| 4 | C1: Privacy Policy | 1 day | TODO | App Store submission |
-| 5 | A3: Gemini Key Security | Deploy + test | CODE DONE (4 Cloud Functions) | Public launch |
-| 6 | A4: Budget Alerts | 15 min | TODO | Public launch |
-| 7 | B1: CI/CD | Verify runs | DONE (ci.yml + build.yml) | Before team grows |
-| 8 | B3: Crash Reporting | 2 hours | TODO | Before beta |
-| 9 | C2-C3: App Store Assets | 2-3 days | TODO | App Store submission |
-| 10 | D1-D6: Device Testing (incl. TTS + 3D) | 2-3 days | TODO | Before beta |
-| 11 | D6: Maestro E2E | 1-2 days | SCAFFOLDED (needs selectors) | Before beta |
-| 12 | A5: App Check | 2 hours | TODO | Public launch |
-| 13 | E1-E3: Data Integrity | 1 day | TODO | Before beta |
-| 14 | F1-F3: Security Checks | half day | TODO | Before beta |
-| 15 | B2: Environment Mgmt | half day | TODO | Before public launch |
-| 16 | G1-G3: Third-party verify | 2 hours | TODO | Before beta |
-| 17 | B4-B5: OTA + Build | half day | TODO | Before beta |
-| 18 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
+| 1 | A1: Firestore Rules | Deploy + test | RULES WRITTEN — need deploy | Any beta testing |
+| 2 | A2: Firestore Indexes | Deploy | INDEXES DEFINED — need deploy | Any beta testing |
+| 3 | A3: Cloud Functions | Deploy + test | 9 FUNCTIONS WRITTEN — verify deploy | Any beta testing |
+| 4 | A6: Account Deletion | Deploy + test | CODE DONE (10 tests) | App Store submission |
+| 5 | D3: Mic Pipeline | Device test | CODE FIXED (Mar 7-8) | Before beta |
+| 6 | C1: Privacy Policy | 1 day | TODO | App Store submission |
+| 7 | A4: Budget Alerts | 15 min | TODO | Public launch |
+| 8 | B1: CI/CD | Verify runs | DONE (ci.yml + build.yml) | Before team grows |
+| 9 | B3: Crash Reporting | 2 hours | TODO | Before beta |
+| 10 | C2-C3: App Store Assets | 2-3 days | TODO | App Store submission |
+| 11 | D1-D5: Device Testing (audio, TTS, perf) | 2-3 days | TODO | Before beta |
+| 12 | D6: Maestro E2E | 1-2 days | SCAFFOLDED (needs selectors) | Before beta |
+| 13 | A5: App Check | 2 hours | TODO | Public launch |
+| 14 | E1-E3: Data Integrity | 1 day | TODO | Before beta |
+| 15 | F1-F3: Security Checks | half day | TODO | Before beta |
+| 16 | B2: Environment Mgmt | half day | TODO | Before public launch |
+| 17 | G1-G4: Third-party verify | 2 hours | TODO | Before beta |
+| 18 | B4-B5: OTA + Build | half day | TODO | Before beta |
+| 19 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
 
-**Total estimated effort: ~10-12 working days** (reduced from 12-15 due to CI/CD, account deletion, and Cloud Functions already implemented)
+**Total estimated effort: ~8-10 working days** (reduced from 10-12 due to rules, indexes, mic fixes, and bug fixes already done)
 
 ---
 

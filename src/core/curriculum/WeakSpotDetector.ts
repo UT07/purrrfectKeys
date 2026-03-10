@@ -9,6 +9,7 @@
  */
 
 import type { GenerationParams } from '../../services/geminiExerciseService';
+import { midiToNoteName } from '../music/MusicTheory';
 
 // ============================================================================
 // Types
@@ -64,7 +65,7 @@ export function detectWeakPatterns(profile: WeakSpotProfile): WeakPattern[] {
   for (const entry of weakNoteEntries) {
     patterns.push({
       type: 'note',
-      description: `Weak note: MIDI ${entry.midi} (${Math.round(entry.accuracy * 100)}% accuracy)`,
+      description: `Weak note: ${midiToNoteName(entry.midi)} (${Math.round(entry.accuracy * 100)}% accuracy)`,
       severity: 1 - entry.accuracy,
       targetMidi: [entry.midi],
     });
@@ -88,7 +89,7 @@ export function detectWeakPatterns(profile: WeakSpotProfile): WeakPattern[] {
 
       patterns.push({
         type: 'transition',
-        description: `Weak transition: MIDI ${noteA} to ${noteB} (avg ${Math.round(avgAcc * 100)}% accuracy)`,
+        description: `Weak transition: ${midiToNoteName(noteA)} to ${midiToNoteName(noteB)} (avg ${Math.round(avgAcc * 100)}% accuracy)`,
         severity: 1 - avgAcc,
         targetMidi: [noteA, noteB],
       });
@@ -179,7 +180,7 @@ export function generateDrillParams(pattern: WeakPattern): GenerationParams {
         ...baseParams,
         difficulty: 1,
         noteCount: 8,
-        skillContext: `Drill: practice weak note(s) MIDI ${pattern.targetMidi.join(', ')}`,
+        skillContext: `Drill: practice weak note(s) ${pattern.targetMidi.map(midiToNoteName).join(', ')}`,
       };
 
     case 'transition':
@@ -187,7 +188,7 @@ export function generateDrillParams(pattern: WeakPattern): GenerationParams {
         ...baseParams,
         difficulty: 2,
         noteCount: 12,
-        skillContext: `Drill: practice transition between MIDI ${pattern.targetMidi.join(' and ')}`,
+        skillContext: `Drill: practice transition between ${pattern.targetMidi.map(midiToNoteName).join(' and ')}`,
       };
 
     case 'timing':

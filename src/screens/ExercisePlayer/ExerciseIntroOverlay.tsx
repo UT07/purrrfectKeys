@@ -7,7 +7,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { PressableScale } from '../../components/common/PressableScale';
 import type { Exercise } from '@/core/exercises/types';
 import { coachingService } from '@/services/ai/CoachingService';
 import { useLearnerProfileStore } from '@/stores/learnerProfileStore';
@@ -103,23 +104,21 @@ export function ExerciseIntroOverlay({
 
         <View style={styles.buttonRow}>
           {onWatchFirst && (
-            <TouchableOpacity
+            <PressableScale
               style={styles.watchButton}
               onPress={() => { onWatchFirst(); }}
               testID={testID ? `${testID}-watch` : 'intro-watch'}
-              activeOpacity={0.8}
             >
               <Text style={styles.watchButtonText}>Watch First</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
-          <TouchableOpacity
+          <PressableScale
             style={[styles.readyButton, onWatchFirst ? styles.readyButtonWithWatch : null]}
             onPress={onReady}
             testID={testID ? `${testID}-ready` : 'intro-ready'}
-            activeOpacity={0.8}
           >
             <Text style={styles.readyButtonText}>Ready</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       </View>
     </View>

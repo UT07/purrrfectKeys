@@ -14,6 +14,19 @@ jest.mock('expo-status-bar', () => ({
   StatusBar: jest.fn(),
 }));
 
+jest.mock('expo-linear-gradient', () => {
+  const { View } = require('react-native');
+  return { LinearGradient: View };
+});
+
+jest.mock('react-native-qrcode-svg', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: (props) => React.createElement('View', { testID: 'qr-code', ...props }),
+  };
+});
+
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
   OrientationLock: {

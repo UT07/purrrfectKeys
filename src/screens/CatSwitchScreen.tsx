@@ -50,6 +50,7 @@ import type { EvolutionStage, CatAbility } from '../stores/types';
 import { PressableScale } from '../components/common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import type { RarityLevel } from '../theme/tokens';
+import { analyticsEvents } from '../services/analytics/PostHog';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.88;
@@ -608,6 +609,7 @@ export function CatSwitchScreen(): React.ReactElement {
     if (!isCatOwned(catId, ownedCats)) return;
     setSelectedCatId(catId);
     selectCat(catId);
+    analyticsEvents.cat.selected(catId);
     const cat = getCatById(catId);
     if (cat) {
       setAvatarEmoji(cat.emoji);
@@ -631,6 +633,7 @@ export function CatSwitchScreen(): React.ReactElement {
     const success = spendGems(cost, `unlock-cat-${buyModalCat.id}`);
     if (success) {
       unlockCat(buyModalCat.id);
+      analyticsEvents.cat.unlocked(buyModalCat.id, cost);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     setBuyModalCat(null);

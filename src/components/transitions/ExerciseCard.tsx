@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
   },
   xpBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    backgroundColor: glowColor(COLORS.starGold, 0.12),
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,

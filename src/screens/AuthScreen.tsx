@@ -18,7 +18,6 @@ import {
   StyleSheet,
   Platform,
   ActivityIndicator,
-  TouchableOpacity,
   Alert,
   useWindowDimensions,
 } from 'react-native';
@@ -41,7 +40,7 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS } from '../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -303,10 +302,10 @@ export function AuthScreen(): React.ReactElement {
       </Animated.View>
 
       {error && (
-        <TouchableOpacity style={styles.errorBanner} onPress={clearError}>
+        <PressableScale style={styles.errorBanner} onPress={clearError} scaleDown={1}>
           <Text style={styles.errorText}>{error}</Text>
           <Text style={styles.errorDismiss}>Tap to dismiss</Text>
-        </TouchableOpacity>
+        </PressableScale>
       )}
 
       {/* Auth buttons */}
@@ -408,7 +407,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   appNameGlow: {
-    textShadowColor: 'rgba(255, 215, 0, 0.6)',
+    textShadowColor: glowColor(COLORS.starGold, 0.6),
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
   },
@@ -427,13 +426,13 @@ const styles = StyleSheet.create({
 
   // Error banner
   errorBanner: {
-    backgroundColor: 'rgba(244, 67, 54, 0.12)',
+    backgroundColor: glowColor(COLORS.error, 0.12),
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(244, 67, 54, 0.25)',
+    borderColor: glowColor(COLORS.error, 0.25),
   },
   errorText: {
     ...TYPOGRAPHY.body.md,
@@ -465,21 +464,21 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: glowColor(COLORS.textPrimary, 0.15),
   },
   appleButtonText: {
     color: '#000000',
   },
   googleButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
+    borderColor: glowColor(COLORS.textPrimary, 0.12),
   },
   googleButtonText: {
     color: COLORS.textPrimary,
   },
   emailButton: {
-    backgroundColor: 'rgba(220, 20, 60, 0.25)',
-    borderColor: 'rgba(220, 20, 60, 0.4)',
+    backgroundColor: glowColor(COLORS.primary, 0.25),
+    borderColor: glowColor(COLORS.primary, 0.4),
   },
   buttonText: {
     ...TYPOGRAPHY.button.lg,

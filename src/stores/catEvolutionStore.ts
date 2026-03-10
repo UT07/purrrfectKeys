@@ -21,6 +21,7 @@ import { CAT_CHARACTERS } from '@/components/Mascot/catCharacters';
 import { postActivity } from '@/services/firebase/socialService';
 import { auth } from '@/services/firebase/config';
 import { logger } from '@/utils/logger';
+import { analyticsEvents } from '@/services/analytics/PostHog';
 
 /** Calculate evolution stage from accumulated XP */
 export function stageFromXp(xp: number): EvolutionStage {
@@ -179,41 +180,48 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
   },
 
   addEvolutionXp: (catId: string, amount: number) => {
-    const state = get();
-    let data = state.evolutionData[catId];
-    // Auto-create evolution data if cat is owned but entry is missing
-    if (!data) {
-      if (!state.ownedCats.includes(catId)) return null;
-      data = createDefaultEvolutionData(catId);
-      set((prev) => ({
-        evolutionData: { ...prev.evolutionData, [catId]: data! },
-      }));
-    }
+    // Compute inside set() updater to prevent lost updates from concurrent calls
+    let evolved = false;
+    let newStage: string | null = null;
 
-    const oldStage = data.currentStage;
-    const newXp = data.xpAccumulated + amount;
-    const newStage = stageFromXp(newXp);
-    const evolved = newStage !== oldStage;
+    set((prev) => {
+      let data = prev.evolutionData[catId];
+      if (!data) {
+        if (!prev.ownedCats.includes(catId)) return prev;
+        data = createDefaultEvolutionData(catId);
+      }
 
-    const updatedData: CatEvolutionData = {
-      ...data,
-      xpAccumulated: newXp,
-      currentStage: newStage,
-      evolvedAt: evolved
-        ? { ...data.evolvedAt, [newStage]: Date.now() }
-        : data.evolvedAt,
-      abilitiesUnlocked: evolved
-        ? unlockAbilitiesForStage(catId, newStage, data.abilitiesUnlocked)
-        : data.abilitiesUnlocked,
-    };
+      const oldStage = data.currentStage;
+      const newXp = data.xpAccumulated + amount;
+      const computedStage = stageFromXp(newXp);
+      evolved = computedStage !== oldStage;
+      newStage = evolved ? computedStage : null;
 
-    set((prev) => ({
-      evolutionData: {
-        ...prev.evolutionData,
-        [catId]: updatedData,
-      },
-    }));
+      const updatedData: CatEvolutionData = {
+        ...data,
+        xpAccumulated: newXp,
+        currentStage: computedStage,
+        evolvedAt: evolved
+          ? { ...data.evolvedAt, [computedStage]: Date.now() }
+          : data.evolvedAt,
+        abilitiesUnlocked: evolved
+          ? unlockAbilitiesForStage(catId, computedStage, data.abilitiesUnlocked)
+          : data.abilitiesUnlocked,
+      };
+
+      return {
+        evolutionData: {
+          ...prev.evolutionData,
+          [catId]: updatedData,
+        },
+      };
+    });
     debouncedSave(get());
+
+    // Analytics: track cat evolution
+    if (evolved && newStage) {
+      analyticsEvents.cat.evolved(catId, newStage);
+    }
 
     // Post evolution activity (fire-and-forget)
     if (evolved && auth.currentUser && !auth.currentUser.isAnonymous) {
@@ -228,7 +236,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
       }).catch((err) => logger.warn('[catEvolutionStore] postActivity failed:', (err as Error)?.message));
     }
 
-    return evolved ? newStage : null;
+    return newStage;
   },
 
   getActiveAbilities: () => {

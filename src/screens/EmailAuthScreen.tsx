@@ -9,7 +9,6 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
@@ -19,9 +18,10 @@ import {
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { PressableScale } from '../components/common/PressableScale';
 import { useAuthStore } from '../stores/authStore';
 import { EmailAuthProvider } from 'firebase/auth';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS } from '../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Mode = 'signIn' | 'signUp';
@@ -117,13 +117,13 @@ export function EmailAuthScreen(): React.ReactElement {
         colors={GRADIENTS.heroGlow}
         style={styles.headerGradient}
       >
-        <TouchableOpacity
+        <PressableScale
           style={styles.backButton}
           onPress={() => navigation.goBack()}
           testID="email-auth-back"
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-        </TouchableOpacity>
+        </PressableScale>
         <Text style={styles.headerTitle}>
           {isLinking ? 'Link Account' : 'Welcome Back'}
         </Text>
@@ -136,18 +136,18 @@ export function EmailAuthScreen(): React.ReactElement {
       >
 
         <View style={styles.tabs}>
-          <TouchableOpacity
+          <PressableScale
             style={[styles.tab, mode === 'signIn' && styles.activeTab]}
             onPress={() => switchMode('signIn')}
           >
             <Text style={[styles.tabText, mode === 'signIn' && styles.activeTabText]}>Sign In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </PressableScale>
+          <PressableScale
             style={[styles.tab, mode === 'signUp' && styles.activeTab]}
             onPress={() => switchMode('signUp')}
           >
             <Text style={[styles.tabText, mode === 'signUp' && styles.activeTabText]}>Create Account</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         <View style={styles.form}>
@@ -187,7 +187,7 @@ export function EmailAuthScreen(): React.ReactElement {
             <Text style={styles.errorText} testID="error-text">{displayError}</Text>
           )}
 
-          <TouchableOpacity
+          <PressableScale
             style={styles.submitButton}
             onPress={handleSubmit}
             disabled={isLoading}
@@ -200,12 +200,12 @@ export function EmailAuthScreen(): React.ReactElement {
                 {mode === 'signIn' ? 'Sign In' : 'Create Account'}
               </Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
 
           {mode === 'signIn' && (
-            <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword} testID="forgot-password">
+            <PressableScale style={styles.forgotButton} onPress={handleForgotPassword} testID="forgot-password">
               <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
         </View>
       </ScrollView>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.08),
     alignItems: 'center',
     justifyContent: 'center',
   },

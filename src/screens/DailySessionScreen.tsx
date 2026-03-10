@@ -79,10 +79,22 @@ export function DailySessionScreen() {
   // Gem balance
   const gems = useGemStore((s) => s.gems);
 
+  // Track which exercises the user completed this session (by key: skillNodeId or exerciseId)
+  const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
+  const lastNavigatedKeyRef = React.useRef<string | null>(null);
+  const prevCompletedCountRef = React.useRef(totalExercisesCompleted);
+
   // Recompute session plan on focus (picks up newly mastered skills after exercises)
   const [focusCounter, setFocusCounter] = useState(0);
   useFocusEffect(
     useCallback(() => {
+      // If totalExercisesCompleted increased since we left, mark the last navigated exercise as done
+      const currentCount = useLearnerProfileStore.getState().totalExercisesCompleted;
+      if (lastNavigatedKeyRef.current && currentCount > prevCompletedCountRef.current) {
+        setCompletedKeys((prev) => new Set([...prev, lastNavigatedKeyRef.current!]));
+        lastNavigatedKeyRef.current = null;
+      }
+      prevCompletedCountRef.current = currentCount;
       setFocusCounter((c) => c + 1);
     }, [])
   );
@@ -128,6 +140,8 @@ export function DailySessionScreen() {
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
+      // Track which exercise we're navigating to, so we can mark it done on return
+      lastNavigatedKeyRef.current = ref.skillNodeId || ref.exerciseId;
       if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
         navigation.navigate('Exercise', {
           exerciseId: ref.fallbackExerciseId ?? 'ai-mode',
@@ -229,6 +243,7 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="warmUp"
           exercises={plan.warmUp}
+          completedKeys={completedKeys}
           onExercisePress={handleExercisePress}
         />
 
@@ -236,6 +251,7 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="lesson"
           exercises={plan.lesson}
+          completedKeys={completedKeys}
           onExercisePress={handleExercisePress}
         />
 
@@ -243,6 +259,7 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="challenge"
           exercises={plan.challenge}
+          completedKeys={completedKeys}
           onExercisePress={handleExercisePress}
         />
 
@@ -305,10 +322,12 @@ function SessionTypeBadge({ type }: { type: SessionType }) {
 function SessionSection({
   sectionKey,
   exercises,
+  completedKeys,
   onExercisePress,
 }: {
   sectionKey: 'warmUp' | 'lesson' | 'challenge';
   exercises: ExerciseRef[];
+  completedKeys: Set<string>;
   onExercisePress: (ref: ExerciseRef) => void;
 }) {
   const colors = SECTION_COLORS[sectionKey];
@@ -318,6 +337,8 @@ function SessionSection({
 
   if (exercises.length === 0) return null;
 
+  const allDone = exercises.every((ref) => completedKeys.has(ref.skillNodeId || ref.exerciseId));
+
   return (
     <View style={styles.section}>
       <Animated.View
@@ -325,9 +346,13 @@ function SessionSection({
         style={styles.sectionHeader}
       >
         <View style={[styles.sectionIconBg, { backgroundColor: colors.bg }]}>
-          <MaterialCommunityIcons name={icon} size={20} color={colors.accent} />
+          <MaterialCommunityIcons
+            name={allDone ? 'check-circle' : icon}
+            size={20}
+            color={allDone ? COLORS.success : colors.accent}
+          />
         </View>
-        <Text style={[styles.sectionLabel, { color: colors.accent }]}>{label}</Text>
+        <Text style={[styles.sectionLabel, { color: allDone ? COLORS.success : colors.accent }]}>{label}</Text>
       </Animated.View>
 
       {exercises.map((ref, i) => (
@@ -339,6 +364,7 @@ function SessionSection({
             exerciseRef={ref}
             rarity={rarity}
             colors={colors}
+            isCompleted={completedKeys.has(ref.skillNodeId || ref.exerciseId)}
             onPress={() => onExercisePress(ref)}
           />
         </Animated.View>
@@ -355,11 +381,13 @@ function SessionExerciseCard({
   exerciseRef,
   rarity,
   colors,
+  isCompleted,
   onPress,
 }: {
   exerciseRef: ExerciseRef;
   rarity: RarityLevel;
   colors: { accent: string; bg: string; border: string };
+  isCompleted: boolean;
   onPress: () => void;
 }) {
   const exercise = exerciseRef.source === 'static' ? getExercise(exerciseRef.exerciseId) : null;
@@ -372,13 +400,19 @@ function SessionExerciseCard({
     <GameCard
       rarity={rarity}
       onPress={onPress}
-      style={styles.exerciseGameCard}
+      style={[styles.exerciseGameCard, isCompleted && styles.exerciseGameCardDone]}
     >
       <View style={styles.exerciseCardContent}>
         <View style={styles.exerciseInfo}>
-          <Text style={styles.exerciseTitle}>{title}</Text>
+          <Text style={[styles.exerciseTitle, isCompleted && styles.exerciseTitleDone]}>{title}</Text>
           <Text style={styles.exerciseReason}>{humanizeReasoning(exerciseRef.reason)}</Text>
           <View style={styles.exerciseMeta}>
+            {isCompleted && (
+              <View style={styles.doneTag}>
+                <MaterialCommunityIcons name="check-circle" size={12} color={COLORS.success} />
+                <Text style={styles.doneTagText}>Done</Text>
+              </View>
+            )}
             {isAI && (
               <View style={styles.aiTag}>
                 <MaterialCommunityIcons name="robot" size={12} color={COLORS.info} />
@@ -396,14 +430,20 @@ function SessionExerciseCard({
                 />
               ))}
             </View>
-            <View style={styles.gemRewardHint}>
-              <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemGold} />
-              <Text style={styles.gemRewardHintText}>5 for 90%+, 15 for perfect</Text>
-            </View>
+            {!isCompleted && (
+              <View style={styles.gemRewardHint}>
+                <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemGold} />
+                <Text style={styles.gemRewardHintText}>5 for 90%+, 15 for perfect</Text>
+              </View>
+            )}
           </View>
         </View>
-        <View style={[styles.playIconBg, { backgroundColor: colors.accent }]}>
-          <MaterialCommunityIcons name="play" size={20} color={COLORS.textPrimary} />
+        <View style={[styles.playIconBg, { backgroundColor: isCompleted ? COLORS.success : colors.accent }]}>
+          <MaterialCommunityIcons
+            name={isCompleted ? 'check' : 'play'}
+            size={20}
+            color={COLORS.textPrimary}
+          />
         </View>
       </View>
     </GameCard>
@@ -556,6 +596,9 @@ const styles = StyleSheet.create({
   exerciseGameCard: {
     marginBottom: SPACING.sm,
   },
+  exerciseGameCardDone: {
+    opacity: 0.7,
+  },
   exerciseCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -566,6 +609,23 @@ const styles = StyleSheet.create({
   exerciseTitle: {
     ...TYPOGRAPHY.heading.sm,
     color: COLORS.textPrimary,
+  },
+  exerciseTitleDone: {
+    color: COLORS.textSecondary,
+  },
+  doneTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: glowColor(COLORS.success, 0.15),
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  doneTagText: {
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '600' as const,
+    color: COLORS.success,
   },
   exerciseReason: {
     ...TYPOGRAPHY.body.sm,

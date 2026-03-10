@@ -28,10 +28,13 @@ import { hydrateSongStore } from './stores/songStore';
 import { hydrateSocialStore, useSocialStore } from './stores/socialStore';
 import { hydrateLeagueStore, useLeagueStore } from './stores/leagueStore';
 import { getCurrentLeagueMembership, assignToLeague } from './services/firebase/leagueService';
+// Import DeviceLog early so it hooks into logger before any subsystem logs
+import './utils/DeviceLog';
 import { registerFriendCode } from './services/firebase/socialService';
 import { useSoundManagerSync } from './hooks/useSoundManager';
 import { logger } from './utils/logger';
 import { withTimeout } from './utils/withTimeout';
+import { AnalyticsService, analyticsEvents } from './services/analytics/PostHog';
 
 // Configure Google Sign-In at module level (synchronous, must run before any signIn call)
 // iosClientId is passed explicitly so the native module doesn't need GoogleService-Info.plist
@@ -63,6 +66,9 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     async function prepare(): Promise<void> {
       try {
+        // ── Phase 0: Analytics init (synchronous, non-blocking) ──────────
+        AnalyticsService.initialize();
+
         // ── Phase 1: Local hydration (fast, AsyncStorage only) ──────────
         // Runs BEFORE auth to ensure hasCompletedOnboarding, progress, and
         // learner profile are in the stores before any screen renders.
@@ -289,11 +295,19 @@ export default function App(): React.ReactElement {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => { });
   }, []);
 
-  // Flush pending debounced saves when app goes to background to prevent data loss
+  // Flush pending debounced saves when app goes to background to prevent data loss.
+  // Also track session foreground/background events for analytics.
   useEffect(() => {
+    // Track initial session start
+    analyticsEvents.session.started();
+
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'background' || nextState === 'inactive') {
+        analyticsEvents.session.backgrounded();
+        AnalyticsService.flush();
         flushAllPendingSaves();
+      } else if (nextState === 'active') {
+        analyticsEvents.session.foregrounded();
       }
     });
     return () => subscription.remove();

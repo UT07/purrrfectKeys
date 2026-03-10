@@ -5,13 +5,14 @@
  */
 
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { PressableScale } from './common/PressableScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   getWeeklyChallengeForWeek,
   isWeeklyChallengeDay,
 } from '../core/challenges/challengeSystem';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '../theme/tokens';
 
 /** Get the Monday of the current week as ISO string */
 function getMondayISO(): string {
@@ -75,9 +76,9 @@ export function WeeklyChallengeCard({ onPress, completed }: WeeklyChallengeCardP
               <Text style={styles.completedText}>Done!</Text>
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={onPress} activeOpacity={0.7}>
+            <PressableScale style={styles.playButton} onPress={onPress}>
               <Text style={styles.playButtonText}>Accept Challenge</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
         </View>
       </View>
@@ -124,12 +125,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    backgroundColor: glowColor(COLORS.starGold, 0.15),
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: glowColor(COLORS.starGold, 0.3),
   },
   rewardText: {
     fontSize: 13,
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   xpBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: glowColor(COLORS.starGold, 0.2),
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.sm,

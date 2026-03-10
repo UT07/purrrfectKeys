@@ -11,14 +11,14 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import { useSettingsStore } from '../stores/settingsStore';
 import { requestMicrophonePermission, checkMicrophonePermission } from '../input/AudioCapture';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -62,9 +62,9 @@ export function MicSetupScreen() {
         style={styles.header}
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <PressableScale onPress={handleGoBack} style={styles.backButton}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          </PressableScale>
           <Text style={styles.title}>Microphone Setup</Text>
           <View style={styles.backButton} />
         </View>
@@ -89,18 +89,18 @@ export function MicSetupScreen() {
               <FeatureItem icon="shield-check" text="Audio stays on your device" />
             </View>
 
-            <TouchableOpacity
+            <PressableScale
               style={styles.primaryButton}
               onPress={handleRequestPermission}
               testID="mic-setup-enable"
             >
               <MaterialCommunityIcons name="microphone" size={20} color={COLORS.textPrimary} />
               <Text style={styles.primaryButtonText}>Enable Microphone</Text>
-            </TouchableOpacity>
+            </PressableScale>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={handleGoBack}>
+            <PressableScale style={styles.secondaryButton} onPress={handleGoBack}>
               <Text style={styles.secondaryButtonText}>Not Now</Text>
-            </TouchableOpacity>
+            </PressableScale>
           </>
         )}
 
@@ -113,7 +113,7 @@ export function MicSetupScreen() {
 
         {step === 'granted' && (
           <>
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: glowColor(COLORS.success, 0.15) }]}>
               <MaterialCommunityIcons name="check-circle" size={48} color={COLORS.success} />
             </View>
             <Text style={styles.heading}>Microphone Ready!</Text>
@@ -130,19 +130,19 @@ export function MicSetupScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity
+            <PressableScale
               style={styles.primaryButton}
               onPress={handleEnableMic}
               testID="mic-setup-done"
             >
               <Text style={styles.primaryButtonText}>Start Playing</Text>
-            </TouchableOpacity>
+            </PressableScale>
           </>
         )}
 
         {step === 'denied' && (
           <>
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(220, 20, 60, 0.15)' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: glowColor(COLORS.primary, 0.15) }]}>
               <MaterialCommunityIcons name="microphone-off" size={48} color={COLORS.error} />
             </View>
             <Text style={styles.heading}>Permission Denied</Text>
@@ -152,9 +152,9 @@ export function MicSetupScreen() {
               and grant microphone access for Purrrfect Keys.
             </Text>
 
-            <TouchableOpacity style={styles.primaryButton} onPress={handleGoBack}>
+            <PressableScale style={styles.primaryButton} onPress={handleGoBack}>
               <Text style={styles.primaryButtonText}>Continue with Touch</Text>
-            </TouchableOpacity>
+            </PressableScale>
           </>
         )}
       </View>
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.08),
   },
   title: { ...TYPOGRAPHY.heading.md, color: COLORS.textPrimary },
   content: {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', gap: SPACING.md },
   iconCircle: {
     width: 96, height: 96, borderRadius: 48,
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    backgroundColor: glowColor(COLORS.primary, 0.15),
     alignItems: 'center', justifyContent: 'center',
     marginBottom: SPACING.lg,
   },
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   featureText: { ...TYPOGRAPHY.body.md, color: COLORS.textSecondary, flex: 1 },
   tipCard: {
     flexDirection: 'row', gap: SPACING.sm,
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    backgroundColor: glowColor(COLORS.starGold, 0.08),
     borderRadius: BORDER_RADIUS.md, padding: SPACING.md,
     marginBottom: SPACING.xl, width: '100%',
   },

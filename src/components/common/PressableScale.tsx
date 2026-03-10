@@ -5,7 +5,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { Pressable, ViewStyle, StyleProp, Platform, Insets } from 'react-native';
+import { AccessibilityRole, Pressable, ViewStyle, StyleProp, Platform, Insets } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,14 +31,18 @@ export interface PressableScaleProps {
   scaleDown?: number;
   /** Trigger a light haptic impact on press (default: false) */
   haptic?: boolean;
-  /** Show a subtle crimson glow when pressed (default: false) */
+  /** Show a subtle glow when pressed (default: false) */
   glowOnPress?: boolean;
+  /** Override the glow border color (default: COLORS.primary) */
+  glowColor?: string;
   /** Play button_press sound + haptic on press via SoundManager (default: true) */
   soundOnPress?: boolean;
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
   testID?: string;
   hitSlop?: Insets | number;
+  accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
 }
 
 export function PressableScale({
@@ -50,9 +54,12 @@ export function PressableScale({
   disabled,
   haptic = false,
   glowOnPress = false,
+  glowColor: customGlowColor,
   soundOnPress = true,
   testID,
   hitSlop,
+  accessibilityLabel,
+  accessibilityRole,
 }: PressableScaleProps): React.JSX.Element {
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
@@ -78,7 +85,7 @@ export function PressableScale({
       // Fallback: manual haptic only when soundOnPress is off
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
-  }, [scale, scaleDown, glowOnPress, glowOpacity, soundOnPress, haptic]);
+  }, [scale, scaleDown, glowOnPress, glowOpacity, soundOnPress, haptic, customGlowColor]);
 
   const handlePressOut = useCallback(() => {
     // Bounce back: lower damping for satisfying overshoot on release
@@ -95,6 +102,8 @@ export function PressableScale({
       disabled={disabled}
       testID={testID}
       hitSlop={hitSlop}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityRole}
       style={[animatedStyle, style]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -111,10 +120,10 @@ export function PressableScale({
               bottom: -2,
               borderRadius: 12,
               borderWidth: 1.5,
-              borderColor: COLORS.primary,
+              borderColor: customGlowColor ?? COLORS.primary,
               ...Platform.select({
                 ios: {
-                  shadowColor: COLORS.primary,
+                  shadowColor: customGlowColor ?? COLORS.primary,
                   shadowOffset: { width: 0, height: 0 },
                   shadowOpacity: 0.5,
                   shadowRadius: 8,

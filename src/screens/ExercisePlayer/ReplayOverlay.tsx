@@ -2,9 +2,9 @@ import React from 'react';
 import {
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import { PressableScale } from '../../components/common/PressableScale';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -117,12 +117,14 @@ export function ReplayOverlay({
     <View style={styles.cardWrapper} pointerEvents="box-none">
       {/* Dimmed backdrop */}
       <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
-        <TouchableOpacity
+        <PressableScale
           style={StyleSheet.absoluteFill}
-          activeOpacity={1}
           onPress={onContinue}
-          accessibilityLabel="Dismiss overlay"
-        />
+          soundOnPress={false}
+          scaleDown={1}
+        >
+          <View style={StyleSheet.absoluteFill} />
+        </PressableScale>
       </Animated.View>
 
       {/* Card */}
@@ -131,21 +133,19 @@ export function ReplayOverlay({
         <Text style={styles.cardText}>{cardText}</Text>
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity
+          <PressableScale
             style={styles.secondaryButton}
             onPress={onShowCorrect}
-            activeOpacity={0.7}
           >
             <Text style={styles.secondaryButtonText}>Show me</Text>
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity
+          <PressableScale
             style={styles.primaryButton}
             onPress={onContinue}
-            activeOpacity={0.7}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       </Animated.View>
     </View>

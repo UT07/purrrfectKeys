@@ -34,6 +34,7 @@ import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
+import QRCode from 'react-native-qrcode-svg';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -83,6 +84,7 @@ export function AddFriendScreen(): React.JSX.Element {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLooking, setIsLooking] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -284,14 +286,48 @@ export function AddFriendScreen(): React.JSX.Element {
             Share your username so friends can find you
           </Text>
 
+          {/* QR / Text toggle */}
+          <View style={styles.toggleRow}>
+            <PressableScale
+              style={[styles.toggleTab, showQR && styles.toggleTabActive]}
+              onPress={() => setShowQR(true)}
+            >
+              <MaterialCommunityIcons name="qrcode" size={16} color={showQR ? COLORS.textPrimary : COLORS.textMuted} />
+              <Text style={[styles.toggleTabText, showQR && styles.toggleTabTextActive]}>QR Code</Text>
+            </PressableScale>
+            <PressableScale
+              style={[styles.toggleTab, !showQR && styles.toggleTabActive]}
+              onPress={() => setShowQR(false)}
+            >
+              <MaterialCommunityIcons name="text-short" size={16} color={!showQR ? COLORS.textPrimary : COLORS.textMuted} />
+              <Text style={[styles.toggleTabText, !showQR && styles.toggleTabTextActive]}>Text</Text>
+            </PressableScale>
+          </View>
+
           <View style={styles.codeCard}>
-            <View style={styles.codeCardAvatarWrap}>
-              <CatAvatar catId={selectedCatId} size="small" mood="happy" skipEntryAnimation />
-            </View>
             {isRegistering ? (
               <ActivityIndicator color={COLORS.primary} size="large" />
             ) : friendCode ? (
-              <Text style={styles.codeText}>{friendCode}</Text>
+              showQR ? (
+                <View style={styles.qrContainer}>
+                  <View style={styles.qrBackground}>
+                    <QRCode
+                      value={`purrrfectkeys://friend/${friendCode}`}
+                      size={160}
+                      backgroundColor="white"
+                      color={COLORS.background}
+                    />
+                  </View>
+                  <Text style={styles.qrHint}>Scan to add as friend</Text>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.codeCardAvatarWrap}>
+                    <CatAvatar catId={selectedCatId} size="small" mood="happy" skipEntryAnimation />
+                  </View>
+                  <Text style={styles.codeText}>{friendCode}</Text>
+                </>
+              )
             ) : (
               <Text style={styles.codeTextMuted}>------</Text>
             )}
@@ -452,6 +488,46 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.md,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  toggleTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  toggleTabActive: {
+    backgroundColor: glowColor(COLORS.primary, 0.15),
+    borderColor: COLORS.primary,
+  },
+  toggleTabText: {
+    ...TYPOGRAPHY.button.sm,
+    color: COLORS.textMuted,
+  },
+  toggleTabTextActive: {
+    color: COLORS.textPrimary,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  qrBackground: {
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: 'white',
+  },
+  qrHint: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textSecondary,
   },
   codeCard: {
     backgroundColor: glowColor(COLORS.primary, 0.06),

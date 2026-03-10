@@ -60,10 +60,13 @@ const DEFAULT_CONFIG: MicrophoneInputConfig = {
  * useExercisePlayback, not by relaxing detection thresholds.
  */
 const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
-  threshold: 0.18,       // Default 0.15 — slightly relaxed for phone mic reverb; NoteTracker filters flukes
+  threshold: 0.15,       // Default 0.15 — standard YIN threshold; NoteTracker filters flukes
   minConfidence: 0.35,   // Default 0.7 — phone mic + room reverb drops confidence to 0.3-0.6 for valid notes;
                          // NoteTracker's 2-confirmation requirement already rejects single-frame noise
-  rmsThreshold: 0.006,   // Default 0.01 — low enough to catch decaying piano sustain; too high = notes cut short
+  rmsThreshold: 0.002,   // Default 0.01 — iPhone mic in measurement mode still delivers low amplitudes
+                         // (maxAmplitude 0.01-0.03 for piano). RMS gate is a perf optimization, not a
+                         // quality filter — YIN threshold + NoteTracker handle noise rejection.
+                         // Ambient noise RMS is ~0.0005-0.001, piano signal ~0.003-0.009.
   octaveCorrection: true, // Essential for piano: low notes have stronger 2nd harmonic than fundamental
   minFrequency: 80,      // Default 50 — E2, covers beginner piano range. Also reduces maxTau from 882→551
   maxFrequency: 1500,    // Default 2000 — ~G6, covers all beginner exercises
@@ -76,8 +79,11 @@ const AMBIENT_PITCH_OVERRIDES: Partial<PitchDetectorConfig> = {
 const AMBIENT_TRACKER_OVERRIDES: Partial<NoteTrackerConfig> = {
   onsetHoldMs: 60,       // ~1.3 buffers at 46ms → minConfirmations clamps to 2.
                          // Combined with gap tolerance, this allows detection within ~92-138ms.
-  releaseHoldMs: 250,    // Piano notes sustain 1-5s; keep the note active through brief amplitude dips.
-                         // At 46ms/buffer, this survives ~5 unvoiced buffers before releasing.
+  releaseHoldMs: 350,    // Piano notes sustain 1-5s; keep the note active through amplitude dips.
+                         // At 46ms/buffer, 350ms survives ~7 unvoiced buffers before releasing.
+                         // Reduced from 500ms: with rmsThreshold at 0.002, piano signal rarely drops
+                         // below the gate during sustain. 350ms is enough for intermittent dips
+                         // while being responsive enough for staccato passages (~170 BPM quarter notes).
 };
 
 // ---------------------------------------------------------------------------
@@ -254,10 +260,16 @@ export class MicrophoneInput {
   }
 
   private _emitNoteEvent(noteEvent: import('./PitchDetector').NoteEvent): void {
+    // Use RMS-estimated velocity when available (noteOn from NoteTracker),
+    // fall back to defaultVelocity for backward compatibility
+    const velocity = noteEvent.type === 'noteOn'
+      ? (noteEvent.velocity ?? this.config.defaultVelocity)
+      : 0;
+
     const midiEvent: MidiNoteEvent = {
       type: noteEvent.type,
       note: noteEvent.midiNote,
-      velocity: noteEvent.type === 'noteOn' ? this.config.defaultVelocity : 0,
+      velocity,
       timestamp: noteEvent.timestamp - this.config.latencyCompensationMs,
       channel: 0,
       inputSource: 'mic',

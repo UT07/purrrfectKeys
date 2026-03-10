@@ -17,13 +17,13 @@ import {
   Modal,
   FlatList,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { PressableScale } from './common/PressableScale';
 import { useSongStore } from '../stores/songStore';
 import type { SongSummary } from '../core/songs/songTypes';
 import {
@@ -32,6 +32,7 @@ import {
   SPACING,
   BORDER_RADIUS,
   SHADOWS,
+  glowColor,
 } from '../theme/tokens';
 
 // ---------------------------------------------------------------------------
@@ -132,10 +133,9 @@ export function SongReferencePicker({
     ({ item }: { item: SongSummary }) => {
       const genreColor = GENRE_COLORS[item.metadata.genre] ?? COLORS.textMuted;
       return (
-        <TouchableOpacity
+        <PressableScale
           style={styles.songRow}
           onPress={() => handleSelect(item)}
-          activeOpacity={0.7}
           testID={`song-pick-${item.id}`}
         >
           <View style={styles.songInfo}>
@@ -146,7 +146,7 @@ export function SongReferencePicker({
               {item.metadata.artist}
             </Text>
           </View>
-          <View style={[styles.genreBadge, { backgroundColor: genreColor + '22' }]}>
+          <View style={[styles.genreBadge, { backgroundColor: glowColor(genreColor, 0.13) }]}>
             <Text style={[styles.genreText, { color: genreColor }]}>
               {item.metadata.genre}
             </Text>
@@ -156,7 +156,7 @@ export function SongReferencePicker({
             size={20}
             color={COLORS.textMuted}
           />
-        </TouchableOpacity>
+        </PressableScale>
       );
     },
     [handleSelect],
@@ -177,11 +177,14 @@ export function SongReferencePicker({
         style={styles.overlay}
       >
         {/* Dismiss tap area */}
-        <TouchableOpacity
+        <PressableScale
           style={styles.backdrop}
-          activeOpacity={1}
+          scaleDown={1}
+          soundOnPress={false}
           onPress={onClose}
-        />
+        >
+          <View style={styles.backdrop} />
+        </PressableScale>
 
         {/* Modal sheet */}
         <View style={styles.sheet}>
@@ -191,13 +194,13 @@ export function SongReferencePicker({
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Choose a Song</Text>
-            <TouchableOpacity onPress={onClose} testID="song-picker-close">
+            <PressableScale onPress={onClose} testID="song-picker-close">
               <MaterialCommunityIcons
                 name="close"
                 size={24}
                 color={COLORS.textSecondary}
               />
-            </TouchableOpacity>
+            </PressableScale>
           </View>
 
           {/* Search */}
@@ -219,7 +222,7 @@ export function SongReferencePicker({
               testID="song-picker-search"
             />
             {searchText.length > 0 && (
-              <TouchableOpacity
+              <PressableScale
                 onPress={() => handleSearchChange('')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -228,7 +231,7 @@ export function SongReferencePicker({
                   size={18}
                   color={COLORS.textMuted}
                 />
-              </TouchableOpacity>
+              </PressableScale>
             )}
           </View>
 

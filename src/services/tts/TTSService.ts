@@ -110,6 +110,7 @@ class TTSServiceImpl {
     // Fallback: expo-speech
     if (!Speech) {
       this._isSpeaking = false;
+      options.onDone?.();
       return;
     }
 

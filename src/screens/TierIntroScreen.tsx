@@ -12,9 +12,9 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import { PressableScale } from '../components/common/PressableScale';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -28,7 +28,7 @@ import { getTierMasteryTestSkillId, hasTierMasteryTestPassed } from '../core/cur
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS } from '../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -54,7 +54,7 @@ const TIER_META: Record<number, { title: string; icon: string; description: stri
 };
 
 const SKILL_COLORS = [
-  { bg: 'rgba(220, 20, 60, 0.15)', text: '#FF6B8A' },
+  { bg: glowColor(COLORS.primary, 0.15), text: '#FF6B8A' },
   { bg: 'rgba(255, 107, 53, 0.15)', text: '#FF8A65' },
   { bg: 'rgba(21, 101, 192, 0.15)', text: '#64B5F6' },
   { bg: 'rgba(46, 125, 50, 0.15)', text: '#81C784' },
@@ -362,14 +362,15 @@ export function TierIntroScreen() {
       <LinearGradient colors={GRADIENTS.heroGlow} style={styles.header}>
         <SafeAreaView>
           <View style={styles.headerContent}>
-            <TouchableOpacity
+            <PressableScale
               onPress={handleBack}
               style={styles.backButton}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               testID="tier-intro-back"
+              soundOnPress={false}
             >
               <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
-            </TouchableOpacity>
+            </PressableScale>
 
             <View style={styles.headerTitleArea}>
               <Text style={styles.tierLabel}>TIER {tier}</Text>
@@ -464,10 +465,9 @@ export function TierIntroScreen() {
       {/* Start / Mastery Test button */}
       <SafeAreaView style={styles.bottomBar}>
         {showMasteryTest ? (
-          <TouchableOpacity
+          <PressableScale
             onPress={handleStartMasteryTest}
             style={styles.startButton}
-            activeOpacity={0.8}
             testID="tier-intro-mastery-test"
           >
             <LinearGradient
@@ -479,12 +479,11 @@ export function TierIntroScreen() {
               <MaterialCommunityIcons name="trophy-outline" size={22} color={COLORS.textPrimary} />
               <Text style={styles.startButtonText}>Take Mastery Test</Text>
             </LinearGradient>
-          </TouchableOpacity>
+          </PressableScale>
         ) : (
-          <TouchableOpacity
+          <PressableScale
             onPress={locked ? undefined : handleStart}
             style={[styles.startButton, locked && styles.startButtonLocked]}
-            activeOpacity={locked ? 1 : 0.8}
             testID="tier-intro-start"
             disabled={locked}
           >
@@ -503,7 +502,7 @@ export function TierIntroScreen() {
                 {locked ? 'Complete Previous Tier' : isAllMastered && testPassed ? 'Practice Again' : isAllMastered ? 'Practice Again' : 'Start Exercises'}
               </Text>
             </LinearGradient>
-          </TouchableOpacity>
+          </PressableScale>
         )}
       </SafeAreaView>
     </View>
@@ -519,7 +518,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.1),
     alignItems: 'center', justifyContent: 'center', marginRight: SPACING.sm, marginTop: 2,
   },
   headerTitleArea: { flex: 1 },
@@ -530,7 +529,7 @@ const styles = StyleSheet.create({
   tierTitle: { ...TYPOGRAPHY.display.md, fontSize: 26, color: COLORS.textPrimary },
   tierIconBadge: {
     width: 48, height: 48, borderRadius: 24,
-    backgroundColor: 'rgba(220, 20, 60, 0.12)',
+    backgroundColor: glowColor(COLORS.primary, 0.12),
     alignItems: 'center', justifyContent: 'center',
     marginLeft: SPACING.sm, marginTop: 4,
   },
@@ -556,7 +555,7 @@ const styles = StyleSheet.create({
   },
   conceptIconBadge: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(220, 20, 60, 0.1)',
+    backgroundColor: glowColor(COLORS.primary, 0.1),
     alignItems: 'center', justifyContent: 'center',
   },
   conceptTitle: {
@@ -589,7 +588,7 @@ const styles = StyleSheet.create({
   progressLabelComplete: { color: COLORS.success },
   testPassedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    backgroundColor: glowColor(COLORS.starGold, 0.12),
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: BORDER_RADIUS.full,
   },
   testPassedText: { ...TYPOGRAPHY.caption.sm, fontWeight: '700', color: COLORS.starGold },
@@ -636,7 +635,7 @@ const styles = StyleSheet.create({
   // AI badge
   aiBadge: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-    backgroundColor: 'rgba(220, 20, 60, 0.06)',
+    backgroundColor: glowColor(COLORS.primary, 0.06),
     borderRadius: BORDER_RADIUS.md, padding: SPACING.md,
     marginBottom: SPACING.lg,
   },
@@ -644,7 +643,7 @@ const styles = StyleSheet.create({
   // Bottom bar
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: COLORS.background + 'F2',
+    backgroundColor: glowColor(COLORS.background, 0.95),
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, paddingBottom: SPACING.sm,
     borderTopWidth: 1, borderTopColor: COLORS.surface,
   },

@@ -89,21 +89,18 @@ function GenrePill({
         styles.genrePill,
         isActive && {
           backgroundColor: glowColor(accentColor, 0.15),
-          borderColor: accentColor,
+          borderColor: glowColor(accentColor, 0.4),
         },
       ]}
       onPress={onPress}
       testID={`genre-${label.toLowerCase()}`}
     >
-      {/* Left accent bar */}
-      <View style={[styles.genreAccentBar, { backgroundColor: accentColor }]} />
       <MaterialCommunityIcons
         name={cfg.icon}
         size={14}
         color={isActive ? accentColor : COLORS.textMuted}
-        style={{ marginRight: 4 }}
       />
-      <Text style={[styles.genrePillText, isActive && { color: COLORS.textPrimary, fontWeight: '600' as const }]}>
+      <Text style={[styles.genrePillText, isActive && { color: accentColor, fontWeight: '700' as const }]}>
         {label}
       </Text>
     </PressableScale>
@@ -666,21 +663,13 @@ const styles = StyleSheet.create({
   genrePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 0,
-    paddingRight: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
+    gap: 5,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
-    overflow: 'hidden',
-  },
-  genreAccentBar: {
-    width: 4,
-    alignSelf: 'stretch',
-    borderTopLeftRadius: BORDER_RADIUS.md,
-    borderBottomLeftRadius: BORDER_RADIUS.md,
-    marginRight: SPACING.sm,
   },
   genrePillText: {
     ...TYPOGRAPHY.body.sm,

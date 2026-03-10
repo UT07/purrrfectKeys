@@ -18,12 +18,13 @@ export const BASE_NOTES = {
 } as const;
 
 // Sample file paths (relative to assets)
+// Real FluidR3 GM piano samples are in assets/samples/piano-c{2-6}.mp3
 const SAMPLE_PATHS: Record<number, string> = {
-  [BASE_NOTES.C2]: 'assets/samples/piano-c2.wav',
-  [BASE_NOTES.C3]: 'assets/samples/piano-c3.wav',
-  [BASE_NOTES.C4]: 'assets/samples/piano-c4.wav',
-  [BASE_NOTES.C5]: 'assets/samples/piano-c5.wav',
-  [BASE_NOTES.C6]: 'assets/samples/piano-c6.wav',
+  [BASE_NOTES.C2]: 'assets/samples/piano-c2.mp3',
+  [BASE_NOTES.C3]: 'assets/samples/piano-c3.mp3',
+  [BASE_NOTES.C4]: 'assets/samples/piano-c4.mp3',
+  [BASE_NOTES.C5]: 'assets/samples/piano-c5.mp3',
+  [BASE_NOTES.C6]: 'assets/samples/piano-c6.mp3',
 };
 
 export interface SampleLoaderConfig {

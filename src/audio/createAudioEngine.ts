@@ -80,9 +80,14 @@ export async function ensureAudioModeConfigured(allowRecording = false): Promise
   try {
      
     const { AudioManager } = require('react-native-audio-api');
+    // When recording: use 'measurement' mode to disable Apple's voice processing
+    // (AGC, noise suppression, echo cancellation) which crushes gain for non-speech
+    // signals like piano. Without measurement mode, mic amplitude is ~0.001 even
+    // with piano playing nearby — far below the RMS gate threshold.
+    const iosMode = allowRecording ? 'measurement' : 'default';
     AudioManager.setAudioSessionOptions({
       iosCategory: allowRecording ? 'playAndRecord' : 'playback',
-      iosMode: 'default',
+      iosMode,
       iosOptions: allowRecording
         ? ['defaultToSpeaker', 'allowBluetooth']
         : ['defaultToSpeaker'],
@@ -90,7 +95,7 @@ export async function ensureAudioModeConfigured(allowRecording = false): Promise
     });
     logger.log(
       `[createAudioEngine] Audio session configured via AudioManager ` +
-      `(category=${allowRecording ? 'playAndRecord' : 'playback'})`
+      `(category=${allowRecording ? 'playAndRecord' : 'playback'}, mode=${iosMode})`
     );
     return;
   } catch (audioManagerError) {

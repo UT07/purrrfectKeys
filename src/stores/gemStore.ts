@@ -10,7 +10,7 @@
 
 import { create } from 'zustand';
 import type { GemTransaction } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
 
 const MAX_TRANSACTIONS = 50;
 
@@ -42,6 +42,8 @@ const defaultData: GemData = {
 };
 
 const debouncedSave = createDebouncedSave<GemData>(STORAGE_KEYS.GEMS, 500);
+/** Immediate save for critical operations (reward claims) — prevents double-claiming on crash */
+const immediateSave = createImmediateSave<GemData>(STORAGE_KEYS.GEMS);
 
 export const useGemStore = create<GemStoreState>((set, get) => ({
   ...defaultData,
@@ -98,11 +100,30 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
   },
 
   claimReward: (key: string, gems: number) => {
-    const state = get();
-    if (state.claimedRewards.includes(key)) return;
-    // Mark as claimed first, then earn gems
-    set({ claimedRewards: [...state.claimedRewards, key] });
-    state.earnGems(gems, key);
+    // Atomic check-and-claim inside a single set() to prevent TOCTOU race
+    let alreadyClaimed = false;
+    set((state) => {
+      if (state.claimedRewards.includes(key)) {
+        alreadyClaimed = true;
+        return state;
+      }
+      const newBalance = state.gems + gems;
+      const transaction: GemTransaction = {
+        amount: gems,
+        source: key,
+        timestamp: Date.now(),
+        balance: newBalance,
+      };
+      return {
+        gems: newBalance,
+        totalGemsEarned: state.totalGemsEarned + gems,
+        claimedRewards: [...state.claimedRewards, key],
+        transactions: [transaction, ...state.transactions].slice(0, MAX_TRANSACTIONS),
+      };
+    });
+    if (!alreadyClaimed) {
+      immediateSave(get());
+    }
   },
 
   reset: () => {

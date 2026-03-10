@@ -12,6 +12,7 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
+import { COLORS, glowColor } from '../../theme/tokens';
 
 export interface XPBarProps {
   currentXP: number; // Total XP earned
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   levelUpContainer: {
     alignItems: 'center',
     paddingVertical: 8,
-    backgroundColor: 'rgba(220, 20, 60, 0.15)',
+    backgroundColor: glowColor(COLORS.primary, 0.15),
     borderRadius: 4,
     borderWidth: 1,
     borderColor: '#DC143C',

@@ -55,8 +55,8 @@ service cloud.firestore {
         allow create: if isOwner(userId) &&
                         request.resource.data.lessonId == lessonId;
         allow update: if isOwner(userId);
-        // Allow deletion for account cleanup (via Cloud Functions)
-        allow delete: if false;
+        // Allow owner to delete own progress (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -68,7 +68,8 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) &&
                                  docId in ['data', 'catEvolution', 'gems'];
-        allow delete: if false;
+        // Allow owner to delete own gamification data (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -78,7 +79,9 @@ service cloud.firestore {
       match /xpLog/{logId} {
         allow read: if isOwner(userId);
         // Client cannot write — only Cloud Functions
-        allow create, update, delete: if false;
+        allow create, update: if false;
+        // Allow owner to delete own xp logs (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -89,7 +92,8 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId);
         allow update: if isOwner(userId);
-        allow delete: if false;
+        // Allow owner to delete own sync logs (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -99,7 +103,8 @@ service cloud.firestore {
       match /settings/{settingId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId);
-        allow delete: if false;
+        // Allow owner to delete own settings (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -114,8 +119,10 @@ service cloud.firestore {
         allow create: if isAuthenticated() && isNotAnonymous();
         // Owner manages (accept/update) own friend connections
         allow update: if isOwner(userId) && isNotAnonymous();
-        // Any authenticated user can delete (needed for removeFriendConnection + account cleanup)
-        allow delete: if isAuthenticated();
+        // Owner can delete own friends; the referenced friend can remove themselves
+        // (needed for removeFriendConnection which deletes from BOTH users' subcollections,
+        // and for account deletion cleanup where user removes self from others' lists)
+        allow delete: if isOwner(userId) || (isAuthenticated() && friendUid == request.auth.uid);
       }
 
       // ====================================================================
@@ -129,7 +136,9 @@ service cloud.firestore {
            exists(/databases/$(database)/documents/users/$(userId)/friends/$(request.auth.uid)));
         // Only the owner posts to their own feed
         allow create: if isOwner(userId) && isNotAnonymous();
-        allow update, delete: if false;
+        allow update: if false;
+        // Allow owner to delete own activity (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -139,7 +148,8 @@ service cloud.firestore {
       match /songMastery/{songId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId);
-        allow delete: if false;
+        // Allow owner to delete own mastery data (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
 
       // ====================================================================
@@ -151,7 +161,8 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) &&
                                  request.resource.data.count is int &&
                                  request.resource.data.count <= 5;
-        allow delete: if false;
+        // Allow owner to delete own rate limit data (GDPR account deletion)
+        allow delete: if isOwner(userId);
       }
     }
 

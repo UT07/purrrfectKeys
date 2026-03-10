@@ -10,6 +10,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase/config';
 import type { GenerationHints } from '../core/curriculum/SkillTree';
+import type { ExerciseType } from '../core/exercises/types';
 import { checkRateLimit } from './firebase/functions';
 import { withTimeout } from '../utils/withTimeout';
 import { logger } from '../utils/logger';
@@ -32,6 +33,8 @@ export interface GenerationParams {
   targetSkillId?: string;
   skillContext?: string;
   exerciseType?: 'warmup' | 'lesson' | 'challenge';
+  /** The interaction type for the exercise (play, rhythm, earTraining, etc.) */
+  interactionType?: ExerciseType;
   /** Explicit key signature override (e.g. from free play analysis). When set, takes priority over difficulty-based key selection. */
   keySignature?: string;
   /** Skill-specific generation hints from the SkillTree. When provided, these drive targeted exercise content. */
@@ -39,6 +42,7 @@ export interface GenerationParams {
 }
 
 export interface AIExercise {
+  type?: ExerciseType;
   notes: Array<{
     note: number;
     startBeat: number;
@@ -68,6 +72,7 @@ export interface AIExercise {
 
 const MIDI_MIN = 36;
 const MIDI_MAX = 96;
+const MIN_NOTES = 4;
 const MAX_NOTES = 64;
 const MAX_INTERVAL_FAST_TEMPO = 24; // 2 octaves at > 120 BPM
 const MAX_INTERVAL_ANY_TEMPO = 36; // 3 octaves absolute limit
@@ -96,7 +101,7 @@ export function validateAIExercise(exercise: unknown, allowedMidi?: number[]): e
   const ex = exercise as Record<string, unknown>;
 
   // Must have notes array and settings object
-  if (!Array.isArray(ex.notes) || ex.notes.length === 0) {
+  if (!Array.isArray(ex.notes) || ex.notes.length < MIN_NOTES) {
     return false;
   }
 
@@ -252,6 +257,22 @@ export function buildPrompt(params: GenerationParams): string {
     prompt += `\n- Exercise purpose: ${typeDescriptions[params.exerciseType]}`;
   }
 
+  // Interaction-type-specific prompt instructions
+  if (params.interactionType && params.interactionType !== 'play') {
+    const typeInstructions: Record<string, string> = {
+      rhythm: 'TYPE: RHYTHM — Scoring ignores pitch entirely; only timing and completeness matter. Generate interesting rhythmic patterns with syncopation, dotted notes, and rests. Vary the pitches for visual interest but the user can tap ANY key.',
+      earTraining: 'TYPE: EAR TRAINING — The user will hear this melody once, then play it back from memory. Keep it short (4-8 notes), memorable, and singable. Use stepwise motion and simple intervals. Avoid wide leaps.',
+      chordId: 'TYPE: CHORD IDENTIFICATION — Display a chord name and the user plays the correct notes simultaneously. Group notes on the same startBeat to form chords. Use 3-4 note chords (triads and sevenths). Include 3-6 chords per exercise.',
+      sightReading: 'TYPE: SIGHT READING — The user reads from staff notation only (no note names, no PianoRoll hints). Use a variety of intervals and rhythms. Notes should progress steadily without long pauses. Slightly tighter timing tolerance.',
+      callResponse: 'TYPE: CALL & RESPONSE — Structure as alternating phrases: a "call" phrase (played by the system) followed by a "response" phrase (played by the user). Group notes into clear 2-4 beat phrases. Mark call phrases with durationBeats patterns the user will echo.',
+    };
+    const instruction = typeInstructions[params.interactionType];
+    if (instruction) {
+      prompt += `\n- ${instruction}`;
+      prompt += `\n- Include "type": "${params.interactionType}" in the JSON output.`;
+    }
+  }
+
   prompt += `
 
 Requirements:
@@ -347,10 +368,13 @@ export async function generateExercise(params: GenerationParams): Promise<AIExer
       return exercise;
     }
   } catch (cfError) {
-    logger.warn('[GeminiExercise] Cloud Function unavailable, falling back to direct API. Deploy functions to secure API key:', (cfError as Error)?.message ?? cfError);
+    logger.warn('[GeminiExercise] Cloud Function unavailable, falling back to direct API:', (cfError as Error)?.message ?? cfError);
   }
 
-  // Fall back to direct Gemini API call
+  // Fall back to direct Gemini API call (only in __DEV__ to avoid exposing API key in production)
+  if (!__DEV__) {
+    return null;
+  }
   try {
     // Dynamic access prevents Babel from inlining the env var at build time
     const apiKey = process.env[API_KEY_ENV];

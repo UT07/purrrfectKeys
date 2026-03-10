@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   PanResponder,
   LayoutChangeEvent,
 } from 'react-native';
+import { PressableScale } from '../../components/common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../../theme/tokens';
 import type {
   ReplayScheduleEntry,
@@ -134,14 +134,14 @@ export function ReplayTimelineBar({
     <View style={styles.container}>
       {/* Row 1: play/pause button + track */}
       <View style={styles.topRow}>
-        <TouchableOpacity
+        <PressableScale
           testID="play-pause-btn"
           onPress={onTogglePlayPause}
           style={styles.playPauseBtn}
-          activeOpacity={0.7}
+          soundOnPress={false}
         >
           <Text style={styles.playPauseText}>{isPaused ? '▶' : '⏸'}</Text>
-        </TouchableOpacity>
+        </PressableScale>
 
         <View
           style={styles.trackContainer}

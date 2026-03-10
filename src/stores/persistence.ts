@@ -128,18 +128,17 @@ export class PersistenceManager {
    * Clear all KeySense data
    */
   static async clearAll(): Promise<void> {
-    try {
-      await Promise.all(
-        Object.values(STORAGE_KEYS).map(key =>
-          typeof key === 'string' ? storage.delete(key) : Promise.resolve()
-        )
-      );
+    const results = await Promise.allSettled(
+      Object.values(STORAGE_KEYS).map(key =>
+        typeof key === 'string' ? storage.delete(key) : Promise.resolve()
+      )
+    );
 
-      if (process.env.NODE_ENV === 'development') {
-        logger.log('[PERSIST] Cleared all KeySense data');
-      }
-    } catch (error) {
-      console.error('[PERSIST] Failed to clear all data:', error);
+    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (failures.length > 0) {
+      console.error(`[PERSIST] Failed to clear ${failures.length} keys:`, failures.map(f => f.reason));
+    } else if (process.env.NODE_ENV === 'development') {
+      logger.log('[PERSIST] Cleared all KeySense data');
     }
   }
 

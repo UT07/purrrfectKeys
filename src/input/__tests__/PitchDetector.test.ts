@@ -249,6 +249,99 @@ describe('YINPitchDetector', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Real-device amplitude tests (iPhone mic in measurement mode)
+// ---------------------------------------------------------------------------
+
+describe('YINPitchDetector — iPhone mic amplitudes', () => {
+  const SAMPLE_RATE = 44100;
+  const BUFFER_SIZE = 2048;
+
+  // Config matching AMBIENT_PITCH_OVERRIDES from MicrophoneInput.ts
+  const MIC_CONFIG = {
+    sampleRate: SAMPLE_RATE,
+    bufferSize: BUFFER_SIZE,
+    threshold: 0.15,
+    minConfidence: 0.35,
+    rmsThreshold: 0.002,
+    octaveCorrection: true,
+    minFrequency: 80,
+    maxFrequency: 1500,
+  };
+
+  it('detects C4 at iPhone mic amplitude (0.008 peak)', () => {
+    const detector = new YINPitchDetector(MIC_CONFIG);
+    // Real device logs show maxAmplitude 0.006-0.009 for piano notes
+    const buffer = generateSineWave(261.63, SAMPLE_RATE, BUFFER_SIZE, 0.008);
+    const result = detector.detect(buffer);
+    expect(result.voiced).toBe(true);
+    expect(result.midiNote).toBe(60); // C4
+  });
+
+  it('detects A4 at very low amplitude (0.004 peak)', () => {
+    const detector = new YINPitchDetector(MIC_CONFIG);
+    const buffer = generateSineWave(440, SAMPLE_RATE, BUFFER_SIZE, 0.004);
+    const result = detector.detect(buffer);
+    expect(result.voiced).toBe(true);
+    expect(result.midiNote).toBe(69); // A4
+  });
+
+  it('rejects ambient noise at RMS 0.001', () => {
+    const detector = new YINPitchDetector(MIC_CONFIG);
+    // Noise at typical ambient RMS level
+    const buffer = generateNoise(BUFFER_SIZE, 0.0015);
+    const result = detector.detect(buffer);
+    // Noise should either fail RMS gate or fail YIN confidence check
+    expect(result.voiced).toBe(false);
+  });
+
+  it('sustains detection across multiple buffers at low amplitude', () => {
+    const detector = new YINPitchDetector(MIC_CONFIG);
+    const tracker = new NoteTracker({ onsetHoldMs: 60, releaseHoldMs: 500 });
+    const events: NoteEvent[] = [];
+    tracker.onNoteEvent((e) => events.push(e));
+
+    // Simulate 10 consecutive buffers of D4 at low amplitude (iPhone mic level)
+    for (let i = 0; i < 10; i++) {
+      const buffer = generateSineWave(293.66, SAMPLE_RATE, BUFFER_SIZE, 0.006);
+      const result = detector.detect(buffer);
+      tracker.update(result);
+    }
+
+    // Should have exactly 1 noteOn and no noteOff (note still held)
+    expect(events.length).toBe(1);
+    expect(events[0].type).toBe('noteOn');
+    expect(events[0].midiNote).toBe(62); // D4
+  });
+
+  it('survives intermittent RMS-rejected buffers without releasing', () => {
+    const detector = new YINPitchDetector(MIC_CONFIG);
+    const tracker = new NoteTracker({ onsetHoldMs: 60, releaseHoldMs: 500 });
+    const events: NoteEvent[] = [];
+    tracker.onNoteEvent((e) => events.push(e));
+
+    // 3 voiced frames → noteOn
+    for (let i = 0; i < 3; i++) {
+      const buffer = generateSineWave(261.63, SAMPLE_RATE, BUFFER_SIZE, 0.006);
+      tracker.update(detector.detect(buffer));
+    }
+    expect(events.length).toBe(1);
+    expect(events[0].type).toBe('noteOn');
+
+    // 5 silent frames (RMS below threshold) — note should survive (500ms hold)
+    for (let i = 0; i < 5; i++) {
+      const buffer = generateSilence(BUFFER_SIZE);
+      const result = detector.detect(buffer);
+      // Advance timestamp by 46ms per buffer
+      result.timestamp = Date.now() + i * 46;
+      tracker.update(result);
+    }
+
+    // Note should still be held (5 * 46ms = 230ms < 500ms releaseHold)
+    expect(events.length).toBe(1); // No noteOff yet
+  });
+});
+
+// ---------------------------------------------------------------------------
 // NoteTracker tests
 // ---------------------------------------------------------------------------
 
@@ -265,7 +358,7 @@ describe('NoteTracker', () => {
     tracker.onNoteEvent((e) => events.push(e));
   });
 
-  function makePitch(midiNote: number | null, voiced: boolean, timestamp: number): PitchResult {
+  function makePitch(midiNote: number | null, voiced: boolean, timestamp: number, rms = 0.01): PitchResult {
     return {
       frequency: midiNote ? 440 * Math.pow(2, (midiNote - 69) / 12) : 0,
       confidence: voiced ? 0.95 : 0,
@@ -273,6 +366,7 @@ describe('NoteTracker', () => {
       midiNote,
       centsOffset: 0,
       timestamp,
+      rms: voiced ? rms : 0,
     };
   }
 
@@ -422,5 +516,113 @@ describe('NoteTracker', () => {
     // Only the noteOn should have been received (the noteOff happened after unsub)
     // Note: the main events array still gets events from the constructor callback
     expect(localEvents).toHaveLength(1);
+  });
+
+  // =========================================================================
+  // Single-frame glitch protection
+  // =========================================================================
+
+  it('ignores single-frame pitch glitch during candidate confirmation', () => {
+    // Start detecting C4
+    tracker.update(makePitch(60, true, 1000)); // candidate=60, count=1
+    expect(events).toHaveLength(0);
+
+    // Single-frame glitch: YIN detects E4 for one buffer
+    tracker.update(makePitch(64, true, 1050)); // glitch — ignored because 64 != lastRawMidi(60)
+    expect(events).toHaveLength(0);
+
+    // C4 returns — should still confirm (candidate 60 was preserved)
+    tracker.update(makePitch(60, true, 1100)); // 60 == candidate, count=2 → confirmed!
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual(expect.objectContaining({
+      type: 'noteOn',
+      midiNote: 60,
+    }));
+  });
+
+  it('allows real transitions when new note appears in 2 consecutive frames', () => {
+    // Confirm C4
+    tracker.update(makePitch(60, true, 1000));
+    tracker.update(makePitch(60, true, 1050));
+    expect(events).toHaveLength(1); // noteOn C4
+
+    // Transition to E4: two consecutive frames
+    tracker.update(makePitch(64, true, 1100)); // candidate=64, count=1
+    tracker.update(makePitch(64, true, 1150)); // count=2 → confirmed
+    expect(events).toHaveLength(3); // noteOff C4 + noteOn E4
+    expect(events[1].type).toBe('noteOff');
+    expect(events[1].midiNote).toBe(60);
+    expect(events[2].type).toBe('noteOn');
+    expect(events[2].midiNote).toBe(64);
+  });
+
+  it('recovers faster from glitch than without protection', () => {
+    // Without glitch protection: glitch resets candidate, needs 2 more frames
+    // With glitch protection: glitch is ignored, candidate preserved
+
+    // Start detecting C4
+    tracker.update(makePitch(60, true, 1000)); // candidate=60, count=1
+
+    // Glitch frame (different note for 1 frame)
+    tracker.update(makePitch(67, true, 1050)); // ignored (67 != lastRawMidi 60)
+
+    // C4 returns — should now be at count=2 and confirm immediately
+    tracker.update(makePitch(60, true, 1100)); // candidate still 60, count→2 → confirmed
+    expect(events).toHaveLength(1);
+    expect(events[0].midiNote).toBe(60);
+  });
+
+  it('handles consecutive different notes as real transitions', () => {
+    // Two consecutive frames of E4 should override the C4 candidate
+    tracker.update(makePitch(60, true, 1000)); // candidate=60, count=1
+    tracker.update(makePitch(64, true, 1050)); // ignored (64 != lastRawMidi 60)
+    tracker.update(makePitch(64, true, 1100)); // 64 == lastRawMidi(64) → switch! candidate=64, count=2 → confirmed
+    expect(events).toHaveLength(1);
+    expect(events[0].midiNote).toBe(64); // E4, not C4
+  });
+
+  // =========================================================================
+  // Velocity estimation from RMS
+  // =========================================================================
+
+  it('provides velocity on noteOn events based on RMS', () => {
+    // Low RMS → low velocity
+    tracker.update(makePitch(60, true, 1000, 0.003));
+    tracker.update(makePitch(60, true, 1050, 0.003));
+    expect(events).toHaveLength(1);
+    expect(events[0].velocity).toBeDefined();
+    expect(events[0].velocity).toBeGreaterThanOrEqual(40);
+    expect(events[0].velocity).toBeLessThanOrEqual(70);
+  });
+
+  it('maps louder RMS to higher velocity', () => {
+    // Play loud note
+    const loudTracker = new NoteTracker({ onsetHoldMs: 40, releaseHoldMs: 80 });
+    const loudEvents: NoteEvent[] = [];
+    loudTracker.onNoteEvent((e) => loudEvents.push(e));
+
+    loudTracker.update(makePitch(60, true, 1000, 0.04));
+    loudTracker.update(makePitch(60, true, 1050, 0.04));
+
+    // Play quiet note
+    const quietTracker = new NoteTracker({ onsetHoldMs: 40, releaseHoldMs: 80 });
+    const quietEvents: NoteEvent[] = [];
+    quietTracker.onNoteEvent((e) => quietEvents.push(e));
+
+    quietTracker.update(makePitch(60, true, 1000, 0.003));
+    quietTracker.update(makePitch(60, true, 1050, 0.003));
+
+    expect(loudEvents[0].velocity).toBeGreaterThan(quietEvents[0].velocity!);
+  });
+
+  it('does not include velocity on noteOff events', () => {
+    tracker.update(makePitch(60, true, 1000));
+    tracker.update(makePitch(60, true, 1050));
+    tracker.update(makePitch(null, false, 1200));
+    tracker.update(makePitch(null, false, 1300));
+
+    const noteOff = events.find(e => e.type === 'noteOff');
+    expect(noteOff).toBeDefined();
+    expect(noteOff!.velocity).toBeUndefined();
   });
 });

@@ -18,7 +18,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS } from '../theme/tokens';
+import { COLORS, glowColor } from '../theme/tokens';
 
 interface GemEarnPopupProps {
   amount: number;
@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: glowColor(COLORS.gemGold, 0.2),
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
+    borderColor: glowColor(COLORS.gemGold, 0.4),
   },
   amount: {
     color: COLORS.gemGold,

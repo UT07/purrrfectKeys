@@ -6,7 +6,8 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { PressableScale } from './common/PressableScale';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,7 +19,7 @@ import Animated, {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { getDailyChallengeForDate } from '../core/challenges/challengeSystem';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '../theme/tokens';
 
 function formatTimeRemaining(ms: number): string {
   const totalMinutes = Math.max(0, Math.floor(ms / 60000));
@@ -145,9 +146,9 @@ export function DailyChallengeCard({ onPress, masteredSkills }: DailyChallengeCa
               <MaterialCommunityIcons name="check-bold" size={18} color={COLORS.success} />
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={onPress} activeOpacity={0.7}>
+            <PressableScale style={styles.playButton} onPress={onPress}>
               <Text style={styles.playButtonText}>Play Now</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
         </View>
       </View>
@@ -251,10 +252,10 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    backgroundColor: glowColor(COLORS.success, 0.15),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    borderColor: glowColor(COLORS.success, 0.3),
   },
 });

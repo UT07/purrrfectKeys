@@ -9,7 +9,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import Animated, {
@@ -21,6 +20,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { PressableScale } from '../common/PressableScale';
 import { CatAvatar } from './CatAvatar';
 import type { MascotMood } from './mascotTips';
 import { ttsService } from '@/services/tts/TTSService';
@@ -191,7 +191,7 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
           >
             <Text style={[styles.message, { fontSize }]}>{message}</Text>
             {onDismiss && (
-              <TouchableOpacity
+              <PressableScale
                 style={styles.dismissButton}
                 onPress={onDismiss}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -202,7 +202,7 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
                   size={14}
                   color="#666666"
                 />
-              </TouchableOpacity>
+              </PressableScale>
             )}
           </View>
         </Animated.View>

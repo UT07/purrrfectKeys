@@ -38,6 +38,8 @@ export interface PitchResult {
   centsOffset: number;
   /** Timestamp (Date.now()) of detection */
   timestamp: number;
+  /** RMS amplitude of the buffer (0.0–1.0), available even when unvoiced */
+  rms: number;
 }
 
 export interface PitchDetectorConfig {
@@ -106,7 +108,7 @@ export class YINPitchDetector {
     this.maxTau = Math.min(this.halfSize - 1, Math.floor(this.config.sampleRate / this.config.minFrequency));
 
     // Pre-allocate result object (mutated in detect() to avoid GC pressure)
-    this._result = { frequency: 0, confidence: 0, voiced: false, midiNote: null, centsOffset: 0, timestamp: 0 };
+    this._result = { frequency: 0, confidence: 0, voiced: false, midiNote: null, centsOffset: 0, timestamp: 0, rms: 0 };
   }
 
   /** Update RMS threshold at runtime (used by ambient noise calibration) */
@@ -148,7 +150,7 @@ export class YINPitchDetector {
     r.timestamp = Date.now();
 
     if (audioBuffer.length < this.config.bufferSize) {
-      r.frequency = 0; r.confidence = 0; r.voiced = false; r.midiNote = null; r.centsOffset = 0;
+      r.frequency = 0; r.confidence = 0; r.voiced = false; r.midiNote = null; r.centsOffset = 0; r.rms = 0;
       return r;
     }
 
@@ -156,6 +158,7 @@ export class YINPitchDetector {
 
     // Step 0: RMS gate — reject silent/quiet buffers before expensive YIN
     const rms = this.computeRMS(audioBuffer);
+    r.rms = rms;
     if (rms < this._rmsThreshold) {
       this._rmsRejectCount++;
       // Log every 200 rejections for diagnostics (not every frame — too noisy)
@@ -436,6 +439,8 @@ export interface NoteEvent {
   midiNote: number;
   confidence: number;
   timestamp: number;
+  /** Estimated velocity (0–127) from RMS amplitude. Present on noteOn events. */
+  velocity?: number;
 }
 
 /**
@@ -461,6 +466,14 @@ export class NoteTracker {
   private readonly minConfirmations: number;
   /** Max unvoiced frames a candidate can survive before resetting */
   private readonly maxCandidateGap: number;
+  /**
+   * Last raw MIDI note detected — used for single-frame glitch protection.
+   * Only switch candidates when the new note appears in 2 consecutive frames,
+   * preventing YIN pitch detection noise from resetting an in-progress candidate.
+   */
+  private lastRawMidi: number | null = null;
+  /** Last RMS amplitude from a voiced frame — used for velocity estimation */
+  private lastRms = 0;
 
   constructor(config?: Partial<NoteTrackerConfig>) {
     this.config = { ...DEFAULT_TRACKER_CONFIG, ...config };
@@ -480,6 +493,17 @@ export class NoteTracker {
     return () => { this.callback = null; };
   }
 
+  /**
+   * Estimate MIDI velocity (0–127) from RMS amplitude.
+   * Maps iPhone mic piano RMS range (0.002–0.05) to velocity 40–120.
+   * Linear mapping: simple, predictable, sufficient for feedback.
+   */
+  private velocityFromRms(rms: number): number {
+    // Piano on iPhone mic: ppp ~0.002, ff ~0.05
+    const vel = Math.round(40 + 5600 * rms);
+    return Math.max(40, Math.min(120, vel));
+  }
+
   /** Feed a new pitch detection result */
   update(result: PitchResult): void {
     const now = result.timestamp;
@@ -487,11 +511,13 @@ export class NoteTracker {
     if (result.voiced && result.midiNote !== null) {
       this.lastVoicedTime = now;
       this.candidateGapCount = 0; // Reset gap counter on any voiced frame
+      this.lastRms = result.rms;
 
       if (result.midiNote === this.currentNote) {
         // Same note sustained — reset candidate
         this.candidateNote = null;
         this.candidateCount = 0;
+        this.lastRawMidi = result.midiNote;
         return;
       }
 
@@ -506,15 +532,52 @@ export class NoteTracker {
           this.currentNote = result.midiNote;
           this.candidateNote = null;
           this.candidateCount = 0;
-          this.emit({ type: 'noteOn', midiNote: this.currentNote, confidence: result.confidence, timestamp: now });
+          this.emit({
+            type: 'noteOn',
+            midiNote: this.currentNote,
+            confidence: result.confidence,
+            timestamp: now,
+            velocity: this.velocityFromRms(this.lastRms),
+          });
         }
       } else {
-        // New candidate — start fresh
-        this.candidateNote = result.midiNote;
-        this.candidateCount = 1;
+        // Different note than current candidate.
+        // Single-frame glitch protection: YIN commonly produces 1-frame pitch
+        // errors (wrong MIDI note) due to room reverb, transients, or harmonics.
+        // Only switch candidate when the new note appeared in the PREVIOUS frame
+        // too (2 consecutive frames of the same new note = real transition).
+        // This prevents a single glitch frame from resetting an in-progress
+        // candidate, which would delay detection by 2+ extra frames (~100ms+).
+        if (this.candidateNote === null || this.candidateCount === 0 || result.midiNote === this.lastRawMidi) {
+          // Accept: no existing candidate, or candidate unconfirmed, or 2 consecutive frames agree
+          this.candidateNote = result.midiNote;
+          this.candidateCount = result.midiNote === this.lastRawMidi ? 2 : 1;
+          // Check immediate confirmation (when lastRawMidi match gives count=2)
+          if (this.candidateCount >= this.minConfirmations) {
+            if (this.currentNote !== null) {
+              this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
+            }
+            this.currentNote = result.midiNote;
+            this.candidateNote = null;
+            this.candidateCount = 0;
+            this.emit({
+              type: 'noteOn',
+              midiNote: this.currentNote,
+              confidence: result.confidence,
+              timestamp: now,
+              velocity: this.velocityFromRms(this.lastRms),
+            });
+          }
+        }
+        // else: single-frame outlier — ignore, keep current candidate intact
       }
+
+      this.lastRawMidi = result.midiNote;
     } else {
-      // Unvoiced frame — allow candidate to survive a few gaps before resetting.
+      // Unvoiced frame
+      this.lastRawMidi = null;
+
+      // Allow candidate to survive a few gaps before resetting.
       // Mic audio often has intermittent unvoiced frames due to buffer drops
       // or transient noise. Without gap tolerance, the candidate resets and
       // notes need to restart their confirmation count from scratch.
@@ -546,6 +609,8 @@ export class NoteTracker {
     this.candidateCount = 0;
     this.candidateGapCount = 0;
     this.lastVoicedTime = 0;
+    this.lastRawMidi = null;
+    this.lastRms = 0;
   }
 
   /** Get currently active note (or null) */
@@ -555,7 +620,10 @@ export class NoteTracker {
 
   private emit(event: NoteEvent): void {
     if (event.type === 'noteOn') {
-      logger.log(`[NoteTracker] noteOn: MIDI ${event.midiNote} (conf=${event.confidence.toFixed(2)}, confirmations=${this.minConfirmations})`);
+      logger.log(
+        `[NoteTracker] noteOn: MIDI ${event.midiNote} ` +
+        `(conf=${event.confidence.toFixed(2)}, vel=${event.velocity ?? '-'}, confirmations=${this.minConfirmations})`
+      );
     } else {
       logger.log(`[NoteTracker] noteOff: MIDI ${event.midiNote}`);
     }

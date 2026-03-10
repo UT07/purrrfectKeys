@@ -37,6 +37,7 @@ import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuthStore } from '../stores/authStore';
 import { logger } from '../utils/logger';
+import { analyticsEvents } from '../services/analytics/PostHog';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 type SongPlayerRouteProp = RouteProp<RootStackParamList, 'SongPlayer'>;
@@ -364,6 +365,7 @@ export function SongPlayerScreen() {
       );
 
       updateMastery(updated);
+      analyticsEvents.song.completed(currentSong.id, lastScore.overall, updated.tier);
 
       // Gem reward on tier upgrade
       if (isBetterTier(updated.tier, oldTier)) {
@@ -408,6 +410,7 @@ export function SongPlayerScreen() {
     };
 
     logger.log(`[SongPlayer] Playing: ${exercise.id}, notes=${exercise.notes.length}, tempo=${exercise.settings.tempo}, countIn=${exercise.settings.countIn}`);
+    analyticsEvents.song.started(song.id, selectedSectionIndex ?? -1);
     setCurrentExercise(exercise);
     navigation.navigate('Exercise', { exerciseId: exercise.id });
   }, [song, selectedSectionIndex, layer, loop, setCurrentExercise, navigation]);

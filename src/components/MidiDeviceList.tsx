@@ -9,7 +9,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { PressableScale } from './common/PressableScale';
 import { getMidiInput } from '../input/MidiInput';
 import MidiDeviceManager from '../input/MidiDevice';
 import type { MidiInputState } from '../input/MidiInput';
@@ -324,10 +325,9 @@ export const MidiDeviceList: React.FC<MidiDeviceListProps> = ({
     const isSelected = selectedDeviceId === device.id;
 
     return (
-      <TouchableOpacity
+      <PressableScale
         onPress={() => handleSelectDevice(device)}
         disabled={!selectable}
-        activeOpacity={selectable ? 0.7 : 1}
       >
         <View
           style={[
@@ -417,29 +417,29 @@ export const MidiDeviceList: React.FC<MidiDeviceListProps> = ({
           {!selectable && (connected || allowForget) && (
             <View style={styles.deviceActions}>
               {connected && !isPreferred && (
-                <TouchableOpacity
+                <PressableScale
                   style={[styles.actionButton, styles.actionButtonPrimary]}
                   onPress={() => handleSetPreferred(device.id)}
                 >
                   <Text style={[styles.actionButtonText, styles.actionButtonTextLight]}>
                     Set as Default
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               )}
               {allowForget && (
-                <TouchableOpacity
+                <PressableScale
                   style={[styles.actionButton, styles.actionButtonDanger]}
                   onPress={() => handleForgetDevice(device.id)}
                 >
                   <Text style={[styles.actionButtonText, styles.actionButtonTextLight]}>
                     Forget
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               )}
             </View>
           )}
         </View>
-      </TouchableOpacity>
+      </PressableScale>
     );
   };
 

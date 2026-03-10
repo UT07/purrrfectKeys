@@ -30,7 +30,6 @@ import { ReviewChallengeCard } from '../components/ReviewChallengeCard';
 import { useSongStore } from '../stores/songStore';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
-import { StreakFlame } from '../components/StreakFlame';
 import { getRandomCatMessage } from '../content/catDialogue';
 import { calculateCatMood } from '../core/catMood';
 import { useProgressStore } from '../stores/progressStore';
@@ -45,6 +44,8 @@ import { SKILL_TREE, getSkillById } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { useAuthStore } from '../stores/authStore';
+import { FriendActivityStrip } from '../components/FriendActivityStrip';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -312,6 +313,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const streak = streakData?.currentStreak ?? 0;
 
+  // Auth state (for conditional friend activity strip)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAnonymous = useAuthStore((s) => s.isAnonymous);
+
   // Song library data for spotlight card
   const songSummaries = useSongStore((s) => s.summaries);
   const totalSongs = songSummaries.length || 124;
@@ -407,13 +412,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     size="large"
                     mood={mascotMood}
                     evolutionStage={activeCatEvolution?.currentStage}
+                    showTooltipOnTap={false}
                   />
                 </View>
               </View>
 
               {/* Streak flame + level badge row */}
               <View style={styles.heroStats}>
-                <StreakFlame streak={streak} size="small" />
+                <View style={styles.streakBadge}>
+                  <MaterialCommunityIcons name="fire" size={16} color={COLORS.starGold} />
+                  <Text style={styles.streakText}>{streak}</Text>
+                </View>
                 <View style={styles.levelBadge}>
                   <MaterialCommunityIcons name="shield-star" size={18} color={COLORS.starGold} />
                   <Text style={styles.levelText}>Lv. {level}</Text>
@@ -461,8 +470,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </Animated.View>
 
+        {/* Friend Activity Strip (authenticated non-anonymous users only) */}
+        {isAuthenticated && !isAnonymous && (
+          <Animated.View style={[styles.section, staggerStyle(1)]}>
+            <FriendActivityStrip />
+          </Animated.View>
+        )}
+
+        {/* Quick Stats Row */}
+        <Animated.View style={[styles.section, staggerStyle(1)]}>
+          <View style={styles.statsPillRow}>
+            <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
+            <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
+            <StatPill icon="fire" label="Streak" value={streak} color={COLORS.starGold} />
+            <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
+          </View>
+        </Animated.View>
+
         {/* Today's Practice */}
-        <Animated.View style={[styles.section, staggerStyle(1), { transform: [{ scale: pulseAnim }] }]}>
+        <Animated.View style={[styles.section, staggerStyle(2), { transform: [{ scale: pulseAnim }] }]}>
           <GameCard rarity="rare" testID="practice-game-card">
             <View style={styles.practiceHeader}>
               <Text style={styles.sectionTitle}>Today's Practice</Text>
@@ -488,7 +514,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Animated.View>
 
         {/* Daily Challenge Card */}
-        <Animated.View style={[styles.section, staggerStyle(2), { transform: [{ translateX: shakeAnim }] }]}>
+        <Animated.View style={[styles.section, staggerStyle(3), { transform: [{ translateX: shakeAnim }] }]}>
           <GameCard rarity="epic" testID="challenge-game-card">
             <DailyChallengeCard masteredSkills={masteredSkills} onPress={() => {
               const challenge = getDailyChallengeForDate(today, masteredSkills);
@@ -502,41 +528,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </GameCard>
         </Animated.View>
 
-        {/* Daily Reward Calendar */}
-        <Animated.View style={[styles.section, staggerStyle(3)]}>
-          <DailyRewardCalendar
-            days={dailyRewards.days}
-            currentDay={dailyRewards.currentDay}
-            onClaim={(day) => claimDailyReward(day)}
-            dailyChallengeCompleted={isDailyChallengeCompleted()}
-          />
-        </Animated.View>
-
-        {/* Quick Stats Row */}
-        <Animated.View style={[styles.section, staggerStyle(4)]}>
-          <View style={styles.statsPillRow}>
-            <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
-            <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
-            <StatPill icon="fire" label="Streak" value={streak} color={COLORS.streakFlame} />
-            <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
-          </View>
-        </Animated.View>
-
-        {/* Music Library Spotlight */}
-        <Animated.View style={[styles.section, staggerStyle(5)]}>
-          <GameCard rarity="common" testID="music-library-game-card">
-            <MusicLibrarySpotlight
-              totalSongs={totalSongs}
-              totalGenres={genres}
-              featuredSong={featuredSong}
-              onBrowse={() => navigation.navigate('MainTabs', { screen: 'Songs' })}
-              onPlayFeatured={() => navigation.navigate('MainTabs', { screen: 'Songs' })}
-            />
-          </GameCard>
-        </Animated.View>
-
         {/* Free Play */}
-        <Animated.View style={[styles.section, staggerStyle(6)]}>
+        <Animated.View style={[styles.section, staggerStyle(4)]}>
           <PressableScale haptic onPress={() => navigation.navigate('FreePlay')}>
             <View style={styles.freePlayOuter}>
               <View style={styles.freePlayCard} testID="free-play-card">
@@ -569,6 +562,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
             </View>
           </PressableScale>
+        </Animated.View>
+
+        {/* Music Library Spotlight */}
+        <Animated.View style={[styles.section, staggerStyle(5)]}>
+          <GameCard rarity="common" testID="music-library-game-card">
+            <MusicLibrarySpotlight
+              totalSongs={totalSongs}
+              totalGenres={genres}
+              featuredSong={featuredSong}
+              onBrowse={() => navigation.navigate('MainTabs', { screen: 'Songs' })}
+              onPlayFeatured={() => navigation.navigate('MainTabs', { screen: 'Songs' })}
+            />
+          </GameCard>
+        </Animated.View>
+
+        {/* Daily Reward Calendar */}
+        <Animated.View style={[styles.section, staggerStyle(6)]}>
+          <DailyRewardCalendar
+            days={dailyRewards.days}
+            currentDay={dailyRewards.currentDay}
+            onClaim={(day) => claimDailyReward(day)}
+            dailyChallengeCompleted={isDailyChallengeCompleted()}
+          />
         </Animated.View>
 
         {/* Review Challenge (conditional — only when skills are decaying) */}
@@ -772,6 +788,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     marginTop: SPACING.sm,
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.starGold, 0.2),
+  },
+  streakText: {
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
+    color: COLORS.starGold,
   },
   levelBadge: {
     flexDirection: 'row',

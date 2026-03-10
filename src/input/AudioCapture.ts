@@ -276,9 +276,14 @@ export class AudioCapture {
  */
 export function configureAudioSessionForRecording(): void {
   try {
+    // 'measurement' mode disables Apple's voice processing (AGC, noise
+    // suppression, echo cancellation) which crushes gain for instrument
+    // detection. With 'default' mode, mic amplitude is ~0.001 even when
+    // playing piano nearby. 'measurement' provides raw, unprocessed audio
+    // with much higher gain — essential for pitch detection.
     AudioManager.setAudioSessionOptions({
       iosCategory: 'playAndRecord',
-      iosMode: 'default',
+      iosMode: 'measurement',
       iosOptions: ['defaultToSpeaker', 'allowBluetooth'],
       iosAllowHaptics: true,
     });

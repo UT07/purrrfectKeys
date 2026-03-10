@@ -32,6 +32,7 @@ import { POSE_CONFIGS } from './animations/catAnimations';
 import type { CatPose } from './animations/catAnimations';
 import { useMicroAnimations } from './animations/useMicroAnimations';
 import { useMoodTransition } from './animations/useMoodTransition';
+import { glowColor } from '@/theme/tokens';
 
 export type CatAvatarSize = 'small' | 'medium' | 'large' | 'hero';
 
@@ -57,6 +58,8 @@ interface CatAvatarProps {
   showGlow?: boolean;
   /** Evolution stage — adds visual accessories/effects. Defaults to 'baby'. */
   evolutionStage?: EvolutionStage;
+  /** Extra accessory render names to overlay (e.g. from Cat Studio preview) */
+  extraAccessoryNames?: string[];
 }
 
 /** Floating idle: gentle up-down bob + slight scale pulse */
@@ -144,6 +147,7 @@ export function CatAvatar({
   skipEntryAnimation = false,
   showGlow = false,
   evolutionStage,
+  extraAccessoryNames,
 }: CatAvatarProps): ReactElement {
   const cat: CatCharacter = getCatById(catId) ?? getDefaultCat();
   const [showTooltip, setShowTooltip] = useState(false);
@@ -195,7 +199,7 @@ export function CatAvatar({
                 width: glowSize,
                 height: glowSize,
                 borderRadius: glowSize / 2,
-                backgroundColor: cat.color + '40',
+                backgroundColor: glowColor(cat.color, 0.25),
                 left: -8,
                 top: -8,
               },
@@ -211,8 +215,8 @@ export function CatAvatar({
               width: dimension,
               height: dimension,
               borderRadius: dimension / 2,
-              backgroundColor: cat.color + '18',
-              borderColor: cat.color + '60',
+              backgroundColor: glowColor(cat.color, 0.09),
+              borderColor: glowColor(cat.color, 0.38),
             },
             entryStyle,
           ]}
@@ -228,6 +232,7 @@ export function CatAvatar({
               evolutionStage={evolutionStage}
               catId={catId}
               microAnimations={pose ? undefined : { ...microAnims, faceScaleY: moodTransition.faceScaleY }}
+              extraAccessoryNames={extraAccessoryNames}
             />
           </Animated.View>
         </Animated.View>
@@ -236,7 +241,7 @@ export function CatAvatar({
       {showTooltip && (
         <Animated.View
           entering={FadeIn.duration(200)}
-          style={[styles.tooltip, { backgroundColor: cat.color + 'DD' }]}
+          style={[styles.tooltip, { backgroundColor: glowColor(cat.color, 0.87) }]}
         >
           <Text style={styles.tooltipName}>{cat.name}</Text>
           <Text style={styles.tooltipSkill}>{cat.musicSkill}</Text>

@@ -35,26 +35,30 @@ export async function buildReplayPlan(
     0,
   );
 
-  // Try Gemini AI for intelligent pause points
+  // Try Gemini AI for intelligent pause points (only if there are actual mistakes)
   let pausePoints = selectAlgorithmicPausePoints(score.details);
   let comments = generateFallbackComments(score.details, totalBeats);
   let summary = generateFallbackSummary(score.details, score.overall);
 
-  try {
-    const aiResponse = await callGeminiReplay(
-      exercise.metadata.title,
-      exercise.metadata.difficulty,
-      score.details,
-      score.overall,
-    );
-    if (aiResponse) {
-      pausePoints = aiResponse.pausePoints;
-      comments = aiResponse.continuousComments;
-      summary = aiResponse.summary;
-      logger.log('[ReplayCoaching] Using Gemini AI response');
+  // Skip Gemini for high scores — no mistakes to analyze, and AI may hallucinate
+  // issues by comparing exercise title (e.g. "C practice") with actual notes (e.g. A)
+  if (score.overall < 95 && pausePoints.length > 0) {
+    try {
+      const aiResponse = await callGeminiReplay(
+        exercise.metadata.title,
+        exercise.metadata.difficulty,
+        score.details,
+        score.overall,
+      );
+      if (aiResponse) {
+        pausePoints = aiResponse.pausePoints;
+        comments = aiResponse.continuousComments;
+        summary = aiResponse.summary;
+        logger.log('[ReplayCoaching] Using Gemini AI response');
+      }
+    } catch (error) {
+      logger.warn('[ReplayCoaching] Gemini failed, using algorithmic fallback:', error);
     }
-  } catch (error) {
-    logger.warn('[ReplayCoaching] Gemini failed, using algorithmic fallback:', error);
   }
 
   const speedZones = buildSpeedZones(entries, pausePoints, totalBeats);

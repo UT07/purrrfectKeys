@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -17,6 +17,8 @@ import Animated, {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { COLORS } from '../theme/tokens';
+import { useSocialStore } from '../stores/socialStore';
+import { useAuthStore } from '../stores/authStore';
 
 // ---------------------------------------------------------------------------
 // Icon config per tab route
@@ -56,6 +58,7 @@ interface TabButtonProps {
   onPress: () => void;
   onLongPress: () => void;
   testID?: string;
+  badgeCount?: number;
 }
 
 function TabButton({
@@ -64,6 +67,7 @@ function TabButton({
   onPress,
   onLongPress,
   testID,
+  badgeCount,
 }: TabButtonProps): React.ReactElement {
   const iconConfig = TAB_ICONS[routeName] ?? TAB_ICONS.Home;
 
@@ -111,6 +115,11 @@ function TabButton({
         {isFocused && (
           <View style={styles.iconGlow} />
         )}
+        {badgeCount != null && badgeCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
+          </View>
+        )}
       </Animated.View>
       <Animated.View style={[styles.indicator, indicatorAnimatedStyle]} />
     </TouchableOpacity>
@@ -127,6 +136,19 @@ export function CustomTabBar({
   navigation,
 }: BottomTabBarProps): React.ReactElement {
   const insets = useSafeAreaInsets();
+
+  // Count pending challenges where current user is the recipient
+  const myUid = useAuthStore((s) => s.user?.uid);
+  const pendingChallengeCount = useSocialStore((s) =>
+    s.challenges.filter((c) => c.status === 'pending' && c.toUid === myUid).length,
+  );
+
+  // Count pending incoming friend requests
+  const pendingFriendCount = useSocialStore((s) =>
+    s.friends.filter((f) => f.status === 'pending_incoming').length,
+  );
+
+  const socialBadge = pendingChallengeCount + pendingFriendCount;
 
   return (
     <View
@@ -171,6 +193,7 @@ export function CustomTabBar({
             onPress={onPress}
             onLongPress={onLongPress}
             testID={testID}
+            badgeCount={route.name === 'Social' ? socialBadge : undefined}
           />
         );
       })}
@@ -215,6 +238,24 @@ const styles = StyleSheet.create({
       },
       default: {},
     }),
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 12,
   },
   indicator: {
     width: INDICATOR_WIDTH,

@@ -34,6 +34,7 @@ import { addLeagueXp } from '@/services/firebase/leagueService';
 import { postActivity } from '@/services/firebase/socialService';
 import { auth } from '@/services/firebase/config';
 import { logger } from '@/utils/logger';
+import { analyticsEvents, updateUserAnalyticsProperties } from '@/services/analytics/PostHog';
 
 /** Fire-and-forget with one retry after 2s delay. Logs failures but never throws. */
 function fireAndRetry(fn: () => Promise<unknown>, label: string): void {
@@ -106,6 +107,16 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     });
     const newLevel = get().level;
 
+    // Analytics: track XP earned and level-ups
+    analyticsEvents.progress.xpEarned(amount, 'addXp');
+    if (newLevel > oldLevel) {
+      analyticsEvents.progress.levelUp(newLevel, get().totalXp);
+    }
+    updateUserAnalyticsProperties({
+      level: newLevel,
+      currentStreak: get().streakData.currentStreak,
+    });
+
     // Post level-up activity (fire-and-forget with logged failure)
     if (newLevel > oldLevel && auth.currentUser && !auth.currentUser.isAnonymous) {
       postActivity(auth.currentUser.uid, {
@@ -128,9 +139,21 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   updateStreakData: (data: Partial<StreakData>) => {
+    const oldStreak = get().streakData.currentStreak;
     set((state) => ({
       streakData: { ...state.streakData, ...data },
     }));
+    const newStreak = get().streakData.currentStreak;
+
+    // Analytics: track streak changes
+    if (data.currentStreak !== undefined) {
+      if (newStreak > oldStreak) {
+        analyticsEvents.progress.streakAchieved(newStreak);
+      } else if (newStreak === 0 && oldStreak > 0) {
+        analyticsEvents.progress.streakBroken(oldStreak);
+      }
+    }
+
     debouncedSave(get());
   },
 
@@ -220,13 +243,11 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     const userMinutesTarget = useSettingsStore.getState().dailyGoalMinutes ?? 10;
 
     // ── Daily challenge check (before XP so we can apply xpMultiplier) ──
-    // Guard: check lastDailyChallengeDate directly to prevent race conditions
-    // where two rapid completions both read isDailyChallengeCompleted() as false
-    const evState = useCatEvolutionStore.getState();
-    const challengeAlreadyDone = evState.lastDailyChallengeDate === today;
+    // Re-read state at the moment of the check to ensure we see the latest
+    // value of lastDailyChallengeDate (defensive against rapid calls)
     let xpMultiplier = 1;
 
-    if (!challengeAlreadyDone) {
+    if (useCatEvolutionStore.getState().lastDailyChallengeDate !== today) {
       const masteredSkills = useLearnerProfileStore.getState().masteredSkills ?? [];
       const challenge = getDailyChallengeForDate(today, masteredSkills);
       const ctx: ExerciseChallengeContext = challengeContext ?? {
@@ -328,6 +349,17 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     if (dailyGoalJustCompleted) {
       useGemStore.getState().earnGems(10, 'daily-goal');
     }
+
+    // Analytics: track XP earned and level-ups from exercise completion
+    analyticsEvents.progress.xpEarned(effectiveXp, 'exercise_completion');
+    const postExLevel = get().level;
+    if (postExLevel > oldLevel) {
+      analyticsEvents.progress.levelUp(postExLevel, get().totalXp);
+    }
+    updateUserAnalyticsProperties({
+      level: postExLevel,
+      currentStreak: get().streakData.currentStreak,
+    });
 
     // BUG-023 fix: Streak gem milestones — only award once per milestone
     const streak = get().streakData.currentStreak;

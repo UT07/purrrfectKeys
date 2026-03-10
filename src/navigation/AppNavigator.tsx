@@ -61,6 +61,11 @@ export type RootStackParamList = {
     };
     /** Pre-generated bonus drill exercise from WeakSpotDetector */
     bonusDrillExercise?: Exercise;
+    /** Friend challenge target — when set, completion creates a FriendChallenge */
+    challengeTarget?: {
+      uid: string;
+      displayName: string;
+    };
   };
   TierIntro: { tier: number; locked?: boolean };
   SkillAssessment: undefined;

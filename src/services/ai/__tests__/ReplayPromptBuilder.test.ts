@@ -19,10 +19,11 @@ const makeNoteScore = (beat: number, overrides: Partial<NoteScore> = {}): NoteSc
 });
 
 describe('buildReplayPrompt', () => {
-  it('includes exercise title and score', () => {
+  it('includes actual note names and score', () => {
     const details = [makeNoteScore(0), makeNoteScore(1)];
     const prompt = buildReplayPrompt('C Scale', 2, details, 85);
-    expect(prompt).toContain('C Scale');
+    // Prompt uses actual note names from details, not the exercise title
+    expect(prompt).toContain('C4');
     expect(prompt).toContain('85%');
   });
 

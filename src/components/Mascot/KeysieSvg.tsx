@@ -8,6 +8,7 @@ import { MASCOT_SIZES } from './types';
 import type { MascotMood, MascotSize } from './types';
 import type { CatPattern, CatVisuals } from './catCharacters';
 import type { EvolutionStage } from '@/stores/types';
+import { glowColor } from '@/theme/tokens';
 
 // Animated.createAnimatedComponent(G) works at runtime but TS can't see the
 // added `style` prop. Cast to accept style for SVG transform animations.
@@ -69,6 +70,8 @@ interface KeysieSvgProps {
   catId?: string;
   /** Micro-animation shared values — when provided, wraps SVG groups with animated transforms */
   microAnimations?: MicroAnimationProps;
+  /** Extra accessory render names to overlay on the cat (e.g. from Cat Studio preview) */
+  extraAccessoryNames?: string[];
 }
 
 const DEFAULT_BODY = '#3A3A3A';
@@ -184,6 +187,7 @@ function renderComposable(
   pattern: CatPattern,
   evolutionStage: EvolutionStage,
   animStyles?: MicroAnimatedStyles,
+  extraAccessoryNames?: string[],
 ): ReactElement {
   const profile = getCatProfile(catId);
   const cat = getCatById(catId);
@@ -216,13 +220,13 @@ function renderComposable(
         <AnimatedG style={animStyles.bodyStyle}>
           <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} bellyColor={bellyColor} />
           <CatChestTuft color={bodyColor} />
-          <CatPaws color={bodyColor} bodyType={profile.body} beanColor={earInnerColor + '80'} />
+          <CatPaws color={bodyColor} bodyType={profile.body} beanColor={glowColor(earInnerColor, 0.50)} />
         </AnimatedG>
       ) : (
         <>
           <CatBody type={profile.body} color={bodyColor} gradientFill={gradId(catId, 'body')} bellyColor={bellyColor} />
           <CatChestTuft color={bodyColor} />
-          <CatPaws color={bodyColor} bodyType={profile.body} beanColor={earInnerColor + '80'} />
+          <CatPaws color={bodyColor} bodyType={profile.body} beanColor={glowColor(earInnerColor, 0.50)} />
         </>
       )}
 
@@ -291,6 +295,10 @@ function renderComposable(
 
       {/* Evolution accessories */}
       {accessories.length > 0 && renderAccessories(accessories, accent)}
+
+      {/* Extra accessories (Cat Studio preview / equipped shop items) */}
+      {extraAccessoryNames && extraAccessoryNames.length > 0 &&
+        renderAccessories(extraAccessoryNames, accent)}
     </G>
   );
 }
@@ -390,6 +398,7 @@ export function KeysieSvg({
   evolutionStage = 'baby',
   catId,
   microAnimations,
+  extraAccessoryNames,
 }: KeysieSvgProps): ReactElement {
   const px = pixelSize ?? MASCOT_SIZES[size];
 
@@ -403,11 +412,25 @@ export function KeysieSvg({
   const accentDark = visuals ? darkenColor(visuals.noseColor, 0.5) : (accentColor ? darkenColor(accentColor, 0.5) : DARK_RED);
   const pattern = visuals?.pattern ?? 'solid';
 
+  // SVG pivot points in the 100×100 viewBox for transform origin compensation.
+  // Without these, AnimatedG transforms default to (0,0) causing visible drift.
+  const TAIL_PIVOT_X = 65;
+  const TAIL_PIVOT_Y = 75;
+  const EAR_PIVOT_X = 50;
+  const EAR_PIVOT_Y = 12;
+  const EYE_CENTER_Y = 36;
+
   // Pre-compute animated styles via useAnimatedStyle (avoids inline .value access
   // which triggers Reanimated Babel plugin issues in test environments)
   const tailStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
-    return { transform: [{ rotate: `${microAnimations.tailRotate.value}deg` }] };
+    return { transform: [
+      { translateX: TAIL_PIVOT_X },
+      { translateY: TAIL_PIVOT_Y },
+      { rotate: `${microAnimations.tailRotate.value}deg` },
+      { translateX: -TAIL_PIVOT_X },
+      { translateY: -TAIL_PIVOT_Y },
+    ] };
   });
   const bodyStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
@@ -418,11 +441,21 @@ export function KeysieSvg({
   });
   const earStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
-    return { transform: [{ rotate: `${microAnimations.leftEarRotate.value}deg` }] };
+    return { transform: [
+      { translateX: EAR_PIVOT_X },
+      { translateY: EAR_PIVOT_Y },
+      { rotate: `${microAnimations.leftEarRotate.value}deg` },
+      { translateX: -EAR_PIVOT_X },
+      { translateY: -EAR_PIVOT_Y },
+    ] };
   });
   const eyeStyle = useAnimatedStyle(() => {
     if (!microAnimations) return {};
-    return { transform: [{ scaleY: microAnimations.eyeScaleY.value }] };
+    const sy = microAnimations.eyeScaleY.value;
+    return { transform: [
+      { translateY: EYE_CENTER_Y * (1 - sy) },
+      { scaleY: sy },
+    ] };
   });
   const faceStyle = useAnimatedStyle(() => {
     if (!microAnimations?.faceScaleY) return {};
@@ -447,11 +480,11 @@ export function KeysieSvg({
       testID="keysie-svg"
     >
       {catId
-        ? (renderFigmaCat(catId, animStyles) ??
+        ? (renderFigmaCat(catId, animStyles, extraAccessoryNames, accent) ??
           renderComposable(
             catId, mood, bodyColor, bellyColor, earInnerColor,
             eyeColor, noseColor, accent, accentDark, pattern, evolutionStage,
-            animStyles,
+            animStyles, extraAccessoryNames,
           ))
         : renderLegacy(
             mood, bodyColor, bellyColor, earInnerColor,

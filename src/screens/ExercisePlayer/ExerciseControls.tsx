@@ -10,11 +10,11 @@ import {
   StyleSheet,
   AccessibilityInfo,
   Platform,
-  TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/tokens';
 import { Button } from '../../components/common/Button';
+import { PressableScale } from '../../components/common/PressableScale';
 
 export interface ExerciseControlsProps {
   isPlaying: boolean;
@@ -67,48 +67,52 @@ export const ExerciseControls: React.FC<ExerciseControlsProps> = ({
     return (
       <View style={styles.compactContainer} testID={testID}>
         {!isPlaying ? (
-          <TouchableOpacity
+          <PressableScale
             onPress={handlePlayPress}
             style={styles.compactButton}
             testID="control-play"
             accessibilityLabel="Play exercise"
+            soundOnPress={false}
           >
             <MaterialCommunityIcons name="play" size={20} color={COLORS.primary} />
-          </TouchableOpacity>
+          </PressableScale>
         ) : (
-          <TouchableOpacity
+          <PressableScale
             onPress={handlePausePress}
             style={styles.compactButton}
             testID="control-pause"
             accessibilityLabel={isPaused ? 'Resume' : 'Pause'}
+            soundOnPress={false}
           >
             <MaterialCommunityIcons
               name={isPaused ? 'play' : 'pause'}
               size={20}
               color={COLORS.primary}
             />
-          </TouchableOpacity>
+          </PressableScale>
         )}
 
         {isPlaying && (
-          <TouchableOpacity
+          <PressableScale
             onPress={handleRestartPress}
             style={styles.compactButton}
             testID="control-restart"
             accessibilityLabel="Restart"
+            soundOnPress={false}
           >
             <MaterialCommunityIcons name="restart" size={20} color={COLORS.feedbackDefault} />
-          </TouchableOpacity>
+          </PressableScale>
         )}
 
-        <TouchableOpacity
+        <PressableScale
           onPress={handleExitPress}
           style={styles.compactButton}
           testID="control-exit"
           accessibilityLabel="Exit"
+          soundOnPress={false}
         >
           <MaterialCommunityIcons name="close" size={20} color={COLORS.error} />
-        </TouchableOpacity>
+        </PressableScale>
       </View>
     );
   }

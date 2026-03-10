@@ -9,7 +9,8 @@
 
 import { useCallback } from 'react';
 import type { ReactElement } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { PressableScale } from './common/PressableScale';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '../theme/tokens';
 import type { DailyRewardDay } from '../stores/types';
 
 const DAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -94,10 +95,9 @@ function DayCell({
   }, [isClaimable, onClaim]);
 
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={handlePress}
       disabled={!isClaimable}
-      activeOpacity={0.7}
     >
       <Animated.View
         style={[
@@ -135,7 +135,7 @@ function DayCell({
            day.reward.amount}
         </Text>
       </Animated.View>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -221,15 +221,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dayCellClaimed: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    backgroundColor: glowColor(COLORS.success, 0.1),
+    borderColor: glowColor(COLORS.success, 0.3),
   },
   dayCellToday: {
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
     borderWidth: 2,
   },
   dayCellMissed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: glowColor(COLORS.textPrimary, 0.03),
     opacity: 0.5,
   },
   dayLabel: {

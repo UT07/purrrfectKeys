@@ -165,7 +165,7 @@ describe('generateDrillParams', () => {
   it('generates params for note pattern (low difficulty, 8 notes)', () => {
     const pattern: WeakPattern = {
       type: 'note',
-      description: 'Weak note: MIDI 62',
+      description: 'Weak note: D4',
       severity: 0.5,
       targetMidi: [62],
     };
@@ -179,7 +179,7 @@ describe('generateDrillParams', () => {
   it('generates params for transition pattern (difficulty 2, 12 notes)', () => {
     const pattern: WeakPattern = {
       type: 'transition',
-      description: 'Weak transition: MIDI 60 to 62',
+      description: 'Weak transition: C4 to D4',
       severity: 0.6,
       targetMidi: [60, 62],
     };

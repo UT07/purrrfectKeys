@@ -1,20 +1,26 @@
 /**
  * PostHog Analytics Integration
  * Tracks user behavior and app events for analytics
+ *
+ * Uses posthog-react-native v4 instance-based API.
  */
 
-import PostHog from 'posthog-react-native';
+import { PostHog } from 'posthog-react-native';
 import { logger } from '../../utils/logger';
 
 // ============================================================================
 // PostHog Initialization
 // ============================================================================
 
+/** Module-level PostHog instance (created lazily on initialize) */
+let posthogInstance: PostHog | null = null;
+
 export class AnalyticsService {
   private static initialized = false;
 
   /**
-   * Initialize PostHog analytics
+   * Initialize PostHog analytics.
+   * Creates a singleton PostHog instance with the v4 constructor API.
    */
   static initialize(): void {
     if (this.initialized) {
@@ -28,16 +34,14 @@ export class AnalyticsService {
     }
 
     try {
-      PostHog.setupWithApiKey(apiKey, {
+      posthogInstance = new PostHog(apiKey, {
         host: 'https://us.posthog.com',
-        captureApplicationLifecycleEvents: true,
-        recordScreenViews: true,
-        enableSessionReplay: true,
-        // Don't capture PII
-        captureLaunchOptions: false,
+        captureAppLifecycleEvents: true,
+        enableSessionReplay: false,
       });
 
       this.initialized = true;
+      logger.log('[Analytics] PostHog initialized');
     } catch (error) {
       console.error('Failed to initialize PostHog:', error);
     }
@@ -47,12 +51,12 @@ export class AnalyticsService {
    * Set user identity
    */
   static identifyUser(userId: string, properties?: Record<string, any>): void {
-    if (!this.initialized) {
+    if (!this.initialized || !posthogInstance) {
       return;
     }
 
     try {
-      PostHog.identify(userId, properties);
+      posthogInstance.identify(userId, properties);
     } catch (error) {
       console.error('Failed to identify user:', error);
     }
@@ -62,12 +66,12 @@ export class AnalyticsService {
    * Set user properties
    */
   static setUserProperties(properties: Record<string, any>): void {
-    if (!this.initialized) {
+    if (!this.initialized || !posthogInstance) {
       return;
     }
 
     try {
-      PostHog.setPersonProperties(properties);
+      posthogInstance.setPersonProperties(properties);
     } catch (error) {
       console.error('Failed to set user properties:', error);
     }
@@ -77,12 +81,12 @@ export class AnalyticsService {
    * Track event
    */
   static trackEvent(eventName: string, properties?: Record<string, any>): void {
-    if (!this.initialized) {
+    if (!this.initialized || !posthogInstance) {
       return;
     }
 
     try {
-      PostHog.capture(eventName, properties);
+      posthogInstance.capture(eventName, properties);
     } catch (error) {
       console.error('Failed to track event:', error);
     }
@@ -92,12 +96,12 @@ export class AnalyticsService {
    * Reset analytics (when user logs out)
    */
   static reset(): void {
-    if (!this.initialized) {
+    if (!this.initialized || !posthogInstance) {
       return;
     }
 
     try {
-      PostHog.reset();
+      posthogInstance.reset();
     } catch (error) {
       console.error('Failed to reset analytics:', error);
     }
@@ -107,12 +111,12 @@ export class AnalyticsService {
    * Flush pending events
    */
   static flush(): void {
-    if (!this.initialized) {
+    if (!this.initialized || !posthogInstance) {
       return;
     }
 
     try {
-      PostHog.flush();
+      posthogInstance.flush();
     } catch (error) {
       console.error('Failed to flush analytics:', error);
     }
@@ -126,9 +130,9 @@ export class AnalyticsService {
 export const analyticsEvents = {
   // Authentication events
   auth: {
-    signUp: (method: 'email' | 'google') =>
+    signUp: (method: 'email' | 'google' | 'apple') =>
       AnalyticsService.trackEvent('auth_sign_up', { method }),
-    signIn: (method: 'email' | 'google') =>
+    signIn: (method: 'email' | 'google' | 'apple' | 'anonymous') =>
       AnalyticsService.trackEvent('auth_sign_in', { method }),
     signOut: () => AnalyticsService.trackEvent('auth_sign_out'),
     passwordReset: () => AnalyticsService.trackEvent('auth_password_reset'),
@@ -262,6 +266,34 @@ export const analyticsEvents = {
     upgradePurchased: (tier: string, price: number) =>
       AnalyticsService.trackEvent('upgrade_purchased', { tier, price }),
     upgradeRestored: () => AnalyticsService.trackEvent('upgrade_restored'),
+  },
+
+  // Replay/coaching events
+  replay: {
+    triggered: (exerciseId: string, score: number, autoTriggered: boolean) =>
+      AnalyticsService.trackEvent('replay_triggered', { exerciseId, score, autoTriggered }),
+    completed: (exerciseId: string) =>
+      AnalyticsService.trackEvent('replay_completed', { exerciseId }),
+    skipped: (exerciseId: string) =>
+      AnalyticsService.trackEvent('replay_skipped', { exerciseId }),
+  },
+
+  // Song events
+  song: {
+    started: (songId: string, sectionIndex: number) =>
+      AnalyticsService.trackEvent('song_started', { songId, sectionIndex }),
+    completed: (songId: string, score: number, masteryTier: string) =>
+      AnalyticsService.trackEvent('song_completed', { songId, score, masteryTier }),
+  },
+
+  // Cat companion events
+  cat: {
+    selected: (catId: string) =>
+      AnalyticsService.trackEvent('cat_selected', { catId }),
+    evolved: (catId: string, newStage: string) =>
+      AnalyticsService.trackEvent('cat_evolved', { catId, newStage }),
+    unlocked: (catId: string, cost: number) =>
+      AnalyticsService.trackEvent('cat_unlocked', { catId, cost }),
   },
 };
 

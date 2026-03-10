@@ -288,14 +288,21 @@ export async function addXp(uid: string, amount: number, source: string): Promis
     await createGamificationData(uid);
   }
 
-  const currentData = (await getGamificationData(uid))!;
-  const newXp = currentData.xp + amount;
-  const newLevel = calculateLevel(newXp);
-
+  // Use atomic increment() to prevent concurrent read-modify-write XP duplication
   await updateDoc(gamDoc, {
-    xp: newXp,
-    level: newLevel,
+    xp: increment(amount),
   });
+
+  // Re-read to get the new total and compute level
+  const updatedData = (await getGamificationData(uid))!;
+  const newLevel = calculateLevel(updatedData.xp);
+
+  // Update level if it changed (separate write — level is derived, not critical)
+  if (newLevel !== updatedData.level) {
+    await updateDoc(gamDoc, { level: newLevel }).catch(() => {
+      // Level update failure is non-critical — will be corrected on next XP change
+    });
+  }
 
   // Log XP change (best-effort — xpLog rules may block client writes)
   try {
@@ -303,7 +310,7 @@ export async function addXp(uid: string, amount: number, source: string): Promis
     await setDoc(doc(logCollection), {
       amount,
       source,
-      newTotal: newXp,
+      newTotal: updatedData.xp,
       timestamp: serverTimestamp(),
     });
   } catch {
@@ -321,11 +328,15 @@ export async function updateStreak(uid: string, increment: boolean): Promise<voi
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date to match progressStore.localToday() (user's wall clock, not UTC)
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const lastPracticeDate = gamData.streak.lastPracticeDate;
 
   let newStreak = gamData.streak.currentStreak;
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
 
   // Check if streak is still active
   if (lastPracticeDate === yesterday || lastPracticeDate === today) {

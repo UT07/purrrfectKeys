@@ -12,6 +12,7 @@ import Animated, {
   withSpring,
   useSharedValue,
 } from 'react-native-reanimated';
+import { COLORS, glowColor } from '../../theme/tokens';
 
 export interface PianoKeyProps {
   midiNote: number;
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   highlightedWhiteKey: {
-    backgroundColor: 'rgba(76, 175, 80, 0.3)',
+    backgroundColor: glowColor(COLORS.success, 0.3),
     borderColor: '#4CAF50',
     borderBottomColor: '#2E7D32',
     borderTopColor: '#81C784',

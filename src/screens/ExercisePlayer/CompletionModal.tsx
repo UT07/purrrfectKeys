@@ -16,8 +16,8 @@ import {
   Easing,
   ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
   Platform,
+  Share,
 } from 'react-native';
 import Reanimated, {
   FadeIn,
@@ -27,6 +27,7 @@ import Reanimated, {
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
+import { PressableScale } from '../../components/common/PressableScale';
 import { MascotBubble } from '../../components/Mascot/MascotBubble';
 import { CatAvatar } from '../../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../../components/Mascot/SalsaCoach';
@@ -46,6 +47,8 @@ import { soundManager } from '../../audio/SoundManager';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, GLOW, RARITY, glowColor } from '../../theme/tokens';
 import type { Exercise, ExerciseScore } from '../../core/exercises/types';
 import type { ChestType } from '../../core/rewards/chestSystem';
+import { ChallengeFriendSheet } from '../../components/ChallengeFriendSheet';
+import { useSocialStore } from '../../stores/socialStore';
 
 /** Star tier colors (no token equivalent — intentional silver/bronze palette) */
 const STAR_SILVER = '#C0C0C0';
@@ -117,6 +120,8 @@ export interface CompletionModalProps {
   skipAnimation?: boolean;
   /** Number of consecutive failures at this exercise */
   failCount?: number;
+  /** If set, shows "Challenge sent to [name]!" banner */
+  challengeSentTo?: string;
 }
 
 export const CompletionModal: React.FC<CompletionModalProps> = ({
@@ -139,6 +144,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   tempoChange = 0,
   skipAnimation = false,
   failCount = 0,
+  challengeSentTo,
 }) => {
   // ---------------------------------------------------------------------------
   // Phase state
@@ -244,6 +250,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
   const [coachFeedback, setCoachFeedback] = useState<string | null>(null);
   const [coachLoading, setCoachLoading] = useState(true);
   const hasAutoPlayed = useRef(false);
+
+  // Challenge a Friend
+  const [showChallengeSheet, setShowChallengeSheet] = useState(false);
+  const allFriends = useSocialStore((s) => s.friends);
+  const acceptedFriends = useMemo(() => allFriends.filter((f) => f.status === 'accepted'), [allFriends]);
 
   // Cat dialogue & evolution
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
@@ -420,6 +431,31 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
     }
   }, [skipAnimation, score.xpEarned]);
 
+  // Auto-trigger replay for very low scores
+  useEffect(() => {
+    if (!onStartReplay || score.overall >= 60 || score.isPassed) return;
+    const timer = setTimeout(() => {
+      onStartReplay();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [onStartReplay, score.overall, score.isPassed]);
+
+  // Share handler — uses built-in Share API
+  const handleShare = useCallback(async () => {
+    const title = exercise.metadata?.title ?? 'an exercise';
+    const starText = score.stars > 0 ? ` ${'⭐'.repeat(score.stars)}` : '';
+    const message = `I scored ${Math.round(score.overall)}% on ${title}!${starText} 🎹 #PurrrfectKeys`;
+    try {
+      await Share.share(
+        Platform.OS === 'ios'
+          ? { message }
+          : { message, title: 'Purrrfect Keys' },
+      );
+    } catch {
+      // User cancelled or share failed — silently ignore
+    }
+  }, [exercise.metadata?.title, score.overall, score.stars]);
+
   return (
     <View style={styles.overlay} testID={testID}>
       {/* Confetti for 3-star scores */}
@@ -467,6 +503,14 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               <Text style={styles.subtitle}>
                 {isTestMode ? 'Mastery Test Complete!' : 'Exercise Complete!'}
               </Text>
+              {challengeSentTo && (
+                <View style={styles.challengeBanner}>
+                  <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.warning} />
+                  <Text style={styles.challengeBannerText}>
+                    Challenge sent to {challengeSentTo}!
+                  </Text>
+                </View>
+              )}
             </Reanimated.View>
           )}
 
@@ -540,6 +584,11 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                 )}
               </View>
             </Reanimated.View>
+          )}
+
+          {/* Auto-replay hint for very low scores */}
+          {onStartReplay && score.overall < 60 && !score.isPassed && (
+            <Text style={styles.autoReplayHint}>Salsa will review this with you...</Text>
           )}
 
           {/* ---------------------------------------------------------------- */}
@@ -688,7 +737,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                   <SalsaCoach size="tiny" mood="teaching" />
                   <Text style={styles.coachTitle}>Salsa Says</Text>
                   {coachFeedback && !coachLoading && (
-                    <TouchableOpacity
+                    <PressableScale
                       style={styles.speakerBtn}
                       onPress={() => {
                         ttsService.speak(coachFeedback, { catId: 'salsa' });
@@ -696,7 +745,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <MaterialCommunityIcons name="volume-high" size={18} color={COLORS.primary} />
-                    </TouchableOpacity>
+                    </PressableScale>
                   )}
                 </View>
                 {coachLoading ? (
@@ -720,9 +769,9 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               {demoOfferMessage && onStartDemo && (
                 <View style={styles.demoPrompt} testID="demo-prompt">
                   <Text style={styles.demoPromptText}>{demoOfferMessage}</Text>
-                  <TouchableOpacity onPress={onStartDemo} style={styles.demoPromptButton} testID="demo-prompt-button">
+                  <PressableScale onPress={onStartDemo} style={styles.demoPromptButton} testID="demo-prompt-button">
                     <Text style={styles.demoPromptButtonText}>Watch Demo</Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 </View>
               )}
 
@@ -791,6 +840,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                   testID="completion-bonus-drill"
                 />
               )}
+              {acceptedFriends.length > 0 && score.isPassed && (
+                <Button
+                  title="Challenge a Friend"
+                  onPress={() => setShowChallengeSheet(true)}
+                  variant="secondary"
+                  size="large"
+                  icon={<MaterialCommunityIcons name="sword-cross" size={20} color={COLORS.textSecondary} />}
+                  testID="completion-challenge-friend"
+                />
+              )}
               {!(isTestMode && !score.isPassed) && (
                 <Button
                   title={score.isPassed && (onNextExercise || onStartTest) ? 'Back to Lessons' : (score.isPassed ? 'Continue' : 'Back to Lessons')}
@@ -801,10 +860,26 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                   testID="completion-continue"
                 />
               )}
+              <Button
+                title="Share"
+                onPress={handleShare}
+                variant="outline"
+                size="large"
+                icon={<MaterialCommunityIcons name="share-variant" size={20} color={COLORS.textSecondary} />}
+                testID="completion-share"
+              />
             </Reanimated.View>
           )}
         </Animated.View>
       </ScrollView>
+
+      <ChallengeFriendSheet
+        visible={showChallengeSheet}
+        onClose={() => setShowChallengeSheet(false)}
+        exerciseId={exercise.id}
+        exerciseTitle={exercise.metadata?.title ?? exercise.id}
+        score={Math.round(score.overall)}
+      />
     </View>
   );
 };
@@ -923,6 +998,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceOverlay,
     zIndex: 1000,
   },
+  autoReplayHint: {
+    color: COLORS.textSecondary,
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  challengeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: glowColor(COLORS.warning, 0.15),
+    borderRadius: 12,
+  },
+  challengeBannerText: {
+    color: COLORS.warning,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   xpPopupContainer: {
     position: 'absolute',
     top: '30%',
@@ -944,7 +1041,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     gap: SPACING.md - 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: glowColor(COLORS.textPrimary, 0.08),
     ...Platform.select({
       ios: {
         shadowColor: COLORS.primary,
@@ -1080,7 +1177,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm + 2,
     borderRadius: BORDER_RADIUS.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: glowColor(COLORS.textPrimary, 0.05),
   },
   breakdownTitle: {
     ...TYPOGRAPHY.body.sm,
@@ -1127,10 +1224,10 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingHorizontal: SPACING.md - 4,
     paddingVertical: 8,
-    backgroundColor: 'rgba(220, 20, 60, 0.08)',
+    backgroundColor: glowColor(COLORS.primary, 0.08),
     borderRadius: BORDER_RADIUS.sm,
     borderWidth: 1,
-    borderColor: 'rgba(220, 20, 60, 0.12)',
+    borderColor: glowColor(COLORS.primary, 0.12),
     flex: 1,
   },
   statLabel: {

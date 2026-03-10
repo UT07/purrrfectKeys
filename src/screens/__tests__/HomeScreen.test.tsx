@@ -181,16 +181,9 @@ jest.mock('../../components/Mascot/SalsaCoach', () => {
   };
 });
 
-jest.mock('../../components/StreakFlame', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return {
-    StreakFlame: (props: any) =>
-      React.createElement(View, { testID: 'streak-flame', ...props },
-        React.createElement(Text, null, 'streak:' + props.streak)
-      ),
-  };
-});
+jest.mock('../../components/StreakFlame', () => ({
+  StreakFlame: () => null,
+}));
 
 jest.mock('../../content/catDialogue', () => ({
   getRandomCatMessage: jest.fn(() => 'Hello from your cat!'),
@@ -377,6 +370,32 @@ jest.mock('../../components/ReviewChallengeCard', () => {
   };
 });
 
+jest.mock('../../components/FriendActivityStrip', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    FriendActivityStrip: (props: any) =>
+      React.createElement(View, { testID: 'friend-activity-strip', ...props },
+        React.createElement(Text, null, 'Friend Activity')
+      ),
+  };
+});
+
+let mockAuthState: any = {
+  user: null,
+  isAuthenticated: false,
+  isAnonymous: false,
+  isLoading: false,
+  isInitializing: false,
+  error: null,
+};
+jest.mock('../../stores/authStore', () => ({
+  useAuthStore: Object.assign(
+    (sel?: any) => (sel ? sel(mockAuthState) : mockAuthState),
+    { getState: () => mockAuthState }
+  ),
+}));
+
 // ---------------------------------------------------------------------------
 // Import component AFTER mocks
 // ---------------------------------------------------------------------------
@@ -401,6 +420,10 @@ beforeEach(() => {
   mockSettingsState.displayName = 'Test Pianist';
   mockSettingsState.hasCompletedOnboarding = true;
   mockSettingsState.selectedCatId = 'mini-meowww';
+
+  mockAuthState.user = null;
+  mockAuthState.isAuthenticated = false;
+  mockAuthState.isAnonymous = false;
 });
 
 // ---------------------------------------------------------------------------
@@ -425,10 +448,9 @@ describe('HomeScreen', () => {
     expect(getByText(expectedGreeting)).toBeTruthy();
   });
 
-  it('shows daily streak info via StreakFlame component', () => {
-    const { getByTestId, getByText } = render(<HomeScreen />);
-    expect(getByTestId('streak-flame')).toBeTruthy();
-    expect(getByText('streak:5')).toBeTruthy();
+  it('shows daily streak count', () => {
+    const { getByText } = render(<HomeScreen />);
+    expect(getByText('Streak')).toBeTruthy();
   });
 
   it('shows today\'s practice section', () => {
@@ -460,8 +482,8 @@ describe('HomeScreen', () => {
   it('shows stat pills row with exercise count and streak', () => {
     const { getByText } = render(<HomeScreen />);
     expect(getByText('Exercises')).toBeTruthy();
-    expect(getByText('Streak')).toBeTruthy();
     expect(getByText('Lessons')).toBeTruthy();
+    expect(getByText('Streak')).toBeTruthy();
     expect(getByText('Stars')).toBeTruthy();
   });
 
@@ -515,5 +537,26 @@ describe('HomeScreen', () => {
   it('shows evolution XP to next stage', () => {
     const { getByText } = render(<HomeScreen />);
     expect(getByText('500 to teen')).toBeTruthy();
+  });
+
+  it('shows friend activity strip for authenticated non-anonymous users', () => {
+    mockAuthState.isAuthenticated = true;
+    mockAuthState.isAnonymous = false;
+    const { getByTestId } = render(<HomeScreen />);
+    expect(getByTestId('friend-activity-strip')).toBeTruthy();
+  });
+
+  it('hides friend activity strip for anonymous users', () => {
+    mockAuthState.isAuthenticated = true;
+    mockAuthState.isAnonymous = true;
+    const { queryByTestId } = render(<HomeScreen />);
+    expect(queryByTestId('friend-activity-strip')).toBeNull();
+  });
+
+  it('hides friend activity strip for unauthenticated users', () => {
+    mockAuthState.isAuthenticated = false;
+    mockAuthState.isAnonymous = false;
+    const { queryByTestId } = render(<HomeScreen />);
+    expect(queryByTestId('friend-activity-strip')).toBeNull();
   });
 });

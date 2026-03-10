@@ -218,10 +218,11 @@ export class GeminiCoach {
       `x${issues.extraCount}`,
     ];
     const key = parts.join('|');
-    return Math.abs(
-      key.split('').reduce((hash, char) => hash * 31 + char.charCodeAt(0), 0)
+    return (
+      key.split('').reduce((hash, char) => ((hash * 31 + char.charCodeAt(0)) >>> 0), 0)
     )
       .toString(16)
+      .padStart(8, '0')
       .slice(0, 8);
   }
 
@@ -291,10 +292,13 @@ export class GeminiCoach {
         return text;
       }
     } catch (cfError) {
-      logger.warn('[GeminiCoach] Cloud Function unavailable, falling back to direct API. Deploy functions to secure API key:', (cfError as Error)?.message ?? cfError);
+      logger.warn('[GeminiCoach] Cloud Function unavailable, falling back to direct API:', (cfError as Error)?.message ?? cfError);
     }
 
-    // Fall back to direct Gemini API call
+    // Fall back to direct Gemini API call (only in __DEV__ to avoid exposing API key in production)
+    if (!__DEV__) {
+      return this.getFallbackFeedback(request);
+    }
     try {
       const genAI = this.initialize();
       const model = genAI.getGenerativeModel({

@@ -38,6 +38,7 @@ import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot';
+import { LeagueTransitionCard } from '../components/LeagueTransitionCard';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -500,6 +501,9 @@ export function SocialScreen(): React.JSX.Element {
   const setChallenges = useSocialStore((s) => s.setChallenges);
   const setMembership = useLeagueStore((s) => s.setMembership);
   const setStandings = useLeagueStore((s) => s.setStandings);
+  const tierTransition = useLeagueStore((s) => s.tierTransition);
+  const membership = useLeagueStore((s) => s.membership);
+  const clearTierTransition = useLeagueStore((s) => s.clearTierTransition);
   const [syncError, setSyncError] = useState<string | null>(null);
 
   // Sync friends + league + challenges from Firestore on mount and on tab focus
@@ -613,6 +617,14 @@ export function SocialScreen(): React.JSX.Element {
             <MaterialCommunityIcons name="cloud-off-outline" size={16} color={COLORS.warning} />
             <Text style={styles.syncErrorText}>{syncError}</Text>
           </View>
+        )}
+
+        {tierTransition != null && tierTransition !== 'same' && membership && (
+          <LeagueTransitionCard
+            transition={tierTransition}
+            newTier={membership.tier}
+            onDismiss={clearTierTransition}
+          />
         )}
 
         <LeagueCard />
