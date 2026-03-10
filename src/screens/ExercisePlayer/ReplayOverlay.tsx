@@ -17,6 +17,7 @@ import {
   BORDER_RADIUS,
   SHADOWS,
   ANIMATION_CONFIG,
+  glowColor,
 } from '../../theme/tokens';
 
 // ---------------------------------------------------------------------------
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   pill: {
-    backgroundColor: 'rgba(10, 10, 10, 0.75)',
+    backgroundColor: glowColor(COLORS.background, 0.75),
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
     borderRadius: BORDER_RADIUS.full,
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: glowColor(COLORS.background, 0.6),
   },
 
   // ── Card ────────────────────────────────────────────────────────────

@@ -69,26 +69,32 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
   },
 
   spendGems: (amount: number, item: string) => {
-    const state = get();
-    if (amount <= 0 || state.gems < amount) return false;
+    if (amount <= 0) return false;
 
-    set((prev) => {
-      const newBalance = prev.gems - amount;
+    // Atomic check-and-update inside a single set() to prevent TOCTOU race
+    // (e.g., double-tap on buy button reading same balance twice)
+    let success = false;
+    set((state) => {
+      if (state.gems < amount) return state; // insufficient balance — no change
+      success = true;
+      const newBalance = state.gems - amount;
       const transaction: GemTransaction = {
         amount: -amount,
         source: item,
         timestamp: Date.now(),
         balance: newBalance,
       };
-      const transactions = [transaction, ...prev.transactions].slice(0, MAX_TRANSACTIONS);
+      const transactions = [transaction, ...state.transactions].slice(0, MAX_TRANSACTIONS);
       return {
         gems: newBalance,
-        totalGemsSpent: prev.totalGemsSpent + amount,
+        totalGemsSpent: state.totalGemsSpent + amount,
         transactions,
       };
     });
-    debouncedSave(get());
-    return true;
+    if (success) {
+      debouncedSave(get());
+    }
+    return success;
   },
 
   canAfford: (amount: number) => {

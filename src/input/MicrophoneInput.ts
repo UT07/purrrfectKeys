@@ -176,6 +176,19 @@ export class MicrophoneInput {
       // to prevent unbounded promise pile-up and latency growth
       this.unsubCapture = this.capture.onAudioBuffer((samples) => {
         this.detectionCount++;
+
+        // Check for sample rate mismatch on first buffer (iPhones use 48kHz).
+        if (!this.sampleRateCorrected) {
+          this.sampleRateCorrected = true;
+          const actualRate = this.capture.getActualSampleRate();
+          if (actualRate && actualRate !== 44100) {
+            logger.warn(
+              `[MicrophoneInput] Correcting polyphonic sample rate: 44100 → ${actualRate}Hz`
+            );
+            this.polyDetector!.setInputSampleRate(actualRate);
+          }
+        }
+
         if (this.polyBusy) return; // Drop buffer — previous inference still running
         this.polyBusy = true;
         this.polyDetector!.detect(samples).then((frames) => {

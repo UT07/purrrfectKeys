@@ -58,10 +58,14 @@ export class MultiNoteTracker {
       }
     }
 
-    // Expire pending onsets that disappeared before reaching the hold threshold
-    for (const [midiNote] of this.pendingOnsets) {
+    // Expire pending onsets that disappeared before reaching the hold threshold.
+    // Allow 1 frame gap tolerance (ONNX model can flicker on transients).
+    for (const [midiNote, pending] of this.pendingOnsets) {
       if (!currentMidiNotes.has(midiNote)) {
-        this.pendingOnsets.delete(midiNote);
+        const gapMs = now - pending.lastSeen;
+        if (gapMs > this.config.onsetHoldMs) {
+          this.pendingOnsets.delete(midiNote);
+        }
       }
     }
 
@@ -98,6 +102,7 @@ export class MultiNoteTracker {
               midiNote: note.midiNote,
               confidence: pending.confidence,
               timestamp: pending.firstSeen,
+              velocity: confidenceToVelocity(pending.confidence),
             });
           }
         } else if (note.isOnset) {
@@ -113,6 +118,7 @@ export class MultiNoteTracker {
               midiNote: note.midiNote,
               confidence: note.confidence,
               timestamp: now,
+              velocity: confidenceToVelocity(note.confidence),
             });
           } else {
             // Start tracking pending onset

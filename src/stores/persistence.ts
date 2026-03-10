@@ -194,12 +194,14 @@ export function cancelAllPendingSaves(): void {
  * Flush all pending debounced saves immediately.
  * Call this when the app transitions to background/inactive to prevent data loss.
  */
-export function flushAllPendingSaves(): void {
+export async function flushAllPendingSaves(): Promise<void> {
+  const promises: Promise<void>[] = [];
   for (const { timerId, execute } of pendingSaves.values()) {
     clearTimeout(timerId);
-    execute().catch(err => console.error('[PERSIST] Flush save failed:', err));
+    promises.push(execute().catch(err => console.error('[PERSIST] Flush save failed:', err)));
   }
   pendingSaves.clear();
+  await Promise.allSettled(promises);
 }
 
 /**
@@ -207,11 +209,20 @@ export function flushAllPendingSaves(): void {
  * Bypasses debouncing for critical state that must persist immediately
  * (e.g., daily challenge completion, gem transactions)
  */
-export function createImmediateSave<T>(key: string): (state: T) => void {
-  return (state: T) => {
-    PersistenceManager.saveState(key, state).catch(err =>
-      console.error('[PERSIST] Immediate save failed:', err)
-    );
+export function createImmediateSave<T>(key: string): (state: T) => Promise<void> {
+  return async (state: T) => {
+    // Cancel any pending debounced save for this key to prevent it from
+    // overwriting the immediate save with stale state
+    const pending = pendingSaves.get(key);
+    if (pending) {
+      clearTimeout(pending.timerId);
+      pendingSaves.delete(key);
+    }
+    try {
+      await PersistenceManager.saveState(key, state);
+    } catch (err) {
+      console.error('[PERSIST] Immediate save failed:', err);
+    }
   };
 }
 

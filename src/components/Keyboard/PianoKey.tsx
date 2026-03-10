@@ -12,7 +12,55 @@ import Animated, {
   withSpring,
   useSharedValue,
 } from 'react-native-reanimated';
-import { COLORS, glowColor } from '../../theme/tokens';
+import { COLORS, GRADIENTS, glowColor } from '../../theme/tokens';
+
+// ─────────────────────────────────────────────────
+// Piano-specific colors — semantic constants for key visuals
+// that have no direct design-token equivalent.
+// ─────────────────────────────────────────────────
+const PIANO_COLORS = {
+  // White key
+  whiteKeyFace: '#F8F8F8',
+  whiteKeyBorder: '#C8C8C8',
+  whiteKeyBottomEdge: '#A0A0A0',
+  whiteKeyTopHighlight: '#FFFFFF',
+  whiteKeyLeftEdge: '#E8E8E8',
+  whiteKeyRightEdge: '#D0D0D0',
+  whiteKeyPressedBottomEdge: '#C0C0C0',
+  whiteKeyLabelText: '#333333',
+
+  // Black key
+  blackKeyFace: '#1A1A1A',
+  blackKeyBorder: '#000000',
+  blackKeyBottomEdge: '#383838',
+  blackKeyTopHighlight: '#3A3A3A',
+
+  // Highlighted white key (success green)
+  highlightSuccessLight: '#81C784',
+
+  // Highlighted black key (goldenrod family)
+  highlightGoldDark: '#8B6914',
+  highlightGoldenrod: '#DAA520',
+  highlightGoldShadow: '#B8860B',
+  highlightGoldLight: '#F0C040',
+
+  // Expected black key (dark blue tint)
+  expectedBlackBg: '#1A2A3A',
+
+  // Scale note overlay (purple accent)
+  scaleNotePurple: 'rgba(156, 136, 255, 0.15)',
+  scaleNotePurpleBorder: 'rgba(156, 136, 255, 0.4)',
+  scaleNotePurpleBorderLight: 'rgba(156, 136, 255, 0.2)',
+  scaleNotePurpleBorderStrong: 'rgba(156, 136, 255, 0.5)',
+  scaleNotePurpleBorderMid: 'rgba(156, 136, 255, 0.3)',
+  scaleNoteBlackBg: '#2A1A3A',
+
+  // Pressed black key (purple neon accent)
+  pressedBlackBg: '#2A2A4A',
+  pressedBlackBottomEdge: '#4A4A6A',
+  pressedBlackTopEdge: '#2A2A3A',
+  pressedBlackNeon: '#E040FB',
+} as const;
 
 export interface PianoKeyProps {
   midiNote: number;
@@ -21,6 +69,8 @@ export interface PianoKeyProps {
   isHighlighted?: boolean;
   isExpected?: boolean;
   isPressed?: boolean;
+  /** Scale overlay: key is part of the selected scale */
+  isScaleNote?: boolean;
   showLabels?: boolean;
   /** Replay mode highlight color (hex string, overrides default highlight color) */
   replayColor?: string;
@@ -54,6 +104,7 @@ export const PianoKey = React.memo(
     isHighlighted = false,
     isExpected = false,
     isPressed = false,
+    isScaleNote = false,
     showLabels = false,
     replayColor,
   }: PianoKeyProps) => {
@@ -98,6 +149,7 @@ export const PianoKey = React.memo(
           <Animated.View
             style={[
               styles.blackKey,
+              isScaleNote && styles.scaleNoteBlackKey,
               isExpected && styles.expectedBlackKey,
               isHighlighted && styles.highlightedBlackKey,
               isPressed && styles.pressedBlackKey,
@@ -124,6 +176,7 @@ export const PianoKey = React.memo(
         <Animated.View
           style={[
             styles.whiteKey,
+            isScaleNote && styles.scaleNoteWhiteKey,
             isExpected && styles.expectedWhiteKey,
             isHighlighted && styles.highlightedWhiteKey,
             isPressed && styles.pressedWhiteKey,
@@ -151,17 +204,17 @@ const styles = StyleSheet.create({
   },
   whiteKey: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: PIANO_COLORS.whiteKeyFace,
     borderWidth: 1,
-    borderColor: '#C8C8C8',
+    borderColor: PIANO_COLORS.whiteKeyBorder,
     borderBottomWidth: 4,
-    borderBottomColor: '#A0A0A0',
+    borderBottomColor: PIANO_COLORS.whiteKeyBottomEdge,
     borderTopWidth: 1,
-    borderTopColor: '#FFFFFF',
-    borderLeftColor: '#E8E8E8',
-    borderRightColor: '#D0D0D0',
+    borderTopColor: PIANO_COLORS.whiteKeyTopHighlight,
+    borderLeftColor: PIANO_COLORS.whiteKeyLeftEdge,
+    borderRightColor: PIANO_COLORS.whiteKeyRightEdge,
     borderRadius: 5,
-    shadowColor: '#000000',
+    shadowColor: PIANO_COLORS.blackKeyBorder,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -173,36 +226,41 @@ const styles = StyleSheet.create({
   whiteKeyLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#333333',
+    color: PIANO_COLORS.whiteKeyLabelText,
     marginBottom: 2,
   },
   highlightedWhiteKey: {
     backgroundColor: glowColor(COLORS.success, 0.3),
-    borderColor: '#4CAF50',
-    borderBottomColor: '#2E7D32',
-    borderTopColor: '#81C784',
-    shadowColor: '#4CAF50',
+    borderColor: COLORS.success,
+    borderBottomColor: GRADIENTS.success[1],
+    borderTopColor: PIANO_COLORS.highlightSuccessLight,
+    shadowColor: COLORS.success,
     shadowOpacity: 0.6,
     shadowRadius: 10,
     elevation: 8,
   },
   expectedWhiteKey: {
-    backgroundColor: 'rgba(64, 196, 255, 0.08)',
-    borderColor: '#40C4FF',
+    backgroundColor: glowColor(COLORS.feedbackEarly, 0.08),
+    borderColor: COLORS.feedbackEarly,
     borderWidth: 2,
-    shadowColor: '#40C4FF',
+    shadowColor: COLORS.feedbackEarly,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.7,
     shadowRadius: 12,
     elevation: 10,
   },
+  scaleNoteWhiteKey: {
+    backgroundColor: PIANO_COLORS.scaleNotePurple,
+    borderColor: PIANO_COLORS.scaleNotePurpleBorder,
+    borderTopColor: PIANO_COLORS.scaleNotePurpleBorderLight,
+  },
   pressedWhiteKey: {
-    backgroundColor: 'rgba(64, 196, 255, 0.2)',
+    backgroundColor: glowColor(COLORS.feedbackEarly, 0.2),
     borderBottomWidth: 1,
-    borderBottomColor: '#C0C0C0',
-    borderTopColor: '#E8E8E8',
-    borderColor: '#40C4FF',
-    shadowColor: '#40C4FF',
+    borderBottomColor: PIANO_COLORS.whiteKeyPressedBottomEdge,
+    borderTopColor: PIANO_COLORS.whiteKeyLeftEdge,
+    borderColor: COLORS.feedbackEarly,
+    shadowColor: COLORS.feedbackEarly,
     shadowOpacity: 0.5,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 10,
@@ -218,17 +276,17 @@ const styles = StyleSheet.create({
   },
   blackKey: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: PIANO_COLORS.blackKeyFace,
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: PIANO_COLORS.blackKeyBorder,
     borderBottomWidth: 4,
-    borderBottomColor: '#383838',
+    borderBottomColor: PIANO_COLORS.blackKeyBottomEdge,
     borderTopWidth: 1,
-    borderTopColor: '#3A3A3A',
-    borderLeftColor: '#0A0A0A',
-    borderRightColor: '#0A0A0A',
+    borderTopColor: PIANO_COLORS.blackKeyTopHighlight,
+    borderLeftColor: COLORS.background,
+    borderRightColor: COLORS.background,
     borderRadius: 4,
-    shadowColor: '#000000',
+    shadowColor: PIANO_COLORS.blackKeyBorder,
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.5,
     shadowRadius: 6,
@@ -240,35 +298,40 @@ const styles = StyleSheet.create({
   blackKeyLabel: {
     fontSize: 9,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   highlightedBlackKey: {
-    backgroundColor: '#8B6914',
-    borderColor: '#DAA520',
-    borderBottomColor: '#B8860B',
-    borderTopColor: '#F0C040',
-    shadowColor: '#DAA520',
+    backgroundColor: PIANO_COLORS.highlightGoldDark,
+    borderColor: PIANO_COLORS.highlightGoldenrod,
+    borderBottomColor: PIANO_COLORS.highlightGoldShadow,
+    borderTopColor: PIANO_COLORS.highlightGoldLight,
+    shadowColor: PIANO_COLORS.highlightGoldenrod,
     shadowOpacity: 0.6,
     shadowRadius: 10,
     elevation: 9,
   },
   expectedBlackKey: {
-    backgroundColor: '#1A2A3A',
-    borderColor: '#40C4FF',
+    backgroundColor: PIANO_COLORS.expectedBlackBg,
+    borderColor: COLORS.feedbackEarly,
     borderWidth: 2,
-    shadowColor: '#40C4FF',
+    shadowColor: COLORS.feedbackEarly,
     shadowOpacity: 0.7,
     shadowRadius: 12,
     elevation: 10,
   },
+  scaleNoteBlackKey: {
+    backgroundColor: PIANO_COLORS.scaleNoteBlackBg,
+    borderColor: PIANO_COLORS.scaleNotePurpleBorderStrong,
+    borderTopColor: PIANO_COLORS.scaleNotePurpleBorderMid,
+  },
   pressedBlackKey: {
-    backgroundColor: '#2A2A4A',
+    backgroundColor: PIANO_COLORS.pressedBlackBg,
     borderBottomWidth: 1,
-    borderBottomColor: '#4A4A6A',
-    borderTopColor: '#2A2A3A',
-    borderColor: '#E040FB',
-    shadowColor: '#E040FB',
+    borderBottomColor: PIANO_COLORS.pressedBlackBottomEdge,
+    borderTopColor: PIANO_COLORS.pressedBlackTopEdge,
+    borderColor: PIANO_COLORS.pressedBlackNeon,
+    shadowColor: PIANO_COLORS.pressedBlackNeon,
     shadowOpacity: 0.6,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 10,

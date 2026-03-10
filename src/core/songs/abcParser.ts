@@ -186,9 +186,14 @@ export function parseABC(abcString: string): ABCParseOutput {
       for (const voice of staff.voices) {
         for (const element of voice) {
           if (element.el_type !== 'note') continue;
-          if (!element.pitches || element.pitches.length === 0) continue;
 
           const beatsForElement = abcDurationToBeats(element.duration, beatValue);
+
+          // Rests have no pitches — advance beat counter but don't emit notes
+          if (!element.pitches || element.pitches.length === 0) {
+            currentBeat += beatsForElement;
+            continue;
+          }
 
           for (const p of element.pitches) {
             const midi = abcPitchToMidi(p.pitch, p.accidental, keyAccidentals);

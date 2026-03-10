@@ -16,7 +16,7 @@ import Animated, {
 import { Button } from '../common/Button';
 import { ScoreRing } from '../common/ScoreRing';
 import { FunFactCard } from '../FunFact/FunFactCard';
-import { COLORS, glowColor } from '../../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../../theme/tokens';
 import type { FunFact } from '../../content/funFacts';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -37,10 +37,10 @@ export interface ExerciseCardProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 95) return '#FFD700';
-  if (score >= 80) return '#4CAF50';
-  if (score >= 60) return '#FF9800';
-  return '#F44336';
+  if (score >= 95) return COLORS.starGold;
+  if (score >= 80) return COLORS.success;
+  if (score >= 60) return COLORS.warning;
+  return COLORS.error;
 }
 
 function renderStars(count: 0 | 1 | 2 | 3): string {
@@ -213,47 +213,46 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: glowColor('#000000', 0.4),
     zIndex: 900,
   },
   card: {
     height: CARD_HEIGHT,
-    backgroundColor: '#1A1A1A',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: COLORS.cardSurface,
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
     borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
     overflow: 'hidden',
   },
   countdownTrack: {
     height: 3,
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.surfaceElevated,
     width: '100%',
   },
   countdownFill: {
     height: '100%',
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: SPACING.xl - 12,
+    paddingVertical: SPACING.md,
     justifyContent: 'space-between',
   },
   scoreRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: SPACING.md,
   },
   infoColumn: {
     flex: 1,
-    gap: 4,
+    gap: SPACING.xs,
   },
   exerciseTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.heading.sm,
+    color: COLORS.textPrimary,
   },
   starsText: {
     fontSize: 22,
@@ -261,30 +260,29 @@ const styles = StyleSheet.create({
   },
   xpBadge: {
     backgroundColor: glowColor(COLORS.starGold, 0.12),
-    paddingHorizontal: 10,
+    paddingHorizontal: SPACING.sm + 2,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.md,
     alignSelf: 'flex-start',
   },
   xpText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     fontWeight: '700',
-    color: '#FFD700',
+    color: COLORS.starGold,
   },
   tipContainer: {
     backgroundColor: glowColor(COLORS.primary, 0.1),
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.md - 4,
+    paddingVertical: SPACING.sm,
     borderWidth: 1,
     borderColor: glowColor(COLORS.primary, 0.2),
   },
   tipText: {
-    fontSize: 13,
+    ...TYPOGRAPHY.body.sm,
     color: COLORS.textPrimary,
-    lineHeight: 18,
   },
   actions: {
-    gap: 8,
+    gap: SPACING.sm,
   },
 });

@@ -19,6 +19,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PressableScale } from '../components/common/PressableScale';
+import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
 import { EmailAuthProvider } from 'firebase/auth';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
@@ -113,6 +114,7 @@ export function EmailAuthScreen(): React.ReactElement {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <GradientMeshBackground accent="home" />
       <LinearGradient
         colors={GRADIENTS.heroGlow}
         style={styles.headerGradient}

@@ -22,6 +22,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { MascotBubble } from '../components/Mascot/MascotBubble';
+import { GradientMeshBackground } from '../components/effects';
 import { SKILL_TREE, getGenerationHints } from '../core/curriculum/SkillTree';
 import type { SkillNode } from '../core/curriculum/SkillTree';
 import { getTierMasteryTestSkillId, hasTierMasteryTestPassed } from '../core/curriculum/tierMasteryTest';
@@ -30,6 +31,7 @@ import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { exerciseTypeForCategory } from '../core/exercises/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 type TierIntroRouteProp = RouteProp<RootStackParamList, 'TierIntro'>;
@@ -338,10 +340,14 @@ export function TierIntroScreen() {
 
   const handleStart = useCallback(() => {
     if (!firstUnmasteredSkillId || locked) return;
+    // Look up the skill's category to resolve exercise type
+    const skill = SKILL_TREE.find((s) => s.id === firstUnmasteredSkillId);
+    const exerciseType = exerciseTypeForCategory(skill?.category);
     navigation.navigate('Exercise', {
       exerciseId: 'ai-mode',
       aiMode: true,
       skillId: firstUnmasteredSkillId,
+      ...(exerciseType ? { exerciseType } : {}),
     });
   }, [navigation, firstUnmasteredSkillId, locked]);
 
@@ -349,16 +355,20 @@ export function TierIntroScreen() {
     if (locked) return;
     const testSkillId = getTierMasteryTestSkillId(tier);
     if (!testSkillId) return;
+    const skill = SKILL_TREE.find((s) => s.id === testSkillId);
+    const exerciseType = exerciseTypeForCategory(skill?.category);
     navigation.navigate('Exercise', {
       exerciseId: 'ai-mode',
       aiMode: true,
       testMode: true,
       skillId: testSkillId,
+      ...(exerciseType ? { exerciseType } : {}),
     });
   }, [navigation, tier, locked]);
 
   return (
     <View style={styles.container} testID="tier-intro-screen">
+      <GradientMeshBackground accent="learn" />
       <LinearGradient colors={GRADIENTS.heroGlow} style={styles.header}>
         <SafeAreaView>
           <View style={styles.headerContent}>

@@ -25,6 +25,7 @@ import { DailyChallengeCard } from '../components/DailyChallengeCard';
 import { DailyRewardCalendar } from '../components/DailyRewardCalendar';
 import { getDailyChallengeForDate } from '../core/challenges/challengeSystem';
 import type { SkillCategory } from '../core/curriculum/SkillTree';
+import { exerciseTypeForCategory } from '../core/exercises/types';
 import { MusicLibrarySpotlight } from '../components/MusicLibrarySpotlight';
 import { ReviewChallengeCard } from '../components/ReviewChallengeCard';
 import { useSongStore } from '../stores/songStore';
@@ -181,10 +182,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
       if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
+        // Infer exercise type from the skill's category (rhythm → rhythm, chords → chordId, etc.)
+        const skill = ref.skillNodeId ? getSkillById(ref.skillNodeId) : null;
+        const exerciseType = exerciseTypeForCategory(skill?.category);
         navigation.navigate('Exercise', {
           exerciseId: ref.fallbackExerciseId ?? 'ai-mode',
           aiMode: true,
           skillId: ref.skillNodeId,
+          ...(exerciseType ? { exerciseType } : {}),
         });
       } else {
         navigation.navigate('Exercise', { exerciseId: ref.exerciseId });
@@ -348,6 +353,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} testID="home-screen">
+      <GradientMeshBackground accent="home" />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -519,10 +525,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <DailyChallengeCard masteredSkills={masteredSkills} onPress={() => {
               const challenge = getDailyChallengeForDate(today, masteredSkills);
               const skillId = getSkillIdForChallenge(challenge.category, masteredSkills);
+              const exerciseType = exerciseTypeForCategory(challenge.category);
               navigation.navigate('Exercise', {
                 exerciseId: 'ai-mode',
                 aiMode: true,
                 skillId,
+                ...(exerciseType ? { exerciseType } : {}),
               });
             }} />
           </GameCard>
@@ -594,10 +602,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <ReviewChallengeCard
                 decayedSkills={decayedSkillIds}
                 onStartReview={() => {
+                  const skill = getSkillById(decayedSkillIds[0]);
+                  const exerciseType = exerciseTypeForCategory(skill?.category);
                   navigation.navigate('Exercise', {
                     exerciseId: 'ai-mode',
                     aiMode: true,
                     skillId: decayedSkillIds[0],
+                    ...(exerciseType ? { exerciseType } : {}),
                   });
                 }}
               />

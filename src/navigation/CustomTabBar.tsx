@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -15,8 +15,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { COLORS } from '../theme/tokens';
+import { COLORS, glowColor } from '../theme/tokens';
+import { PressableScale } from '../components/common/PressableScale';
 import { useSocialStore } from '../stores/socialStore';
 import { useAuthStore } from '../stores/authStore';
 
@@ -89,21 +89,16 @@ function TabButton({
     };
   }, [isFocused]);
 
-  const handlePress = (): void => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onPress();
-  };
-
   return (
-    <TouchableOpacity
+    <PressableScale
       accessibilityRole="button"
-      accessibilityState={isFocused ? { selected: true } : {}}
       accessibilityLabel={routeName}
-      onPress={handlePress}
+      onPress={onPress}
       onLongPress={onLongPress}
       style={styles.tabButton}
       testID={testID}
-      activeOpacity={0.7}
+      scaleDown={0.9}
+      soundOnPress={false}
     >
       <Animated.View style={[styles.iconWrapper, iconAnimatedStyle]}>
         <MaterialCommunityIcons
@@ -122,7 +117,7 @@ function TabButton({
         )}
       </Animated.View>
       <Animated.View style={[styles.indicator, indicatorAnimatedStyle]} />
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -209,9 +204,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: TAB_BAR_HEIGHT,
-    backgroundColor: 'rgba(14, 14, 14, 0.92)',
+    backgroundColor: glowColor(COLORS.surface, 0.92),
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+    borderTopColor: glowColor(COLORS.textPrimary, 0.06),
   },
   tabButton: {
     flex: 1,
@@ -252,7 +247,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: COLORS.textPrimary,
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 12,

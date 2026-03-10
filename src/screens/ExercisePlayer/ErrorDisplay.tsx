@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { PressableScale } from '../../components/common/PressableScale';
 import { COLORS, BORDER_RADIUS, SPACING } from '../../theme/tokens';
 
 export interface ErrorDisplayProps {
@@ -31,23 +32,23 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
 
         <View style={styles.actions}>
           {onRetry && (
-            <Pressable
+            <PressableScale
               style={[styles.button, styles.retryButton]}
               onPress={onRetry}
               testID={testID && `${testID}-retry`}
             >
               <Text style={styles.buttonText}>Retry</Text>
-            </Pressable>
+            </PressableScale>
           )}
 
           {onClose && (
-            <Pressable
+            <PressableScale
               style={[styles.button, styles.closeButton]}
               onPress={onClose}
               testID={testID && `${testID}-close`}
             >
               <Text style={styles.buttonText}>Close</Text>
-            </Pressable>
+            </PressableScale>
           )}
         </View>
       </View>

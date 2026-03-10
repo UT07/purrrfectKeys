@@ -32,6 +32,7 @@ import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor, type RarityLevel } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { exerciseTypeForCategory } from '../core/exercises/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -143,10 +144,13 @@ export function DailySessionScreen() {
       // Track which exercise we're navigating to, so we can mark it done on return
       lastNavigatedKeyRef.current = ref.skillNodeId || ref.exerciseId;
       if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
+        const skill = ref.skillNodeId ? getSkillById(ref.skillNodeId) : null;
+        const exerciseType = exerciseTypeForCategory(skill?.category);
         navigation.navigate('Exercise', {
           exerciseId: ref.fallbackExerciseId ?? 'ai-mode',
           aiMode: true,
           skillId: ref.skillNodeId,
+          ...(exerciseType ? { exerciseType } : {}),
         });
       } else {
         navigation.navigate('Exercise', { exerciseId: ref.exerciseId });
@@ -513,10 +517,10 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
     marginHorizontal: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: glowColor('#FFFFFF', 0.06),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.10),
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
     marginBottom: SPACING.lg,
   },
   skillProgressRow: {
@@ -674,10 +678,10 @@ const styles = StyleSheet.create({
   reasoningCard: {
     marginHorizontal: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: glowColor('#FFFFFF', 0.06),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.10),
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
     marginBottom: SPACING.md,
   },
   reasoningHeader: {

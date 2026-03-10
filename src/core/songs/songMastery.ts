@@ -82,7 +82,12 @@ export function updateSongMastery(
     merged[sectionId] = Math.max(merged[sectionId] ?? 0, score);
   }
 
-  const tier = computeMasteryTier(merged, sectionIds, layer);
+  const newTier = computeMasteryTier(merged, sectionIds, layer);
+
+  // Never regress tier — a user who earned gold on 'full' layer shouldn't
+  // lose it when replaying on 'melody' layer
+  const oldTier = existing?.tier ?? 'none';
+  const tier = isBetterTier(newTier, oldTier) ? newTier : oldTier;
 
   return {
     songId,

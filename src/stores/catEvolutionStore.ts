@@ -164,6 +164,11 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     if (!state.ownedCats.includes(catId)) return;
     set({ selectedCatId: catId });
     debouncedSave(get());
+    // Keep settingsStore in sync — it's the source of truth for social/league/ability
+    try {
+      const { useSettingsStore } = require('./settingsStore');
+      useSettingsStore.getState().setSelectedCatId(catId);
+    } catch { /* settings sync is best-effort */ }
   },
 
   unlockCat: (catId: string) => {
@@ -412,6 +417,11 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
       },
     });
     debouncedSave(get());
+    // Keep settingsStore in sync
+    try {
+      const { useSettingsStore } = require('./settingsStore');
+      useSettingsStore.getState().setSelectedCatId(catId);
+    } catch { /* settings sync is best-effort */ }
   },
 
   reset: () => {

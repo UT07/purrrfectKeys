@@ -29,7 +29,7 @@ import {
 import type { User, AuthCredential } from 'firebase/auth';
 import { auth, firebaseAvailable } from '../services/firebase/config';
 import { createUserProfile, getUserProfile, updateUserProfile, deleteUserData } from '../services/firebase/firestore';
-import { PersistenceManager, cancelAllPendingSaves } from './persistence';
+import { PersistenceManager, cancelAllPendingSaves, STORAGE_KEYS } from './persistence';
 import { useProgressStore } from './progressStore';
 import { useSettingsStore } from './settingsStore';
 import { useExerciseStore } from './exerciseStore';
@@ -238,16 +238,55 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
  * Trigger migration + remote pull after a non-anonymous sign-in.
  * Uses dynamic imports to avoid circular dependency (authStore → syncService → progressStore).
  * Runs asynchronously — errors are logged but don't block the UI.
+ *
+ * CRITICAL: After pulling remote data, checks if user has existing progress
+ * and auto-sets hasCompletedOnboarding=true to prevent re-onboarding.
  */
 async function triggerPostSignInSync(): Promise<void> {
-  // Pull display name from Firebase Auth user to settingsStore (cross-device sync)
+  // Restore settings from Firestore profile (hasCompletedOnboarding, username, displayName)
   try {
     const authState = useAuthStore.getState();
-    if (authState.user?.displayName) {
-      useSettingsStore.getState().setDisplayName(authState.user.displayName);
+    if (authState.user) {
+      const profile = await getUserProfile(authState.user.uid);
+      if (profile) {
+        // Restore hasCompletedOnboarding from Firestore
+        if ((profile as any).hasCompletedOnboarding === true) {
+          useSettingsStore.getState().setHasCompletedOnboarding(true);
+        }
+        // Restore username from Firestore
+        if ((profile as any).username) {
+          const localUsername = useSettingsStore.getState().username;
+          if (!localUsername) {
+            // Use setUsername for persistence + normalization; fall back to direct
+            // setState + manual save if the name is somehow shorter than 3 chars.
+            const remoteUsername = (profile as any).username;
+            useSettingsStore.getState().setUsername(remoteUsername);
+            // If setUsername rejected (< 3 chars), force it anyway to avoid losing data
+            if (!useSettingsStore.getState().username && remoteUsername) {
+              useSettingsStore.setState({ username: remoteUsername });
+              PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, useSettingsStore.getState());
+            }
+          }
+        }
+        // Restore display name: prefer Firestore profile > Firebase Auth
+        const localName = useSettingsStore.getState().displayName;
+        const isDefaultName = !localName || localName === 'Piano Student';
+        if (isDefaultName && profile.displayName) {
+          useSettingsStore.getState().setDisplayName(profile.displayName);
+        } else if (isDefaultName && authState.user.displayName) {
+          useSettingsStore.getState().setDisplayName(authState.user.displayName);
+        }
+      } else {
+        // No Firestore profile — fall back to Firebase Auth name for display name
+        const localName = useSettingsStore.getState().displayName;
+        const isDefaultName = !localName || localName === 'Piano Student';
+        if (isDefaultName && authState.user.displayName) {
+          useSettingsStore.getState().setDisplayName(authState.user.displayName);
+        }
+      }
     }
   } catch (err) {
-    logger.warn('[Auth] Display name sync failed:', err);
+    logger.warn('[Auth] Profile restore failed:', err);
   }
 
   try {
@@ -264,13 +303,54 @@ async function triggerPostSignInSync(): Promise<void> {
     logger.warn('[Auth] Post-sign-in pull failed:', err);
   }
 
-  // Set up social features (league membership + friend code)
+  // Auto-detect existing progress: if user has XP, completed exercises, or cats,
+  // they're a returning user — skip onboarding even if flag wasn't synced
+  try {
+    const hasOnboarded = useSettingsStore.getState().hasCompletedOnboarding;
+    if (!hasOnboarded) {
+      const totalXp = useProgressStore.getState().totalXp;
+      const lessonProgress = useProgressStore.getState().lessonProgress;
+      const hasProgress = totalXp > 0 || Object.keys(lessonProgress).length > 0;
+
+      if (hasProgress) {
+        logger.log('[Auth] Existing progress detected — auto-completing onboarding');
+        useSettingsStore.getState().setHasCompletedOnboarding(true);
+      }
+    }
+  } catch (err) {
+    logger.warn('[Auth] Onboarding auto-detection failed:', err);
+  }
+
+  // Push local settings to Firestore if they weren't there already.
+  // This covers the case where a user completed onboarding as anonymous
+  // and then linked/signed in — the username was local-only until now.
   try {
     const authState = useAuthStore.getState();
     if (authState.user && !authState.isAnonymous) {
+      const settings = useSettingsStore.getState();
+      const updates: Record<string, any> = {};
+      if (settings.username) updates.username = settings.username;
+      if (settings.hasCompletedOnboarding) updates.hasCompletedOnboarding = true;
+      if (settings.displayName && settings.displayName !== 'Piano Student') {
+        updates.displayName = settings.displayName;
+      }
+      if (Object.keys(updates).length > 0) {
+        await updateUserProfile(authState.user.uid, updates as any).catch(() => {});
+      }
+    }
+  } catch (err) {
+    logger.warn('[Auth] Post-sign-in settings push failed:', err);
+  }
+
+  // Set up social features (league membership + friend code)
+  // Use the app's display name (settingsStore) for league, NOT Firebase Auth name
+  try {
+    const authState = useAuthStore.getState();
+    if (authState.user && !authState.isAnonymous) {
+      const appDisplayName = useSettingsStore.getState().displayName || authState.user.displayName || 'Player';
       await ensureSocialSetup(
         authState.user.uid,
-        authState.user.displayName ?? 'Player',
+        appDisplayName,
       );
     }
   } catch (err) {
@@ -406,11 +486,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName });
-      await createUserProfile(result.user.uid, { email, displayName });
+      // Include username + onboarding flag in initial profile so they survive sign-out/sign-in
+      const localSettings = useSettingsStore.getState();
+      const profileData: Record<string, any> = { email, displayName };
+      if (localSettings.username) profileData.username = localSettings.username;
+      if (localSettings.hasCompletedOnboarding) profileData.hasCompletedOnboarding = true;
+      await createUserProfile(result.user.uid, profileData as any);
 
       // Sync display name to settings store so ProfileScreen shows it
       try {
-        const { useSettingsStore } = require('./settingsStore');
         useSettingsStore.getState().setDisplayName(displayName);
       } catch { /* settings sync is best-effort */ }
 
@@ -642,6 +726,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     const { isAnonymous } = get();
     set({ isLoading: true, error: null });
+
+    // CRITICAL: Push all local data to Firestore BEFORE signing out.
+    // Without this, local-only data is lost when we clear local storage.
+    if (!isAnonymous) {
+      try {
+        const { syncManager } = require('../services/firebase/syncService');
+        // Flush offline queue
+        await syncManager.flushQueue();
+        // Push cat evolution + gem data
+        await syncManager.pushCatAndGemData();
+        // Save hasCompletedOnboarding + username to Firestore profile
+        const user = get().user;
+        if (user) {
+          const settings = useSettingsStore.getState();
+          await updateUserProfile(user.uid, {
+            hasCompletedOnboarding: settings.hasCompletedOnboarding,
+            username: settings.username,
+            displayName: settings.displayName,
+          } as any).catch(() => {});
+        }
+        logger.log('[Auth] Pre-signout data push completed');
+      } catch (err) {
+        logger.warn('[Auth] Pre-signout data push failed (continuing with signout):', err);
+      }
+    }
 
     let signOutSucceeded = false;
     try {

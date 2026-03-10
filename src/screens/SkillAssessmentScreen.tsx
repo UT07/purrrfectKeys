@@ -30,6 +30,7 @@ import { configureAudioSessionForRecording } from '../input/AudioCapture';
 import type { NoteHandle } from '../audio/types';
 import { getRandomCatMessage } from '../content/catDialogue';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, glowColor } from '../theme/tokens';
+import { GradientMeshBackground } from '../components/effects';
 import type { NoteEvent, MidiNoteEvent } from '../core/exercises/types';
 import { InputManager, type ActiveInputMethod } from '../input/InputManager';
 import { logger } from '../utils/logger';
@@ -1034,6 +1035,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={styles.container} testID="skill-assessment-screen">
+      <GradientMeshBackground accent="exercise" />
       {phase !== 'complete' && (
         <View style={styles.progressHeader}>
           <Text style={styles.progressTitle}>Skill Check</Text>

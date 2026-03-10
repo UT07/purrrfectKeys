@@ -13,6 +13,7 @@ import {
   StyleSheet,
   SafeAreaView,
   FlatList,
+  ScrollView,
   TextInput,
   Modal,
   ActivityIndicator,
@@ -32,7 +33,7 @@ import { useGemStore } from '../stores/gemStore';
 import { useAuthStore } from '../stores/authStore';
 import { masteryColor, masteryLabel } from '../core/songs/songMastery';
 import type { SongGenre, SongSummary, SongRequestParams, MasteryTier } from '../core/songs/songTypes';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, NEON, RARITY, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -45,12 +46,12 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const GENRE_CONFIG: Record<string, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
   all:       { icon: 'music-note',           color: COLORS.primary },
-  classical: { icon: 'music-clef-treble',    color: '#CE93D8' },  // soft purple
-  folk:      { icon: 'guitar-acoustic',      color: '#66BB6A' },  // warm green
-  pop:       { icon: 'microphone-variant',   color: '#FF7043' },  // coral
-  film:      { icon: 'filmstrip',            color: '#42A5F5' },  // sky blue
-  game:      { icon: 'gamepad-variant',      color: '#AB47BC' },  // vivid purple
-  holiday:   { icon: 'snowflake',            color: '#4FC3F7' },  // ice blue
+  classical: { icon: 'music-clef-treble',    color: RARITY.epic.borderColor },
+  folk:      { icon: 'guitar-acoustic',      color: COLORS.success },
+  pop:       { icon: 'microphone-variant',   color: COLORS.streakFlame },
+  film:      { icon: 'filmstrip',            color: COLORS.info },
+  game:      { icon: 'gamepad-variant',      color: NEON.purple },
+  holiday:   { icon: 'snowflake',            color: COLORS.gemDiamond },
 };
 
 const GENRES: Array<{ label: string; value: SongGenre | 'all' }> = [
@@ -150,12 +151,18 @@ const MASTERY_ICONS: Record<Exclude<MasteryTier, 'none'>, keyof typeof MaterialC
 // ---------------------------------------------------------------------------
 
 const DIFFICULTY_STAR_COLORS: Record<number, string> = {
-  1: '#4CAF50', // green — easy
-  2: '#8BC34A', // light green
-  3: '#FFD700', // gold — medium
-  4: '#FF9800', // orange
-  5: '#F44336', // red — hard
+  1: COLORS.success,
+  2: NEON.green,
+  3: COLORS.starGold,
+  4: COLORS.warning,
+  5: COLORS.error,
 };
+
+// ---------------------------------------------------------------------------
+// Dark text color for light badge backgrounds
+// ---------------------------------------------------------------------------
+
+const BADGE_DARK_TEXT = COLORS.surface;
 
 // ---------------------------------------------------------------------------
 // Metallic Mastery Badge
@@ -167,6 +174,7 @@ function MasteryBadge({ tier }: { tier: MasteryTier }) {
   const color = masteryColor(tier);
   const icon = MASTERY_ICONS[tier];
   const isPlatinum = tier === 'platinum';
+  const useDarkText = tier === 'silver' || tier === 'platinum';
 
   return (
     <View
@@ -183,14 +191,14 @@ function MasteryBadge({ tier }: { tier: MasteryTier }) {
       <MaterialCommunityIcons
         name={icon}
         size={11}
-        color={tier === 'silver' || tier === 'platinum' ? '#1A1A1A' : '#FFFFFF'}
+        color={useDarkText ? BADGE_DARK_TEXT : COLORS.textPrimary}
         style={{ marginRight: 3 }}
       />
       <Text
         style={[
           styles.masteryBadgeText,
           {
-            color: tier === 'silver' || tier === 'platinum' ? '#1A1A1A' : '#FFFFFF',
+            color: useDarkText ? BADGE_DARK_TEXT : COLORS.textPrimary,
           },
         ]}
       >
@@ -515,23 +523,23 @@ export function SongLibraryScreen() {
         </View>
       </View>
 
-      {/* Genre carousel */}
-      <FlatList
+      {/* Genre carousel — ScrollView instead of FlatList to prevent vertical clipping */}
+      <ScrollView
         horizontal
-        data={GENRES}
-        keyExtractor={(item) => item.value}
-        renderItem={({ item }) => (
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.genreCarousel}
+        style={styles.genreCarouselWrapper}
+      >
+        {GENRES.map((item) => (
           <GenrePill
+            key={item.value}
             label={item.label}
             value={item.value}
             isActive={activeGenre === item.value}
             onPress={() => handleGenrePress(item.value)}
           />
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.genreCarousel}
-        style={styles.genreCarouselWrapper}
-      />
+        ))}
+      </ScrollView>
 
       {/* Search bar */}
       <View style={[
@@ -554,7 +562,7 @@ export function SongLibraryScreen() {
           testID="search-input"
         />
         {searchText.length > 0 && (
-          <PressableScale onPress={() => setSearchText('')} style={{ padding: 4 }}>
+          <PressableScale onPress={() => setSearchText('')} style={{ padding: SPACING.xs }}>
             <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
           </PressableScale>
         )}
@@ -653,27 +661,34 @@ const styles = StyleSheet.create({
 
   // Genre carousel
   genreCarouselWrapper: {
-    maxHeight: 44,
+    marginBottom: SPACING.sm,
+    overflow: 'visible',
   },
   genreCarousel: {
     paddingHorizontal: SPACING.lg,
-    paddingRight: SPACING.xl,
+    paddingRight: SPACING.xxl,
     gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    alignItems: 'center',
   },
   genrePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs + 2,
+    justifyContent: 'center',
+    gap: SPACING.xs + 1,
+    paddingHorizontal: SPACING.sm + 4,
+    paddingVertical: SPACING.sm + 2,
     borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
+    minHeight: 36,
   },
   genrePillText: {
     ...TYPOGRAPHY.body.sm,
     color: COLORS.textSecondary,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 
   // Search
@@ -771,7 +786,7 @@ const styles = StyleSheet.create({
   genreChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.xs + 2,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.sm,
   },
@@ -846,7 +861,7 @@ const styles = StyleSheet.create({
     right: SPACING.lg,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',

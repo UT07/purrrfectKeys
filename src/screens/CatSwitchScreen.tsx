@@ -48,6 +48,7 @@ import { useGemStore } from '../stores/gemStore';
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import type { EvolutionStage, CatAbility } from '../stores/types';
 import { PressableScale } from '../components/common/PressableScale';
+import { GradientMeshBackground } from '../components/effects';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import type { RarityLevel } from '../theme/tokens';
 import { analyticsEvents } from '../services/analytics/PostHog';
@@ -65,7 +66,7 @@ const STAGE_LABELS: Record<EvolutionStage, string> = {
 };
 
 const STAGE_COLORS: Record<EvolutionStage, string> = {
-  baby: '#81D4FA',
+  baby: COLORS.gemDiamond,
   teen: COLORS.success,
   adult: COLORS.starGold,
   master: COLORS.starGold,
@@ -168,7 +169,7 @@ function LegendaryShimmerBorder(): React.ReactElement {
     const borderColor = interpolateColor(
       shimmer.value,
       [0, 1],
-      [RARITY.legendary.borderColor, '#FFA500'],
+      [RARITY.legendary.borderColor, COLORS.warning],
     );
     return { borderColor };
   });
@@ -675,6 +676,7 @@ export function CatSwitchScreen(): React.ReactElement {
 
   return (
     <View style={styles.container} testID="cat-switch-screen">
+      <GradientMeshBackground accent="catStudio" />
       {/* Dynamic background gradient matching current cat */}
       <LinearGradient
         colors={[glowColor(currentCat.color, 0.09), COLORS.background, COLORS.background]}
@@ -870,7 +872,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: glowColor('#000000', 0.6),
+    backgroundColor: glowColor(COLORS.background, 0.6),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -1095,7 +1097,7 @@ const styles = StyleSheet.create({
   // Buy modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: glowColor('#000000', 0.7),
+    backgroundColor: glowColor(COLORS.background, 0.7),
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,

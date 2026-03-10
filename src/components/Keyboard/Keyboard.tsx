@@ -40,6 +40,8 @@ export interface KeyboardProps {
   scrollEnabled?: boolean; // Allow manual scroll (default: true). Set false during exercises.
   keyHeight?: number;
   focusNote?: number; // MIDI note to auto-center on (for auto-scroll)
+  /** Scale overlay: notes belonging to the selected scale */
+  scaleNotes?: Set<number>;
   /** Per-note color overrides for replay mode (MIDI note → hex color string) */
   replayHighlights?: Map<number, string>;
   testID?: string;
@@ -64,6 +66,7 @@ export const Keyboard = React.memo(
     scrollEnabled = true,
     keyHeight = 80,
     focusNote,
+    scaleNotes,
     replayHighlights,
     testID,
   }: KeyboardProps) => {
@@ -395,6 +398,7 @@ export const Keyboard = React.memo(
               isBlackKey={false}
               isHighlighted={mergedPressedNotes.has(note)}
               isExpected={expectedNotes.has(note)}
+              isScaleNote={scaleNotes?.has(note)}
               isPressed={pressedNotes.has(note)}
               showLabels={showLabels}
               replayColor={replayHighlights?.get(note)}
@@ -434,6 +438,7 @@ export const Keyboard = React.memo(
                 isBlackKey={true}
                 isHighlighted={mergedPressedNotes.has(note)}
                 isExpected={expectedNotes.has(note)}
+                isScaleNote={scaleNotes?.has(note)}
                 isPressed={pressedNotes.has(note)}
                 showLabels={showLabels}
                 replayColor={replayHighlights?.get(note)}

@@ -1035,7 +1035,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 500,
-    backgroundColor: 'rgba(20, 20, 20, 0.88)',
+    backgroundColor: glowColor(COLORS.surface, 0.88),
     borderRadius: BORDER_RADIUS.xl,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
@@ -1077,7 +1077,7 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: 'rgba(24, 24, 24, 0.9)',
+    backgroundColor: glowColor(COLORS.cardSurface, 0.9),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
@@ -1172,7 +1172,7 @@ const styles = StyleSheet.create({
   },
   breakdownSection: {
     gap: SPACING.sm,
-    backgroundColor: 'rgba(24, 24, 24, 0.7)',
+    backgroundColor: glowColor(COLORS.cardSurface, 0.7),
     paddingHorizontal: SPACING.md - 4,
     paddingVertical: SPACING.sm + 2,
     borderRadius: BORDER_RADIUS.sm,
@@ -1199,7 +1199,7 @@ const styles = StyleSheet.create({
   breakdownBar: {
     flex: 1,
     height: 7,
-    backgroundColor: 'rgba(42, 42, 42, 0.6)',
+    backgroundColor: glowColor(COLORS.cardBorder, 0.6),
     borderRadius: 4,
     overflow: 'hidden',
   },

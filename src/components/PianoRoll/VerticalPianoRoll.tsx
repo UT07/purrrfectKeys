@@ -14,7 +14,7 @@ import { View, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { midiToNoteName } from '@/core/music/MusicTheory';
 import type { NoteEvent } from '@/core/exercises/types';
-import { glowColor as hexGlow } from '@/theme/tokens';
+import { COLORS as THEME, glowColor as hexGlow } from '@/theme/tokens';
 
 // ---------------------------------------------------------------------------
 // Exported constants
@@ -37,48 +37,89 @@ const DEFAULT_MIDI_MIN = 48; // C3
 const DEFAULT_MIDI_MAX = 72; // C5
 
 // ---------------------------------------------------------------------------
-// Color palette (matches horizontal PianoRoll)
+// Piano-roll-specific semantic colors
+// Maps raw hex values to design tokens where possible; piano-roll-specific
+// colors that have no global equivalent use `hexGlow` or literal values
+// with a semantic key.
 // ---------------------------------------------------------------------------
 
-const COLORS = {
-  // Right hand: blue-purple
+const PIANO_ROLL_COLORS = {
+  // Right hand: blue-purple tones
   rightUpcoming: '#7C4DFF',
   rightUpcomingLight: '#7C4DFF',
   rightUpcomingDark: '#536DFE',
   rightActive: '#E040FB',
   rightActiveLight: '#E040FB',
   rightActiveDark: '#AA00FF',
-  rightPastLight: 'rgba(124, 77, 255, 0.3)',
-  rightPastDark: 'rgba(83, 109, 254, 0.2)',
-  // Left hand: teal-green
+  rightPastLight: hexGlow('#7C4DFF', 0.3),
+  rightPastDark: hexGlow('#536DFE', 0.2),
+
+  // Left hand: teal-green tones (active maps to feedback tokens)
   leftUpcoming: '#26C6DA',
   leftUpcomingLight: '#26C6DA',
   leftUpcomingDark: '#00BFA5',
-  leftActive: '#69F0AE',
-  leftActiveLight: '#69F0AE',
-  leftActiveDark: '#00E676',
-  leftPastLight: 'rgba(38, 198, 218, 0.3)',
-  leftPastDark: 'rgba(0, 191, 165, 0.2)',
+  leftActive: THEME.feedbackGood,            // #69F0AE
+  leftActiveLight: THEME.feedbackGood,        // #69F0AE
+  leftActiveDark: THEME.feedbackPerfect,      // #00E676
+  leftPastLight: hexGlow('#26C6DA', 0.3),
+  leftPastDark: hexGlow('#00BFA5', 0.2),
+
   // Generic (when hand not specified)
-  upcoming: '#7986CB',
+  upcoming: THEME.info,                       // #2196F3 (was #7986CB)
   upcomingLight: '#7986CB',
   upcomingDark: '#3949AB',
-  active: '#FF8A80',
+  active: THEME.feedbackMiss,                 // #FF5252 (was #FF8A80)
   activeLight: '#FF8A80',
-  activeDark: '#D32F2F',
-  activeGlow: 'rgba(224, 64, 251, 0.35)',
-  activeHalo: 'rgba(224, 64, 251, 0.15)',
-  pastFaded: 'rgba(102, 187, 106, 0.4)',
-  pastLight: 'rgba(129, 199, 132, 0.5)',
-  pastDark: 'rgba(76, 175, 80, 0.3)',
-  pressLine: '#40C4FF',
-  pressLineGlow: 'rgba(64, 196, 255, 0.3)',
-  beatLine: 'rgba(255, 255, 255, 0.06)',
-  beatLineAccent: 'rgba(255, 255, 255, 0.15)',
+  activeDark: THEME.error,                    // #F44336 (was #D32F2F)
+  activeGlow: hexGlow('#E040FB', 0.35),
+  activeHalo: hexGlow('#E040FB', 0.15),
+
+  // Past notes (faded success tones)
+  pastFaded: hexGlow(THEME.success, 0.4),
+  pastLight: hexGlow('#81C784', 0.5),
+  pastDark: hexGlow(THEME.success, 0.3),
+
+  // Press / hit line
+  pressLine: THEME.feedbackEarly,             // #40C4FF
+  pressLineGlow: hexGlow(THEME.feedbackEarly, 0.3),
+
+  // Grid
+  beatLine: hexGlow(THEME.textPrimary, 0.06),
+  beatLineAccent: hexGlow(THEME.textPrimary, 0.15),
+
+  // Background
   background: 'transparent',
-  ghost: 'rgba(255, 255, 255, 0.15)',
-  ghostBorder: 'rgba(255, 255, 255, 0.08)',
-  innerHighlight: 'rgba(255, 255, 255, 0.25)',
+
+  // Ghost notes
+  ghost: hexGlow(THEME.textPrimary, 0.15),
+  ghostBorder: hexGlow(THEME.textPrimary, 0.08),
+  ghostInnerHighlight: hexGlow(THEME.textPrimary, 0.08),
+
+  // Note surface highlight
+  innerHighlight: hexGlow(THEME.textPrimary, 0.25),
+
+  // Note border (upcoming default)
+  noteBorderDefault: hexGlow(THEME.textPrimary, 0.2),
+  noteBorderActive: THEME.textPrimary,        // #FFFFFF
+
+  // Note label text
+  labelText: hexGlow(THEME.textPrimary, 0.85),
+  labelTextActive: THEME.textPrimary,         // #FFFFFF
+  labelTextShadow: hexGlow('#000000', 0.5),
+  labelTextShadowActive: hexGlow('#000000', 0.7),
+  handLabelText: hexGlow(THEME.textPrimary, 0.6),
+
+  // Timing zone
+  timingZoneEdge: hexGlow(THEME.feedbackEarly, 0),
+  timingZoneMid: hexGlow(THEME.feedbackEarly, 0.15),
+
+  // Note shadow
+  noteShadow: '#000000',
+  noteShadowActive: '#FF8A80',
+
+  // Beat counter
+  beatCounterBg: hexGlow('#000000', 0.6),
+  beatCounterText: hexGlow(THEME.textPrimary, 0.5),
 };
 
 // ---------------------------------------------------------------------------
@@ -302,21 +343,21 @@ export const VerticalPianoRoll = React.memo(
 
         // Per-hand coloring: right=purple, left=teal, unspecified=indigo
         const hand = note.hand;
-        let color = hand === 'right' ? COLORS.rightUpcoming : hand === 'left' ? COLORS.leftUpcoming : COLORS.upcoming;
-        let gradientTop = hand === 'right' ? COLORS.rightUpcomingLight : hand === 'left' ? COLORS.leftUpcomingLight : COLORS.upcomingLight;
-        let gradientBottom = hand === 'right' ? COLORS.rightUpcomingDark : hand === 'left' ? COLORS.leftUpcomingDark : COLORS.upcomingDark;
-        let borderColor = 'rgba(255, 255, 255, 0.2)';
+        let color = hand === 'right' ? PIANO_ROLL_COLORS.rightUpcoming : hand === 'left' ? PIANO_ROLL_COLORS.leftUpcoming : PIANO_ROLL_COLORS.upcoming;
+        let gradientTop = hand === 'right' ? PIANO_ROLL_COLORS.rightUpcomingLight : hand === 'left' ? PIANO_ROLL_COLORS.leftUpcomingLight : PIANO_ROLL_COLORS.upcomingLight;
+        let gradientBottom = hand === 'right' ? PIANO_ROLL_COLORS.rightUpcomingDark : hand === 'left' ? PIANO_ROLL_COLORS.leftUpcomingDark : PIANO_ROLL_COLORS.upcomingDark;
+        let borderColor = PIANO_ROLL_COLORS.noteBorderDefault;
         if (isPast) {
-          color = COLORS.pastFaded;
-          gradientTop = hand === 'right' ? COLORS.rightPastLight : hand === 'left' ? COLORS.leftPastLight : COLORS.pastLight;
-          gradientBottom = hand === 'right' ? COLORS.rightPastDark : hand === 'left' ? COLORS.leftPastDark : COLORS.pastDark;
+          color = PIANO_ROLL_COLORS.pastFaded;
+          gradientTop = hand === 'right' ? PIANO_ROLL_COLORS.rightPastLight : hand === 'left' ? PIANO_ROLL_COLORS.leftPastLight : PIANO_ROLL_COLORS.pastLight;
+          gradientBottom = hand === 'right' ? PIANO_ROLL_COLORS.rightPastDark : hand === 'left' ? PIANO_ROLL_COLORS.leftPastDark : PIANO_ROLL_COLORS.pastDark;
           borderColor = 'transparent';
         }
         if (isActive) {
-          color = hand === 'right' ? COLORS.rightActive : hand === 'left' ? COLORS.leftActive : COLORS.active;
-          gradientTop = hand === 'right' ? COLORS.rightActiveLight : hand === 'left' ? COLORS.leftActiveLight : COLORS.activeLight;
-          gradientBottom = hand === 'right' ? COLORS.rightActiveDark : hand === 'left' ? COLORS.leftActiveDark : COLORS.activeDark;
-          borderColor = '#FFF';
+          color = hand === 'right' ? PIANO_ROLL_COLORS.rightActive : hand === 'left' ? PIANO_ROLL_COLORS.leftActive : PIANO_ROLL_COLORS.active;
+          gradientTop = hand === 'right' ? PIANO_ROLL_COLORS.rightActiveLight : hand === 'left' ? PIANO_ROLL_COLORS.leftActiveLight : PIANO_ROLL_COLORS.activeLight;
+          gradientBottom = hand === 'right' ? PIANO_ROLL_COLORS.rightActiveDark : hand === 'left' ? PIANO_ROLL_COLORS.leftActiveDark : PIANO_ROLL_COLORS.activeDark;
+          borderColor = PIANO_ROLL_COLORS.noteBorderActive;
         }
 
         // Replay mode: override colors per note index
@@ -401,8 +442,8 @@ export const VerticalPianoRoll = React.memo(
                   width: containerWidth,
                   height: isMeasureLine ? 2 : 1,
                   backgroundColor: isMeasureLine
-                    ? COLORS.beatLineAccent
-                    : COLORS.beatLine,
+                    ? PIANO_ROLL_COLORS.beatLineAccent
+                    : PIANO_ROLL_COLORS.beatLine,
                 },
               ]}
             />
@@ -508,7 +549,7 @@ export const VerticalPianoRoll = React.memo(
 
         {/* Timing zone: symmetric gradient centered on press line (early/late window) */}
         <LinearGradient
-          colors={['rgba(64, 196, 255, 0)', 'rgba(64, 196, 255, 0.15)', 'rgba(64, 196, 255, 0)']}
+          colors={[PIANO_ROLL_COLORS.timingZoneEdge, PIANO_ROLL_COLORS.timingZoneMid, PIANO_ROLL_COLORS.timingZoneEdge]}
           style={[styles.timingZoneFill, {
             top: hitLineY - zoneHalfPx,
             height: zoneHalfPx * 2,
@@ -552,7 +593,7 @@ const styles = StyleSheet.create({
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.background,
+    backgroundColor: PIANO_ROLL_COLORS.background,
   },
   contentLayer: {
     position: 'absolute',
@@ -572,14 +613,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     zIndex: 10,
     // 3D shadow for depth
-    shadowColor: '#000000',
+    shadowColor: PIANO_ROLL_COLORS.noteShadow,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,
     shadowRadius: 4,
     elevation: 5,
   },
   noteActive: {
-    shadowColor: COLORS.active,
+    shadowColor: PIANO_ROLL_COLORS.noteShadowActive,
     shadowOpacity: 0.6,
     shadowRadius: 8,
     elevation: 8,
@@ -598,7 +639,7 @@ const styles = StyleSheet.create({
     height: '40%',
     borderTopLeftRadius: 6,
     borderTopRightRadius: 6,
-    backgroundColor: COLORS.innerHighlight,
+    backgroundColor: PIANO_ROLL_COLORS.innerHighlight,
   },
   noteLabelContainer: {
     justifyContent: 'center',
@@ -608,21 +649,21 @@ const styles = StyleSheet.create({
   noteHalo: {
     position: 'absolute',
     borderRadius: 12,
-    backgroundColor: COLORS.activeHalo,
+    backgroundColor: PIANO_ROLL_COLORS.activeHalo,
     zIndex: 8,
   },
   noteGlow: {
     position: 'absolute',
     borderRadius: 10,
-    backgroundColor: COLORS.activeGlow,
+    backgroundColor: PIANO_ROLL_COLORS.activeGlow,
     zIndex: 9,
   },
   ghostNote: {
     position: 'absolute',
     borderRadius: 8,
-    backgroundColor: COLORS.ghost,
+    backgroundColor: PIANO_ROLL_COLORS.ghost,
     borderWidth: 1,
-    borderColor: COLORS.ghostBorder,
+    borderColor: PIANO_ROLL_COLORS.ghostBorder,
     zIndex: 5,
     overflow: 'hidden',
   },
@@ -632,24 +673,24 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '35%',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: PIANO_ROLL_COLORS.ghostInnerHighlight,
     borderTopLeftRadius: 7,
     borderTopRightRadius: 7,
   },
   noteLabel: {
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: PIANO_ROLL_COLORS.labelText,
     fontSize: 10,
     fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: PIANO_ROLL_COLORS.labelTextShadow,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   noteLabelActive: {
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    color: PIANO_ROLL_COLORS.labelTextActive,
+    textShadowColor: PIANO_ROLL_COLORS.labelTextShadowActive,
   },
   handLabel: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: PIANO_ROLL_COLORS.handLabelText,
     fontSize: 8,
     fontWeight: '600',
     marginTop: 1,
@@ -665,7 +706,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: COLORS.pressLine,
+    backgroundColor: PIANO_ROLL_COLORS.pressLine,
     zIndex: 20,
   },
   hitLineGlow: {
@@ -673,21 +714,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 16,
-    backgroundColor: COLORS.pressLineGlow,
+    backgroundColor: PIANO_ROLL_COLORS.pressLineGlow,
     zIndex: 19,
   },
   beatCounter: {
     position: 'absolute',
     bottom: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: PIANO_ROLL_COLORS.beatCounterBg,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
     zIndex: 25,
   },
   beatText: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: PIANO_ROLL_COLORS.beatCounterText,
     fontSize: 11,
   },
 });

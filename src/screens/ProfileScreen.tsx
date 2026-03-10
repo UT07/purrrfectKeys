@@ -241,67 +241,19 @@ function AchievementsSection(): React.ReactElement {
   );
 }
 
-/** SVG progress ring for level display */
-function LevelProgressRing({
-  percent,
-  level,
-  size,
-  catColor,
-}: {
-  percent: number;
-  level: number;
-  size: number;
-  catColor: string;
-}): React.ReactElement {
-  const strokeWidth = 5;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = (1 - percent / 100) * circumference;
-  const center = size / 2;
-
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
-        {/* Background track */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          stroke={COLORS.cardBorder}
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        {/* Foreground progress */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          stroke={catColor}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-        />
-      </Svg>
-      {/* Center content */}
-      <View style={StyleSheet.absoluteFill}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={styles.levelRingLabel}>Level</Text>
-          <Text style={[styles.levelRingValue, { color: catColor }]}>{level}</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
+/** Ring constants — matches HomeScreen GOAL_ARC pattern */
+const RING_SIZE = 160;
+const RING_STROKE = 8;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export function ProfileScreen(): React.ReactElement {
   const navigation = useNavigation<ProfileNavProp>();
   const { totalXp, level, streakData, lessonProgress } = useProgressStore();
   const {
-    dailyGoalMinutes, masterVolume, displayName, selectedCatId,
+    dailyGoalMinutes, masterVolume, displayName, username, selectedCatId,
     preferredInputMethod, micDetectionMode,
-    setDailyGoalMinutes, setMasterVolume, setDisplayName,
+    setDailyGoalMinutes, setMasterVolume, setDisplayName, setUsername,
     setPreferredInputMethod, setMicDetectionMode,
   } = useSettingsStore();
   const weeklyPractice = useWeeklyPractice();
@@ -309,12 +261,15 @@ export function ProfileScreen(): React.ReactElement {
   const maxDayMinutes = Math.max(...weeklyPractice.map(d => d.minutes), 1);
 
   const [activeTab, setActiveTab] = useState<'me' | 'settings'>('me');
+  const [showXpTooltip, setShowXpTooltip] = useState(false);
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showVolumePicker, setShowVolumePicker] = useState(false);
   const [showInputPicker, setShowInputPicker] = useState(false);
   const [showDetectionModePicker, setShowDetectionModePicker] = useState(false);
   const [showNameEditor, setShowNameEditor] = useState(false);
   const [editingName, setEditingName] = useState(displayName);
+  const [showUsernameEditor, setShowUsernameEditor] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(username || '');
 
   const selectedCat = getCatById(selectedCatId) ?? CAT_CHARACTERS[0];
   const catColor = selectedCat.color;
@@ -368,6 +323,20 @@ export function ProfileScreen(): React.ReactElement {
     setShowNameEditor(false);
   }, [editingName, setDisplayName]);
 
+  const handleSaveUsername = useCallback(() => {
+    const trimmed = editingUsername.trim();
+    if (trimmed.length >= 3) {
+      setUsername(trimmed);
+      // Sync to Firestore
+      const { user } = useAuthStore.getState();
+      if (user && !user.isAnonymous) {
+        const { updateUserProfile } = require('../services/firebase/firestore');
+        updateUserProfile(user.uid, { username: trimmed } as any).catch(() => {});
+      }
+    }
+    setShowUsernameEditor(false);
+  }, [editingUsername, setUsername]);
+
   return (
     <SafeAreaView style={styles.container} testID="profile-screen">
       <GradientMeshBackground accent="profile" />
@@ -376,36 +345,78 @@ export function ProfileScreen(): React.ReactElement {
         contentContainerStyle={styles.scrollContent}
         testID="profile-scroll"
       >
-        {/* Gradient Header with cat avatar centerpiece and level progress ring */}
+        {/* Header — cat avatar in level XP ring */}
         <LinearGradient
           colors={[glowColor(catColor, 0.13), 'transparent', 'transparent']}
           style={styles.header}
         >
+          {/* Level XP ring with cat avatar inside — tap for XP detail */}
           <PressableScale
-            style={styles.avatarContainer}
-            onPress={() => navigation.navigate('CatSwitch')}
-            testID="profile-open-cat-switch"
+            style={styles.ringContainer}
+            onPress={() => setShowXpTooltip((v) => !v)}
+            testID="profile-level-ring"
           >
-            {/* Circular halo glow behind avatar */}
-            <View style={[styles.avatarHalo, { backgroundColor: glowColor(catColor, 0.18) }]} />
-            <View style={[styles.avatarHaloInner, { borderColor: glowColor(catColor, 0.25) }]} />
-            <CatAvatar catId={selectedCatId} size="hero" evolutionStage={evolutionStage} />
-            <View style={styles.editBadge}>
-              <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
+            <Svg width={RING_SIZE} height={RING_SIZE}>
+              {/* Background track */}
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={glowColor(COLORS.primary, 0.15)}
+                strokeWidth={RING_STROKE}
+                fill="transparent"
+              />
+              {/* Progress arc */}
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={COLORS.primaryLight}
+                strokeWidth={RING_STROKE}
+                fill="transparent"
+                strokeDasharray={`${RING_CIRCUMFERENCE}`}
+                strokeDashoffset={(1 - levelProgress.percentToNextLevel / 100) * RING_CIRCUMFERENCE}
+                strokeLinecap="round"
+                rotation="-90"
+                origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+              />
+            </Svg>
+            <View style={styles.avatarInRing}>
+              <CatAvatar catId={selectedCatId} size="large" evolutionStage={evolutionStage} />
             </View>
           </PressableScale>
+          {/* Inline XP tooltip — shown on ring tap */}
+          {showXpTooltip && (
+            <Text style={styles.xpTooltip}>
+              {levelProgress.xpToNextLevel} XP to level {level + 1}
+            </Text>
+          )}
 
-          {/* Level progress ring */}
-          <LevelProgressRing
-            percent={levelProgress.percentToNextLevel}
-            level={levelProgress.level}
-            size={80}
-            catColor={catColor}
-          />
-          <Text style={styles.xpToNextText}>
-            {levelProgress.xpToNextLevel} XP to next
-          </Text>
+          {/* All stat pills in one row */}
+          <View style={styles.heroPills}>
+            <View style={styles.heroPill}>
+              <MaterialCommunityIcons name="fire" size={16} color={COLORS.starGold} />
+              <Text style={styles.heroPillText}>{streakData.currentStreak}</Text>
+            </View>
+            <View style={styles.heroPill}>
+              <MaterialCommunityIcons name="shield-star" size={18} color={COLORS.starGold} />
+              <Text style={styles.heroPillText}>Lv. {level}</Text>
+            </View>
+            <View style={styles.heroPill}>
+              <MaterialCommunityIcons name="lightning-bolt" size={16} color={COLORS.starGold} />
+              <Text style={styles.heroPillText}>{totalXp} XP</Text>
+            </View>
+            <View style={styles.heroPill}>
+              <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
+              <Text style={[styles.heroPillText, { color: COLORS.gemGold }]}>{gems}</Text>
+            </View>
+            <View style={styles.heroPill}>
+              <MaterialCommunityIcons name="star" size={16} color={COLORS.starGold} />
+              <Text style={styles.heroPillText}>{totalStars}</Text>
+            </View>
+          </View>
 
+          {/* Display name + username */}
           {showNameEditor ? (
             <View style={styles.inlineNameEdit} testID="name-editor">
               <TextInput
@@ -415,7 +426,7 @@ export function ProfileScreen(): React.ReactElement {
                 maxLength={30}
                 autoFocus
                 selectTextOnFocus
-                placeholder="Your name"
+                placeholder="Display name"
                 placeholderTextColor={COLORS.textMuted}
                 returnKeyType="done"
                 onSubmitEditing={handleSaveName}
@@ -429,16 +440,22 @@ export function ProfileScreen(): React.ReactElement {
           ) : (
             <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }} testID="name-display">
               <View style={styles.nameRow}>
-                <Text style={styles.username}>{displayName}</Text>
+                <Text style={styles.displayNameText}>{displayName}</Text>
                 <View style={styles.nameEditBtn}>
                   <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
                 </View>
               </View>
             </PressableScale>
           )}
-          <Text style={styles.subtitle}>
-            Level {level} Pianist {selectedCat.personality ? `\u00B7 ${selectedCat.name}` : ''}
-          </Text>
+          {username ? (
+            <Text style={styles.usernameSubtext}>@{username}</Text>
+          ) : null}
+          <PressableScale
+            onPress={() => navigation.navigate('CatSwitch')}
+            testID="profile-open-cat-switch"
+          >
+            <Text style={styles.changeCatLink}>{selectedCat.name} &middot; Tap to change</Text>
+          </PressableScale>
         </LinearGradient>
 
         {/* Tab Toggle */}
@@ -461,21 +478,6 @@ export function ProfileScreen(): React.ReactElement {
 
         {activeTab === 'me' && (
         <>
-        {/* Quick identity pills: Streak + Gems */}
-        <View style={styles.quickPillRow}>
-          <View style={styles.streakPill}>
-            <MaterialCommunityIcons name="fire" size={16} color={COLORS.starGold} />
-            <Text style={styles.streakPillText}>{streakData.currentStreak}</Text>
-          </View>
-          <View style={styles.gemPill}>
-            <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
-            <Text style={styles.gemPillText}>{gems}</Text>
-          </View>
-          <View style={styles.starPill}>
-            <MaterialCommunityIcons name="star" size={16} color={COLORS.starGold} />
-            <Text style={styles.starPillText}>{totalStars}</Text>
-          </View>
-        </View>
 
         {/* Your Journey — personal milestones */}
         <View style={styles.section}>
@@ -607,6 +609,39 @@ export function ProfileScreen(): React.ReactElement {
         {/* Settings Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
+
+          {/* Username editor */}
+          <PressableScale style={styles.settingItem} onPress={() => { setEditingUsername(username || ''); setShowUsernameEditor(!showUsernameEditor); }}>
+            <View style={styles.settingLeft}>
+              <MaterialCommunityIcons name="at" size={24} color={COLORS.textSecondary} />
+              <Text style={styles.settingLabel}>Username</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{username || 'Not set'}</Text>
+              <MaterialCommunityIcons name={showUsernameEditor ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.textMuted} />
+            </View>
+          </PressableScale>
+          {showUsernameEditor && (
+            <View style={styles.usernameEditRow}>
+              <TextInput
+                style={styles.usernameInput}
+                value={editingUsername}
+                onChangeText={setEditingUsername}
+                maxLength={20}
+                autoFocus
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="username (3-20 chars)"
+                placeholderTextColor={COLORS.textMuted}
+                returnKeyType="done"
+                onSubmitEditing={handleSaveUsername}
+                testID="username-input"
+              />
+              <PressableScale onPress={handleSaveUsername} style={styles.usernameSaveBtn} testID="username-save-btn">
+                <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
+              </PressableScale>
+            </View>
+          )}
 
           <PressableScale style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
             <View style={styles.settingLeft}>
@@ -797,7 +832,7 @@ export function ProfileScreen(): React.ReactElement {
               testID="profile-debug-log"
             >
               <View style={styles.settingLeft}>
-                <MaterialCommunityIcons name="bug" size={24} color="#FF9800" />
+                <MaterialCommunityIcons name="bug" size={24} color={COLORS.warning} />
                 <Text style={styles.settingLabel}>Debug Log</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.textMuted} />
@@ -825,39 +860,51 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xl,
     paddingBottom: SPACING.lg,
   },
-  avatarContainer: {
-    marginBottom: SPACING.md,
-    position: 'relative',
+  ringContainer: {
+    width: RING_SIZE,
+    height: RING_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 160,
-    height: 160,
+    marginBottom: SPACING.xs,
   },
-  avatarHalo: {
+  avatarInRing: {
     position: 'absolute',
-    width: 156,
-    height: 156,
-    borderRadius: 78,
   },
-  avatarHaloInner: {
-    position: 'absolute',
-    width: 144,
-    height: 144,
-    borderRadius: 72,
-    borderWidth: 2,
+  xpTooltip: {
+    ...TYPOGRAPHY.caption.md,
+    fontWeight: '600' as const,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.xs,
   },
-  editBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: 12,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.primary,
+  heroPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.surface,
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  heroPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: glowColor(COLORS.starGold, 0.1),
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.starGold, 0.2),
+  },
+  heroPillText: {
+    ...TYPOGRAPHY.body.sm,
+    fontWeight: '700' as const,
+    color: COLORS.starGold,
+  },
+  changeCatLink: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
   nameRow: {
     flexDirection: 'row',
@@ -865,33 +912,41 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: SPACING.sm,
   },
-  username: {
+  displayNameText: {
     ...TYPOGRAPHY.display.sm,
     fontWeight: '800' as const,
     color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
   },
-  subtitle: {
-    ...TYPOGRAPHY.heading.sm,
-    fontWeight: '400' as const,
-    color: COLORS.textSecondary,
-  },
-  // Level progress ring
-  levelRingLabel: {
-    ...TYPOGRAPHY.caption.md,
-    fontWeight: '600' as const,
-    color: COLORS.textSecondary,
-  },
-  levelRingValue: {
-    ...TYPOGRAPHY.display.sm,
-    fontSize: 22,
-    fontWeight: '800' as const,
-  },
-  xpToNextText: {
+  usernameSubtext: {
     ...TYPOGRAPHY.caption.lg,
-    fontWeight: '600' as const,
-    color: COLORS.textMuted,
-    marginTop: SPACING.xs,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  usernameEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  usernameInput: {
+    flex: 1,
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textPrimary,
+    backgroundColor: glowColor(COLORS.textPrimary, 0.08),
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.3),
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs + 2,
+  },
+  usernameSaveBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Tab toggle
   tabRow: {
@@ -922,63 +977,6 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: COLORS.textPrimary,
     fontWeight: '600' as const,
-  },
-  // Quick pill row (streak + gems + stars)
-  quickPillRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
-  streakPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: glowColor(COLORS.starGold, 0.1),
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: glowColor(COLORS.starGold, 0.2),
-  },
-  streakPillText: {
-    ...TYPOGRAPHY.body.sm,
-    fontWeight: '700' as const,
-    color: COLORS.starGold,
-  },
-  gemPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: glowColor(COLORS.gemGold, 0.1),
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: glowColor(COLORS.gemGold, 0.2),
-  },
-  gemPillText: {
-    ...TYPOGRAPHY.body.sm,
-    fontWeight: '700' as const,
-    color: COLORS.gemGold,
-  },
-  starPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: glowColor(COLORS.starGold, 0.1),
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: glowColor(COLORS.starGold, 0.2),
-  },
-  starPillText: {
-    ...TYPOGRAPHY.body.sm,
-    fontWeight: '700' as const,
-    color: COLORS.starGold,
   },
   // Journey milestones
   journeyGrid: {
@@ -1031,12 +1029,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: glowColor('#FFFFFF', 0.06),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.10),
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
   },
   settingLeft: {
     flexDirection: 'row',
@@ -1102,12 +1100,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    backgroundColor: glowColor('#FFFFFF', 0.06),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     paddingBottom: SPACING.md - 4,
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.10),
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
     height: 140,
     position: 'relative',
   },
@@ -1156,13 +1154,13 @@ const styles = StyleSheet.create({
     height: 1,
     borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.2),
+    borderColor: glowColor(COLORS.textPrimary, 0.2),
   },
   goalLineLabel: {
     ...TYPOGRAPHY.caption.sm,
     fontSize: 9,
     fontWeight: '600' as const,
-    color: glowColor('#FFFFFF', 0.3),
+    color: glowColor(COLORS.textPrimary, 0.3),
     marginLeft: SPACING.xs,
   },
   // Achievement badges (horizontal scroll)
@@ -1205,9 +1203,9 @@ const styles = StyleSheet.create({
     } : { elevation: 4 }),
   },
   achievementBadgeLocked: {
-    backgroundColor: glowColor('#FFFFFF', 0.04),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.04),
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.10),
+    borderColor: glowColor(COLORS.textPrimary, 0.10),
   },
   achievementBadgeRecent: {
     shadowColor: COLORS.starGold,
@@ -1238,7 +1236,7 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.heading.sm,
     fontWeight: '600' as const,
     color: COLORS.textPrimary,
-    backgroundColor: glowColor('#FFFFFF', 0.08),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.08),
     borderWidth: 1,
     borderColor: glowColor(COLORS.primary, 0.3),
     borderRadius: BORDER_RADIUS.sm,
@@ -1257,14 +1255,14 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: glowColor('#FFFFFF', 0.12),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.12),
     alignItems: 'center',
     justifyContent: 'center',
   },
   // Evolution progress
   evolutionCard: {
     ...SHADOWS.sm,
-    backgroundColor: glowColor('#FFFFFF', 0.06),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     borderWidth: 1,

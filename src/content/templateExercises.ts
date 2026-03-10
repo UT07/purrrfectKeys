@@ -3,8 +3,9 @@
  * 15 templates (5 easy, 5 medium, 5 hard) with note-swapping logic
  * to target the player's weak notes.
  */
-import type { Exercise, NoteEvent } from '@/core/exercises/types';
-import { getGenerationHints } from '@/core/curriculum/SkillTree';
+import type { Exercise, NoteEvent, ExerciseType } from '@/core/exercises/types';
+import { exerciseTypeForCategory } from '@/core/exercises/types';
+import { getGenerationHints, getSkillById } from '@/core/curriculum/SkillTree';
 
 interface ExerciseTemplate {
   id: string;
@@ -15,6 +16,8 @@ interface ExerciseTemplate {
   keySignature: string;
   hand: 'left' | 'right' | 'both';
   skillId?: string;
+  /** Exercise interaction type — defaults to 'play' if omitted */
+  type?: ExerciseType;
   buildNotes: () => NoteEvent[];
 }
 
@@ -194,11 +197,76 @@ const templates: ExerciseTemplate[] = [
   {
     id: 'tmpl-skill-lh-broken', title: 'Left Hand Broken Chord', difficulty: 2,
     baseNotes: [48, 53, 57], tempo: 65, keySignature: 'C', hand: 'left',
-    skillId: 'lh-broken-chords',
+    skillId: 'broken-chords-lh',
     buildNotes: () => [
       qn(48, 0, 'left'), qn(53, 1, 'left'), qn(57, 2, 'left'),
       qn(53, 3, 'left'), qn(48, 4, 'left'), qn(53, 5, 'left'),
       hn(57, 6, 'left'),
+    ],
+  },
+
+  // ── Type-specific templates (exercise interaction types) ──
+
+  // Rhythm: tap along to the beat pattern (no pitch accuracy needed)
+  {
+    id: 'tmpl-type-rhythm-basic', title: 'Rhythm Clap', difficulty: 1,
+    baseNotes: [60], tempo: 80, keySignature: 'C', hand: 'right', type: 'rhythm',
+    buildNotes: () => [
+      qn(60, 0), qn(60, 1), qn(60, 2), qn(60, 3),
+      en(60, 4), en(60, 4.5), qn(60, 5), hn(60, 6),
+    ],
+  },
+  {
+    id: 'tmpl-type-rhythm-syncopated', title: 'Syncopated Rhythm', difficulty: 2,
+    baseNotes: [60], tempo: 90, keySignature: 'C', hand: 'right', type: 'rhythm',
+    buildNotes: () => [
+      qn(60, 0), en(60, 1.5), en(60, 2), qn(60, 3),
+      en(60, 4.5), qn(60, 5), en(60, 6.5), qn(60, 7),
+    ],
+  },
+
+  // Ear Training: listen then replay (same notes, tests pitch memory)
+  {
+    id: 'tmpl-type-ear-intervals', title: 'Interval Echo', difficulty: 2,
+    baseNotes: [60, 64, 67], tempo: 60, keySignature: 'C', hand: 'right', type: 'earTraining',
+    buildNotes: () => [
+      hn(60, 0), hn(64, 2), hn(67, 4), hn(64, 6),
+    ],
+  },
+
+  // Chord ID: identify and play the displayed chord
+  {
+    id: 'tmpl-type-chord-major', title: 'Major Chord ID', difficulty: 2,
+    baseNotes: [60, 64, 67, 65, 69, 72], tempo: 55, keySignature: 'C', hand: 'right', type: 'chordId',
+    buildNotes: () => [
+      // C major chord
+      hn(60, 0), hn(64, 0), hn(67, 0),
+      // F major chord
+      hn(65, 4), hn(69, 4), hn(72, 4),
+    ],
+  },
+
+  // Sight Reading: notes appear one at a time, play what you see
+  {
+    id: 'tmpl-type-sight-read', title: 'Sight Reading Drill', difficulty: 2,
+    baseNotes: [60, 62, 64, 65, 67, 69, 71, 72], tempo: 50, keySignature: 'C', hand: 'right',
+    type: 'sightReading',
+    buildNotes: () => [
+      qn(67, 0), qn(64, 1), qn(69, 2), qn(62, 3),
+      qn(72, 4), qn(65, 5), qn(71, 6), qn(60, 7),
+    ],
+  },
+
+  // Call & Response: teacher plays, student echoes
+  {
+    id: 'tmpl-type-call-response', title: 'Echo Back', difficulty: 1,
+    baseNotes: [60, 62, 64, 65, 67], tempo: 60, keySignature: 'C', hand: 'right',
+    type: 'callResponse',
+    buildNotes: () => [
+      // Call phrase
+      qn(60, 0), qn(62, 1), qn(64, 2), hn(65, 3),
+      // Response phrase (student echoes)
+      qn(60, 5), qn(62, 6), qn(64, 7), hn(65, 8),
     ],
   },
 ];
@@ -247,6 +315,7 @@ function templateToExercise(template: ExerciseTemplate, swappedNotes: NoteEvent[
   return {
     id: template.id,
     version: 1,
+    ...(template.type ? { type: template.type } : {}),
     metadata: {
       title: `Practice: ${template.title}`,
       description: 'AI fallback exercise targeting your weak areas',
@@ -284,8 +353,8 @@ export function getTemplateExercise(
   difficulty: 1 | 2 | 3,
   weakNotes: number[] = [],
 ): Exercise {
-  // Filter to generic templates (no skillId) to keep tempo ranges predictable
-  const tier = templates.filter((t) => t.difficulty === difficulty && !t.skillId);
+  // Filter to generic templates (no skillId, no type) to keep tempo ranges predictable
+  const tier = templates.filter((t) => t.difficulty === difficulty && !t.skillId && !t.type);
 
   // Rank by overlap with weak notes (descending)
   const ranked = tier
@@ -397,9 +466,14 @@ function buildExerciseFromHints(
   const baseTempo = difficulty <= 1 ? 55 : difficulty <= 2 ? 65 : 80;
   const tempoVariation = Math.floor(Math.random() * 11) - 5;
 
+  // Resolve exercise type from the skill's category
+  const skill = getSkillById(skillId);
+  const resolvedType = exerciseTypeForCategory(skill?.category);
+
   return {
     id: `tmpl-hints-${skillId}`,
     version: 1,
+    ...(resolvedType ? { type: resolvedType } : {}),
     metadata: {
       title: `Practice: ${title}`,
       description: hints.promptHint ?? 'Practice exercise targeting your current skill',
@@ -467,6 +541,30 @@ export function getTemplateForSkill(
   const exercise = templateToExercise(chosen, swappedNotes);
 
   // Apply slight tempo variation (±5 BPM)
+  const tempoVariation = Math.floor(Math.random() * 11) - 5;
+  exercise.settings.tempo = Math.max(40, exercise.settings.tempo + tempoVariation);
+
+  return exercise;
+}
+
+/**
+ * Get a template exercise for a specific exercise type.
+ * Falls back to getTemplateExercise() if no type-specific template exists.
+ */
+export function getTemplateForType(
+  exerciseType: ExerciseType,
+  weakNotes: number[] = [],
+): Exercise {
+  const matches = templates.filter((t) => t.type === exerciseType);
+  if (matches.length === 0) {
+    return getTemplateExercise(2, weakNotes);
+  }
+
+  const chosen = matches[Math.floor(Math.random() * matches.length)];
+  const rawNotes = chosen.buildNotes();
+  const swappedNotes = swapNotes(rawNotes, chosen.baseNotes, weakNotes);
+  const exercise = templateToExercise(chosen, swappedNotes);
+
   const tempoVariation = Math.floor(Math.random() * 11) - 5;
   exercise.settings.tempo = Math.max(40, exercise.settings.tempo + tempoVariation);
 

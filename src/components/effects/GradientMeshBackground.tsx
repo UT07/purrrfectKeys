@@ -42,7 +42,7 @@ const ACCENT_PALETTES: Record<ScreenAccent, [string, string, string]> = {
   songs: ['#2E2000', '#231A00', '#0E0B1A'],
   catStudio: ['#2E0D2B', '#1F0A20', '#0E0B1A'],
   exercise: ['#1A0A2E', '#0E0B1A', '#0A0A14'],
-  profile: ['#1B2E4E', '#0A1A2E', '#0E0B1A'],
+  profile: ['#2E0D1B', '#1E0812', '#0E0B1A'],
   leaderboard: ['#2E1B0D', '#1E1208', '#0E0B1A'],
 };
 

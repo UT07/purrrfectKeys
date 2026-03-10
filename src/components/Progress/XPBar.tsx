@@ -12,7 +12,7 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
-import { COLORS, glowColor } from '../../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, glowColor, shadowGlow } from '../../theme/tokens';
 
 export interface XPBarProps {
   currentXP: number; // Total XP earned
@@ -58,16 +58,17 @@ export const XPBar = React.memo(
   ({ currentXP, currentLevel, animatedXPGain = 0 }: XPBarProps) => {
     const screenWidth = Dimensions.get('window').width;
 
-    // Animation values
-    const progressAnim = React.useRef(new Animated.Value(0)).current;
-    const popAnim = React.useRef(new Animated.Value(1)).current;
-    const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
     // Calculate progress
     const progress = useMemo(
       () => getLevelProgress(currentXP, currentLevel),
       [currentXP, currentLevel]
     );
+
+    // Animation values — initialize progressAnim to current progress so bar
+    // shows correctly even without an animatedXPGain trigger.
+    const progressAnim = React.useRef(new Animated.Value(progress)).current;
+    const popAnim = React.useRef(new Animated.Value(1)).current;
+    const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
     const xpForCurrentLevel = useMemo(
       () => calculateXPForLevel(currentLevel),
@@ -79,7 +80,7 @@ export const XPBar = React.memo(
       return currentXP - cumulative;
     }, [currentXP, currentLevel]);
 
-    // Animate XP gain if provided
+    // Keep progress bar in sync when XP changes (even without animatedXPGain)
     useEffect(() => {
       if (animatedXPGain > 0) {
         // Pop animation for +XP text
@@ -106,6 +107,9 @@ export const XPBar = React.memo(
           duration: 800,
           useNativeDriver: false,
         }).start();
+      } else {
+        // No XP gain animation — just snap to current progress
+        progressAnim.setValue(progress);
       }
     }, [animatedXPGain, progress]);
 
@@ -147,7 +151,7 @@ export const XPBar = React.memo(
         </View>
 
         {/* Progress bar container */}
-        <View style={[styles.progressContainer, { width: screenWidth - 32 }]}>
+        <View style={[styles.progressContainer, { width: screenWidth - SPACING.md * 2 }]}>
           <Animated.View
             style={[
               styles.progressBar,
@@ -176,85 +180,81 @@ XPBar.displayName = 'XPBar';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 12,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.surfaceElevated,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: COLORS.cardBorder,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   levelBadge: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: '#DC143C',
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    shadowColor: '#DC143C',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    ...shadowGlow(COLORS.primary, 4),
   },
   levelText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontSize: TYPOGRAPHY.heading.lg.fontSize,
+    fontWeight: TYPOGRAPHY.heading.lg.fontWeight,
+    color: COLORS.textPrimary,
   },
   textContainer: {
     flex: 1,
   },
   levelLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: TYPOGRAPHY.body.md.fontSize,
+    fontWeight: TYPOGRAPHY.heading.sm.fontWeight,
+    color: COLORS.textPrimary,
   },
   xpLabel: {
-    fontSize: 12,
-    color: '#B0B0B0',
+    fontSize: TYPOGRAPHY.caption.lg.fontSize,
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   xpPopup: {
     position: 'absolute',
-    right: 16,
-    backgroundColor: '#DC143C',
+    right: SPACING.md,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.md,
   },
   xpPopupText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontSize: TYPOGRAPHY.body.md.fontSize,
+    fontWeight: TYPOGRAPHY.heading.lg.fontWeight,
+    color: COLORS.textPrimary,
   },
   progressContainer: {
     height: 8,
-    backgroundColor: '#333333',
-    borderRadius: 4,
+    backgroundColor: COLORS.starEmpty,
+    borderRadius: SPACING.xs,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#DC143C',
-    borderRadius: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: SPACING.xs,
   },
   levelUpContainer: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
     backgroundColor: glowColor(COLORS.primary, 0.15),
-    borderRadius: 4,
+    borderRadius: SPACING.xs,
     borderWidth: 1,
-    borderColor: '#DC143C',
+    borderColor: COLORS.primary,
   },
   levelUpText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#DC143C',
+    fontSize: TYPOGRAPHY.caption.lg.fontSize,
+    fontWeight: TYPOGRAPHY.heading.lg.fontWeight,
+    color: COLORS.primary,
   },
 });

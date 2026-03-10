@@ -1,7 +1,7 @@
 import type { Exercise } from '@/core/exercises/types';
 import { getTemplateExercise, getTemplateForSkill } from '../templateExercises';
 
-// Mock SkillTree so getTemplateForSkill can use getGenerationHints
+// Mock SkillTree so getTemplateForSkill can use getGenerationHints / getSkillById
 jest.mock('../../core/curriculum/SkillTree', () => ({
   getGenerationHints: jest.fn((skillId: string) => {
     const hints: Record<string, any> = {
@@ -10,8 +10,20 @@ jest.mock('../../core/curriculum/SkillTree', () => ({
       'white-keys': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', minDifficulty: 1, promptHint: 'All white keys C4-C5' },
       'hands-together-basic': { targetMidi: [48, 52, 55, 60, 62, 64], hand: 'both', keySignature: 'C major', minDifficulty: 2, exerciseTypes: ['melody'], promptHint: 'Simple melody in right hand with bass in left' },
       'scale-technique': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', minDifficulty: 2, exerciseTypes: ['scale'], promptHint: 'C major scale' },
+      'rhythm-basics': { targetMidi: [60], hand: 'right', minDifficulty: 1, exerciseTypes: ['rhythm'], promptHint: 'Basic rhythm patterns' },
     };
     return hints[skillId] ?? null;
+  }),
+  getSkillById: jest.fn((skillId: string) => {
+    const skills: Record<string, { id: string; category: string }> = {
+      'find-middle-c': { id: 'find-middle-c', category: 'note-finding' },
+      'keyboard-geography': { id: 'keyboard-geography', category: 'note-finding' },
+      'white-keys': { id: 'white-keys', category: 'note-finding' },
+      'hands-together-basic': { id: 'hands-together-basic', category: 'hand-independence' },
+      'scale-technique': { id: 'scale-technique', category: 'scales' },
+      'rhythm-basics': { id: 'rhythm-basics', category: 'rhythm' },
+    };
+    return skills[skillId] ?? null;
   }),
   SKILL_TREE: [],
 }));

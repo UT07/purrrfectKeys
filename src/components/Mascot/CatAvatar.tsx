@@ -230,7 +230,7 @@ export function CatAvatar({
               pixelSize={Math.round(dimension * 0.75)}
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
-              catId={catId}
+              catId={cat.id}
               microAnimations={pose ? undefined : { ...microAnims, faceScaleY: moodTransition.faceScaleY }}
               extraAccessoryNames={extraAccessoryNames}
             />

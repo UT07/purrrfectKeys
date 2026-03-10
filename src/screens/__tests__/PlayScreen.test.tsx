@@ -1,13 +1,14 @@
 /**
  * PlayScreen Tests
  *
- * Tests for the landscape Free Play screen:
- * - Locks to landscape on mount, restores portrait on unmount
- * - Side-by-side keyboards (left = C2-B3, right = C4-C6)
- * - Note name display updates on key press
- * - Recording controls work (record/stop/play/clear)
- * - Song reference picker opens on button press
- * - Analysis card and drill generation
+ * Tests for the redesigned Neon Arcade Free Play screen:
+ * - Landscape orientation lock on mount
+ * - Single unified keyboard with octave arrows
+ * - Tool sidebar with 7 tools
+ * - Chord display toggle
+ * - Song loading and song picker
+ * - Recording controls via loop recorder widget
+ * - Session stats and note display
  */
 
 import React from 'react';
@@ -37,6 +38,10 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));
+
 // expo-screen-orientation is globally mocked in jest.setup.js
 import * as ScreenOrientation from 'expo-screen-orientation';
 
@@ -62,19 +67,25 @@ jest.mock('../../audio/createAudioEngine', () => ({
   })),
 }));
 
-// Capture left and right keyboard props
-let capturedLeftProps: any = {};
-let capturedRightProps: any = {};
+// Capture keyboard props
+let capturedKeyboardProps: any = {};
 jest.mock('../../components/Keyboard/Keyboard', () => ({
   Keyboard: (props: any) => {
-    if (props.testID === 'freeplay-keyboard-left') capturedLeftProps = props;
-    if (props.testID === 'freeplay-keyboard-right') capturedRightProps = props;
+    capturedKeyboardProps = props;
     const { View, Text } = require('react-native');
     return (
       <View testID={props.testID || 'mock-keyboard'}>
         <Text>Keyboard</Text>
       </View>
     );
+  },
+}));
+
+// Mock VerticalPianoRoll
+jest.mock('../../components/PianoRoll/VerticalPianoRoll', () => ({
+  VerticalPianoRoll: (props: any) => {
+    const { View } = require('react-native');
+    return <View testID={props.testID || 'mock-vertical-piano-roll'} />;
   },
 }));
 
@@ -86,7 +97,75 @@ jest.mock('../../components/SongReferencePicker', () => ({
   },
 }));
 
-// Mock InputManager (avoids react-native-audio-api native import)
+// Mock FreePlay components
+jest.mock('../../components/FreePlay/ToolSidebar', () => ({
+  ToolSidebar: (props: any) => {
+    const { View } = require('react-native');
+    return <View testID="tool-sidebar" {...props} />;
+  },
+}));
+jest.mock('../../components/FreePlay/FloatingWidget', () => ({
+  FloatingWidget: (props: any) => {
+    const { View, Text } = require('react-native');
+    return (
+      <View testID={props.testID}>
+        <Text>{props.title}</Text>
+        {props.children}
+      </View>
+    );
+  },
+}));
+jest.mock('../../components/FreePlay/AuroraBackground', () => ({
+  AuroraBackground: () => {
+    const { View } = require('react-native');
+    return <View testID="aurora-background" />;
+  },
+}));
+jest.mock('../../components/FreePlay/OctaveArrows', () => ({
+  OctaveArrows: (props: any) => {
+    const { View } = require('react-native');
+    return <View testID="octave-arrows" {...props} />;
+  },
+}));
+jest.mock('../../components/FreePlay/ChordDisplay', () => ({
+  ChordDisplay: (props: any) => {
+    const { View } = require('react-native');
+    return <View testID={props.testID || 'chord-display'} />;
+  },
+}));
+jest.mock('../../components/FreePlay/MetronomeWidget', () => ({
+  MetronomeWidget: () => {
+    const { View } = require('react-native');
+    return <View testID="metronome-widget" />;
+  },
+}));
+jest.mock('../../components/FreePlay/KeySelectorWidget', () => ({
+  KeySelectorWidget: () => {
+    const { View } = require('react-native');
+    return <View testID="key-selector-widget" />;
+  },
+  getScaleNotes: () => new Set<number>(),
+}));
+jest.mock('../../components/FreePlay/SessionStatsWidget', () => ({
+  SessionStatsWidget: () => {
+    const { View } = require('react-native');
+    return <View testID="session-stats-widget" />;
+  },
+}));
+jest.mock('../../components/FreePlay/LoopRecorderWidget', () => ({
+  LoopRecorderWidget: () => {
+    const { View } = require('react-native');
+    return <View testID="loop-recorder-widget" />;
+  },
+}));
+jest.mock('../../components/FreePlay/TempoTrainerWidget', () => ({
+  TempoTrainerWidget: () => {
+    const { View } = require('react-native');
+    return <View testID="tempo-trainer-widget" />;
+  },
+}));
+
+// Mock InputManager
 jest.mock('../../input/InputManager', () => ({
   InputManager: jest.fn().mockImplementation(() => ({
     initialize: jest.fn().mockResolvedValue(undefined),
@@ -107,8 +186,8 @@ jest.mock('../../input/InputManager', () => ({
 // Mock settingsStore
 jest.mock('../../stores/settingsStore', () => ({
   useSettingsStore: Object.assign(
-    (selector: any) => selector({ preferredInputMethod: 'touch' }),
-    { getState: () => ({ preferredInputMethod: 'touch' }) },
+    (selector: any) => selector({ preferredInputMethod: 'touch', selectedCatId: 'mini-meowww' }),
+    { getState: () => ({ preferredInputMethod: 'touch', selectedCatId: 'mini-meowww' }) },
   ),
 }));
 
@@ -154,8 +233,7 @@ import { PlayScreen } from '../PlayScreen';
 describe('PlayScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    capturedLeftProps = {};
-    capturedRightProps = {};
+    capturedKeyboardProps = {};
   });
 
   // -----------------------------------------------------------------------
@@ -193,64 +271,73 @@ describe('PlayScreen', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Side-by-side keyboards
+  // Unified keyboard
   // -----------------------------------------------------------------------
 
-  describe('Side-by-side keyboards', () => {
-    it('renders left keyboard', () => {
+  describe('Unified keyboard', () => {
+    it('renders a single keyboard', () => {
       const { getByTestId } = render(<PlayScreen />);
-      expect(getByTestId('freeplay-keyboard-left')).toBeTruthy();
+      expect(getByTestId('freeplay-keyboard')).toBeTruthy();
     });
 
-    it('renders right keyboard', () => {
+    it('keyboard starts at C3 (MIDI 48) by default', () => {
+      render(<PlayScreen />);
+      expect(capturedKeyboardProps.startNote).toBe(48);
+    });
+
+    it('keyboard has 3 octaves', () => {
+      render(<PlayScreen />);
+      expect(capturedKeyboardProps.octaveCount).toBe(3);
+    });
+
+    it('keyboard is enabled with haptic and labels', () => {
+      render(<PlayScreen />);
+      expect(capturedKeyboardProps.enabled).toBe(true);
+      expect(capturedKeyboardProps.hapticEnabled).toBe(true);
+      expect(capturedKeyboardProps.showLabels).toBe(true);
+    });
+
+    it('keyboard has note event callbacks', () => {
+      render(<PlayScreen />);
+      expect(typeof capturedKeyboardProps.onNoteOn).toBe('function');
+      expect(typeof capturedKeyboardProps.onNoteOff).toBe('function');
+    });
+
+    it('renders octave bar', () => {
       const { getByTestId } = render(<PlayScreen />);
-      expect(getByTestId('freeplay-keyboard-right')).toBeTruthy();
+      expect(getByTestId('freeplay-octave-bar')).toBeTruthy();
     });
 
-    it('left keyboard starts at C2 (MIDI 36)', () => {
-      render(<PlayScreen />);
-      expect(capturedLeftProps.startNote).toBe(36);
+    it('renders keyboard container', () => {
+      const { getByTestId } = render(<PlayScreen />);
+      expect(getByTestId('freeplay-keyboard-container')).toBeTruthy();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tool sidebar
+  // -----------------------------------------------------------------------
+
+  describe('Tool sidebar', () => {
+    it('renders tool sidebar', () => {
+      const { getByTestId } = render(<PlayScreen />);
+      expect(getByTestId('tool-sidebar')).toBeTruthy();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Visualization area
+  // -----------------------------------------------------------------------
+
+  describe('Visualization area', () => {
+    it('renders aurora background', () => {
+      const { getByTestId } = render(<PlayScreen />);
+      expect(getByTestId('aurora-background')).toBeTruthy();
     });
 
-    it('left keyboard has 2 octaves', () => {
-      render(<PlayScreen />);
-      expect(capturedLeftProps.octaveCount).toBe(2);
-    });
-
-    it('right keyboard starts at C4 (MIDI 60)', () => {
-      render(<PlayScreen />);
-      expect(capturedRightProps.startNote).toBe(60);
-    });
-
-    it('right keyboard has 2 octaves', () => {
-      render(<PlayScreen />);
-      expect(capturedRightProps.octaveCount).toBe(2);
-    });
-
-    it('both keyboards are enabled', () => {
-      render(<PlayScreen />);
-      expect(capturedLeftProps.enabled).toBe(true);
-      expect(capturedRightProps.enabled).toBe(true);
-    });
-
-    it('both keyboards have haptic enabled', () => {
-      render(<PlayScreen />);
-      expect(capturedLeftProps.hapticEnabled).toBe(true);
-      expect(capturedRightProps.hapticEnabled).toBe(true);
-    });
-
-    it('both keyboards show labels', () => {
-      render(<PlayScreen />);
-      expect(capturedLeftProps.showLabels).toBe(true);
-      expect(capturedRightProps.showLabels).toBe(true);
-    });
-
-    it('both keyboards have note event callbacks', () => {
-      render(<PlayScreen />);
-      expect(typeof capturedLeftProps.onNoteOn).toBe('function');
-      expect(typeof capturedLeftProps.onNoteOff).toBe('function');
-      expect(typeof capturedRightProps.onNoteOn).toBe('function');
-      expect(typeof capturedRightProps.onNoteOff).toBe('function');
+    it('renders viz area', () => {
+      const { getByTestId } = render(<PlayScreen />);
+      expect(getByTestId('freeplay-viz-area')).toBeTruthy();
     });
   });
 
@@ -289,46 +376,13 @@ describe('PlayScreen', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Recording controls
+  // Orientation toggle
   // -----------------------------------------------------------------------
 
-  describe('Recording controls', () => {
-    it('shows record button initially', () => {
+  describe('Orientation toggle', () => {
+    it('renders orientation toggle button', () => {
       const { getByTestId } = render(<PlayScreen />);
-      expect(getByTestId('freeplay-record-start')).toBeTruthy();
-    });
-
-    it('shows stop button when recording', () => {
-      const { getByTestId, queryByTestId } = render(<PlayScreen />);
-
-      fireEvent.press(getByTestId('freeplay-record-start'));
-      expect(getByTestId('freeplay-record-stop')).toBeTruthy();
-      expect(queryByTestId('freeplay-record-start')).toBeNull();
-    });
-
-    it('shows playback and clear buttons after recording notes', () => {
-      const { getByTestId } = render(<PlayScreen />);
-
-      // Start recording
-      fireEvent.press(getByTestId('freeplay-record-start'));
-
-      // Simulate a note via left keyboard onNoteOn
-      if (capturedLeftProps.onNoteOn) {
-        capturedLeftProps.onNoteOn({
-          note: 48,
-          velocity: 100,
-          timestamp: Date.now(),
-          type: 'noteOn',
-          channel: 0,
-        });
-      }
-
-      // Stop recording
-      fireEvent.press(getByTestId('freeplay-record-stop'));
-
-      // Playback and clear should be visible
-      expect(getByTestId('freeplay-record-playback')).toBeTruthy();
-      expect(getByTestId('freeplay-record-clear')).toBeTruthy();
+      expect(getByTestId('freeplay-orientation-toggle')).toBeTruthy();
     });
   });
 

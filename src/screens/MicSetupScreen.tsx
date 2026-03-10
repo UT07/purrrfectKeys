@@ -19,6 +19,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
+import { GradientMeshBackground } from '../components/effects';
 import { useSettingsStore } from '../stores/settingsStore';
 import { requestMicrophonePermission, checkMicrophonePermission } from '../input/AudioCapture';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -57,6 +58,7 @@ export function MicSetupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <GradientMeshBackground accent="profile" />
       <LinearGradient
         colors={[GRADIENTS.header[0], GRADIENTS.header[1], COLORS.background]}
         style={styles.header}

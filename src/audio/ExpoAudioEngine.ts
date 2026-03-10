@@ -487,8 +487,8 @@ export class ExpoAudioEngine implements IAudioEngine {
     const startTime = Date.now() / 1000;
     // Scale volume down when many notes are active to prevent digital clipping.
     // Using 1/sqrt(n) keeps perceived loudness roughly constant as polyphony increases.
-    const activeCount = this.activeNotes.size;
-    const polyphonyScale = activeCount > 0 ? Math.min(1.0, 1.0 / Math.sqrt(activeCount)) : 1.0;
+    const activeCount = this.activeNotes.size + 1; // +1 for the note about to play
+    const polyphonyScale = Math.min(1.0, 1.0 / Math.sqrt(activeCount));
     const vol = clampedVelocity * this.volume * polyphonyScale;
 
     const pool = this.voicePools.get(note);
@@ -561,12 +561,14 @@ export class ExpoAudioEngine implements IAudioEngine {
 
       sound.setOnPlaybackStatusUpdate((status) => {
         if ('didJustFinish' in status && status.didJustFinish) {
+          this.activeVoices.delete(note);
           sound.unloadAsync().catch(() => {});
           this.activeNotes.delete(note);
         }
       });
 
       this.activeNotes.add(note);
+      this.activeVoices.set(note, sound);
     } catch (error) {
       console.error(`[ExpoAudioEngine] Failed to play note ${note}:`, error);
     }

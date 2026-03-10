@@ -82,6 +82,7 @@ export default function App(): React.ReactElement {
             soundEnabled, hapticEnabled, metronomeVolume, keyboardVolume,
             showFingerNumbers, showNoteNames, preferredHand, darkMode, showTutorials,
             lastMidiDeviceId, lastMidiDeviceName, autoConnectMidi,
+            username, micPermissionGranted, reminderTime,
             // Phase 8-11 fields (must be hydrated or they revert to defaults on restart)
             equippedAccessories, ownedAccessories, playbackSpeed,
             uiSoundEnabled, uiSoundVolume, preferredInputMethod, micDetectionMode,
@@ -109,6 +110,9 @@ export default function App(): React.ReactElement {
             ...(lastMidiDeviceId !== undefined ? { lastMidiDeviceId: lastMidiDeviceId as string | null } : {}),
             ...(lastMidiDeviceName !== undefined ? { lastMidiDeviceName: lastMidiDeviceName as string | null } : {}),
             ...(autoConnectMidi != null ? { autoConnectMidi: autoConnectMidi as boolean } : {}),
+            ...(username ? { username: username as string } : {}),
+            ...(micPermissionGranted != null ? { micPermissionGranted: micPermissionGranted as boolean } : {}),
+            ...(reminderTime ? { reminderTime: reminderTime as string } : {}),
             // Phase 8-11 fields
             ...(equippedAccessories != null ? { equippedAccessories: equippedAccessories as Record<string, string> } : {}),
             ...(ownedAccessories != null ? { ownedAccessories: ownedAccessories as string[] } : {}),

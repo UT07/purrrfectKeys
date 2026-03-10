@@ -382,6 +382,7 @@ export interface FriendChallenge {
   fromDisplayName: string;
   fromCatId: string;
   toUid: string;
+  toDisplayName?: string;
   exerciseId: string;
   exerciseTitle: string;
   fromScore: number;

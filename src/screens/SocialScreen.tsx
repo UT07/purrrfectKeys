@@ -290,7 +290,7 @@ function FriendsSection(): React.JSX.Element {
           <View style={styles.friendAvatarStack}>
             {previewFriends.map((f, i) => (
               <View key={f.uid} style={[styles.friendAvatarWrapper, { marginLeft: i > 0 ? -12 : 0, zIndex: previewFriends.length - i }]}>
-                <CatAvatar catId={f.selectedCatId || 'mini-meowww'} size="small" skipEntryAnimation />
+                <CatAvatar catId={f.selectedCatId || 'salsa'} size="small" skipEntryAnimation />
               </View>
             ))}
           </View>
@@ -352,6 +352,7 @@ function ChallengeCard({
     id: string;
     fromUid: string;
     fromDisplayName: string;
+    toDisplayName?: string;
     exerciseTitle: string;
     fromScore: number;
     toScore: number | null;
@@ -407,7 +408,7 @@ function ChallengeCard({
       </View>
 
       <Text style={styles.challengeOpponent}>
-        vs. {challenge.fromDisplayName}
+        vs. {iAmSender ? (challenge.toDisplayName ?? 'Opponent') : challenge.fromDisplayName}
       </Text>
 
       <View style={styles.challengeScoresRow}>
@@ -738,7 +739,7 @@ const styles = StyleSheet.create({
     backgroundColor: glowColor(COLORS.cardSurface, 0.75),
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.08),
+    borderColor: glowColor(COLORS.textPrimary, 0.08),
     padding: SPACING.md,
     marginBottom: SPACING.lg,
   },
@@ -831,9 +832,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: glowColor('#FFFFFF', 0.08),
+    borderTopColor: glowColor(COLORS.textPrimary, 0.08),
     borderBottomWidth: 1,
-    borderBottomColor: glowColor('#FFFFFF', 0.08),
+    borderBottomColor: glowColor(COLORS.textPrimary, 0.08),
     marginBottom: SPACING.md,
   },
   leagueStat: {
@@ -861,7 +862,7 @@ const styles = StyleSheet.create({
   leagueStatDivider: {
     width: 1,
     height: 36,
-    backgroundColor: glowColor('#FFFFFF', 0.08),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.08),
   },
 
   // Section header
@@ -903,8 +904,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   friendAvatarWrapper: {
-    width: 36,
-    height: 36,
+    width: 48,
+    height: 48,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 2,
     borderColor: COLORS.cardSurface,
@@ -946,9 +947,9 @@ const styles = StyleSheet.create({
   },
   addFriendButton: {
     flex: 1,
-    backgroundColor: glowColor('#FFFFFF', 0.06),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.06),
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.08),
+    borderColor: glowColor(COLORS.textPrimary, 0.08),
   },
 
   // Action button (shared)
@@ -980,7 +981,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: glowColor('#FFFFFF', 0.05),
+    borderColor: glowColor(COLORS.textPrimary, 0.05),
   },
   challengeHeader: {
     flexDirection: 'row',
@@ -1005,7 +1006,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     marginBottom: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: glowColor('#FFFFFF', 0.03),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.03),
     borderRadius: BORDER_RADIUS.sm,
   },
   challengeScoreBox: {
@@ -1033,7 +1034,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: glowColor('#FFFFFF', 0.06),
+    borderTopColor: glowColor(COLORS.textPrimary, 0.06),
     paddingTop: SPACING.sm,
   },
   challengeStatus: {

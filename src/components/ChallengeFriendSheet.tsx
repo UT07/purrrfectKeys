@@ -14,6 +14,7 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PressableScale } from './common/PressableScale';
@@ -24,6 +25,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { createChallenge } from '../services/firebase/socialService';
 import type { FriendChallenge } from '../stores/types';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
+import { logger } from '../utils/logger';
 
 export interface ChallengeFriendSheetProps {
   visible: boolean;
@@ -74,18 +76,24 @@ export function ChallengeFriendSheet({
           expiresAt: now + CHALLENGE_EXPIRY_MS,
         };
 
-        await createChallenge(challenge);
-
-        // Also add to local store
+        // Add to local store immediately (offline-first)
         useSocialStore.getState().addChallenge(challenge);
+
+        // Try to sync to Firestore (best-effort)
+        try {
+          await createChallenge(challenge);
+        } catch (firestoreErr) {
+          logger.warn('[Challenge] Firestore write failed (challenge saved locally):', (firestoreErr as Error)?.message);
+        }
 
         setSentTo(friendName);
         setTimeout(() => {
           setSentTo(null);
           onClose();
         }, 1500);
-      } catch {
-        // Silently fail — user can retry
+      } catch (err) {
+        logger.error('[Challenge] Failed to create challenge:', (err as Error)?.message);
+        Alert.alert('Challenge Failed', 'Could not send challenge. Please try again.');
       } finally {
         setSendingTo(null);
       }
@@ -105,7 +113,7 @@ export function ChallengeFriendSheet({
           style={styles.friendItem}
           testID={`challenge-friend-${item.uid}`}
         >
-          <CatAvatar catId={item.selectedCatId || 'mini-meowww'} size="small" mood="happy" />
+          <CatAvatar catId={item.selectedCatId || 'salsa'} size="small" mood="happy" />
           {isSending && (
             <View style={styles.sendingOverlay}>
               <ActivityIndicator size="small" color={COLORS.primary} />

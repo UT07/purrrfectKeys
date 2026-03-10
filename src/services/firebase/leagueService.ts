@@ -226,6 +226,32 @@ export async function addLeagueXp(
   await updateDoc(memberRef, { weeklyXp: increment(xpAmount) });
 }
 
+/**
+ * Update a league member's display name.
+ * Called when the user changes their name in ProfileScreen.
+ */
+export async function updateLeagueMemberDisplayName(
+  leagueId: string,
+  uid: string,
+  displayName: string,
+): Promise<void> {
+  const memberRef = doc(db, 'leagues', leagueId, 'members', uid);
+  await updateDoc(memberRef, { displayName });
+}
+
+/**
+ * Update a league member's selected cat avatar.
+ * Called when the user switches their cat in CatSwitchScreen / settings.
+ */
+export async function updateLeagueMemberSelectedCatId(
+  leagueId: string,
+  uid: string,
+  selectedCatId: string,
+): Promise<void> {
+  const memberRef = doc(db, 'leagues', leagueId, 'members', uid);
+  await updateDoc(memberRef, { selectedCatId });
+}
+
 // ---------------------------------------------------------------------------
 // League Lookup
 // ---------------------------------------------------------------------------

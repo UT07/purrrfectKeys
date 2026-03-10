@@ -413,11 +413,11 @@ export class InputManager {
           });
         } else {
           logger.log(`[InputManager] MIDI device disconnected: ${device.name}`);
-          // If all MIDI devices disconnected, fall back to touch
+          // If all MIDI devices disconnected, fall back to mic (if available) then touch
           this.midiInput.getConnectedDevices().then((devices) => {
             if (devices.length === 0 && this._activeMethod === 'midi') {
-              this._activeMethod = 'touch';
-              logger.log('[InputManager] No MIDI devices — falling back to touch');
+              this._activeMethod = this.micInput ? 'mic' : 'touch';
+              logger.log(`[InputManager] No MIDI devices — falling back to ${this._activeMethod}`);
             }
           }).catch(() => {});
         }

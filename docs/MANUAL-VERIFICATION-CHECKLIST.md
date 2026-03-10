@@ -3,7 +3,7 @@
 **Purpose:** Concrete steps YOU need to execute before launch — things that require your Firebase Console, GCP access, Apple Developer account, physical devices, or human judgment.
 **Companion:** `docs/system-design-analysis.md` (architecture analysis), `docs/plans/UNIFIED-PLAN.md` Phase 11 (full QA audit)
 
-**Last updated:** March 9, 2026
+**Last updated:** March 10, 2026
 **Codebase health:** 139 test suites, 2,831 tests, 0 failures, 0 TypeScript errors
 **GitHub issues:** 0 open (all closed as of Mar 8-9)
 **Key completions since initial draft:**
@@ -24,6 +24,11 @@
 - Replay navigation fix: replay completion navigates to next exercise or home (no re-showing CompletionModal)
 - ChallengeCard perspective fix: shows correct "Your score" vs "Their score" based on sender/receiver
 - Local challenge notifications: fires notification when new incoming challenge detected
+- 6 exercise types with type-specific scoring strategies and UI components (rhythm, ear training, chord ID, sight reading, call/response, standard)
+- Social overhaul: ChallengeFriendSheet, activity feed, share cards, league tiers, QR/friend code discovery
+- PressableScale migration: replaced TouchableOpacity across codebase (CustomTabBar, GameCard, etc.)
+- songService.ts: all 10 Firestore functions wrapped in try-catch with graceful error handling
+- ChallengeFriendSheet: offline-first pattern (local store update before Firestore write)
 
 ---
 
@@ -213,6 +218,19 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] Verify audio session does NOT revert to earpiece after mic initialization
 - [ ] Verify notes sustain properly (no instant noteOff after detection)
 
+### D3a. Mic Pipeline Tuning [IMPORTANT]
+
+**Status: Tuned (Mar 7-8).** Audio session uses `measurement` mode for raw audio capture. RMS threshold set to 0.002, YIN threshold at 0.15, release hold at 500ms. ONNX polyphonic detection with graceful YIN monophonic fallback.
+
+- [ ] **Measurement mode:** Verify `createAudioEngine.ts` uses `measurement` audio session mode when `allowRecording=true` (no Apple voice processing crushing piano audio)
+- [ ] **RMS threshold 0.002:** Play piano softly at ~1m distance → notes still detected (iPhone mic RMS for piano is 0.003-0.009)
+- [ ] **Ambient noise rejection:** In quiet room with no playing → verify no phantom notes detected (RMS < 0.002 rejected)
+- [ ] **YIN threshold 0.15:** Single notes on acoustic piano → verify clean pitch detection with minimal octave errors
+- [ ] **Release hold 500ms:** Play a sustained note → verify it holds for duration (survives ~10 unvoiced buffers between weak voiced frames)
+- [ ] **Polyphonic ONNX:** Switch to polyphonic mode in Settings → play 2-3 note chords → verify multiple pitches detected simultaneously
+- [ ] **ONNX fallback:** If ONNX model fails to load → verify automatic fallback to YIN monophonic (seamless, no crash)
+- [ ] **Sample rate adaptation:** Verify `AudioCapture` detects actual iPhone sample rate (48000Hz, not assumed 44100Hz) and `MicrophoneInput` calls `detector.setSampleRate()`
+
 ### D4. Text-to-Speech (ElevenLabs + expo-speech)
 
 **Status: Implemented.** Two-tier TTS pipeline: ElevenLabs neural TTS (primary, `eleven_turbo_v2_5` model) with expo-speech fallback. 13 cats mapped to unique ElevenLabs voices matched to personality. File-based audio caching via expo-file-system. Lazy module loading avoids Jest mock interference.
@@ -247,6 +265,33 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] Run `ios/run-maestro-tests.sh` against simulator → fix any selector mismatches
 - [ ] Verify at least flows 01 (app launch) and 02 (user auth) pass end-to-end
 - [ ] Integrate Maestro into CI (optional — can be post-launch)
+
+### D7. Exercise Types (6 Types) [IMPORTANT]
+
+**Status: Code complete (Mar 9-10).** Six exercise types with type-specific scoring strategies (`src/core/exercises/scoringStrategies.ts`), type-aware UI components, and ExercisePlayer integration. Types: standard (note), rhythm, ear_training, chord_identification, sight_reading, call_and_response.
+
+- [ ] **Standard (note) exercise:** Play a normal note-matching exercise → verify standard scoring (accuracy 35%, timing 30%, completeness 10%, extra notes 10%, duration 15%)
+- [ ] **Rhythm exercise:** Play a rhythm-only exercise → verify rhythm scoring weights timing higher (timing-focused, pitch accuracy relaxed)
+- [ ] **Ear training exercise:** Listen to audio prompt → play back notes → verify ear training scoring (pitch accuracy emphasized, timing tolerance relaxed)
+- [ ] **Chord identification exercise:** Hear a chord → select or play the correct chord → verify chord ID scoring (all chord tones required, order-independent)
+- [ ] **Sight reading exercise:** Notes appear on screen → play from sight → verify sight reading scoring (first-attempt emphasis, no replay bonus)
+- [ ] **Call and response exercise:** Listen to Salsa play a phrase → repeat it back → verify call/response scoring (phrase-level matching)
+- [ ] **Type-specific UI:** Each type should display its own intro overlay (`ExerciseIntroOverlay`) with type-appropriate instructions
+- [ ] **Type-specific scoring display:** CompletionModal shows type-relevant breakdown (e.g., "Rhythm Accuracy" instead of generic "Accuracy" for rhythm exercises)
+- [ ] **ExercisePlayer routing:** Verify `ExercisePlayer.tsx` uses `exercise.metadata.type` (or `exerciseType` field) to select the correct scoring strategy
+- [ ] **AI-generated exercises:** Request an AI exercise for tiers 7-15 → verify the generated exercise has a valid `exerciseType` field
+- [ ] **Score normalization:** Verify all 6 scoring strategies produce scores in the 0-100 range with correct star thresholds
+
+### D8. Replay System [IMPORTANT]
+
+**Status: Code complete (Mar 9).** `stopReplay(replayFinished)` parameter differentiates natural completion from early exit. Natural completion navigates to next exercise or home; early exit returns to CompletionModal.
+
+- [ ] **Natural completion → next exercise:** Complete an exercise → tap "Review with Salsa" → let replay run to final beat → verify auto-navigation to next exercise in lesson
+- [ ] **Natural completion → home (AI mode):** In AI-generated exercise with no next exercise → replay finishes → verify navigation to HomeScreen
+- [ ] **Early exit → CompletionModal:** During replay, tap "Exit Review" → verify CompletionModal re-appears with original scores intact
+- [ ] **Replay audio:** During replay, verify piano notes play back with correct timing and visual highlighting on keyboard
+- [ ] **Replay timeline bar:** Verify `ReplayTimelineBar` shows progress during replay and responds to scrub gestures
+- [ ] **Replay overlay controls:** Verify `ReplayOverlay` shows play/pause and exit controls
 
 ---
 
@@ -333,9 +378,10 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ### G5a. Challenge Flow [IMPORTANT]
 
-**Status: Code complete (Mar 9).** Challenge fetching wired via `getChallengesForUser()` in SocialScreen, triggered on every tab focus via `useFocusEffect`. ChallengeCard displays correct sender/receiver perspective.
+**Status: Code complete (Mar 9-10).** Challenge fetching wired via `getChallengesForUser()` in SocialScreen, triggered on every tab focus via `useFocusEffect`. ChallengeCard displays correct sender/receiver perspective. ChallengeFriendSheet uses offline-first pattern.
 
-- [ ] **Send challenge:** Complete exercise → CompletionModal → "Challenge a Friend" → friend receives it
+- [ ] **Send challenge from score screen:** Complete exercise → CompletionModal → "Challenge a Friend" → ChallengeFriendSheet opens → select friend → challenge sent
+- [ ] **ChallengeFriendSheet offline-first:** Disable WiFi → send a challenge → verify local store updates immediately (before Firestore write succeeds)
 - [ ] **Receive challenge:** Open Social tab → pending challenge appears with correct exercise title and sender's score
 - [ ] **Accept challenge:** Tap challenge → play exercise → score submitted → card updates to "completed"
 - [ ] **Score perspective:** Sender sees "Your score: X%" (their score) and "Their score: Y%" (friend's score, or "Not played yet")
@@ -343,7 +389,7 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ### G5b. Social Tab Badge [IMPORTANT]
 
-**Status: Code complete (Mar 9).** CustomTabBar shows red badge on Social tab combining pending challenge count + pending friend request count.
+**Status: Code complete (Mar 9-10).** CustomTabBar uses PressableScale (not TouchableOpacity), shows red badge on Social tab combining pending challenge count + pending friend request count.
 
 - [ ] **Badge appears:** Have a friend send a challenge → Social tab shows red badge with count
 - [ ] **Badge updates:** Accept the challenge → badge count decreases
@@ -366,6 +412,36 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] **Replay finishes → next exercise:** Complete exercise → "Review with Salsa" → replay runs to end → auto-navigates to next exercise
 - [ ] **Replay finishes → home (AI mode):** In AI mode with no next exercise → replay ends → navigates to home
 - [ ] **Exit early → modal:** During replay, tap "Exit Review" → CompletionModal re-appears (correct behavior)
+
+### G5e. Activity Feed & Share Cards [IMPORTANT]
+
+**Status: Code complete (Mar 9-10).** Activity feed shows friend events (level-up, evolution, exercise completions). ShareCard generates shareable images of scores/streaks/evolutions.
+
+- [ ] **Activity feed strip:** Open SocialScreen or FriendsScreen → verify activity feed shows recent friend events (level-ups, evolutions, high scores)
+- [ ] **Feed ordering:** Verify feed items are sorted by timestamp (most recent first)
+- [ ] **Share card generation:** Complete an exercise → CompletionModal → tap Share → verify shareable image generated with score, streak, cat avatar
+- [ ] **Share card export:** Verify share card can be shared via system share sheet (expo-sharing) — image renders without blank/broken areas
+- [ ] **Evolution share:** When a cat evolves → verify evolution share card shows before/after cat stage
+
+### G5f. League Tier Transitions [IMPORTANT]
+
+**Status: Code complete (Phase 10.5).** LeaderboardScreen shows weekly league standings with tier-colored promotion and demotion zones.
+
+- [ ] **League assignment:** Sign in → verify user auto-assigned to a league on first sign-in
+- [ ] **Standings display:** Open LeaderboardScreen → verify standings show rank, username, XP for all league members
+- [ ] **Promotion zone:** Top 3 users highlighted in green (promotion zone) → at week end, verify promoted to next tier
+- [ ] **Demotion zone:** Bottom 3 users highlighted in red (demotion zone) → at week end, verify demoted to previous tier
+- [ ] **XP tracking:** Complete exercises → verify XP updates in league standings (may require re-opening screen)
+
+### G5g. QR / Friend Code Discovery [IMPORTANT]
+
+**Status: Code complete (Phase 10.5).** AddFriendScreen displays your 6-character friend code, supports code lookup, and friend request sending.
+
+- [ ] **Friend code display:** Open AddFriendScreen → verify your 6-character friend code displayed (copy to clipboard works)
+- [ ] **Code lookup:** Enter a friend's code → verify their username/avatar appears for confirmation
+- [ ] **Send request:** Confirm friend request → verify request appears in recipient's pending list
+- [ ] **Invalid code:** Enter a nonexistent code → verify graceful error message (not crash)
+- [ ] **Auth gate:** Anonymous users → verify AddFriendScreen shows sign-in prompt (not crash)
 
 ---
 
@@ -396,6 +472,36 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ---
 
+## I. Recent Bug Fixes Verification (Mar 9-10)
+
+### I1. PressableScale Migration [IMPORTANT]
+
+**Status: Code complete.** All `TouchableOpacity` instances across the codebase migrated to `PressableScale` component (`src/components/common/PressableScale.tsx`). This prevents the known Reanimated crash with `TouchableOpacity` in animated contexts.
+
+- [ ] **CustomTabBar:** Tap each tab (Home, Learn, Social, Profile) rapidly → no crash, smooth animations
+- [ ] **GameCard:** Tap game cards on HomeScreen → verify press animation (scale down/up), no crash
+- [ ] **All interactive elements:** Navigate through all screens → verify no "TouchableOpacity" yellow-box warnings or crashes
+- [ ] **Press feedback:** Verify PressableScale provides visual press feedback (scale animation) on all buttons/cards
+
+### I2. songService.ts Error Handling [IMPORTANT]
+
+**Status: Code complete.** All 10 Firestore CRUD functions in `src/services/firebase/songService.ts` have try-catch blocks with graceful error handling (return empty arrays/null on failure instead of throwing).
+
+- [ ] **Network failure:** Disable WiFi → open SongLibraryScreen → verify graceful empty state (no crash, shows "No songs" or similar)
+- [ ] **Firestore error:** Verify console logs errors but does not throw unhandled exceptions
+- [ ] **Song search offline:** Search for a song while offline → verify empty results returned gracefully
+- [ ] **Song mastery save:** Complete a song section offline → verify mastery data queued for sync (no crash)
+
+### I3. ChallengeFriendSheet Offline-First [IMPORTANT]
+
+**Status: Code complete.** `src/components/ChallengeFriendSheet.tsx` updates the local Zustand store before writing to Firestore, ensuring the UI reflects the challenge immediately even if the network write is delayed or fails.
+
+- [ ] **Send challenge offline:** Disable WiFi → send a friend challenge → verify UI shows "Challenge Sent" immediately
+- [ ] **Sync on reconnect:** Re-enable WiFi → verify challenge eventually syncs to Firestore
+- [ ] **Friend list loads:** Verify ChallengeFriendSheet shows friends list from local store (not blocked by Firestore fetch)
+
+---
+
 ## Quick Reference: Priority Order
 
 | Priority | Section | Est. Time | Status | Must Complete Before |
@@ -404,23 +510,27 @@ No Crashlytics integration exists. Production crashes will be invisible.
 | 2 | A2: Firestore Indexes | Deploy | INDEXES DEFINED — need deploy | Any beta testing |
 | 3 | A3: Cloud Functions | Deploy + test | 9 FUNCTIONS WRITTEN — verify deploy | Any beta testing |
 | 4 | A6: Account Deletion | Deploy + test | CODE DONE (10 tests) | App Store submission |
-| 5 | D3: Mic Pipeline | Device test | CODE FIXED (Mar 7-8) | Before beta |
-| 6 | C1: Privacy Policy | 1 day | TODO | App Store submission |
-| 7 | A4: Budget Alerts | 15 min | TODO | Public launch |
-| 8 | B1: CI/CD | Verify runs | DONE (ci.yml + build.yml) | Before team grows |
-| 9 | B3: Crash Reporting | 2 hours | TODO | Before beta |
-| 10 | C2-C3: App Store Assets | 2-3 days | TODO | App Store submission |
-| 11 | D1-D5: Device Testing (audio, TTS, perf) | 2-3 days | TODO | Before beta |
-| 12 | D6: Maestro E2E | 1-2 days | SCAFFOLDED (needs selectors) | Before beta |
-| 13 | A5: App Check | 2 hours | TODO | Public launch |
-| 14 | E1-E3: Data Integrity | 1 day | TODO | Before beta |
-| 15 | F1-F3: Security Checks | half day | TODO | Before beta |
-| 16 | B2: Environment Mgmt | half day | TODO | Before public launch |
-| 17 | G1-G4: Third-party verify | 2 hours | TODO | Before beta |
-| 18 | B4-B5: OTA + Build | half day | TODO | Before beta |
-| 19 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
+| 5 | D3/D3a: Mic Pipeline + Tuning | Device test | CODE FIXED (Mar 7-8) | Before beta |
+| 6 | D7: Exercise Types (6 types) | Device test | CODE DONE (Mar 9-10) | Before beta |
+| 7 | C1: Privacy Policy | 1 day | TODO | App Store submission |
+| 8 | A4: Budget Alerts | 15 min | TODO | Public launch |
+| 9 | B1: CI/CD | Verify runs | DONE (ci.yml + build.yml) | Before team grows |
+| 10 | B3: Crash Reporting | 2 hours | TODO | Before beta |
+| 11 | C2-C3: App Store Assets | 2-3 days | TODO | App Store submission |
+| 12 | D1-D5: Device Testing (audio, TTS, perf) | 2-3 days | TODO | Before beta |
+| 13 | D8: Replay System | 1 hour | CODE DONE (Mar 9) | Before beta |
+| 14 | D6: Maestro E2E | 1-2 days | SCAFFOLDED (needs selectors) | Before beta |
+| 15 | A5: App Check | 2 hours | TODO | Public launch |
+| 16 | E1-E3: Data Integrity | 1 day | TODO | Before beta |
+| 17 | F1-F3: Security Checks | half day | TODO | Before beta |
+| 18 | G5e-G5g: Social Overhaul | 2 hours | CODE DONE (Mar 9-10) | Before beta |
+| 19 | I1-I3: Recent Bug Fixes | 1 hour | CODE DONE (Mar 9-10) | Before beta |
+| 20 | B2: Environment Mgmt | half day | TODO | Before public launch |
+| 21 | G1-G4: Third-party verify | 2 hours | TODO | Before beta |
+| 22 | B4-B5: OTA + Build | half day | TODO | Before beta |
+| 23 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
 
-**Total estimated effort: ~8-10 working days** (reduced from 10-12 due to rules, indexes, mic fixes, and bug fixes already done)
+**Total estimated effort: ~9-11 working days** (includes new exercise types, social overhaul, replay, and bug fix verification)
 
 ---
 

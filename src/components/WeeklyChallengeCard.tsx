@@ -46,11 +46,11 @@ export function WeeklyChallengeCard({ onPress, completed }: WeeklyChallengeCardP
         {/* Header row */}
         <View style={styles.topRow}>
           <View style={styles.titleRow}>
-            <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
+            <MaterialCommunityIcons name="crown" size={20} color={COLORS.starGold} />
             <Text style={styles.title}>Weekly Bonus</Text>
           </View>
           <View style={styles.rewardBadge}>
-            <MaterialCommunityIcons name="diamond-stone" size={14} color="#FFD700" />
+            <MaterialCommunityIcons name="diamond-stone" size={14} color={COLORS.starGold} />
             <Text style={styles.rewardText}>{challenge.reward.gems}</Text>
           </View>
         </View>
@@ -90,11 +90,11 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: COLORS.starGold,
     overflow: 'hidden',
   },
   cardInner: {
-    backgroundColor: '#1A1410',
+    backgroundColor: COLORS.cardSurface,
     padding: SPACING.md,
   },
   accentStripe: {
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#FFD700',
+    backgroundColor: COLORS.starGold,
   },
   topRow: {
     flexDirection: 'row',
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFD700',
+    color: COLORS.starGold,
   },
   rewardBadge: {
     flexDirection: 'row',
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   rewardText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#FFD700',
+    color: COLORS.starGold,
   },
   challengeRow: {
     flexDirection: 'row',
@@ -170,10 +170,10 @@ const styles = StyleSheet.create({
   xpText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#FFD700',
+    color: COLORS.starGold,
   },
   playButton: {
-    backgroundColor: '#DC143C',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,

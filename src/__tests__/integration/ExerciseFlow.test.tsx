@@ -369,6 +369,7 @@ jest.mock('../../theme/tokens', () => ({
     comboGold: '#FFD700',
   },
   GRADIENTS: { dark: ['#141414', '#0A0A0A'], gold: ['#FFD700', '#FFA500'], heroGlow: ['#2A0A0A', '#1A0A0A', '#0A0A0A'], cardWarm: ['#1C1C1C', '#181818'], header: ['#1C1C1C', '#0A0A0A'], crimson: ['#DC143C', '#8B0000'], lavaLamp: { duration: 8000, palettes: [['#1A0000', '#0A0A0A', '#0A0A0A']] } },
+  NEON: { crimson: '#DC143C', purple: '#9B59B6', blue: '#4FC3F7', gold: '#FFD700', green: '#2ECC71', orange: '#FF8C00' },
   GLOW: { crimson: 'rgba(220, 20, 60, 0.3)', gold: 'rgba(255, 215, 0, 0.3)', dark: 'rgba(28, 28, 28, 0.3)', success: 'rgba(76, 175, 80, 0.3)' },
   glowColor: (_hex: string, opacity = 0.3) => `rgba(0, 0, 0, ${opacity})`,
   TYPOGRAPHY: {

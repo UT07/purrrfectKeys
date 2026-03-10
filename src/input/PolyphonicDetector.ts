@@ -96,6 +96,17 @@ export class PolyphonicDetector {
     this.accumBuffer = new Float32Array(MODEL_INPUT_SAMPLES);
   }
 
+  /** Update sample rate after construction (e.g. iPhone 48 kHz auto-detect) */
+  setInputSampleRate(rate: number): void {
+    if (rate === this.config.inputSampleRate) return;
+    this.config.inputSampleRate = rate;
+    // Re-allocate resample buffer for new ratio
+    const maxResampledSize = Math.ceil(
+      (4096 * MODEL_SAMPLE_RATE) / rate,
+    );
+    this.resampleBuffer = new Float32Array(maxResampledSize);
+  }
+
   async initialize(): Promise<void> {
     // Lazy-load onnxruntime to avoid crash when native module isn't linked
     if (!OnnxRuntime) {

@@ -161,3 +161,30 @@ export interface TimingResult {
 export function getExerciseType(exercise: Exercise): ExerciseType {
   return exercise.type ?? 'play';
 }
+
+/**
+ * Map a skill category string to its corresponding ExerciseType.
+ * Categories not listed here default to standard 'play' exercises.
+ */
+const CATEGORY_EXERCISE_TYPE_MAP: Record<string, ExerciseType> = {
+  rhythm: 'rhythm',
+  chords: 'chordId',
+  'sight-reading': 'sightReading',
+};
+
+export function exerciseTypeForCategory(category: string | undefined): ExerciseType | undefined {
+  if (!category) return undefined;
+  return CATEGORY_EXERCISE_TYPE_MAP[category];
+}
+
+/**
+ * Resolve exercise type from an explicit param or a skill ID lookup.
+ * Used by both ExercisePlayer and navigation callers.
+ */
+export function resolveExerciseTypeFromSkill(
+  explicitType: ExerciseType | null | undefined,
+  skillCategory: string | undefined,
+): ExerciseType | undefined {
+  if (explicitType) return explicitType;
+  return exerciseTypeForCategory(skillCategory);
+}

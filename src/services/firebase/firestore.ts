@@ -525,6 +525,7 @@ export interface GemSyncData {
   gems: number;
   totalGemsEarned: number;
   totalGemsSpent: number;
+  claimedRewards?: string[];
   updatedAt: FieldValue | Timestamp;
 }
 
@@ -550,6 +551,54 @@ export async function getGemSyncData(uid: string): Promise<GemSyncData | null> {
 export async function saveGemSyncData(uid: string, data: Omit<GemSyncData, 'updatedAt'>): Promise<void> {
   const gemDoc = doc(db, 'users', uid, 'gamification', 'gems');
   await setDoc(gemDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+// ============================================================================
+// Learner Profile & Achievement Sync Operations
+// ============================================================================
+
+export interface LearnerProfileSyncData {
+  noteAccuracy: Record<number, number>;
+  noteAttempts: Record<number, number>;
+  skills: Record<string, number>;
+  tempoRange: { min: number; max: number };
+  totalExercisesCompleted: number;
+  masteredSkills: string[];
+  skillMasteryData: Record<string, any>;
+  recentExerciseIds: string[];
+  updatedAt: FieldValue | Timestamp;
+}
+
+export interface AchievementSyncData {
+  unlockedIds: Record<string, string>;
+  totalNotesPlayed: number;
+  perfectScoreCount: number;
+  highScoreCount: number;
+  updatedAt: FieldValue | Timestamp;
+}
+
+export async function getLearnerProfileData(uid: string): Promise<LearnerProfileSyncData | null> {
+  const profileDoc = doc(db, 'users', uid, 'gamification', 'learnerProfile');
+  const docSnap = await getDoc(profileDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data() as LearnerProfileSyncData;
+}
+
+export async function saveLearnerProfileData(uid: string, data: Omit<LearnerProfileSyncData, 'updatedAt'>): Promise<void> {
+  const profileDoc = doc(db, 'users', uid, 'gamification', 'learnerProfile');
+  await setDoc(profileDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+export async function getAchievementSyncData(uid: string): Promise<AchievementSyncData | null> {
+  const achieveDoc = doc(db, 'users', uid, 'gamification', 'achievements');
+  const docSnap = await getDoc(achieveDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data() as AchievementSyncData;
+}
+
+export async function saveAchievementSyncData(uid: string, data: Omit<AchievementSyncData, 'updatedAt'>): Promise<void> {
+  const achieveDoc = doc(db, 'users', uid, 'gamification', 'achievements');
+  await setDoc(achieveDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 // ============================================================================

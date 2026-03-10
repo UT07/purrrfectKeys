@@ -244,8 +244,26 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       if (user && !isAnonymous) {
         const { updateProfile } = require('firebase/auth');
         updateProfile(user, { displayName: trimmed }).catch(() => {});
+
+        // Also update Firestore user profile so name survives re-auth
+        const { updateUserProfile } = require('../services/firebase/firestore');
+        updateUserProfile(user.uid, { displayName: trimmed }).catch(() => {});
       }
     } catch { /* Firebase sync is best-effort */ }
+
+    // Fire-and-forget sync to league member document so leaderboard shows updated name
+    try {
+      const { useLeagueStore } = require('./leagueStore');
+      const membership = useLeagueStore.getState().membership;
+      if (membership?.leagueId) {
+        const { useAuthStore } = require('./authStore');
+        const { user, isAnonymous } = useAuthStore.getState();
+        if (user && !isAnonymous) {
+          const { updateLeagueMemberDisplayName } = require('../services/firebase/leagueService');
+          updateLeagueMemberDisplayName(membership.leagueId, user.uid, trimmed).catch(() => {});
+        }
+      }
+    } catch { /* League sync is best-effort */ }
   },
 
   setAvatarEmoji: (emoji: string) => {
@@ -256,6 +274,20 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   setSelectedCatId: (id: string) => {
     set({ selectedCatId: id });
     debouncedSave({ ...get(), selectedCatId: id });
+
+    // Fire-and-forget sync to league member document so leaderboard shows updated cat
+    try {
+      const { useLeagueStore } = require('./leagueStore');
+      const membership = useLeagueStore.getState().membership;
+      if (membership?.leagueId) {
+        const { useAuthStore } = require('./authStore');
+        const { user, isAnonymous } = useAuthStore.getState();
+        if (user && !isAnonymous) {
+          const { updateLeagueMemberSelectedCatId } = require('../services/firebase/leagueService');
+          updateLeagueMemberSelectedCatId(membership.leagueId, user.uid, id).catch(() => {});
+        }
+      }
+    } catch { /* League sync is best-effort */ }
   },
 
   equipAccessory: (category: string, accessoryId: string) => {

@@ -35,7 +35,7 @@ import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { hasTierMasteryTestPassed } from '../core/curriculum/tierMasteryTest';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, NEON, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -87,7 +87,7 @@ const TIER_THEMES: Record<number, TierTheme> = {
 };
 
 const DEFAULT_TIER_THEME: TierTheme = {
-  backgroundGradient: ['#1A1A1A', '#0A0A0A'],
+  backgroundGradient: GRADIENTS.dark,
   nodeColor: COLORS.primary,
   pathColor: COLORS.primaryDark,
   label: 'Unknown',
@@ -138,10 +138,10 @@ const TIER_CAT_COMPANIONS: Record<number, string> = {
 
 /** Section milestones */
 const TIER_SECTIONS: Record<number, { label: string; icon: string; color: string }> = {
-  0: { label: 'Beginner', icon: 'seed-outline', color: '#4CAF50' },
-  4: { label: 'Fundamentals', icon: 'book-open-variant', color: '#2196F3' },
-  6: { label: 'Intermediate', icon: 'fire', color: '#FF9800' },
-  10: { label: 'Advanced', icon: 'lightning-bolt', color: '#9C27B0' },
+  0: { label: 'Beginner', icon: 'seed-outline', color: COLORS.success },
+  4: { label: 'Fundamentals', icon: 'book-open-variant', color: COLORS.info },
+  6: { label: 'Intermediate', icon: 'fire', color: COLORS.warning },
+  10: { label: 'Advanced', icon: 'lightning-bolt', color: NEON.purple },
   14: { label: 'Mastery', icon: 'crown', color: COLORS.starGold },
 };
 
@@ -284,7 +284,7 @@ function getNodeColors(state: NodeState, theme: TierTheme) {
       return {
         bg: COLORS.starGold,
         border: COLORS.starGold,
-        iconColor: '#1A1400',
+        iconColor: COLORS.background,
         textColor: COLORS.textPrimary,
         subtitleColor: COLORS.starGold,
       };
@@ -292,7 +292,7 @@ function getNodeColors(state: NodeState, theme: TierTheme) {
       return {
         bg: COLORS.success,
         border: COLORS.success,
-        iconColor: '#FFFFFF',
+        iconColor: COLORS.textPrimary,
         textColor: COLORS.textPrimary,
         subtitleColor: COLORS.success,
       };
@@ -300,7 +300,7 @@ function getNodeColors(state: NodeState, theme: TierTheme) {
       return {
         bg: theme.nodeColor,
         border: theme.nodeColor,
-        iconColor: '#FFFFFF',
+        iconColor: COLORS.textPrimary,
         textColor: COLORS.textPrimary,
         subtitleColor: theme.nodeColor,
       };
@@ -776,19 +776,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
 
   // Header
-  header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: SPACING.lg },
+  header: { paddingTop: 60, paddingBottom: SPACING.md, paddingHorizontal: SPACING.lg },
   headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: glowColor('#FFFFFF', 0.08),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.08),
   },
   title: { ...TYPOGRAPHY.display.md, color: COLORS.textPrimary },
   headerStats: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.sm, justifyContent: 'center' },
   headerBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: glowColor('#FFFFFF', 0.05),
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: BORDER_RADIUS.full,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
+    backgroundColor: glowColor(COLORS.textPrimary, 0.05),
+    paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: BORDER_RADIUS.full,
   },
   headerBadgeText: { ...TYPOGRAPHY.body.md, fontWeight: '700', color: COLORS.textSecondary },
 
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
   nodeCircle: {
     alignItems: 'center', justifyContent: 'center',
   },
-  nodeLabel: { alignItems: 'center', marginTop: 6, width: 100 },
+  nodeLabel: { alignItems: 'center', marginTop: SPACING.xs, width: 100 },
   nodeTier: {
     ...TYPOGRAPHY.caption.lg, fontWeight: '800', letterSpacing: 1,
   },
@@ -815,8 +815,8 @@ const styles = StyleSheet.create({
   // START chip
   startChip: {
     flexDirection: 'row', alignItems: 'center',
-    gap: 2, marginTop: 6, backgroundColor: COLORS.primary,
-    paddingHorizontal: 10, paddingVertical: 3, borderRadius: BORDER_RADIUS.full,
+    gap: 2, marginTop: SPACING.xs, backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm, paddingVertical: 3, borderRadius: BORDER_RADIUS.full,
   },
   startChipText: {
     ...TYPOGRAPHY.special.badge, fontWeight: '800',
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
   catCompanion: {
     position: 'absolute',
     right: -44,
-    top: 4,
+    top: SPACING.xs,
   },
   catCompanionLocked: {
     opacity: 0.3,
@@ -851,21 +851,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
     paddingHorizontal: SPACING.lg, height: SECTION_BANNER_HEIGHT,
   },
-  sectionBannerLine: { flex: 1, height: 1, backgroundColor: glowColor('#FFFFFF', 0.06) },
+  sectionBannerLine: { flex: 1, height: 1, backgroundColor: glowColor(COLORS.textPrimary, 0.06) },
   sectionBannerPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
     borderWidth: 1, borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: 12, paddingVertical: 5,
-    backgroundColor: glowColor('#FFFFFF', 0.03),
+    paddingHorizontal: SPACING.sm + SPACING.xs, paddingVertical: SPACING.xs,
+    backgroundColor: glowColor(COLORS.textPrimary, 0.03),
   },
   sectionLabel: {
     ...TYPOGRAPHY.caption.lg, fontWeight: '700',
     textTransform: 'uppercase', letterSpacing: 1.5,
   },
-  sectionRewardBadge: { marginLeft: 4 },
+  sectionRewardBadge: { marginLeft: SPACING.xs },
   sectionRewardLocked: {
     width: 20, height: 20, borderRadius: 10,
-    backgroundColor: glowColor('#FFFFFF', 0.05),
+    backgroundColor: glowColor(COLORS.textPrimary, 0.05),
     alignItems: 'center', justifyContent: 'center',
   },
 

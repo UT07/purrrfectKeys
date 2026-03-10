@@ -30,7 +30,7 @@ import type { LeagueStandingEntry } from '../stores/leagueStore';
 import { useAuthStore } from '../stores/authStore';
 import { getLeagueStandings } from '../services/firebase/leagueService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor, shadowGlow } from '../theme/tokens';
-import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
+import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS, MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
@@ -89,7 +89,7 @@ function PodiumPedestal({
         ]}
       >
         <CatAvatar
-          catId={entry.selectedCatId ?? 'mini-meowww'}
+          catId={entry.selectedCatId ?? 'salsa'}
           size={catSize > 60 ? 'medium' : 'small'}
           pose={place === 1 ? 'celebrate' : undefined}
           skipEntryAnimation
@@ -179,9 +179,9 @@ function StandingsRow({
     entry.rank === 1
       ? COLORS.starGold
       : entry.rank === 2
-        ? '#C0C0C0'
+        ? MEDAL_COLORS.silver
         : entry.rank === 3
-          ? '#CD7F32'
+          ? MEDAL_COLORS.bronze
           : COLORS.textSecondary;
 
   return (
@@ -218,7 +218,7 @@ function StandingsRow({
       {/* Small cat avatar */}
       <View style={styles.rowAvatar}>
         <CatAvatar
-          catId={entry.selectedCatId ?? 'mini-meowww'}
+          catId={entry.selectedCatId ?? 'salsa'}
           size="small"
           skipEntryAnimation
         />

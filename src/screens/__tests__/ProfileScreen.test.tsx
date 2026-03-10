@@ -367,12 +367,13 @@ describe('ProfileScreen', () => {
 
   it('shows level information', () => {
     const { getByText } = render(<ProfileScreen />);
-    expect(getByText(/Level 3 Pianist/)).toBeTruthy();
+    expect(getByText('Lv. 3')).toBeTruthy();
   });
 
-  it('shows level progress ring with XP to next', () => {
-    const { getByText } = render(<ProfileScreen />);
-    expect(getByText('200 XP to next')).toBeTruthy();
+  it('shows XP tooltip on ring tap', () => {
+    const { getByTestId, getByText } = render(<ProfileScreen />);
+    fireEvent.press(getByTestId('profile-level-ring'));
+    expect(getByText(/200 XP to level/)).toBeTruthy();
   });
 
   it('shows streak count in quick pill row', () => {
@@ -407,10 +408,9 @@ describe('ProfileScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Account');
   });
 
-  it('Cat avatar press navigates to CatSwitchScreen', () => {
+  it('Tap to change navigates to CatSwitchScreen', () => {
     const { getByTestId } = render(<ProfileScreen />);
-    const avatar = getByTestId('cat-avatar');
-    fireEvent.press(avatar);
+    fireEvent.press(getByTestId('profile-open-cat-switch'));
     expect(mockNavigate).toHaveBeenCalledWith('CatSwitch');
   });
 

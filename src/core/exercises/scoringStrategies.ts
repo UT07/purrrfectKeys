@@ -25,6 +25,20 @@ const SCORE_WEIGHTS = {
   duration: 0.15,
 };
 
+/**
+ * Rhythm exercises ignore pitch, so accuracy === completeness.
+ * Redistribute accuracy weight to timing (the core rhythm skill).
+ */
+const RHYTHM_WEIGHTS = {
+  accuracy: 0,
+  timing: 0.65,
+  completeness: 0.10,
+  extraNotes: 0.10,
+  duration: 0.15,
+};
+
+type ScoreWeights = typeof SCORE_WEIGHTS;
+
 // ── Rhythm scoring ──────────────────────────────────────────────────────
 
 /**
@@ -84,18 +98,19 @@ function buildScoreFromNotes(
   exercise: Exercise,
   noteScores: NoteScore[],
   totalExpected: number,
-  previousHighScore: number
+  previousHighScore: number,
+  weights: ScoreWeights = SCORE_WEIGHTS,
 ): ExerciseScore {
   // Calculate breakdown
   const breakdown = calculateBreakdownFromNotes(noteScores, totalExpected);
 
   // Weighted overall score
   const overall =
-    breakdown.accuracy * SCORE_WEIGHTS.accuracy +
-    breakdown.timing * SCORE_WEIGHTS.timing +
-    breakdown.completeness * SCORE_WEIGHTS.completeness +
-    breakdown.extraNotes * SCORE_WEIGHTS.extraNotes +
-    breakdown.duration * SCORE_WEIGHTS.duration;
+    breakdown.accuracy * weights.accuracy +
+    breakdown.timing * weights.timing +
+    breakdown.completeness * weights.completeness +
+    breakdown.extraNotes * weights.extraNotes +
+    breakdown.duration * weights.duration;
 
   // Stars
   const starThresholds = exercise.scoring.starThresholds;
@@ -262,7 +277,7 @@ export function scoreRhythmExercise(
     }
   }
 
-  return buildScoreFromNotes(exercise, noteScores, exercise.notes.length, previousHighScore);
+  return buildScoreFromNotes(exercise, noteScores, exercise.notes.length, previousHighScore, RHYTHM_WEIGHTS);
 }
 
 /**

@@ -13,7 +13,7 @@ import {
   getMonthlyChallengeForMonth,
   isMonthlyChallengeActive,
 } from '../core/challenges/challengeSystem';
-import { COLORS, SPACING, BORDER_RADIUS } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, NEON, glowColor } from '../theme/tokens';
 
 function getCurrentMonthISO(): string {
   const now = new Date();
@@ -73,7 +73,7 @@ export function MonthlyChallengeCard({
         {/* Header */}
         <View style={styles.topRow}>
           <View style={styles.titleRow}>
-            <MaterialCommunityIcons name="calendar-star" size={22} color="#E040FB" />
+            <MaterialCommunityIcons name="calendar-star" size={22} color={NEON.purple} />
             <Text style={styles.title}>Monthly Challenge</Text>
           </View>
           <View style={styles.rewardBadge}>
@@ -124,11 +124,11 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,
-    borderColor: '#E040FB',
+    borderColor: NEON.purple,
     overflow: 'hidden',
   },
   cardInner: {
-    backgroundColor: '#1A101A',
+    backgroundColor: COLORS.cardSurface,
     padding: SPACING.md,
   },
   topRow: {
@@ -145,18 +145,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#E040FB',
+    color: NEON.purple,
   },
   rewardBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(224, 64, 251, 0.15)',
+    backgroundColor: glowColor(NEON.purple, 0.15),
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
-    borderColor: 'rgba(224, 64, 251, 0.3)',
+    borderColor: glowColor(NEON.purple, 0.3),
   },
   rewardText: {
     fontSize: 13,
@@ -178,20 +178,20 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 10,
-    backgroundColor: 'rgba(224, 64, 251, 0.15)',
+    backgroundColor: glowColor(NEON.purple, 0.15),
     borderRadius: 5,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#E040FB',
+    backgroundColor: NEON.purple,
     borderRadius: 5,
     minWidth: 4,
   },
   progressText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#E040FB',
+    color: NEON.purple,
     minWidth: 30,
     textAlign: 'right',
   },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   playButton: {
-    backgroundColor: '#E040FB',
+    backgroundColor: NEON.purple,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   playButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFF',
+    color: COLORS.textPrimary,
   },
   completedBadge: {
     flexDirection: 'row',

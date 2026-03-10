@@ -168,19 +168,29 @@ export async function lookupFriendCode(code: string): Promise<string | null> {
 /**
  * Get a user's public profile (display name + selected cat).
  * Used when sending friend requests to populate the outgoing connection.
+ *
+ * Reads displayName from the user doc root, and selectedCatId from the
+ * gamification/catEvolution subcollection (where syncService stores it).
  */
 export async function getUserPublicProfile(
   uid: string,
 ): Promise<{ displayName: string; selectedCatId: string } | null> {
-  const userDoc = doc(db, 'users', uid);
-  const snap = await getDoc(userDoc);
+  const userRef = doc(db, 'users', uid);
+  const catRef = doc(db, 'users', uid, 'gamification', 'catEvolution');
 
-  if (!snap.exists()) return null;
+  const [userSnap, catSnap] = await Promise.all([
+    getDoc(userRef),
+    getDoc(catRef),
+  ]);
 
-  const data = snap.data();
+  if (!userSnap.exists()) return null;
+
+  const userData = userSnap.data();
+  const catData = catSnap.exists() ? catSnap.data() : null;
+
   return {
-    displayName: (data.displayName as string) || 'Player',
-    selectedCatId: (data.settings?.selectedCatId as string) || '',
+    displayName: (userData.displayName as string) || 'Player',
+    selectedCatId: (catData?.selectedCatId as string) || (userData.settings?.selectedCatId as string) || '',
   };
 }
 
@@ -361,4 +371,39 @@ export async function updateChallengeResult(
     toScore,
     status: 'completed',
   });
+}
+
+/**
+ * Delete all challenges between two users.
+ * Called when a friend connection is removed.
+ */
+export async function deleteChallengesBetweenUsers(
+  uidA: string,
+  uidB: string,
+): Promise<void> {
+  const challengesCol = collection(db, 'challenges');
+
+  // Query challenges where uidA sent to uidB or uidB sent to uidA
+  const abQuery = query(
+    challengesCol,
+    where('fromUid', '==', uidA),
+    where('toUid', '==', uidB),
+  );
+  const baQuery = query(
+    challengesCol,
+    where('fromUid', '==', uidB),
+    where('toUid', '==', uidA),
+  );
+
+  const [abSnap, baSnap] = await Promise.all([
+    getDocs(abQuery),
+    getDocs(baQuery),
+  ]);
+
+  if (abSnap.empty && baSnap.empty) return;
+
+  const batch = writeBatch(db);
+  for (const d of abSnap.docs) batch.delete(d.ref);
+  for (const d of baSnap.docs) batch.delete(d.ref);
+  await batch.commit();
 }

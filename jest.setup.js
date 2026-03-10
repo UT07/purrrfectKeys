@@ -133,6 +133,25 @@ jest.mock('expo-crypto', () => ({
     }
     return array;
   }),
+  digestStringAsync: jest.fn(async (_algorithm, input) => {
+    // Simple deterministic hash for tests (not cryptographic)
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash).toString(16).padStart(64, '0');
+  }),
+  CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+}));
+
+// Mock expo-contacts
+jest.mock('expo-contacts', () => ({
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getContactsAsync: jest.fn(async () => ({ data: [] })),
+  Fields: {
+    PhoneNumbers: 'phoneNumbers',
+    Emails: 'emails',
+  },
 }));
 
 // Mock AsyncStorage (Expo Go compatible version)

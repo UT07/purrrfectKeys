@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import type { ExerciseResult, Skills, LearnerProfileState, SkillMasteryRecord } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
 import { getSkillById, DECAY_HALF_LIFE_DAYS, DECAY_THRESHOLD } from '../core/curriculum/SkillTree';
 import { useGemStore } from './gemStore';
 
@@ -57,8 +57,10 @@ const defaultData: LearnerProfileData = {
   recentExerciseIds: [],
 };
 
-// Create debounced save function
+// Create debounced save function for frequent updates (note accuracy, skills, etc.)
 const debouncedSave = createDebouncedSave(STORAGE_KEYS.LEARNER_PROFILE, 1000);
+// Immediate save for critical state changes that must survive app backgrounding
+const immediateSave = createImmediateSave(STORAGE_KEYS.LEARNER_PROFILE);
 
 export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => ({
   ...defaultData,
@@ -132,8 +134,9 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
     if (masteredSkills.includes(skillId)) return;
     const now = Date.now();
     const existing = skillMasteryData[skillId];
+    const newMastered = [...masteredSkills, skillId];
     set({
-      masteredSkills: [...masteredSkills, skillId],
+      masteredSkills: newMastered,
       skillMasteryData: {
         ...skillMasteryData,
         [skillId]: {
@@ -145,10 +148,14 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
       },
     });
 
+    console.log(`[LearnerProfile] Skill mastered: ${skillId} (total: ${newMastered.length})`);
+
     // Gem reward for mastering a skill
     useGemStore.getState().earnGems(15, 'skill-mastered');
 
-    debouncedSave(get());
+    // Use immediate save — skill mastery is critical state that must persist
+    // before the user navigates away (debounced save could lose it)
+    immediateSave(get());
   },
 
   recordSkillPractice: (skillId: string, passed: boolean) => {
@@ -171,6 +178,7 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
     // Auto-master if completionCount meets the node's requiredCompletions
     if (passed) {
       const node = getSkillById(skillId);
+      console.log(`[LearnerProfile] recordSkillPractice: ${skillId} passed=${passed} count=${newCount}/${node?.requiredCompletions ?? '?'}`);
       if (node && newCount >= node.requiredCompletions) {
         get().markSkillMastered(skillId);
       }

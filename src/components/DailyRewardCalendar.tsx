@@ -7,7 +7,7 @@
  * - Future days: reward preview
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PressableScale } from './common/PressableScale';
@@ -69,17 +69,19 @@ function DayCell({
   const isMissed = isPast && !isClaimed;
   const isClaimable = !isClaimed && !disabled && isToday;
 
-  // Pulsing glow for claimable rewards
-  if (isClaimable) {
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    );
-  }
+  // Pulsing glow for claimable rewards (in useEffect to avoid re-triggering on every render)
+  useEffect(() => {
+    if (isClaimable) {
+      glowOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.7, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false,
+      );
+    }
+  }, [isClaimable]);
 
   const glowStyle = useAnimatedStyle(() => ({
     borderColor: isToday

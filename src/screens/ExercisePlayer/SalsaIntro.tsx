@@ -14,13 +14,13 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 
+import { PressableScale } from '../../components/common/PressableScale';
 import { ttsService } from '../../services/tts/TTSService';
 import {
   COLORS,
@@ -114,13 +114,13 @@ export function SalsaIntro({
           <Text style={styles.salsaLabel}>Salsa</Text>
           <Text style={styles.tier1Text}>{introText}</Text>
         </View>
-        <Pressable
+        <PressableScale
           onPress={handleDismiss}
           style={styles.skipButtonSmall}
           testID="skip-button"
         >
           <Text style={styles.skipText}>Skip</Text>
-        </Pressable>
+        </PressableScale>
       </Animated.View>
     );
   }
@@ -159,7 +159,7 @@ export function SalsaIntro({
         <View style={styles.buttonRow}>
           {/* Tier 3: Demo button */}
           {tier === 3 && onRequestDemo && (
-            <Pressable
+            <PressableScale
               onPress={() => {
                 ttsService.stop();
                 onRequestDemo();
@@ -168,27 +168,27 @@ export function SalsaIntro({
               testID="demo-button"
             >
               <Text style={styles.demoButtonText}>Watch demo first</Text>
-            </Pressable>
+            </PressableScale>
           )}
 
           {/* Ready / Let's go */}
-          <Pressable
+          <PressableScale
             onPress={handleDismiss}
             style={styles.goButton}
             testID="go-button"
           >
             <Text style={styles.goButtonText}>Let&apos;s go!</Text>
-          </Pressable>
+          </PressableScale>
         </View>
 
         {/* Skip always visible */}
-        <Pressable
+        <PressableScale
           onPress={handleDismiss}
           style={styles.skipButton}
           testID="skip-button"
         >
           <Text style={styles.skipText}>Skip</Text>
-        </Pressable>
+        </PressableScale>
       </Animated.View>
     </Animated.View>
   );

@@ -37,7 +37,7 @@ import { getNextExerciseForSkill, getNextExercise as getNextAIExercise, fillBuff
 import { recordPracticeSession as calculateStreakUpdate } from '../../core/progression/XpSystem';
 import type { RootStackParamList } from '../../navigation/AppNavigator';
 import type { Exercise, ExerciseScore, MidiNoteEvent, ExerciseType } from '../../core/exercises/types';
-import { getExerciseType } from '../../core/exercises/types';
+import { getExerciseType, resolveExerciseTypeFromSkill } from '../../core/exercises/types';
 import { ScoreDisplay } from './ScoreDisplay';
 import { ExerciseControls } from './ExerciseControls';
 import { HintDisplay } from './HintDisplay';
@@ -90,7 +90,7 @@ import { buildReplayPlan } from '../../services/replayCoachingService';
 import { getIntroData } from '../../services/replayCoachingService';
 import type { ReplayPlan } from '../../core/exercises/replayTypes';
 import ReAnimated, { FadeIn } from 'react-native-reanimated';
-import { SKILL_TREE, getSkillsForExercise, getSkillById, getGenerationHints } from '../../core/curriculum/SkillTree';
+import { SKILL_TREE, getSkillsForExercise, getSkillById, getAvailableSkills, getGenerationHints } from '../../core/curriculum/SkillTree';
 import type { SkillCategory } from '../../core/curriculum/SkillTree';
 import { getTierMasteryTestSkillId, isTierMasteryTestAvailable, hasTierMasteryTestPassed } from '../../core/curriculum/tierMasteryTest';
 import { adjustDifficulty } from '../../core/curriculum/DifficultyEngine';
@@ -100,12 +100,24 @@ import type { WeakPattern } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
 import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
 import { midiToNoteName } from '../../core/music/MusicTheory';
-import { COLORS, glowColor } from '../../theme/tokens';
+import { COLORS, NEON, glowColor } from '../../theme/tokens';
 import { suggestDrill } from '../../services/FreePlayAnalyzer';
 import { generateExercise as generateFreePlayExercise } from '../../services/geminiExerciseService';
-import { getTemplateForSkill, getTemplateExercise } from '../../content/templateExercises';
+import { getTemplateForSkill, getTemplateExercise, getTemplateForType } from '../../content/templateExercises';
 import { getChestType, getChestReward } from '../../core/rewards/chestSystem';
 import { analyticsEvents } from '../../services/analytics/PostHog';
+
+/** Resolve the exercise type from explicit param, or infer from skill category */
+function resolveExerciseType(
+  explicitType: ExerciseType | null,
+  skillId: string | null,
+): ExerciseType | undefined {
+  if (explicitType) return explicitType;
+  if (!skillId) return undefined;
+  const skill = getSkillById(skillId);
+  if (!skill) return undefined;
+  return resolveExerciseTypeFromSkill(null, skill.category);
+}
 
 /**
  * Timing tolerance multiplier per input method — mirrors InputManager's
@@ -248,6 +260,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const testMode = route.params?.testMode ?? false;
   const aiMode = route.params?.aiMode ?? false;
   const skillIdParam = route.params?.skillId ?? null;
+  const exerciseTypeParam = route.params?.exerciseType ?? null;
   const challengeTarget = route.params?.challengeTarget ?? null;
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
@@ -351,10 +364,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       if (cancelled) return;
 
       if (buffered) {
+        // Resolve exercise type: explicit param > AI response > skill category > default 'play'
+        const resolvedType = buffered.type ?? resolveExerciseType(exerciseTypeParam, skillIdParam);
+
         // Convert AIExercise to Exercise
         const converted: Exercise = {
           id: `ai-${Date.now()}`,
           version: 1,
+          ...(resolvedType ? { type: resolvedType } : {}),
           metadata: {
             title: buffered.metadata?.title ?? 'AI Practice',
             description: 'Generated exercise targeting your weak areas',
@@ -392,24 +409,30 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       } else {
         // Buffer empty — use offline template fallback chain
         const profile = useLearnerProfileStore.getState();
+        const resolvedType = resolveExerciseType(exerciseTypeParam, skillIdParam);
 
         // 1. Skill-targeted template (best match)
         if (skillIdParam) {
           const template = getTemplateForSkill(skillIdParam, profile.weakNotes);
           setAiExercise({ ...template, id: `tmpl-${skillIdParam}-${Date.now()}` });
         }
-        // 2. Static exercise fallback (original JSON)
+        // 2. Type-specific template (when exercise type is known but no skill)
+        else if (resolvedType && resolvedType !== 'play') {
+          const template = getTemplateForType(resolvedType, profile.weakNotes);
+          setAiExercise({ ...template, id: `tmpl-type-${resolvedType}-${Date.now()}` });
+        }
+        // 3. Static exercise fallback (original JSON)
         else if (route.params?.exerciseId && route.params.exerciseId !== 'ai-mode') {
           const staticEx = getExercise(route.params.exerciseId);
           if (staticEx) {
             setAiExercise(staticEx);
           } else {
-            // 3. Generic difficulty-based template
+            // 4. Generic difficulty-based template
             const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
             setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-generic-${Date.now()}` });
           }
         }
-        // 4. Generic difficulty-based template (no exerciseId param)
+        // 5. Generic difficulty-based template (no exerciseId param)
         else {
           const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
           setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-generic-${Date.now()}` });
@@ -422,8 +445,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         const profile = useLearnerProfileStore.getState();
         const difficulty = profile.totalExercisesCompleted > 20 ? 4 : profile.totalExercisesCompleted > 10 ? 3 : 2;
         const hints = skillIdParam ? getGenerationHints(skillIdParam) : null;
+        const resolvedInteractionType = resolveExerciseType(exerciseTypeParam, skillIdParam);
         if (skillIdParam && hints) {
-          // Skill-aware fill: pre-generate for this skill
+          // Skill-aware fill: pre-generate for this skill with interaction type
           fillBufferForSkills([{
             skillId: skillIdParam,
             params: {
@@ -434,6 +458,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               skills: profile.skills,
               targetSkillId: skillIdParam,
               generationHints: hints,
+              ...(resolvedInteractionType ? { interactionType: resolvedInteractionType } : {}),
             },
             count: BUFFER_MIN_THRESHOLD,
           }]).catch((e) => {
@@ -446,6 +471,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             difficulty,
             noteCount: 12,
             skills: profile.skills,
+            ...(resolvedInteractionType ? { interactionType: resolvedInteractionType } : {}),
           }).catch((e) => {
             logger.warn('[ExercisePlayer] Buffer fill failed:', e);
           });
@@ -1200,6 +1226,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           fromDisplayName: authUser.displayName ?? 'Player',
           fromCatId: useSettingsStore.getState().selectedCatId ?? 'mini-meowww',
           toUid: challengeTarget.uid,
+          toDisplayName: challengeTarget.displayName ?? 'Opponent',
           exerciseId: ex.id,
           exerciseTitle: ex.metadata.title,
           fromScore: score.overall,
@@ -1302,11 +1329,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const replayNoteColors = useMemo(() => {
     if (playerMode !== 'replay' || !replayPlan) return undefined;
     const COLOR_MAP: Record<string, string> = {
-      green: '#4CAF50',
-      yellow: '#FFC107',
-      red: '#F44336',
-      grey: '#9E9E9E',
-      purple: '#9C27B0',
+      green: COLORS.success,
+      yellow: COLORS.warning,
+      red: COLORS.error,
+      grey: COLORS.textSecondary,
+      purple: NEON.purple,
     };
     const map = new Map<number, string>();
     replayPlan.entries.forEach((entry, i) => {
@@ -1455,7 +1482,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   abilityConfigRef.current = abilityConfig;
 
   // Hit particle state
-  const [hitParticle, setHitParticle] = useState({ x: 0, y: 0, color: '#fff', trigger: 0 });
+  const [hitParticle, setHitParticle] = useState<{ x: number; y: number; color: string; trigger: number }>({ x: 0, y: 0, color: COLORS.textPrimary, trigger: 0 });
   // Red flash on miss
   const [showMissFlash, setShowMissFlash] = useState(false);
 
@@ -1758,20 +1785,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
       // Scoring feedback only during active playback.
-      // Use realtimeBeatRef (60fps) instead of countInComplete (derived from throttled
-      // currentBeat ~20fps) — the throttled state can still be negative at beat 0,
-      // causing the first note to silently miss feedback.
-      if (!isPlaying || isPaused || realtimeBeatRef.current < 0) return;
+      // Allow notes up to 1.5 beats before beat 0 — this matches the scoring engine's
+      // ±1.5 beat window and prevents the first note from silently missing visual feedback
+      // when played slightly early (during the last moment of count-in).
+      const matchWindowBeats = 1.5;
+      if (!isPlaying || isPaused || realtimeBeatRef.current < -matchWindowBeats) return;
 
       // Nearest-note matching: find the closest unconsumed note with matching pitch.
       // Uses realtimeBeatRef (60fps) instead of currentBeat (throttled to 20fps)
       // for accurate timing classification.
       const realtimeBeat = realtimeBeatRef.current;
       const msPerBeat = 60000 / exercise.settings.tempo;
-      // Match window must align with the scorer's ±1.5-beat window (ExerciseValidator.matchNotes).
-      // A tighter visual window causes notes to show "miss" during gameplay but still score —
-      // confusing the user. Use the same 1.5 beats so visual feedback always matches the final score.
-      const matchWindowBeats = 1.5;
 
       let bestMatch:
         | {
@@ -1852,7 +1876,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
         // Hit particles — gold for perfect, feedback color for others
-        const particleColor = feedbackType === 'perfect' ? '#FFD700' : getFeedbackColor(feedbackType);
+        const particleColor = feedbackType === 'perfect' ? COLORS.starGold : getFeedbackColor(feedbackType);
         setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: particleColor, trigger: Date.now() });
       } else {
         // Combo shield: forgive the miss if the cat's ability allows it
@@ -1865,7 +1889,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           setComboCount(0);
           // Screen shake + red particles on miss
           shakeRef.current?.shake('medium');
-          setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: '#FF5252', trigger: Date.now() });
+          setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: COLORS.feedbackMiss, trigger: Date.now() });
           setShowMissFlash(true);
           setTimeout(() => setShowMissFlash(false), 150);
         }
@@ -2141,6 +2165,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             (navigation as any).replace('Exercise', {
               exerciseId: nextExerciseId,
               ...(skillIdParam ? { skillId: skillIdParam } : {}),
+              ...(exerciseTypeParam ? { exerciseType: exerciseTypeParam } : {}),
             });
           }
         }, 100);
@@ -2151,7 +2176,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       // User exited early — show CompletionModal again
       setShowCompletion(true);
     }
-  }, [nextExerciseId, aiMode, stopPlayback, exerciseStore, navigation, skillIdParam, handleExit]);
+  }, [nextExerciseId, aiMode, stopPlayback, exerciseStore, navigation, skillIdParam, exerciseTypeParam, handleExit]);
 
   /**
    * Resume replay after a pause point
@@ -2206,10 +2231,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         (navigation as any).replace('Exercise', {
           exerciseId: nextExerciseId,
           ...(skillIdParam ? { skillId: skillIdParam } : {}),
+          ...(exerciseTypeParam ? { exerciseType: exerciseTypeParam } : {}),
         });
       }
     }, 100);
-  }, [nextExerciseId, stopPlayback, exerciseStore, navigation, skillIdParam]);
+  }, [nextExerciseId, stopPlayback, exerciseStore, navigation, skillIdParam, exerciseTypeParam]);
 
   /**
    * Navigate to the next AI-generated exercise (AI mode continuation)
@@ -2221,17 +2247,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     exerciseStore.clearSession();
 
     // Determine which skill to target next:
-    // If the current skill is now mastered, advance to the next unmastered skill in the same tier
+    // If the current skill is now mastered, advance to the next available skill
+    // (prerequisite-aware, cross-tier)
     let nextSkillId = skillIdParam;
     if (skillIdParam) {
       const masteredSkills = useLearnerProfileStore.getState().masteredSkills;
       if (masteredSkills.includes(skillIdParam)) {
         const currentNode = getSkillById(skillIdParam);
         if (currentNode) {
-          const tierSkills = SKILL_TREE.filter((s) => s.tier === currentNode.tier);
-          const masteredSet = new Set(masteredSkills);
-          const nextUnmastered = tierSkills.find((s) => !masteredSet.has(s.id));
-          nextSkillId = nextUnmastered?.id ?? skillIdParam;
+          // First try same tier, then fall back to any available skill
+          const available = getAvailableSkills(masteredSkills);
+          const sameTier = available.find((s) => s.tier === currentNode.tier);
+          const nextTier = available.find((s) => s.tier === currentNode.tier + 1);
+          nextSkillId = sameTier?.id ?? nextTier?.id ?? available[0]?.id ?? skillIdParam;
         }
       }
     }
@@ -2492,7 +2520,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         {/* Glassmorphism top bar: exit + score + play/pause — hidden during replay */}
         {playerMode !== 'replay' && <GlassmorphismCard
           tint={glowColor(COLORS.background, 0.75)}
-          borderColor={glowColor('#FFFFFF', 0.06)}
+          borderColor={glowColor(COLORS.textPrimary, 0.06)}
           borderRadius={16}
           style={styles.topBar}
         >
@@ -3065,7 +3093,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: glowColor('#000000', 0.9),
+    backgroundColor: glowColor(COLORS.background, 0.9),
   },
   missFlash: {
     ...StyleSheet.absoluteFillObject,
@@ -3165,7 +3193,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: glowColor('#E1BEE7', 0.15),
+    backgroundColor: glowColor(NEON.purple, 0.15),
     alignItems: 'center',
     justifyContent: 'center',
   },

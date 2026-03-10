@@ -555,6 +555,7 @@ jest.mock('../../../theme/tokens', () => ({
     cardWarm: ['#1C1C1C', '#181818'],
     lavaLamp: { duration: 8000, palettes: [['#1A0000', '#0A0A0A', '#0A0A0A']] },
   },
+  NEON: { crimson: '#DC143C', purple: '#9B59B6', blue: '#4FC3F7', gold: '#FFD700', green: '#2ECC71', orange: '#FF8C00' },
   GLOW: {
     crimson: 'rgba(220, 20, 60, 0.3)',
     gold: 'rgba(255, 215, 0, 0.3)',

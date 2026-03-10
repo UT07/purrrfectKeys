@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { ReactElement } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,6 +27,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { PressableScale } from '../common/PressableScale';
 import { CatAvatar } from '../Mascot/CatAvatar';
 import { getCatById } from '../Mascot/catCharacters';
 import type { EvolutionStage, CatAbility } from '../../stores/types';
@@ -189,7 +190,7 @@ export function EvolutionReveal({
       {/* Continue button */}
       {phase === 'ability' && (
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.continueContainer}>
-          <Pressable
+          <PressableScale
             style={[styles.continueButton, { backgroundColor: accentColor }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -197,7 +198,7 @@ export function EvolutionReveal({
             }}
           >
             <Text style={styles.continueText}>Continue</Text>
-          </Pressable>
+          </PressableScale>
         </Animated.View>
       )}
 

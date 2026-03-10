@@ -33,6 +33,7 @@ import {
 import type { Song, SongSection, SongLayer, MasteryTier } from '../core/songs/songTypes';
 import type { Exercise, NoteEvent, ExerciseScore } from '../core/exercises/types';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuthStore } from '../stores/authStore';
@@ -424,6 +425,7 @@ export function SongPlayerScreen() {
   if (isLoadingSong || !song) {
     return (
       <SafeAreaView style={styles.container}>
+        <GradientMeshBackground accent="songs" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Loading song...</Text>
@@ -436,6 +438,7 @@ export function SongPlayerScreen() {
 
   return (
     <SafeAreaView style={styles.container} testID="song-player-screen">
+      <GradientMeshBackground accent="songs" />
       {/* Header */}
       <View style={styles.header}>
         <PressableScale onPress={() => navigation.goBack()} testID="back-button">

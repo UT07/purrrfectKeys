@@ -42,7 +42,7 @@ import { OfflineBanner } from '../components/common/OfflineBanner';
 import { useAuthStore } from '../stores/authStore';
 
 // Types
-import type { Exercise } from '../core/exercises/types';
+import type { Exercise, ExerciseType } from '../core/exercises/types';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -54,6 +54,8 @@ export type RootStackParamList = {
     testMode?: boolean;
     aiMode?: boolean;
     skillId?: string;
+    /** Request a specific exercise type (rhythm, earTraining, chordId, sightReading, callResponse) */
+    exerciseType?: ExerciseType;
     freePlayContext?: {
       detectedKey: string | null;
       suggestedDrillType: string;

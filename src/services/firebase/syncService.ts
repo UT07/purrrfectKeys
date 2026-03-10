@@ -10,12 +10,15 @@ import { auth } from './config';
 import {
   syncProgress, getAllLessonProgress, getGamificationData, addXp, createGamificationData,
   getCatEvolutionData, saveCatEvolutionData, getGemSyncData, saveGemSyncData,
+  getLearnerProfileData, saveLearnerProfileData, getAchievementSyncData, saveAchievementSyncData,
 } from './firestore';
 import type { ProgressChange, LessonProgress as FirestoreLessonProgress } from './firestore';
 import { useProgressStore } from '../../stores/progressStore';
 import { logger } from '../../utils/logger';
 import { useCatEvolutionStore } from '../../stores/catEvolutionStore';
 import { useGemStore } from '../../stores/gemStore';
+import { useLearnerProfileStore } from '../../stores/learnerProfileStore';
+import { useAchievementStore } from '../../stores/achievementStore';
 import { levelFromXp } from '../../core/progression/XpSystem';
 import type { LessonProgress, ExerciseProgress } from '../../core/exercises/types';
 
@@ -82,7 +85,7 @@ export class SyncManager {
     this.syncTimer = setInterval(() => {
       this.flushQueue();
       // Also pull remote changes so cross-device updates are picked up
-      this.pullRemoteProgress().catch((e) => logger.warn('[SyncManager] Periodic pull failed:', e));
+      this.pullRemoteProgress().catch((e) => logger.warn('[Sync] Periodic pull failed:', e));
     }, intervalMs);
   }
 
@@ -202,13 +205,14 @@ export class SyncManager {
         } else if (localXp > remoteGam.xp) {
           await addXp(uid, localXp - remoteGam.xp, 'sync');
         }
-      } catch {
-        // Non-critical: XP sync failure doesn't block queue flush
+      } catch (err) {
+        logger.warn('[Sync] XP sync in flushQueue failed:', err);
       }
 
       // Sync cat evolution + gem data to Firestore
       await this.pushCatAndGemData(uid);
-    } catch {
+    } catch (err) {
+      logger.warn('[Sync] flushQueue failed:', err);
       // Failure: increment retryCount on valid items
       const updatedQueue = validItems.map((item) => ({
         ...item,
@@ -287,7 +291,7 @@ export class SyncManager {
 
       if (changesUploaded === 0) {
         // No local changes to upload, but still pull remote updates
-        await this.pullRemoteProgress().catch((e) => logger.warn('[SyncManager] Pull in syncAll failed:', e));
+        await this.pullRemoteProgress().catch((e) => logger.warn('[Sync] Pull in syncAll failed:', e));
         return {
           success: true,
           changesUploaded: 0,
@@ -329,7 +333,8 @@ export class SyncManager {
           changesDownloaded: response.serverChanges.length,
           conflicts: response.conflicts.length,
         };
-      } catch {
+      } catch (err) {
+        logger.warn('[Sync] syncAll flush failed:', err);
         // Flush failed -- increment retry counts
         const updatedQueue = validItems.map((item) => ({
           ...item,
@@ -553,10 +558,159 @@ export class SyncManager {
           didMerge = true;
           logger.log(`[Sync] Merged remote gems: ${remoteGems.gems} (local was ${localGems.gems})`);
         }
+
+        // Merge claimedRewards: union to prevent double-claiming
+        if (remoteGems.claimedRewards) {
+          const localClaimed = new Set(localGems.claimedRewards ?? []);
+          let newClaims = false;
+          for (const r of remoteGems.claimedRewards) {
+            if (!localClaimed.has(r)) {
+              localClaimed.add(r);
+              newClaims = true;
+            }
+          }
+          if (newClaims) {
+            useGemStore.setState({ claimedRewards: Array.from(localClaimed) });
+            didMerge = true;
+          }
+        }
+      }
+
+      // Merge learner profile: take higher exercise count, union of mastered skills
+      try {
+        const remoteLearner = await getLearnerProfileData(uid);
+        if (remoteLearner) {
+          const localLearner = useLearnerProfileStore.getState();
+          const updates: Record<string, any> = {};
+
+          if (remoteLearner.totalExercisesCompleted > localLearner.totalExercisesCompleted) {
+            updates.totalExercisesCompleted = remoteLearner.totalExercisesCompleted;
+          }
+
+          // Union of mastered skills
+          const localMastered = new Set(localLearner.masteredSkills);
+          const remoteMastered = remoteLearner.masteredSkills ?? [];
+          let newSkillsAdded = false;
+          for (const skillId of remoteMastered) {
+            if (!localMastered.has(skillId)) {
+              localMastered.add(skillId);
+              newSkillsAdded = true;
+            }
+          }
+          if (newSkillsAdded) {
+            updates.masteredSkills = Array.from(localMastered);
+          }
+
+          // Merge skill mastery data: take later lastPracticedAt, higher completionCount
+          if (remoteLearner.skillMasteryData) {
+            const mergedMasteryData = { ...localLearner.skillMasteryData };
+            for (const [skillId, remoteRecord] of Object.entries(remoteLearner.skillMasteryData)) {
+              const localRecord = mergedMasteryData[skillId];
+              if (!localRecord) {
+                mergedMasteryData[skillId] = remoteRecord;
+              } else if (remoteRecord.completionCount > localRecord.completionCount) {
+                mergedMasteryData[skillId] = {
+                  ...localRecord,
+                  completionCount: remoteRecord.completionCount,
+                  lastPracticedAt: Math.max(localRecord.lastPracticedAt, remoteRecord.lastPracticedAt ?? 0),
+                };
+              }
+            }
+            updates.skillMasteryData = mergedMasteryData;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            useLearnerProfileStore.setState(updates);
+            didMerge = true;
+          }
+        }
+      } catch (err) {
+        logger.warn('[Sync] Learner profile pull failed:', err);
+      }
+
+      // Merge achievements: union of unlocked IDs
+      try {
+        const remoteAchievements = await getAchievementSyncData(uid);
+        if (remoteAchievements) {
+          const localAch = useAchievementStore.getState();
+          const mergedIds = { ...localAch.unlockedIds };
+          let newUnlocks = false;
+          for (const [id, timestamp] of Object.entries(remoteAchievements.unlockedIds ?? {})) {
+            if (!mergedIds[id]) {
+              mergedIds[id] = timestamp;
+              newUnlocks = true;
+            }
+          }
+          if (newUnlocks) {
+            useAchievementStore.setState({ unlockedIds: mergedIds });
+            didMerge = true;
+          }
+
+          // Take higher counters
+          if (remoteAchievements.totalNotesPlayed > localAch.totalNotesPlayed) {
+            useAchievementStore.setState({ totalNotesPlayed: remoteAchievements.totalNotesPlayed });
+            didMerge = true;
+          }
+          if (remoteAchievements.perfectScoreCount > localAch.perfectScoreCount) {
+            useAchievementStore.setState({ perfectScoreCount: remoteAchievements.perfectScoreCount });
+            didMerge = true;
+          }
+          if (remoteAchievements.highScoreCount > localAch.highScoreCount) {
+            useAchievementStore.setState({ highScoreCount: remoteAchievements.highScoreCount });
+            didMerge = true;
+          }
+        }
+      } catch (err) {
+        logger.warn('[Sync] Achievement pull failed:', err);
       }
 
       if (didMerge) {
         logger.log('[Sync] Remote progress merged into local state');
+
+        // Persist merged state to AsyncStorage (raw setState calls above bypass
+        // the stores' internal debouncedSave, so we must save explicitly)
+        const { PersistenceManager, STORAGE_KEYS } = require('../../stores/persistence');
+        // Save progress store (XP, streak, lessons were potentially modified via setState)
+        const progressData = useProgressStore.getState();
+        await PersistenceManager.saveState(STORAGE_KEYS.PROGRESS, {
+          totalXp: progressData.totalXp,
+          level: progressData.level,
+          streakData: progressData.streakData,
+          lessonProgress: progressData.lessonProgress,
+          dailyGoalData: progressData.dailyGoalData,
+          tierTestResults: progressData.tierTestResults,
+          streakMilestonesClaimed: progressData.streakMilestonesClaimed,
+        });
+        // Save gem store (gems were potentially modified via setState)
+        const gemData = useGemStore.getState();
+        await PersistenceManager.saveState(STORAGE_KEYS.GEMS, {
+          gems: gemData.gems,
+          totalGemsEarned: gemData.totalGemsEarned,
+          totalGemsSpent: gemData.totalGemsSpent,
+          transactions: gemData.transactions,
+          claimedRewards: gemData.claimedRewards,
+        });
+        // Save learner profile (mastered skills were potentially modified via setState)
+        const learnerData = useLearnerProfileStore.getState();
+        await PersistenceManager.saveState(STORAGE_KEYS.LEARNER_PROFILE, {
+          noteAccuracy: learnerData.noteAccuracy,
+          noteAttempts: learnerData.noteAttempts,
+          skills: learnerData.skills,
+          tempoRange: learnerData.tempoRange,
+          totalExercisesCompleted: learnerData.totalExercisesCompleted,
+          masteredSkills: learnerData.masteredSkills,
+          skillMasteryData: learnerData.skillMasteryData,
+          recentExerciseIds: learnerData.recentExerciseIds,
+        });
+        // Save achievements (unlocked IDs were potentially modified via setState)
+        const achData = useAchievementStore.getState();
+        await PersistenceManager.saveState(STORAGE_KEYS.ACHIEVEMENTS, {
+          unlockedIds: achData.unlockedIds,
+          totalNotesPlayed: achData.totalNotesPlayed,
+          perfectScoreCount: achData.perfectScoreCount,
+          highScoreCount: achData.highScoreCount,
+        });
+        logger.log('[Sync] Persisted merged state to AsyncStorage');
       }
 
       return { pulled: true, merged: didMerge };
@@ -630,8 +784,8 @@ export class SyncManager {
           });
         }
       }
-    } catch {
-      // Non-critical: cat sync failure doesn't block
+    } catch (err) {
+      logger.warn('[Sync] Cat evolution push failed:', err);
     }
 
     try {
@@ -640,14 +794,60 @@ export class SyncManager {
       const remoteGems = await getGemSyncData(resolvedUid);
 
       if (!remoteGems || gemState.gems > remoteGems.gems || gemState.totalGemsEarned > remoteGems.totalGemsEarned) {
+        // Merge claimedRewards: union of local + remote
+        const localClaimed = new Set(gemState.claimedRewards ?? []);
+        const remoteClaimed = remoteGems?.claimedRewards ?? [];
+        for (const r of remoteClaimed) localClaimed.add(r);
+
         await saveGemSyncData(resolvedUid, {
           gems: Math.max(gemState.gems, remoteGems?.gems ?? 0),
           totalGemsEarned: Math.max(gemState.totalGemsEarned, remoteGems?.totalGemsEarned ?? 0),
           totalGemsSpent: Math.max(gemState.totalGemsSpent, remoteGems?.totalGemsSpent ?? 0),
+          claimedRewards: Array.from(localClaimed),
         });
       }
-    } catch {
-      // Non-critical: gem sync failure doesn't block
+    } catch (err) {
+      logger.warn('[Sync] Gem push failed:', err);
+    }
+
+    // Also push learner profile + achievements
+    await this.pushLearnerAndAchievementData(resolvedUid);
+  }
+
+  /**
+   * Push learner profile + achievement data to Firestore.
+   * Called during sign-out and periodic sync to prevent data loss.
+   */
+  async pushLearnerAndAchievementData(uid?: string): Promise<void> {
+    const resolvedUid = uid ?? auth.currentUser?.uid;
+    if (!resolvedUid) return;
+
+    try {
+      const lp = useLearnerProfileStore.getState();
+      await saveLearnerProfileData(resolvedUid, {
+        noteAccuracy: lp.noteAccuracy,
+        noteAttempts: lp.noteAttempts,
+        skills: { ...lp.skills },
+        tempoRange: lp.tempoRange,
+        totalExercisesCompleted: lp.totalExercisesCompleted,
+        masteredSkills: lp.masteredSkills,
+        skillMasteryData: lp.skillMasteryData,
+        recentExerciseIds: lp.recentExerciseIds,
+      });
+    } catch (err) {
+      logger.warn('[Sync] Learner profile push failed:', err);
+    }
+
+    try {
+      const achState = useAchievementStore.getState();
+      await saveAchievementSyncData(resolvedUid, {
+        unlockedIds: achState.unlockedIds,
+        totalNotesPlayed: achState.totalNotesPlayed,
+        perfectScoreCount: achState.perfectScoreCount,
+        highScoreCount: achState.highScoreCount,
+      });
+    } catch (err) {
+      logger.warn('[Sync] Achievement push failed:', err);
     }
   }
 

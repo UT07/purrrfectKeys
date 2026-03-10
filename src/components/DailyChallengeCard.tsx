@@ -87,7 +87,7 @@ export function DailyChallengeCard({ onPress, masteredSkills }: DailyChallengeCa
     const borderColor = interpolateColor(
       shimmerProgress.value,
       [0, 0.33, 0.66, 1],
-      ['#DC143C', '#FFD700', '#DC143C', '#FFD700'],
+      [COLORS.primary, COLORS.starGold, COLORS.primary, COLORS.starGold],
     );
     return { borderColor };
   });
@@ -160,11 +160,11 @@ const styles = StyleSheet.create({
   cardBorder: {
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,
-    borderColor: '#DC143C',
+    borderColor: COLORS.primary,
     overflow: 'hidden',
   },
   cardInner: {
-    backgroundColor: '#141414',
+    backgroundColor: COLORS.surface,
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.lg - 2,
   },
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   xpBadge: {
-    backgroundColor: '#FFD700',
+    backgroundColor: COLORS.starGold,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.sm,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   xpBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#141414',
+    color: COLORS.surface,
   },
   description: {
     fontSize: 14,

@@ -27,6 +27,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export interface PressableScaleProps {
   onPress?: () => void;
   onLongPress?: () => void;
+  delayLongPress?: number;
   disabled?: boolean;
   scaleDown?: number;
   /** Trigger a light haptic impact on press (default: false) */
@@ -51,6 +52,7 @@ export function PressableScale({
   style,
   onPress,
   onLongPress,
+  delayLongPress,
   disabled,
   haptic = false,
   glowOnPress = false,
@@ -99,6 +101,7 @@ export function PressableScale({
     <AnimatedPressable
       onPress={onPress}
       onLongPress={onLongPress}
+      delayLongPress={delayLongPress}
       disabled={disabled}
       testID={testID}
       hitSlop={hitSlop}

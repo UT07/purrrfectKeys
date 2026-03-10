@@ -44,14 +44,11 @@ export class AudioCapture {
   private isInitialized = false;
   private bufferCount = 0;
   private bufferWatchdogTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Pre-allocated copy buffer to avoid GC pressure in the audio callback hot path */
-  private copyBuffer: Float32Array;
   /** Actual sample rate detected from the first audio buffer (may differ from requested) */
   private actualSampleRate: number | null = null;
 
   constructor(config?: Partial<AudioCaptureConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    this.copyBuffer = new Float32Array(this.config.bufferSize);
   }
 
   /**
@@ -80,13 +77,14 @@ export class AudioCapture {
     this.recorder.onAudioReady((event) => {
       if (!this.isCapturing) return;
 
-      // Defensive copy into pre-allocated buffer: getChannelData() may return
-      // a reference to a reusable native buffer. Avoids `new Float32Array()` on
-      // every callback (~21x/sec) which would cause GC pressure and audio glitches.
+      // getChannelData() may return a shared/reused native buffer that gets
+      // overwritten by the audio system before callbacks finish processing.
+      // We must create an owned copy. Using .slice() instead of a pre-allocated
+      // buffer + subarray() view — a subarray is still a view into the same
+      // ArrayBuffer, so async consumers would see corrupted data on the next
+      // callback cycle.
       const rawSamples = event.buffer.getChannelData(0);
-      const len = Math.min(rawSamples.length, this.copyBuffer.length);
-      this.copyBuffer.set(rawSamples.subarray(0, len));
-      const samples = this.copyBuffer.subarray(0, len);
+      const samples = new Float32Array(rawSamples);
       // event.when may be undefined in some react-native-audio-api versions;
       // fall back to Date.now() for a reasonable timestamp
       const timestamp = typeof event.when === 'number' ? event.when * 1000 : Date.now();

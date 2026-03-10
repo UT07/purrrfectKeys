@@ -991,6 +991,20 @@ export function OnboardingScreen(): React.ReactElement {
         const dn = state.usernameDisplayName?.trim() || state.username;
         useSettingsStore.getState().setDisplayName(dn);
       }
+      // Sync onboarding completion + username to Firestore so it survives sign-out/sign-in.
+      // Save for ALL users (including anonymous) — anonymous users have a uid and their
+      // Firestore profile persists after account linking via triggerPostSignInSync.
+      try {
+        const { useAuthStore } = require('../stores/authStore');
+        const { user } = useAuthStore.getState();
+        if (user) {
+          const { updateUserProfile } = require('../services/firebase/firestore');
+          updateUserProfile(user.uid, {
+            hasCompletedOnboarding: true,
+            username: state.username || '',
+          } as any).catch(() => {});
+        }
+      } catch { /* Firestore sync is best-effort */ }
       // Pre-fill buffer with tier-1 exercises for immediate play (fire-and-forget)
       prefillOnboardingBuffer().catch(() => {});
       // Dismiss the onboarding modal and return to MainTabs

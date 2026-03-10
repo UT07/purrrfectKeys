@@ -22,8 +22,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { useSocialStore } from '../stores/socialStore';
 import { useAuthStore } from '../stores/authStore';
-import { acceptFriendRequest, removeFriendConnection, getFriends, getUserPublicProfile } from '../services/firebase/socialService';
+import { acceptFriendRequest, removeFriendConnection, deleteChallengesBetweenUsers, getFriends, getUserPublicProfile, getFriendActivity } from '../services/firebase/socialService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
+import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import type { FriendConnection, ActivityFeedItem } from '../stores/types';
@@ -108,7 +109,7 @@ function PendingRequestRow({
       <View style={[styles.friendRowAccent, { backgroundColor: borderColor }]} />
       <View style={[styles.friendAvatarRing, { borderColor }]}>
         <View style={styles.friendAvatarWrap}>
-          <CatAvatar catId={friend.selectedCatId} size="small" />
+          <CatAvatar catId={friend.selectedCatId || 'salsa'} size="small" />
         </View>
       </View>
       <View style={styles.friendInfo}>
@@ -150,7 +151,7 @@ function SentRequestRow({
       <View style={[styles.friendRowAccent, { backgroundColor: borderColor }]} />
       <View style={[styles.friendAvatarRing, { borderColor }]}>
         <View style={styles.friendAvatarWrap}>
-          <CatAvatar catId={friend.selectedCatId} size="small" />
+          <CatAvatar catId={friend.selectedCatId || 'salsa'} size="small" />
         </View>
       </View>
       <View style={styles.friendInfo}>
@@ -174,8 +175,12 @@ function SentRequestRow({
 
 function AcceptedFriendRow({
   friend,
+  onRemove,
+  isRemoving,
 }: {
   friend: FriendConnection;
+  onRemove: () => void;
+  isRemoving: boolean;
 }): React.JSX.Element {
   const navigation = useNavigation<Nav>();
 
@@ -202,13 +207,24 @@ function AcceptedFriendRow({
     );
   }, [friend.uid, friend.displayName, navigation]);
 
+  const handleLongPress = useCallback(() => {
+    Alert.alert(
+      'Remove Friend',
+      `Remove ${friend.displayName || 'this friend'} from your friends list?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: onRemove },
+      ],
+    );
+  }, [friend.displayName, onRemove]);
+
   const borderColor = statusColor(friend.status);
   return (
-    <View style={styles.friendRow}>
+    <PressableScale onLongPress={handleLongPress} delayLongPress={500} style={styles.friendRow}>
       <View style={[styles.friendRowAccent, { backgroundColor: borderColor }]} />
       <View style={[styles.friendAvatarRing, { borderColor }]}>
         <View style={styles.friendAvatarWrap}>
-          <CatAvatar catId={friend.selectedCatId} size="small" />
+          <CatAvatar catId={friend.selectedCatId || 'salsa'} size="small" />
         </View>
       </View>
       <View style={styles.friendInfo}>
@@ -216,14 +232,18 @@ function AcceptedFriendRow({
           {friend.displayName || 'Player'}
         </Text>
       </View>
-      <PressableScale
-        style={styles.challengeButton}
-        onPress={handleChallenge}
-      >
-        <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.primaryLight} />
-        <Text style={styles.challengeButtonText}>Challenge</Text>
-      </PressableScale>
-    </View>
+      {isRemoving ? (
+        <ActivityIndicator color={COLORS.error} size="small" />
+      ) : (
+        <PressableScale
+          style={styles.challengeButton}
+          onPress={handleChallenge}
+        >
+          <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.primaryLight} />
+          <Text style={styles.challengeButtonText}>Challenge</Text>
+        </PressableScale>
+      )}
+    </PressableScale>
   );
 }
 
@@ -268,12 +288,13 @@ export function FriendsScreen(): React.JSX.Element {
   const removeFriend = useSocialStore((s) => s.removeFriend);
 
   const setFriends = useSocialStore((s) => s.setFriends);
+  const setActivityFeed = useSocialStore((s) => s.setActivityFeed);
 
   const [activeTab, setActiveTab] = useState<TabKey>('friends');
   const [processingUid, setProcessingUid] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Sync friends list from Firestore on mount to discover incoming requests.
+  // Sync friends list + activity feed from Firestore on mount.
   // Also enriches any connections with missing display names (legacy data).
   useEffect(() => {
     if (!user?.uid || isAnonymous) return;
@@ -283,7 +304,8 @@ export function FriendsScreen(): React.JSX.Element {
     (async () => {
       try {
         const remoteFriends = await getFriends(user.uid);
-        if (cancelled || remoteFriends.length === 0) return;
+        if (cancelled) return;
+        if (remoteFriends.length === 0) return;
 
         // Enrich friends that have empty/default display names
         const enriched = await Promise.all(
@@ -305,6 +327,29 @@ export function FriendsScreen(): React.JSX.Element {
 
         if (!cancelled) {
           setFriends(enriched);
+
+          // Fetch activity feed from all accepted friends
+          const accepted = enriched.filter((f) => f.status === 'accepted');
+          if (accepted.length > 0) {
+            try {
+              const allActivity: ActivityFeedItem[] = [];
+              // Fetch in parallel (max 10 friends to avoid burst)
+              const feedPromises = accepted.slice(0, 10).map((f) =>
+                getFriendActivity(f.uid, 10).catch(() => [] as ActivityFeedItem[]),
+              );
+              const feeds = await Promise.all(feedPromises);
+              for (const feed of feeds) {
+                allActivity.push(...feed);
+              }
+              // Sort by timestamp descending and cap at 50
+              allActivity.sort((a, b) => b.timestamp - a.timestamp);
+              if (!cancelled) {
+                setActivityFeed(allActivity.slice(0, 50));
+              }
+            } catch {
+              // Activity fetch is non-critical
+            }
+          }
         }
       } catch {
         // Silently fail — local data is still available
@@ -314,7 +359,7 @@ export function FriendsScreen(): React.JSX.Element {
     })();
 
     return () => { cancelled = true; };
-  }, [user?.uid, isAnonymous, setFriends]);
+  }, [user?.uid, isAnonymous, setFriends, setActivityFeed]);
 
   const pendingIncoming = useMemo(
     () => friends.filter((f) => f.status === 'pending_incoming'),
@@ -377,6 +422,36 @@ export function FriendsScreen(): React.JSX.Element {
       }
     },
     [user?.uid, removeFriend],
+  );
+
+  const setChallenges = useSocialStore((s) => s.setChallenges);
+  const challenges = useSocialStore((s) => s.challenges);
+
+  const handleRemoveFriend = useCallback(
+    async (friendUid: string) => {
+      if (!user?.uid) return;
+      setProcessingUid(friendUid);
+      try {
+        // Remove friend connection + delete challenges between users
+        await Promise.all([
+          removeFriendConnection(user.uid, friendUid),
+          deleteChallengesBetweenUsers(user.uid, friendUid).catch(() => {
+            // Non-critical — challenges will expire naturally
+          }),
+        ]);
+        removeFriend(friendUid);
+        // Remove challenges involving this friend from local store
+        const remaining = challenges.filter(
+          (c) => c.fromUid !== friendUid && c.toUid !== friendUid,
+        );
+        setChallenges(remaining);
+      } catch {
+        Alert.alert('Error', 'Failed to remove friend. Please try again.');
+      } finally {
+        setProcessingUid(null);
+      }
+    },
+    [user?.uid, removeFriend, challenges, setChallenges],
   );
 
   // ---------------------------------------------------------------------------
@@ -474,11 +549,17 @@ export function FriendsScreen(): React.JSX.Element {
               />
             );
           }
-          return <AcceptedFriendRow friend={friend} />;
+          return (
+            <AcceptedFriendRow
+              friend={friend}
+              onRemove={() => handleRemoveFriend(friend.uid)}
+              isRemoving={processingUid === friend.uid}
+            />
+          );
         }}
       />
     );
-  }, [pendingIncoming, pendingOutgoing, acceptedFriends, processingUid, handleAcceptRequest, handleDeclineRequest, handleCancelRequest, navigation]);
+  }, [pendingIncoming, pendingOutgoing, acceptedFriends, processingUid, handleAcceptRequest, handleDeclineRequest, handleCancelRequest, handleRemoveFriend, navigation]);
 
   // ---------------------------------------------------------------------------
   // Activity tab content
@@ -515,6 +596,7 @@ export function FriendsScreen(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.container} testID="friends-screen">
+      <GradientMeshBackground accent="social" />
       {/* Header */}
       <View style={styles.header}>
         <PressableScale
@@ -615,7 +697,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: glowColor('#FFFFFF', 0.06),
+    borderBottomColor: glowColor(COLORS.textPrimary, 0.06),
   },
   backButton: {
     width: 40,
@@ -736,8 +818,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: BORDER_RADIUS.md,
   },
   friendAvatarRing: {
-    width: 44,
-    height: 44,
+    width: 54,
+    height: 54,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 2,
     alignItems: 'center',
@@ -745,8 +827,8 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   friendAvatarWrap: {
-    width: 36,
-    height: 36,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

@@ -1,8 +1,9 @@
 /**
- * AddFriendScreen — Username / friend code display + entry
+ * AddFriendScreen — Username / friend code display + entry + contacts discovery
  *
  * Top: Shows user's username (or legacy 6-char friend code) with Copy/Share actions
- * Bottom: Text input to enter a friend's username or legacy code and send a request
+ * Middle: Text input to enter a friend's username or legacy code and send a request
+ * Bottom: "Find from Contacts" — reads device contacts, hashes phone/email, matches in Firestore
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -16,6 +17,8 @@ import {
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,6 +33,11 @@ import {
   sendFriendRequest,
   getUserPublicProfile,
 } from '../services/firebase/socialService';
+import {
+  findFriendsFromContacts,
+  registerEmailForDiscovery,
+  type ContactMatch,
+} from '../services/firebase/contactLookupService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
@@ -88,6 +96,14 @@ export function AddFriendScreen(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Contacts discovery state
+  const [contactMatches, setContactMatches] = useState<ContactMatch[]>([]);
+  const [isSearchingContacts, setIsSearchingContacts] = useState(false);
+  const [contactsError, setContactsError] = useState<string | null>(null);
+  const [contactsSearched, setContactsSearched] = useState(false);
+  const [sendingToUid, setSendingToUid] = useState<string | null>(null);
+  const [sentUids, setSentUids] = useState<Set<string>>(new Set());
 
   const storedUsername = useSettingsStore((s) => s.username);
 
@@ -218,6 +234,115 @@ export function AddFriendScreen(): React.JSX.Element {
     }
   }, [inputCode, friendCode, user?.uid, friends, addFriend, displayName, selectedCatId]);
 
+  // ---------------------------------------------------------------------------
+  // Find friends from contacts
+  // ---------------------------------------------------------------------------
+
+  const handleFindFromContacts = useCallback(async () => {
+    if (!user?.uid) return;
+
+    setIsSearchingContacts(true);
+    setContactsError(null);
+
+    try {
+      // Lazy-load expo-contacts — requires a dev build (native module)
+      let Contacts: typeof import('expo-contacts');
+      try {
+        Contacts = require('expo-contacts');
+      } catch {
+        setContactsError(
+          'Contact access requires a development build. This feature is not available in Expo Go.',
+        );
+        setIsSearchingContacts(false);
+        return;
+      }
+
+      const { status } = await Contacts.requestPermissionsAsync();
+
+      if (status !== 'granted') {
+        setContactsError('Contact permission is required to find friends.');
+        setIsSearchingContacts(false);
+        return;
+      }
+
+      // Read contacts with phone numbers and emails
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Emails],
+      });
+
+      if (data.length === 0) {
+        setContactsError('No contacts found on this device.');
+        setIsSearchingContacts(false);
+        setContactsSearched(true);
+        return;
+      }
+
+      // Register current user's email for discoverability (best-effort)
+      if (user.email) {
+        registerEmailForDiscovery(user.uid, user.email).catch(() => {
+          // Non-critical — user can still search contacts
+        });
+      }
+
+      // Transform contacts into the format our service expects
+      const contactList = data.map((c) => ({
+        name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unknown',
+        phoneNumbers: c.phoneNumbers?.map((p) => p.number ?? '').filter(Boolean) ?? [],
+        emails: c.emails?.map((e) => e.email ?? '').filter(Boolean) ?? [],
+      }));
+
+      const matches = await findFriendsFromContacts(contactList, user.uid);
+
+      // Filter out people already in friends list
+      const existingUids = new Set(friends.map((f) => f.uid));
+      const newMatches = matches.filter((m) => !existingUids.has(m.uid));
+
+      setContactMatches(newMatches);
+      setContactsSearched(true);
+    } catch {
+      setContactsError('Failed to search contacts. Please try again.');
+    } finally {
+      setIsSearchingContacts(false);
+    }
+  }, [user?.uid, user?.email, friends]);
+
+  const handleAddContactFriend = useCallback(
+    async (match: ContactMatch) => {
+      if (!user?.uid) return;
+
+      setSendingToUid(match.uid);
+      try {
+        const friendProfile = await getUserPublicProfile(match.uid);
+        const friendDisplayName = friendProfile?.displayName || match.contactName;
+        const friendCatId = friendProfile?.selectedCatId || '';
+
+        await sendFriendRequest(
+          user.uid,
+          match.uid,
+          displayName || 'Player',
+          selectedCatId,
+          friendDisplayName,
+          friendCatId,
+        );
+
+        addFriend({
+          uid: match.uid,
+          displayName: friendDisplayName,
+          selectedCatId: friendCatId,
+          status: 'pending_outgoing',
+          connectedAt: Date.now(),
+        });
+
+        setSentUids((prev) => new Set(prev).add(match.uid));
+      } catch {
+        Alert.alert('Error', 'Failed to send friend request. Please try again.');
+      } finally {
+        setSendingToUid(null);
+      }
+    },
+    [user?.uid, displayName, selectedCatId, addFriend],
+  );
+
   // Auth gate: anonymous users cannot use friend codes (placed after hooks)
   if (isAnonymous) {
     return (
@@ -279,6 +404,13 @@ export function AddFriendScreen(): React.JSX.Element {
           <View style={styles.backButton} />
         </View>
 
+        <ScrollView
+          style={styles.scrollContent}
+          contentContainerStyle={styles.scrollContentInner}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+
         {/* Your Code Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Username</Text>
@@ -312,13 +444,13 @@ export function AddFriendScreen(): React.JSX.Element {
                 <View style={styles.qrContainer}>
                   <View style={styles.qrBackground}>
                     <QRCode
-                      value={`purrrfectkeys://friend/${friendCode}`}
+                      value={friendCode}
                       size={160}
                       backgroundColor="white"
                       color={COLORS.background}
                     />
                   </View>
-                  <Text style={styles.qrHint}>Scan to add as friend</Text>
+                  <Text style={styles.qrHint}>Scan with any camera app to see username</Text>
                 </View>
               ) : (
                 <>
@@ -433,6 +565,103 @@ export function AddFriendScreen(): React.JSX.Element {
             </View>
           )}
         </View>
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Find from Contacts Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Find from Contacts</Text>
+          <Text style={styles.sectionSubtitle}>
+            See which of your contacts are already on Purrrfect Keys
+          </Text>
+
+          {!contactsSearched ? (
+            <PressableScale
+              style={styles.contactsButton}
+              onPress={handleFindFromContacts}
+              disabled={isSearchingContacts}
+            >
+              {isSearchingContacts ? (
+                <ActivityIndicator color={COLORS.textPrimary} size="small" />
+              ) : (
+                <View style={styles.addButtonContent}>
+                  <MaterialCommunityIcons name="contacts" size={20} color={COLORS.textPrimary} />
+                  <Text style={styles.addButtonText}>Search Contacts</Text>
+                </View>
+              )}
+            </PressableScale>
+          ) : contactMatches.length === 0 ? (
+            <View style={styles.contactsEmpty}>
+              <MaterialCommunityIcons name="account-search-outline" size={40} color={COLORS.textMuted} />
+              <Text style={styles.contactsEmptyText}>
+                None of your contacts are on Purrrfect Keys yet.{'\n'}Invite them to join!
+              </Text>
+              <PressableScale
+                style={styles.inviteButton}
+                onPress={() => {
+                  Share.share({
+                    message: 'Learn piano with me on Purrrfect Keys! Download it and add me as a friend.',
+                  }).catch(() => {});
+                }}
+              >
+                <MaterialCommunityIcons name="share-variant" size={16} color={COLORS.textPrimary} />
+                <Text style={styles.inviteButtonText}>Invite Friends</Text>
+              </PressableScale>
+            </View>
+          ) : (
+            <View style={styles.contactsList}>
+              {contactMatches.map((match) => {
+                const alreadySent = sentUids.has(match.uid);
+                const isSending = sendingToUid === match.uid;
+
+                return (
+                  <View key={match.uid} style={styles.contactRow}>
+                    <View style={styles.contactInfo}>
+                      <Text style={styles.contactName} numberOfLines={1}>
+                        {match.contactName}
+                      </Text>
+                      <Text style={styles.contactMatchType}>
+                        Matched by {match.matchType}
+                      </Text>
+                    </View>
+                    {alreadySent ? (
+                      <View style={styles.sentBadge}>
+                        <MaterialCommunityIcons name="check" size={14} color={COLORS.success} />
+                        <Text style={styles.sentBadgeText}>Sent</Text>
+                      </View>
+                    ) : (
+                      <PressableScale
+                        style={styles.contactAddButton}
+                        onPress={() => handleAddContactFriend(match)}
+                        disabled={isSending}
+                      >
+                        {isSending ? (
+                          <ActivityIndicator color={COLORS.textPrimary} size="small" />
+                        ) : (
+                          <MaterialCommunityIcons name="account-plus" size={18} color={COLORS.textPrimary} />
+                        )}
+                      </PressableScale>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {contactsError && (
+            <View style={styles.messageBanner}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={16} color={COLORS.error} />
+              <Text style={styles.errorText}>{contactsError}</Text>
+            </View>
+          )}
+        </View>
+
+        </ScrollView>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
@@ -705,5 +934,96 @@ const styles = StyleSheet.create({
   authGateButtonText: {
     ...TYPOGRAPHY.button.lg,
     color: COLORS.textPrimary,
+  },
+  // Scroll wrapper
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentInner: {
+    paddingBottom: SPACING.xl,
+  },
+  // Contacts section
+  contactsButton: {
+    backgroundColor: glowColor(COLORS.info, 0.15),
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.info, 0.3),
+  },
+  contactsEmpty: {
+    alignItems: 'center',
+    paddingVertical: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  contactsEmptyText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  inviteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: glowColor(COLORS.primary, 0.12),
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.25),
+  },
+  inviteButtonText: {
+    ...TYPOGRAPHY.button.md,
+    color: COLORS.textPrimary,
+  },
+  contactsList: {
+    gap: SPACING.sm,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactName: {
+    ...TYPOGRAPHY.body.lg,
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+  },
+  contactMatchType: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textMuted,
+  },
+  contactAddButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sentBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: glowColor(COLORS.success, 0.1),
+  },
+  sentBadgeText: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.success,
+    fontWeight: '600',
   },
 });

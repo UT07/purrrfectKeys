@@ -11,7 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, glowColor } from '../../theme/tokens';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, glowColor } from '../../theme/tokens';
 
 export interface StreakDisplayProps {
   currentStreak: number; // Current streak count
@@ -49,10 +49,10 @@ export const StreakDisplay = React.memo(
     const daysSince = daysSinceLastPractice(lastPracticeDate);
     const streakAtRisk = isStreakAtRisk || daysSince >= 1;
 
-    // Animate fire icon
+    // Animate fire icon (continuous loop)
     useEffect(() => {
-      if (currentStreak > 0) {
-        // Animated.loop(
+      if (currentStreak <= 0) return;
+      const anim = Animated.loop(
         Animated.sequence([
           Animated.timing(fireAnim, {
             toValue: 1,
@@ -64,16 +64,16 @@ export const StreakDisplay = React.memo(
             duration: 400,
             useNativeDriver: true,
           }),
-          // ])
-          // ).start();
-        ]).start();
-      }
+        ]),
+      );
+      anim.start();
+      return () => anim.stop();
     }, [currentStreak]);
 
-    // Shake animation if at risk
+    // Shake animation if at risk (continuous loop)
     useEffect(() => {
-      if (streakAtRisk && currentStreak > 0) {
-        // Animated.loop(
+      if (!streakAtRisk || currentStreak <= 0) return;
+      const anim = Animated.loop(
         Animated.sequence([
           Animated.timing(shakeAnim, {
             toValue: 1,
@@ -85,10 +85,10 @@ export const StreakDisplay = React.memo(
             duration: 500,
             useNativeDriver: true,
           }),
-          // ])
-          // ).start();
-        ]).start();
-      }
+        ]),
+      );
+      anim.start();
+      return () => anim.stop();
     }, [streakAtRisk, currentStreak]);
 
     return (
@@ -127,7 +127,7 @@ export const StreakDisplay = React.memo(
             <MaterialCommunityIcons
               name="fire"
               size={32}
-              color={streakAtRisk ? '#F44336' : '#FF6F00'}
+              color={streakAtRisk ? COLORS.error : COLORS.streakFlameMedium}
             />
           </Animated.View>
           <View style={styles.streakInfo}>
@@ -149,7 +149,7 @@ export const StreakDisplay = React.memo(
           <MaterialCommunityIcons
             name="trophy"
             size={28}
-            color="#FFD700"
+            color={COLORS.starGold}
           />
           <View style={styles.streakInfo}>
             <Text style={styles.secondaryLabel}>Best Streak</Text>
@@ -163,7 +163,7 @@ export const StreakDisplay = React.memo(
             <MaterialCommunityIcons
               name="snowflake"
               size={24}
-              color="#2196F3"
+              color={COLORS.info}
             />
             <Text style={styles.freezeText}>
               {freezesAvailable} freeze{freezesAvailable !== 1 ? 's' : ''} available
@@ -179,9 +179,9 @@ StreakDisplay.displayName = 'StreakDisplay';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 12,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: COLORS.background,
   },
   containerAtRisk: {
     backgroundColor: glowColor(COLORS.primary, 0.05),
@@ -191,65 +191,65 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.sm,
+    marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: COLORS.cardBorder,
   },
   secondaryCard: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#2A2A2A',
+    backgroundColor: COLORS.surfaceElevated,
+    borderColor: COLORS.cardBorder,
   },
   streakInfo: {
     marginLeft: 12,
     flex: 1,
   },
   streakLabel: {
-    fontSize: 12,
-    color: '#B0B0B0',
+    fontSize: TYPOGRAPHY.caption.lg.fontSize,
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   streakNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF6F00',
+    fontSize: TYPOGRAPHY.display.sm.fontSize,
+    fontWeight: TYPOGRAPHY.display.sm.fontWeight,
+    color: COLORS.streakFlameMedium,
     marginTop: 2,
   },
   streakNumberAtRisk: {
-    color: '#DC143C',
+    color: COLORS.primary,
   },
   atRiskText: {
-    fontSize: 11,
-    color: '#DC143C',
-    marginTop: 4,
+    fontSize: TYPOGRAPHY.caption.md.fontSize,
+    color: COLORS.primary,
+    marginTop: SPACING.xs,
     fontWeight: '500',
   },
   secondaryLabel: {
-    fontSize: 11,
-    color: '#B0B0B0',
+    fontSize: TYPOGRAPHY.caption.md.fontSize,
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   secondaryNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontSize: TYPOGRAPHY.heading.lg.fontSize,
+    fontWeight: TYPOGRAPHY.heading.lg.fontWeight,
+    color: COLORS.starGold,
     marginTop: 2,
   },
   freezeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
     backgroundColor: glowColor(COLORS.gemDiamond, 0.1),
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.sm,
     borderWidth: 1,
     borderColor: glowColor(COLORS.gemDiamond, 0.3),
   },
   freezeText: {
-    marginLeft: 8,
-    fontSize: 12,
+    marginLeft: SPACING.sm,
+    fontSize: TYPOGRAPHY.caption.lg.fontSize,
     fontWeight: '500',
-    color: '#4FC3F7',
+    color: COLORS.gemDiamond,
   },
 });

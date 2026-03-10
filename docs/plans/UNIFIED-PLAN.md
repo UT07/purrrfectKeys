@@ -48,20 +48,20 @@
 ║  Complete 6 exercise types (UI branching + AI generation)           ║
 ║  ➜ AUDIT                                                            ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  PHASE 3: CAT PROGRESSION REBALANCE                                 ║
+║  PHASE 3: CONTENT EXPLOSION                                         ║
+║  500+ exercises, 500+ songs, 5 learning paths, daily challenges     ║
+║  ➜ AUDIT                                                            ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  PHASE 4: CAT PROGRESSION REBALANCE                                 ║
 ║  3-5x higher thresholds, milestone rewards, XP sources expansion    ║
 ║  ➜ AUDIT                                                            ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  PHASE 4: THE ARENA + MUSIC GUILDS                                  ║
+║  PHASE 5: THE ARENA + MUSIC GUILDS                                  ║
 ║  Social tab → Arena entrance, battle log, bands, reactions          ║
 ║  ➜ AUDIT                                                            ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  PHASE 5: CAT STUDIO                                                ║
+║  PHASE 6: CAT STUDIO                                                ║
 ║  Full Bitmoji-style accessory equip (48 items, 6 categories)       ║
-║  ➜ AUDIT                                                            ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  PHASE 6: CONTENT EXPLOSION                                         ║
-║  500+ exercises, 500+ songs, 5 learning paths, daily challenges     ║
 ║  ➜ AUDIT                                                            ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║  PHASE 7: "PLAY FIRST" ONBOARDING                                   ║
@@ -211,25 +211,174 @@
 ### Phase 2 Audit Checklist
 
 **App:**
-- [ ] All 6 exercise types playable end-to-end
-- [ ] Scoring works correctly for each type (rhythm ignores pitch, etc.)
-- [ ] AI generates valid exercises for each type via Gemini
-- [ ] Existing 30 exercises still work (backward compat: `type` field is optional)
-- [ ] CompletionModal shows correct feedback per type
-- [ ] 0 TypeScript errors, 0 test failures
+- [x] All 6 exercise types playable end-to-end (UI components + wiring + template fallbacks)
+- [x] Scoring works correctly for each type (rhythm ignores pitch, chordId wider timing, etc.)
+- [x] AI generates valid exercises for each type via Gemini (`interactionType` passed through)
+- [x] Existing 30 exercises still work (backward compat: `type` field is optional, defaults to 'play')
+- [x] CompletionModal shows correct feedback per type (uses score data from type-specific scorers)
+- [x] 0 TypeScript errors, 141 test suites / 2,883 tests passing
 
 **CI/CD:**
-- [ ] New test suites for exercise types pass in CI
-- [ ] Build succeeds with new components
+- [x] New test suites for exercise types pass in CI
+- [x] Build succeeds with new components
 
 **System Design:**
-- [ ] Exercise type field is optional (backward compatible)
-- [ ] AI generation has rate limiting per user
-- [ ] Offline fallback exists for each exercise type (static exercises)
+- [x] Exercise type field is optional (backward compatible)
+- [x] AI generation has rate limiting per user (checkRateLimit in geminiExerciseService)
+- [x] Offline fallback exists for each exercise type (6 type-specific templates + hints-based generation)
+
+### PlayScreen Redesign (Free Play + Song Mode)
+
+**Design Spec:** `docs/plans/2026-03-10-playscreen-redesign-design.md`
+
+Complete redesign of the PlayScreen from landscape-locked split-keyboard layout into a neon arcade studio.
+
+**Key Changes:**
+- Single continuous keyboard (no L/R split) with smart auto-range + octave `<` `>` arrows
+- 7 practice tools via slim left sidebar (metronome, chord display, scale overlay, loop recorder, key/scale selector, tempo trainer, session stats)
+- Toggle tools (direct effect) vs floating widget tools (draggable cards, max 2 open)
+- Song mode: vertical falling notes (reuse `VerticalPianoRoll`), section pills, now-line, key highlighting — no scoring
+- Neon arcade visuals: glow keys, particle bursts, light beams, aurora background
+- Landscape default, portrait opt-in via toggle button (saved in settingsStore)
+
+**Tasks:**
+- [x] 2.10 — Unified keyboard with octave arrows + smart auto-range
+- [x] 2.11 — Tool sidebar component + floating widget system
+- [x] 2.12 — Metronome widget (BPM dial, tap tempo, time sig)
+- [x] 2.13 — Chord display (real-time detection in viz area)
+- [x] 2.14 — Scale overlay + key selector (dim out-of-key notes)
+- [x] 2.15 — Loop recorder widget (record/overdub/play)
+- [x] 2.16 — Tempo trainer widget (progressive BPM)
+- [x] 2.17 — Session stats widget (notes, time, analysis, drill button)
+- [x] 2.18 — Song mode with VerticalPianoRoll + section pills + now-line
+- [x] 2.19 — Neon arcade visuals (key glow, particles, aurora background, light beams)
+- [x] 2.20 — Portrait mode toggle + orientation preference persistence
+- [x] 2.21 — PlayScreen audit: all tools work, song mode works, no crashes, 0 TS errors
 
 ---
 
-## Phase 3: Cat Progression Rebalance
+## Phase 3: Content Explosion
+
+**Goal:** 500+ exercises, 500+ songs, 5 learning paths. Content is king.
+
+### Exercise Library (500+)
+
+| Block | Lessons | Exercises | Skills |
+|-------|---------|-----------|--------|
+| Beginner | 1-6 | 60 | Note finding, C position, simple melodies, both hands |
+| Early Intermediate | 7-12 | 72 | Black keys, G/F/D major, sharps/flats, dotted rhythms |
+| Intermediate | 13-20 | 96 | Minor keys, chords & inversions, arpeggios, pedaling |
+| Upper Intermediate | 21-28 | 96 | Chord progressions, accompaniment, syncopation, 6/8 time |
+| Advanced | 29-36 | 96 | Modulation, jazz voicings, classical technique, ornaments |
+| Mastery | 37-40 | 48 | Performance pieces, improvisation, sight-reading drills |
+
+**Total:** ~468 structured + ~50 standalone drills = **500+**
+
+All 6 exercise types distributed across blocks. Existing 30 exercises kept as-is.
+
+### Song Library (500+)
+
+| Source | Count | Genre | Method |
+|--------|-------|-------|--------|
+| Existing | 124 | Mixed | Already in Firestore |
+| TheSession.org | +150 | Folk/Celtic | `import-thesession.ts` |
+| IMSLP/music21 | +100 | Classical | `import-pdmx.py` |
+| Gemini generation | +75 | Pop/Film/Game | `generate-songs.ts` |
+| Public domain hymns | +50 | Standards | New import script |
+
+Each popular song in 3 difficulty arrangements (Easy/Medium/Hard).
+
+### 5 Learning Paths
+
+| Path | Focus | Branches at | Unique Content |
+|------|-------|-------------|----------------|
+| **Piano Basics** | Default, well-rounded | — | Standard curriculum |
+| **Pop & Film** | Play songs you know | Lesson 5 | Song-heavy, chord-first |
+| **Classical** | Technique & repertoire | Lesson 5 | Scales, arpeggios, Bach/Mozart/Beethoven |
+| **Jazz & Blues** | Chord voicings, improv | Lesson 10 | 7th chords, swing, blues scale, lead sheets |
+| **Kids** | Simplified, gamified | Lesson 1 | Shorter exercises, more cat interactions, nursery rhymes |
+
+Each path is a JSON manifest referencing exercises from the shared pool + path-exclusive exercises.
+
+### Songs Integrated Throughout Curriculum
+
+Songs are NOT a separate silo. They appear as **exercises within the learning path**:
+
+**Song exercises in lessons:** Each tier includes 1-2 songs as exercises. CurriculumEngine mixes song exercises into daily sessions alongside regular exercises.
+- Tier 1-3: Nursery rhymes, simple folk songs (Twinkle Twinkle, Mary Had a Little Lamb)
+- Tier 4-6: Easy pop arrangements (Let It Be, Imagine, Clocks)
+- Tier 7-9: Intermediate classical/film (Für Elise, Hedwig's Theme)
+- Tier 10-12: Full arrangements with both hands
+- Tier 13-15: Performance-level pieces
+
+**Song skill rewards:** Mastering skills unlocks new songs:
+- Master C major position → unlock "Twinkle Twinkle" (Easy)
+- Master both-hands → unlock "Let It Be" (Easy)
+- Master black keys → unlock "Bohemian Rhapsody" (Easy)
+
+**Implementation:**
+- Add `requiredSkills: string[]` and `tier: number` to song metadata
+- Create a `songExercise` exercise type or convert song sections to Exercise format
+- CurriculumEngine's `generateSessionPlan()` includes song exercises when player has earned them
+- Show locked songs on LevelMap as reward nodes
+- SongPlayerScreen sections can route back to ExercisePlayer for scoring
+
+### Daily Fresh Content
+
+- **Daily Sight-Reading Challenge:** Cloud Function at midnight UTC, 3 difficulty variants, global leaderboard per tier, gem rewards
+- **Weekly Featured Song:** One song highlighted every Monday, 3x gem multiplier, friend score comparison
+- **AI Practice Sessions:** CurriculumEngine pulls from 500+ pool — never repeats
+
+### ContentLoader Migration
+
+Static `require()` doesn't scale to 500+. Migrate to:
+- Bundled JSON index file (`content/exercise-index.json`) with all metadata ← partly done
+- Individual exercise files loaded on demand (lazy require or fetch)
+- Firestore backup for remote content updates without app releases
+
+### Tasks
+
+| # | Task |
+|---|------|
+| 3.1 | Batch exercise generation pipeline (`scripts/batch-generate-exercises.ts`) |
+| 3.2 | Generate + review 470 new exercises across all blocks and types |
+| 3.3 | Import 275+ new songs (TheSession + IMSLP + hymns) |
+| 3.4 | Generate 75 new songs via Gemini |
+| 3.5 | Create 5 learning path manifests |
+| 3.6 | Path selection UI (onboarding + settings) |
+| 3.7 | CurriculumEngine path routing |
+| 3.8 | Song-curriculum linking (`requiredSkills` field) |
+| 3.9 | Daily Sight-Reading Challenge Cloud Function |
+| 3.10 | Weekly Featured Song selection + UI |
+| 3.11 | ContentLoader lazy loading migration |
+| 3.12 | Song search improvements (Firestore text search or Algolia) |
+
+### Phase 3 Audit Checklist
+
+**App:**
+- [ ] 500+ exercises accessible and playable
+- [ ] 500+ songs accessible and playable
+- [ ] All 5 learning paths selectable and route correctly
+- [ ] Daily challenge generates and displays
+- [ ] Weekly featured song highlights
+- [ ] Songs unlock based on skill mastery
+- [ ] ContentLoader handles 500+ exercises without startup lag
+- [ ] 0 TypeScript errors, 0 test failures
+
+**CI/CD:**
+- [ ] Exercise validation script passes for all 500+ exercises
+- [ ] Build succeeds (app size stays under 100MB)
+- [ ] Daily challenge Cloud Function deploysable
+
+**System Design:**
+- [ ] Content loading is lazy (not all 500+ loaded at startup)
+- [ ] Song search scales to 1000+ without client-side filtering
+- [ ] Firestore reads per session stay reasonable (<500 reads)
+- [ ] Offline-first: exercises bundled, songs cached after first load
+
+---
+
+## Phase 4: Cat Progression Rebalance
 
 **Goal:** Make cat evolution a meaningful months-long journey, not a week-long sprint.
 
@@ -276,14 +425,14 @@ Current thresholds are trivially reachable:
 
 | # | Task |
 |---|------|
-| 3.1 | Update `EVOLUTION_XP_THRESHOLDS` in `stores/types.ts` |
-| 3.2 | Add new XP sources (song mastery, guild contribution, streak milestones, lesson completion) |
-| 3.3 | Add milestone reward system (gems + accessories on evolution) |
-| 3.4 | Update all tests for new thresholds |
-| 3.5 | Update ProfileScreen/HomeScreen/CatSwitchScreen progress displays |
-| 3.6 | Data migration: existing users keep their current stage (grandfather existing progress) |
+| 4.1 | Update `EVOLUTION_XP_THRESHOLDS` in `stores/types.ts` |
+| 4.2 | Add new XP sources (song mastery, guild contribution, streak milestones, lesson completion) |
+| 4.3 | Add milestone reward system (gems + accessories on evolution) |
+| 4.4 | Update all tests for new thresholds |
+| 4.5 | Update ProfileScreen/HomeScreen/CatSwitchScreen progress displays |
+| 4.6 | Data migration: existing users keep their current stage (grandfather existing progress) |
 
-### Phase 3 Audit Checklist
+### Phase 4 Audit Checklist
 
 **App:**
 - [ ] Evolution thresholds match new values
@@ -304,7 +453,7 @@ Current thresholds are trivially reachable:
 
 ---
 
-## Phase 4: The Arena + Music Guilds
+## Phase 5: The Arena + Music Guilds
 
 **Goal:** Transform social from a checkbox feature into the #1 retention driver. Friends, competition, and band identity make users come back daily.
 
@@ -399,25 +548,25 @@ guilds/{guildId}
 
 | # | Task |
 |---|------|
-| 4.1 | Arena entrance animation (Reanimated + tier skins) |
-| 4.2 | Battle log component (challenge cards with cat vs cat) |
-| 4.3 | Reaction system on activity feed |
-| 4.4 | Friend profile cards |
-| 4.5 | `guildService.ts` — Firestore CRUD for guilds |
-| 4.6 | `guildStore.ts` — Zustand store for band state |
-| 4.7 | `GuildScreen.tsx` — Create/join/manage band |
-| 4.8 | `GuildChatScreen.tsx` — Emoji-only chat |
-| 4.9 | Band challenges (matching + scoring + results) |
-| 4.10 | Band leaderboard (aggregate XP display) |
-| 4.11 | Challenge from CompletionModal |
-| 4.12 | Share score card from CompletionModal |
-| 4.13 | Friend activity strip on HomeScreen |
-| 4.14 | QR code friend discovery |
-| 4.15 | League promotion/demotion animations |
-| 4.16 | Firestore rules + indexes for guilds collection |
-| 4.17 | Tests for all guild service + store + screens |
+| 5.1 | Arena entrance animation (Reanimated + tier skins) |
+| 5.2 | Battle log component (challenge cards with cat vs cat) |
+| 5.3 | Reaction system on activity feed |
+| 5.4 | Friend profile cards |
+| 5.5 | `guildService.ts` — Firestore CRUD for guilds |
+| 5.6 | `guildStore.ts` — Zustand store for band state |
+| 5.7 | `GuildScreen.tsx` — Create/join/manage band |
+| 5.8 | `GuildChatScreen.tsx` — Emoji-only chat |
+| 5.9 | Band challenges (matching + scoring + results) |
+| 5.10 | Band leaderboard (aggregate XP display) |
+| 5.11 | Challenge from CompletionModal |
+| 5.12 | Share score card from CompletionModal |
+| 5.13 | Friend activity strip on HomeScreen |
+| 5.14 | QR code friend discovery |
+| 5.15 | League promotion/demotion animations |
+| 5.16 | Firestore rules + indexes for guilds collection |
+| 5.17 | Tests for all guild service + store + screens |
 
-### Phase 4 Audit Checklist
+### Phase 5 Audit Checklist
 
 **App:**
 - [ ] Arena entrance animation plays on Social tab
@@ -445,7 +594,7 @@ guilds/{guildId}
 
 ---
 
-## Phase 5: Cat Studio
+## Phase 6: Cat Studio
 
 **Goal:** Full Bitmoji-style accessory equip UI. Cats become personal expression, not just collectibles. Lower priority than social — users need friends before fashion.
 
@@ -510,16 +659,16 @@ guilds/{guildId}
 
 | # | Task |
 |---|------|
-| 5.1 | Add `equippedAccessories` and `ownedAccessories` to settingsStore |
-| 5.2 | Create `CatStudioScreen.tsx` (replaces CatSwitchScreen route) |
-| 5.3 | Build accessory grid component with buy/equip/preview flow |
-| 5.4 | SVG accessory rendering on CatAvatar (overlay at anchor points) |
-| 5.5 | Evolution-gated access logic |
-| 5.6 | Show equipped accessories on ALL cat displays (Home, Exercise, Social, etc.) |
-| 5.7 | Sync accessories to Firestore |
-| 5.8 | Tests for accessory store, purchase flow, evolution gating |
+| 6.1 | Add `equippedAccessories` and `ownedAccessories` to settingsStore |
+| 6.2 | Create `CatStudioScreen.tsx` (replaces CatSwitchScreen route) |
+| 6.3 | Build accessory grid component with buy/equip/preview flow |
+| 6.4 | SVG accessory rendering on CatAvatar (overlay at anchor points) |
+| 6.5 | Evolution-gated access logic |
+| 6.6 | Show equipped accessories on ALL cat displays (Home, Exercise, Social, etc.) |
+| 6.7 | Sync accessories to Firestore |
+| 6.8 | Tests for accessory store, purchase flow, evolution gating |
 
-### Phase 5 Audit Checklist
+### Phase 6 Audit Checklist
 
 **App:**
 - [ ] Cat Studio screen fully functional (browse, preview, buy, equip)
@@ -537,113 +686,6 @@ guilds/{guildId}
 - [ ] Accessories synced to Firestore for cross-device
 - [ ] Accessory data is lightweight (IDs, not images)
 - [ ] No orphaned purchases if app crashes mid-transaction (atomic set)
-
----
-
-## Phase 6: Content Explosion
-
-**Goal:** 500+ exercises, 500+ songs, 5 learning paths. Content is king.
-
-### Exercise Library (500+)
-
-| Block | Lessons | Exercises | Skills |
-|-------|---------|-----------|--------|
-| Beginner | 1-6 | 60 | Note finding, C position, simple melodies, both hands |
-| Early Intermediate | 7-12 | 72 | Black keys, G/F/D major, sharps/flats, dotted rhythms |
-| Intermediate | 13-20 | 96 | Minor keys, chords & inversions, arpeggios, pedaling |
-| Upper Intermediate | 21-28 | 96 | Chord progressions, accompaniment, syncopation, 6/8 time |
-| Advanced | 29-36 | 96 | Modulation, jazz voicings, classical technique, ornaments |
-| Mastery | 37-40 | 48 | Performance pieces, improvisation, sight-reading drills |
-
-**Total:** ~468 structured + ~50 standalone drills = **500+**
-
-All 6 exercise types distributed across blocks. Existing 30 exercises kept as-is.
-
-### Song Library (500+)
-
-| Source | Count | Genre | Method |
-|--------|-------|-------|--------|
-| Existing | 124 | Mixed | Already in Firestore |
-| TheSession.org | +150 | Folk/Celtic | `import-thesession.ts` |
-| IMSLP/music21 | +100 | Classical | `import-pdmx.py` |
-| Gemini generation | +75 | Pop/Film/Game | `generate-songs.ts` |
-| Public domain hymns | +50 | Standards | New import script |
-
-Each popular song in 3 difficulty arrangements (Easy/Medium/Hard).
-
-### 5 Learning Paths
-
-| Path | Focus | Branches at | Unique Content |
-|------|-------|-------------|----------------|
-| **Piano Basics** | Default, well-rounded | — | Standard curriculum |
-| **Pop & Film** | Play songs you know | Lesson 5 | Song-heavy, chord-first |
-| **Classical** | Technique & repertoire | Lesson 5 | Scales, arpeggios, Bach/Mozart/Beethoven |
-| **Jazz & Blues** | Chord voicings, improv | Lesson 10 | 7th chords, swing, blues scale, lead sheets |
-| **Kids** | Simplified, gamified | Lesson 1 | Shorter exercises, more cat interactions, nursery rhymes |
-
-Each path is a JSON manifest referencing exercises from the shared pool + path-exclusive exercises.
-
-### Songs as Skill Rewards
-
-Songs are NOT a separate silo. They're **curriculum rewards**:
-- Master C major position → unlock "Twinkle Twinkle" (Easy)
-- Master both-hands → unlock "Let It Be" (Easy)
-- Master black keys → unlock "Bohemian Rhapsody" (Easy)
-
-Implementation: Add `requiredSkills: string[]` to song metadata. Show locked songs on LevelMap as reward nodes.
-
-### Daily Fresh Content
-
-- **Daily Sight-Reading Challenge:** Cloud Function at midnight UTC, 3 difficulty variants, global leaderboard per tier, gem rewards
-- **Weekly Featured Song:** One song highlighted every Monday, 3x gem multiplier, friend score comparison
-- **AI Practice Sessions:** CurriculumEngine pulls from 500+ pool — never repeats
-
-### ContentLoader Migration
-
-Static `require()` doesn't scale to 500+. Migrate to:
-- Bundled JSON index file (`content/exercise-index.json`) with all metadata ← partly done
-- Individual exercise files loaded on demand (lazy require or fetch)
-- Firestore backup for remote content updates without app releases
-
-### Tasks
-
-| # | Task |
-|---|------|
-| 6.1 | Batch exercise generation pipeline (`scripts/batch-generate-exercises.ts`) |
-| 6.2 | Generate + review 470 new exercises across all blocks and types |
-| 6.3 | Import 275+ new songs (TheSession + IMSLP + hymns) |
-| 6.4 | Generate 75 new songs via Gemini |
-| 6.5 | Create 5 learning path manifests |
-| 6.6 | Path selection UI (onboarding + settings) |
-| 6.7 | CurriculumEngine path routing |
-| 6.8 | Song-curriculum linking (`requiredSkills` field) |
-| 6.9 | Daily Sight-Reading Challenge Cloud Function |
-| 6.10 | Weekly Featured Song selection + UI |
-| 6.11 | ContentLoader lazy loading migration |
-| 6.12 | Song search improvements (Firestore text search or Algolia) |
-
-### Phase 6 Audit Checklist
-
-**App:**
-- [ ] 500+ exercises accessible and playable
-- [ ] 500+ songs accessible and playable
-- [ ] All 5 learning paths selectable and route correctly
-- [ ] Daily challenge generates and displays
-- [ ] Weekly featured song highlights
-- [ ] Songs unlock based on skill mastery
-- [ ] ContentLoader handles 500+ exercises without startup lag
-- [ ] 0 TypeScript errors, 0 test failures
-
-**CI/CD:**
-- [ ] Exercise validation script passes for all 500+ exercises
-- [ ] Build succeeds (app size stays under 100MB)
-- [ ] Daily challenge Cloud Function deploysable
-
-**System Design:**
-- [ ] Content loading is lazy (not all 500+ loaded at startup)
-- [ ] Song search scales to 1000+ without client-side filtering
-- [ ] Firestore reads per session stay reasonable (<500 reads)
-- [ ] Offline-first: exercises bundled, songs cached after first load
 
 ---
 
@@ -972,21 +1014,21 @@ PHASE 1 (Foundation Cleanup) ─────────────────
 PHASE 2 (Exercise Types) ─────────────────────────────────────────────
   │  Complete 6 exercise types (UI + AI generation)
   │
-PHASE 3 (Cat Progression) ────────────────────────────────────────────
-  │  Rebalance thresholds, new XP sources, milestone rewards
-  │
-  ├── PHASE 4 + PHASE 5 can run in parallel ──────────────────────────
-  │                                │
-  │  PHASE 4 (Cat Studio)    PHASE 5 (Arena + Guilds)
-  │  Accessories, equip UI   Social redesign, bands, battles
-  │                                │
-  └────────────────┬───────────────┘
-                   │
-PHASE 6 (Content Explosion) ──────────────────────────────────────────
+PHASE 3 (Content Explosion) ──────────────────────────────────────────
   │  500+ exercises, 500+ songs, 5 paths, daily challenges
   │
+PHASE 4 (Cat Progression) ────────────────────────────────────────────
+  │  Rebalance thresholds, new XP sources, milestone rewards
+  │
+  ├── PHASE 5 + PHASE 6 can run in parallel ──────────────────────────
+  │                                │
+  │  PHASE 5 (Arena + Guilds) PHASE 6 (Cat Studio)
+  │  Social redesign, bands,  Accessories, equip UI
+  │  battles                       │
+  └────────────────┬───────────────┘
+                   │
 PHASE 7 (Onboarding) ────────────────────────────────────────────────
-  │  "Play First" + cat + path selection (needs paths from Phase 6)
+  │  "Play First" + cat + path selection (needs paths from Phase 3)
   │
 PHASE 8 (Retention) ─────────────────────────────────────────────────
   │  Cat mood, streak freeze, re-engagement, weekly featured
@@ -1005,10 +1047,10 @@ PHASE 12 (Monetization) ──────────────────�
 ```
 
 ### Key Dependencies
-- Phase 4 (Arena+Guilds) depends on Phase 3 (band XP feeds into cat evolution)
-- Phase 5 (Cat Studio) depends on Phase 3 (evolution gating uses new thresholds)
-- Phase 6 (Content) needs Phase 2 (exercise types) for type diversity
-- Phase 7 (Onboarding) needs Phase 6 (learning paths) for path selection step
+- Phase 3 (Content) needs Phase 2 (exercise types) for type diversity
+- Phase 5 (Arena+Guilds) depends on Phase 4 (band XP feeds into cat evolution)
+- Phase 6 (Cat Studio) depends on Phase 4 (evolution gating uses new thresholds)
+- Phase 7 (Onboarding) needs Phase 3 (learning paths) for path selection step
 - Phase 9 (Analytics) should start wiring EARLY — ideally begin during Phase 5-6
 - Phase 10 (System Design) should be done BEFORE Phase 11 (launch)
 
@@ -1051,8 +1093,8 @@ PHASE 12 (Monetization) ──────────────────�
 | **This file** | All | Single source of truth |
 | [`salsa-coaching-loop-design.md`](2026-03-03-salsa-coaching-loop-design.md) | Done | Coaching loop spec |
 | [`ui-production-revamp-design.md`](2026-03-08-ui-production-revamp-design.md) | 1 | UI polish spec |
-| [`beta-launch-master-design.md`](2026-03-03-beta-launch-master-design.md) | 6-12 | Vision doc: content, retention, analytics, monetization |
-| [`production-readiness-design.md`](archive/2026-03-01-production-readiness-design.md) | 4-5 | Cat Studio, Arena, visual identity |
+| [`beta-launch-master-design.md`](2026-03-03-beta-launch-master-design.md) | 3-12 | Vision doc: content, retention, analytics, monetization |
+| [`production-readiness-design.md`](archive/2026-03-01-production-readiness-design.md) | 5-6 | Cat Studio, Arena, visual identity |
 | [`exercise-types-and-social-overhaul.md`](2026-03-09-exercise-types-and-social-overhaul.md) | 2+5 | 6 exercise types + social features |
 | [`premium-svg-cats-design.md`](2026-03-03-premium-svg-cats-design.md) | Done | Cat art spec (completed) |
 | `docs/system-design-analysis.md` | 10 | Architecture review, 30 recommendations |

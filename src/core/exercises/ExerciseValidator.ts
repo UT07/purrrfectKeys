@@ -37,7 +37,10 @@ export function calculateTimingScore(
 
   if (absOffset <= gracePeriod) {
     // Linear interpolation between perfect and good
-    return 100 - ((absOffset - tolerance) / (gracePeriod - tolerance)) * 30;
+    // Guard: if tolerance === gracePeriod, the range collapses — treat as perfect
+    const range = gracePeriod - tolerance;
+    if (range <= 0) return 100;
+    return 100 - ((absOffset - tolerance) / range) * 30;
   }
 
   if (absOffset <= gracePeriod * 2) {
