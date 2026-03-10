@@ -1,10 +1,9 @@
 name: EAS Build
 
 # Build workflow:
-#   Feature branches → Auto-build Dev Client on push (hot reload + native module testing)
+#   Feature branches → Auto-build Dev Client (iOS + Android) on push
 #   Master/main      → Manual-only builds via workflow_dispatch (preserves EAS quota)
-#
-#   For master builds: Actions tab → EAS Build → Run workflow → pick profile + platform
+#   Production       → Manual build + optional submit to TestFlight / Firebase App Distribution
 
 on:
   push:
@@ -30,10 +29,15 @@ on:
           - ios
           - android
           - all
+      submit:
+        description: 'Submit after build? (production only)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
-  # ── Feature branches → Auto Dev Client (like a dev server) ──
-  build-dev:
+  # ── Feature branches → Auto Dev Client (iOS + Android) ──
+  build-dev-ios:
     name: Dev Client (iOS)
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -67,7 +71,41 @@ jobs:
       - name: Build iOS dev client
         run: eas build --platform ios --profile development-device --non-interactive
 
-  # ── Manual dispatch → any profile/platform (for master/preview/production) ──
+  build-dev-android:
+    name: Dev Client (Android)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Firebase config files
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > firebase/GoogleService-Info.plist
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > firebase/google-services.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android dev client
+        run: eas build --platform android --profile development-device --non-interactive
+
+  # ── Manual dispatch → build any profile/platform ──
   build-manual:
     name: Build (${{ inputs.profile }} / ${{ inputs.platform }})
     if: github.event_name == 'workflow_dispatch'
@@ -109,3 +147,73 @@ jobs:
       - name: Build Android
         if: env.BUILD_PLATFORM == 'android' || env.BUILD_PLATFORM == 'all'
         run: eas build --platform android --profile "$BUILD_PROFILE" --non-interactive
+
+  # ── Submit to stores (production builds only) ──
+  submit-ios:
+    name: Submit to TestFlight
+    needs: build-manual
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.profile == 'production' &&
+      inputs.submit == true &&
+      (inputs.platform == 'ios' || inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to TestFlight
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+        run: eas submit --platform ios --profile production --latest --non-interactive
+
+  submit-android:
+    name: Submit to Firebase App Distribution
+    needs: build-manual
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.profile == 'production' &&
+      inputs.submit == true &&
+      (inputs.platform == 'android' || inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Firebase service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: echo "$FIREBASE_SERVICE_ACCOUNT_KEY" | base64 --decode > firebase/google-services-sa.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to Firebase App Distribution
+        run: eas submit --platform android --profile production --latest --non-interactive

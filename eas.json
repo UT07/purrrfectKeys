@@ -41,8 +41,12 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "REPLACE_WITH_YOUR_APPLE_ID",
-        "ascAppId": "REPLACE_WITH_YOUR_ASC_APP_ID"
+        "appleId": "254utkarsh@gmail.com",
+        "ascAppId": "REPLACE_AFTER_FIRST_SUBMIT"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./firebase/google-services-sa.json",
+        "track": "internal"
       }
     }
   }
