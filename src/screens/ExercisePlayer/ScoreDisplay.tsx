@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    maxWidth: 140,
+    flexShrink: 1,
   },
   compactProgress: {
     flex: 1,

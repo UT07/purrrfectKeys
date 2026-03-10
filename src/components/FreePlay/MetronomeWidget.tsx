@@ -28,12 +28,15 @@ type TimeSig = typeof TIME_SIGNATURES[number];
 interface MetronomeWidgetProps {
   onBpmChange?: (bpm: number) => void;
   onToggle?: (isPlaying: boolean) => void;
+  /** Called on every beat tick — (beat, beatsPerMeasure). Use to trigger audio. */
+  onTick?: (beat: number, beatsPerMeasure: number) => void;
   testID?: string;
 }
 
 export function MetronomeWidget({
   onBpmChange,
   onToggle,
+  onTick,
   testID,
 }: MetronomeWidgetProps): React.ReactElement {
   const [bpm, setBpm] = useState(120);
@@ -43,6 +46,8 @@ export function MetronomeWidget({
   const tapTimesRef = useRef<number[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseScale = useSharedValue(1);
+  const onTickRef = useRef(onTick);
+  onTickRef.current = onTick;
 
   const beatsPerMeasure = timeSig === '6/8' ? 6 : parseInt(timeSig[0], 10);
 
@@ -51,8 +56,14 @@ export function MetronomeWidget({
     if (isPlaying) {
       const ms = 60000 / bpm;
       setCurrentBeat(0);
+      // Fire first tick immediately
+      onTickRef.current?.(0, beatsPerMeasure);
       intervalRef.current = setInterval(() => {
-        setCurrentBeat((prev) => (prev + 1) % beatsPerMeasure);
+        setCurrentBeat((prev) => {
+          const next = (prev + 1) % beatsPerMeasure;
+          onTickRef.current?.(next, beatsPerMeasure);
+          return next;
+        });
         pulseScale.value = withSequence(
           withTiming(1.3, { duration: 50 }),
           withTiming(1, { duration: ms * 0.6 }),

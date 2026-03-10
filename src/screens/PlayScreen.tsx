@@ -412,6 +412,13 @@ export function PlayScreen(): React.JSX.Element {
   useEffect(() => { handleNoteOnRef.current = handleNoteOn; }, [handleNoteOn]);
   useEffect(() => { handleNoteOffRef.current = handleNoteOff; }, [handleNoteOff]);
 
+  // ── Metronome tick handler ─────────────────────────────────────────────
+  const handleMetronomeTick = useCallback((beat: number, beatsPerMeasure: number) => {
+    const isDownbeat = beat === 0 || beat % beatsPerMeasure === 0;
+    const freq = isDownbeat ? 1500 : 1000;
+    audioEngineRef.current.playMetronomeClick(freq, 0.4);
+  }, []);
+
   // ── Recording controls ───────────────────────────────────────────────────
   const startRecording = useCallback(() => {
     setRecordedNotes([]);
@@ -906,7 +913,9 @@ export function PlayScreen(): React.JSX.Element {
             stackIndex={i}
             testID={`widget-${widgetId}`}
           >
-            {widgetId === 'metronome' && <MetronomeWidget />}
+            {widgetId === 'metronome' && (
+              <MetronomeWidget onTick={handleMetronomeTick} />
+            )}
             {widgetId === 'keySelector' && (
               <KeySelectorWidget
                 selectedKey={selectedKey}
@@ -928,7 +937,9 @@ export function PlayScreen(): React.JSX.Element {
                 onClear={clearRecording}
               />
             )}
-            {widgetId === 'tempoTrainer' && <TempoTrainerWidget />}
+            {widgetId === 'tempoTrainer' && (
+              <TempoTrainerWidget onTick={handleMetronomeTick} />
+            )}
             {widgetId === 'stats' && (
               <SessionStatsWidget
                 noteCount={sessionNoteCount}

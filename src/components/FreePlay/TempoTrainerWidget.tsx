@@ -4,7 +4,7 @@
  * Set a start BPM and target BPM, then gradually speeds up after each loop.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PressableScale } from '../common/PressableScale';
@@ -12,11 +12,14 @@ import { COLORS, TYPOGRAPHY, BORDER_RADIUS, SPACING, glowColor } from '../../the
 
 interface TempoTrainerWidgetProps {
   onBpmChange?: (bpm: number) => void;
+  /** Called on every beat tick while running — use to trigger metronome audio */
+  onTick?: (beat: number, beatsPerMeasure: number) => void;
   testID?: string;
 }
 
 export function TempoTrainerWidget({
   onBpmChange,
+  onTick,
   testID,
 }: TempoTrainerWidgetProps): React.ReactElement {
   const [startBpm, setStartBpm] = useState(60);
@@ -24,6 +27,27 @@ export function TempoTrainerWidget({
   const [currentBpm, setCurrentBpm] = useState(60);
   const [isRunning, setIsRunning] = useState(false);
   const increment = 5;
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const beatRef = useRef(0);
+  const onTickRef = useRef(onTick);
+  onTickRef.current = onTick;
+
+  // Run a metronome interval while the tempo trainer is active
+  useEffect(() => {
+    if (isRunning) {
+      const ms = 60000 / currentBpm;
+      beatRef.current = 0;
+      onTickRef.current?.(0, 4);
+      intervalRef.current = setInterval(() => {
+        beatRef.current = (beatRef.current + 1) % 4;
+        onTickRef.current?.(beatRef.current, 4);
+      }, ms);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isRunning, currentBpm]);
 
   const handleStart = useCallback(() => {
     setCurrentBpm(startBpm);

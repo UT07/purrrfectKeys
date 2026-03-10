@@ -147,8 +147,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   coachingTip: {
-    position: 'absolute',
-    bottom: 140,
+    marginTop: 24,
     fontSize: 15,
     fontWeight: '500',
     color: COLORS.textSecondary,
