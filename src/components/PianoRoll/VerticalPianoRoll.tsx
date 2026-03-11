@@ -319,8 +319,10 @@ export const VerticalPianoRoll = React.memo(
       return lines;
     }, [totalBeats, beatsPerMeasure]);
 
-    // Pre-compute visual notes with positions, colors, and state
-    const visualNotes = useMemo(() => {
+    // Static geometry: positions, sizes, names — recomputed only when notes or
+    // layout change (NOT on every beat/frame). This is the key optimization:
+    // separating O(N) position math from the per-frame color/state pass.
+    const noteGeometry = useMemo(() => {
       return notes.map((note, index) => {
         const { x, width } = calculateNoteX(
           note.note,
@@ -336,13 +338,34 @@ export const VerticalPianoRoll = React.memo(
         // convention where the leading (bottom) edge is the attack point.
         const topPosition = hitLineY - note.startBeat * pixelsPerBeat - noteHeight;
 
+        const noteName = midiToNoteName(note.note);
         const noteEnd = note.startBeat + note.durationBeats;
+
+        return {
+          index,
+          note,
+          x,
+          width,
+          noteHeight,
+          topPosition,
+          noteName,
+          hand: note.hand,
+          startBeat: note.startBeat,
+          endBeat: noteEnd,
+        };
+      });
+    }, [notes, containerWidth, midiMin, midiRange, hitLineY, pixelsPerBeat]);
+
+    // Dynamic state: colors and active/past flags — recomputed per frame but
+    // only does lightweight comparisons (no trig, no position math).
+    const visualNotes = useMemo(() => {
+      return noteGeometry.map((geo) => {
         // During countdown (currentBeat < 0), all notes are upcoming (none active/past)
-        const isPast = currentBeat >= 0 && noteEnd < currentBeat;
-        const isActive = currentBeat >= 0 && note.startBeat <= currentBeat && currentBeat < noteEnd;
+        const isPast = currentBeat >= 0 && geo.endBeat < currentBeat;
+        const isActive = currentBeat >= 0 && geo.startBeat <= currentBeat && currentBeat < geo.endBeat;
 
         // Per-hand coloring: right=purple, left=teal, unspecified=indigo
-        const hand = note.hand;
+        const hand = geo.hand;
         let color = hand === 'right' ? PIANO_ROLL_COLORS.rightUpcoming : hand === 'left' ? PIANO_ROLL_COLORS.leftUpcoming : PIANO_ROLL_COLORS.upcoming;
         let gradientTop = hand === 'right' ? PIANO_ROLL_COLORS.rightUpcomingLight : hand === 'left' ? PIANO_ROLL_COLORS.leftUpcomingLight : PIANO_ROLL_COLORS.upcomingLight;
         let gradientBottom = hand === 'right' ? PIANO_ROLL_COLORS.rightUpcomingDark : hand === 'left' ? PIANO_ROLL_COLORS.leftUpcomingDark : PIANO_ROLL_COLORS.upcomingDark;
@@ -361,7 +384,7 @@ export const VerticalPianoRoll = React.memo(
         }
 
         // Replay mode: override colors per note index
-        const overrideColor = noteColorOverrides?.get(index);
+        const overrideColor = noteColorOverrides?.get(geo.index);
         let glowColor: string | undefined;
         let haloColor: string | undefined;
         if (overrideColor) {
@@ -369,33 +392,23 @@ export const VerticalPianoRoll = React.memo(
           gradientTop = overrideColor;
           gradientBottom = overrideColor;
           borderColor = overrideColor;
-          // Use override color at lower opacity for glow effects
           glowColor = hexGlow(overrideColor, 0.35);
           haloColor = hexGlow(overrideColor, 0.15);
         }
 
-        const noteName = midiToNoteName(note.note);
-
         return {
-          index,
-          note,
-          x,
-          width,
-          noteHeight,
-          topPosition,
+          ...geo,
           color,
           gradientTop,
           gradientBottom,
           borderColor,
           isPast,
           isActive,
-          noteName,
-          hand: note.hand,
           glowColor,
           haloColor,
         };
       });
-    }, [notes, currentBeat, containerWidth, containerHeight, midiMin, midiRange, hitLineY, pixelsPerBeat, noteColorOverrides]);
+    }, [noteGeometry, currentBeat, noteColorOverrides]);
 
     // Ghost notes (semi-transparent overlay of upcoming notes)
     const visualGhostNotes = useMemo(() => {

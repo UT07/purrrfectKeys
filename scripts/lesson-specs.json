@@ -1,0 +1,457 @@
+{
+  "$comment": "Lesson specs for batch exercise generation. Lessons 7-16 expand the curriculum from 30 to 150+ exercises.",
+  "lessons": [
+    {
+      "lessonNumber": 7,
+      "title": "Black Keys & Sharps/Flats",
+      "description": "Discover the black keys — sharps, flats, half steps, and chromatic patterns",
+      "tier": 6,
+      "difficulty": 2,
+      "exerciseCount": 10,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh",
+        "chromatic-scale",
+        "half-steps-whole-steps",
+        "black-key-melodies"
+      ],
+      "exercises": [
+        { "skillId": "find-black-keys", "type": "play", "title": "Find the Black Keys", "description": "Locate groups of 2 and 3 black keys on the keyboard", "difficulty": 1 },
+        { "skillId": "find-black-keys", "type": "play", "title": "Black Key Groups", "description": "Navigate between groups of 2 and 3 black keys smoothly", "difficulty": 2 },
+        { "skillId": "sharp-notes-rh", "type": "play", "title": "F-Sharp & C-Sharp", "description": "Play F# and C# with right hand in simple patterns", "difficulty": 2 },
+        { "skillId": "sharp-notes-rh", "type": "play", "title": "G-Sharp Explorer", "description": "Add G# to your right hand sharp note vocabulary", "difficulty": 2 },
+        { "skillId": "flat-notes-lh", "type": "play", "title": "B-Flat & E-Flat Left Hand", "description": "Play Bb and Eb with your left hand", "difficulty": 2 },
+        { "skillId": "half-steps-whole-steps", "type": "play", "title": "Half Steps & Whole Steps", "description": "Practice patterns of half steps and whole steps to build interval awareness", "difficulty": 2 },
+        { "skillId": "chromatic-scale", "type": "play", "title": "Chromatic Scale Up", "description": "Play the chromatic scale ascending from C4 to C5", "difficulty": 2 },
+        { "skillId": "chromatic-scale", "type": "play", "title": "Chromatic Scale Down", "description": "Play the chromatic scale descending from C5 to C4", "difficulty": 2 },
+        { "skillId": "black-key-melodies", "type": "play", "title": "Pentatonic Melody", "description": "Play a melody using only the black keys (pentatonic scale)", "difficulty": 2 },
+        { "skillId": "black-key-melodies", "type": "play", "title": "Black Key Song", "description": "A short song that mixes black and white keys", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-05" },
+      "xpReward": 350
+    },
+    {
+      "lessonNumber": 8,
+      "title": "G Major Scale & Melodies",
+      "description": "Learn the G major scale with F# and play melodies in this new key",
+      "tier": 7,
+      "difficulty": 2,
+      "exerciseCount": 10,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands",
+        "g-major-melodies"
+      ],
+      "exercises": [
+        { "skillId": "g-major-scale-rh", "type": "play", "title": "G Major Scale Right Hand", "description": "Learn the G major scale with F# using your right hand", "difficulty": 2 },
+        { "skillId": "g-major-scale-rh", "type": "play", "title": "G Major Patterns", "description": "Practice common patterns within the G major scale", "difficulty": 2 },
+        { "skillId": "g-major-scale-lh", "type": "play", "title": "G Major Scale Left Hand", "description": "Play the G major scale with your left hand", "difficulty": 2 },
+        { "skillId": "g-major-scale-lh", "type": "play", "title": "G Major Left Hand Patterns", "description": "Left hand exercises in G major position", "difficulty": 2 },
+        { "skillId": "g-major-hands", "type": "play", "title": "G Major Both Hands", "description": "Play the G major scale with both hands in parallel", "difficulty": 3 },
+        { "skillId": "g-major-hands", "type": "play", "title": "G Major Contrary Motion", "description": "Play G major scale hands moving in opposite directions", "difficulty": 3 },
+        { "skillId": "g-major-melodies", "type": "play", "title": "Simple G Major Melody", "description": "A simple melody in G major with the F# accidental", "difficulty": 2 },
+        { "skillId": "g-major-melodies", "type": "play", "title": "G Major Folk Tune", "description": "A folk-style melody in G major using quarter and half notes", "difficulty": 2 },
+        { "skillId": "g-major-melodies", "type": "play", "title": "G Major with Eighth Notes", "description": "A livelier melody in G major with eighth note passages", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-07" },
+      "xpReward": 400
+    },
+    {
+      "lessonNumber": 9,
+      "title": "F Major & Key Signatures",
+      "description": "Master the F major scale with Bb and learn to read key signatures",
+      "tier": 7,
+      "difficulty": 2,
+      "exerciseCount": 10,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands",
+        "key-signature-reading"
+      ],
+      "exercises": [
+        { "skillId": "f-major-scale-rh", "type": "play", "title": "F Major Scale Right Hand", "description": "Learn the F major scale with Bb using your right hand", "difficulty": 2 },
+        { "skillId": "f-major-scale-rh", "type": "play", "title": "F Major Patterns", "description": "Practice patterns and sequences in F major", "difficulty": 2 },
+        { "skillId": "f-major-scale-lh", "type": "play", "title": "F Major Scale Left Hand", "description": "Play the F major scale with your left hand", "difficulty": 2 },
+        { "skillId": "f-major-scale-lh", "type": "play", "title": "F Major Left Hand Drills", "description": "Strengthen your left hand in the F major position", "difficulty": 3 },
+        { "skillId": "f-major-hands", "type": "play", "title": "F Major Both Hands", "description": "Play the F major scale with both hands together", "difficulty": 3 },
+        { "skillId": "f-major-hands", "type": "play", "title": "F Major Hands Together Melody", "description": "A simple two-hand piece in F major", "difficulty": 3 },
+        { "skillId": "key-signature-reading", "type": "play", "title": "C to G Key Change", "description": "A melody that switches between C major and G major sections", "difficulty": 2 },
+        { "skillId": "key-signature-reading", "type": "play", "title": "C to F Key Change", "description": "A melody that modulates from C major to F major", "difficulty": 2 },
+        { "skillId": "key-signature-reading", "type": "play", "title": "Three-Key Journey", "description": "Navigate a melody that visits C, G, and F major", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-08" },
+      "xpReward": 400
+    },
+    {
+      "lessonNumber": 10,
+      "title": "A Minor & Minor Keys",
+      "description": "Enter the world of minor keys — learn A minor natural and harmonic scales",
+      "tier": 8,
+      "difficulty": 2,
+      "exerciseCount": 10,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major",
+        "harmonic-minor"
+      ],
+      "exercises": [
+        { "skillId": "a-minor-natural", "type": "play", "title": "A Natural Minor Scale", "description": "Play the A natural minor scale — all white keys starting from A", "difficulty": 2 },
+        { "skillId": "a-minor-natural", "type": "play", "title": "A Minor Patterns", "description": "Practice common patterns within A natural minor", "difficulty": 2 },
+        { "skillId": "a-minor-melodies", "type": "play", "title": "Sad Song in A Minor", "description": "A melancholic melody in A minor using quarter and half notes", "difficulty": 2 },
+        { "skillId": "a-minor-melodies", "type": "play", "title": "A Minor Lament", "description": "An expressive A minor melody with wider intervals", "difficulty": 3 },
+        { "skillId": "minor-vs-major", "type": "play", "title": "Major vs Minor Comparison", "description": "Compare the sound of C major and A minor phrases side by side", "difficulty": 2 },
+        { "skillId": "minor-vs-major", "type": "play", "title": "Happy to Sad", "description": "A melody that shifts from C major to A minor to hear the contrast", "difficulty": 2 },
+        { "skillId": "harmonic-minor", "type": "play", "title": "A Harmonic Minor Scale", "description": "Play the A harmonic minor scale with the raised G#", "difficulty": 2 },
+        { "skillId": "harmonic-minor", "type": "play", "title": "Harmonic Minor Melody", "description": "A mysterious-sounding melody using the harmonic minor scale", "difficulty": 3 },
+        { "skillId": "a-minor-melodies", "type": "play", "title": "A Minor with Both Hands", "description": "A two-hand arrangement in A minor", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-09" },
+      "xpReward": 400
+    },
+    {
+      "lessonNumber": 11,
+      "title": "D Minor & E Minor",
+      "description": "Expand your minor key vocabulary with D minor and E minor scales and songs",
+      "tier": 8,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale",
+        "minor-songs"
+      ],
+      "exercises": [
+        { "skillId": "d-minor-scale", "type": "play", "title": "D Minor Scale", "description": "Learn the D natural minor scale with Bb", "difficulty": 2 },
+        { "skillId": "d-minor-scale", "type": "play", "title": "D Minor Scale Drills", "description": "Speed and accuracy drills in D minor", "difficulty": 3 },
+        { "skillId": "d-minor-melodies", "type": "play", "title": "D Minor Melody", "description": "A moody melody in D minor with varied rhythms", "difficulty": 3 },
+        { "skillId": "d-minor-melodies", "type": "play", "title": "D Minor Dance", "description": "A rhythmic piece in D minor with eighth notes", "difficulty": 3 },
+        { "skillId": "e-minor-scale", "type": "play", "title": "E Minor Scale", "description": "Learn the E natural minor scale with F#", "difficulty": 2 },
+        { "skillId": "e-minor-scale", "type": "play", "title": "E Minor Patterns", "description": "Practice common patterns in E minor", "difficulty": 3 },
+        { "skillId": "minor-songs", "type": "play", "title": "Minor Key Song 1", "description": "A song in A minor with simple left hand accompaniment", "difficulty": 3 },
+        { "skillId": "minor-songs", "type": "play", "title": "Minor Key Song 2", "description": "A song exploring D minor with both hands", "difficulty": 3 },
+        { "skillId": "minor-songs", "type": "play", "title": "Three Minor Keys", "description": "A medley that visits A minor, D minor, and E minor", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-10" },
+      "xpReward": 450
+    },
+    {
+      "lessonNumber": 12,
+      "title": "Dotted Rhythms & Syncopation",
+      "description": "Master dotted quarter notes, syncopation, and tied notes for more musical phrasing",
+      "tier": 11,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "exercises": [
+        { "skillId": "dotted-quarter-notes", "type": "rhythm", "title": "Dotted Quarter Notes", "description": "Learn the dotted quarter note rhythm (1.5 beats)", "difficulty": 2 },
+        { "skillId": "dotted-quarter-notes", "type": "rhythm", "title": "Dotted Rhythm Patterns", "description": "Practice dotted quarter-eighth patterns in melodies", "difficulty": 3 },
+        { "skillId": "dotted-quarter-notes", "type": "play", "title": "Dotted Rhythm Melody", "description": "A melody that features dotted quarter notes prominently", "difficulty": 3 },
+        { "skillId": "syncopation-intro", "type": "rhythm", "title": "Off-Beat Accents", "description": "Learn to accent notes on the off-beats", "difficulty": 3 },
+        { "skillId": "syncopation-intro", "type": "rhythm", "title": "Syncopated Melody", "description": "A melody with syncopated rhythms that challenges your timing", "difficulty": 3 },
+        { "skillId": "syncopation-intro", "type": "play", "title": "Funky Syncopation", "description": "A fun, groovy exercise with strong syncopation", "difficulty": 3 },
+        { "skillId": "ties-across-barline", "type": "rhythm", "title": "Tied Notes Basics", "description": "Learn to hold notes across bar lines with ties", "difficulty": 2 },
+        { "skillId": "ties-across-barline", "type": "play", "title": "Tied Note Melodies", "description": "A melody where notes are tied across bar lines", "difficulty": 3 },
+        { "skillId": "syncopation-intro", "type": "play", "title": "Rhythm Mix", "description": "An exercise combining dotted rhythms, syncopation, and ties", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-11" },
+      "xpReward": 450
+    },
+    {
+      "lessonNumber": 13,
+      "title": "Major & Minor Triads",
+      "description": "Build and play major and minor triads — the building blocks of harmony",
+      "tier": 9,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro",
+        "progression-i-iv-v"
+      ],
+      "exercises": [
+        { "skillId": "major-triads-root", "type": "play", "title": "C Major Triad", "description": "Play the C major triad (C-E-G) blocked and broken", "difficulty": 3 },
+        { "skillId": "major-triads-root", "type": "play", "title": "F & G Major Triads", "description": "Play F major (F-A-C) and G major (G-B-D) triads", "difficulty": 3 },
+        { "skillId": "minor-triads", "type": "play", "title": "A Minor Triad", "description": "Play the A minor triad (A-C-E) blocked and broken", "difficulty": 3 },
+        { "skillId": "minor-triads", "type": "play", "title": "D Minor & E Minor Triads", "description": "Play Dm (D-F-A) and Em (E-G-B) triads", "difficulty": 3 },
+        { "skillId": "chord-inversions-intro", "type": "play", "title": "First Inversions", "description": "Play first inversions of C, F, and G major triads", "difficulty": 3 },
+        { "skillId": "chord-inversions-intro", "type": "play", "title": "Second Inversions", "description": "Play second inversions of C, F, and G major triads", "difficulty": 3 },
+        { "skillId": "progression-i-iv-v", "type": "play", "title": "I-IV-V in C Major", "description": "Play the classic C-F-G chord progression", "difficulty": 3 },
+        { "skillId": "progression-i-iv-v", "type": "play", "title": "I-IV-V with Bass", "description": "Play I-IV-V progression with left hand bass notes", "difficulty": 3 },
+        { "skillId": "major-triads-root", "type": "play", "title": "Chord Strumming Pattern", "description": "Play chords in a rhythmic strumming-style pattern", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-12" },
+      "xpReward": 500
+    },
+    {
+      "lessonNumber": 14,
+      "title": "Chord Progressions",
+      "description": "Learn iconic chord progressions and accompaniment patterns used in popular music",
+      "tier": 9,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv",
+        "bass-chord-pattern",
+        "alberti-bass"
+      ],
+      "exercises": [
+        { "skillId": "progression-i-iv-v", "type": "play", "title": "I-IV-V Revisited", "description": "Solidify the I-IV-V progression with varied voicings", "difficulty": 3 },
+        { "skillId": "progression-i-vi-iv-v", "type": "play", "title": "50s Doo-Wop Progression", "description": "Learn the I-vi-IV-V progression (C-Am-F-G)", "difficulty": 3 },
+        { "skillId": "progression-i-vi-iv-v", "type": "play", "title": "Doo-Wop with Rhythm", "description": "Play I-vi-IV-V with a rhythmic pattern", "difficulty": 3 },
+        { "skillId": "progression-i-v-vi-iv", "type": "play", "title": "Pop Axis Progression", "description": "Learn the modern pop progression (C-G-Am-F)", "difficulty": 3 },
+        { "skillId": "progression-i-v-vi-iv", "type": "play", "title": "Axis with Melody", "description": "Add a simple melody over the Axis progression", "difficulty": 3 },
+        { "skillId": "bass-chord-pattern", "type": "play", "title": "Bass-Chord-Chord Pattern", "description": "Play the classic left hand bass-chord accompaniment", "difficulty": 3 },
+        { "skillId": "bass-chord-pattern", "type": "play", "title": "Oom-Pah Accompaniment", "description": "Practice the oom-pah bass pattern with chords", "difficulty": 3 },
+        { "skillId": "alberti-bass", "type": "play", "title": "Alberti Bass Pattern", "description": "Learn the Alberti bass (C-G-E-G) in eighth notes", "difficulty": 3 },
+        { "skillId": "alberti-bass", "type": "play", "title": "Alberti Bass with Chords", "description": "Apply Alberti bass to different chord changes", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-13" },
+      "xpReward": 500
+    },
+    {
+      "lessonNumber": 15,
+      "title": "Chord Songs & Transitions",
+      "description": "Apply your chord skills to real songs with smooth voice-leading transitions",
+      "tier": 9,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "exercises": [
+        { "skillId": "chord-songs", "type": "play", "title": "Pop Song Arrangement 1", "description": "Play a pop-style song with melody and chord accompaniment", "difficulty": 3 },
+        { "skillId": "chord-songs", "type": "play", "title": "Pop Song Arrangement 2", "description": "Another song arrangement using familiar chord progressions", "difficulty": 3 },
+        { "skillId": "chord-songs", "type": "play", "title": "Ballad Style", "description": "A slow ballad with arpeggiated chord accompaniment", "difficulty": 3 },
+        { "skillId": "chord-transitions", "type": "play", "title": "Smooth C to F Transition", "description": "Practice transitioning from C to F major using inversions", "difficulty": 3 },
+        { "skillId": "chord-transitions", "type": "play", "title": "Voice Leading Basics", "description": "Move between chords using the smoothest possible voice leading", "difficulty": 3 },
+        { "skillId": "chord-transitions", "type": "play", "title": "Four-Chord Voice Leading", "description": "Smooth transitions through C-Am-F-G using inversions", "difficulty": 3 },
+        { "skillId": "chord-transitions", "type": "play", "title": "Chord Transition Speed", "description": "Quick chord changes between multiple triads", "difficulty": 3 },
+        { "skillId": "chord-songs", "type": "play", "title": "Song with Transitions", "description": "A complete song that requires smooth chord transitions", "difficulty": 3 },
+        { "skillId": "chord-songs", "type": "play", "title": "Two-Hand Chord Song", "description": "Full two-hand arrangement with melody over chord changes", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-14" },
+      "xpReward": 550
+    },
+    {
+      "lessonNumber": 16,
+      "title": "Arpeggios & Patterns",
+      "description": "Master arpeggio patterns that form the foundation of piano accompaniment",
+      "tier": 12,
+      "difficulty": 3,
+      "exerciseCount": 12,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios",
+        "arpeggio-patterns",
+        "broken-chord-patterns",
+        "hands-arpeggio",
+        "arpeggio-songs"
+      ],
+      "exercises": [
+        { "skillId": "c-major-arpeggio", "type": "play", "title": "C Major Arpeggio", "description": "Play the C major arpeggio across 2 octaves ascending and descending", "difficulty": 3 },
+        { "skillId": "c-major-arpeggio", "type": "play", "title": "C Arpeggio Variations", "description": "Practice C major arpeggio in different rhythmic patterns", "difficulty": 3 },
+        { "skillId": "g-major-arpeggio", "type": "play", "title": "G Major Arpeggio", "description": "Play the G major arpeggio across 2 octaves", "difficulty": 3 },
+        { "skillId": "minor-arpeggios", "type": "play", "title": "A Minor Arpeggio", "description": "Play the A minor arpeggio across 2 octaves", "difficulty": 3 },
+        { "skillId": "minor-arpeggios", "type": "play", "title": "D Minor Arpeggio", "description": "Play the D minor arpeggio ascending and descending", "difficulty": 3 },
+        { "skillId": "arpeggio-patterns", "type": "play", "title": "1-3-5-8 Pattern", "description": "Practice the classic accompaniment arpeggio pattern", "difficulty": 3 },
+        { "skillId": "arpeggio-patterns", "type": "play", "title": "Arpeggio Pattern Variations", "description": "Different arpeggio patterns for accompaniment", "difficulty": 3 },
+        { "skillId": "broken-chord-patterns", "type": "play", "title": "Waltz Bass Pattern", "description": "Left hand waltz-style broken chord pattern", "difficulty": 3 },
+        { "skillId": "broken-chord-patterns", "type": "play", "title": "Stride Pattern", "description": "Left hand stride pattern jumping between bass and chord", "difficulty": 3 },
+        { "skillId": "hands-arpeggio", "type": "play", "title": "Arpeggios Both Hands", "description": "Play arpeggios with both hands in parallel motion", "difficulty": 3 },
+        { "skillId": "arpeggio-songs", "type": "play", "title": "Arpeggio Accompaniment Song", "description": "A song using arpeggio patterns for accompaniment with melody on top", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-15" },
+      "xpReward": 600
+    },
+    {
+      "lessonNumber": 17,
+      "title": "Triplets & Waltz Time",
+      "description": "Master triplet rhythms and explore 3/4 time with waltz-style pieces",
+      "tier": 11,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": ["triplet-rhythm", "3-4-time", "6-8-time"],
+      "exercises": [
+        { "skillId": "triplet-rhythm", "type": "rhythm", "title": "Triplet Introduction", "description": "Learn to play three notes per beat evenly", "difficulty": 3 },
+        { "skillId": "triplet-rhythm", "type": "rhythm", "title": "Triplet Patterns", "description": "Practice triplet patterns on C-D-E-F-G", "difficulty": 3 },
+        { "skillId": "triplet-rhythm", "type": "play", "title": "Triplet Melody", "description": "A flowing melody built on triplet rhythms", "difficulty": 3 },
+        { "skillId": "3-4-time", "type": "play", "title": "First Waltz", "description": "A simple waltz in 3/4 time with oom-pah-pah bass", "difficulty": 2 },
+        { "skillId": "3-4-time", "type": "play", "title": "Waltz Melody", "description": "A graceful waltz melody with both hands", "difficulty": 3 },
+        { "skillId": "3-4-time", "type": "play", "title": "Waltz with Dynamics", "description": "A waltz with crescendo and diminuendo shaping", "difficulty": 3 },
+        { "skillId": "6-8-time", "type": "rhythm", "title": "6/8 Time Feel", "description": "Feel the two groups of three in 6/8 time", "difficulty": 3 },
+        { "skillId": "6-8-time", "type": "play", "title": "6/8 Melody", "description": "A lilting melody in 6/8 compound meter", "difficulty": 3 },
+        { "skillId": "6-8-time", "type": "play", "title": "Irish-Style 6/8", "description": "A folk-style tune in 6/8 with accented downbeats", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-12" },
+      "xpReward": 500
+    },
+    {
+      "lessonNumber": 18,
+      "title": "Swing & Mixed Rhythms",
+      "description": "Learn swing feel and combine all rhythm types in comprehensive exercises",
+      "tier": 11,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": ["swing-rhythm", "rhythm-reading", "mixed-rhythms"],
+      "exercises": [
+        { "skillId": "swing-rhythm", "type": "rhythm", "title": "Swing Eighth Notes", "description": "Feel the long-short swing rhythm pattern", "difficulty": 3 },
+        { "skillId": "swing-rhythm", "type": "play", "title": "Swing Melody", "description": "A jazz-style melody with swing eighth notes", "difficulty": 3 },
+        { "skillId": "swing-rhythm", "type": "play", "title": "Swing Blues", "description": "A 12-bar blues with swing feel on C pentatonic", "difficulty": 3 },
+        { "skillId": "rhythm-reading", "type": "rhythm", "title": "Rhythm Reading Level 1", "description": "Read and play written rhythms accurately in 4/4", "difficulty": 3 },
+        { "skillId": "rhythm-reading", "type": "rhythm", "title": "Rhythm Reading Level 2", "description": "More complex rhythm reading with dotted notes and ties", "difficulty": 3 },
+        { "skillId": "rhythm-reading", "type": "rhythm", "title": "Rhythm Reading in 3/4", "description": "Read rhythms in 3/4 and 6/8 time", "difficulty": 3 },
+        { "skillId": "mixed-rhythms", "type": "play", "title": "Rhythm Medley", "description": "A piece combining straight, dotted, syncopated, and triplet rhythms", "difficulty": 3 },
+        { "skillId": "mixed-rhythms", "type": "play", "title": "Rhythm Challenge", "description": "Advanced rhythm exercise with frequent meter changes", "difficulty": 4 },
+        { "skillId": "mixed-rhythms", "type": "play", "title": "Rhythm Showcase", "description": "Performance piece showcasing all learned rhythm types", "difficulty": 4 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-17" },
+      "xpReward": 550
+    },
+    {
+      "lessonNumber": 19,
+      "title": "Expression & Dynamics",
+      "description": "Add musical expression with dynamics, staccato, legato, and phrasing",
+      "tier": 13,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": ["dynamics-p-f", "crescendo-diminuendo", "staccato-technique", "legato-technique", "accents-emphasis"],
+      "exercises": [
+        { "skillId": "dynamics-p-f", "type": "play", "title": "Piano & Forte", "description": "Alternate between soft (piano) and loud (forte) passages", "difficulty": 3 },
+        { "skillId": "dynamics-p-f", "type": "play", "title": "Dynamic Contrast", "description": "A melody with clear dynamic contrast between sections", "difficulty": 3 },
+        { "skillId": "crescendo-diminuendo", "type": "play", "title": "Crescendo Practice", "description": "Build volume gradually from piano to forte over 4 bars", "difficulty": 3 },
+        { "skillId": "crescendo-diminuendo", "type": "play", "title": "Wave Dynamics", "description": "A melody that swells and fades like waves", "difficulty": 3 },
+        { "skillId": "staccato-technique", "type": "play", "title": "Staccato Bouncing", "description": "Short, detached bouncing notes in playful patterns", "difficulty": 3 },
+        { "skillId": "staccato-technique", "type": "play", "title": "Staccato vs Legato", "description": "Alternate between staccato and legato passages", "difficulty": 3 },
+        { "skillId": "legato-technique", "type": "play", "title": "Smooth Legato", "description": "Connect notes smoothly with overlapping finger technique", "difficulty": 3 },
+        { "skillId": "legato-technique", "type": "play", "title": "Legato Melody", "description": "A lyrical melody requiring smooth, connected playing", "difficulty": 3 },
+        { "skillId": "accents-emphasis", "type": "play", "title": "Accented Notes", "description": "Emphasize specific notes within a melody for musical effect", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-16" },
+      "xpReward": 550
+    },
+    {
+      "lessonNumber": 20,
+      "title": "Phrasing & Pedal",
+      "description": "Shape musical phrases and learn basic sustain pedal technique",
+      "tier": 13,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": ["pedal-intro", "phrasing", "expressive-songs"],
+      "exercises": [
+        { "skillId": "pedal-intro", "type": "play", "title": "Sustain Pedal Basics", "description": "Learn when to press and release the sustain pedal", "difficulty": 3 },
+        { "skillId": "pedal-intro", "type": "play", "title": "Pedaled Chords", "description": "Chord progression with pedal changes on each chord", "difficulty": 3 },
+        { "skillId": "pedal-intro", "type": "play", "title": "Legato Pedaling", "description": "Use the pedal to connect chords smoothly", "difficulty": 3 },
+        { "skillId": "phrasing", "type": "play", "title": "4-Bar Phrases", "description": "Shape 4-bar phrases with dynamic arc and breathing", "difficulty": 3 },
+        { "skillId": "phrasing", "type": "play", "title": "Question & Answer", "description": "Musical phrases that ask and answer each other", "difficulty": 3 },
+        { "skillId": "phrasing", "type": "play", "title": "Phrase Shaping", "description": "Shape longer 8-bar phrases with climax and resolution", "difficulty": 4 },
+        { "skillId": "expressive-songs", "type": "play", "title": "Expressive Ballad", "description": "A slow ballad with dynamics, phrasing, and pedal", "difficulty": 3 },
+        { "skillId": "expressive-songs", "type": "play", "title": "Classical Cantabile", "description": "A singing-style classical melody with expression", "difficulty": 4 },
+        { "skillId": "expressive-songs", "type": "play", "title": "Expressive Showcase", "description": "A piece combining all expression techniques learned so far", "difficulty": 4 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-19" },
+      "xpReward": 600
+    },
+    {
+      "lessonNumber": 21,
+      "title": "D Major & Bb Major",
+      "description": "Expand to new key signatures — D major with 2 sharps and Bb major with 2 flats",
+      "tier": 14,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": ["d-major-scale", "bb-major-scale", "relative-minor"],
+      "exercises": [
+        { "skillId": "d-major-scale", "type": "play", "title": "D Major Scale RH", "description": "Play the D major scale right hand with F# and C#", "difficulty": 3 },
+        { "skillId": "d-major-scale", "type": "play", "title": "D Major Scale LH", "description": "Play the D major scale with left hand", "difficulty": 3 },
+        { "skillId": "d-major-scale", "type": "play", "title": "D Major Melody", "description": "A melody in D major using the new key signature", "difficulty": 3 },
+        { "skillId": "bb-major-scale", "type": "play", "title": "Bb Major Scale RH", "description": "Play the Bb major scale right hand with Bb and Eb", "difficulty": 3 },
+        { "skillId": "bb-major-scale", "type": "play", "title": "Bb Major Scale LH", "description": "Play the Bb major scale with left hand", "difficulty": 3 },
+        { "skillId": "bb-major-scale", "type": "play", "title": "Bb Major Melody", "description": "A warm melody in Bb major", "difficulty": 3 },
+        { "skillId": "relative-minor", "type": "play", "title": "B Minor (relative of D)", "description": "Explore B minor as the relative minor of D major", "difficulty": 3 },
+        { "skillId": "relative-minor", "type": "play", "title": "G Minor (relative of Bb)", "description": "Explore G minor as the relative minor of Bb major", "difficulty": 3 },
+        { "skillId": "d-major-scale", "type": "play", "title": "Two-Key Piece", "description": "A piece that modulates between D major and Bb major", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-20" },
+      "xpReward": 600
+    },
+    {
+      "lessonNumber": 22,
+      "title": "Sight Reading",
+      "description": "Develop the ability to read and play music at sight in various keys",
+      "tier": 14,
+      "difficulty": 3,
+      "exerciseCount": 10,
+      "skills": ["sight-reading-c", "sight-reading-g", "sight-reading-mixed", "interval-recognition", "key-fluency"],
+      "exercises": [
+        { "skillId": "sight-reading-c", "type": "play", "title": "Sight Reading in C (1)", "description": "Read and play a new melody in C major at sight", "difficulty": 3 },
+        { "skillId": "sight-reading-c", "type": "play", "title": "Sight Reading in C (2)", "description": "Another fresh C major melody for sight reading", "difficulty": 3 },
+        { "skillId": "sight-reading-g", "type": "play", "title": "Sight Reading in G", "description": "Read and play a G major melody — remember the F#", "difficulty": 3 },
+        { "skillId": "sight-reading-g", "type": "play", "title": "G Major Sight Reading Challenge", "description": "A more complex G major sight reading exercise", "difficulty": 3 },
+        { "skillId": "sight-reading-mixed", "type": "play", "title": "Multi-Key Sight Reading", "description": "Sight reading that switches between C, G, and F major", "difficulty": 4 },
+        { "skillId": "interval-recognition", "type": "play", "title": "Interval Leaps", "description": "A melody built on specific intervals for recognition practice", "difficulty": 3 },
+        { "skillId": "interval-recognition", "type": "play", "title": "Interval Identification", "description": "Play intervals and identify 2nds, 3rds, 5ths, and octaves", "difficulty": 3 },
+        { "skillId": "key-fluency", "type": "play", "title": "Five-Key Scales", "description": "Quick scale passages in C, G, F, D, and Bb major", "difficulty": 3 },
+        { "skillId": "key-fluency", "type": "play", "title": "Key Change Piece", "description": "A piece with key changes between sections", "difficulty": 4 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-21" },
+      "xpReward": 650
+    },
+    {
+      "lessonNumber": 23,
+      "title": "Performance Skills",
+      "description": "Develop performance mindset — play complete pieces with confidence and expression",
+      "tier": 15,
+      "difficulty": 4,
+      "exerciseCount": 10,
+      "skills": ["performance-prep", "rubato-intro", "intermediate-classical", "intermediate-pop", "blues-scale"],
+      "exercises": [
+        { "skillId": "performance-prep", "type": "play", "title": "Play-Through Challenge", "description": "Play a complete 16-bar piece without stopping", "difficulty": 4 },
+        { "skillId": "performance-prep", "type": "play", "title": "Performance Mindset", "description": "Practice maintaining focus through an entire piece", "difficulty": 4 },
+        { "skillId": "rubato-intro", "type": "play", "title": "Rubato Expression", "description": "Learn expressive timing flexibility — slow down and speed up musically", "difficulty": 4 },
+        { "skillId": "rubato-intro", "type": "play", "title": "Rubato in Practice", "description": "Apply rubato to a lyrical melody", "difficulty": 4 },
+        { "skillId": "intermediate-classical", "type": "play", "title": "Classical Minuet", "description": "A classical minuet-style piece with balanced phrases", "difficulty": 4 },
+        { "skillId": "intermediate-classical", "type": "play", "title": "Sonatina Movement", "description": "A simplified sonatina movement with clear form", "difficulty": 4 },
+        { "skillId": "intermediate-pop", "type": "play", "title": "Pop Piano Arrangement", "description": "A pop song arrangement with melody over chords", "difficulty": 4 },
+        { "skillId": "intermediate-pop", "type": "play", "title": "Ballad Arrangement", "description": "A piano ballad with arpeggiated accompaniment", "difficulty": 4 },
+        { "skillId": "blues-scale", "type": "play", "title": "Blues Scale & Riffs", "description": "Learn the C blues scale and play basic blues riffs", "difficulty": 3 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-22" },
+      "xpReward": 700
+    },
+    {
+      "lessonNumber": 24,
+      "title": "Year One Finale",
+      "description": "Perform complete pieces and demonstrate mastery of all Year One skills",
+      "tier": 15,
+      "difficulty": 4,
+      "exerciseCount": 10,
+      "skills": ["full-piece-classical", "full-piece-pop", "repertoire-building", "year-one-mastery"],
+      "exercises": [
+        { "skillId": "full-piece-classical", "type": "play", "title": "Classical Performance 1", "description": "Perform a complete classical piece with expression and dynamics", "difficulty": 4 },
+        { "skillId": "full-piece-classical", "type": "play", "title": "Classical Performance 2", "description": "A second classical piece to build your repertoire", "difficulty": 5 },
+        { "skillId": "full-piece-pop", "type": "play", "title": "Pop Performance", "description": "Perform a complete pop song arrangement", "difficulty": 4 },
+        { "skillId": "full-piece-pop", "type": "play", "title": "Your Favorite Song", "description": "A crowd-pleasing pop arrangement to share with others", "difficulty": 4 },
+        { "skillId": "repertoire-building", "type": "play", "title": "Concert Piece in G", "description": "A showpiece in G major for your performance repertoire", "difficulty": 4 },
+        { "skillId": "repertoire-building", "type": "play", "title": "Concert Piece in F", "description": "A lyrical piece in F major to round out your repertoire", "difficulty": 4 },
+        { "skillId": "year-one-mastery", "type": "play", "title": "Scale & Chord Review", "description": "Demonstrate mastery of scales, chords, and arpeggios", "difficulty": 4 },
+        { "skillId": "year-one-mastery", "type": "play", "title": "Rhythm & Expression Review", "description": "Show your rhythm and expression skills in one piece", "difficulty": 4 },
+        { "skillId": "year-one-mastery", "type": "play", "title": "Grand Finale", "description": "A comprehensive piece combining all Year One skills", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-23" },
+      "xpReward": 800
+    }
+  ]
+}
