@@ -22,6 +22,8 @@ import { GradientMeshBackground } from '../components/effects';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { DailyChallengeCard } from '../components/DailyChallengeCard';
+import { WeeklyChallengeCard } from '../components/WeeklyChallengeCard';
+import { MonthlyChallengeCard } from '../components/MonthlyChallengeCard';
 import { DailyRewardCalendar } from '../components/DailyRewardCalendar';
 import { getDailyChallengeForDate } from '../core/challenges/challengeSystem';
 import type { SkillCategory } from '../core/curriculum/SkillTree';
@@ -539,6 +541,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             }} />
           </GameCard>
         </Animated.View>
+
+        {/* Weekly Challenge Card (self-hides when not the weekly challenge day) */}
+        <WeeklyChallengeCard
+          onPress={() => {
+            navigation.navigate('Exercise', {
+              exerciseId: 'ai-mode',
+              aiMode: true,
+              skillId: getSkillIdForChallenge(undefined, masteredSkills),
+            });
+          }}
+        />
+
+        {/* Monthly Challenge Card (self-hides when outside the 48h window) */}
+        <MonthlyChallengeCard
+          onPress={() => {
+            navigation.navigate('Exercise', {
+              exerciseId: 'ai-mode',
+              aiMode: true,
+              skillId: getSkillIdForChallenge(undefined, masteredSkills),
+            });
+          }}
+          exercisesCompletedToday={todayGoal?.exercisesCompleted ?? 0}
+        />
 
         {/* Free Play */}
         <Animated.View style={[styles.section, staggerStyle(4)]}>
