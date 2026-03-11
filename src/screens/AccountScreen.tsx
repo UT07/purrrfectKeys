@@ -85,7 +85,7 @@ export function AccountScreen(): React.ReactElement {
     // Determine provider
     const providers = user?.providerData?.map(p => p.providerId) ?? [];
 
-    if (providers.includes('google.com')) {
+    if (providers.some(p => p === 'google.com')) {
       try {
         if (!isGoogleAuthAvailable()) {
           Alert.alert('Error', 'Google Sign-In is not available.');
@@ -103,7 +103,7 @@ export function AccountScreen(): React.ReactElement {
         logger.warn('[AccountScreen] Google re-auth failed:', err);
         Alert.alert('Re-authentication Failed', 'Please try again.');
       }
-    } else if (providers.includes('apple.com')) {
+    } else if (providers.some(p => p === 'apple.com')) {
       try {
         if (!isAppleAuthAvailable()) {
           Alert.alert('Error', 'Apple Sign-In is not available.');
@@ -468,8 +468,8 @@ export function AccountScreen(): React.ReactElement {
 
   // Determine linked providers
   const linkedProviders = user?.providerData?.map((p: { providerId: string }) => p.providerId) ?? [];
-  const isGoogleLinked = linkedProviders.includes('google.com');
-  const isAppleLinked = linkedProviders.includes('apple.com');
+  const isGoogleLinked = linkedProviders.some(p => p === 'google.com');
+  const isAppleLinked = linkedProviders.some(p => p === 'apple.com');
 
   // Authenticated user → full account management
   return (
