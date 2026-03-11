@@ -19,7 +19,7 @@ module.exports = {
     '^@/services/(.*)$': '<rootDir>/src/services/$1',
     '^@/utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@/content/(.*)$': '<rootDir>/content/$1',
-
+    '\\.(mp3|wav|ogg|m4a|aac)$': '<rootDir>/__mocks__/audioFileMock.js',
   },
   testMatch: [
     '**/__tests__/**/*.[jt]s?(x)',
