@@ -1,0 +1,93 @@
+{
+  "id": "lesson-07",
+  "version": 1,
+  "metadata": {
+    "title": "Black Keys & Sharps/Flats",
+    "description": "Discover the black keys — sharps, flats, half steps, and chromatic patterns",
+    "difficulty": 2,
+    "estimatedMinutes": 28,
+    "skills": [
+      "find-black-keys",
+      "sharp-notes-rh",
+      "flat-notes-lh",
+      "chromatic-scale",
+      "half-steps-whole-steps",
+      "black-key-melodies"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-07-ex-01",
+      "title": "Find the Black Keys",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-02",
+      "title": "Black Key Groups",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-03",
+      "title": "F-Sharp & C-Sharp",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-04",
+      "title": "G-Sharp Explorer",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-05",
+      "title": "B-Flat & E-Flat Left Hand",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-06",
+      "title": "Half Steps & Whole Steps",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-07",
+      "title": "Chromatic Scale Up",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-08",
+      "title": "Chromatic Scale Down",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-09",
+      "title": "Pentatonic Melody",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-07-ex-10",
+      "title": "Black Key Song",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-07-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-05"
+  },
+  "xpReward": 350,
+  "estimatedMinutes": 28
+}

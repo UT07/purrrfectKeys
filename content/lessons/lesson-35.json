@@ -1,0 +1,139 @@
+{
+  "id": "lesson-35",
+  "version": 1,
+  "metadata": {
+    "title": "Performance Repertoire: Pop & Contemporary",
+    "description": "Build your pop and contemporary repertoire with complete song arrangements",
+    "difficulty": 4,
+    "estimatedMinutes": 48,
+    "skills": [
+      "full-piece-pop",
+      "intermediate-pop",
+      "intermediate-classical",
+      "blues-scale"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-35-ex-01",
+      "title": "Pop Ballad in C",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-02",
+      "title": "Pop Rock in G",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-03",
+      "title": "R&B Groove",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-04",
+      "title": "Movie Theme Style",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-05",
+      "title": "Singer-Songwriter Style",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-06",
+      "title": "Dance Pop Beat",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-07",
+      "title": "Indie Folk Piano",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-08",
+      "title": "Power Ballad",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-09",
+      "title": "Sonatina Rondo",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-10",
+      "title": "Romantic Character Piece",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-11",
+      "title": "C Blues Scale",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-12",
+      "title": "Blues Lick Patterns",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-13",
+      "title": "12-Bar Blues Solo",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-14",
+      "title": "Boogie-Woogie Bass",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-15",
+      "title": "Blues Song",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-16",
+      "title": "Anime/Game Theme",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-17",
+      "title": "Latin Pop",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-35-ex-18",
+      "title": "Epic Finale",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-35-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-34"
+  },
+  "xpReward": 800,
+  "estimatedMinutes": 48
+}

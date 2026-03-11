@@ -316,21 +316,44 @@ function generateLesson(
   const nextSkill = getNextSkillToLearn(masteredSkills);
 
   if (!nextSkill) {
-    reasoning.push('All skills mastered — lesson uses AI-generated review');
-    // Pick the deepest mastered skill for a varied review
-    const deepest = [...masteredSkills]
+    reasoning.push('Post-curriculum: AI-generated exercises across skill categories');
+    // Pick skills from varied categories for a diverse session
+    const allMasteredSkills = [...masteredSkills]
       .map((id) => getSkillById(id))
-      .filter(Boolean)
-      .sort((a, b) => getSkillDepth(b!.id) - getSkillDepth(a!.id))[0];
-    if (deepest) {
-      refs.push(makeAIRef(deepest, 'All skills mastered, generating review exercise', _recentSet));
-    } else {
-      refs.push({
-        exerciseId: 'ai-generated',
-        source: 'ai',
-        skillNodeId: 'review',
-        reason: 'All skills mastered, generating review exercise',
-      });
+      .filter(Boolean) as SkillNode[];
+
+    // Group by category and pick one skill per category, prioritizing deep skills
+    const byCategory = new Map<string, SkillNode[]>();
+    for (const skill of allMasteredSkills) {
+      const list = byCategory.get(skill.category) ?? [];
+      list.push(skill);
+      byCategory.set(skill.category, list);
+    }
+
+    // Pick from 2-3 categories, rotating based on recent exercises to keep it fresh
+    const categories = [...byCategory.keys()].sort();
+    const recentCount = _recentSet.size;
+    const offset = recentCount % categories.length;
+    const selectedCategories = categories.slice(offset, offset + 3)
+      .concat(categories.slice(0, Math.max(0, 3 - (categories.length - offset))));
+    const uniqueCategories = [...new Set(selectedCategories)].slice(0, 3);
+
+    for (const cat of uniqueCategories) {
+      const skills = byCategory.get(cat) ?? [];
+      // Pick deepest skill in category that wasn't recently done
+      const sorted = skills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
+      const skill = sorted.find((s) => !_recentSet.has(`ai-skill-${s.id}`)) ?? sorted[0];
+      if (skill) {
+        refs.push(makeAIRef(skill, `Post-curriculum ${cat}: ${skill.name}`, _recentSet));
+      }
+    }
+
+    if (refs.length === 0) {
+      // Ultimate fallback
+      const deepest = allMasteredSkills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id))[0];
+      if (deepest) {
+        refs.push(makeAIRef(deepest, 'Post-curriculum review exercise', _recentSet));
+      }
     }
     return refs;
   }
@@ -393,15 +416,21 @@ function generateChallenge(
     reasoning.push(`Challenge targets advanced skill: ${challengeSkill.name}`);
   }
 
-  // Fallback: AI-generated challenge at higher tempo using the most recently mastered skill
+  // Post-curriculum or no available skills: AI-generated challenge at higher tempo
   if (refs.length === 0) {
     const tempoStr = `${profile.tempoRange.max + 10} BPM`;
-    const deepestMastered = [...masteredSkills]
+    const allMastered = [...masteredSkills]
       .map((id) => getSkillById(id))
-      .filter(Boolean)
-      .sort((a, b) => getSkillDepth(b!.id) - getSkillDepth(a!.id))[0];
-    if (deepestMastered) {
-      refs.push(makeAIRef(deepestMastered, `Tempo challenge at ${tempoStr}`, _recentSet));
+      .filter(Boolean) as SkillNode[];
+    const sorted = allMastered.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
+
+    // Pick a random deep skill for challenge variety (post-curriculum)
+    const topSkills = sorted.slice(0, Math.min(10, sorted.length));
+    const recentCount = _recentSet.size;
+    const pick = topSkills[recentCount % topSkills.length] ?? sorted[0];
+
+    if (pick) {
+      refs.push(makeAIRef(pick, `Post-curriculum challenge: ${pick.name} at ${tempoStr}`, _recentSet));
     } else {
       refs.push({
         exerciseId: 'ai-generated',

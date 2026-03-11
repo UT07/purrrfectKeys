@@ -1,0 +1,139 @@
+{
+  "id": "lesson-09-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "F Major Scale Left Hand",
+    "description": "Play the F major scale with your left hand",
+    "difficulty": 2,
+    "estimatedMinutes": 2,
+    "skills": [
+      "f-major-scale-lh"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "F",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 53,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 58,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 5,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 65,
+      "startBeat": 6.5,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 7.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 58,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [
+      70,
+      85,
+      95
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: f major scale left hand.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on F Major Scale Left Hand! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

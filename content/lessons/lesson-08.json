@@ -1,0 +1,85 @@
+{
+  "id": "lesson-08",
+  "version": 1,
+  "metadata": {
+    "title": "G Major Scale & Melodies",
+    "description": "Learn the G major scale with F# and play melodies in this new key",
+    "difficulty": 2,
+    "estimatedMinutes": 25,
+    "skills": [
+      "g-major-scale-rh",
+      "g-major-scale-lh",
+      "g-major-hands",
+      "g-major-melodies"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-08-ex-01",
+      "title": "G Major Scale Right Hand",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-02",
+      "title": "G Major Patterns",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-03",
+      "title": "G Major Scale Left Hand",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-04",
+      "title": "G Major Left Hand Patterns",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-05",
+      "title": "G Major Both Hands",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-06",
+      "title": "G Major Contrary Motion",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-07",
+      "title": "Simple G Major Melody",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-08",
+      "title": "G Major Folk Tune",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-08-ex-09",
+      "title": "G Major with Eighth Notes",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-08-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-07"
+  },
+  "xpReward": 400,
+  "estimatedMinutes": 25
+}

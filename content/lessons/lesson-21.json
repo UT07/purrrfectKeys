@@ -1,0 +1,84 @@
+{
+  "id": "lesson-21",
+  "version": 1,
+  "metadata": {
+    "title": "D Major & Bb Major",
+    "description": "Expand to new key signatures — D major with 2 sharps and Bb major with 2 flats",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "d-major-scale",
+      "bb-major-scale",
+      "relative-minor"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-21-ex-01",
+      "title": "D Major Scale RH",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-02",
+      "title": "D Major Scale LH",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-03",
+      "title": "D Major Melody",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-04",
+      "title": "Bb Major Scale RH",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-05",
+      "title": "Bb Major Scale LH",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-06",
+      "title": "Bb Major Melody",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-07",
+      "title": "B Minor (relative of D)",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-08",
+      "title": "G Minor (relative of Bb)",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-21-ex-09",
+      "title": "Two-Key Piece",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-21-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-20"
+  },
+  "xpReward": 600,
+  "estimatedMinutes": 25
+}

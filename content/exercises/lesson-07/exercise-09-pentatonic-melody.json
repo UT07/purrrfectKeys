@@ -1,0 +1,117 @@
+{
+  "id": "lesson-07-ex-09",
+  "version": 1,
+  "metadata": {
+    "title": "Pentatonic Melody",
+    "description": "Play a melody using only the black keys (pentatonic scale)",
+    "difficulty": 2,
+    "estimatedMinutes": 2,
+    "skills": [
+      "find-black-keys",
+      "sharp-notes-rh",
+      "flat-notes-lh"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 63,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 66,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 68,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 70,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 68,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 66,
+      "startBeat": 4,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 63,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 61,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [
+      70,
+      85,
+      95
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: pentatonic-style melody using only black keys.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Pentatonic Melody! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

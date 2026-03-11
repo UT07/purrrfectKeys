@@ -1,0 +1,141 @@
+{
+  "id": "lesson-37-ex-06",
+  "version": 1,
+  "metadata": {
+    "title": "Bb Major Mastery",
+    "description": "Demonstrate Bb major mastery: scale, arpeggio, and melody",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "scale-review",
+      "g-major-hands",
+      "f-major-hands"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 73,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "Bb",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 58,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 63,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 63,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 9,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 63,
+      "startBeat": 9.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 58,
+      "startBeat": 10,
+      "durationBeats": 4,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: bb major scale with bb and eb.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Bb Major Mastery! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

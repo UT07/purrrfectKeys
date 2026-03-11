@@ -1,0 +1,85 @@
+{
+  "id": "lesson-11",
+  "version": 1,
+  "metadata": {
+    "title": "D Minor & E Minor",
+    "description": "Expand your minor key vocabulary with D minor and E minor scales and songs",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "d-minor-scale",
+      "d-minor-melodies",
+      "e-minor-scale",
+      "minor-songs"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-11-ex-01",
+      "title": "D Minor Scale",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-02",
+      "title": "D Minor Scale Drills",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-03",
+      "title": "D Minor Melody",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-04",
+      "title": "D Minor Dance",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-05",
+      "title": "E Minor Scale",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-06",
+      "title": "E Minor Patterns",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-07",
+      "title": "Minor Key Song 1",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-08",
+      "title": "Minor Key Song 2",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-11-ex-09",
+      "title": "Three Minor Keys",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-11-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-10"
+  },
+  "xpReward": 450,
+  "estimatedMinutes": 25
+}

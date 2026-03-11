@@ -129,33 +129,28 @@ describe('Fresh User Store Defaults', () => {
 });
 
 // ===========================================================================
-// Section 2: Content Loading — All 30 Exercises
+// Section 2: Content Loading — Complete Exercise Library
 // ===========================================================================
 
 describe('Content Loading — Complete Exercise Library', () => {
   const lessons = getLessons();
 
-  it('has exactly 6 lessons', () => {
-    expect(lessons).toHaveLength(6);
+  it('has at least 40 lessons', () => {
+    expect(lessons.length).toBeGreaterThanOrEqual(40);
   });
 
-  it('lesson IDs are sequential (lesson-01 through lesson-06)', () => {
+  it('lesson IDs include lesson-01 through lesson-40', () => {
     const ids = lessons.map((l) => l.id);
-    expect(ids).toEqual([
-      'lesson-01',
-      'lesson-02',
-      'lesson-03',
-      'lesson-04',
-      'lesson-05',
-      'lesson-06',
-    ]);
+    for (let i = 1; i <= 40; i++) {
+      expect(ids).toContain(`lesson-${String(i).padStart(2, '0')}`);
+    }
   });
 
-  it('each lesson has at least 3 exercises', () => {
+  it('each lesson has at least 3 exercises and no more than 18', () => {
     for (const lesson of lessons) {
       const exercises = getLessonExercises(lesson.id);
       expect(exercises.length).toBeGreaterThanOrEqual(3);
-      expect(exercises.length).toBeLessThanOrEqual(8);
+      expect(exercises.length).toBeLessThanOrEqual(18);
     }
   });
 

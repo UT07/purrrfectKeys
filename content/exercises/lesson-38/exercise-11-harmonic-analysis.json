@@ -1,0 +1,141 @@
+{
+  "id": "lesson-38-ex-11",
+  "version": 1,
+  "metadata": {
+    "title": "Harmonic Analysis",
+    "description": "Play through a piece identifying the harmonic function",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "chord-transitions",
+      "progression-i-iv-v",
+      "progression-i-v-vi-iv"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 6.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 8,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 11,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: smooth voice-leading transitions between inversions of c.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Harmonic Analysis! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

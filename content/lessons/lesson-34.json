@@ -1,0 +1,139 @@
+{
+  "id": "lesson-34",
+  "version": 1,
+  "metadata": {
+    "title": "Performance Repertoire: Classical",
+    "description": "Build your classical repertoire with complete arranged pieces",
+    "difficulty": 4,
+    "estimatedMinutes": 48,
+    "skills": [
+      "full-piece-classical",
+      "performance-prep",
+      "rubato-intro",
+      "repertoire-building"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-34-ex-01",
+      "title": "Minuet in C",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-02",
+      "title": "Sonatina Movement 1",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-03",
+      "title": "Aria Arrangement",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-04",
+      "title": "March in D",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-05",
+      "title": "Invention-Style Piece",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-06",
+      "title": "Run-Through Practice 1",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-07",
+      "title": "Run-Through Practice 2",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-08",
+      "title": "Recovery Practice",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-09",
+      "title": "Flexible Tempo 1",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-10",
+      "title": "Flexible Tempo 2",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-11",
+      "title": "Romantic Rubato",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-12",
+      "title": "Bagatelle in Am",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-13",
+      "title": "Prelude in C",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-14",
+      "title": "Waltz in G",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-15",
+      "title": "Rondo in F",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-16",
+      "title": "Gavotte in D",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-17",
+      "title": "Concert Performance",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-34-ex-18",
+      "title": "Theme and Variation",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-34-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-24"
+  },
+  "xpReward": 800,
+  "estimatedMinutes": 48
+}

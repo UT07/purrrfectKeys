@@ -1,0 +1,139 @@
+{
+  "id": "lesson-36",
+  "version": 1,
+  "metadata": {
+    "title": "Improvisation & Creativity",
+    "description": "Learn to improvise over chord progressions and create your own melodies",
+    "difficulty": 4,
+    "estimatedMinutes": 48,
+    "skills": [
+      "blues-scale",
+      "year-one-mastery",
+      "repertoire-building",
+      "key-fluency"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-36-ex-01",
+      "title": "Blues Scale in G",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-02",
+      "title": "Blues Scale in F",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-03",
+      "title": "Call & Response Blues",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-04",
+      "title": "Pentatonic Improvisation",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-05",
+      "title": "Chord Tone Targeting",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-06",
+      "title": "Rhythmic Variation",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-07",
+      "title": "Theme Variation 1",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-08",
+      "title": "Theme Variation 2",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-09",
+      "title": "Theme Variation 3",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-10",
+      "title": "Modulating Solo",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-11",
+      "title": "Minor Key Improv",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-12",
+      "title": "Question & Answer",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-13",
+      "title": "Melodic Embellishment",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-14",
+      "title": "Compose Your Intro",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-15",
+      "title": "Compose Your Ending",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-16",
+      "title": "Jazz-Blues Combo",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-17",
+      "title": "Free Improvisation",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-36-ex-18",
+      "title": "Improvisation Showcase",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-36-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-35"
+  },
+  "xpReward": 800,
+  "estimatedMinutes": 48
+}

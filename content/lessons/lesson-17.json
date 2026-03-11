@@ -1,0 +1,84 @@
+{
+  "id": "lesson-17",
+  "version": 1,
+  "metadata": {
+    "title": "Triplets & Waltz Time",
+    "description": "Master triplet rhythms and explore 3/4 time with waltz-style pieces",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "triplet-rhythm",
+      "3-4-time",
+      "6-8-time"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-17-ex-01",
+      "title": "Triplet Introduction",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-02",
+      "title": "Triplet Patterns",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-03",
+      "title": "Triplet Melody",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-04",
+      "title": "First Waltz",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-05",
+      "title": "Waltz Melody",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-06",
+      "title": "Waltz with Dynamics",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-07",
+      "title": "6/8 Time Feel",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-08",
+      "title": "6/8 Melody",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-17-ex-09",
+      "title": "Irish-Style 6/8",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-17-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-12"
+  },
+  "xpReward": 500,
+  "estimatedMinutes": 25
+}

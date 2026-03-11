@@ -1,0 +1,148 @@
+{
+  "id": "lesson-28-test",
+  "version": 1,
+  "metadata": {
+    "title": "Lesson 28 Mastery Test",
+    "description": "Prove your compound meters & special time signatures skills -- play from memory!",
+    "difficulty": 4,
+    "estimatedMinutes": 3,
+    "skills": [
+      "6-8-time",
+      "3-4-time",
+      "ties-across-barline"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 63,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": false
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 59,
+      "startBeat": 5.5,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 9,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 9.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 10,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 11.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 13,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 13.5,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Mastery test -- play from memory! No green hints this time.",
+    "commonMistakes": [],
+    "successMessage": "You've mastered Compound Meters & Special Time Signatures! Ready for the next lesson."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

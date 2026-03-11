@@ -1,0 +1,140 @@
+{
+  "id": "lesson-29",
+  "version": 1,
+  "metadata": {
+    "title": "Advanced Arpeggios & Technique",
+    "description": "Fast arpeggios, wide-range patterns, and hand-crossing technique",
+    "difficulty": 4,
+    "estimatedMinutes": 48,
+    "skills": [
+      "c-major-arpeggio",
+      "g-major-arpeggio",
+      "minor-arpeggios",
+      "arpeggio-patterns",
+      "hands-arpeggio"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-29-ex-01",
+      "title": "C Major Arpeggio Speed",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-02",
+      "title": "C Major Arpeggio 3 Octaves",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-03",
+      "title": "G Major Arpeggio Speed",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-04",
+      "title": "G Major Arpeggio Extended",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-05",
+      "title": "A Minor Arpeggio Speed",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-06",
+      "title": "D Minor Arpeggio",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-07",
+      "title": "E Minor Arpeggio",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-08",
+      "title": "Root-5th-8th Pattern",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-09",
+      "title": "Inversed Arpeggios",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-10",
+      "title": "Diminished Arpeggio",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-11",
+      "title": "Augmented Arpeggio",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-12",
+      "title": "Two-Hand Arpeggios in C",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-13",
+      "title": "Two-Hand Arpeggios in G",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-14",
+      "title": "Contrary Motion Arpeggios",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-15",
+      "title": "Hand Crossing Arpeggio",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-16",
+      "title": "Arpeggio Etude 1",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-17",
+      "title": "Arpeggio Etude 2",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-29-ex-18",
+      "title": "Arpeggio Virtuoso",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-29-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-20"
+  },
+  "xpReward": 700,
+  "estimatedMinutes": 48
+}

@@ -1,0 +1,117 @@
+{
+  "id": "lesson-07-ex-07",
+  "version": 1,
+  "metadata": {
+    "title": "Chromatic Scale Up",
+    "description": "Play the chromatic scale ascending from C4 to C5",
+    "difficulty": 2,
+    "estimatedMinutes": 2,
+    "skills": [
+      "find-black-keys",
+      "sharp-notes-rh",
+      "flat-notes-lh"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 65,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 61,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 63,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 5,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [
+      70,
+      85,
+      95
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: chromatic scale one octave c4-c5 ascending and descending.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Chromatic Scale Up! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

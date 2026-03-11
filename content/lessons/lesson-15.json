@@ -1,0 +1,83 @@
+{
+  "id": "lesson-15",
+  "version": 1,
+  "metadata": {
+    "title": "Chord Songs & Transitions",
+    "description": "Apply your chord skills to real songs with smooth voice-leading transitions",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "chord-songs",
+      "chord-transitions"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-15-ex-01",
+      "title": "Pop Song Arrangement 1",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-02",
+      "title": "Pop Song Arrangement 2",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-03",
+      "title": "Ballad Style",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-04",
+      "title": "Smooth C to F Transition",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-05",
+      "title": "Voice Leading Basics",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-06",
+      "title": "Four-Chord Voice Leading",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-07",
+      "title": "Chord Transition Speed",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-08",
+      "title": "Song with Transitions",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-15-ex-09",
+      "title": "Two-Hand Chord Song",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-15-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-14"
+  },
+  "xpReward": 550,
+  "estimatedMinutes": 25
+}

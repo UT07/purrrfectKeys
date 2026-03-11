@@ -1,0 +1,85 @@
+{
+  "id": "lesson-13",
+  "version": 1,
+  "metadata": {
+    "title": "Major & Minor Triads",
+    "description": "Build and play major and minor triads — the building blocks of harmony",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "major-triads-root",
+      "minor-triads",
+      "chord-inversions-intro",
+      "progression-i-iv-v"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-13-ex-01",
+      "title": "C Major Triad",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-02",
+      "title": "F & G Major Triads",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-03",
+      "title": "A Minor Triad",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-04",
+      "title": "D Minor & E Minor Triads",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-05",
+      "title": "First Inversions",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-06",
+      "title": "Second Inversions",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-07",
+      "title": "I-IV-V in C Major",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-08",
+      "title": "I-IV-V with Bass",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-13-ex-09",
+      "title": "Chord Strumming Pattern",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-13-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-12"
+  },
+  "xpReward": 500,
+  "estimatedMinutes": 25
+}

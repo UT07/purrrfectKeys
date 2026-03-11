@@ -1,0 +1,86 @@
+{
+  "id": "lesson-22",
+  "version": 1,
+  "metadata": {
+    "title": "Sight Reading",
+    "description": "Develop the ability to read and play music at sight in various keys",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "sight-reading-c",
+      "sight-reading-g",
+      "sight-reading-mixed",
+      "interval-recognition",
+      "key-fluency"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-22-ex-01",
+      "title": "Sight Reading in C (1)",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-02",
+      "title": "Sight Reading in C (2)",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-03",
+      "title": "Sight Reading in G",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-04",
+      "title": "G Major Sight Reading Challenge",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-05",
+      "title": "Multi-Key Sight Reading",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-06",
+      "title": "Interval Leaps",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-07",
+      "title": "Interval Identification",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-08",
+      "title": "Five-Key Scales",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-22-ex-09",
+      "title": "Key Change Piece",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-22-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-21"
+  },
+  "xpReward": 650,
+  "estimatedMinutes": 25
+}

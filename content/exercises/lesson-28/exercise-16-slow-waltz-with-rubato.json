@@ -1,0 +1,183 @@
+{
+  "id": "lesson-28-ex-16",
+  "version": 1,
+  "metadata": {
+    "title": "Slow Waltz with Rubato",
+    "description": "Expressive slow waltz with flexible timing",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "6-8-time",
+      "3-4-time",
+      "ties-across-barline"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 85,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 59,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 13,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 13.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 14,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 15.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 16,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 17,
+      "durationBeats": 1,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: waltz time 3/4 — three beats per measure — simple melody.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Slow Waltz with Rubato! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

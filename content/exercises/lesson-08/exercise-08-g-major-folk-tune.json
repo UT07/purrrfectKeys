@@ -1,0 +1,117 @@
+{
+  "id": "lesson-08-ex-08",
+  "version": 1,
+  "metadata": {
+    "title": "G Major Folk Tune",
+    "description": "A folk-style melody in G major using quarter and half notes",
+    "difficulty": 2,
+    "estimatedMinutes": 2,
+    "skills": [
+      "g-major-scale-rh",
+      "g-major-scale-lh",
+      "g-major-hands"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 73,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "G",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 72,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 2,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 2.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [
+      70,
+      85,
+      95
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: simple melody in g major with f# accidental.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on G Major Folk Tune! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "id": "lesson-27",
+  "version": 1,
+  "metadata": {
+    "title": "Advanced Rhythm Patterns",
+    "description": "Master complex rhythms: swing, syncopation, cross-rhythms, and mixed meters",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "syncopation-intro",
+      "swing-rhythm",
+      "mixed-rhythms",
+      "triplet-rhythm",
+      "rhythm-reading"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-27-ex-01",
+      "title": "Off-Beat Accents 2",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-02",
+      "title": "Syncopated Melody in G",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-03",
+      "title": "Cross-Rhythm Intro",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-04",
+      "title": "Swing Eighths Practice",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-05",
+      "title": "Blues Shuffle",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-06",
+      "title": "Jazz Waltz",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-07",
+      "title": "Swing Song",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-08",
+      "title": "Triplet vs. Duplet",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-09",
+      "title": "Complex Rhythmic Patterns",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-10",
+      "title": "Rhythmic Challenge in Am",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-11",
+      "title": "Triplet Melody",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-12",
+      "title": "Triplet Accompaniment",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-13",
+      "title": "Triplet Speed Drill",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-14",
+      "title": "Rhythm Reading Level 2",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-15",
+      "title": "Rhythm Reading Level 3",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-16",
+      "title": "Funk Rhythm Pattern",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-17",
+      "title": "Latin Rhythm Pattern",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-27-ex-18",
+      "title": "Walking Bass & Swing",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-27-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-18"
+  },
+  "xpReward": 650,
+  "estimatedMinutes": 48
+}

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-03-09T19:32:43.950Z",
+  "generatedAt": "2026-03-11T11:42:37.681Z",
   "exercises": [
     {
       "id": "lesson-01-ex-01",
@@ -507,6 +507,6010 @@
       ],
       "type": "test",
       "order": 99
+    },
+    {
+      "id": "lesson-07-ex-01",
+      "lessonId": "lesson-07",
+      "title": "Find the Black Keys",
+      "difficulty": 1,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-07-ex-02",
+      "lessonId": "lesson-07",
+      "title": "Black Key Groups",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-07-ex-03",
+      "lessonId": "lesson-07",
+      "title": "F-Sharp & C-Sharp",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-07-ex-04",
+      "lessonId": "lesson-07",
+      "title": "G-Sharp Explorer",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-07-ex-05",
+      "lessonId": "lesson-07",
+      "title": "B-Flat & E-Flat Left Hand",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-07-ex-06",
+      "lessonId": "lesson-07",
+      "title": "Half Steps & Whole Steps",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-07-ex-07",
+      "lessonId": "lesson-07",
+      "title": "Chromatic Scale Up",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-07-ex-08",
+      "lessonId": "lesson-07",
+      "title": "Chromatic Scale Down",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-07-ex-09",
+      "lessonId": "lesson-07",
+      "title": "Pentatonic Melody",
+      "difficulty": 2,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-07-ex-10",
+      "lessonId": "lesson-07",
+      "title": "Black Key Song",
+      "difficulty": 3,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-07-test",
+      "lessonId": "lesson-07",
+      "title": "Lesson 7 Mastery Test",
+      "difficulty": 3,
+      "skills": [
+        "find-black-keys",
+        "sharp-notes-rh",
+        "flat-notes-lh"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-08-ex-01",
+      "lessonId": "lesson-08",
+      "title": "G Major Scale Right Hand",
+      "difficulty": 2,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-08-ex-02",
+      "lessonId": "lesson-08",
+      "title": "G Major Patterns",
+      "difficulty": 2,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-08-ex-03",
+      "lessonId": "lesson-08",
+      "title": "G Major Scale Left Hand",
+      "difficulty": 2,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-08-ex-04",
+      "lessonId": "lesson-08",
+      "title": "G Major Left Hand Patterns",
+      "difficulty": 2,
+      "skills": [
+        "g-major-scale-lh"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-08-ex-05",
+      "lessonId": "lesson-08",
+      "title": "G Major Both Hands",
+      "difficulty": 3,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-08-ex-06",
+      "lessonId": "lesson-08",
+      "title": "G Major Contrary Motion",
+      "difficulty": 3,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-08-ex-07",
+      "lessonId": "lesson-08",
+      "title": "Simple G Major Melody",
+      "difficulty": 2,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-08-ex-08",
+      "lessonId": "lesson-08",
+      "title": "G Major Folk Tune",
+      "difficulty": 2,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-08-ex-09",
+      "lessonId": "lesson-08",
+      "title": "G Major with Eighth Notes",
+      "difficulty": 3,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-08-test",
+      "lessonId": "lesson-08",
+      "title": "Lesson 8 Mastery Test",
+      "difficulty": 3,
+      "skills": [
+        "g-major-scale-rh",
+        "g-major-scale-lh",
+        "g-major-hands"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-09-ex-01",
+      "lessonId": "lesson-09",
+      "title": "F Major Scale Right Hand",
+      "difficulty": 2,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-09-ex-02",
+      "lessonId": "lesson-09",
+      "title": "F Major Patterns",
+      "difficulty": 2,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-09-ex-03",
+      "lessonId": "lesson-09",
+      "title": "F Major Scale Left Hand",
+      "difficulty": 2,
+      "skills": [
+        "f-major-scale-lh"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-09-ex-04",
+      "lessonId": "lesson-09",
+      "title": "F Major Left Hand Drills",
+      "difficulty": 3,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-09-ex-05",
+      "lessonId": "lesson-09",
+      "title": "F Major Both Hands",
+      "difficulty": 3,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-09-ex-06",
+      "lessonId": "lesson-09",
+      "title": "F Major Hands Together Melody",
+      "difficulty": 3,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-09-ex-07",
+      "lessonId": "lesson-09",
+      "title": "C to G Key Change",
+      "difficulty": 2,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-09-ex-08",
+      "lessonId": "lesson-09",
+      "title": "C to F Key Change",
+      "difficulty": 2,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-09-ex-09",
+      "lessonId": "lesson-09",
+      "title": "Three-Key Journey",
+      "difficulty": 3,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-09-test",
+      "lessonId": "lesson-09",
+      "title": "Lesson 9 Mastery Test",
+      "difficulty": 3,
+      "skills": [
+        "f-major-scale-rh",
+        "f-major-scale-lh",
+        "f-major-hands"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-10-ex-01",
+      "lessonId": "lesson-10",
+      "title": "A Natural Minor Scale",
+      "difficulty": 2,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-10-ex-02",
+      "lessonId": "lesson-10",
+      "title": "A Minor Patterns",
+      "difficulty": 2,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-10-ex-03",
+      "lessonId": "lesson-10",
+      "title": "Sad Song in A Minor",
+      "difficulty": 2,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-10-ex-04",
+      "lessonId": "lesson-10",
+      "title": "A Minor Lament",
+      "difficulty": 3,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-10-ex-05",
+      "lessonId": "lesson-10",
+      "title": "Major vs Minor Comparison",
+      "difficulty": 2,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-10-ex-06",
+      "lessonId": "lesson-10",
+      "title": "Happy to Sad",
+      "difficulty": 2,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-10-ex-07",
+      "lessonId": "lesson-10",
+      "title": "A Harmonic Minor Scale",
+      "difficulty": 2,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-10-ex-08",
+      "lessonId": "lesson-10",
+      "title": "Harmonic Minor Melody",
+      "difficulty": 3,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-10-ex-09",
+      "lessonId": "lesson-10",
+      "title": "A Minor with Both Hands",
+      "difficulty": 3,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-10-test",
+      "lessonId": "lesson-10",
+      "title": "Lesson 10 Mastery Test",
+      "difficulty": 3,
+      "skills": [
+        "a-minor-natural",
+        "a-minor-melodies",
+        "minor-vs-major"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-11-ex-01",
+      "lessonId": "lesson-11",
+      "title": "D Minor Scale",
+      "difficulty": 2,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-11-ex-02",
+      "lessonId": "lesson-11",
+      "title": "D Minor Scale Drills",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-11-ex-03",
+      "lessonId": "lesson-11",
+      "title": "D Minor Melody",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-11-ex-04",
+      "lessonId": "lesson-11",
+      "title": "D Minor Dance",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-11-ex-05",
+      "lessonId": "lesson-11",
+      "title": "E Minor Scale",
+      "difficulty": 2,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-11-ex-06",
+      "lessonId": "lesson-11",
+      "title": "E Minor Patterns",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-11-ex-07",
+      "lessonId": "lesson-11",
+      "title": "Minor Key Song 1",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-11-ex-08",
+      "lessonId": "lesson-11",
+      "title": "Minor Key Song 2",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-11-ex-09",
+      "lessonId": "lesson-11",
+      "title": "Three Minor Keys",
+      "difficulty": 3,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-11-test",
+      "lessonId": "lesson-11",
+      "title": "Lesson 11 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "d-minor-scale",
+        "d-minor-melodies",
+        "e-minor-scale"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-12-ex-01",
+      "lessonId": "lesson-12",
+      "title": "Dotted Quarter Notes",
+      "difficulty": 2,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-12-ex-02",
+      "lessonId": "lesson-12",
+      "title": "Dotted Rhythm Patterns",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-12-ex-03",
+      "lessonId": "lesson-12",
+      "title": "Dotted Rhythm Melody",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-12-ex-04",
+      "lessonId": "lesson-12",
+      "title": "Off-Beat Accents",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-12-ex-05",
+      "lessonId": "lesson-12",
+      "title": "Syncopated Melody",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-12-ex-06",
+      "lessonId": "lesson-12",
+      "title": "Funky Syncopation",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-12-ex-07",
+      "lessonId": "lesson-12",
+      "title": "Tied Notes Basics",
+      "difficulty": 2,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-12-ex-08",
+      "lessonId": "lesson-12",
+      "title": "Tied Note Melodies",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-12-ex-09",
+      "lessonId": "lesson-12",
+      "title": "Rhythm Mix",
+      "difficulty": 3,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-12-test",
+      "lessonId": "lesson-12",
+      "title": "Lesson 12 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "dotted-quarter-notes",
+        "syncopation-intro",
+        "ties-across-barline"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-13-ex-01",
+      "lessonId": "lesson-13",
+      "title": "C Major Triad",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-13-ex-02",
+      "lessonId": "lesson-13",
+      "title": "F & G Major Triads",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-13-ex-03",
+      "lessonId": "lesson-13",
+      "title": "A Minor Triad",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-13-ex-04",
+      "lessonId": "lesson-13",
+      "title": "D Minor & E Minor Triads",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-13-ex-05",
+      "lessonId": "lesson-13",
+      "title": "First Inversions",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-13-ex-06",
+      "lessonId": "lesson-13",
+      "title": "Second Inversions",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-13-ex-07",
+      "lessonId": "lesson-13",
+      "title": "I-IV-V in C Major",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-13-ex-08",
+      "lessonId": "lesson-13",
+      "title": "I-IV-V with Bass",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-13-ex-09",
+      "lessonId": "lesson-13",
+      "title": "Chord Strumming Pattern",
+      "difficulty": 3,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-13-test",
+      "lessonId": "lesson-13",
+      "title": "Lesson 13 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "major-triads-root",
+        "minor-triads",
+        "chord-inversions-intro"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-14-ex-01",
+      "lessonId": "lesson-14",
+      "title": "I-IV-V Revisited",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-14-ex-02",
+      "lessonId": "lesson-14",
+      "title": "50s Doo-Wop Progression",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-14-ex-03",
+      "lessonId": "lesson-14",
+      "title": "Doo-Wop with Rhythm",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-14-ex-04",
+      "lessonId": "lesson-14",
+      "title": "Pop Axis Progression",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-14-ex-05",
+      "lessonId": "lesson-14",
+      "title": "Axis with Melody",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-14-ex-06",
+      "lessonId": "lesson-14",
+      "title": "Bass-Chord-Chord Pattern",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-14-ex-07",
+      "lessonId": "lesson-14",
+      "title": "Oom-Pah Accompaniment",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-14-ex-08",
+      "lessonId": "lesson-14",
+      "title": "Alberti Bass Pattern",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-14-ex-09",
+      "lessonId": "lesson-14",
+      "title": "Alberti Bass with Chords",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-14-test",
+      "lessonId": "lesson-14",
+      "title": "Lesson 14 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-vi-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-15-ex-01",
+      "lessonId": "lesson-15",
+      "title": "Pop Song Arrangement 1",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-15-ex-02",
+      "lessonId": "lesson-15",
+      "title": "Pop Song Arrangement 2",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-15-ex-03",
+      "lessonId": "lesson-15",
+      "title": "Ballad Style",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-15-ex-04",
+      "lessonId": "lesson-15",
+      "title": "Smooth C to F Transition",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-15-ex-05",
+      "lessonId": "lesson-15",
+      "title": "Voice Leading Basics",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-15-ex-06",
+      "lessonId": "lesson-15",
+      "title": "Four-Chord Voice Leading",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-15-ex-07",
+      "lessonId": "lesson-15",
+      "title": "Chord Transition Speed",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-15-ex-08",
+      "lessonId": "lesson-15",
+      "title": "Song with Transitions",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-15-ex-09",
+      "lessonId": "lesson-15",
+      "title": "Two-Hand Chord Song",
+      "difficulty": 3,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-15-test",
+      "lessonId": "lesson-15",
+      "title": "Lesson 15 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "chord-songs",
+        "chord-transitions"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-16-ex-01",
+      "lessonId": "lesson-16",
+      "title": "C Major Arpeggio",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-16-ex-02",
+      "lessonId": "lesson-16",
+      "title": "C Arpeggio Variations",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-16-ex-03",
+      "lessonId": "lesson-16",
+      "title": "G Major Arpeggio",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-16-ex-04",
+      "lessonId": "lesson-16",
+      "title": "A Minor Arpeggio",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-16-ex-05",
+      "lessonId": "lesson-16",
+      "title": "D Minor Arpeggio",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-16-ex-06",
+      "lessonId": "lesson-16",
+      "title": "1-3-5-8 Pattern",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-16-ex-07",
+      "lessonId": "lesson-16",
+      "title": "Arpeggio Pattern Variations",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-16-ex-08",
+      "lessonId": "lesson-16",
+      "title": "Waltz Bass Pattern",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-16-ex-09",
+      "lessonId": "lesson-16",
+      "title": "Stride Pattern",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-16-ex-10",
+      "lessonId": "lesson-16",
+      "title": "Arpeggios Both Hands",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-16-ex-11",
+      "lessonId": "lesson-16",
+      "title": "Arpeggio Accompaniment Song",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-16-test",
+      "lessonId": "lesson-16",
+      "title": "Lesson 16 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-17-ex-01",
+      "lessonId": "lesson-17",
+      "title": "Triplet Introduction",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-17-ex-02",
+      "lessonId": "lesson-17",
+      "title": "Triplet Patterns",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-17-ex-03",
+      "lessonId": "lesson-17",
+      "title": "Triplet Melody",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-17-ex-04",
+      "lessonId": "lesson-17",
+      "title": "First Waltz",
+      "difficulty": 2,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-17-ex-05",
+      "lessonId": "lesson-17",
+      "title": "Waltz Melody",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-17-ex-06",
+      "lessonId": "lesson-17",
+      "title": "Waltz with Dynamics",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-17-ex-07",
+      "lessonId": "lesson-17",
+      "title": "6/8 Time Feel",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-17-ex-08",
+      "lessonId": "lesson-17",
+      "title": "6/8 Melody",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-17-ex-09",
+      "lessonId": "lesson-17",
+      "title": "Irish-Style 6/8",
+      "difficulty": 3,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-17-test",
+      "lessonId": "lesson-17",
+      "title": "Lesson 17 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "triplet-rhythm",
+        "3-4-time",
+        "6-8-time"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-18-ex-01",
+      "lessonId": "lesson-18",
+      "title": "Swing Eighth Notes",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-18-ex-02",
+      "lessonId": "lesson-18",
+      "title": "Swing Melody",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-18-ex-03",
+      "lessonId": "lesson-18",
+      "title": "Swing Blues",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-18-ex-04",
+      "lessonId": "lesson-18",
+      "title": "Rhythm Reading Level 1",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-18-ex-05",
+      "lessonId": "lesson-18",
+      "title": "Rhythm Reading Level 2",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-18-ex-06",
+      "lessonId": "lesson-18",
+      "title": "Rhythm Reading in 3/4",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-18-ex-07",
+      "lessonId": "lesson-18",
+      "title": "Rhythm Medley",
+      "difficulty": 3,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-18-ex-08",
+      "lessonId": "lesson-18",
+      "title": "Rhythm Challenge",
+      "difficulty": 4,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-18-ex-09",
+      "lessonId": "lesson-18",
+      "title": "Rhythm Showcase",
+      "difficulty": 4,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-18-test",
+      "lessonId": "lesson-18",
+      "title": "Lesson 18 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "swing-rhythm",
+        "rhythm-reading",
+        "mixed-rhythms"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-19-ex-01",
+      "lessonId": "lesson-19",
+      "title": "Piano & Forte",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-19-ex-02",
+      "lessonId": "lesson-19",
+      "title": "Dynamic Contrast",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-19-ex-03",
+      "lessonId": "lesson-19",
+      "title": "Crescendo Practice",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-19-ex-04",
+      "lessonId": "lesson-19",
+      "title": "Wave Dynamics",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-19-ex-05",
+      "lessonId": "lesson-19",
+      "title": "Staccato Bouncing",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-19-ex-06",
+      "lessonId": "lesson-19",
+      "title": "Staccato vs Legato",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-19-ex-07",
+      "lessonId": "lesson-19",
+      "title": "Smooth Legato",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-19-ex-08",
+      "lessonId": "lesson-19",
+      "title": "Legato Melody",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-19-ex-09",
+      "lessonId": "lesson-19",
+      "title": "Accented Notes",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-19-test",
+      "lessonId": "lesson-19",
+      "title": "Lesson 19 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-20-ex-01",
+      "lessonId": "lesson-20",
+      "title": "Sustain Pedal Basics",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-20-ex-02",
+      "lessonId": "lesson-20",
+      "title": "Pedaled Chords",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-20-ex-03",
+      "lessonId": "lesson-20",
+      "title": "Legato Pedaling",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-20-ex-04",
+      "lessonId": "lesson-20",
+      "title": "4-Bar Phrases",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-20-ex-05",
+      "lessonId": "lesson-20",
+      "title": "Question & Answer",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-20-ex-06",
+      "lessonId": "lesson-20",
+      "title": "Phrase Shaping",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-20-ex-07",
+      "lessonId": "lesson-20",
+      "title": "Expressive Ballad",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-20-ex-08",
+      "lessonId": "lesson-20",
+      "title": "Classical Cantabile",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-20-ex-09",
+      "lessonId": "lesson-20",
+      "title": "Expressive Showcase",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-20-test",
+      "lessonId": "lesson-20",
+      "title": "Lesson 20 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "phrasing",
+        "expressive-songs"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-21-ex-01",
+      "lessonId": "lesson-21",
+      "title": "D Major Scale RH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-21-ex-02",
+      "lessonId": "lesson-21",
+      "title": "D Major Scale LH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-21-ex-03",
+      "lessonId": "lesson-21",
+      "title": "D Major Melody",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-21-ex-04",
+      "lessonId": "lesson-21",
+      "title": "Bb Major Scale RH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-21-ex-05",
+      "lessonId": "lesson-21",
+      "title": "Bb Major Scale LH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-21-ex-06",
+      "lessonId": "lesson-21",
+      "title": "Bb Major Melody",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-21-ex-07",
+      "lessonId": "lesson-21",
+      "title": "B Minor (relative of D)",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-21-ex-08",
+      "lessonId": "lesson-21",
+      "title": "G Minor (relative of Bb)",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-21-ex-09",
+      "lessonId": "lesson-21",
+      "title": "Two-Key Piece",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-21-test",
+      "lessonId": "lesson-21",
+      "title": "Lesson 21 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "relative-minor"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-22-ex-01",
+      "lessonId": "lesson-22",
+      "title": "Sight Reading in C (1)",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-22-ex-02",
+      "lessonId": "lesson-22",
+      "title": "Sight Reading in C (2)",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-22-ex-03",
+      "lessonId": "lesson-22",
+      "title": "Sight Reading in G",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-22-ex-04",
+      "lessonId": "lesson-22",
+      "title": "G Major Sight Reading Challenge",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-22-ex-05",
+      "lessonId": "lesson-22",
+      "title": "Multi-Key Sight Reading",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-22-ex-06",
+      "lessonId": "lesson-22",
+      "title": "Interval Leaps",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-22-ex-07",
+      "lessonId": "lesson-22",
+      "title": "Interval Identification",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-22-ex-08",
+      "lessonId": "lesson-22",
+      "title": "Five-Key Scales",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-22-ex-09",
+      "lessonId": "lesson-22",
+      "title": "Key Change Piece",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-22-test",
+      "lessonId": "lesson-22",
+      "title": "Lesson 22 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-23-ex-01",
+      "lessonId": "lesson-23",
+      "title": "Play-Through Challenge",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-23-ex-02",
+      "lessonId": "lesson-23",
+      "title": "Performance Mindset",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-23-ex-03",
+      "lessonId": "lesson-23",
+      "title": "Rubato Expression",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-23-ex-04",
+      "lessonId": "lesson-23",
+      "title": "Rubato in Practice",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-23-ex-05",
+      "lessonId": "lesson-23",
+      "title": "Classical Minuet",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-23-ex-06",
+      "lessonId": "lesson-23",
+      "title": "Sonatina Movement",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-23-ex-07",
+      "lessonId": "lesson-23",
+      "title": "Pop Piano Arrangement",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-23-ex-08",
+      "lessonId": "lesson-23",
+      "title": "Ballad Arrangement",
+      "difficulty": 4,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-23-ex-09",
+      "lessonId": "lesson-23",
+      "title": "Blues Scale & Riffs",
+      "difficulty": 3,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-23-test",
+      "lessonId": "lesson-23",
+      "title": "Lesson 23 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "performance-prep",
+        "rubato-intro",
+        "intermediate-classical"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-24-ex-01",
+      "lessonId": "lesson-24",
+      "title": "Classical Performance 1",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-24-ex-02",
+      "lessonId": "lesson-24",
+      "title": "Classical Performance 2",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-24-ex-03",
+      "lessonId": "lesson-24",
+      "title": "Pop Performance",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-24-ex-04",
+      "lessonId": "lesson-24",
+      "title": "Your Favorite Song",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-24-ex-05",
+      "lessonId": "lesson-24",
+      "title": "Concert Piece in G",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-24-ex-06",
+      "lessonId": "lesson-24",
+      "title": "Concert Piece in F",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-24-ex-07",
+      "lessonId": "lesson-24",
+      "title": "Scale & Chord Review",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-24-ex-08",
+      "lessonId": "lesson-24",
+      "title": "Rhythm & Expression Review",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-24-ex-09",
+      "lessonId": "lesson-24",
+      "title": "Grand Finale",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-24-test",
+      "lessonId": "lesson-24",
+      "title": "Lesson 24 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "full-piece-pop",
+        "repertoire-building"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-25-ex-01",
+      "lessonId": "lesson-25",
+      "title": "I-IV-V in G Major",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-25-ex-02",
+      "lessonId": "lesson-25",
+      "title": "I-IV-V in F Major",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-25-ex-03",
+      "lessonId": "lesson-25",
+      "title": "I-IV-V with Inversions",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-25-ex-04",
+      "lessonId": "lesson-25",
+      "title": "Pop Progression in G",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-25-ex-05",
+      "lessonId": "lesson-25",
+      "title": "Pop Progression in F",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-25-ex-06",
+      "lessonId": "lesson-25",
+      "title": "Pop Ballad Pattern",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-25-ex-07",
+      "lessonId": "lesson-25",
+      "title": "Smooth Transitions G Major",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-25-ex-08",
+      "lessonId": "lesson-25",
+      "title": "Smooth Transitions F Major",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-25-ex-09",
+      "lessonId": "lesson-25",
+      "title": "Cross-Key Transitions",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-25-ex-10",
+      "lessonId": "lesson-25",
+      "title": "Triads in G Major",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-25-ex-11",
+      "lessonId": "lesson-25",
+      "title": "Triads in F Major",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-25-ex-12",
+      "lessonId": "lesson-25",
+      "title": "Triad Speed Drill",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-25-ex-13",
+      "lessonId": "lesson-25",
+      "title": "Minor Triads in D Minor",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-25-ex-14",
+      "lessonId": "lesson-25",
+      "title": "Minor Triads Speed",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-25-ex-15",
+      "lessonId": "lesson-25",
+      "title": "12-Bar Blues in C",
+      "difficulty": 3,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-25-ex-16",
+      "lessonId": "lesson-25",
+      "title": "Chord Melody Combo",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-25-ex-17",
+      "lessonId": "lesson-25",
+      "title": "Walking Bass Chords",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-25-ex-18",
+      "lessonId": "lesson-25",
+      "title": "Full Pop Song Structure",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-25-test",
+      "lessonId": "lesson-25",
+      "title": "Lesson 25 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv",
+        "chord-transitions"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-26-ex-01",
+      "lessonId": "lesson-26",
+      "title": "Alberti Bass in C",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-26-ex-02",
+      "lessonId": "lesson-26",
+      "title": "Alberti Bass in G",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-26-ex-03",
+      "lessonId": "lesson-26",
+      "title": "Alberti Bass in F",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-26-ex-04",
+      "lessonId": "lesson-26",
+      "title": "Alberti with Melody",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-26-ex-05",
+      "lessonId": "lesson-26",
+      "title": "Oom-Pah in C",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-26-ex-06",
+      "lessonId": "lesson-26",
+      "title": "Oom-Pah in G",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-26-ex-07",
+      "lessonId": "lesson-26",
+      "title": "Oom-Pah-Pah Waltz",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-26-ex-08",
+      "lessonId": "lesson-26",
+      "title": "Waltz with Melody",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-26-ex-09",
+      "lessonId": "lesson-26",
+      "title": "Stride Left Hand",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-26-ex-10",
+      "lessonId": "lesson-26",
+      "title": "Stride Pattern in G",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-26-ex-11",
+      "lessonId": "lesson-26",
+      "title": "Rock Rhythm Pattern",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-26-ex-12",
+      "lessonId": "lesson-26",
+      "title": "Ballad Arpeggios",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-26-ex-13",
+      "lessonId": "lesson-26",
+      "title": "Classical Accompaniment 1",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-26-ex-14",
+      "lessonId": "lesson-26",
+      "title": "Pop Accompaniment 1",
+      "difficulty": 3,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-26-ex-15",
+      "lessonId": "lesson-26",
+      "title": "Waltz Song",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-26-ex-16",
+      "lessonId": "lesson-26",
+      "title": "Ballad Arrangement",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-26-ex-17",
+      "lessonId": "lesson-26",
+      "title": "Alberti Speed Challenge",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-26-ex-18",
+      "lessonId": "lesson-26",
+      "title": "Mixed Accompaniment Styles",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-26-test",
+      "lessonId": "lesson-26",
+      "title": "Lesson 26 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "alberti-bass",
+        "bass-chord-pattern",
+        "broken-chord-patterns"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-27-ex-01",
+      "lessonId": "lesson-27",
+      "title": "Off-Beat Accents 2",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-27-ex-02",
+      "lessonId": "lesson-27",
+      "title": "Syncopated Melody in G",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-27-ex-03",
+      "lessonId": "lesson-27",
+      "title": "Cross-Rhythm Intro",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-27-ex-04",
+      "lessonId": "lesson-27",
+      "title": "Swing Eighths Practice",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-27-ex-05",
+      "lessonId": "lesson-27",
+      "title": "Blues Shuffle",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-27-ex-06",
+      "lessonId": "lesson-27",
+      "title": "Jazz Waltz",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-27-ex-07",
+      "lessonId": "lesson-27",
+      "title": "Swing Song",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-27-ex-08",
+      "lessonId": "lesson-27",
+      "title": "Triplet vs. Duplet",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-27-ex-09",
+      "lessonId": "lesson-27",
+      "title": "Complex Rhythmic Patterns",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-27-ex-10",
+      "lessonId": "lesson-27",
+      "title": "Rhythmic Challenge in Am",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-27-ex-11",
+      "lessonId": "lesson-27",
+      "title": "Triplet Melody",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-27-ex-12",
+      "lessonId": "lesson-27",
+      "title": "Triplet Accompaniment",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-27-ex-13",
+      "lessonId": "lesson-27",
+      "title": "Triplet Speed Drill",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-27-ex-14",
+      "lessonId": "lesson-27",
+      "title": "Rhythm Reading Level 2",
+      "difficulty": 3,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-27-ex-15",
+      "lessonId": "lesson-27",
+      "title": "Rhythm Reading Level 3",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-27-ex-16",
+      "lessonId": "lesson-27",
+      "title": "Funk Rhythm Pattern",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-27-ex-17",
+      "lessonId": "lesson-27",
+      "title": "Latin Rhythm Pattern",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-27-ex-18",
+      "lessonId": "lesson-27",
+      "title": "Walking Bass & Swing",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-27-test",
+      "lessonId": "lesson-27",
+      "title": "Lesson 27 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "syncopation-intro",
+        "swing-rhythm",
+        "mixed-rhythms"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-28-ex-01",
+      "lessonId": "lesson-28",
+      "title": "6/8 Counting Drill",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-28-ex-02",
+      "lessonId": "lesson-28",
+      "title": "6/8 Melody in C",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-28-ex-03",
+      "lessonId": "lesson-28",
+      "title": "6/8 Irish Jig",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-28-ex-04",
+      "lessonId": "lesson-28",
+      "title": "6/8 Barcarolle",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-28-ex-05",
+      "lessonId": "lesson-28",
+      "title": "Waltz in G Major",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-28-ex-06",
+      "lessonId": "lesson-28",
+      "title": "Waltz in D Minor",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-28-ex-07",
+      "lessonId": "lesson-28",
+      "title": "Mazurka Rhythm",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-28-ex-08",
+      "lessonId": "lesson-28",
+      "title": "Minuet in C",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-28-ex-09",
+      "lessonId": "lesson-28",
+      "title": "Tied Note Patterns 2",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-28-ex-10",
+      "lessonId": "lesson-28",
+      "title": "Sustained Note Exercise",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-28-ex-11",
+      "lessonId": "lesson-28",
+      "title": "Tied Note Melody",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-28-ex-12",
+      "lessonId": "lesson-28",
+      "title": "Dotted Rhythms Level 2",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-28-ex-13",
+      "lessonId": "lesson-28",
+      "title": "Dotted Half Notes",
+      "difficulty": 3,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-28-ex-14",
+      "lessonId": "lesson-28",
+      "title": "Dotted Rhythm Song",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-28-ex-15",
+      "lessonId": "lesson-28",
+      "title": "Tarantella",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-28-ex-16",
+      "lessonId": "lesson-28",
+      "title": "Slow Waltz with Rubato",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-28-ex-17",
+      "lessonId": "lesson-28",
+      "title": "9/8 Feel Introduction",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-28-ex-18",
+      "lessonId": "lesson-28",
+      "title": "Hemiola Pattern",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-28-test",
+      "lessonId": "lesson-28",
+      "title": "Lesson 28 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "6-8-time",
+        "3-4-time",
+        "ties-across-barline"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-29-ex-01",
+      "lessonId": "lesson-29",
+      "title": "C Major Arpeggio Speed",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-29-ex-02",
+      "lessonId": "lesson-29",
+      "title": "C Major Arpeggio 3 Octaves",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-29-ex-03",
+      "lessonId": "lesson-29",
+      "title": "G Major Arpeggio Speed",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-29-ex-04",
+      "lessonId": "lesson-29",
+      "title": "G Major Arpeggio Extended",
+      "difficulty": 4,
+      "skills": [
+        "g-major-arpeggio",
+        "advanced-arpeggios",
+        "dynamics"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-29-ex-05",
+      "lessonId": "lesson-29",
+      "title": "A Minor Arpeggio Speed",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-29-ex-06",
+      "lessonId": "lesson-29",
+      "title": "D Minor Arpeggio",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-29-ex-07",
+      "lessonId": "lesson-29",
+      "title": "E Minor Arpeggio",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-29-ex-08",
+      "lessonId": "lesson-29",
+      "title": "Root-5th-8th Pattern",
+      "difficulty": 3,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-29-ex-09",
+      "lessonId": "lesson-29",
+      "title": "Inversed Arpeggios",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-29-ex-10",
+      "lessonId": "lesson-29",
+      "title": "Diminished Arpeggio",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-29-ex-11",
+      "lessonId": "lesson-29",
+      "title": "Augmented Arpeggio",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-29-ex-12",
+      "lessonId": "lesson-29",
+      "title": "Two-Hand Arpeggios in C",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-29-ex-13",
+      "lessonId": "lesson-29",
+      "title": "Two-Hand Arpeggios in G",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-29-ex-14",
+      "lessonId": "lesson-29",
+      "title": "Contrary Motion Arpeggios",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-29-ex-15",
+      "lessonId": "lesson-29",
+      "title": "Hand Crossing Arpeggio",
+      "difficulty": 5,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-29-ex-16",
+      "lessonId": "lesson-29",
+      "title": "Arpeggio Etude 1",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-29-ex-17",
+      "lessonId": "lesson-29",
+      "title": "Arpeggio Etude 2",
+      "difficulty": 4,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-29-ex-18",
+      "lessonId": "lesson-29",
+      "title": "Arpeggio Virtuoso",
+      "difficulty": 5,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-29-test",
+      "lessonId": "lesson-29",
+      "title": "Lesson 29 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "c-major-arpeggio",
+        "g-major-arpeggio",
+        "minor-arpeggios"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-30-ex-01",
+      "lessonId": "lesson-30",
+      "title": "Echo Dynamics",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-30-ex-02",
+      "lessonId": "lesson-30",
+      "title": "Terraced Dynamics",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-30-ex-03",
+      "lessonId": "lesson-30",
+      "title": "Dynamic Contrasts Song",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-30-ex-04",
+      "lessonId": "lesson-30",
+      "title": "Long Crescendo",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-30-ex-05",
+      "lessonId": "lesson-30",
+      "title": "Hairpin Dynamics",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-30-ex-06",
+      "lessonId": "lesson-30",
+      "title": "Wave Dynamics",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-30-ex-07",
+      "lessonId": "lesson-30",
+      "title": "Staccato Scale",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-30-ex-08",
+      "lessonId": "lesson-30",
+      "title": "Staccato Melody",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-30-ex-09",
+      "lessonId": "lesson-30",
+      "title": "Staccato vs Legato",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-30-ex-10",
+      "lessonId": "lesson-30",
+      "title": "Legato Scale",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-30-ex-11",
+      "lessonId": "lesson-30",
+      "title": "Singing Legato",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-30-ex-12",
+      "lessonId": "lesson-30",
+      "title": "Legato Song",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-30-ex-13",
+      "lessonId": "lesson-30",
+      "title": "Accent Patterns",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-30-ex-14",
+      "lessonId": "lesson-30",
+      "title": "Sforzando Practice",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-30-ex-15",
+      "lessonId": "lesson-30",
+      "title": "Phrase Shaping 1",
+      "difficulty": 3,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-30-ex-16",
+      "lessonId": "lesson-30",
+      "title": "Phrase Shaping 2",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-30-ex-17",
+      "lessonId": "lesson-30",
+      "title": "Expressive Etude",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-30-ex-18",
+      "lessonId": "lesson-30",
+      "title": "Romantic Melody",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-30-test",
+      "lessonId": "lesson-30",
+      "title": "Lesson 30 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "dynamics-p-f",
+        "crescendo-diminuendo",
+        "staccato-technique"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-31-ex-01",
+      "lessonId": "lesson-31",
+      "title": "Pedal Basics",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-31-ex-02",
+      "lessonId": "lesson-31",
+      "title": "Pedal with Scales",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-31-ex-03",
+      "lessonId": "lesson-31",
+      "title": "Syncopated Pedaling",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-31-ex-04",
+      "lessonId": "lesson-31",
+      "title": "Half Pedaling",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-31-ex-05",
+      "lessonId": "lesson-31",
+      "title": "Pedal Legato",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-31-ex-06",
+      "lessonId": "lesson-31",
+      "title": "Wide Legato with Pedal",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-31-ex-07",
+      "lessonId": "lesson-31",
+      "title": "Pedaled Chord Progressions",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-31-ex-08",
+      "lessonId": "lesson-31",
+      "title": "Hymn-Style Chords",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-31-ex-09",
+      "lessonId": "lesson-31",
+      "title": "Arpeggio with Pedal",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-31-ex-10",
+      "lessonId": "lesson-31",
+      "title": "Moonlight Intro",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-31-ex-11",
+      "lessonId": "lesson-31",
+      "title": "Raindrop Pattern",
+      "difficulty": 3,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-31-ex-12",
+      "lessonId": "lesson-31",
+      "title": "Nocturne Fragment",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-31-ex-13",
+      "lessonId": "lesson-31",
+      "title": "Ballade Fragment",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-31-ex-14",
+      "lessonId": "lesson-31",
+      "title": "Clean Pedal Test",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-31-ex-15",
+      "lessonId": "lesson-31",
+      "title": "Cantabile Melody",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-31-ex-16",
+      "lessonId": "lesson-31",
+      "title": "Contemporary Ballad",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-31-ex-17",
+      "lessonId": "lesson-31",
+      "title": "Pedal with Dynamics",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-31-ex-18",
+      "lessonId": "lesson-31",
+      "title": "Dreamscape",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-31-test",
+      "lessonId": "lesson-31",
+      "title": "Lesson 31 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "pedal-intro",
+        "legato-technique",
+        "chord-transitions"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-32-ex-01",
+      "lessonId": "lesson-32",
+      "title": "D Major Scale RH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-32-ex-02",
+      "lessonId": "lesson-32",
+      "title": "D Major Scale LH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-32-ex-03",
+      "lessonId": "lesson-32",
+      "title": "D Major Scale Both Hands",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-32-ex-04",
+      "lessonId": "lesson-32",
+      "title": "D Major Melody",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-32-ex-05",
+      "lessonId": "lesson-32",
+      "title": "D Major Song",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-32-ex-06",
+      "lessonId": "lesson-32",
+      "title": "Bb Major Scale RH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-32-ex-07",
+      "lessonId": "lesson-32",
+      "title": "Bb Major Scale LH",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-32-ex-08",
+      "lessonId": "lesson-32",
+      "title": "Bb Major Scale Both",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-32-ex-09",
+      "lessonId": "lesson-32",
+      "title": "Bb Major Melody",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-32-ex-10",
+      "lessonId": "lesson-32",
+      "title": "Bb Major Song",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-32-ex-11",
+      "lessonId": "lesson-32",
+      "title": "Key Switch: C to D",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-32-ex-12",
+      "lessonId": "lesson-32",
+      "title": "Key Switch: G to Bb",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-32-ex-13",
+      "lessonId": "lesson-32",
+      "title": "Four-Key Challenge",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-32-ex-14",
+      "lessonId": "lesson-32",
+      "title": "B Minor (Relative of D)",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-32-ex-15",
+      "lessonId": "lesson-32",
+      "title": "G Minor (Relative of Bb)",
+      "difficulty": 3,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-32-ex-16",
+      "lessonId": "lesson-32",
+      "title": "Major-Minor Pairs",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-32-ex-17",
+      "lessonId": "lesson-32",
+      "title": "Chromatic Key Change",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-32-ex-18",
+      "lessonId": "lesson-32",
+      "title": "D Major Arpeggio Song",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-32-test",
+      "lessonId": "lesson-32",
+      "title": "Lesson 32 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "d-major-scale",
+        "bb-major-scale",
+        "key-fluency"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-33-ex-01",
+      "lessonId": "lesson-33",
+      "title": "SR: C Major Level 1",
+      "difficulty": 2,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-33-ex-02",
+      "lessonId": "lesson-33",
+      "title": "SR: C Major Level 2",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-33-ex-03",
+      "lessonId": "lesson-33",
+      "title": "SR: C Major Level 3",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-33-ex-04",
+      "lessonId": "lesson-33",
+      "title": "SR: C Major Two Hands",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-33-ex-05",
+      "lessonId": "lesson-33",
+      "title": "SR: G Major Level 1",
+      "difficulty": 2,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-33-ex-06",
+      "lessonId": "lesson-33",
+      "title": "SR: G Major Level 2",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-33-ex-07",
+      "lessonId": "lesson-33",
+      "title": "SR: G Major Level 3",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-33-ex-08",
+      "lessonId": "lesson-33",
+      "title": "SR: G Major Two Hands",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-33-ex-09",
+      "lessonId": "lesson-33",
+      "title": "SR: F Major",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-33-ex-10",
+      "lessonId": "lesson-33",
+      "title": "SR: D Major",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-33-ex-11",
+      "lessonId": "lesson-33",
+      "title": "SR: A Minor",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-33-ex-12",
+      "lessonId": "lesson-33",
+      "title": "SR: Key Changes",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-33-ex-13",
+      "lessonId": "lesson-33",
+      "title": "Hear the Interval 1",
+      "difficulty": 2,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-33-ex-14",
+      "lessonId": "lesson-33",
+      "title": "Hear the Interval 2",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-33-ex-15",
+      "lessonId": "lesson-33",
+      "title": "Play the Interval",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-33-ex-16",
+      "lessonId": "lesson-33",
+      "title": "Interval Melody",
+      "difficulty": 3,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-33-ex-17",
+      "lessonId": "lesson-33",
+      "title": "SR: Two Hands Mixed Keys",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-33-ex-18",
+      "lessonId": "lesson-33",
+      "title": "SR: Speed Challenge",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-33-test",
+      "lessonId": "lesson-33",
+      "title": "Lesson 33 Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "sight-reading-c",
+        "sight-reading-g",
+        "sight-reading-mixed"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-34-ex-01",
+      "lessonId": "lesson-34",
+      "title": "Minuet in C",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-34-ex-02",
+      "lessonId": "lesson-34",
+      "title": "Sonatina Movement 1",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-34-ex-03",
+      "lessonId": "lesson-34",
+      "title": "Aria Arrangement",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-34-ex-04",
+      "lessonId": "lesson-34",
+      "title": "March in D",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-34-ex-05",
+      "lessonId": "lesson-34",
+      "title": "Invention-Style Piece",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-34-ex-06",
+      "lessonId": "lesson-34",
+      "title": "Run-Through Practice 1",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-34-ex-07",
+      "lessonId": "lesson-34",
+      "title": "Run-Through Practice 2",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-34-ex-08",
+      "lessonId": "lesson-34",
+      "title": "Recovery Practice",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-34-ex-09",
+      "lessonId": "lesson-34",
+      "title": "Flexible Tempo 1",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-34-ex-10",
+      "lessonId": "lesson-34",
+      "title": "Flexible Tempo 2",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-34-ex-11",
+      "lessonId": "lesson-34",
+      "title": "Romantic Rubato",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-34-ex-12",
+      "lessonId": "lesson-34",
+      "title": "Bagatelle in Am",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-34-ex-13",
+      "lessonId": "lesson-34",
+      "title": "Prelude in C",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-34-ex-14",
+      "lessonId": "lesson-34",
+      "title": "Waltz in G",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-34-ex-15",
+      "lessonId": "lesson-34",
+      "title": "Rondo in F",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-34-ex-16",
+      "lessonId": "lesson-34",
+      "title": "Gavotte in D",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-34-ex-17",
+      "lessonId": "lesson-34",
+      "title": "Concert Performance",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-34-ex-18",
+      "lessonId": "lesson-34",
+      "title": "Theme and Variation",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-34-test",
+      "lessonId": "lesson-34",
+      "title": "Lesson 34 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-classical",
+        "performance-prep",
+        "rubato-intro"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-35-ex-01",
+      "lessonId": "lesson-35",
+      "title": "Pop Ballad in C",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-35-ex-02",
+      "lessonId": "lesson-35",
+      "title": "Pop Rock in G",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-35-ex-03",
+      "lessonId": "lesson-35",
+      "title": "R&B Groove",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-35-ex-04",
+      "lessonId": "lesson-35",
+      "title": "Movie Theme Style",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-35-ex-05",
+      "lessonId": "lesson-35",
+      "title": "Singer-Songwriter Style",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-35-ex-06",
+      "lessonId": "lesson-35",
+      "title": "Dance Pop Beat",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-35-ex-07",
+      "lessonId": "lesson-35",
+      "title": "Indie Folk Piano",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-35-ex-08",
+      "lessonId": "lesson-35",
+      "title": "Power Ballad",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-35-ex-09",
+      "lessonId": "lesson-35",
+      "title": "Sonatina Rondo",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-35-ex-10",
+      "lessonId": "lesson-35",
+      "title": "Romantic Character Piece",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-35-ex-11",
+      "lessonId": "lesson-35",
+      "title": "C Blues Scale",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-35-ex-12",
+      "lessonId": "lesson-35",
+      "title": "Blues Lick Patterns",
+      "difficulty": 3,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-35-ex-13",
+      "lessonId": "lesson-35",
+      "title": "12-Bar Blues Solo",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-35-ex-14",
+      "lessonId": "lesson-35",
+      "title": "Boogie-Woogie Bass",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-35-ex-15",
+      "lessonId": "lesson-35",
+      "title": "Blues Song",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-35-ex-16",
+      "lessonId": "lesson-35",
+      "title": "Anime/Game Theme",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-35-ex-17",
+      "lessonId": "lesson-35",
+      "title": "Latin Pop",
+      "difficulty": 4,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-35-ex-18",
+      "lessonId": "lesson-35",
+      "title": "Epic Finale",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-35-test",
+      "lessonId": "lesson-35",
+      "title": "Lesson 35 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "full-piece-pop",
+        "intermediate-pop",
+        "intermediate-classical"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-36-ex-01",
+      "lessonId": "lesson-36",
+      "title": "Blues Scale in G",
+      "difficulty": 3,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-36-ex-02",
+      "lessonId": "lesson-36",
+      "title": "Blues Scale in F",
+      "difficulty": 3,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-36-ex-03",
+      "lessonId": "lesson-36",
+      "title": "Call & Response Blues",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-36-ex-04",
+      "lessonId": "lesson-36",
+      "title": "Pentatonic Improvisation",
+      "difficulty": 3,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-36-ex-05",
+      "lessonId": "lesson-36",
+      "title": "Chord Tone Targeting",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-36-ex-06",
+      "lessonId": "lesson-36",
+      "title": "Rhythmic Variation",
+      "difficulty": 3,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-36-ex-07",
+      "lessonId": "lesson-36",
+      "title": "Theme Variation 1",
+      "difficulty": 3,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-36-ex-08",
+      "lessonId": "lesson-36",
+      "title": "Theme Variation 2",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-36-ex-09",
+      "lessonId": "lesson-36",
+      "title": "Theme Variation 3",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-36-ex-10",
+      "lessonId": "lesson-36",
+      "title": "Modulating Solo",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-36-ex-11",
+      "lessonId": "lesson-36",
+      "title": "Minor Key Improv",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-36-ex-12",
+      "lessonId": "lesson-36",
+      "title": "Question & Answer",
+      "difficulty": 3,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-36-ex-13",
+      "lessonId": "lesson-36",
+      "title": "Melodic Embellishment",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 13
+    },
+    {
+      "id": "lesson-36-ex-14",
+      "lessonId": "lesson-36",
+      "title": "Compose Your Intro",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 14
+    },
+    {
+      "id": "lesson-36-ex-15",
+      "lessonId": "lesson-36",
+      "title": "Compose Your Ending",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 15
+    },
+    {
+      "id": "lesson-36-ex-16",
+      "lessonId": "lesson-36",
+      "title": "Jazz-Blues Combo",
+      "difficulty": 5,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 16
+    },
+    {
+      "id": "lesson-36-ex-17",
+      "lessonId": "lesson-36",
+      "title": "Free Improvisation",
+      "difficulty": 4,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 17
+    },
+    {
+      "id": "lesson-36-ex-18",
+      "lessonId": "lesson-36",
+      "title": "Improvisation Showcase",
+      "difficulty": 5,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "play",
+      "order": 18
+    },
+    {
+      "id": "lesson-36-test",
+      "lessonId": "lesson-36",
+      "title": "Lesson 36 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "blues-scale",
+        "year-one-mastery",
+        "repertoire-building"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-37-ex-01",
+      "lessonId": "lesson-37",
+      "title": "All Major Scales Review",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-37-ex-02",
+      "lessonId": "lesson-37",
+      "title": "Scale Speed Test",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-37-ex-03",
+      "lessonId": "lesson-37",
+      "title": "G Major Mastery",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-37-ex-04",
+      "lessonId": "lesson-37",
+      "title": "F Major Mastery",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-37-ex-05",
+      "lessonId": "lesson-37",
+      "title": "D Major Mastery",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-37-ex-06",
+      "lessonId": "lesson-37",
+      "title": "Bb Major Mastery",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-37-ex-07",
+      "lessonId": "lesson-37",
+      "title": "Circle of Fifths Journey",
+      "difficulty": 5,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-37-ex-08",
+      "lessonId": "lesson-37",
+      "title": "All Minor Scales Review",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-37-ex-09",
+      "lessonId": "lesson-37",
+      "title": "Contrary Motion Scales",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-37-ex-10",
+      "lessonId": "lesson-37",
+      "title": "Rapid Key Changes",
+      "difficulty": 5,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-37-ex-11",
+      "lessonId": "lesson-37",
+      "title": "Chromatic Mastery",
+      "difficulty": 4,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-37-ex-12",
+      "lessonId": "lesson-37",
+      "title": "Scale Showcase",
+      "difficulty": 5,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-37-test",
+      "lessonId": "lesson-37",
+      "title": "Lesson 37 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "scale-review",
+        "g-major-hands",
+        "f-major-hands"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-38-ex-01",
+      "lessonId": "lesson-38",
+      "title": "All Chord Types",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-38-ex-02",
+      "lessonId": "lesson-38",
+      "title": "Chord Inversions Mastery",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-38-ex-03",
+      "lessonId": "lesson-38",
+      "title": "I-IV-V in All Keys",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-38-ex-04",
+      "lessonId": "lesson-38",
+      "title": "Pop Progression All Keys",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-38-ex-05",
+      "lessonId": "lesson-38",
+      "title": "Voice Leading Challenge",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-38-ex-06",
+      "lessonId": "lesson-38",
+      "title": "Accompaniment Styles Review",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-38-ex-07",
+      "lessonId": "lesson-38",
+      "title": "Chord Speed Test",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-38-ex-08",
+      "lessonId": "lesson-38",
+      "title": "12-Bar Blues Review",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-38-ex-09",
+      "lessonId": "lesson-38",
+      "title": "Jazz Chords Preview",
+      "difficulty": 5,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-38-ex-10",
+      "lessonId": "lesson-38",
+      "title": "Chord Song Medley",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-38-ex-11",
+      "lessonId": "lesson-38",
+      "title": "Harmonic Analysis",
+      "difficulty": 4,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-38-ex-12",
+      "lessonId": "lesson-38",
+      "title": "Harmony Showcase",
+      "difficulty": 5,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-38-test",
+      "lessonId": "lesson-38",
+      "title": "Lesson 38 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "chord-transitions",
+        "progression-i-iv-v",
+        "progression-i-v-vi-iv"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-39-ex-01",
+      "lessonId": "lesson-39",
+      "title": "All Rhythms Challenge",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-39-ex-02",
+      "lessonId": "lesson-39",
+      "title": "Polyrhythm Intro",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-39-ex-03",
+      "lessonId": "lesson-39",
+      "title": "Rhythmic Showcase",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-39-ex-04",
+      "lessonId": "lesson-39",
+      "title": "Full Dynamic Range",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-39-ex-05",
+      "lessonId": "lesson-39",
+      "title": "Subito Dynamics",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-39-ex-06",
+      "lessonId": "lesson-39",
+      "title": "Musical Storytelling",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-39-ex-07",
+      "lessonId": "lesson-39",
+      "title": "Phrase Architecture",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-39-ex-08",
+      "lessonId": "lesson-39",
+      "title": "Pedal Mastery Test",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-39-ex-09",
+      "lessonId": "lesson-39",
+      "title": "Pedal Expression",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-39-ex-10",
+      "lessonId": "lesson-39",
+      "title": "Rubato Mastery",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-39-ex-11",
+      "lessonId": "lesson-39",
+      "title": "Tempo Flexibility",
+      "difficulty": 4,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-39-ex-12",
+      "lessonId": "lesson-39",
+      "title": "Expression Showcase",
+      "difficulty": 5,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-39-test",
+      "lessonId": "lesson-39",
+      "title": "Lesson 39 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "mixed-rhythms",
+        "dynamics-p-f",
+        "phrasing"
+      ],
+      "type": "test",
+      "order": 99
+    },
+    {
+      "id": "lesson-40-ex-01",
+      "lessonId": "lesson-40",
+      "title": "Technical Warm-Up",
+      "difficulty": 4,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 1
+    },
+    {
+      "id": "lesson-40-ex-02",
+      "lessonId": "lesson-40",
+      "title": "Sight-Reading Final",
+      "difficulty": 4,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 2
+    },
+    {
+      "id": "lesson-40-ex-03",
+      "lessonId": "lesson-40",
+      "title": "Recital: Classical 1",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 3
+    },
+    {
+      "id": "lesson-40-ex-04",
+      "lessonId": "lesson-40",
+      "title": "Recital: Classical 2",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 4
+    },
+    {
+      "id": "lesson-40-ex-05",
+      "lessonId": "lesson-40",
+      "title": "Recital: Pop Arrangement",
+      "difficulty": 4,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 5
+    },
+    {
+      "id": "lesson-40-ex-06",
+      "lessonId": "lesson-40",
+      "title": "Recital: Film/TV Theme",
+      "difficulty": 4,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 6
+    },
+    {
+      "id": "lesson-40-ex-07",
+      "lessonId": "lesson-40",
+      "title": "Recital: Your Choice 1",
+      "difficulty": 4,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 7
+    },
+    {
+      "id": "lesson-40-ex-08",
+      "lessonId": "lesson-40",
+      "title": "Recital: Your Choice 2",
+      "difficulty": 4,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 8
+    },
+    {
+      "id": "lesson-40-ex-09",
+      "lessonId": "lesson-40",
+      "title": "Encore Piece",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 9
+    },
+    {
+      "id": "lesson-40-ex-10",
+      "lessonId": "lesson-40",
+      "title": "Improvised Cadenza",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 10
+    },
+    {
+      "id": "lesson-40-ex-11",
+      "lessonId": "lesson-40",
+      "title": "Grand Medley",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 11
+    },
+    {
+      "id": "lesson-40-ex-12",
+      "lessonId": "lesson-40",
+      "title": "Graduation Finale",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "play",
+      "order": 12
+    },
+    {
+      "id": "lesson-40-test",
+      "lessonId": "lesson-40",
+      "title": "Lesson 40 Mastery Test",
+      "difficulty": 5,
+      "skills": [
+        "year-one-mastery",
+        "full-piece-classical",
+        "full-piece-pop"
+      ],
+      "type": "test",
+      "order": 99
     }
   ],
   "lessons": [
@@ -565,6 +6569,346 @@
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-05"
+      }
+    },
+    {
+      "id": "lesson-07",
+      "title": "Black Keys & Sharps/Flats",
+      "difficulty": 2,
+      "exerciseCount": 10,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-05"
+      }
+    },
+    {
+      "id": "lesson-08",
+      "title": "G Major Scale & Melodies",
+      "difficulty": 2,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-07"
+      }
+    },
+    {
+      "id": "lesson-09",
+      "title": "F Major & Key Signatures",
+      "difficulty": 2,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-08"
+      }
+    },
+    {
+      "id": "lesson-10",
+      "title": "A Minor & Minor Keys",
+      "difficulty": 2,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-09"
+      }
+    },
+    {
+      "id": "lesson-11",
+      "title": "D Minor & E Minor",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-10"
+      }
+    },
+    {
+      "id": "lesson-12",
+      "title": "Dotted Rhythms & Syncopation",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-11"
+      }
+    },
+    {
+      "id": "lesson-13",
+      "title": "Major & Minor Triads",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-12"
+      }
+    },
+    {
+      "id": "lesson-14",
+      "title": "Chord Progressions",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-13"
+      }
+    },
+    {
+      "id": "lesson-15",
+      "title": "Chord Songs & Transitions",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-14"
+      }
+    },
+    {
+      "id": "lesson-16",
+      "title": "Arpeggios & Patterns",
+      "difficulty": 3,
+      "exerciseCount": 11,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-15"
+      }
+    },
+    {
+      "id": "lesson-17",
+      "title": "Triplets & Waltz Time",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-12"
+      }
+    },
+    {
+      "id": "lesson-18",
+      "title": "Swing & Mixed Rhythms",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-17"
+      }
+    },
+    {
+      "id": "lesson-19",
+      "title": "Expression & Dynamics",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-16"
+      }
+    },
+    {
+      "id": "lesson-20",
+      "title": "Phrasing & Pedal",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-19"
+      }
+    },
+    {
+      "id": "lesson-21",
+      "title": "D Major & Bb Major",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-20"
+      }
+    },
+    {
+      "id": "lesson-22",
+      "title": "Sight Reading",
+      "difficulty": 3,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-21"
+      }
+    },
+    {
+      "id": "lesson-23",
+      "title": "Performance Skills",
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-22"
+      }
+    },
+    {
+      "id": "lesson-24",
+      "title": "Year One Finale",
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-23"
+      }
+    },
+    {
+      "id": "lesson-25",
+      "title": "Chord Progressions in New Keys",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-15"
+      }
+    },
+    {
+      "id": "lesson-26",
+      "title": "Accompaniment Mastery",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-25"
+      }
+    },
+    {
+      "id": "lesson-27",
+      "title": "Advanced Rhythm Patterns",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-18"
+      }
+    },
+    {
+      "id": "lesson-28",
+      "title": "Compound Meters & Special Time Signatures",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-27"
+      }
+    },
+    {
+      "id": "lesson-29",
+      "title": "Advanced Arpeggios & Technique",
+      "difficulty": 4,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-20"
+      }
+    },
+    {
+      "id": "lesson-30",
+      "title": "Dynamics & Expression Deep Dive",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-21"
+      }
+    },
+    {
+      "id": "lesson-31",
+      "title": "Pedaling & Sustained Sound",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-30"
+      }
+    },
+    {
+      "id": "lesson-32",
+      "title": "New Keys: D Major & B-Flat Major",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-22"
+      }
+    },
+    {
+      "id": "lesson-33",
+      "title": "Sight Reading Intensive",
+      "difficulty": 3,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-23"
+      }
+    },
+    {
+      "id": "lesson-34",
+      "title": "Performance Repertoire: Classical",
+      "difficulty": 4,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-24"
+      }
+    },
+    {
+      "id": "lesson-35",
+      "title": "Performance Repertoire: Pop & Contemporary",
+      "difficulty": 4,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-34"
+      }
+    },
+    {
+      "id": "lesson-36",
+      "title": "Improvisation & Creativity",
+      "difficulty": 4,
+      "exerciseCount": 18,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-35"
+      }
+    },
+    {
+      "id": "lesson-37",
+      "title": "Comprehensive Review: Scales & Keys",
+      "difficulty": 4,
+      "exerciseCount": 12,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-36"
+      }
+    },
+    {
+      "id": "lesson-38",
+      "title": "Comprehensive Review: Chords & Harmony",
+      "difficulty": 4,
+      "exerciseCount": 12,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-37"
+      }
+    },
+    {
+      "id": "lesson-39",
+      "title": "Comprehensive Review: Rhythm & Expression",
+      "difficulty": 4,
+      "exerciseCount": 12,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-38"
+      }
+    },
+    {
+      "id": "lesson-40",
+      "title": "Year One Grand Recital",
+      "difficulty": 5,
+      "exerciseCount": 12,
+      "unlockRequirement": {
+        "type": "lesson-complete",
+        "lessonId": "lesson-39"
       }
     }
   ]

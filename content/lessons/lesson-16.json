@@ -1,0 +1,100 @@
+{
+  "id": "lesson-16",
+  "version": 1,
+  "metadata": {
+    "title": "Arpeggios & Patterns",
+    "description": "Master arpeggio patterns that form the foundation of piano accompaniment",
+    "difficulty": 3,
+    "estimatedMinutes": 30,
+    "skills": [
+      "c-major-arpeggio",
+      "g-major-arpeggio",
+      "minor-arpeggios",
+      "arpeggio-patterns",
+      "broken-chord-patterns",
+      "hands-arpeggio",
+      "arpeggio-songs"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-16-ex-01",
+      "title": "C Major Arpeggio",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-02",
+      "title": "C Arpeggio Variations",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-03",
+      "title": "G Major Arpeggio",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-04",
+      "title": "A Minor Arpeggio",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-05",
+      "title": "D Minor Arpeggio",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-06",
+      "title": "1-3-5-8 Pattern",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-07",
+      "title": "Arpeggio Pattern Variations",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-08",
+      "title": "Waltz Bass Pattern",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-09",
+      "title": "Stride Pattern",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-10",
+      "title": "Arpeggios Both Hands",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-16-ex-11",
+      "title": "Arpeggio Accompaniment Song",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-16-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-15"
+  },
+  "xpReward": 600,
+  "estimatedMinutes": 30
+}

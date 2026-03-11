@@ -1,0 +1,85 @@
+{
+  "id": "lesson-24",
+  "version": 1,
+  "metadata": {
+    "title": "Year One Finale",
+    "description": "Perform complete pieces and demonstrate mastery of all Year One skills",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "full-piece-classical",
+      "full-piece-pop",
+      "repertoire-building",
+      "year-one-mastery"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-24-ex-01",
+      "title": "Classical Performance 1",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-02",
+      "title": "Classical Performance 2",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-03",
+      "title": "Pop Performance",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-04",
+      "title": "Your Favorite Song",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-05",
+      "title": "Concert Piece in G",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-06",
+      "title": "Concert Piece in F",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-07",
+      "title": "Scale & Chord Review",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-08",
+      "title": "Rhythm & Expression Review",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-24-ex-09",
+      "title": "Grand Finale",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-24-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-23"
+  },
+  "xpReward": 800,
+  "estimatedMinutes": 25
+}

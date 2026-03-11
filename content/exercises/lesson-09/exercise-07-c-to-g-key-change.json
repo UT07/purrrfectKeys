@@ -1,0 +1,147 @@
+{
+  "id": "lesson-09-ex-07",
+  "version": 1,
+  "metadata": {
+    "title": "C to G Key Change",
+    "description": "A melody that switches between C major and G major sections",
+    "difficulty": 2,
+    "estimatedMinutes": 2,
+    "skills": [
+      "f-major-scale-rh",
+      "f-major-scale-lh",
+      "f-major-hands"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 70,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 9,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 9.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 11,
+      "durationBeats": 1,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [
+      70,
+      85,
+      95
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: melody that modulates between c.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on C to G Key Change! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

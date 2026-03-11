@@ -1,0 +1,85 @@
+{
+  "id": "lesson-09",
+  "version": 1,
+  "metadata": {
+    "title": "F Major & Key Signatures",
+    "description": "Master the F major scale with Bb and learn to read key signatures",
+    "difficulty": 2,
+    "estimatedMinutes": 25,
+    "skills": [
+      "f-major-scale-rh",
+      "f-major-scale-lh",
+      "f-major-hands",
+      "key-signature-reading"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-09-ex-01",
+      "title": "F Major Scale Right Hand",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-02",
+      "title": "F Major Patterns",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-03",
+      "title": "F Major Scale Left Hand",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-04",
+      "title": "F Major Left Hand Drills",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-05",
+      "title": "F Major Both Hands",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-06",
+      "title": "F Major Hands Together Melody",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-07",
+      "title": "C to G Key Change",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-08",
+      "title": "C to F Key Change",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-09-ex-09",
+      "title": "Three-Key Journey",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-09-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-08"
+  },
+  "xpReward": 400,
+  "estimatedMinutes": 25
+}

@@ -1,0 +1,139 @@
+{
+  "id": "lesson-33",
+  "version": 1,
+  "metadata": {
+    "title": "Sight Reading Intensive",
+    "description": "Build sight-reading confidence with progressive exercises in multiple keys",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "sight-reading-c",
+      "sight-reading-g",
+      "sight-reading-mixed",
+      "interval-recognition"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-33-ex-01",
+      "title": "SR: C Major Level 1",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-02",
+      "title": "SR: C Major Level 2",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-03",
+      "title": "SR: C Major Level 3",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-04",
+      "title": "SR: C Major Two Hands",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-05",
+      "title": "SR: G Major Level 1",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-06",
+      "title": "SR: G Major Level 2",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-07",
+      "title": "SR: G Major Level 3",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-08",
+      "title": "SR: G Major Two Hands",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-09",
+      "title": "SR: F Major",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-10",
+      "title": "SR: D Major",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-11",
+      "title": "SR: A Minor",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-12",
+      "title": "SR: Key Changes",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-13",
+      "title": "Hear the Interval 1",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-14",
+      "title": "Hear the Interval 2",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-15",
+      "title": "Play the Interval",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-16",
+      "title": "Interval Melody",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-17",
+      "title": "SR: Two Hands Mixed Keys",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-33-ex-18",
+      "title": "SR: Speed Challenge",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-33-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-23"
+  },
+  "xpReward": 700,
+  "estimatedMinutes": 48
+}

@@ -1,0 +1,141 @@
+{
+  "id": "lesson-25-ex-10",
+  "version": 1,
+  "metadata": {
+    "title": "Triads in G Major",
+    "description": "G, C, D major triads blocked and broken in G major context",
+    "difficulty": 3,
+    "estimatedMinutes": 2,
+    "skills": [
+      "progression-i-iv-v",
+      "progression-i-v-vi-iv",
+      "chord-transitions"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 65,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 74,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: c.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Triads in G Major! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

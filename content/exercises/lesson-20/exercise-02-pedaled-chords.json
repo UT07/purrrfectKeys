@@ -1,0 +1,357 @@
+{
+  "id": "lesson-20-ex-02",
+  "version": 1,
+  "metadata": {
+    "title": "Pedaled Chords",
+    "description": "Chord progression with pedal changes on each chord",
+    "difficulty": 3,
+    "estimatedMinutes": 2,
+    "skills": [
+      "pedal-intro",
+      "phrasing",
+      "expressive-songs"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 63,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 65,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 70,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 59,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 65,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 70,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 13,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 13,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 13,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 13,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 14,
+      "durationBeats": 4,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 14,
+      "durationBeats": 4,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 14,
+      "durationBeats": 4,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 14,
+      "durationBeats": 4,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: chord progression using sustained notes to simulate pedal technique.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Pedaled Chords! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "id": "lesson-30",
+  "version": 1,
+  "metadata": {
+    "title": "Dynamics & Expression Deep Dive",
+    "description": "Master dynamic range from pp to ff, with crescendo, diminuendo, and articulation",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "dynamics-p-f",
+      "crescendo-diminuendo",
+      "staccato-technique",
+      "legato-technique",
+      "accents-emphasis",
+      "phrasing"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-30-ex-01",
+      "title": "Echo Dynamics",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-02",
+      "title": "Terraced Dynamics",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-03",
+      "title": "Dynamic Contrasts Song",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-04",
+      "title": "Long Crescendo",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-05",
+      "title": "Hairpin Dynamics",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-06",
+      "title": "Wave Dynamics",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-07",
+      "title": "Staccato Scale",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-08",
+      "title": "Staccato Melody",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-09",
+      "title": "Staccato vs Legato",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-10",
+      "title": "Legato Scale",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-11",
+      "title": "Singing Legato",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-12",
+      "title": "Legato Song",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-13",
+      "title": "Accent Patterns",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-14",
+      "title": "Sforzando Practice",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-15",
+      "title": "Phrase Shaping 1",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-16",
+      "title": "Phrase Shaping 2",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-17",
+      "title": "Expressive Etude",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-30-ex-18",
+      "title": "Romantic Melody",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-30-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-21"
+  },
+  "xpReward": 700,
+  "estimatedMinutes": 48
+}

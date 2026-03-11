@@ -1,0 +1,189 @@
+{
+  "id": "lesson-08-ex-05",
+  "version": 1,
+  "metadata": {
+    "title": "G Major Both Hands",
+    "description": "Play the G major scale with both hands in parallel",
+    "difficulty": 3,
+    "estimatedMinutes": 2,
+    "skills": [
+      "g-major-scale-rh",
+      "g-major-scale-lh",
+      "g-major-hands"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 73,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "G",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 55,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 3,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 3,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 6,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 6.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 6.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 54,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 8,
+      "durationBeats": 4,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 8,
+      "durationBeats": 4,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: g major scale both hands in parallel.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on G Major Both Hands! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

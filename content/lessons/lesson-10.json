@@ -1,0 +1,85 @@
+{
+  "id": "lesson-10",
+  "version": 1,
+  "metadata": {
+    "title": "A Minor & Minor Keys",
+    "description": "Enter the world of minor keys — learn A minor natural and harmonic scales",
+    "difficulty": 2,
+    "estimatedMinutes": 25,
+    "skills": [
+      "a-minor-natural",
+      "a-minor-melodies",
+      "minor-vs-major",
+      "harmonic-minor"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-10-ex-01",
+      "title": "A Natural Minor Scale",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-02",
+      "title": "A Minor Patterns",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-03",
+      "title": "Sad Song in A Minor",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-04",
+      "title": "A Minor Lament",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-05",
+      "title": "Major vs Minor Comparison",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-06",
+      "title": "Happy to Sad",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-07",
+      "title": "A Harmonic Minor Scale",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-08",
+      "title": "Harmonic Minor Melody",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-10-ex-09",
+      "title": "A Minor with Both Hands",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-10-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-09"
+  },
+  "xpReward": 400,
+  "estimatedMinutes": 25
+}

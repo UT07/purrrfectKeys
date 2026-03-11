@@ -131,6 +131,12 @@ const GENERATION_HINTS: Record<string, GenerationHints> = {
   'chord-songs': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Song with melody in right hand and chord accompaniment in left, tempo 70-85' },
   'chord-transitions': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Smooth voice-leading transitions between inversions of C, F, G, Am, tempo 60-75' },
 
+  // Tier 10: Songs & Scale Review
+  'beginner-songs': { hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Well-known beginner song arrangement (Jingle Bells style) with both hands, tempo 70-85' },
+  'intermediate-songs': { hand: 'both', keySignature: 'C major', exerciseTypes: ['melody'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Intermediate song arrangement with melody, chords, and some passing tones, tempo 75-90' },
+  'scale-speed': { targetMidi: [60, 62, 64, 65, 67, 69, 71, 72], hand: 'right', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Fast C major scale with eighth notes, focus on evenness and speed, tempo 80-100' },
+  'scale-review': { targetMidi: [48, 50, 52, 60, 62, 64, 65, 67, 69, 71, 72], hand: 'both', keySignature: 'C major', exerciseTypes: ['scale'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Comprehensive scale review: ascending/descending, both hands, varied rhythms, tempo 75-90' },
+
   // Tier 11: Rhythm
   'dotted-quarter-notes': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 2, maxDifficulty: 3, promptHint: 'Dotted quarter note rhythms (1.5 beats) mixed with eighths, tempo 65-80' },
   'syncopation-intro': { keySignature: 'C major', hand: 'right', exerciseTypes: ['rhythm'], minDifficulty: 3, maxDifficulty: 3, promptHint: 'Off-beat accents and syncopated rhythms, tempo 70-85' },
@@ -195,7 +201,9 @@ function buildExercisePrompt(
 ): string {
   const hints = GENERATION_HINTS[spec.skillId];
   const hand = hints?.hand ?? 'right';
-  const keySignature = hints?.keySignature ?? 'C major';
+  const rawKeySig = hints?.keySignature ?? 'C major';
+  // Normalize for the prompt: "C major" stays readable but we'll fix it in assembly
+  const keySignature = rawKeySig;
   const difficulty = spec.difficulty;
   const noteCount = isTest ? 16 : (difficulty <= 2 ? 8 : 12);
   const tempoRange = hints?.promptHint?.match(/tempo (\d+)-(\d+)/);
@@ -279,6 +287,17 @@ function assembleExercise(
   const aiScoring = aiResponse.scoring as Record<string, unknown> | undefined;
   const aiNotes = aiResponse.notes as Array<Record<string, unknown>> | undefined;
 
+  // Normalize key signature: "C major" → "C", "A minor" → "Am", "D major" → "D"
+  function normalizeKeySignature(raw: string): string {
+    const trimmed = raw.trim();
+    const lowerMatch = trimmed.match(/^([A-Ga-g][#b]?)\s+(major|minor)$/i);
+    if (lowerMatch) {
+      const root = lowerMatch[1].charAt(0).toUpperCase() + lowerMatch[1].slice(1);
+      return lowerMatch[2].toLowerCase() === 'minor' ? `${root}m` : root;
+    }
+    return trimmed;
+  }
+
   // Snap durations to nearest valid value
   const notes = (aiNotes ?? []).map((n) => {
     const dur = n.durationBeats as number;
@@ -315,7 +334,7 @@ function assembleExercise(
     settings: {
       tempo: (aiSettings?.tempo as number) ?? 70,
       timeSignature: (aiSettings?.timeSignature as [number, number]) ?? [4, 4],
-      keySignature: (aiSettings?.keySignature as string) ?? 'C',
+      keySignature: normalizeKeySignature((aiSettings?.keySignature as string) ?? hints?.keySignature ?? 'C'),
       countIn: 4,
       metronomeEnabled: true,
       loopEnabled: !isTest,

@@ -1,0 +1,139 @@
+{
+  "id": "lesson-31",
+  "version": 1,
+  "metadata": {
+    "title": "Pedaling & Sustained Sound",
+    "description": "Use the sustain pedal for richer sound, legato connections, and musical coloring",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "pedal-intro",
+      "legato-technique",
+      "chord-transitions",
+      "expressive-songs"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-31-ex-01",
+      "title": "Pedal Basics",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-02",
+      "title": "Pedal with Scales",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-03",
+      "title": "Syncopated Pedaling",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-04",
+      "title": "Half Pedaling",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-05",
+      "title": "Pedal Legato",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-06",
+      "title": "Wide Legato with Pedal",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-07",
+      "title": "Pedaled Chord Progressions",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-08",
+      "title": "Hymn-Style Chords",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-09",
+      "title": "Arpeggio with Pedal",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-10",
+      "title": "Moonlight Intro",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-11",
+      "title": "Raindrop Pattern",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-12",
+      "title": "Nocturne Fragment",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-13",
+      "title": "Ballade Fragment",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-14",
+      "title": "Clean Pedal Test",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-15",
+      "title": "Cantabile Melody",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-16",
+      "title": "Contemporary Ballad",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-17",
+      "title": "Pedal with Dynamics",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-31-ex-18",
+      "title": "Dreamscape",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-31-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-30"
+  },
+  "xpReward": 700,
+  "estimatedMinutes": 48
+}

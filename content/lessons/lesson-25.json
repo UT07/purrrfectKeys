@@ -1,0 +1,140 @@
+{
+  "id": "lesson-25",
+  "version": 1,
+  "metadata": {
+    "title": "Chord Progressions in New Keys",
+    "description": "Apply chord patterns you know to G major, F major, and D minor",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "progression-i-iv-v",
+      "progression-i-v-vi-iv",
+      "chord-transitions",
+      "major-triads-root",
+      "minor-triads"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-25-ex-01",
+      "title": "I-IV-V in G Major",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-02",
+      "title": "I-IV-V in F Major",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-03",
+      "title": "I-IV-V with Inversions",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-04",
+      "title": "Pop Progression in G",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-05",
+      "title": "Pop Progression in F",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-06",
+      "title": "Pop Ballad Pattern",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-07",
+      "title": "Smooth Transitions G Major",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-08",
+      "title": "Smooth Transitions F Major",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-09",
+      "title": "Cross-Key Transitions",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-10",
+      "title": "Triads in G Major",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-11",
+      "title": "Triads in F Major",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-12",
+      "title": "Triad Speed Drill",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-13",
+      "title": "Minor Triads in D Minor",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-14",
+      "title": "Minor Triads Speed",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-15",
+      "title": "12-Bar Blues in C",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-16",
+      "title": "Chord Melody Combo",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-17",
+      "title": "Walking Bass Chords",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-25-ex-18",
+      "title": "Full Pop Song Structure",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-25-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-15"
+  },
+  "xpReward": 600,
+  "estimatedMinutes": 48
+}

@@ -1,0 +1,153 @@
+{
+  "id": "lesson-25-ex-17",
+  "version": 1,
+  "metadata": {
+    "title": "Walking Bass Chords",
+    "description": "Walking bass line with chord changes in left hand",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "progression-i-iv-v",
+      "progression-i-v-vi-iv",
+      "chord-transitions"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 36,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 38,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 40,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 41,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 43,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 45,
+      "startBeat": 4,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 43,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 41,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 36,
+      "startBeat": 8,
+      "durationBeats": 4,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 4,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: i-iv-v chord progression in c major (c-f-g).",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Walking Bass Chords! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "id": "lesson-32",
+  "version": 1,
+  "metadata": {
+    "title": "New Keys: D Major & B-Flat Major",
+    "description": "Expand your key vocabulary with D major (2 sharps) and Bb major (2 flats)",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "d-major-scale",
+      "bb-major-scale",
+      "key-fluency",
+      "relative-minor"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-32-ex-01",
+      "title": "D Major Scale RH",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-02",
+      "title": "D Major Scale LH",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-03",
+      "title": "D Major Scale Both Hands",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-04",
+      "title": "D Major Melody",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-05",
+      "title": "D Major Song",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-06",
+      "title": "Bb Major Scale RH",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-07",
+      "title": "Bb Major Scale LH",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-08",
+      "title": "Bb Major Scale Both",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-09",
+      "title": "Bb Major Melody",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-10",
+      "title": "Bb Major Song",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-11",
+      "title": "Key Switch: C to D",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-12",
+      "title": "Key Switch: G to Bb",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-13",
+      "title": "Four-Key Challenge",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-14",
+      "title": "B Minor (Relative of D)",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-15",
+      "title": "G Minor (Relative of Bb)",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-16",
+      "title": "Major-Minor Pairs",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-17",
+      "title": "Chromatic Key Change",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-32-ex-18",
+      "title": "D Major Arpeggio Song",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-32-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-22"
+  },
+  "xpReward": 700,
+  "estimatedMinutes": 48
+}

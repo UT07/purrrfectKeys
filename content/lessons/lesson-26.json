@@ -1,0 +1,139 @@
+{
+  "id": "lesson-26",
+  "version": 1,
+  "metadata": {
+    "title": "Accompaniment Mastery",
+    "description": "Master common piano accompaniment patterns: Alberti bass, waltz, stride, and arpeggiated patterns",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "alberti-bass",
+      "bass-chord-pattern",
+      "broken-chord-patterns",
+      "chord-songs"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-26-ex-01",
+      "title": "Alberti Bass in C",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-02",
+      "title": "Alberti Bass in G",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-03",
+      "title": "Alberti Bass in F",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-04",
+      "title": "Alberti with Melody",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-05",
+      "title": "Oom-Pah in C",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-06",
+      "title": "Oom-Pah in G",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-07",
+      "title": "Oom-Pah-Pah Waltz",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-08",
+      "title": "Waltz with Melody",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-09",
+      "title": "Stride Left Hand",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-10",
+      "title": "Stride Pattern in G",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-11",
+      "title": "Rock Rhythm Pattern",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-12",
+      "title": "Ballad Arpeggios",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-13",
+      "title": "Classical Accompaniment 1",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-14",
+      "title": "Pop Accompaniment 1",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-15",
+      "title": "Waltz Song",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-16",
+      "title": "Ballad Arrangement",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-17",
+      "title": "Alberti Speed Challenge",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-26-ex-18",
+      "title": "Mixed Accompaniment Styles",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-26-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-25"
+  },
+  "xpReward": 600,
+  "estimatedMinutes": 48
+}

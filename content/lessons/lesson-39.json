@@ -1,0 +1,104 @@
+{
+  "id": "lesson-39",
+  "version": 1,
+  "metadata": {
+    "title": "Comprehensive Review: Rhythm & Expression",
+    "description": "Review all rhythm types, dynamics, and expressive techniques",
+    "difficulty": 4,
+    "estimatedMinutes": 33,
+    "skills": [
+      "mixed-rhythms",
+      "dynamics-p-f",
+      "phrasing",
+      "pedal-intro",
+      "rubato-intro"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-39-ex-01",
+      "title": "All Rhythms Challenge",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-02",
+      "title": "Polyrhythm Intro",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-03",
+      "title": "Rhythmic Showcase",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-04",
+      "title": "Full Dynamic Range",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-05",
+      "title": "Subito Dynamics",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-06",
+      "title": "Musical Storytelling",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-07",
+      "title": "Phrase Architecture",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-08",
+      "title": "Pedal Mastery Test",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-09",
+      "title": "Pedal Expression",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-10",
+      "title": "Rubato Mastery",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-11",
+      "title": "Tempo Flexibility",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-39-ex-12",
+      "title": "Expression Showcase",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-39-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-38"
+  },
+  "xpReward": 850,
+  "estimatedMinutes": 33
+}

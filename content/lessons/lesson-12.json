@@ -1,0 +1,84 @@
+{
+  "id": "lesson-12",
+  "version": 1,
+  "metadata": {
+    "title": "Dotted Rhythms & Syncopation",
+    "description": "Master dotted quarter notes, syncopation, and tied notes for more musical phrasing",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "dotted-quarter-notes",
+      "syncopation-intro",
+      "ties-across-barline"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-12-ex-01",
+      "title": "Dotted Quarter Notes",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-02",
+      "title": "Dotted Rhythm Patterns",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-03",
+      "title": "Dotted Rhythm Melody",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-04",
+      "title": "Off-Beat Accents",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-05",
+      "title": "Syncopated Melody",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-06",
+      "title": "Funky Syncopation",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-07",
+      "title": "Tied Notes Basics",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-08",
+      "title": "Tied Note Melodies",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-12-ex-09",
+      "title": "Rhythm Mix",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-12-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-11"
+  },
+  "xpReward": 450,
+  "estimatedMinutes": 25
+}

@@ -1,0 +1,86 @@
+{
+  "id": "lesson-14",
+  "version": 1,
+  "metadata": {
+    "title": "Chord Progressions",
+    "description": "Learn iconic chord progressions and accompaniment patterns used in popular music",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "progression-i-iv-v",
+      "progression-i-vi-iv-v",
+      "progression-i-v-vi-iv",
+      "bass-chord-pattern",
+      "alberti-bass"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-14-ex-01",
+      "title": "I-IV-V Revisited",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-02",
+      "title": "50s Doo-Wop Progression",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-03",
+      "title": "Doo-Wop with Rhythm",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-04",
+      "title": "Pop Axis Progression",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-05",
+      "title": "Axis with Melody",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-06",
+      "title": "Bass-Chord-Chord Pattern",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-07",
+      "title": "Oom-Pah Accompaniment",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-08",
+      "title": "Alberti Bass Pattern",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-14-ex-09",
+      "title": "Alberti Bass with Chords",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-14-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-13"
+  },
+  "xpReward": 500,
+  "estimatedMinutes": 25
+}

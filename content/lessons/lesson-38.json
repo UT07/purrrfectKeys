@@ -1,0 +1,104 @@
+{
+  "id": "lesson-38",
+  "version": 1,
+  "metadata": {
+    "title": "Comprehensive Review: Chords & Harmony",
+    "description": "Review all chord types, progressions, and harmonic concepts",
+    "difficulty": 4,
+    "estimatedMinutes": 33,
+    "skills": [
+      "chord-transitions",
+      "progression-i-iv-v",
+      "progression-i-v-vi-iv",
+      "chord-inversions-intro",
+      "alberti-bass"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-38-ex-01",
+      "title": "All Chord Types",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-02",
+      "title": "Chord Inversions Mastery",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-03",
+      "title": "I-IV-V in All Keys",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-04",
+      "title": "Pop Progression All Keys",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-05",
+      "title": "Voice Leading Challenge",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-06",
+      "title": "Accompaniment Styles Review",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-07",
+      "title": "Chord Speed Test",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-08",
+      "title": "12-Bar Blues Review",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-09",
+      "title": "Jazz Chords Preview",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-10",
+      "title": "Chord Song Medley",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-11",
+      "title": "Harmonic Analysis",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-38-ex-12",
+      "title": "Harmony Showcase",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-38-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-37"
+  },
+  "xpReward": 850,
+  "estimatedMinutes": 33
+}

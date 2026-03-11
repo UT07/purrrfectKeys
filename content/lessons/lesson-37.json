@@ -1,0 +1,105 @@
+{
+  "id": "lesson-37",
+  "version": 1,
+  "metadata": {
+    "title": "Comprehensive Review: Scales & Keys",
+    "description": "Review all scales and keys learned throughout the curriculum",
+    "difficulty": 4,
+    "estimatedMinutes": 33,
+    "skills": [
+      "scale-review",
+      "g-major-hands",
+      "f-major-hands",
+      "d-major-scale",
+      "bb-major-scale",
+      "key-fluency"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-37-ex-01",
+      "title": "All Major Scales Review",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-02",
+      "title": "Scale Speed Test",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-03",
+      "title": "G Major Mastery",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-04",
+      "title": "F Major Mastery",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-05",
+      "title": "D Major Mastery",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-06",
+      "title": "Bb Major Mastery",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-07",
+      "title": "Circle of Fifths Journey",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-08",
+      "title": "All Minor Scales Review",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-09",
+      "title": "Contrary Motion Scales",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-10",
+      "title": "Rapid Key Changes",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-11",
+      "title": "Chromatic Mastery",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-37-ex-12",
+      "title": "Scale Showcase",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-37-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-36"
+  },
+  "xpReward": 850,
+  "estimatedMinutes": 33
+}

@@ -1,0 +1,117 @@
+{
+  "id": "lesson-08-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "G Major Scale Left Hand",
+    "description": "Play the G major scale with your left hand",
+    "difficulty": 2,
+    "estimatedMinutes": 2,
+    "skills": [
+      "g-major-scale-rh",
+      "g-major-scale-lh",
+      "g-major-hands"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "G",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 55,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 66,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 75,
+    "timingGracePeriodMs": 200,
+    "velocitySensitive": false,
+    "passingScore": 60,
+    "starThresholds": [
+      70,
+      85,
+      95
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: g major scale left hand.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on G Major Scale Left Hand! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": true,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "lesson-18",
+  "version": 1,
+  "metadata": {
+    "title": "Swing & Mixed Rhythms",
+    "description": "Learn swing feel and combine all rhythm types in comprehensive exercises",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "swing-rhythm",
+      "rhythm-reading",
+      "mixed-rhythms"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-18-ex-01",
+      "title": "Swing Eighth Notes",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-02",
+      "title": "Swing Melody",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-03",
+      "title": "Swing Blues",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-04",
+      "title": "Rhythm Reading Level 1",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-05",
+      "title": "Rhythm Reading Level 2",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-06",
+      "title": "Rhythm Reading in 3/4",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-07",
+      "title": "Rhythm Medley",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-08",
+      "title": "Rhythm Challenge",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-18-ex-09",
+      "title": "Rhythm Showcase",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-18-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-17"
+  },
+  "xpReward": 550,
+  "estimatedMinutes": 25
+}

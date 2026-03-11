@@ -1,0 +1,84 @@
+{
+  "id": "lesson-20",
+  "version": 1,
+  "metadata": {
+    "title": "Phrasing & Pedal",
+    "description": "Shape musical phrases and learn basic sustain pedal technique",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "pedal-intro",
+      "phrasing",
+      "expressive-songs"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-20-ex-01",
+      "title": "Sustain Pedal Basics",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-02",
+      "title": "Pedaled Chords",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-03",
+      "title": "Legato Pedaling",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-04",
+      "title": "4-Bar Phrases",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-05",
+      "title": "Question & Answer",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-06",
+      "title": "Phrase Shaping",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-07",
+      "title": "Expressive Ballad",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-08",
+      "title": "Classical Cantabile",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-20-ex-09",
+      "title": "Expressive Showcase",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-20-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-19"
+  },
+  "xpReward": 600,
+  "estimatedMinutes": 25
+}

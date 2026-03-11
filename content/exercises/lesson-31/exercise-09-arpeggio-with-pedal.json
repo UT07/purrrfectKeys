@@ -1,0 +1,177 @@
+{
+  "id": "lesson-31-ex-09",
+  "version": 1,
+  "metadata": {
+    "title": "Arpeggio with Pedal",
+    "description": "Rolling arpeggios sustained by pedal creating harmonic wash",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "pedal-intro",
+      "legato-technique",
+      "chord-transitions"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 48,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 52,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 48,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 53,
+      "startBeat": 7,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 7.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 9.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 53,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 48,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 13,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 13.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 14,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 15.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 48,
+      "startBeat": 16,
+      "durationBeats": 2,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: smooth voice-leading transitions between inversions of c.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Arpeggio with Pedal! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![React Native](https://img.shields.io/badge/React_Native-0.76-61DAFB)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo_SDK-52-000020)](https://expo.dev/)
-[![Tests](https://img.shields.io/badge/Tests-2722%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-2893%20passing-brightgreen)]()
 
 ---
 
@@ -31,8 +31,8 @@ Purrrfect Keys is a Duolingo-style piano learning app that combines real-time pe
 ## Features
 
 ### Core Experience
-- 6 structured lessons with 30 exercises (beginner to intermediate)
-- AI-generated exercises for tiers 7-15 via Gemini Flash
+- 24 structured lessons with 200+ exercises spanning 15 tiers (beginner to intermediate)
+- Batch AI exercise generation pipeline via Gemini Flash with validation + retry
 - Real-time vertical piano roll with falling notes (Synthesia-style)
 - Touch keyboard with haptic feedback and latency compensation
 - MIDI keyboard support (USB + Bluetooth)
@@ -41,7 +41,7 @@ Purrrfect Keys is a Duolingo-style piano learning app that combines real-time pe
 - Free play mode with post-play key/scale analysis and drill generation
 - Demo playback mode with visual-only note demonstration
 
-### Music Library (124 Songs)
+### Music Library (124+ Songs)
 - **6 genres:** Pop, Classical, Folk, Film/TV, Game, Holiday
 - **Content sources:** 37 AI-generated (Gemini), 50 folk tunes (TheSession.org), 38 classical (Beethoven, Mozart, Bach, Haydn)
 - **ABC notation** parsing via abcjs with section-based playback
@@ -50,6 +50,7 @@ Purrrfect Keys is a Duolingo-style piano learning app that combines real-time pe
 - Section-by-section playback with melody/accompaniment layer toggle
 
 ### Adaptive Learning
+- **17 Exercise Types** -- 6 classic + 5 interaction + 5 gamified + 1 creative (Phase 3)
 - **SkillTree** -- DAG of 100 skill nodes across 15 tiers, 12 categories
 - **CurriculumEngine** -- AI session planner with 4 session types (new-material, review, challenge, mixed)
 - **Skill Decay** -- 14-day half-life model; stale skills trigger automatic review sessions
@@ -126,7 +127,7 @@ Purrrfect Keys is a Duolingo-style piano learning app that combines real-time pe
 | AI | Google Gemini 2.0 Flash |
 | TTS | ElevenLabs (primary) + expo-speech (fallback) |
 | Analytics | PostHog |
-| Testing | Jest + React Testing Library (2,722 tests, 129 suites) |
+| Testing | Jest + React Testing Library (2,893 tests, 142 suites) |
 | CI/CD | GitHub Actions + EAS Build |
 
 ---
@@ -178,7 +179,7 @@ npm run android              # Run on Android emulator
 
 ```bash
 npm run typecheck    # TypeScript validation (0 errors)
-npm run test         # Jest tests (2,722 passing, 129 suites)
+npm run test         # Jest tests (2,893 passing, 142 suites)
 npm run lint         # ESLint + Prettier
 npm run lint:fix     # Auto-fix linting issues
 ```
@@ -240,8 +241,15 @@ src/
   theme/             Design tokens (colors, gradients, rarity, combo tiers, animation config)
 
 content/
-  exercises/         JSON exercise definitions (6 lessons, 30 exercises)
+  exercises/         JSON exercise definitions (24 lessons, 200+ exercises)
   lessons/           Lesson metadata and sequencing
+
+scripts/
+  batch-generate-exercises.ts   Gemini-powered batch exercise generator
+  generate-content-registry.ts  Metro-compatible lazy-loading code-gen
+  perf-benchmark.ts             Content loading performance benchmarks
+  validate-exercise.ts          Exercise JSON validator
+  lesson-specs.json             Lesson specifications for batch generation
 
 firebase/
   functions/         Cloud Functions (Gemini AI, account deletion, progress sync)
@@ -310,9 +318,12 @@ Each cat evolves through 4 stages (Baby → Teen → Adult → Master) with XP t
 | 9 | Music Library (124 songs) | Complete |
 | 10 | Arcade Concert Hall | Complete |
 | 10.5 | Social & Leaderboards | Complete |
-| **11** | **QA + Launch** | **In Progress** |
+| 11 | QA + Launch | Complete |
+| **2.5** | **Performance Audit** | **In Progress** |
+| **3a** | **Content Explosion (existing types)** | **In Progress** |
+| 3b | Content Explosion (new exercise types) | Planned |
 
-**Codebase health:** 0 TypeScript errors, 129 test suites, 2,722 tests passing
+**Codebase health:** 0 TypeScript errors, 142 test suites, 2,893 tests passing
 
 See [UNIFIED-PLAN.md](docs/plans/UNIFIED-PLAN.md) for the full roadmap and phase details.
 

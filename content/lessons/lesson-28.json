@@ -1,0 +1,139 @@
+{
+  "id": "lesson-28",
+  "version": 1,
+  "metadata": {
+    "title": "Compound Meters & Special Time Signatures",
+    "description": "Master 6/8, 9/8, 3/4, and cut time with confidence",
+    "difficulty": 3,
+    "estimatedMinutes": 48,
+    "skills": [
+      "6-8-time",
+      "3-4-time",
+      "ties-across-barline",
+      "dotted-quarter-notes"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-28-ex-01",
+      "title": "6/8 Counting Drill",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-02",
+      "title": "6/8 Melody in C",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-03",
+      "title": "6/8 Irish Jig",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-04",
+      "title": "6/8 Barcarolle",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-05",
+      "title": "Waltz in G Major",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-06",
+      "title": "Waltz in D Minor",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-07",
+      "title": "Mazurka Rhythm",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-08",
+      "title": "Minuet in C",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-09",
+      "title": "Tied Note Patterns 2",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-10",
+      "title": "Sustained Note Exercise",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-11",
+      "title": "Tied Note Melody",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-12",
+      "title": "Dotted Rhythms Level 2",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-13",
+      "title": "Dotted Half Notes",
+      "order": 13,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-14",
+      "title": "Dotted Rhythm Song",
+      "order": 14,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-15",
+      "title": "Tarantella",
+      "order": 15,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-16",
+      "title": "Slow Waltz with Rubato",
+      "order": 16,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-17",
+      "title": "9/8 Feel Introduction",
+      "order": 17,
+      "required": true
+    },
+    {
+      "id": "lesson-28-ex-18",
+      "title": "Hemiola Pattern",
+      "order": 18,
+      "required": true
+    },
+    {
+      "id": "lesson-28-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-27"
+  },
+  "xpReward": 650,
+  "estimatedMinutes": 48
+}

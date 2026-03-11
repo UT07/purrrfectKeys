@@ -1,0 +1,86 @@
+{
+  "id": "lesson-19",
+  "version": 1,
+  "metadata": {
+    "title": "Expression & Dynamics",
+    "description": "Add musical expression with dynamics, staccato, legato, and phrasing",
+    "difficulty": 3,
+    "estimatedMinutes": 25,
+    "skills": [
+      "dynamics-p-f",
+      "crescendo-diminuendo",
+      "staccato-technique",
+      "legato-technique",
+      "accents-emphasis"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-19-ex-01",
+      "title": "Piano & Forte",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-02",
+      "title": "Dynamic Contrast",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-03",
+      "title": "Crescendo Practice",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-04",
+      "title": "Wave Dynamics",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-05",
+      "title": "Staccato Bouncing",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-06",
+      "title": "Staccato vs Legato",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-07",
+      "title": "Smooth Legato",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-08",
+      "title": "Legato Melody",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-19-ex-09",
+      "title": "Accented Notes",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-19-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-16"
+  },
+  "xpReward": 550,
+  "estimatedMinutes": 25
+}

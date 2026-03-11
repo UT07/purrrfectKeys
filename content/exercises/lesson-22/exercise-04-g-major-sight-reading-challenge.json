@@ -1,0 +1,177 @@
+{
+  "id": "lesson-22-ex-04",
+  "version": 1,
+  "metadata": {
+    "title": "G Major Sight Reading Challenge",
+    "description": "A more complex G major sight reading exercise",
+    "difficulty": 3,
+    "estimatedMinutes": 2,
+    "skills": [
+      "sight-reading-c",
+      "sight-reading-g",
+      "sight-reading-mixed"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 65,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "G",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 72,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 77,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 5,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 5.75,
+      "durationBeats": 0.25,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 77,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 79,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 79,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 77,
+      "startBeat": 13,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 13.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 14,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 15,
+      "durationBeats": 3,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 18,
+      "durationBeats": 0.25,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: new unseen melody in g major for sight reading.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on G Major Sight Reading Challenge! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": true,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

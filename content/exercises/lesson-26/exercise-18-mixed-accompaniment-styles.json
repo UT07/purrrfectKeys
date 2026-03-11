@@ -1,0 +1,141 @@
+{
+  "id": "lesson-26-ex-18",
+  "version": 1,
+  "metadata": {
+    "title": "Mixed Accompaniment Styles",
+    "description": "Switch between Alberti, oom-pah, and arpeggiated styles",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "alberti-bass",
+      "bass-chord-pattern",
+      "broken-chord-patterns"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 73,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 48,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 47,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 43,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 47,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 50,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 47,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 43,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 48,
+      "startBeat": 8,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 36,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: left hand broken chord accompaniment (bass-chord-chord pattern).",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Mixed Accompaniment Styles! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": false,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

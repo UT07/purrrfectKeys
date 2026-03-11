@@ -1,0 +1,104 @@
+{
+  "id": "lesson-40",
+  "version": 1,
+  "metadata": {
+    "title": "Year One Grand Recital",
+    "description": "Your final capstone — demonstrate everything you've learned in one epic performance",
+    "difficulty": 5,
+    "estimatedMinutes": 33,
+    "skills": [
+      "year-one-mastery",
+      "full-piece-classical",
+      "full-piece-pop",
+      "repertoire-building",
+      "performance-prep"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-40-ex-01",
+      "title": "Technical Warm-Up",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-02",
+      "title": "Sight-Reading Final",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-03",
+      "title": "Recital: Classical 1",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-04",
+      "title": "Recital: Classical 2",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-05",
+      "title": "Recital: Pop Arrangement",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-06",
+      "title": "Recital: Film/TV Theme",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-07",
+      "title": "Recital: Your Choice 1",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-08",
+      "title": "Recital: Your Choice 2",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-09",
+      "title": "Encore Piece",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-10",
+      "title": "Improvised Cadenza",
+      "order": 10,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-11",
+      "title": "Grand Medley",
+      "order": 11,
+      "required": true
+    },
+    {
+      "id": "lesson-40-ex-12",
+      "title": "Graduation Finale",
+      "order": 12,
+      "required": true
+    },
+    {
+      "id": "lesson-40-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-39"
+  },
+  "xpReward": 1000,
+  "estimatedMinutes": 33
+}

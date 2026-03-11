@@ -1,0 +1,86 @@
+{
+  "id": "lesson-23",
+  "version": 1,
+  "metadata": {
+    "title": "Performance Skills",
+    "description": "Develop performance mindset — play complete pieces with confidence and expression",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "performance-prep",
+      "rubato-intro",
+      "intermediate-classical",
+      "intermediate-pop",
+      "blues-scale"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-23-ex-01",
+      "title": "Play-Through Challenge",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-02",
+      "title": "Performance Mindset",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-03",
+      "title": "Rubato Expression",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-04",
+      "title": "Rubato in Practice",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-05",
+      "title": "Classical Minuet",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-06",
+      "title": "Sonatina Movement",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-07",
+      "title": "Pop Piano Arrangement",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-08",
+      "title": "Ballad Arrangement",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-23-ex-09",
+      "title": "Blues Scale & Riffs",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-23-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-22"
+  },
+  "xpReward": 700,
+  "estimatedMinutes": 25
+}

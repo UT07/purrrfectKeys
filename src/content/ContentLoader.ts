@@ -10,6 +10,7 @@
  */
 
 import type { Exercise, ExerciseType } from '../core/exercises/types';
+import { loadExerciseFromRegistry } from './ContentLoaderRegistry.generated';
 import { logger } from '../utils/logger';
 
 // ============================================================================
@@ -110,58 +111,12 @@ for (const lesson of EXERCISE_INDEX.lessons) {
 }
 
 // ============================================================================
-// Static exercise registry (Metro-compatible)
+// Exercise registry — delegates to auto-generated lazy-loading registry
+// All exercises (lessons 1-24+) are loaded via ContentLoaderRegistry.generated.ts
 // ============================================================================
 
-const EXERCISE_REGISTRY: Record<string, Exercise> = {
-  // Lesson 01
-  'lesson-01-ex-01': require('../../content/exercises/lesson-01/exercise-01-find-middle-c.json'),
-  'lesson-01-ex-02': require('../../content/exercises/lesson-01/exercise-02-keyboard-geography.json'),
-  'lesson-01-ex-03': require('../../content/exercises/lesson-01/exercise-03-white-keys.json'),
-  'lesson-01-test': require('../../content/exercises/lesson-01/exercise-test.json'),
-
-  // Lesson 02
-  'lesson-02-ex-01': require('../../content/exercises/lesson-02/exercise-01-cde-simple.json'),
-  'lesson-02-ex-02': require('../../content/exercises/lesson-02/exercise-02-cdefg.json'),
-  'lesson-02-ex-03': require('../../content/exercises/lesson-02/exercise-03-c-major-octave.json'),
-  'lesson-02-ex-04': require('../../content/exercises/lesson-02/exercise-04-mary-snippet.json'),
-  'lesson-02-ex-05': require('../../content/exercises/lesson-02/exercise-05-broken-c-chord.json'),
-  'lesson-02-ex-06': require('../../content/exercises/lesson-02/exercise-06-twinkle-twinkle.json'),
-  'lesson-02-ex-07': require('../../content/exercises/lesson-02/exercise-07-eighth-note-drill.json'),
-  'lesson-02-ex-08': require('../../content/exercises/lesson-02/exercise-08-c-position-review.json'),
-  'lesson-02-test': require('../../content/exercises/lesson-02/exercise-test.json'),
-
-  // Lesson 03
-  'lesson-03-ex-01': require('../../content/exercises/lesson-03/exercise-01-left-c-position.json'),
-  'lesson-03-ex-02': require('../../content/exercises/lesson-03/exercise-02-left-scale-down.json'),
-  'lesson-03-ex-03': require('../../content/exercises/lesson-03/exercise-03-bass-notes.json'),
-  'lesson-03-ex-04': require('../../content/exercises/lesson-03/exercise-04-broken-f-chord-left.json'),
-  'lesson-03-ex-05': require('../../content/exercises/lesson-03/exercise-05-steady-bass-pattern.json'),
-  'lesson-03-test': require('../../content/exercises/lesson-03/exercise-test.json'),
-
-  // Lesson 04
-  'lesson-04-ex-01': require('../../content/exercises/lesson-04/exercise-01-hands-melody-bass.json'),
-  'lesson-04-ex-02': require('../../content/exercises/lesson-04/exercise-02-mary-full-version.json'),
-  'lesson-04-ex-03': require('../../content/exercises/lesson-04/exercise-03-hand-independence-drill.json'),
-  'lesson-04-ex-04': require('../../content/exercises/lesson-04/exercise-04-ode-to-joy-intro.json'),
-  'lesson-04-ex-05': require('../../content/exercises/lesson-04/exercise-05-blocked-c-f-chords.json'),
-  'lesson-04-ex-06': require('../../content/exercises/lesson-04/exercise-06-both-hands-review.json'),
-  'lesson-04-test': require('../../content/exercises/lesson-04/exercise-test.json'),
-
-  // Lesson 05
-  'lesson-05-ex-01': require('../../content/exercises/lesson-05/exercise-01-scale-technique.json'),
-  'lesson-05-ex-02': require('../../content/exercises/lesson-05/exercise-02-parallel-scales.json'),
-  'lesson-05-ex-03': require('../../content/exercises/lesson-05/exercise-03-scale-speed-drill.json'),
-  'lesson-05-ex-04': require('../../content/exercises/lesson-05/exercise-04-scale-review.json'),
-  'lesson-05-test': require('../../content/exercises/lesson-05/exercise-test.json'),
-
-  // Lesson 06
-  'lesson-06-ex-01': require('../../content/exercises/lesson-06/exercise-01-jingle-bells.json'),
-  'lesson-06-ex-02': require('../../content/exercises/lesson-06/exercise-02-happy-birthday.json'),
-  'lesson-06-ex-03': require('../../content/exercises/lesson-06/exercise-03-amazing-grace.json'),
-  'lesson-06-ex-04': require('../../content/exercises/lesson-06/exercise-04-let-it-go-snippet.json'),
-  'lesson-06-test': require('../../content/exercises/lesson-06/exercise-test.json'),
-};
+// Cache for loaded exercises (populated on first access per exercise)
+const _exerciseCache: Record<string, Exercise> = {};
 
 // ============================================================================
 // Static lesson registry
@@ -174,16 +129,51 @@ const LESSON_REGISTRY: Record<string, LessonManifest> = {
   'lesson-04': require('../../content/lessons/lesson-04.json'),
   'lesson-05': require('../../content/lessons/lesson-05.json'),
   'lesson-06': require('../../content/lessons/lesson-06.json'),
+  'lesson-07': require('../../content/lessons/lesson-07.json'),
+  'lesson-08': require('../../content/lessons/lesson-08.json'),
+  'lesson-09': require('../../content/lessons/lesson-09.json'),
+  'lesson-10': require('../../content/lessons/lesson-10.json'),
+  'lesson-11': require('../../content/lessons/lesson-11.json'),
+  'lesson-12': require('../../content/lessons/lesson-12.json'),
+  'lesson-13': require('../../content/lessons/lesson-13.json'),
+  'lesson-14': require('../../content/lessons/lesson-14.json'),
+  'lesson-15': require('../../content/lessons/lesson-15.json'),
+  'lesson-16': require('../../content/lessons/lesson-16.json'),
+  'lesson-17': require('../../content/lessons/lesson-17.json'),
+  'lesson-18': require('../../content/lessons/lesson-18.json'),
+  'lesson-19': require('../../content/lessons/lesson-19.json'),
+  'lesson-20': require('../../content/lessons/lesson-20.json'),
+  'lesson-21': require('../../content/lessons/lesson-21.json'),
+  'lesson-22': require('../../content/lessons/lesson-22.json'),
+  'lesson-23': require('../../content/lessons/lesson-23.json'),
+  'lesson-24': require('../../content/lessons/lesson-24.json'),
+  'lesson-25': require('../../content/lessons/lesson-25.json'),
+  'lesson-26': require('../../content/lessons/lesson-26.json'),
+  'lesson-27': require('../../content/lessons/lesson-27.json'),
+  'lesson-28': require('../../content/lessons/lesson-28.json'),
+  'lesson-29': require('../../content/lessons/lesson-29.json'),
+  'lesson-30': require('../../content/lessons/lesson-30.json'),
+  'lesson-31': require('../../content/lessons/lesson-31.json'),
+  'lesson-32': require('../../content/lessons/lesson-32.json'),
+  'lesson-33': require('../../content/lessons/lesson-33.json'),
+  'lesson-34': require('../../content/lessons/lesson-34.json'),
+  'lesson-35': require('../../content/lessons/lesson-35.json'),
+  'lesson-36': require('../../content/lessons/lesson-36.json'),
+  'lesson-37': require('../../content/lessons/lesson-37.json'),
+  'lesson-38': require('../../content/lessons/lesson-38.json'),
+  'lesson-39': require('../../content/lessons/lesson-39.json'),
+  'lesson-40': require('../../content/lessons/lesson-40.json'),
 };
 
 // Ordered list of lesson IDs (determines display order)
 const LESSON_ORDER = [
-  'lesson-01',
-  'lesson-02',
-  'lesson-03',
-  'lesson-04',
-  'lesson-05',
-  'lesson-06',
+  'lesson-01', 'lesson-02', 'lesson-03', 'lesson-04', 'lesson-05', 'lesson-06',
+  'lesson-07', 'lesson-08', 'lesson-09', 'lesson-10', 'lesson-11', 'lesson-12',
+  'lesson-13', 'lesson-14', 'lesson-15', 'lesson-16', 'lesson-17', 'lesson-18',
+  'lesson-19', 'lesson-20', 'lesson-21', 'lesson-22', 'lesson-23', 'lesson-24',
+  'lesson-25', 'lesson-26', 'lesson-27', 'lesson-28', 'lesson-29', 'lesson-30',
+  'lesson-31', 'lesson-32', 'lesson-33', 'lesson-34', 'lesson-35', 'lesson-36',
+  'lesson-37', 'lesson-38', 'lesson-39', 'lesson-40',
 ];
 
 // ============================================================================
@@ -191,7 +181,17 @@ const LESSON_ORDER = [
 // ============================================================================
 
 export function getExercise(exerciseId: string): Exercise | null {
-  return EXERCISE_REGISTRY[exerciseId] ?? null;
+  // Check cache first
+  if (_exerciseCache[exerciseId]) return _exerciseCache[exerciseId];
+
+  // Load from generated registry (lazy — only loads JSON on first access)
+  const exercise = loadExerciseFromRegistry(exerciseId);
+  if (exercise) {
+    _exerciseCache[exerciseId] = exercise;
+    return exercise;
+  }
+
+  return null;
 }
 
 export function getLessons(): LessonManifest[] {
@@ -212,7 +212,7 @@ export function getLessonExercises(lessonId: string): Exercise[] {
 
   const exercises: Exercise[] = [];
   for (const entry of nonTestExercises) {
-    const exercise = EXERCISE_REGISTRY[entry.id];
+    const exercise = getExercise(entry.id);
     if (exercise) {
       exercises.push(exercise);
     } else {
@@ -263,7 +263,7 @@ export function getTestExercise(lessonId: string): Exercise | null {
   const testEntry = lesson.exercises.find((e) => e.test);
   if (!testEntry) return null;
 
-  return EXERCISE_REGISTRY[testEntry.id] ?? null;
+  return getExercise(testEntry.id);
 }
 
 /**
