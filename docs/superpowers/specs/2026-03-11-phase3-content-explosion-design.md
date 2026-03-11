@@ -1,8 +1,9 @@
 # Phase 3: Content Explosion + Phase 2.5: Performance Audit
 
 **Date:** 2026-03-11
-**Status:** Approved
+**Status:** Approved (revised after spec review)
 **Parallel tracks:** Phase 2.5 (performance) runs alongside Phase 3 (content)
+**Phase split:** Phase 3a (content scaling, existing types) → Phase 3b (new exercise types)
 
 ---
 
@@ -11,6 +12,10 @@
 Phase 3 scales Purrrfect Keys from 30 exercises to 600+, from 124 songs to 500+, adds 5 learning paths, and introduces 11 new exercise types (17 total). All content is pre-generated and bundled for offline-first operation.
 
 Phase 2.5 runs in parallel: profile current performance, establish baselines, and fix bottlenecks before the content load multiplies them.
+
+**Phase split rationale:** The 11 new exercise types each require unique data schemas, scoring strategies, and UI components. To avoid blocking content scaling on type implementations, Phase 3 is split:
+- **Phase 3a:** Scale to 600+ exercises using existing 6 types, lazy loading, songs, paths. Can start immediately.
+- **Phase 3b:** Implement 11 new exercise types with full schema definitions. Depends on 3a infrastructure.
 
 ---
 
@@ -109,6 +114,139 @@ The app feels slow during gameplay and after exercise completion. No performance
 
 17. **Improvisation** — Given chord progression + scale, play freely for 8-16 bars. Scoring: % in-key, rhythmic variety, chord tone usage. Keys outside scale dimmed. Unlocked at tier 10+.
 
+#### Exercise JSON Schema Extensions (Phase 3b)
+
+Each new type extends the base `Exercise` interface with a `typeConfig` field. The existing `notes: NoteEvent[]` array is reused where possible.
+
+```typescript
+// Added to Exercise interface:
+interface Exercise {
+  // ... existing fields ...
+  typeConfig?: ExerciseTypeConfig; // New — type-specific configuration
+}
+
+type ExerciseTypeConfig =
+  | FillInTheBlankConfig
+  | SpotTheErrorConfig
+  | IntervalQuizConfig
+  | ChordBuilderConfig
+  | KeySignatureIdConfig
+  | BossBattleConfig
+  | DuetConfig
+  | SpeedRunConfig
+  | EndlessModeConfig
+  | TeacherChallengeConfig
+  | ImprovisationConfig;
+
+// --- New Interaction Types ---
+
+interface FillInTheBlankConfig {
+  kind: 'fillInTheBlank';
+  gapIndices: number[];       // Indices into notes[] that are hidden
+  playFullFirst: boolean;     // Play full melody before gaps appear
+}
+// Scoring: only gap positions scored. notes[] contains ALL notes; gapIndices marks blanks.
+
+interface SpotTheErrorConfig {
+  kind: 'spotTheError';
+  wrongNoteIndex: number;     // Which note in notes[] is wrong
+  correctNote: number;        // What the right MIDI note should be
+  options: number[];          // 4 MIDI notes to highlight as choices
+}
+// Scoring: binary — tapped correct key = 100%, wrong = 0%.
+
+interface IntervalQuizConfig {
+  kind: 'intervalQuiz';
+  mode: 'identify' | 'play'; // Identify: hear interval, pick name. Play: see name, play it.
+  intervalName: string;       // e.g. "minor 3rd", "perfect 5th"
+  rootNote: number;           // MIDI note of the root
+  targetNote: number;         // MIDI note of the interval
+  options?: string[];         // Multiple choice options for 'identify' mode
+}
+// Scoring: binary for identify. For play: standard pitch matching from root+interval.
+
+interface ChordBuilderConfig {
+  kind: 'chordBuilder';
+  rootNote: number;           // MIDI note of chord root
+  chordType: string;          // e.g. "major", "minor", "7", "m7", "dim"
+  expectedNotes: number[];    // Correct MIDI notes for the chord
+  maxAttempts: number;        // Notes allowed before scoring
+}
+// Scoring: incremental — each correct note adds to score. Order doesn't matter.
+
+interface KeySignatureIdConfig {
+  kind: 'keySignatureId';
+  mode: 'listen' | 'read';   // Listen: hear passage, pick key. Read: see staff, play scale.
+  correctKey: string;         // e.g. "G major", "D minor"
+  options: string[];          // 4 key choices for 'listen' mode
+  passage?: NoteEvent[];      // Short passage to play (listen mode)
+  scaleNotes?: number[];      // Expected scale notes (read mode)
+}
+// Scoring: binary for listen. Standard pitch matching for read/play-scale.
+
+// --- Gamified Wrappers ---
+
+interface BossBattleConfig {
+  kind: 'bossBattle';
+  bossName: string;           // e.g. "Dissonance Dragon"
+  lives: number;              // Default 3
+  modifiers: BossModifier[];  // Applied progressively
+  lootTier: 'common' | 'rare' | 'epic' | 'legendary';
+}
+interface BossModifier {
+  triggerAtPercent: number;    // 0-100, when in the exercise this activates
+  type: 'tempoRamp' | 'darkKeys' | 'flipNotes' | 'narrowWindow';
+  value: number;              // tempoRamp: BPM increase. darkKeys: % keys hidden.
+}
+// Scoring: standard scoring + lives system. Miss 3 notes = lose a life.
+
+interface DuetConfig {
+  kind: 'duet';
+  catPart: NoteEvent[];       // Notes the cat plays (auto-played by audio engine)
+  playerPart: NoteEvent[];    // Notes the player must play (scored)
+  catHand: 'left' | 'right';
+}
+// Scoring: only playerPart scored. catPart plays automatically. notes[] = playerPart.
+
+interface SpeedRunConfig {
+  kind: 'speedRun';
+  exerciseIds: string[];      // 5 exercise IDs to chain
+  timeLimitSeconds: number;   // Total time for all 5
+  starThresholdSeconds: [number, number, number]; // Time-based star thresholds
+}
+// Scoring: aggregate accuracy across 5 exercises + time bonus.
+
+interface EndlessModeConfig {
+  kind: 'endlessMode';
+  startTempo: number;         // Starting BPM
+  tempoIncrement: number;     // BPM added per round
+  patternPool: string[];      // Exercise IDs to draw from
+  personalBestKey: string;    // Storage key for tracking best streak
+}
+// Scoring: rounds survived. One miss = game over.
+
+interface TeacherChallengeConfig {
+  kind: 'teacherChallenge';
+  goal: 'faster' | 'louder' | 'softer' | 'legato' | 'staccato';
+  targetValue: number;        // Goal-specific (BPM for faster, velocity for louder)
+  salsaDialogue: string[];    // Commentary lines from Salsa
+}
+// Scoring: standard + technique goal bonus (0-20 points).
+
+// --- Creative ---
+
+interface ImprovisationConfig {
+  kind: 'improvisation';
+  chordProgression: Array<{ chord: string; durationBeats: number }>;
+  scale: string;              // e.g. "C major", "A minor pentatonic"
+  scaleNotes: number[];       // MIDI notes in the scale (for key dimming)
+  bars: number;               // 8 or 16
+  backingTrack?: string;      // Optional backing track asset ID
+}
+// Scoring: % notes in-key (40%), rhythmic variety (30%), chord tone usage (30%).
+// No "expected notes" — entirely freeform. Uses ImprovisationScorer.
+```
+
 #### Exercise Distribution (600+)
 
 | Block | Lessons | Core Exercises | Bonus | Boss Battles | Total |
@@ -189,6 +327,61 @@ Each popular song has 3 difficulty arrangements (Easy/Medium/Hard). All validate
 - Shared trunk lessons (1-4 for most paths, 1-9 for Jazz) use identical exercises
 - Path-specific lessons swap ~30% of exercises for variants that match the path focus
 
+**Path manifest schema:**
+```json
+{
+  "id": "pop-film",
+  "name": "Pop & Film",
+  "description": "Learn to play songs you know and love",
+  "icon": "music-note",
+  "branchesAtLesson": 5,
+  "sharedLessons": ["lesson-01", "lesson-02", "lesson-03", "lesson-04"],
+  "lessonOverrides": {
+    "lesson-05": {
+      "swap": {
+        "lesson-05-ex-03": "lesson-05-pop-ex-03",
+        "lesson-05-ex-07": "lesson-05-pop-ex-07"
+      },
+      "addBonus": ["lesson-05-pop-bonus-song-01"]
+    }
+  },
+  "additionalSongIds": ["song-let-it-be-easy", "song-clocks-easy"],
+  "emphasizeSkills": ["chords", "chord-progressions"],
+  "deemphasizeSkills": ["scales", "arpeggios"]
+}
+```
+
+**CurriculumEngine path integration:**
+- `generateSessionPlan()` gains an optional `pathId` parameter
+- Reads path manifest → applies `lessonOverrides` when selecting exercises
+- `emphasizeSkills` increases selection weight for matching exercises
+- Falls back to default (Piano Basics) if path not set
+
+**Song-as-exercise data flow:**
+Songs appear as exercises within lessons by converting song sections to Exercise format:
+- `SongPlayerScreen` sections already have `NoteEvent[]`-compatible data
+- A `songToExercise(song, sectionIndex)` utility converts a song section into an `Exercise` object
+- Exercise type = `'play'` (reuses existing scoring — no new type needed)
+- `exercise.metadata.source = 'song'` flag distinguishes song exercises in UI (music note icon)
+- Songs are loaded through `songStore` but wrapped as Exercise for ExercisePlayer
+- This keeps the Song and Exercise data models separate while reusing scoring infrastructure
+
+### SkillTree Extension
+
+Current SkillTree has 100 nodes across 15 tiers with `shouldUnlockAnchorLesson()` mapping lessons 1-24. Phase 3 adds lessons 25-40.
+
+**Required changes:**
+- Extend `shouldUnlockAnchorLesson()` to map lessons 25-40 to tier prerequisites
+- Add ~30 new skill nodes for advanced topics (jazz voicings, improvisation, performance pieces)
+- Each new lesson maps to 2-3 skill nodes as prerequisites
+- Existing 100 nodes remain unchanged — new nodes extend the DAG
+
+**Mapping (lessons 25-40 → tiers):**
+- Lessons 25-28 → Tier 11-12 (Rhythm, Arpeggios)
+- Lessons 29-32 → Tier 13 (Expression)
+- Lessons 33-36 → Tier 14 (Sight Reading)
+- Lessons 37-40 → Tier 15 (Performance)
+
 ### Content Generation Pipeline
 
 All content is pre-generated and bundled. No runtime generation needed for core content.
@@ -223,36 +416,49 @@ Existing scripts (`import-thesession.ts`, `import-pdmx.py`, `generate-songs.ts`)
 ### ContentLoader Architecture (Lazy Loading)
 
 Current: Static `require()` for all exercises at import time.
-New: Metadata index + on-demand loading.
+New: Metadata index + code-generated require registry.
+
+**Metro limitation:** Metro requires static `require()` strings — no dynamic `import()`. Two viable approaches:
+
+**Approach A (chosen): Code-generated require registry.**
+A build-time script generates a `ContentLoaderRegistry.ts` file with all `require()` calls. Exercises are loaded on-demand by calling the registry function.
 
 ```typescript
-// content/exercise-index.json — loaded once at startup (~50KB for 600 exercises)
-{
-  "exercises": {
-    "lesson-01-ex-01": {
-      "title": "Find Middle C",
-      "lesson": "lesson-01",
-      "tier": 1,
-      "difficulty": 1,
-      "types": ["play"],
-      "skills": ["note-finding", "c-major"]
-    },
-    // ... 600 entries, metadata only (no notes array)
-  }
-}
+// scripts/generate-content-registry.ts — RUN AT BUILD TIME
+// Scans content/exercises/ and generates:
 
-// Full exercise loaded on demand
-ContentLoader.getExercise("lesson-01-ex-01")
-  → checks in-memory cache
-  → if miss: dynamic import(`content/exercises/lesson-01/exercise-01.json`)
-  → cache and return
+// src/content/ContentLoaderRegistry.generated.ts (auto-generated, do not edit)
+const EXERCISE_LOADERS: Record<string, () => Exercise> = {
+  'lesson-01-ex-01': () => require('../../content/exercises/lesson-01/exercise-01.json'),
+  'lesson-01-ex-02': () => require('../../content/exercises/lesson-01/exercise-02.json'),
+  // ... 600 entries — each is a lazy thunk, not loaded until called
+  'lesson-40-ex-10': () => require('../../content/exercises/lesson-40/exercise-10.json'),
+};
+export function loadExercise(id: string): Exercise | null {
+  const loader = EXERCISE_LOADERS[id];
+  return loader ? loader() : null;
+}
+```
+
+**Key insight:** Metro resolves `require()` statically but the thunk `() => require(...)` is only _executed_ on demand. The JSON files are bundled but not parsed until the thunk is called. This gives us lazy loading within Metro's constraints.
+
+**Alternative B: `require.context()` (Expo SDK 52+).** Available but less explicit — harder to tree-shake and debug. Keep as fallback if registry approach hits issues.
+
+```typescript
+// Alternative using require.context()
+const ctx = require.context('../../content/exercises', true, /\.json$/);
+function loadExercise(id: string): Exercise | null {
+  const path = exerciseIdToPath(id); // e.g. './lesson-01/exercise-01.json'
+  return ctx(path);
+}
 ```
 
 **Cache strategy:**
 - LRU cache, max 50 exercises in memory
 - Current lesson's exercises pre-loaded when lesson starts
 - Next lesson pre-fetched after completing current
-- Index file loaded once, kept in memory permanently
+- Index file (`exercise-index.json`) loaded once at startup, kept in memory (~50KB for 600 exercises)
+- Index uses existing array format (matches current `ExerciseIndexEntry[]`)
 
 ### Daily & Weekly Content
 
@@ -290,44 +496,69 @@ Current zigzag path with lesson nodes. Phase 3 additions:
 | 2.5.5 | ExercisePlayer render audit | 2.5.2 | M |
 | 2.5.6 | Memory profiling + fixes | 2.5.2 | S |
 
-### Phase 3 Tasks (Content — main track)
+### Phase 3a Tasks (Content scaling — existing types)
 
 | # | Task | Depends On | Estimate |
 |---|------|-----------|----------|
-| 3.1 | New exercise type implementations (11 types) | — | XL |
-| 3.2 | Batch exercise generation pipeline | — | L |
-| 3.3 | Generate + validate 570 new exercises | 3.1, 3.2 | XL |
-| 3.4 | Import 300+ new songs | — | L |
-| 3.5 | Generate 75 new songs via Gemini | — | M |
-| 3.6 | Song-curriculum linking (requiredSkills) | 3.4, 3.5 | M |
-| 3.7 | 5 learning path manifests | 3.3 | L |
-| 3.8 | Path selection UI (onboarding + settings) | 3.7 | M |
-| 3.9 | CurriculumEngine path routing | 3.7 | M |
-| 3.10 | Daily challenge expansion (Speed Run, Teacher) | 3.1 | M |
-| 3.11 | ContentLoader lazy loading | 2.5.4 | L |
-| 3.12 | LevelMap reward/boss/song nodes | 3.6 | M |
-| 3.13 | Song search improvements | 3.4 | M |
-| 3.14 | Exercise + song validation CI | 3.3, 3.4 | S |
+| 3a.1 | Content registry code-gen script | — | M |
+| 3a.2 | ContentLoader lazy loading + LRU cache | 3a.1, 2.5.4 | L |
+| 3a.3 | Batch exercise generation pipeline (6 existing types) | — | L |
+| 3a.4 | Lesson specs for 40 lessons | — | L |
+| 3a.5 | Generate + validate 570 new exercises | 3a.3, 3a.4 | XL |
+| 3a.6 | SkillTree extension (lessons 25-40) | — | M |
+| 3a.7 | Import 300+ new songs | — | L |
+| 3a.8 | Generate 75 new songs via Gemini | — | M |
+| 3a.9 | Song-curriculum linking (requiredSkills + songToExercise) | 3a.7, 3a.8 | M |
+| 3a.10 | 5 learning path manifests | 3a.5 | L |
+| 3a.11 | Path selection UI (onboarding + settings) | 3a.10 | M |
+| 3a.12 | CurriculumEngine path routing | 3a.10 | M |
+| 3a.13 | LevelMap reward/boss/song nodes | 3a.9 | M |
+| 3a.14 | Song search improvements | 3a.7 | M |
+| 3a.15 | Exercise + song validation CI | 3a.5, 3a.7 | S |
+
+### Phase 3b Tasks (New exercise types — after 3a infrastructure)
+
+| # | Task | Depends On | Estimate |
+|---|------|-----------|----------|
+| 3b.1 | ExerciseType union + typeConfig schemas | — | M |
+| 3b.2 | Fill-in-the-Blank (validator + UI) | 3b.1 | L |
+| 3b.3 | Spot the Error (validator + UI) | 3b.1 | M |
+| 3b.4 | Interval Quiz (validator + UI) | 3b.1 | M |
+| 3b.5 | Chord Builder (validator + UI) | 3b.1 | L |
+| 3b.6 | Key Signature ID (validator + UI) | 3b.1 | M |
+| 3b.7 | Boss Battle engine + overlay | 3b.1 | XL |
+| 3b.8 | Duet engine (cat accompaniment) | 3b.1 | L |
+| 3b.9 | Speed Run (exercise chaining + timer) | 3b.1 | L |
+| 3b.10 | Endless Mode (progressive difficulty) | 3b.1 | L |
+| 3b.11 | Teacher Challenge (technique goals) | 3b.1 | M |
+| 3b.12 | Improvisation (freeform scoring) | 3b.1 | XL |
+| 3b.13 | Daily challenge expansion (Speed Run, Teacher) | 3b.9, 3b.11 | M |
+| 3b.14 | Generate exercises for new types | 3b.2-3b.12, 3a.3 | XL |
 
 ### Execution Order
 
 **Week 1-2 (parallel start):**
 - 2.5.1 + 2.5.2: Baseline profiling
-- 3.1: Start new exercise type implementations
-- 3.2: Build batch generation pipeline
-- 3.4 + 3.5: Song imports (independent)
+- 3a.1 + 3a.2: Content registry + lazy loading
+- 3a.3 + 3a.4: Build generation pipeline + lesson specs
+- 3a.7 + 3a.8: Song imports (independent)
 
 **Week 3-4:**
 - 2.5.3 + 2.5.5: Fix bottlenecks found in profiling
-- 2.5.4 / 3.11: ContentLoader lazy loading (shared)
-- 3.3: Generate exercises (needs 3.1 + 3.2 done)
-- 3.6: Song-curriculum linking
+- 3a.5: Generate 570 exercises (needs pipeline + specs done)
+- 3a.6: SkillTree extension
+- 3a.9: Song-curriculum linking
 
 **Week 5-6:**
-- 3.7 + 3.8 + 3.9: Learning paths
-- 3.10: Daily challenge expansion
-- 3.12: LevelMap updates
-- 3.13 + 3.14: Search + validation CI
+- 3a.10 + 3a.11 + 3a.12: Learning paths
+- 3a.13: LevelMap updates
+- 3a.14 + 3a.15: Search + validation CI
+- 3b.1: Start new type schemas (begin Phase 3b)
+
+**Week 7-10 (Phase 3b):**
+- 3b.2-3b.6: New interaction types (parallel development)
+- 3b.7-3b.12: Gamified wrappers + creative types
+- 3b.13-3b.14: Daily challenges + content for new types
 
 ---
 
@@ -353,6 +584,6 @@ Current zigzag path with lesson nodes. Phase 3 additions:
 - [ ] ContentLoader lazy loads (not all at startup)
 - [ ] Exercise validation passes for all 600+
 - [ ] Song validation passes for all 500+
-- [ ] App size stays under 150MB
+- [ ] App size stays under 100MB (bundled exercises ~1.2MB, songs in Firestore not bundled)
 - [ ] Offline-first: exercises bundled, songs cached after first load
 - [ ] 0 TypeScript errors, 0 test failures
