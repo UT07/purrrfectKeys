@@ -180,13 +180,15 @@ export async function getUserPublicProfile(
 
   const [userSnap, catSnap] = await Promise.all([
     getDoc(userRef),
-    getDoc(catRef),
+    // catEvolution is owner-read-only — gracefully handle permission denied
+    // when viewing another user's profile for friend requests
+    getDoc(catRef).catch(() => null),
   ]);
 
   if (!userSnap.exists()) return null;
 
   const userData = userSnap.data();
-  const catData = catSnap.exists() ? catSnap.data() : null;
+  const catData = catSnap != null && catSnap.exists() ? catSnap.data() : null;
 
   return {
     displayName: (userData.displayName as string) || 'Player',

@@ -353,6 +353,7 @@ function ChallengeCard({
     fromUid: string;
     fromDisplayName: string;
     toDisplayName?: string;
+    exerciseId: string;
     exerciseTitle: string;
     fromScore: number;
     toScore: number | null;
@@ -361,7 +362,9 @@ function ChallengeCard({
   };
   myUid: string;
 }): React.JSX.Element {
+  const navigation = useNavigation<NavigationProp>();
   const iAmSender = challenge.fromUid === myUid;
+  const canPlay = !iAmSender && challenge.status === 'pending' && challenge.toScore == null;
 
   const timeLeft = useMemo(() => {
     const remaining = challenge.expiresAt - Date.now();
@@ -394,12 +397,26 @@ function ChallengeCard({
   const myWins = myScore != null && theirScore != null && myScore > theirScore;
   const theyWin = myScore != null && theirScore != null && theirScore > myScore;
 
+  const handlePlay = useCallback(() => {
+    if (!canPlay) return;
+    navigation.navigate('Exercise', {
+      exerciseId: challenge.exerciseId,
+      friendChallengeId: challenge.id,
+    });
+  }, [canPlay, challenge.exerciseId, challenge.id, navigation]);
+
+  const Wrapper = canPlay ? PressableScale : View;
+  const wrapperProps = canPlay ? { onPress: handlePlay } : {};
+
   return (
-    <View style={[
-      styles.challengeCard,
-      { borderLeftWidth: 3, borderLeftColor },
-      { backgroundColor: glowColor(borderLeftColor, 0.06) },
-    ]}>
+    <Wrapper
+      {...wrapperProps}
+      style={[
+        styles.challengeCard,
+        { borderLeftWidth: 3, borderLeftColor },
+        { backgroundColor: glowColor(borderLeftColor, 0.06) },
+      ]}
+    >
       <View style={styles.challengeHeader}>
         <MaterialCommunityIcons name="sword-cross" size={22} color={COLORS.warning} />
         <Text style={styles.challengeTitle} numberOfLines={1}>
@@ -433,7 +450,7 @@ function ChallengeCard({
             </Text>
           ) : (
             <Text style={[styles.challengeScoreValue, { color: COLORS.warning, fontSize: 14 }]}>
-              Pending
+              Tap to play!
             </Text>
           )}
         </View>
@@ -445,11 +462,13 @@ function ChallengeCard({
             ? 'Completed'
             : challenge.status === 'expired'
               ? 'Expired'
-              : 'Pending'}
+              : canPlay
+                ? 'Tap to accept!'
+                : 'Waiting...'}
         </Text>
         <Text style={styles.challengeTime}>{timeLeft}</Text>
       </View>
-    </View>
+    </Wrapper>
   );
 }
 

@@ -66,7 +66,7 @@ import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 import { DemoPlaybackService } from '../../services/demoPlayback';
 import { createAudioEngine } from '../../audio/createAudioEngine';
 import { ttsService } from '../../services/tts/TTSService';
-import { createChallenge } from '../../services/firebase/socialService';
+import { createChallenge, updateChallengeResult } from '../../services/firebase/socialService';
 import { useSocialStore } from '../../stores/socialStore';
 import { useAuthStore } from '../../stores/authStore';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
@@ -262,6 +262,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const skillIdParam = route.params?.skillId ?? null;
   const exerciseTypeParam = route.params?.exerciseType ?? null;
   const challengeTarget = route.params?.challengeTarget ?? null;
+  const friendChallengeId = route.params?.friendChallengeId ?? null;
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
@@ -1242,6 +1243,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
+    // --- Friend challenge response (receiver submitting their score) ---
+    if (friendChallengeId) {
+      updateChallengeResult(friendChallengeId, score.overall).catch((err) => {
+        logger.warn('[ExercisePlayer] Failed to submit challenge result:', err);
+      });
+      // Update local store so UI reflects completion immediately
+      const { challenges, setChallenges } = useSocialStore.getState();
+      setChallenges(challenges.map((c) =>
+        c.id === friendChallengeId
+          ? { ...c, toScore: score.overall, status: 'completed' as const }
+          : c,
+      ));
+    }
+
     // Always show full CompletionModal with AI coaching, score ring, cat dialogue.
     // CompletionModal handles all scenarios: pass, fail, retry, next exercise, lesson complete.
     setShowCompletion(true);
@@ -1251,7 +1266,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         `Exercise complete! Score: ${score.overall}%`
       );
     }
-  }, [onExerciseComplete, abilityConfig, challengeTarget]);
+  }, [onExerciseComplete, abilityConfig, challengeTarget, friendChallengeId]);
 
   // Metronome toggle — defaults to exercise setting, user can toggle during play
   const [metronomeOn, setMetronomeOn] = useState(exercise.settings.metronomeEnabled ?? true);

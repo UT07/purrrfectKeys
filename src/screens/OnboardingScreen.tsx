@@ -44,7 +44,7 @@ import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
-import { checkUsernameAvailable, isValidUsername } from '../services/firebase/socialService';
+import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor, shadowGlow } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 
@@ -527,10 +527,10 @@ function UsernameStep({
             setValidationError('Username already taken');
           }
         } catch {
-          // Network/permission error — allow proceeding optimistically.
-          // Registration will validate again. Don't block onboarding on network.
-          setIsAvailable(true);
-          setValidationError(null);
+          // Network/permission error — do NOT assume available.
+          // Block proceeding until a successful check.
+          setIsAvailable(null);
+          setValidationError('Could not verify — check your connection');
         } finally {
           setIsChecking(false);
         }
@@ -1003,6 +1003,25 @@ export function OnboardingScreen(): React.ReactElement {
             hasCompletedOnboarding: true,
             username: state.username || '',
           } as any).catch(() => {});
+
+          // Atomically claim the username in the `usernames/` collection so other
+          // users can find us and duplicate usernames are prevented. This MUST happen
+          // during onboarding — not lazily in AddFriendScreen or ensureSocialSetup.
+          if (state.username) {
+            const dn = state.usernameDisplayName?.trim() || state.username;
+            registerUsername(user.uid, state.username, dn).then(() => {
+              const { useSocialStore } = require('../stores/socialStore');
+              useSocialStore.getState().setFriendCode(state.username!);
+            }).catch((err: Error) => {
+              // Username was taken (race condition). Clear from user profile
+              // to prevent duplicate usernames in the system.
+              console.warn('[Onboarding] registerUsername failed:', err.message);
+              if (err.message === 'Username already taken') {
+                updateUserProfile(user.uid, { username: '' } as any).catch(() => {});
+                useSettingsStore.getState().setUsername('');
+              }
+            });
+          }
         }
       } catch { /* Firestore sync is best-effort */ }
       // Pre-fill buffer with tier-1 exercises for immediate play (fire-and-forget)

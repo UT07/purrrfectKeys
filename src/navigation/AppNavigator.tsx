@@ -68,6 +68,8 @@ export type RootStackParamList = {
       uid: string;
       displayName: string;
     };
+    /** When playing a received challenge — submits score back on completion */
+    friendChallengeId?: string;
   };
   TierIntro: { tier: number; locked?: boolean };
   SkillAssessment: undefined;

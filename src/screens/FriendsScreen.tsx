@@ -445,13 +445,18 @@ export function FriendsScreen(): React.JSX.Element {
           (c) => c.fromUid !== friendUid && c.toUid !== friendUid,
         );
         setChallenges(remaining);
+        // Remove deleted friend's activity from the feed
+        const filteredActivity = activityFeed.filter(
+          (a) => a.friendUid !== friendUid,
+        );
+        setActivityFeed(filteredActivity);
       } catch {
         Alert.alert('Error', 'Failed to remove friend. Please try again.');
       } finally {
         setProcessingUid(null);
       }
     },
-    [user?.uid, removeFriend, challenges, setChallenges],
+    [user?.uid, removeFriend, challenges, setChallenges, activityFeed, setActivityFeed],
   );
 
   // ---------------------------------------------------------------------------

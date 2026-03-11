@@ -4,7 +4,7 @@
  * Duolingo-style gamification polish: progress ring, gradient stats, horizontal achievements
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Alert,
   TextInput,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { PressableScale } from '../components/common/PressableScale';
 import { useNavigation } from '@react-navigation/native';
@@ -45,6 +46,7 @@ import { getLevelProgress } from '../core/progression/XpSystem';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
+import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -270,6 +272,15 @@ export function ProfileScreen(): React.ReactElement {
   const [editingName, setEditingName] = useState(displayName);
   const [showUsernameEditor, setShowUsernameEditor] = useState(false);
   const [editingUsername, setEditingUsername] = useState(username || '');
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSaving, setUsernameSaving] = useState(false);
+  const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current); };
+  }, []);
 
   const selectedCat = getCatById(selectedCatId) ?? CAT_CHARACTERS[0];
   const catColor = selectedCat.color;
@@ -323,19 +334,78 @@ export function ProfileScreen(): React.ReactElement {
     setShowNameEditor(false);
   }, [editingName, setDisplayName]);
 
-  const handleSaveUsername = useCallback(() => {
-    const trimmed = editingUsername.trim();
-    if (trimmed.length >= 3) {
-      setUsername(trimmed);
-      // Sync to Firestore
+  const handleUsernameInputChange = useCallback((text: string) => {
+    const normalized = text.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
+    setEditingUsername(normalized);
+    setUsernameAvailable(null);
+    setUsernameError(null);
+
+    if (usernameDebounceRef.current) clearTimeout(usernameDebounceRef.current);
+
+    if (normalized.length === 0) return;
+    if (normalized === username) {
+      // Same as current — no change needed
+      setUsernameAvailable(null);
+      return;
+    }
+    if (normalized.length < 3) {
+      setUsernameError('At least 3 characters');
+      return;
+    }
+    if (!isValidUsername(normalized)) {
+      setUsernameError('Only lowercase letters, numbers, _ and -');
+      return;
+    }
+
+    setUsernameChecking(true);
+    usernameDebounceRef.current = setTimeout(async () => {
+      try {
+        const available = await checkUsernameAvailable(normalized);
+        setUsernameAvailable(available);
+        if (!available) setUsernameError('Username already taken');
+      } catch {
+        setUsernameAvailable(null);
+        setUsernameError('Could not verify — check your connection');
+      } finally {
+        setUsernameChecking(false);
+      }
+    }, 500);
+  }, [username]);
+
+  const handleSaveUsername = useCallback(async () => {
+    const trimmed = editingUsername.trim().toLowerCase();
+    if (trimmed === username) {
+      setShowUsernameEditor(false);
+      return;
+    }
+    if (trimmed.length < 3 || !isValidUsername(trimmed) || usernameAvailable !== true) return;
+
+    setUsernameSaving(true);
+    try {
       const { user } = useAuthStore.getState();
       if (user && !user.isAnonymous) {
-        const { updateUserProfile } = require('../services/firebase/firestore');
-        updateUserProfile(user.uid, { username: trimmed } as any).catch(() => {});
+        const dn = displayName || trimmed;
+        await registerUsername(user.uid, trimmed, dn);
+        setUsername(trimmed);
+        const { useSocialStore } = require('../stores/socialStore');
+        useSocialStore.getState().setFriendCode(trimmed);
+        setShowUsernameEditor(false);
+      } else {
+        // Anonymous users just save locally
+        setUsername(trimmed);
+        setShowUsernameEditor(false);
       }
+    } catch (err: any) {
+      if (err?.message === 'Username already taken') {
+        setUsernameError('Username already taken');
+        setUsernameAvailable(false);
+      } else {
+        setUsernameError('Failed to save — try again');
+      }
+    } finally {
+      setUsernameSaving(false);
     }
-    setShowUsernameEditor(false);
-  }, [editingUsername, setUsername]);
+  }, [editingUsername, username, usernameAvailable, displayName, setUsername]);
 
   return (
     <SafeAreaView style={styles.container} testID="profile-screen">
@@ -610,24 +680,48 @@ export function ProfileScreen(): React.ReactElement {
             </View>
           </PressableScale>
           {showUsernameEditor && (
-            <View style={styles.usernameEditRow}>
-              <TextInput
-                style={styles.usernameInput}
-                value={editingUsername}
-                onChangeText={setEditingUsername}
-                maxLength={20}
-                autoFocus
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholder="username (3-20 chars)"
-                placeholderTextColor={COLORS.textMuted}
-                returnKeyType="done"
-                onSubmitEditing={handleSaveUsername}
-                testID="username-input"
-              />
-              <PressableScale onPress={handleSaveUsername} style={styles.usernameSaveBtn} testID="username-save-btn">
-                <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
-              </PressableScale>
+            <View>
+              <View style={styles.usernameEditRow}>
+                <TextInput
+                  style={[
+                    styles.usernameInput,
+                    usernameError ? { borderColor: COLORS.error } : null,
+                    usernameAvailable === true ? { borderColor: COLORS.success } : null,
+                  ]}
+                  value={editingUsername}
+                  onChangeText={handleUsernameInputChange}
+                  maxLength={20}
+                  autoFocus
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder="username (3-20 chars)"
+                  placeholderTextColor={COLORS.textMuted}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveUsername}
+                  editable={!usernameSaving}
+                  testID="username-input"
+                />
+                {usernameChecking || usernameSaving ? (
+                  <View style={styles.usernameSaveBtn}>
+                    <ActivityIndicator size="small" color={COLORS.textMuted} />
+                  </View>
+                ) : (
+                  <PressableScale
+                    onPress={handleSaveUsername}
+                    style={[styles.usernameSaveBtn, usernameAvailable !== true && { opacity: 0.4 }]}
+                    disabled={usernameAvailable !== true || usernameSaving}
+                    testID="username-save-btn"
+                  >
+                    <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
+                  </PressableScale>
+                )}
+              </View>
+              {usernameError && (
+                <Text style={{ color: COLORS.error, fontSize: 12, marginTop: 4, marginHorizontal: SPACING.md }}>{usernameError}</Text>
+              )}
+              {!usernameError && usernameAvailable === true && (
+                <Text style={{ color: COLORS.success, fontSize: 12, marginTop: 4, marginHorizontal: SPACING.md }}>Username available!</Text>
+              )}
             </View>
           )}
 
