@@ -1,40 +1,30 @@
-name: Build & Deploy
-
-# Native builds as primary, EAS as optional fallback.
+# ──────────────────────────────────────────────────────────────
+#  Build — Preview (Internal Testing)
+# ──────────────────────────────────────────────────────────────
+# Builds iOS + Android via EAS Build with the "preview" profile.
+# Runs quality gate first, then triggers EAS builds.
 #
 # Triggers:
-#   - Version tags (v*) → Auto-build release for both platforms
-#   - Manual dispatch  → Choose platform, profile, submission, or EAS fallback
+#   - Push to master (auto-build after quality gate)
+#   - Manual dispatch (choose platform)
 #
-# Required GitHub Secrets (native builds):
-#   Android:
-#     ANDROID_KEYSTORE_BASE64      - base64-encoded .jks keystore
-#     ANDROID_KEYSTORE_PASSWORD    - Keystore password
-#     ANDROID_KEY_ALIAS            - Key alias
-#     ANDROID_KEY_PASSWORD         - Key password
-#   iOS:
-#     IOS_CERTIFICATE_P12_BASE64  - base64-encoded .p12 distribution cert
-#     IOS_PROVISIONING_PROFILE_BASE64 - base64-encoded .mobileprovision
-#     IOS_TEAM_ID                 - Apple Developer Team ID
-#   Firebase configs:
-#     GOOGLE_SERVICE_INFO_PLIST   - base64-encoded GoogleService-Info.plist
-#     GOOGLE_SERVICES_JSON        - base64-encoded google-services.json
-#   Store submission (optional):
-#     ASC_KEY_ID                  - App Store Connect API Key ID
-#     ASC_ISSUER_ID               - App Store Connect Issuer ID
-#     ASC_API_KEY_BASE64          - base64-encoded AuthKey .p8
-#     FIREBASE_SERVICE_ACCOUNT_KEY - base64-encoded Firebase SA JSON
-#     FIREBASE_ANDROID_APP_ID     - Firebase Android App ID
-#   EAS fallback:
-#     EXPO_TOKEN                  - Expo account token
+# Required GitHub Secrets:
+#   EXPO_TOKEN                    - Expo account token
+#   GOOGLE_SERVICE_INFO_PLIST     - base64 iOS Firebase config
+#   GOOGLE_SERVICES_JSON          - base64 Android Firebase config
+#
+# EAS Secrets (set via `eas secret:push`):
+#   EXPO_PUBLIC_FIREBASE_API_KEY, EXPO_PUBLIC_FIREBASE_PROJECT_ID, etc.
+# ──────────────────────────────────────────────────────────────
+name: Build Preview
 
 on:
   push:
-    tags: ['v*']
+    branches: [master]
   workflow_dispatch:
     inputs:
       platform:
-        description: 'Target platform'
+        description: 'Platform to build'
         required: true
         default: 'all'
         type: choice
@@ -42,306 +32,74 @@ on:
           - ios
           - android
           - all
-      profile:
-        description: 'Build profile'
-        required: true
-        default: 'release'
-        type: choice
-        options:
-          - debug
-          - release
-      submit:
-        description: 'Submit to stores after build?'
-        required: false
-        default: false
-        type: boolean
-      use_eas:
-        description: 'Use EAS Build instead of native? (fallback)'
-        required: false
-        default: false
-        type: boolean
 
-env:
-  NODE_VERSION: '20'
-  JAVA_VERSION: '17'
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  # ─────────────────────────────────────────────
-  #  Native iOS Build (xcodebuild on macOS)
-  # ─────────────────────────────────────────────
-  build-ios-native:
-    name: iOS Native Build
-    if: >
-      (github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' &&
-       inputs.use_eas == false &&
-       (inputs.platform == 'ios' || inputs.platform == 'all'))
-    runs-on: macos-14
-    timeout-minutes: 45
-    outputs:
-      ipa-path: ${{ steps.export.outputs.ipa-path }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install JS dependencies
-        run: npm ci
-
-      - name: Restore Firebase config
-        env:
-          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
-        run: |
-          mkdir -p firebase
-          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > firebase/GoogleService-Info.plist
-
-      - name: Generate native project (expo prebuild)
-        run: npx expo prebuild --platform ios --clean --no-install
-
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: pods-${{ runner.os }}-
-
-      - name: Install CocoaPods
-        run: cd ios && pod install
-
-      - name: Install Apple certificate and provisioning profile
-        env:
-          P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
-          P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          KEYCHAIN_PASSWORD: ${{ github.run_id }}
-        run: |
-          # Create temporary keychain
-          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-          # Import certificate
-          CERT_PATH="$RUNNER_TEMP/certificate.p12"
-          echo -n "$P12_BASE64" | base64 --decode -o "$CERT_PATH"
-          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security list-keychain -d user -s "$KEYCHAIN_PATH"
-
-          # Install provisioning profile
-          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
-          echo -n "$PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/"
-
-      - name: Determine build configuration
-        id: config
-        run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "configuration=Release" >> "$GITHUB_OUTPUT"
-            echo "export-method=app-store" >> "$GITHUB_OUTPUT"
-          elif [ "${{ inputs.profile }}" = "release" ]; then
-            echo "configuration=Release" >> "$GITHUB_OUTPUT"
-            if [ "${{ inputs.submit }}" = "true" ]; then
-              echo "export-method=app-store" >> "$GITHUB_OUTPUT"
-            else
-              echo "export-method=ad-hoc" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "configuration=Debug" >> "$GITHUB_OUTPUT"
-            echo "export-method=development" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Build iOS archive
-        env:
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
-          BUILD_CONFIG: ${{ steps.config.outputs.configuration }}
-        run: |
-          xcodebuild archive \
-            -workspace ios/PurrrfectKeys.xcworkspace \
-            -scheme PurrrfectKeys \
-            -configuration "$BUILD_CONFIG" \
-            -archivePath "$RUNNER_TEMP/PurrrfectKeys.xcarchive" \
-            -destination 'generic/platform=iOS' \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
-            -quiet
-
-      - name: Export IPA
-        id: export
-        env:
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
-          EXPORT_METHOD: ${{ steps.config.outputs.export-method }}
-        run: |
-          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>${EXPORT_METHOD}</string>
-            <key>teamID</key>
-            <string>${IOS_TEAM_ID}</string>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>signingStyle</key>
-            <string>manual</string>
-          </dict>
-          </plist>
-          PLIST
-
-          xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/PurrrfectKeys.xcarchive" \
-            -exportPath "$RUNNER_TEMP/export" \
-            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-            -quiet
-
-          IPA_PATH=$(find "$RUNNER_TEMP/export" -name "*.ipa" -print -quit)
-          echo "ipa-path=$IPA_PATH" >> "$GITHUB_OUTPUT"
-
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PurrrfectKeys-iOS-${{ github.sha }}
-          path: ${{ steps.export.outputs.ipa-path }}
-          retention-days: 14
-
-      - name: Clean up keychain
-        if: always()
-        run: security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
-
-  # ─────────────────────────────────────────────
-  #  Native Android Build (Gradle on Ubuntu)
-  # ─────────────────────────────────────────────
-  build-android-native:
-    name: Android Native Build
-    if: >
-      (github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' &&
-       inputs.use_eas == false &&
-       (inputs.platform == 'android' || inputs.platform == 'all'))
+  # ── Quality Gate ──────────────────────────────
+  typecheck:
+    name: TypeScript
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
-
-      - name: Install JS dependencies
-        run: npm ci
-
-      - name: Restore Firebase config
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: |
-          mkdir -p firebase
-          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > firebase/google-services.json
-
-      - name: Generate native project (expo prebuild)
-        run: npx expo prebuild --platform android --clean
-
-      - name: Decode keystore
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
-
-      - name: Inject release signing config
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          BUILD_GRADLE="android/app/build.gradle"
-
-          # Insert release signingConfig block after the debug block
-          sed -i "/keyPassword 'android'/a\\
-          \        }\\
-          \        release {\\
-          \            storeFile file('release.keystore')\\
-          \            storePassword \"$KEYSTORE_PASSWORD\"\\
-          \            keyAlias \"$KEY_ALIAS\"\\
-          \            keyPassword \"$KEY_PASSWORD\"" "$BUILD_GRADLE"
-
-          # Remove the duplicate closing brace (debug block already has one)
-          # The sed above adds an extra } before release, fix by removing first duplicate
-          sed -i '0,/^        }$/{/^        }$/{ n; /^        }$/d; }}' "$BUILD_GRADLE"
-
-          # Point release buildType to release signingConfig instead of debug
-          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' "$BUILD_GRADLE"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-home-cache-cleanup: true
-
-      - name: Determine build task
-        id: task
-        run: |
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.profile }}" = "release" ]; then
-            echo "gradle-task=assembleRelease bundleRelease" >> "$GITHUB_OUTPUT"
-            echo "is-release=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "gradle-task=assembleDebug" >> "$GITHUB_OUTPUT"
-            echo "is-release=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Build Android
-        env:
-          GRADLE_TASK: ${{ steps.task.outputs.gradle-task }}
-        run: cd android && ./gradlew $GRADLE_TASK --no-daemon -q
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PurrrfectKeys-Android-APK-${{ github.sha }}
-          path: android/app/build/outputs/apk/
-          retention-days: 14
-
-      - name: Upload AAB artifact
-        if: steps.task.outputs.is-release == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: PurrrfectKeys-Android-AAB-${{ github.sha }}
-          path: android/app/build/outputs/bundle/release/
-          retention-days: 14
-
-  # ─────────────────────────────────────────────
-  #  EAS Build (optional fallback)
-  # ─────────────────────────────────────────────
-  build-eas:
-    name: EAS Build (${{ inputs.platform }})
-    if: github.event_name == 'workflow_dispatch' && inputs.use_eas == true
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
 
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test -- --ci --maxWorkers=2
+
+  # ── EAS Builds ───────────────────────────────
+  build-ios:
+    name: iOS Preview Build
+    needs: [typecheck, lint, test]
+    if: >
+      github.event_name == 'push' ||
+      inputs.platform == 'ios' ||
+      inputs.platform == 'all'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Restore Firebase config files
+      - name: Restore Firebase configs
         env:
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
@@ -356,92 +114,55 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Map to EAS profile
-        id: eas-profile
+      - name: Trigger iOS build
         run: |
-          if [ "${{ inputs.profile }}" = "release" ]; then
-            echo "profile=production" >> "$GITHUB_OUTPUT"
-          else
-            echo "profile=development-device" >> "$GITHUB_OUTPUT"
-          fi
+          eas build --platform ios --profile preview --non-interactive --no-wait
+          echo "### iOS Preview Build Triggered" >> "$GITHUB_STEP_SUMMARY"
+          echo "Profile: \`preview\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Track progress at [expo.dev](https://expo.dev/accounts/ut254/projects/purrrfect-keys/builds)" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build iOS via EAS
-        if: inputs.platform == 'ios' || inputs.platform == 'all'
-        env:
-          EAS_PROFILE: ${{ steps.eas-profile.outputs.profile }}
-        run: eas build --platform ios --profile "$EAS_PROFILE" --non-interactive
-
-      - name: Build Android via EAS
-        if: inputs.platform == 'android' || inputs.platform == 'all'
-        env:
-          EAS_PROFILE: ${{ steps.eas-profile.outputs.profile }}
-        run: eas build --platform android --profile "$EAS_PROFILE" --non-interactive
-
-  # ─────────────────────────────────────────────
-  #  Submit to TestFlight
-  # ─────────────────────────────────────────────
-  submit-ios:
-    name: Submit to TestFlight
-    needs: build-ios-native
+  build-android:
+    name: Android Preview Build
+    needs: [typecheck, lint, test]
     if: >
-      (github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' &&
-       inputs.submit == true &&
-       inputs.profile == 'release' &&
-       (inputs.platform == 'ios' || inputs.platform == 'all'))
-    runs-on: macos-14
-    timeout-minutes: 30
-
-    steps:
-      - name: Download IPA artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: PurrrfectKeys-iOS-${{ github.sha }}
-          path: ${{ runner.temp }}/ios-artifact
-
-      - name: Upload to TestFlight
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_API_KEY: ${{ secrets.ASC_API_KEY_BASE64 }}
-        run: |
-          mkdir -p ~/.private_keys
-          echo -n "$ASC_API_KEY" | base64 --decode > ~/.private_keys/AuthKey_${ASC_KEY_ID}.p8
-
-          IPA_PATH=$(find "$RUNNER_TEMP/ios-artifact" -name "*.ipa" -print -quit)
-
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID"
-
-  # ─────────────────────────────────────────────
-  #  Submit to Firebase App Distribution
-  # ─────────────────────────────────────────────
-  submit-android:
-    name: Submit to Firebase App Distribution
-    needs: build-android-native
-    if: >
-      (github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' &&
-       inputs.submit == true &&
-       inputs.profile == 'release' &&
-       (inputs.platform == 'android' || inputs.platform == 'all'))
+      github.event_name == 'push' ||
+      inputs.platform == 'android' ||
+      inputs.platform == 'all'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 15
     steps:
-      - name: Download AAB artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: PurrrfectKeys-Android-AAB-${{ github.sha }}
-          path: ${{ runner.temp }}/android-artifact
+      - uses: actions/checkout@v4
 
-      - name: Upload to Firebase App Distribution
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
+      - uses: actions/setup-node@v4
         with:
-          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-          file: ${{ runner.temp }}/android-artifact/app-release.aab
-          groups: internal-testers
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Firebase configs
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          mkdir -p firebase
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > firebase/GoogleService-Info.plist
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > firebase/google-services.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Trigger Android build
+        run: |
+          eas build --platform android --profile preview --non-interactive --no-wait
+          echo "### Android Preview Build Triggered" >> "$GITHUB_STEP_SUMMARY"
+          echo "Profile: \`preview\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Track progress at [expo.dev](https://expo.dev/accounts/ut254/projects/purrrfect-keys/builds)" >> "$GITHUB_STEP_SUMMARY"

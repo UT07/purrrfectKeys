@@ -1,0 +1,208 @@
+# ──────────────────────────────────────────────────────────────
+#  Release — Production Build + Store Submission
+# ──────────────────────────────────────────────────────────────
+# Builds production binaries via EAS and optionally submits
+# to App Store Connect / Google Play.
+#
+# Manual trigger only. Uses GitHub Environment "production"
+# for approval gates.
+#
+# Required GitHub Secrets:
+#   EXPO_TOKEN                    - Expo account token
+#   GOOGLE_SERVICE_INFO_PLIST     - base64 iOS Firebase config
+#   GOOGLE_SERVICES_JSON          - base64 Android Firebase config
+#
+# For store submission:
+#   FIREBASE_SERVICE_ACCOUNT_KEY  - base64 Google Play service account
+#
+# Setup:
+#   1. Create "production" environment: Settings > Environments > New
+#   2. Add required reviewers for approval gate
+#   3. Update eas.json submit.production.ios.ascAppId after first build
+# ──────────────────────────────────────────────────────────────
+name: Production Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+      submit:
+        description: 'Submit to stores after build?'
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # ── Quality Gate ──────────────────────────────
+  quality-gate:
+    name: Quality Gate
+    uses: ./.github/workflows/ci.yml
+
+  # ── Production Builds ─────────────────────────
+  build-ios:
+    name: Build iOS (Production)
+    needs: quality-gate
+    if: inputs.platform == 'ios' || inputs.platform == 'all'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Firebase configs
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          mkdir -p firebase
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > firebase/GoogleService-Info.plist
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > firebase/google-services.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build iOS (waits for completion)
+        run: eas build --platform ios --profile production --non-interactive
+
+      - name: Summary
+        if: always()
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "### iOS Production Build" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`$COMMIT_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+  build-android:
+    name: Build Android (Production)
+    needs: quality-gate
+    if: inputs.platform == 'android' || inputs.platform == 'all'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore Firebase configs
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          mkdir -p firebase
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > firebase/GoogleService-Info.plist
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > firebase/google-services.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (waits for completion)
+        run: eas build --platform android --profile production --non-interactive
+
+      - name: Summary
+        if: always()
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "### Android Production Build" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`$COMMIT_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Store Submission ──────────────────────────
+  submit-ios:
+    name: Submit to App Store
+    needs: build-ios
+    if: inputs.submit && (inputs.platform == 'ios' || inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to App Store Connect
+        run: eas submit --platform ios --profile production --latest --non-interactive
+
+      - name: Summary
+        run: echo "### iOS submitted to App Store Connect" >> "$GITHUB_STEP_SUMMARY"
+
+  submit-android:
+    name: Submit to Google Play
+    needs: build-android
+    if: inputs.submit && (inputs.platform == 'android' || inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          mkdir -p firebase
+          echo "$FIREBASE_SERVICE_ACCOUNT_KEY" | base64 --decode > firebase/google-services-sa.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to Google Play (internal track)
+        run: eas submit --platform android --profile production --latest --non-interactive
+
+      - name: Summary
+        run: echo "### Android submitted to Google Play (internal track)" >> "$GITHUB_STEP_SUMMARY"

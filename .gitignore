@@ -45,7 +45,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # EAS
-.easignore
+# .easignore is version-controlled (needed by EAS Build in CI)
 
 # Claude Code
 .claude/

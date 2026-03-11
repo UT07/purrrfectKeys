@@ -1,16 +1,92 @@
-# EAS Build ignore — exclude files not needed for the native build
-.venv/
-*.blend
-*.blend1
-*.py
+# ──────────────────────────────────────────────────────────────
+# EAS Build Ignore
+# ──────────────────────────────────────────────────────────────
+# When .easignore exists, it REPLACES .gitignore for determining
+# which files are uploaded to EAS Build servers.
+#
+# IMPORTANT: Firebase config files (GoogleService-Info.plist,
+# google-services.json) are restored from CI secrets during
+# the build workflow and MUST be uploaded to EAS.
+# ──────────────────────────────────────────────────────────────
+
+# ── Dependencies ────────────────────────────────
+node_modules/
+
+# ── Expo / Build artifacts ──────────────────────
+.expo/
+dist/
+web-build/
+android/
+ios/
+*.orig.*
+*.apk
+*.aab
+
+# ── Environment / Secrets ───────────────────────
+.env
+.env.local
+.env.*.local
+secrets/
+credentials/
+credentials.json
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+*-firebase-adminsdk-*.json
+google-services-sa.json
+
+# ── IDE / OS ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ── Testing / Coverage ─────────────────────────
+coverage/
+.jest/
+
+# ── TypeScript build info ──────────────────────
+*.tsbuildinfo
+
+# ── Debug logs ──────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+firebase-debug.log
+
+# ── Claude Code / Git ──────────────────────────
+.claude/
+.worktrees/
+.superpowers/
+.playwright-mcp/
+
+# ── CI / Docs / Scripts (not needed in build) ──
+.github/
 e2e/
 scripts/
 docs/
 artifacts/
 .maestro/
-firebase-debug.log
+
+# ── Large / unnecessary files ──────────────────
+.venv/
+*.blend
+*.blend1
+*.py
+Purrrfect_Keys_Mentor_Brief_v2.docx
+~$*
+
+# ── Images (keep only app assets) ──────────────
 *.png
 !assets/*.png
 !assets/**/*.png
-Purrrfect_Keys_Mentor_Brief_v2.docx
-~$*
+screenshots/
+
+# ── Firebase configs: DO NOT EXCLUDE ────────────
+# These are restored from CI secrets before EAS upload.
+# firebase/GoogleService-Info.plist  → included
+# firebase/google-services.json     → included

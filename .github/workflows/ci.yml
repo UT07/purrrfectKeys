@@ -1,24 +1,37 @@
+# ──────────────────────────────────────────────────────────────
+#  CI — Quality Gate
+# ──────────────────────────────────────────────────────────────
+# Parallel typecheck, lint, and test jobs.
+# Runs on feature branches, PRs, and as a reusable workflow
+# called by build/release pipelines.
+#
+# Required: none (no secrets needed)
+# ──────────────────────────────────────────────────────────────
 name: CI
 
 on:
   push:
-    branches: [master, main, 'feat/**']
+    branches: [master, 'feat/**', 'fix/**', 'chore/**']
   pull_request:
-    branches: [master, main]
+    branches: [master]
+  workflow_call: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    name: Typecheck, Lint & Test
+  typecheck:
+    name: TypeScript
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -26,8 +39,46 @@ jobs:
       - name: TypeScript check
         run: npm run typecheck
 
-      - name: Lint
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
         run: npm run lint
 
-      - name: Unit & integration tests
-        run: npm run test -- --ci --maxWorkers=2
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Jest (unit + integration)
+        run: npm run test -- --ci --maxWorkers=2 --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
