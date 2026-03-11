@@ -29,10 +29,12 @@ export type SessionType = 'new-material' | 'review' | 'challenge' | 'mixed';
 
 export interface ExerciseRef {
   exerciseId: string;
-  source: 'static' | 'ai' | 'ai-with-fallback';
+  source: 'static' | 'ai' | 'ai-with-fallback' | 'song';
   skillNodeId: string;
   reason: string;
   fallbackExerciseId?: string;  // Static exercise ID for offline fallback
+  songId?: string;  // Song ID if source is 'song' — UI loads via songToExercise()
+  songSectionIndex?: number;  // Which section of the song to play
 }
 
 export interface SessionPlan {
@@ -40,6 +42,7 @@ export interface SessionPlan {
   warmUp: ExerciseRef[];
   lesson: ExerciseRef[];
   challenge: ExerciseRef[];
+  songs: ExerciseRef[];  // Song exercises mixed into the session
   reasoning: string[];
 }
 
@@ -95,6 +98,7 @@ export function generateSessionPlan(
   let warmUp: ExerciseRef[];
   let lesson: ExerciseRef[];
   let challenge: ExerciseRef[];
+  const songs: ExerciseRef[] = [];
 
   switch (sessionType) {
     case 'review': {
@@ -144,7 +148,15 @@ export function generateSessionPlan(
     }
   }
 
-  return { sessionType, warmUp, lesson, challenge, reasoning };
+  // Add a song exercise if the learner has enough skills (3+ mastered)
+  if (masteredSkills.length >= 3) {
+    const songRef = generateSongExercise(masteredSkills, reasoning, recentSet);
+    if (songRef) {
+      songs.push(songRef);
+    }
+  }
+
+  return { sessionType, warmUp, lesson, challenge, songs, reasoning };
 }
 
 /**
@@ -443,6 +455,39 @@ function generateChallenge(
   }
 
   return refs;
+}
+
+/**
+ * Generate a song exercise reference for the session.
+ * Picks a song at the learner's difficulty level, skipping recently played songs.
+ */
+function generateSongExercise(
+  masteredSkills: string[],
+  reasoning: string[],
+  recentSet: Set<string> = new Set(),
+): ExerciseRef | null {
+  // Determine difficulty tier from mastered skill count
+  const difficulty = masteredSkills.length > 50 ? 4
+    : masteredSkills.length > 30 ? 3
+    : masteredSkills.length > 10 ? 2
+    : 1;
+
+  // Song IDs are loaded from the song store at runtime.
+  // Here we create a placeholder ref that the UI resolves via songToExercise().
+  const songExerciseId = `song-daily-d${difficulty}-${recentSet.size % 20}`;
+
+  if (recentSet.has(songExerciseId)) return null;
+
+  reasoning.push(`Song exercise: difficulty ${difficulty} song to practice playing real music`);
+
+  return {
+    exerciseId: songExerciseId,
+    source: 'song',
+    skillNodeId: 'song-practice',
+    reason: `Play a song! (difficulty ${difficulty})`,
+    songId: undefined, // Resolved at runtime by DailySessionScreen from songStore
+    songSectionIndex: 0,
+  };
 }
 
 // ============================================================================

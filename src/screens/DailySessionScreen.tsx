@@ -37,28 +37,34 @@ import { exerciseTypeForCategory } from '../core/exercises/types';
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Section colors
-const SECTION_COLORS = {
+type SectionKey = 'warmUp' | 'lesson' | 'challenge' | 'songs';
+
+const SECTION_COLORS: Record<SectionKey, { accent: string; bg: string; border: string }> = {
   warmUp: { accent: COLORS.warning, bg: glowColor(COLORS.warning, 0.08), border: glowColor(COLORS.warning, 0.2) },
   lesson: { accent: COLORS.info, bg: glowColor(COLORS.info, 0.08), border: glowColor(COLORS.info, 0.2) },
   challenge: { accent: COLORS.primaryLight, bg: glowColor(COLORS.primaryLight, 0.08), border: glowColor(COLORS.primaryLight, 0.2) },
-} as const;
-
-const SECTION_ICONS = {
-  warmUp: 'fire' as const,
-  lesson: 'book-open-variant' as const,
-  challenge: 'lightning-bolt' as const,
+  songs: { accent: COLORS.success, bg: glowColor(COLORS.success, 0.08), border: glowColor(COLORS.success, 0.2) },
 };
 
-const SECTION_LABELS = {
+const SECTION_ICONS: Record<SectionKey, string> = {
+  warmUp: 'fire',
+  lesson: 'book-open-variant',
+  challenge: 'lightning-bolt',
+  songs: 'music-note',
+};
+
+const SECTION_LABELS: Record<SectionKey, string> = {
   warmUp: 'Warm Up',
   lesson: "Today's Lesson",
   challenge: 'Challenge',
+  songs: 'Song Time',
 };
 
-const SECTION_RARITY: Record<'warmUp' | 'lesson' | 'challenge', RarityLevel> = {
+const SECTION_RARITY: Record<SectionKey, RarityLevel> = {
   warmUp: 'common',
   lesson: 'rare',
   challenge: 'epic',
+  songs: 'legendary',
 };
 
 /** Replace MIDI numbers in reasoning strings with note names */
@@ -123,7 +129,7 @@ export function DailySessionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusCounter]);
 
-  const totalExercises = plan.warmUp.length + plan.lesson.length + plan.challenge.length;
+  const totalExercises = plan.warmUp.length + plan.lesson.length + plan.challenge.length + (plan.songs?.length ?? 0);
   const masteredCount = masteredSkills.length;
   const totalSkills = SKILL_TREE.length;
   const isNewUser = masteredCount === 0 && totalExercisesCompleted === 0;
@@ -143,7 +149,15 @@ export function DailySessionScreen() {
     (ref: ExerciseRef) => {
       // Track which exercise we're navigating to, so we can mark it done on return
       lastNavigatedKeyRef.current = ref.skillNodeId || ref.exerciseId;
-      if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
+      if (ref.source === 'song') {
+        // Navigate to song player for song exercises
+        if (ref.songId) {
+          navigation.navigate('SongPlayer', { songId: ref.songId });
+        } else {
+          // Song ID not resolved yet — go to Songs tab to pick one
+          navigation.navigate('MainTabs', { screen: 'Songs' } as never);
+        }
+      } else if (ref.source === 'ai' || ref.source === 'ai-with-fallback') {
         const skill = ref.skillNodeId ? getSkillById(ref.skillNodeId) : null;
         const exerciseType = exerciseTypeForCategory(skill?.category);
         navigation.navigate('Exercise', {
@@ -267,6 +281,16 @@ export function DailySessionScreen() {
           onExercisePress={handleExercisePress}
         />
 
+        {/* Songs Section */}
+        {plan.songs && plan.songs.length > 0 && (
+          <SessionSection
+            sectionKey="songs"
+            exercises={plan.songs}
+            completedKeys={completedKeys}
+            onExercisePress={handleExercisePress}
+          />
+        )}
+
         {/* AI Reasoning */}
         {plan.reasoning.length > 0 && (
           <View style={styles.reasoningCard}>
@@ -329,7 +353,7 @@ function SessionSection({
   completedKeys,
   onExercisePress,
 }: {
-  sectionKey: 'warmUp' | 'lesson' | 'challenge';
+  sectionKey: SectionKey;
   exercises: ExerciseRef[];
   completedKeys: Set<string>;
   onExercisePress: (ref: ExerciseRef) => void;
@@ -351,7 +375,7 @@ function SessionSection({
       >
         <View style={[styles.sectionIconBg, { backgroundColor: colors.bg }]}>
           <MaterialCommunityIcons
-            name={allDone ? 'check-circle' : icon}
+            name={(allDone ? 'check-circle' : icon) as 'check-circle'}
             size={20}
             color={allDone ? COLORS.success : colors.accent}
           />

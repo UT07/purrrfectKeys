@@ -285,42 +285,81 @@ function convertTuneToSong(detail: SessionTuneDetail): Song | null {
 // Main
 // ---------------------------------------------------------------------------
 
+// Default distribution for --all mode: fetches 150 tunes across 5 types
+const ALL_TYPES_DISTRIBUTION: Record<string, number> = {
+  reel: 50,
+  jig: 40,
+  waltz: 30,
+  hornpipe: 20,
+  polka: 10,
+};
+
+async function fetchTunesForType(
+  tuneType: string,
+  limit: number,
+): Promise<Song[]> {
+  const songs: Song[] = [];
+  const perPage = 50;
+  let page = 1;
+  let fetched = 0;
+
+  while (fetched < limit) {
+    const batchSize = Math.min(perPage, limit - fetched);
+    const searchResponse = await searchTunes(tuneType, page, batchSize);
+    if (searchResponse.tunes.length === 0) break;
+
+    for (const result of searchResponse.tunes) {
+      if (fetched >= limit) break;
+      console.log(`  Fetching: ${result.name} (#${result.id})...`);
+
+      try {
+        const detail = await fetchTuneDetail(result.id);
+        const song = convertTuneToSong(detail);
+
+        if (song) {
+          songs.push(song);
+          fetched++;
+          console.log(`    ✓ ${song.sections.length} section(s), ${song.metadata.durationSeconds}s, key=${song.settings.keySignature}`);
+        }
+      } catch (err) {
+        console.warn(`    ✗ Error: ${err instanceof Error ? err.message : String(err)}`);
+      }
+
+      await new Promise((r) => setTimeout(r, DELAY_MS));
+    }
+    page++;
+  }
+
+  return songs;
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const limitIdx = args.indexOf('--limit');
   const typeIdx = args.indexOf('--type');
   const outputIdx = args.indexOf('--output');
+  const allMode = args.includes('--all');
   const limit = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : DEFAULT_LIMIT;
   const tuneType = typeIdx >= 0 ? args[typeIdx + 1] : 'reel';
   const outputFile = outputIdx >= 0 ? args[outputIdx + 1] : null;
 
-  console.log(`Searching for up to ${limit} "${tuneType}" tunes on TheSession.org...`);
-
-  // Fetch search results (IDs only)
-  const searchResponse = await searchTunes(tuneType, 1, Math.min(limit, 50));
-  console.log(`Found ${searchResponse.tunes.length} tunes (${searchResponse.total} total available)`);
-
   const songs: Song[] = [];
 
-  for (const result of searchResponse.tunes) {
-    console.log(`Fetching: ${result.name} (#${result.id})...`);
-
-    try {
-      const detail = await fetchTuneDetail(result.id);
-      const song = convertTuneToSong(detail);
-
-      if (song) {
-        songs.push(song);
-        console.log(`  ✓ ${song.sections.length} section(s), ${song.metadata.durationSeconds}s, key=${song.settings.keySignature}`);
-      }
-    } catch (err) {
-      console.warn(`  ✗ Error fetching tune #${result.id}: ${err instanceof Error ? err.message : String(err)}`);
+  if (allMode) {
+    console.log(`Fetching tunes across all types (target: ${Object.values(ALL_TYPES_DISTRIBUTION).reduce((a, b) => a + b, 0)} tunes)...`);
+    for (const [type, count] of Object.entries(ALL_TYPES_DISTRIBUTION)) {
+      console.log(`\n--- ${type} (target: ${count}) ---`);
+      const typeSongs = await fetchTunesForType(type, count);
+      songs.push(...typeSongs);
+      console.log(`  Got ${typeSongs.length}/${count} ${type} tunes`);
     }
-
-    await new Promise((r) => setTimeout(r, DELAY_MS));
+  } else {
+    console.log(`Searching for up to ${limit} "${tuneType}" tunes on TheSession.org...`);
+    const typeSongs = await fetchTunesForType(tuneType, limit);
+    songs.push(...typeSongs);
   }
 
-  console.log(`\nConverted ${songs.length}/${searchResponse.tunes.length} tunes successfully.`);
+  console.log(`\nTotal songs converted: ${songs.length}`);
 
   if (outputFile) {
     writeFileSync(outputFile, JSON.stringify(songs, null, 2));
