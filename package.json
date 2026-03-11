@@ -99,6 +99,9 @@
     "ts-node": "^10.9.0",
     "typescript": "~5.6.0"
   },
+  "overrides": {
+    "tar": "^7.5.11"
+  },
   "resolutions": {
     "metro": "0.81.0",
     "metro-core": "0.81.0",
