@@ -280,8 +280,9 @@ jest.mock('../../components/Mascot/catCharacters', () => ({
   getUnlockedCats: jest.fn(() => []),
 }));
 
-// Mock ExerciseBuddy
+// Mock ExerciseBuddy and SalsaCoach
 jest.mock('../../components/Mascot/ExerciseBuddy', () => ({ ExerciseBuddy: () => null }));
+jest.mock('../../components/Mascot/SalsaCoach', () => ({ SalsaCoach: () => null }));
 jest.mock('../../components/Mascot/mascotTips', () => ({ getTipForScore: jest.fn(() => 'Great job!') }));
 jest.mock('../../components/transitions/AchievementToast', () => ({ AchievementToast: () => null }));
 jest.mock('../../components/transitions/LessonCompleteScreen', () => ({ LessonCompleteScreen: () => null }));

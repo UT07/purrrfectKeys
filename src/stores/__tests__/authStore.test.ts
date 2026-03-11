@@ -41,8 +41,33 @@ jest.mock('../../services/firebase/config', () => ({
 
 jest.mock('../../services/firebase/firestore', () => ({
   createUserProfile: jest.fn(),
-  getUserProfile: jest.fn(),
+  getUserProfile: jest.fn().mockResolvedValue(null),
+  updateUserProfile: jest.fn().mockResolvedValue(undefined),
   deleteUserData: jest.fn(),
+}));
+
+// Mock modules used by triggerPostSignInSync (now awaited in sign-in methods)
+jest.mock('../../services/firebase/dataMigration', () => ({
+  migrateLocalToCloud: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../../services/firebase/syncService', () => ({
+  syncManager: {
+    pullRemoteProgress: jest.fn().mockResolvedValue({ pulled: true, merged: false }),
+    startPeriodicSync: jest.fn(),
+    flushQueue: jest.fn().mockResolvedValue(undefined),
+    pushCatAndGemData: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('../../services/firebase/leagueService', () => ({
+  getCurrentLeagueMembership: jest.fn().mockResolvedValue(null),
+  assignToLeague: jest.fn().mockResolvedValue({ leagueId: 'test', tier: 'bronze' }),
+}));
+
+jest.mock('../../services/firebase/socialService', () => ({
+  registerUsername: jest.fn().mockResolvedValue(undefined),
+  registerFriendCode: jest.fn().mockResolvedValue('ABC123'),
 }));
 
 jest.mock('../persistence', () => ({

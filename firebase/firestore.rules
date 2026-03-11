@@ -117,8 +117,10 @@ service cloud.firestore {
         // Any authenticated non-anonymous user can create friend connections
         // (needed for sendFriendRequest batch write — writes to BOTH users' subcollections)
         allow create: if isAuthenticated() && isNotAnonymous();
-        // Owner manages (accept/update) own friend connections
-        allow update: if isOwner(userId) && isNotAnonymous();
+        // Owner OR the referenced friend can update (accept/decline) friend connections
+        // (needed for acceptFriendRequest batch write — updates BOTH users' subcollections)
+        allow update: if (isOwner(userId) || (isAuthenticated() && friendUid == request.auth.uid))
+                         && isNotAnonymous();
         // Owner can delete own friends; the referenced friend can remove themselves
         // (needed for removeFriendConnection which deletes from BOTH users' subcollections,
         // and for account deletion cleanup where user removes self from others' lists)

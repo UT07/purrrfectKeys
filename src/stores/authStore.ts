@@ -364,6 +364,13 @@ async function triggerPostSignInSync(): Promise<void> {
 
 // Track the onAuthStateChanged unsubscribe function to prevent listener leaks
 let authUnsubscribe: (() => void) | null = null;
+/**
+ * When true, a sign-in method is running post-sign-in sync.
+ * Prevents onAuthStateChanged from prematurely clearing isLoading,
+ * which would cause HomeScreen to check hasCompletedOnboarding before
+ * Firestore data has been restored.
+ */
+let _signInSyncPending = false;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -403,7 +410,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user,
           isAuthenticated: user !== null,
           isAnonymous: user?.isAnonymous ?? false,
-          isLoading: false,
+          // Keep isLoading true if a sign-in method is running post-sign-in sync
+          isLoading: _signInSyncPending ? true : false,
           isInitializing: false,
           error: null,
         });
@@ -459,6 +467,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithEmail: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
@@ -468,11 +477,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -482,6 +494,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUpWithEmail: async (email: string, password: string, displayName: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -504,11 +517,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -518,6 +534,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithGoogle: async (idToken: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const credential = GoogleAuthProvider.credential(idToken);
@@ -546,11 +563,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -560,6 +580,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithApple: async (identityToken: string, nonce: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const provider = new OAuthProvider('apple.com');
@@ -572,11 +593,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -586,10 +610,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   linkWithGoogle: async (idToken: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const { user } = get();
       if (!user) {
+        _signInSyncPending = false;
         set({ isLoading: false, error: 'No user is currently signed in.' });
         return;
       }
@@ -601,11 +627,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -615,10 +644,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   linkWithApple: async (identityToken: string, nonce: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const { user } = get();
       if (!user) {
+        _signInSyncPending = false;
         set({ isLoading: false, error: 'No user is currently signed in.' });
         return;
       }
@@ -631,11 +662,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -645,10 +679,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   linkWithEmail: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const { user } = get();
       if (!user) {
+        _signInSyncPending = false;
         set({ isLoading: false, error: 'No user is currently signed in.' });
         return;
       }
@@ -660,11 +696,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),
@@ -674,6 +713,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInReplacingAnonymous: async (credential: AuthCredential) => {
     set({ isLoading: true, error: null });
+    _signInSyncPending = true;
 
     try {
       const { user: anonUser, isAnonymous } = get();
@@ -710,12 +750,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: result.user,
         isAuthenticated: true,
         isAnonymous: false,
-        isLoading: false,
+        isLoading: true,
         error: null,
       });
 
-      triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      await triggerPostSignInSync().catch((err) => logger.warn('[Auth] Post-sign-in sync error:', err));
+      _signInSyncPending = false;
+      set({ isLoading: false });
     } catch (error) {
+      _signInSyncPending = false;
       set({
         isLoading: false,
         error: handleAuthError(error),

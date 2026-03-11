@@ -116,14 +116,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { totalXp, level, streakData, dailyGoalData, lessonProgress } = useProgressStore();
   const { dailyGoalMinutes, displayName, hasCompletedOnboarding, selectedCatId } = useSettingsStore();
 
-  // Onboarding guard
+  // Onboarding guard — wait for post-sign-in sync to finish before checking.
+  // Without this, sign-out → sign-in shows Onboarding because local data was
+  // wiped and triggerPostSignInSync hasn't restored hasCompletedOnboarding yet.
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
   const hasShownOnboarding = useRef(false);
   useEffect(() => {
+    if (isAuthLoading) return; // Sync still restoring data from Firestore
     if (!hasCompletedOnboarding && !hasShownOnboarding.current) {
       hasShownOnboarding.current = true;
       navigation.navigate('Onboarding');
     }
-  }, [hasCompletedOnboarding, navigation]);
+  }, [hasCompletedOnboarding, navigation, isAuthLoading]);
 
   // Daily goal progress
   const today = new Date().toISOString().split('T')[0];

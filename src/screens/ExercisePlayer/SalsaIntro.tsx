@@ -21,6 +21,7 @@ import {
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { PressableScale } from '../../components/common/PressableScale';
+import { SalsaCoach } from '../../components/Mascot/SalsaCoach';
 import { ttsService } from '../../services/tts/TTSService';
 import {
   COLORS,
@@ -138,9 +139,9 @@ export function SalsaIntro({
         entering={FadeInDown.duration(400)}
         style={styles.card}
       >
-        {/* Salsa label */}
+        {/* Salsa avatar */}
         <View style={styles.salsaRow}>
-          <Text style={styles.salsaAvatar}>🐱</Text>
+          <SalsaCoach size="small" mood="teaching" />
           <Text style={styles.salsaName}>Salsa</Text>
         </View>
 
@@ -251,9 +252,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-  },
-  salsaAvatar: {
-    fontSize: 28,
   },
   salsaName: {
     ...TYPOGRAPHY.heading.md,
