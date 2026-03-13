@@ -82,16 +82,16 @@ export function DebugLogScreen() {
     return unsub;
   }, []);
 
+  const filteredLogs =
+    filter === 'All' ? logs : logs.filter((e) => e.tag === filter);
+
   useEffect(() => {
     if (autoScroll && filteredLogs.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
       }, 50);
     }
-  });
-
-  const filteredLogs =
-    filter === 'All' ? logs : logs.filter((e) => e.tag === filter);
+  }, [autoScroll, filteredLogs.length]);
 
   const handleClear = useCallback(() => {
     DeviceLog.clear();

@@ -128,8 +128,23 @@ interface LoadedSound {
 export class SoundManager {
   private sounds: Map<SoundName, LoadedSound> = new Map();
   private enabled = true;
-  private volume = 0.7;
+  private volume = 0.35;
   private preloaded = false;
+
+  /**
+   * When true, per-note gameplay sounds (note_correct, note_perfect, note_miss)
+   * are suppressed. Combo tier sounds still play.
+   * Set this for long exercises (songs, 20+ notes) where per-note SFX is annoying.
+   */
+  private suppressNoteSFX = false;
+
+  /** Timestamp of last haptic trigger — throttle to max 3 per 333ms */
+  private lastHapticTime = 0;
+  private static readonly HAPTIC_MIN_INTERVAL_MS = 80;
+
+  /** Per-sound debounce: prevents the same sound from playing twice within 150ms */
+  private lastPlayTime: Map<SoundName, number> = new Map();
+  private static readonly SOUND_DEBOUNCE_MS = 150;
 
   isEnabled(): boolean {
     return this.enabled;
@@ -145,6 +160,14 @@ export class SoundManager {
 
   setVolume(vol: number): void {
     this.volume = Math.max(0, Math.min(1, vol));
+  }
+
+  setSuppressNoteSFX(suppress: boolean): void {
+    this.suppressNoteSFX = suppress;
+  }
+
+  isSuppressNoteSFX(): boolean {
+    return this.suppressNoteSFX;
   }
 
   async preload(): Promise<void> {
@@ -188,6 +211,20 @@ export class SoundManager {
   play(name: SoundName): void {
     if (!this.enabled) return;
 
+    // In long exercises, suppress per-note gameplay sounds (haptics still fire)
+    const isNoteSFX = name === 'note_correct' || name === 'note_perfect' || name === 'note_miss';
+    if (isNoteSFX && this.suppressNoteSFX) {
+      this.triggerHaptic(name);
+      return;
+    }
+
+    // Per-sound debounce: prevent the same sound from playing twice within 150ms
+    // (XPTransitionOverlay + AchievementToast both trigger star_earn, etc.)
+    const now = Date.now();
+    const lastPlay = this.lastPlayTime.get(name) ?? 0;
+    if (now - lastPlay < SoundManager.SOUND_DEBOUNCE_MS) return;
+    this.lastPlayTime.set(name, now);
+
     // Always fire haptic (even if sound not loaded)
     this.triggerHaptic(name);
 
@@ -201,6 +238,12 @@ export class SoundManager {
   private triggerHaptic(name: SoundName): void {
     if (!Haptics) return;
     const type = SOUND_HAPTICS[name];
+    if (type === 'none') return;
+
+    // Throttle haptics to prevent motor burnout during rapid combo gameplay
+    const now = Date.now();
+    if (now - this.lastHapticTime < SoundManager.HAPTIC_MIN_INTERVAL_MS) return;
+    this.lastHapticTime = now;
     switch (type) {
       case 'light':
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -217,8 +260,6 @@ export class SoundManager {
       case 'warning':
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
         break;
-      case 'none':
-        break;
     }
   }
 
@@ -227,6 +268,7 @@ export class SoundManager {
       sound.unloadAsync().catch(() => {});
     }
     this.sounds.clear();
+    this.lastPlayTime.clear();
     this.preloaded = false;
   }
 }

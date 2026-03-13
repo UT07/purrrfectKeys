@@ -35,6 +35,7 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import { getRandomCatMessage } from '../content/catDialogue';
 import { calculateCatMood } from '../core/catMood';
+import { isPracticedToday } from '../core/progression/XpSystem';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useGemStore } from '../stores/gemStore';
@@ -220,6 +221,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // Gem store
   const gems = useGemStore((s) => s.gems);
+  const claimedRewards = useGemStore((s) => s.claimedRewards);
 
   // Cat evolution store
   const evolutionData = useCatEvolutionStore((s) => s.evolutionData);
@@ -232,6 +234,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   useEffect(() => {
     advanceDailyRewardDate();
   }, [advanceDailyRewardDate]);
+
+  // Weekly challenge completion (checked via gem store claimed rewards)
+  const isWeeklyChallengeCompleted = useMemo(() => {
+    const now = new Date();
+    const dow = now.getDay();
+    const mondayOff = dow === 0 ? -6 : 1 - dow;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() + mondayOff);
+    const weekKey = `weekly-${mon.getFullYear()}-${String(mon.getMonth() + 1).padStart(2, '0')}-${String(mon.getDate()).padStart(2, '0')}`;
+    return claimedRewards.includes(weekKey);
+  }, [claimedRewards]);
+
+  // Monthly challenge completion
+  const isMonthlyChallengeCompleted = useMemo(() => {
+    const now = new Date();
+    const monthKey = `monthly-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return claimedRewards.includes(monthKey);
+  }, [claimedRewards]);
   const activeCatId = selectedCatId ?? 'mini-meowww';
   const activeCatEvolution = evolutionData[activeCatId];
   const evolutionNext = useMemo(
@@ -323,6 +343,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const goalArcOffset = GOAL_ARC_CIRCUMFERENCE * (1 - dailyGoalProgress);
 
   const streak = streakData?.currentStreak ?? 0;
+  const practicedToday = streakData ? isPracticedToday(streakData) : false;
 
   // Auth state (for conditional friend activity strip)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -431,9 +452,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
               {/* Streak flame + level badge row */}
               <View style={styles.heroStats}>
-                <View style={styles.streakBadge}>
-                  <MaterialCommunityIcons name="fire" size={16} color={COLORS.starGold} />
-                  <Text style={styles.streakText}>{streak}</Text>
+                <View style={[styles.streakBadge, !practicedToday && styles.streakBadgeInactive]}>
+                  <MaterialCommunityIcons name="fire" size={16} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
+                  <Text style={[styles.streakText, !practicedToday && styles.streakTextInactive]}>{streak}</Text>
                 </View>
                 <View style={styles.levelBadge}>
                   <MaterialCommunityIcons name="shield-star" size={18} color={COLORS.starGold} />
@@ -494,7 +515,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
             <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
-            <StatPill icon="fire" label="Streak" value={streak} color={COLORS.starGold} />
+            <StatPill icon="fire" label="Streak" value={streak} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
             <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>
         </Animated.View>
@@ -551,6 +572,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               skillId: getSkillIdForChallenge(undefined, masteredSkills),
             });
           }}
+          completed={isWeeklyChallengeCompleted}
         />
 
         {/* Monthly Challenge Card (self-hides when outside the 48h window) */}
@@ -563,6 +585,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             });
           }}
           exercisesCompletedToday={todayGoal?.exercisesCompleted ?? 0}
+          completed={isMonthlyChallengeCompleted}
         />
 
         {/* Free Play */}
@@ -844,6 +867,13 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body.sm,
     fontWeight: '700' as const,
     color: COLORS.starGold,
+  },
+  streakBadgeInactive: {
+    backgroundColor: glowColor(COLORS.textMuted, 0.08),
+    borderColor: glowColor(COLORS.textMuted, 0.15),
+  },
+  streakTextInactive: {
+    color: COLORS.textMuted,
   },
   levelBadge: {
     flexDirection: 'row',

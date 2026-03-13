@@ -326,11 +326,12 @@ export function DailySessionScreen() {
 // Session Type Badge
 // ============================================================================
 
-const SESSION_TYPE_CONFIG: Record<SessionType, { label: string; color: string; icon: 'school' | 'refresh' | 'lightning-bolt' | 'shuffle-variant' }> = {
+const SESSION_TYPE_CONFIG: Record<SessionType, { label: string; color: string; icon: 'school' | 'refresh' | 'lightning-bolt' | 'shuffle-variant' | 'star-circle' }> = {
   'new-material': { label: 'New Material', color: COLORS.success, icon: 'school' },
   review: { label: 'Review Day', color: COLORS.warning, icon: 'refresh' },
   challenge: { label: 'Challenge Day', color: COLORS.primaryLight, icon: 'lightning-bolt' },
   mixed: { label: 'Mixed', color: COLORS.info, icon: 'shuffle-variant' },
+  endgame: { label: 'Endgame', color: '#FFD700', icon: 'star-circle' },
 };
 
 function SessionTypeBadge({ type }: { type: SessionType }) {

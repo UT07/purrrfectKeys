@@ -38,7 +38,7 @@ describe('SoundManager', () => {
 
   it('starts with sound enabled and default volume', () => {
     expect(manager.isEnabled()).toBe(true);
-    expect(manager.getVolume()).toBe(0.7);
+    expect(manager.getVolume()).toBe(0.35);
   });
 
   it('can be disabled and re-enabled', () => {
@@ -83,13 +83,52 @@ describe('SoundManager', () => {
 
   it('play triggers correct haptic type per sound category', () => {
     const Haptics = require('expo-haptics');
+    const realNow = Date.now;
+
+    // Each play needs a time gap to pass both per-sound debounce (150ms)
+    // and haptic throttle (80ms)
+    let mockTime = 1000;
+    Date.now = () => mockTime;
+
     manager.play('note_correct');
     expect(Haptics.impactAsync).toHaveBeenCalledWith('light');
 
+    mockTime += 200;
     manager.play('combo_20');
     expect(Haptics.impactAsync).toHaveBeenCalledWith('heavy');
 
+    mockTime += 200;
     manager.play('star_earn');
     expect(Haptics.notificationAsync).toHaveBeenCalledWith('success');
+
+    Date.now = realNow;
+  });
+
+  it('debounces duplicate sounds within 150ms', () => {
+    const Haptics = require('expo-haptics');
+    const realNow = Date.now;
+
+    let mockTime = 1000;
+    Date.now = () => mockTime;
+
+    manager.play('star_earn');
+    expect(Haptics.notificationAsync).toHaveBeenCalledTimes(1);
+
+    // Second play of same sound within 150ms — should be silenced
+    mockTime += 50;
+    manager.play('star_earn');
+    expect(Haptics.notificationAsync).toHaveBeenCalledTimes(1);
+
+    // Different sound after haptic throttle (80ms) — should still play
+    mockTime += 100;
+    manager.play('note_correct');
+    expect(Haptics.impactAsync).toHaveBeenCalledTimes(1);
+
+    // Same sound after debounce window — should play again
+    mockTime += 200;
+    manager.play('star_earn');
+    expect(Haptics.notificationAsync).toHaveBeenCalledTimes(2);
+
+    Date.now = realNow;
   });
 });

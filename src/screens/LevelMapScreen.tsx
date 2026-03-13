@@ -30,6 +30,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useGemStore } from '../stores/gemStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { hasTierMasteryTestPassed } from '../core/curriculum/tierMasteryTest';
@@ -630,6 +631,8 @@ export function LevelMapScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const gems = useGemStore((s) => s.gems);
   const ownedCats = useCatEvolutionStore((s) => s.ownedCats);
+  const selectedCatId = useSettingsStore((s) => s.selectedCatId) ?? 'mini-meowww';
+  const catStage = useCatEvolutionStore((s) => s.evolutionData[selectedCatId]?.currentStage ?? 'baby');
 
   const { positions, sectionBannerPositions, tierLabelPositions, totalHeight } = useNodePositions(nodes, screenWidth);
 
@@ -691,7 +694,9 @@ export function LevelMapScreen() {
             <View style={styles.backButton} />
           )}
           <Text style={styles.title}>Your Journey</Text>
-          <View style={styles.backButton} />
+          <View style={styles.headerCatAvatar}>
+            <CatAvatar catId={selectedCatId} size="small" evolutionStage={catStage} skipEntryAnimation />
+          </View>
         </View>
         <View style={styles.headerStats}>
           <View style={styles.headerBadge}>
@@ -782,6 +787,10 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: glowColor(COLORS.textPrimary, 0.08),
+  },
+  headerCatAvatar: {
+    width: 40, height: 40,
+    alignItems: 'center', justifyContent: 'center',
   },
   title: { ...TYPOGRAPHY.display.md, color: COLORS.textPrimary },
   headerStats: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.sm, justifyContent: 'center' },

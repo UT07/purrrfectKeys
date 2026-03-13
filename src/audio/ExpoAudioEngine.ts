@@ -404,12 +404,16 @@ export class ExpoAudioEngine implements IAudioEngine {
               shouldCorrectPitch: false,
             }
           );
-          // Clean up activeNotes when a pooled voice finishes naturally
-          // (prevents polyphonyScale from permanently decreasing)
+          // Clean up activeNotes when a pooled voice finishes naturally.
+          // Only delete if THIS voice is still the active one for the note —
+          // prevents premature deletion when a note is replayed before
+          // the previous voice finishes.
           sound.setOnPlaybackStatusUpdate((status) => {
             if ('didJustFinish' in status && status.didJustFinish) {
-              this.activeNotes.delete(note);
-              this.activeVoices.delete(note);
+              if (this.activeVoices.get(note) === sound) {
+                this.activeNotes.delete(note);
+                this.activeVoices.delete(note);
+              }
             }
           });
           sounds.push(sound);

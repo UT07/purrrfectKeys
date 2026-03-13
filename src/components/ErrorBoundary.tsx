@@ -8,6 +8,7 @@ import type { ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PressableScale } from './common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
+import { analyticsEvents } from '../services/analytics/PostHog';
 
 interface Props {
   children: ReactNode;
@@ -30,7 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
     if (__DEV__) {
       console.error('[ErrorBoundary] Uncaught error:', error, info.componentStack);
     }
-    // TODO: Log to Crashlytics when integrated
+    analyticsEvents.error.crashReported(
+      error.message,
+      info.componentStack ?? error.stack ?? '',
+    );
   }
 
   private handleReset = (): void => {

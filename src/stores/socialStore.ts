@@ -73,6 +73,7 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
   removeFriend: (uid: string) => {
     set((state) => ({
       friends: state.friends.filter((f) => f.uid !== uid),
+      activityFeed: state.activityFeed.filter((item) => item.friendUid !== uid),
     }));
     debouncedSave(get());
   },
@@ -96,7 +97,7 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
 
   addChallenge: (challenge: FriendChallenge) => {
     set((state) => ({
-      challenges: [challenge, ...state.challenges],
+      challenges: [challenge, ...state.challenges].slice(0, MAX_ACTIVITY_FEED),
     }));
     debouncedSave(get());
   },

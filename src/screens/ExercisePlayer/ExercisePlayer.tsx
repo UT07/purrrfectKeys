@@ -98,6 +98,8 @@ import { getTodayDateString } from '../../utils/time';
 import { detectWeakPatterns, generateDrillParams } from '../../core/curriculum/WeakSpotDetector';
 import type { WeakPattern } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
+import { XPTransitionOverlay } from '../../components/transitions/XPTransitionOverlay';
+import { setPostExerciseData } from '../postExerciseCache';
 import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
 import { midiToNoteName } from '../../core/music/MusicTheory';
 import { COLORS, NEON, glowColor } from '../../theme/tokens';
@@ -106,6 +108,7 @@ import { generateExercise as generateFreePlayExercise } from '../../services/gem
 import { getTemplateForSkill, getTemplateExercise, getTemplateForType } from '../../content/templateExercises';
 import { getChestType, getChestReward } from '../../core/rewards/chestSystem';
 import { analyticsEvents } from '../../services/analytics/PostHog';
+import { soundManager } from '../../audio/SoundManager';
 
 /** Resolve the exercise type from explicit param, or infer from skill category */
 function resolveExerciseType(
@@ -609,6 +612,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const exerciseType: ExerciseType = getExerciseType(exercise);
   const isSightReading = exerciseType === 'sightReading';
 
+  // Suppress per-note SFX for long exercises (songs, 20+ notes) — keeps haptics, mutes audio
+  useEffect(() => {
+    const isLong = exercise.notes.length >= 20;
+    soundManager.setSuppressNoteSFX(isLong);
+    return () => soundManager.setSuppressNoteSFX(false);
+  }, [exercise.notes.length]);
+
   // Chord prompt state (chordId type)
   const currentChordName = useMemo(() => {
     if (exerciseType !== 'chordId' || exercise.notes.length === 0) return '';
@@ -686,6 +696,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Completion state (declared before useExercisePlayback so the callback is available)
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showXPTransition, setShowXPTransition] = useState(false);
   const [finalScore, setFinalScore] = useState<ExerciseScore | null>(null);
 
   // Quick exercise card (between exercises in a lesson) — CompletionModal
@@ -1257,9 +1268,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       ));
     }
 
-    // Always show full CompletionModal with AI coaching, score ring, cat dialogue.
-    // CompletionModal handles all scenarios: pass, fail, retry, next exercise, lesson complete.
-    setShowCompletion(true);
+    // Show XP transition overlay first, then navigate to PostExerciseScreen.
+    // CompletionModal is kept for replay flow (user returns from replay to completion).
+    setShowXPTransition(true);
 
     if (Platform.OS === 'web') {
       AccessibilityInfo.announceForAccessibility(
@@ -1327,6 +1338,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [replayOverlayMode, setReplayOverlayMode] = useState<'hidden' | 'pill' | 'card'>('hidden');
   const [replayPillText, setReplayPillText] = useState('');
   const [replayCardText, setReplayCardText] = useState('');
+  const [replaySectionIndex, setReplaySectionIndex] = useState(0);
 
   // Salsa intro state (pre-exercise coaching)
   const [salsaIntroTier, setSalsaIntroTier] = useState<1 | 2 | 3 | null>(null);
@@ -2097,8 +2109,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setShowCompletion(false);
     // If lesson was just completed, show the celebration screen before navigating away
     if (lessonCompleteData) {
-      // Clear after capturing — prevents duplicate celebrations
-      setLessonCompleteData(null);
+      // Don't clear lessonCompleteData here — LessonCompleteScreen needs it for rendering.
+      // It gets cleared in the onContinue handler.
       setTimeout(() => {
         if (mountedRef.current) {
           setShowLessonComplete(true);
@@ -2115,11 +2127,83 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [handleExit, lessonCompleteData]);
 
   /**
+   * Handle XP transition overlay completion — navigate to PostExerciseScreen
+   */
+  const handleXPTransitionComplete = useCallback(() => {
+    if (!finalScore || !mountedRef.current) return;
+    setShowXPTransition(false);
+
+    // Store completion data in cache for PostExerciseScreen to read
+    setPostExerciseData({
+      score: finalScore,
+      exercise,
+      gemsEarned: gemsEarnedForModal,
+      chestType: chestTypeForModal,
+      chestGems: chestGemsForModal,
+      sessionMinutes: Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000)),
+      tempoChange: tempoChangeForModal,
+      failCount: useExerciseStore.getState().failCount,
+      challengeSentTo: challengeTarget?.displayName,
+      hasNextExercise: !!(aiMode ? true : nextExerciseId),
+      hasNextAIExercise: aiMode,
+      hasMasteryTest: (() => {
+        if (testMode) return false;
+        if (aiMode && skillIdParam) {
+          const skillNode = getSkillById(skillIdParam);
+          if (skillNode) {
+            const masteredSkills = useLearnerProfileStore.getState().masteredSkills;
+            const tierTestResults = useProgressStore.getState().tierTestResults;
+            return isTierMasteryTestAvailable(skillNode.tier, masteredSkills) &&
+              !hasTierMasteryTestPassed(skillNode.tier, tierTestResults);
+          }
+          return false;
+        }
+        if (isTestExercise(exercise.id)) return false;
+        const lid = getLessonIdForExercise(exercise.id);
+        if (!lid) return false;
+        const lesson = getLesson(lid);
+        if (!lesson) return false;
+        const lp = useProgressStore.getState().lessonProgress[lid];
+        const nonTestExercises = lesson.exercises.filter((e: any) => !e.test);
+        const allNonTestComplete = nonTestExercises.every((entry: any) =>
+          lp?.exerciseScores[entry.id]?.completedAt != null
+        );
+        if (!allNonTestComplete) return false;
+        const testEx = lesson.exercises.find((e: any) => e.test);
+        return !!testEx && !lp?.exerciseScores[testEx.id]?.completedAt;
+      })(),
+      hasReplay: !!replayPlan,
+      hasBonusDrill: !!bonusDrillPattern,
+      bonusDrillDescription: bonusDrillPattern?.description,
+      exerciseId: exercise.id,
+      skillId: skillIdParam ?? undefined,
+      exerciseType: exerciseTypeParam ?? undefined,
+      nextExerciseId: nextExerciseId ?? undefined,
+    });
+
+    // If lesson was just completed, show celebration first, then navigate
+    if (lessonCompleteData) {
+      // Don't clear lessonCompleteData here — LessonCompleteScreen needs it for rendering.
+      // It gets cleared in the onContinue handler.
+      setTimeout(() => {
+        if (mountedRef.current) setShowLessonComplete(true);
+      }, 200);
+    } else {
+      // Navigate to PostExerciseScreen
+      (navigation as any).replace('PostExercise');
+    }
+  }, [finalScore, exercise, gemsEarnedForModal, chestTypeForModal, chestGemsForModal,
+      sessionStartTime, tempoChangeForModal, challengeTarget, aiMode, nextExerciseId,
+      testMode, replayPlan, bonusDrillPattern, skillIdParam, exerciseTypeParam,
+      lessonCompleteData, navigation]);
+
+  /**
    * Retry the current exercise after failing
    */
   const handleRetry = useCallback(() => {
     analyticsEvents.replay.skipped(exercise.id);
     setShowCompletion(false);
+    setShowXPTransition(false);
     setFinalScore(null);
     handleRestart();
   }, [handleRestart, exercise.id]);
@@ -2127,18 +2211,41 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   /**
    * Start replay mode — Salsa's coaching review of the exercise
    */
-  const startReplay = useCallback(() => {
+  /**
+   * Start (or restart) replay from a given beat position.
+   * For sectioned replays, pass the section's fromBeat.
+   */
+  const startReplayFromBeat = useCallback((fromBeat: number = 0) => {
     if (!replayPlan) return;
-    analyticsEvents.replay.triggered(exercise.id, finalScore?.overall ?? 0, false);
     setShowCompletion(false);
     setPlayerMode('replay');
-    setReplayBeat(0);
+    setReplayBeat(fromBeat);
     setReplayPaused(false);
     setReplayOverlayMode('hidden');
 
     const audioEngine = createAudioEngine();
+
+    // Filter plan to only include content within the active section range
+    const hasSections = replayPlan.sections.length > 1;
+    const activeSection = hasSections ? replayPlan.sections[replaySectionIndex] : null;
+    const sectionEnd = activeSection ? activeSection.toBeat : replayPlan.totalBeats;
+
     demoServiceRef.current.startReplay(replayPlan, exercise.settings.tempo, audioEngine, {
-      onBeatUpdate: (beat) => setReplayBeat(beat),
+      onBeatUpdate: (beat) => {
+        setReplayBeat(beat);
+        // Auto-pause at section boundary for sectioned replays
+        if (hasSections && beat >= sectionEnd) {
+          demoServiceRef.current.stop();
+          setReplayPaused(true);
+          const isLastSection = replaySectionIndex >= replayPlan.sections.length - 1;
+          setReplayOverlayMode('card');
+          setReplayCardText(
+            isLastSection
+              ? replayPlan.summary
+              : `Section ${replaySectionIndex + 1} complete. Tap Continue for the next section.`,
+          );
+        }
+      },
       onPausePoint: (pp) => {
         setReplayPaused(true);
         setReplayOverlayMode('card');
@@ -2158,7 +2265,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         setReplayCardText(replayPlan.summary);
       },
     });
-  }, [replayPlan, exercise.settings.tempo]);
+
+    // If starting from a non-zero beat, seek to that position
+    if (fromBeat > 0) {
+      demoServiceRef.current.seekReplay(fromBeat);
+    }
+  }, [replayPlan, exercise.settings.tempo, replaySectionIndex]);
+
+  const startReplay = useCallback(() => {
+    if (!replayPlan) return;
+    analyticsEvents.replay.triggered(exercise.id, finalScore?.overall ?? 0, false);
+    setReplaySectionIndex(0);
+    startReplayFromBeat(0);
+  }, [replayPlan, exercise.id, finalScore, startReplayFromBeat]);
 
   /**
    * Stop replay. If replay finished naturally, navigate away.
@@ -2204,13 +2323,30 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (!replayPlan) return;
 
     if (replayBeat >= replayPlan.totalBeats) {
-      // Replay finished — navigate away instead of re-showing CompletionModal
       stopReplay(true);
       return;
     }
 
+    // Section boundary: advance to next section
+    const hasSections = replayPlan.sections.length > 1;
+    if (hasSections) {
+      const currentSection = replayPlan.sections[replaySectionIndex];
+      if (currentSection && replayBeat >= currentSection.toBeat - 0.5) {
+        const nextIndex = replaySectionIndex + 1;
+        if (nextIndex < replayPlan.sections.length) {
+          setReplaySectionIndex(nextIndex);
+          startReplayFromBeat(replayPlan.sections[nextIndex].fromBeat);
+          return;
+        } else {
+          // All sections done
+          stopReplay(true);
+          return;
+        }
+      }
+    }
+
     demoServiceRef.current.resumeReplay();
-  }, [replayPlan, replayBeat, stopReplay]);
+  }, [replayPlan, replayBeat, replaySectionIndex, stopReplay, startReplayFromBeat]);
 
   /**
    * Seek to a specific beat in the replay timeline
@@ -2849,6 +2985,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           {...lessonCompleteData}
           onContinue={() => {
             setShowLessonComplete(false);
+            setLessonCompleteData(null);
             handleExit();
           }}
         />
@@ -2924,7 +3061,21 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
-      {/* Completion modal */}
+      {/* XP Transition Overlay — gamification celebration before PostExerciseScreen */}
+      {showXPTransition && finalScore && (
+        <XPTransitionOverlay
+          score={finalScore}
+          gemsEarned={gemsEarnedForModal}
+          chestType={chestTypeForModal}
+          chestGems={chestGemsForModal}
+          tempoChange={tempoChangeForModal}
+          evolutionData={evolutionRevealData}
+          onComplete={handleXPTransitionComplete}
+          testID="xp-transition"
+        />
+      )}
+
+      {/* Completion modal — kept for replay flow (user exits replay early → shows modal) */}
       {showCompletion && finalScore && (
         <CompletionModal
           score={finalScore}
@@ -2970,6 +3121,42 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             <Text style={styles.replayTitle}>Salsa&apos;s Review</Text>
             <View style={{ width: 100 }} />
           </View>
+
+          {/* Section navigation for long exercises */}
+          {replayPlan.sections.length > 1 && (
+            <View style={styles.replaySectionBar}>
+              {replayPlan.sections.map((section) => {
+                const isActive = section.index === replaySectionIndex;
+                const hasIssues = section.issueCount > 0;
+                return (
+                  <PressableScale
+                    key={section.index}
+                    onPress={() => {
+                      setReplaySectionIndex(section.index);
+                      demoServiceRef.current.stop();
+                      startReplayFromBeat(section.fromBeat);
+                    }}
+                    style={[
+                      styles.replaySectionPill,
+                      isActive && styles.replaySectionPillActive,
+                      hasIssues && !isActive && styles.replaySectionPillIssues,
+                    ]}
+                    soundOnPress={false}
+                  >
+                    <Text style={[
+                      styles.replaySectionPillText,
+                      isActive && styles.replaySectionPillTextActive,
+                    ]}>
+                      {section.index + 1}
+                    </Text>
+                    {hasIssues && (
+                      <View style={styles.replaySectionIssueDot} />
+                    )}
+                  </PressableScale>
+                );
+              })}
+            </View>
+          )}
 
           {/* Replay timeline bar */}
           <ReplayTimelineBar
@@ -3244,6 +3431,52 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '700',
+  },
+  replaySectionBar: {
+    position: 'absolute',
+    top: 88,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    zIndex: 200,
+  },
+  replaySectionPill: {
+    width: 32,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  replaySectionPillActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  replaySectionPillIssues: {
+    borderColor: COLORS.warning,
+  },
+  replaySectionPillText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  replaySectionPillTextActive: {
+    color: '#FFFFFF',
+  },
+  replaySectionIssueDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.warning,
   },
 });
 

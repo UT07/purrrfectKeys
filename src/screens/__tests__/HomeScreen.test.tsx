@@ -260,9 +260,12 @@ const mockGemState: any = {
   totalGemsEarned: 200,
   totalGemsSpent: 100,
   transactions: [],
+  claimedRewards: [],
   earnGems: jest.fn(),
   spendGems: jest.fn(),
   canAfford: jest.fn(() => true),
+  claimReward: jest.fn(),
+  hasClaimedReward: jest.fn(() => false),
   reset: jest.fn(),
 };
 jest.mock('../../stores/gemStore', () => ({
