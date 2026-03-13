@@ -356,6 +356,45 @@ async function triggerPostSignInSync(): Promise<void> {
   } catch (err) {
     logger.warn('[Auth] Post-sign-in social setup failed:', err);
   }
+
+  // Restore social data: friends, activity feed, challenges
+  try {
+    const authState = useAuthStore.getState();
+    if (authState.user && !authState.isAnonymous) {
+      const uid = authState.user.uid;
+      const { getFriends, getChallengesForUser, getFriendActivity } =
+        require('../services/firebase/socialService');
+
+      const [friends, challenges] = await Promise.all([
+        getFriends(uid).catch(() => []),
+        getChallengesForUser(uid).catch(() => []),
+      ]);
+
+      if (friends.length > 0) {
+        useSocialStore.getState().setFriends(friends);
+
+        // Fetch activity from all accepted friends
+        const acceptedFriends = friends.filter(
+          (f: { status: string }) => f.status === 'accepted',
+        );
+        const activityPromises = acceptedFriends.map(
+          (f: { uid: string }) => getFriendActivity(f.uid, 10).catch(() => []),
+        );
+        const allActivity = (await Promise.all(activityPromises)).flat();
+        // Sort by timestamp descending and take top 50
+        allActivity.sort((a: { timestamp: number }, b: { timestamp: number }) => b.timestamp - a.timestamp);
+        useSocialStore.getState().setActivityFeed(allActivity.slice(0, 50));
+      }
+
+      if (challenges.length > 0) {
+        useSocialStore.getState().setChallenges(challenges);
+      }
+
+      logger.log(`[Auth] Restored social data: ${friends.length} friends, ${challenges.length} challenges`);
+    }
+  } catch (err) {
+    logger.warn('[Auth] Post-sign-in social restore failed:', err);
+  }
 }
 
 // ============================================================================
@@ -733,7 +772,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
-      // Clear local anonymous progress
+      // CRITICAL: Push all local progress to Firestore UNDER THE NEW UID
+      // BEFORE clearing local storage. Without this, progress is lost.
+      try {
+        const { syncManager } = require('../services/firebase/syncService');
+        await syncManager.pushAllProgressData(result.user.uid);
+        logger.log('[Auth] Pre-clear data push to new account completed');
+      } catch (err) {
+        logger.warn('[Auth] Pre-clear data push failed:', err);
+      }
+
+      // Now safe to clear local anonymous progress
       cancelAllPendingSaves();
       await PersistenceManager.clearAll();
       resetAllStores();
@@ -770,15 +819,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { isAnonymous } = get();
     set({ isLoading: true, error: null });
 
-    // CRITICAL: Push all local data to Firestore BEFORE signing out.
+    // CRITICAL: Push ALL local data to Firestore BEFORE signing out.
     // Without this, local-only data is lost when we clear local storage.
     if (!isAnonymous) {
       try {
         const { syncManager } = require('../services/firebase/syncService');
-        // Flush offline queue
+        // Flush offline queue first
         await syncManager.flushQueue();
-        // Push cat evolution + gem data
-        await syncManager.pushCatAndGemData();
+        // Push ALL progress data: XP, streaks, lessons, cats, gems, learner profile, achievements
+        await syncManager.pushAllProgressData();
         // Save hasCompletedOnboarding + username to Firestore profile
         const user = get().user;
         if (user) {

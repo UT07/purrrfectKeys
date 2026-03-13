@@ -338,7 +338,7 @@ jest.mock('react-native-svg', () => {
 });
 
 jest.mock('../../audio/SoundManager', () => ({
-  soundManager: { play: jest.fn(), preload: jest.fn() },
+  soundManager: { play: jest.fn(), preload: jest.fn(), setSuppressNoteSFX: jest.fn(), isSuppressNoteSFX: jest.fn(() => false) },
 }));
 
 jest.mock('../../theme/tokens', () => ({

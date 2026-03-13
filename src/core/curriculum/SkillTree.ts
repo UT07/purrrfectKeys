@@ -14,6 +14,30 @@ export const DECAY_HALF_LIFE_DAYS = 14;
 /** Decay score below this triggers a review session */
 export const DECAY_THRESHOLD = 0.5;
 
+/** Days of inactivity before applying gentler re-entry (slower tempo, easier exercises) */
+export const GENTLE_REENTRY_DAYS = 7;
+
+/** Factor to reduce difficulty on gentle re-entry (0.8 = 80% of normal tempo) */
+export const GENTLE_REENTRY_FACTOR = 0.8;
+
+/** Minimum mastery score (0-100) required to advance past each tier */
+export const TIER_MASTERY_GATES: Record<number, number> = {
+  1: 70,  // Tier 1 → 2: basic note finding
+  2: 70,  // Tier 2 → 3: RH melodies
+  3: 75,  // Tier 3 → 4: LH basics
+  4: 75,  // Tier 4 → 5: both hands
+  5: 80,  // Tier 5 → 6: scales/technique
+  6: 80,  // Tier 6 → 7: black keys
+  7: 80,  // Tier 7 → 8: G/F major
+  8: 85,  // Tier 8 → 9: key signatures
+  9: 85,  // Tier 9 → 10: minor keys
+  10: 85, // Tier 10 → 11: chords
+  11: 85, // Tier 11 → 12: rhythm
+  12: 85, // Tier 12 → 13: arpeggios
+  13: 90, // Tier 13 → 14: expression
+  14: 90, // Tier 14 → 15: sight reading
+};
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -1452,4 +1476,78 @@ export function getSkillsNeedingReview(
       // Oldest practiced first (most decayed)
       return decayA - decayB;
     });
+}
+
+/**
+ * Get all skill nodes in a specific tier.
+ */
+export function getSkillsByTier(tier: number): SkillNode[] {
+  return SKILL_TREE.filter((node) => node.tier === tier);
+}
+
+/**
+ * Compute the average mastery score across all skills in a tier.
+ * Returns 0 if no skills in the tier are mastered, 100 if all are fully mastered.
+ */
+export function getTierMasteryScore(
+  tier: number,
+  masteredSkills: string[],
+  skillMasteryData: Record<string, SkillMasteryRecord>,
+): number {
+  const tierSkills = getSkillsByTier(tier);
+  if (tierSkills.length === 0) return 100;
+
+  const masteredSet = new Set(masteredSkills);
+  let totalScore = 0;
+
+  for (const skill of tierSkills) {
+    if (masteredSet.has(skill.id)) {
+      const record = skillMasteryData[skill.id];
+      // Mastered skill: score based on completion count vs required
+      const completionRatio = record
+        ? Math.min(record.completionCount / skill.requiredCompletions, 1)
+        : 1;
+      totalScore += completionRatio * 100;
+    }
+    // Unmastered skills contribute 0
+  }
+
+  return Math.round(totalScore / tierSkills.length);
+}
+
+/**
+ * Check if the learner has passed the mastery gate for a tier.
+ * A tier gate is passed when the average mastery score meets the threshold.
+ */
+export function isTierGatePassed(
+  tier: number,
+  masteredSkills: string[],
+  skillMasteryData: Record<string, SkillMasteryRecord>,
+): boolean {
+  const gate = TIER_MASTERY_GATES[tier];
+  if (gate == null) return true; // No gate for this tier
+  const score = getTierMasteryScore(tier, masteredSkills, skillMasteryData);
+  return score >= gate;
+}
+
+/**
+ * Calculate days since last practice for any skill.
+ * Returns Infinity if never practiced.
+ */
+export function daysSinceLastPractice(
+  skillMasteryData: Record<string, SkillMasteryRecord>,
+): number {
+  const records = Object.values(skillMasteryData);
+  if (records.length === 0) return Infinity;
+  const lastPracticed = Math.max(...records.map((r) => r.lastPracticedAt));
+  return (Date.now() - lastPracticed) / 86400000;
+}
+
+/**
+ * Check if the learner needs gentle re-entry after a break.
+ */
+export function needsGentleReentry(
+  skillMasteryData: Record<string, SkillMasteryRecord>,
+): boolean {
+  return daysSinceLastPractice(skillMasteryData) >= GENTLE_REENTRY_DAYS;
 }

@@ -152,61 +152,65 @@ export class DemoPlaybackService {
     );
 
     this.intervalId = setInterval(() => {
-      if (!this.isPlaying) return;
+      try {
+        if (!this.isPlaying) return;
 
-      const elapsed = Date.now() - this.startTime;
-      const currentBeat = elapsed / msPerBeat;
+        const elapsed = Date.now() - this.startTime;
+        const currentBeat = elapsed / msPerBeat;
 
-      // Report beat position
-      onBeatUpdate?.(currentBeat);
+        // Report beat position
+        onBeatUpdate?.(currentBeat);
 
-      // Process note scheduling
-      const activeNotes = new Set<number>();
+        // Process note scheduling
+        const activeNotes = new Set<number>();
 
-      for (let i = 0; i < this.schedule.length; i++) {
-        const entry = this.schedule[i];
-        if (!entry.play) continue;
+        for (let i = 0; i < this.schedule.length; i++) {
+          const entry = this.schedule[i];
+          if (!entry.play) continue;
 
-        // Convert jitter from ms to beats for beat-based comparison
-        const jitterBeats = entry.jitterMs / msPerBeat;
-        const noteOnBeat = entry.note.startBeat + jitterBeats;
-        const noteOffBeat = entry.note.startBeat + entry.note.durationBeats + jitterBeats;
+          // Convert jitter from ms to beats for beat-based comparison
+          const jitterBeats = entry.jitterMs / msPerBeat;
+          const noteOnBeat = entry.note.startBeat + jitterBeats;
+          const noteOffBeat = entry.note.startBeat + entry.note.durationBeats + jitterBeats;
 
-        // Trigger note-on when currentBeat reaches the note's start
-        if (!this.scheduledNoteIndices.has(i) && currentBeat >= noteOnBeat) {
-          this.scheduledNoteIndices.add(i);
-          const handle = audioEngine.playNote(entry.note.note, 0.7);
-          this.activeHandles.set(i, handle);
-        }
-
-        // Track currently active notes (started but not yet released)
-        if (this.scheduledNoteIndices.has(i) && !this.releasedNoteIndices.has(i)) {
-          activeNotes.add(entry.note.note);
-        }
-
-        // Trigger note-off when currentBeat reaches the note's end
-        if (
-          this.scheduledNoteIndices.has(i) &&
-          !this.releasedNoteIndices.has(i) &&
-          currentBeat >= noteOffBeat
-        ) {
-          this.releasedNoteIndices.add(i);
-          const handle = this.activeHandles.get(i);
-          if (handle) {
-            audioEngine.releaseNote(handle);
+          // Trigger note-on when currentBeat reaches the note's start
+          if (!this.scheduledNoteIndices.has(i) && currentBeat >= noteOnBeat) {
+            this.scheduledNoteIndices.add(i);
+            const handle = audioEngine.playNote(entry.note.note, 0.7);
+            this.activeHandles.set(i, handle);
           }
-          this.activeHandles.delete(i);
+
+          // Track currently active notes (started but not yet released)
+          if (this.scheduledNoteIndices.has(i) && !this.releasedNoteIndices.has(i)) {
+            activeNotes.add(entry.note.note);
+          }
+
+          // Trigger note-off when currentBeat reaches the note's end
+          if (
+            this.scheduledNoteIndices.has(i) &&
+            !this.releasedNoteIndices.has(i) &&
+            currentBeat >= noteOffBeat
+          ) {
+            this.releasedNoteIndices.add(i);
+            const handle = this.activeHandles.get(i);
+            if (handle) {
+              audioEngine.releaseNote(handle);
+            }
+            this.activeHandles.delete(i);
+          }
         }
-      }
 
-      // Report active notes
-      onActiveNotes?.(activeNotes);
+        // Report active notes
+        onActiveNotes?.(activeNotes);
 
-      // Auto-stop when exercise is complete (totalBeats + 1 beat buffer)
-      if (currentBeat > totalBeats + 1) {
-        const cb = this.onCompleteCallback;
+        // Auto-stop when exercise is complete (totalBeats + 1 beat buffer)
+        if (currentBeat > totalBeats + 1) {
+          const cb = this.onCompleteCallback;
+          this.stop();
+          cb?.();
+        }
+      } catch (error) {
         this.stop();
-        cb?.();
       }
     }, 16); // ~60fps
   }
@@ -402,6 +406,7 @@ export class DemoPlaybackService {
     const baseMsPerBeat = 60000 / this.replayTempo;
 
     this.intervalId = setInterval(() => {
+      try {
       if (!this.isPlaying) return;
 
       // Calculate current beat accounting for speed zones
@@ -511,6 +516,9 @@ export class DemoPlaybackService {
         const onComplete = callbacks.onComplete;
         this.stop();
         onComplete?.();
+      }
+      } catch (error) {
+        this.stop();
       }
     }, 16); // ~60fps
   }

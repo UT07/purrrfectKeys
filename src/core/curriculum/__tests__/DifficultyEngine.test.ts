@@ -1,4 +1,9 @@
-import { adjustDifficulty, type DifficultyProfile } from '../DifficultyEngine';
+import {
+  adjustDifficulty,
+  adjustSkillTempo,
+  getTempoForSkill,
+  type DifficultyProfile,
+} from '../DifficultyEngine';
 
 // ============================================================================
 // Helpers
@@ -136,6 +141,93 @@ describe('adjustDifficulty', () => {
     it('includes score in reasoning string', () => {
       const result = adjustDifficulty(createProfile(), 85);
       expect(result.reasoning).toContain('85%');
+    });
+  });
+});
+
+describe('Per-Skill Tempo Tracking', () => {
+  describe('getTempoForSkill', () => {
+    it('returns existing tempo for tracked skill', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          'rh-cde': { currentTempo: 85, highScore: 90, attempts: 5, lastAdjusted: Date.now() },
+        },
+      });
+      expect(getTempoForSkill('rh-cde', profile)).toBe(85);
+    });
+
+    it('returns global midpoint for untracked skill', () => {
+      expect(getTempoForSkill('unknown-skill', createProfile())).toBe(80); // (60+100)/2
+    });
+  });
+
+  describe('adjustSkillTempo', () => {
+    it('increases tempo on high score (>=90)', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          'rh-cde': { currentTempo: 70, highScore: 85, attempts: 3, lastAdjusted: Date.now() },
+        },
+      });
+      const result = adjustSkillTempo('rh-cde', 92, profile);
+      expect(result.currentTempo).toBe(75);
+      expect(result.highScore).toBe(92);
+      expect(result.attempts).toBe(4);
+    });
+
+    it('slightly increases on good score (70-89)', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          'rh-cde': { currentTempo: 70, highScore: 85, attempts: 3, lastAdjusted: Date.now() },
+        },
+      });
+      const result = adjustSkillTempo('rh-cde', 78, profile);
+      expect(result.currentTempo).toBe(72);
+    });
+
+    it('decreases tempo on low score (<50)', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          'rh-cde': { currentTempo: 70, highScore: 85, attempts: 3, lastAdjusted: Date.now() },
+        },
+      });
+      const result = adjustSkillTempo('rh-cde', 40, profile);
+      expect(result.currentTempo).toBe(67);
+    });
+
+    it('maintains on moderate score (50-69)', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          'rh-cde': { currentTempo: 70, highScore: 85, attempts: 3, lastAdjusted: Date.now() },
+        },
+      });
+      const result = adjustSkillTempo('rh-cde', 55, profile);
+      expect(result.currentTempo).toBe(70);
+    });
+
+    it('initializes new skill at default tempo of 60', () => {
+      const result = adjustSkillTempo('new-skill', 80, createProfile());
+      expect(result.currentTempo).toBe(62); // default 60 + 2 (good score)
+      expect(result.attempts).toBe(1);
+    });
+
+    it('caps at max 200 BPM', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          fast: { currentTempo: 198, highScore: 95, attempts: 20, lastAdjusted: Date.now() },
+        },
+      });
+      const result = adjustSkillTempo('fast', 95, profile);
+      expect(result.currentTempo).toBeLessThanOrEqual(200);
+    });
+
+    it('caps at min 30 BPM', () => {
+      const profile = createProfile({
+        skillTempoHistory: {
+          slow: { currentTempo: 31, highScore: 30, attempts: 5, lastAdjusted: Date.now() },
+        },
+      });
+      const result = adjustSkillTempo('slow', 20, profile);
+      expect(result.currentTempo).toBeGreaterThanOrEqual(30);
     });
   });
 });

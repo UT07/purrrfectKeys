@@ -34,6 +34,7 @@ import { SocialScreen } from '../screens/SocialScreen';
 import { LeaderboardScreen } from '../screens/LeaderboardScreen';
 import { FriendsScreen } from '../screens/FriendsScreen';
 import { AddFriendScreen } from '../screens/AddFriendScreen';
+import { PostExerciseScreen } from '../screens/PostExerciseScreen';
 // Navigation
 import { CustomTabBar } from './CustomTabBar';
 import { OfflineBanner } from '../components/common/OfflineBanner';
@@ -82,6 +83,7 @@ export type RootStackParamList = {
   CatSwitch: undefined;
   CatStudio: undefined;
   DebugLog: undefined;
+  PostExercise: undefined;
   SongPlayer: { songId: string };
   Leaderboard: undefined;
   Friends: undefined;
@@ -229,6 +231,11 @@ export function AppNavigator() {
               name="FreePlay"
               component={PlayScreen}
               options={{ animation: 'fade' }}
+            />
+            <RootStack.Screen
+              name="PostExercise"
+              component={PostExerciseScreen}
+              options={{ animation: 'fade', gestureEnabled: false }}
             />
             <RootStack.Screen
               name="SongPlayer"

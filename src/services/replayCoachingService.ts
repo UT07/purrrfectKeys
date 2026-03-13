@@ -3,7 +3,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Exercise, ExerciseScore, NoteScore } from '../core/exercises/types';
 import type { ReplayPlan, IntroAIResponse } from '../core/exercises/replayTypes';
-import { buildReplayEntries, buildSpeedZones } from '../core/exercises/replayTypes';
+import { buildReplayEntries, buildSpeedZones, buildReplaySections } from '../core/exercises/replayTypes';
 import {
   selectAlgorithmicPausePoints,
   generateFallbackComments,
@@ -62,6 +62,8 @@ export async function buildReplayPlan(
   }
 
   const speedZones = buildSpeedZones(entries, pausePoints, totalBeats);
+  const beatsPerMeasure = exercise.settings?.timeSignature?.[0] ?? 4;
+  const sections = buildReplaySections(entries, totalBeats, beatsPerMeasure);
 
   return {
     entries,
@@ -70,6 +72,7 @@ export async function buildReplayPlan(
     summary,
     speedZones,
     totalBeats,
+    sections,
   };
 }
 

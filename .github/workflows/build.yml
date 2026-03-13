@@ -1,12 +1,13 @@
 # ──────────────────────────────────────────────────────────────
-#  Build — Preview (Internal Testing)
+#  Build — Preview & Production
 # ──────────────────────────────────────────────────────────────
-# Builds iOS + Android via EAS Build with the "preview" profile.
-# Runs quality gate first, then triggers EAS builds.
+# Manual-only builds via EAS. NO auto-triggers on push.
 #
-# Triggers:
-#   - Push to master (auto-build after quality gate)
-#   - Manual dispatch (choose platform)
+# Preview:  Internal testing builds (ad-hoc distribution)
+#           Can target any branch via workflow_dispatch.
+#
+# Production: Store-ready builds (auto-increment version)
+#             Should only target master with verified, stable code.
 #
 # Required GitHub Secrets:
 #   EXPO_TOKEN                    - Expo account token
@@ -16,13 +17,19 @@
 # EAS Secrets (set via `eas secret:push`):
 #   EXPO_PUBLIC_FIREBASE_API_KEY, EXPO_PUBLIC_FIREBASE_PROJECT_ID, etc.
 # ──────────────────────────────────────────────────────────────
-name: Build Preview
+name: Build
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
     inputs:
+      profile:
+        description: 'Build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
       platform:
         description: 'Platform to build'
         required: true
@@ -37,58 +44,20 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.ref }}-${{ inputs.profile }}
   cancel-in-progress: false
 
 jobs:
   # ── Quality Gate ──────────────────────────────
-  typecheck:
-    name: TypeScript
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
+  quality-gate:
+    name: Quality Gate
+    uses: ./.github/workflows/ci.yml
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run test -- --ci --maxWorkers=2
-
-  # ── EAS Builds ───────────────────────────────
+  # ── iOS Build ───────────────────────────────
   build-ios:
-    name: iOS Preview Build
-    needs: [typecheck, lint, test]
-    if: >
-      github.event_name == 'push' ||
-      inputs.platform == 'ios' ||
-      inputs.platform == 'all'
+    name: iOS ${{ inputs.profile }} Build
+    needs: [quality-gate]
+    if: inputs.platform == 'ios' || inputs.platform == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -119,20 +88,19 @@ jobs:
 
       - name: Trigger iOS build
         run: |
-          eas build --platform ios --profile preview --non-interactive --no-wait
-          echo "### iOS Preview Build Triggered" >> "$GITHUB_STEP_SUMMARY"
-          echo "Profile: \`preview\`" >> "$GITHUB_STEP_SUMMARY"
+          eas build --platform ios --profile ${{ inputs.profile }} --non-interactive --no-wait
+          echo "### iOS ${{ inputs.profile }} Build Triggered" >> "$GITHUB_STEP_SUMMARY"
+          echo "Profile: \`${{ inputs.profile }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Branch: \`${{ github.ref_name }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Track progress at [expo.dev](https://expo.dev/accounts/ut254/projects/purrrfect-keys/builds)" >> "$GITHUB_STEP_SUMMARY"
 
+  # ── Android Build ───────────────────────────
   build-android:
-    name: Android Preview Build
-    needs: [typecheck, lint, test]
-    if: >
-      github.event_name == 'push' ||
-      inputs.platform == 'android' ||
-      inputs.platform == 'all'
+    name: Android ${{ inputs.profile }} Build
+    needs: [quality-gate]
+    if: inputs.platform == 'android' || inputs.platform == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -163,9 +131,10 @@ jobs:
 
       - name: Trigger Android build
         run: |
-          eas build --platform android --profile preview --non-interactive --no-wait
-          echo "### Android Preview Build Triggered" >> "$GITHUB_STEP_SUMMARY"
-          echo "Profile: \`preview\`" >> "$GITHUB_STEP_SUMMARY"
+          eas build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait
+          echo "### Android ${{ inputs.profile }} Build Triggered" >> "$GITHUB_STEP_SUMMARY"
+          echo "Profile: \`${{ inputs.profile }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Branch: \`${{ github.ref_name }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Track progress at [expo.dev](https://expo.dev/accounts/ut254/projects/purrrfect-keys/builds)" >> "$GITHUB_STEP_SUMMARY"

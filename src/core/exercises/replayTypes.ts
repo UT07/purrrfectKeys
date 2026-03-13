@@ -76,6 +76,65 @@ export interface ReplayPlan {
   summary: string;
   speedZones: SpeedZoneEntry[];
   totalBeats: number;
+  /** Sections for chunked review (long exercises only) */
+  sections: ReplaySection[];
+}
+
+// --- Replay sections (for long exercises) ---
+
+export interface ReplaySection {
+  index: number;
+  label: string;
+  fromBeat: number;
+  toBeat: number;
+  /** Count of non-green notes in this section */
+  issueCount: number;
+}
+
+/**
+ * Split a long exercise into reviewable sections of ~8 beats each.
+ * Short exercises (< 16 beats) return a single section.
+ * Sections are aligned to time signature measures when possible.
+ */
+export function buildReplaySections(
+  entries: ReplayScheduleEntry[],
+  totalBeats: number,
+  beatsPerMeasure: number = 4,
+): ReplaySection[] {
+  // Short exercises: single section, no splitting
+  if (totalBeats <= 16) {
+    const issueCount = entries.filter(e => e.color !== 'green').length;
+    return [{ index: 0, label: 'Full', fromBeat: 0, toBeat: totalBeats, issueCount }];
+  }
+
+  // Target ~8 beats per section, aligned to measures
+  const measuresPerSection = Math.max(1, Math.round(8 / beatsPerMeasure));
+  const beatsPerSection = measuresPerSection * beatsPerMeasure;
+
+  const sections: ReplaySection[] = [];
+  let sectionIndex = 0;
+  let fromBeat = 0;
+
+  while (fromBeat < totalBeats) {
+    const toBeat = Math.min(fromBeat + beatsPerSection, totalBeats);
+    const sectionEntries = entries.filter(
+      e => e.note.startBeat >= fromBeat && e.note.startBeat < toBeat,
+    );
+    const issueCount = sectionEntries.filter(e => e.color !== 'green').length;
+
+    sections.push({
+      index: sectionIndex,
+      label: `Section ${sectionIndex + 1}`,
+      fromBeat,
+      toBeat,
+      issueCount,
+    });
+
+    sectionIndex++;
+    fromBeat = toBeat;
+  }
+
+  return sections;
 }
 
 // --- Builder functions ---

@@ -7,6 +7,12 @@ import {
   validateSkillTree,
   getSkillDepth,
   getGenerationHints,
+  getSkillsByTier,
+  getTierMasteryScore,
+  isTierGatePassed,
+  daysSinceLastPractice,
+  needsGentleReentry,
+  TIER_MASTERY_GATES,
 } from '../SkillTree';
 
 describe('SkillTree', () => {
@@ -235,6 +241,134 @@ describe('SkillTree', () => {
           }
         }
       }
+    });
+  });
+
+  describe('Tier Mastery Gates', () => {
+    it('should define gates for tiers 1-14', () => {
+      for (let tier = 1; tier <= 14; tier++) {
+        expect(TIER_MASTERY_GATES[tier]).toBeDefined();
+        expect(TIER_MASTERY_GATES[tier]).toBeGreaterThanOrEqual(70);
+        expect(TIER_MASTERY_GATES[tier]).toBeLessThanOrEqual(100);
+      }
+    });
+
+    it('gates should increase or stay stable with tier', () => {
+      for (let tier = 2; tier <= 14; tier++) {
+        expect(TIER_MASTERY_GATES[tier]).toBeGreaterThanOrEqual(TIER_MASTERY_GATES[tier - 1]);
+      }
+    });
+  });
+
+  describe('getSkillsByTier', () => {
+    it('returns skills for tier 1', () => {
+      const tier1 = getSkillsByTier(1);
+      expect(tier1.length).toBeGreaterThan(0);
+      expect(tier1.every((s) => s.tier === 1)).toBe(true);
+    });
+
+    it('returns empty for nonexistent tier', () => {
+      expect(getSkillsByTier(99)).toHaveLength(0);
+    });
+
+    it('every skill belongs to exactly one tier', () => {
+      for (const node of SKILL_TREE) {
+        const tierSkills = getSkillsByTier(node.tier);
+        expect(tierSkills.map((s) => s.id)).toContain(node.id);
+      }
+    });
+  });
+
+  describe('getTierMasteryScore', () => {
+    it('returns 0 when no tier skills are mastered', () => {
+      const score = getTierMasteryScore(1, [], {});
+      expect(score).toBe(0);
+    });
+
+    it('returns 100 when all tier skills are mastered', () => {
+      const tier1Skills = getSkillsByTier(1);
+      const masteredIds = tier1Skills.map((s) => s.id);
+      const masteryData: Record<string, { masteredAt: number; lastPracticedAt: number; completionCount: number; decayScore: number }> = {};
+      for (const skill of tier1Skills) {
+        masteryData[skill.id] = {
+          masteredAt: Date.now(),
+          lastPracticedAt: Date.now(),
+          completionCount: skill.requiredCompletions,
+          decayScore: 1.0,
+        };
+      }
+      const score = getTierMasteryScore(1, masteredIds, masteryData);
+      expect(score).toBe(100);
+    });
+
+    it('returns partial score for partially mastered tier', () => {
+      const tier1Skills = getSkillsByTier(1);
+      // Master just the first skill
+      const masteredIds = [tier1Skills[0].id];
+      const masteryData = {
+        [tier1Skills[0].id]: {
+          masteredAt: Date.now(),
+          lastPracticedAt: Date.now(),
+          completionCount: tier1Skills[0].requiredCompletions,
+          decayScore: 1.0,
+        },
+      };
+      const score = getTierMasteryScore(1, masteredIds, masteryData);
+      expect(score).toBeGreaterThan(0);
+      expect(score).toBeLessThan(100);
+    });
+  });
+
+  describe('isTierGatePassed', () => {
+    it('returns true when tier is fully mastered', () => {
+      const tier1Skills = getSkillsByTier(1);
+      const masteredIds = tier1Skills.map((s) => s.id);
+      const masteryData: Record<string, { masteredAt: number; lastPracticedAt: number; completionCount: number; decayScore: number }> = {};
+      for (const skill of tier1Skills) {
+        masteryData[skill.id] = {
+          masteredAt: Date.now(),
+          lastPracticedAt: Date.now(),
+          completionCount: skill.requiredCompletions,
+          decayScore: 1.0,
+        };
+      }
+      expect(isTierGatePassed(1, masteredIds, masteryData)).toBe(true);
+    });
+
+    it('returns false when tier is not mastered enough', () => {
+      expect(isTierGatePassed(1, [], {})).toBe(false);
+    });
+
+    it('returns true for tier 15 (no gate defined)', () => {
+      expect(isTierGatePassed(15, [], {})).toBe(true);
+    });
+  });
+
+  describe('daysSinceLastPractice', () => {
+    it('returns Infinity for empty mastery data', () => {
+      expect(daysSinceLastPractice({})).toBe(Infinity);
+    });
+
+    it('returns ~0 for recent practice', () => {
+      const data = { 'skill-1': { masteredAt: Date.now(), lastPracticedAt: Date.now(), completionCount: 1, decayScore: 1 } };
+      expect(daysSinceLastPractice(data)).toBeLessThan(1);
+    });
+  });
+
+  describe('needsGentleReentry', () => {
+    it('returns true for empty mastery data', () => {
+      expect(needsGentleReentry({})).toBe(true);
+    });
+
+    it('returns false for recent practice', () => {
+      const data = { 'skill-1': { masteredAt: Date.now(), lastPracticedAt: Date.now(), completionCount: 1, decayScore: 1 } };
+      expect(needsGentleReentry(data)).toBe(false);
+    });
+
+    it('returns true for old practice', () => {
+      const eightDaysAgo = Date.now() - 8 * 86400000;
+      const data = { 'skill-1': { masteredAt: eightDaysAgo, lastPracticedAt: eightDaysAgo, completionCount: 1, decayScore: 0.3 } };
+      expect(needsGentleReentry(data)).toBe(true);
     });
   });
 });

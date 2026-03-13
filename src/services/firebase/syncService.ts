@@ -11,6 +11,7 @@ import {
   syncProgress, getAllLessonProgress, getGamificationData, addXp, createGamificationData,
   getCatEvolutionData, saveCatEvolutionData, getGemSyncData, saveGemSyncData,
   getLearnerProfileData, saveLearnerProfileData, getAchievementSyncData, saveAchievementSyncData,
+  createLessonProgress,
 } from './firestore';
 import type { ProgressChange, LessonProgress as FirestoreLessonProgress } from './firestore';
 import { useProgressStore } from '../../stores/progressStore';
@@ -849,6 +850,98 @@ export class SyncManager {
     } catch (err) {
       logger.warn('[Sync] Achievement push failed:', err);
     }
+  }
+
+  // --------------------------------------------------------------------------
+  // Full Progress Push (for sign-out / sign-in migration)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Push ALL local progress data to Firestore.
+   * Called before sign-out to ensure nothing is lost when local storage is wiped.
+   * Pushes: XP/level/streak (gamification), lesson progress, cats, gems,
+   * learner profile, and achievements.
+   */
+  async pushAllProgressData(uid?: string): Promise<void> {
+    const resolvedUid = uid ?? auth.currentUser?.uid;
+    if (!resolvedUid) return;
+
+    // 1. Push gamification data (XP, level, streak)
+    try {
+      const progressState = useProgressStore.getState();
+      const remoteGam = await getGamificationData(resolvedUid);
+
+      if (remoteGam) {
+        // Merge: take higher XP, higher streak
+        const { doc, updateDoc } = require('firebase/firestore');
+        const { db } = require('./config');
+        const gamDoc = doc(db, 'users', resolvedUid, 'gamification', 'data');
+        await updateDoc(gamDoc, {
+          xp: Math.max(progressState.totalXp, remoteGam.xp),
+          level: levelFromXp(Math.max(progressState.totalXp, remoteGam.xp)),
+          'streak.currentStreak': Math.max(
+            progressState.streakData.currentStreak,
+            remoteGam.streak?.currentStreak ?? 0,
+          ),
+          'streak.longestStreak': Math.max(
+            progressState.streakData.longestStreak,
+            remoteGam.streak?.longestStreak ?? 0,
+          ),
+          'streak.lastPracticeDate': progressState.streakData.lastPracticeDate ||
+            remoteGam.streak?.lastPracticeDate || '',
+        });
+      } else {
+        await createGamificationData(resolvedUid);
+        const { doc, updateDoc } = require('firebase/firestore');
+        const { db } = require('./config');
+        const gamDoc = doc(db, 'users', resolvedUid, 'gamification', 'data');
+        await updateDoc(gamDoc, {
+          xp: progressState.totalXp,
+          level: progressState.level,
+          'streak.currentStreak': progressState.streakData.currentStreak,
+          'streak.longestStreak': progressState.streakData.longestStreak,
+          'streak.lastPracticeDate': progressState.streakData.lastPracticeDate,
+        });
+      }
+      logger.log('[Sync] Pushed gamification data (XP, streak)');
+    } catch (err) {
+      logger.warn('[Sync] Gamification push failed:', err);
+    }
+
+    // 2. Push lesson progress (all lessons with scores)
+    try {
+      const progressState = useProgressStore.getState();
+      const lessonIds = Object.keys(progressState.lessonProgress);
+
+      for (const lessonId of lessonIds) {
+        const lesson = progressState.lessonProgress[lessonId];
+        if (!lesson || Object.keys(lesson.exerciseScores).length === 0) continue;
+
+        try {
+          await createLessonProgress(resolvedUid, lessonId, {
+            lessonId,
+            status: lesson.status,
+            exerciseScores: lesson.exerciseScores as any,
+            bestScore: Math.max(
+              0,
+              ...Object.values(lesson.exerciseScores).map((e) => e.highScore),
+            ),
+            totalAttempts: Object.values(lesson.exerciseScores).reduce(
+              (sum, e) => sum + e.attempts,
+              0,
+            ),
+          });
+        } catch {
+          // createLessonProgress uses merge: true, so partial failures are OK
+        }
+      }
+      logger.log(`[Sync] Pushed ${lessonIds.length} lesson progress records`);
+    } catch (err) {
+      logger.warn('[Sync] Lesson progress push failed:', err);
+    }
+
+    // 3. Push cats, gems, learner profile, achievements (existing method)
+    await this.pushCatAndGemData(resolvedUid);
   }
 
   // --------------------------------------------------------------------------

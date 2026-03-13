@@ -258,8 +258,10 @@ describe('Adaptive Learning Integration', () => {
       const hasAI = plan.lesson.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
       expect(hasAI).toBe(true);
 
-      // Reasoning should mention all skills mastered
-      const aiReasoning = plan.reasoning.find((r) => r.includes('mastered'));
+      // Reasoning should mention endgame or post-curriculum context
+      const aiReasoning = plan.reasoning.find((r) =>
+        r.includes('mastered') || r.includes('Endgame') || r.includes('Post-curriculum')
+      );
       expect(aiReasoning).toBeDefined();
     });
 

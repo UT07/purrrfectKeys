@@ -16,7 +16,11 @@ import {
   getSkillById,
   getSkillDepth,
   getSkillsNeedingReview,
+  isTierGatePassed,
+  needsGentleReentry,
+  GENTLE_REENTRY_FACTOR,
   type SkillNode,
+  type SkillCategory,
 } from './SkillTree';
 import { getExercise, getLessons, getLessonExercises } from '../../content/ContentLoader';
 import { midiToNoteName } from '../music/MusicTheory';
@@ -25,7 +29,17 @@ import { midiToNoteName } from '../music/MusicTheory';
 // Types
 // ============================================================================
 
-export type SessionType = 'new-material' | 'review' | 'challenge' | 'mixed';
+export type SessionType = 'new-material' | 'review' | 'challenge' | 'mixed' | 'endgame';
+
+/** Endgame theme rotations for post-curriculum daily sessions */
+export type EndgameTheme =
+  | 'technique-drills'    // Focus on scales, arpeggios, tempo push
+  | 'sight-reading'       // Random key/time signature exercises
+  | 'genre-deep-dive'     // Pick a genre and go deep
+  | 'review-marathon'     // Review oldest decayed skills
+  | 'tempo-push'          // Challenge exercises at elevated tempo
+  | 'weak-spot-focus'     // Target lowest-accuracy notes/skills
+  | 'mixed-challenge';    // Variety session across all categories
 
 export interface ExerciseRef {
   exerciseId: string;
@@ -35,6 +49,7 @@ export interface ExerciseRef {
   fallbackExerciseId?: string;  // Static exercise ID for offline fallback
   songId?: string;  // Song ID if source is 'song' — UI loads via songToExercise()
   songSectionIndex?: number;  // Which section of the song to play
+  suggestedTempo?: number;    // Per-skill adaptive tempo override
 }
 
 export interface SessionPlan {
@@ -44,6 +59,28 @@ export interface SessionPlan {
   challenge: ExerciseRef[];
   songs: ExerciseRef[];  // Song exercises mixed into the session
   reasoning: string[];
+  endgameTheme?: EndgameTheme;   // Only set when sessionType === 'endgame'
+  gentleReentry?: boolean;        // True when returning after a break
+}
+
+// ============================================================================
+// Warm-up category pool for variety
+// ============================================================================
+
+const WARMUP_CATEGORIES: SkillCategory[] = [
+  'note-finding', 'scales', 'rhythm', 'chords', 'arpeggios',
+  'hand-independence', 'intervals', 'black-keys',
+];
+
+/** Endgame themes rotate daily based on a simple date hash */
+const ENDGAME_THEMES: EndgameTheme[] = [
+  'technique-drills', 'sight-reading', 'genre-deep-dive',
+  'review-marathon', 'tempo-push', 'weak-spot-focus', 'mixed-challenge',
+];
+
+function getEndgameThemeForDay(): EndgameTheme {
+  const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+  return ENDGAME_THEMES[daysSinceEpoch % ENDGAME_THEMES.length];
 }
 
 // ============================================================================
@@ -53,6 +90,7 @@ export interface SessionPlan {
 /**
  * Select what type of session to generate based on the learner's state.
  *
+ * - If all skills mastered: endgame mode with themed daily rotations
  * - Every 5th session is a challenge day
  * - If 3+ skills have decayed, prioritize review
  * - If 1-2 skills decayed, mix review with new material
@@ -63,6 +101,11 @@ export function selectSessionType(
   skillMasteryData: Record<string, SkillMasteryRecord>,
   totalExercisesCompleted: number
 ): SessionType {
+  // Endgame: all 100 skills mastered
+  const allMastered = getAvailableSkills(masteredSkills).length === 0
+    && masteredSkills.length >= SKILL_TREE.length;
+  if (allMastered) return 'endgame';
+
   // Every 5th session is a challenge day (exercises 5, 10, 15, ...)
   if (totalExercisesCompleted > 0 && totalExercisesCompleted % 5 === 0) return 'challenge';
 
@@ -89,20 +132,37 @@ export function generateSessionPlan(
 ): SessionPlan {
   const reasoning: string[] = [];
   const recentSet = new Set(profile.recentExerciseIds ?? []);
+  const skillMasteryData = profile.skillMasteryData ?? {};
   const sessionType = selectSessionType(
     masteredSkills,
-    profile.skillMasteryData ?? {},
+    skillMasteryData,
     profile.totalExercisesCompleted
   );
+
+  // Check for gentle re-entry after extended break
+  const gentleReentry = needsGentleReentry(skillMasteryData);
+  if (gentleReentry) {
+    reasoning.push(`Welcome back! Taking it easy today — reduced tempo (${Math.round(GENTLE_REENTRY_FACTOR * 100)}% of normal)`);
+  }
 
   let warmUp: ExerciseRef[];
   let lesson: ExerciseRef[];
   let challenge: ExerciseRef[];
   const songs: ExerciseRef[] = [];
+  let endgameTheme: EndgameTheme | undefined;
 
   switch (sessionType) {
+    case 'endgame': {
+      endgameTheme = getEndgameThemeForDay();
+      reasoning.push(`Endgame: ${endgameTheme} day`);
+      const endgame = generateEndgameSession(profile, masteredSkills, endgameTheme, reasoning, recentSet);
+      warmUp = endgame.warmUp;
+      lesson = endgame.lesson;
+      challenge = endgame.challenge;
+      break;
+    }
     case 'review': {
-      reasoning.push(`Review day: ${getSkillsNeedingReview(masteredSkills, profile.skillMasteryData ?? {}).length} skills need refreshing`);
+      reasoning.push(`Review day: ${getSkillsNeedingReview(masteredSkills, skillMasteryData).length} skills need refreshing`);
       warmUp = generateWarmUp(profile, masteredSkills, reasoning, recentSet);
       lesson = generateReviewLesson(profile, masteredSkills, reasoning, recentSet);
       // Add 1 new-material exercise at end
@@ -156,16 +216,36 @@ export function generateSessionPlan(
     }
   }
 
-  return { sessionType, warmUp, lesson, challenge, songs, reasoning };
+  return { sessionType, warmUp, lesson, challenge, songs, reasoning, endgameTheme, gentleReentry };
 }
 
 /**
  * Get the next skill the learner should work on.
  * Uses BFS through the skill tree, prioritizing lower-depth nodes.
+ * Enforces tier mastery gates — won't advance to tier N+1 until tier N gate is passed.
  */
-export function getNextSkillToLearn(masteredSkills: string[]): SkillNode | null {
+export function getNextSkillToLearn(
+  masteredSkills: string[],
+  skillMasteryData?: Record<string, SkillMasteryRecord>,
+): SkillNode | null {
   const available = getAvailableSkills(masteredSkills);
   if (available.length === 0) return null;
+
+  // Enforce tier mastery gates: filter out skills in tiers that require
+  // a gate from a previous tier that hasn't been passed yet
+  const gatedAvailable = skillMasteryData
+    ? available.filter((skill) => {
+        // Check all tiers below this skill's tier
+        for (let t = 1; t < skill.tier; t++) {
+          if (!isTierGatePassed(t, masteredSkills, skillMasteryData)) {
+            return false; // Blocked by an earlier tier gate
+          }
+        }
+        return true;
+      })
+    : available;
+
+  const candidates = gatedAvailable.length > 0 ? gatedAvailable : available;
 
   // Sort by depth (shallowest first), then by category priority
   const categoryPriority: Record<string, number> = {
@@ -183,7 +263,7 @@ export function getNextSkillToLearn(masteredSkills: string[]): SkillNode | null 
     songs: 11,
   };
 
-  return available.sort((a, b) => {
+  return candidates.sort((a, b) => {
     const depthDiff = getSkillDepth(a.id) - getSkillDepth(b.id);
     if (depthDiff !== 0) return depthDiff;
     return (categoryPriority[a.category] ?? 99) - (categoryPriority[b.category] ?? 99);
@@ -264,9 +344,26 @@ function generateWarmUp(
 ): ExerciseRef[] {
   const refs: ExerciseRef[] = [];
 
-  // Strategy 1: AI warm-up targeting weak notes from a mastered skill
-  if (profile.weakNotes.length > 0 && masteredSkills.length > 0) {
-    // Find the mastered skill whose notes overlap with weak notes (skip recently practiced)
+  // Strategy 1: Rotate warm-up category daily for variety
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  const categoryIndex = dayIndex % WARMUP_CATEGORIES.length;
+  const todayCategory = WARMUP_CATEGORIES[categoryIndex];
+
+  // Find a mastered skill in today's warm-up category
+  if (masteredSkills.length > 0) {
+    const categorySkill = [...masteredSkills]
+      .map((id) => getSkillById(id))
+      .filter((s): s is SkillNode => s != null && s.category === todayCategory)
+      .find((s) => !recentSet.has(`ai-skill-${s.id}`));
+
+    if (categorySkill) {
+      refs.push(makeAIRef(categorySkill, `Warm-up (${todayCategory}): ${categorySkill.name}`, recentSet));
+      reasoning.push(`Warm-up rotates to ${todayCategory}: ${categorySkill.name}`);
+    }
+  }
+
+  // Strategy 2: Target weak notes if any exist
+  if (refs.length === 0 && profile.weakNotes.length > 0 && masteredSkills.length > 0) {
     for (const skillId of [...masteredSkills].reverse()) {
       if (recentSet.has(`ai-skill-${skillId}`)) continue;
       const skill = getSkillById(skillId);
@@ -280,15 +377,15 @@ function generateWarmUp(
     }
   }
 
-  // Strategy 2: AI review of a recently mastered skill (skip if just practiced)
+  // Strategy 3: Review a recently mastered skill from a different category
   if (refs.length < 2 && masteredSkills.length > 0) {
-    // Walk backwards through mastered skills, skip recently practiced
-    let recentSkill = null;
+    const usedCategories = new Set(refs.map((r) => getSkillById(r.skillNodeId)?.category));
+    let recentSkill: SkillNode | null = null;
     for (let j = masteredSkills.length - 1; j >= 0; j--) {
       const sid = masteredSkills[j];
       if (recentSet.has(`ai-skill-${sid}`)) continue;
       const s = getSkillById(sid);
-      if (s && !refs.some((r) => r.skillNodeId === sid)) {
+      if (s && !refs.some((r) => r.skillNodeId === sid) && !usedCategories.has(s.category)) {
         recentSkill = s;
         break;
       }
@@ -325,7 +422,7 @@ function generateLesson(
   _recentSet: Set<string> = new Set()
 ): ExerciseRef[] {
   const refs: ExerciseRef[] = [];
-  const nextSkill = getNextSkillToLearn(masteredSkills);
+  const nextSkill = getNextSkillToLearn(masteredSkills, _profile.skillMasteryData);
 
   if (!nextSkill) {
     reasoning.push('Post-curriculum: AI-generated exercises across skill categories');
@@ -458,8 +555,127 @@ function generateChallenge(
 }
 
 /**
+ * Generate an endgame session with themed daily rotation.
+ * Only called when all 100 skills are mastered.
+ */
+function generateEndgameSession(
+  profile: LearnerProfileData,
+  masteredSkills: string[],
+  theme: EndgameTheme,
+  reasoning: string[],
+  recentSet: Set<string>,
+): { warmUp: ExerciseRef[]; lesson: ExerciseRef[]; challenge: ExerciseRef[] } {
+  const allSkills = [...masteredSkills]
+    .map((id) => getSkillById(id))
+    .filter(Boolean) as SkillNode[];
+
+  const warmUp: ExerciseRef[] = [];
+  const lesson: ExerciseRef[] = [];
+  const challenge: ExerciseRef[] = [];
+
+  // Warm-up is always light review
+  const warmUpSkill = allSkills.find((s) => !recentSet.has(`ai-skill-${s.id}`)) ?? allSkills[0];
+  if (warmUpSkill) {
+    warmUp.push(makeAIRef(warmUpSkill, `Endgame warm-up: ${warmUpSkill.name}`, recentSet));
+  }
+
+  switch (theme) {
+    case 'technique-drills': {
+      reasoning.push('Technique day: scales, arpeggios, and hand independence');
+      const categories: SkillCategory[] = ['scales', 'arpeggios', 'hand-independence'];
+      for (const cat of categories) {
+        const skill = allSkills.find((s) => s.category === cat && !recentSet.has(`ai-skill-${s.id}`));
+        if (skill) lesson.push(makeAIRef(skill, `Technique: ${skill.name}`, recentSet));
+      }
+      break;
+    }
+    case 'sight-reading': {
+      reasoning.push('Sight reading day: random keys and time signatures');
+      const sightSkills = allSkills.filter((s) => s.category === 'sight-reading' || s.category === 'key-signatures');
+      for (const skill of sightSkills.slice(0, 3)) {
+        lesson.push(makeAIRef(skill, `Sight-read: ${skill.name}`, recentSet));
+      }
+      break;
+    }
+    case 'genre-deep-dive': {
+      reasoning.push('Genre day: deep dive into song repertoire');
+      const songSkills = allSkills.filter((s) => s.category === 'songs');
+      for (const skill of songSkills.slice(0, 3)) {
+        lesson.push(makeAIRef(skill, `Genre: ${skill.name}`, recentSet));
+      }
+      break;
+    }
+    case 'review-marathon': {
+      reasoning.push('Review day: refreshing oldest skills');
+      const decayed = getSkillsNeedingReview(masteredSkills, profile.skillMasteryData ?? {});
+      for (const skill of decayed.slice(0, 4)) {
+        lesson.push(makeAIRef(skill, `Review: ${skill.name}`, recentSet));
+      }
+      break;
+    }
+    case 'tempo-push': {
+      reasoning.push('Tempo push day: challenge exercises at elevated tempo');
+      const deepSkills = allSkills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id)).slice(0, 3);
+      for (const skill of deepSkills) {
+        const ref = makeAIRef(skill, `Tempo push: ${skill.name}`, recentSet);
+        ref.suggestedTempo = profile.tempoRange.max + 10;
+        lesson.push(ref);
+      }
+      break;
+    }
+    case 'weak-spot-focus': {
+      reasoning.push('Weak spot day: targeting lowest-accuracy areas');
+      if (profile.weakNotes.length > 0) {
+        // Find skills whose note ranges overlap with weak notes
+        const overlapping = allSkills.filter((s) => {
+          const hints = SKILL_TREE.find((n) => n.id === s.id);
+          return hints != null;
+        }).slice(0, 3);
+        for (const skill of overlapping) {
+          lesson.push(makeAIRef(skill, `Weak spot: ${skill.name}`, recentSet));
+        }
+      }
+      if (lesson.length === 0) {
+        // No weak spots — just do random deep skills
+        const deep = allSkills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id)).slice(0, 3);
+        for (const s of deep) lesson.push(makeAIRef(s, `Deep practice: ${s.name}`, recentSet));
+      }
+      break;
+    }
+    default: {
+      // mixed-challenge
+      reasoning.push('Mixed challenge: variety across all categories');
+      const byCategory = new Map<string, SkillNode[]>();
+      for (const skill of allSkills) {
+        const list = byCategory.get(skill.category) ?? [];
+        list.push(skill);
+        byCategory.set(skill.category, list);
+      }
+      const categories = [...byCategory.keys()];
+      const dayOffset = Math.floor(Date.now() / 86400000) % categories.length;
+      for (let i = 0; i < 3 && i < categories.length; i++) {
+        const cat = categories[(dayOffset + i) % categories.length];
+        const skills = byCategory.get(cat) ?? [];
+        const pick = skills.find((s) => !recentSet.has(`ai-skill-${s.id}`)) ?? skills[0];
+        if (pick) lesson.push(makeAIRef(pick, `Mixed: ${pick.name}`, recentSet));
+      }
+    }
+  }
+
+  // Endgame challenge is always a tempo push
+  const deepest = allSkills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id))[0];
+  if (deepest) {
+    const ref = makeAIRef(deepest, `Endgame challenge: ${deepest.name}`, recentSet);
+    ref.suggestedTempo = profile.tempoRange.max + 15;
+    challenge.push(ref);
+  }
+
+  return { warmUp, lesson, challenge };
+}
+
+/**
  * Generate a song exercise reference for the session.
- * Picks a song at the learner's difficulty level, skipping recently played songs.
+ * Uses genre matching to align songs with the learner's current skill focus.
  */
 function generateSongExercise(
   masteredSkills: string[],
@@ -472,23 +688,51 @@ function generateSongExercise(
     : masteredSkills.length > 10 ? 2
     : 1;
 
+  // Determine preferred genre based on strongest skill category
+  const skillCategories = masteredSkills
+    .map((id) => getSkillById(id)?.category)
+    .filter(Boolean) as string[];
+  const categoryCounts = new Map<string, number>();
+  for (const cat of skillCategories) {
+    categoryCounts.set(cat, (categoryCounts.get(cat) ?? 0) + 1);
+  }
+  // Map strongest category to a preferred genre hint
+  const strongestCategory = [...categoryCounts.entries()]
+    .sort((a, b) => b[1] - a[1])[0]?.[0];
+  const genreHint = CATEGORY_TO_GENRE[strongestCategory ?? ''] ?? 'pop';
+
   // Song IDs are loaded from the song store at runtime.
-  // Here we create a placeholder ref that the UI resolves via songToExercise().
-  const songExerciseId = `song-daily-d${difficulty}-${recentSet.size % 20}`;
+  const songExerciseId = `song-daily-d${difficulty}-${genreHint}-${recentSet.size % 20}`;
 
   if (recentSet.has(songExerciseId)) return null;
 
-  reasoning.push(`Song exercise: difficulty ${difficulty} song to practice playing real music`);
+  reasoning.push(`Song exercise: ${genreHint} song (difficulty ${difficulty}) matching your ${strongestCategory ?? 'general'} strength`);
 
   return {
     exerciseId: songExerciseId,
     source: 'song',
     skillNodeId: 'song-practice',
-    reason: `Play a song! (difficulty ${difficulty})`,
-    songId: undefined, // Resolved at runtime by DailySessionScreen from songStore
+    reason: `Play a ${genreHint} song! (difficulty ${difficulty})`,
+    songId: undefined,
     songSectionIndex: 0,
   };
 }
+
+/** Maps skill categories to preferred song genres */
+const CATEGORY_TO_GENRE: Record<string, string> = {
+  'note-finding': 'pop',
+  intervals: 'classical',
+  scales: 'classical',
+  chords: 'pop',
+  rhythm: 'game',
+  'hand-independence': 'classical',
+  songs: 'pop',
+  'black-keys': 'film',
+  'key-signatures': 'classical',
+  expression: 'film',
+  arpeggios: 'classical',
+  'sight-reading': 'folk',
+};
 
 // ============================================================================
 // Helpers
