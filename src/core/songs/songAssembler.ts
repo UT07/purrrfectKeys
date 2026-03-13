@@ -75,7 +75,7 @@ Return JSON with this exact structure:
 {
   "title": "Song Title",
   "artist": "Original Artist",
-  "genre": "pop|classical|folk|film|game|holiday",
+  "genre": "pop|classical|folk|film|game|holiday|jazz|blues|kids|hymn",
   "difficulty": ${params.difficulty},
   "attribution": "AI arrangement — simplified for learning",
   "tempo": <BPM 60-160>,
@@ -222,5 +222,9 @@ function normalizeGenre(genre: string): Song['metadata']['genre'] {
   if (g.includes('film') || g.includes('movie') || g.includes('soundtrack')) return 'film';
   if (g.includes('game') || g.includes('video')) return 'game';
   if (g.includes('holiday') || g.includes('christmas')) return 'holiday';
+  if (g.includes('jazz')) return 'jazz';
+  if (g.includes('blues')) return 'blues';
+  if (g.includes('kids') || g.includes('nursery') || g.includes('children')) return 'kids';
+  if (g.includes('hymn') || g.includes('gospel') || g.includes('spiritual')) return 'hymn';
   return 'pop';
 }

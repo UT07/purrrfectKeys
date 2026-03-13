@@ -228,6 +228,59 @@ const SONG_LIST: SongRequestParams[] = [
   { title: 'This Old Man', difficulty: 1 },
   { title: 'If You\'re Happy and You Know It', difficulty: 1 },
   { title: 'Itsy Bitsy Spider', difficulty: 1 },
+
+  // Blues (difficulty 2-4)
+  { title: 'St. Louis Blues (simplified)', artist: 'W.C. Handy', difficulty: 3 },
+  { title: 'Stormy Monday (simplified)', artist: 'T-Bone Walker', difficulty: 3 },
+  { title: '12-Bar Blues in C', difficulty: 2 },
+  { title: 'Sweet Home Chicago (simplified)', artist: 'Robert Johnson', difficulty: 3 },
+  { title: 'Ain\'t No Sunshine (simplified)', artist: 'Bill Withers', difficulty: 2 },
+  { title: 'The Thrill Is Gone (simplified)', artist: 'B.B. King', difficulty: 3 },
+  { title: 'Georgia On My Mind (simplified)', artist: 'Ray Charles', difficulty: 3 },
+  { title: 'Feeling Good (simplified)', artist: 'Nina Simone', difficulty: 3 },
+  { title: 'Hit the Road Jack (simplified)', artist: 'Ray Charles', difficulty: 2 },
+  { title: 'I Got You (I Feel Good) (simplified)', artist: 'James Brown', difficulty: 3 },
+
+  // Hymn / Spiritual (difficulty 1-3)
+  { title: 'Amazing Grace (hymn)', difficulty: 1 },
+  { title: 'How Great Thou Art', difficulty: 2 },
+  { title: 'Be Thou My Vision', difficulty: 2 },
+  { title: 'It Is Well with My Soul', difficulty: 2 },
+  { title: 'Great Is Thy Faithfulness', difficulty: 3 },
+  { title: 'Holy Holy Holy', difficulty: 2 },
+  { title: 'A Mighty Fortress Is Our God', difficulty: 2 },
+  { title: 'Abide with Me', difficulty: 2 },
+  { title: 'Ave Maria (simplified)', artist: 'Schubert', difficulty: 3 },
+  { title: 'Jesu Joy of Man\'s Desiring (simplified)', artist: 'J.S. Bach', difficulty: 3 },
+
+  // More Jazz (difficulty 2-4)
+  { title: 'Summertime (simplified)', artist: 'George Gershwin', difficulty: 3 },
+  { title: 'All of Me (jazz standard, simplified)', difficulty: 3 },
+  { title: 'Georgia on My Mind (jazz, simplified)', artist: 'Hoagy Carmichael', difficulty: 3 },
+  { title: 'My Funny Valentine (simplified)', difficulty: 3 },
+  { title: 'The Girl from Ipanema (simplified)', artist: 'Tom Jobim', difficulty: 3 },
+  { title: 'So What (simplified)', artist: 'Miles Davis', difficulty: 3 },
+  { title: 'Round Midnight (simplified)', artist: 'Thelonious Monk', difficulty: 4 },
+  { title: 'Body and Soul (simplified)', difficulty: 3 },
+  { title: 'Moon River (jazz arrangement)', artist: 'Henry Mancini', difficulty: 2 },
+  { title: 'In a Sentimental Mood (simplified)', artist: 'Duke Ellington', difficulty: 3 },
+
+  // More Pop / Modern (difficulty 1-3)
+  { title: 'Happier Than Ever (simplified)', artist: 'Billie Eilish', difficulty: 2 },
+  { title: 'drivers license (simplified)', artist: 'Olivia Rodrigo', difficulty: 2 },
+  { title: 'Good 4 U (simplified)', artist: 'Olivia Rodrigo', difficulty: 3 },
+  { title: 'Peaches (simplified)', artist: 'Justin Bieber', difficulty: 2 },
+  { title: 'Butter (simplified)', artist: 'BTS', difficulty: 2 },
+  { title: 'Dynamite (simplified)', artist: 'BTS', difficulty: 2 },
+  { title: 'Save Your Tears (simplified)', artist: 'The Weeknd', difficulty: 2 },
+  { title: 'Memories (simplified)', artist: 'Maroon 5', difficulty: 2 },
+  { title: 'Señorita (simplified)', artist: 'Shawn Mendes & Camila Cabello', difficulty: 2 },
+  { title: 'Havana (simplified)', artist: 'Camila Cabello', difficulty: 2 },
+  { title: 'Golden Hour (simplified)', artist: 'JVKE', difficulty: 2 },
+  { title: 'Glimpse of Us (simplified)', artist: 'Joji', difficulty: 2 },
+  { title: 'Until I Found You (simplified)', artist: 'Stephen Sanchez', difficulty: 2 },
+  { title: 'Die With a Smile (simplified)', artist: 'Lady Gaga & Bruno Mars', difficulty: 2 },
+  { title: 'APT. (simplified)', artist: 'ROSÉ & Bruno Mars', difficulty: 2 },
 ];
 
 // ---------------------------------------------------------------------------
