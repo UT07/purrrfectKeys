@@ -38,6 +38,10 @@ export const GENRE_SKILL_AFFINITY: Record<SongGenre, string[]> = {
   folk: ['note-finding', 'rhythm', 'hand-independence'],
   game: ['rhythm', 'note-finding', 'scales'],
   holiday: ['note-finding', 'rhythm'],
+  jazz: ['chords', 'rhythm', 'expression', 'arpeggios'],
+  blues: ['chords', 'rhythm', 'expression'],
+  kids: ['note-finding', 'rhythm'],
+  hymn: ['chords', 'note-finding', 'expression'],
 };
 
 // ---------------------------------------------------------------------------

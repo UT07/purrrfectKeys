@@ -44,7 +44,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 // Genre visual config: icon + accent color per genre
 // ---------------------------------------------------------------------------
 
-const GENRE_CONFIG: Record<string, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
+const GENRE_CONFIG: Record<string, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string; label?: string }> = {
   all:       { icon: 'music-note',           color: COLORS.primary },
   classical: { icon: 'music-clef-treble',    color: RARITY.epic.borderColor },
   folk:      { icon: 'guitar-acoustic',      color: COLORS.success },
@@ -52,15 +52,23 @@ const GENRE_CONFIG: Record<string, { icon: keyof typeof MaterialCommunityIcons.g
   film:      { icon: 'filmstrip',            color: COLORS.info },
   game:      { icon: 'gamepad-variant',      color: NEON.purple },
   holiday:   { icon: 'snowflake',            color: COLORS.gemDiamond },
+  jazz:      { icon: 'saxophone',            color: '#FFB74D' },
+  blues:     { icon: 'music-note-eighth',    color: '#5C6BC0' },
+  kids:      { icon: 'baby-face-outline',    color: '#81C784' },
+  hymn:      { icon: 'church',               color: '#CE93D8' },
 };
 
 const GENRES: Array<{ label: string; value: SongGenre | 'all' }> = [
   { label: 'All', value: 'all' },
   { label: 'Classical', value: 'classical' },
-  { label: 'Folk', value: 'folk' },
   { label: 'Pop', value: 'pop' },
+  { label: 'Folk', value: 'folk' },
   { label: 'Film', value: 'film' },
+  { label: 'Jazz', value: 'jazz' },
+  { label: 'Blues', value: 'blues' },
   { label: 'Game', value: 'game' },
+  { label: 'Kids', value: 'kids' },
+  { label: 'Hymn', value: 'hymn' },
   { label: 'Holiday', value: 'holiday' },
 ];
 

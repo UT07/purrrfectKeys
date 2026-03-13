@@ -9,7 +9,7 @@ import type { NoteEvent, ExerciseSettings, ExerciseScoringConfig } from '@/core/
 // Enums / Literals
 // ---------------------------------------------------------------------------
 
-export type SongGenre = 'classical' | 'pop' | 'film' | 'folk' | 'game' | 'holiday';
+export type SongGenre = 'classical' | 'pop' | 'film' | 'folk' | 'game' | 'holiday' | 'jazz' | 'blues' | 'kids' | 'hymn';
 export type SongSource = 'pdmx' | 'thesession' | 'gemini';
 export type MasteryTier = 'none' | 'bronze' | 'silver' | 'gold' | 'platinum';
 export type SongLayer = 'melody' | 'full';
