@@ -34,9 +34,27 @@ import { useSongStore } from '../stores/songStore';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { exerciseTypeForCategory } from '../core/exercises/types';
+import type { ExerciseType } from '../core/exercises/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 type TierIntroRouteProp = RouteProp<RootStackParamList, 'TierIntro'>;
+
+/** User-friendly labels for exercise types */
+const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  play: { label: 'Play Along', icon: 'piano', color: '#64B5F6' },
+  rhythm: { label: 'Rhythm', icon: 'metronome', color: '#FF8A65' },
+  earTraining: { label: 'Ear Training', icon: 'ear-hearing', color: '#CE93D8' },
+  chordId: { label: 'Chord ID', icon: 'cards', color: '#81C784' },
+  sightReading: { label: 'Sight Read', icon: 'eye', color: '#FFD54F' },
+  callResponse: { label: 'Call & Response', icon: 'swap-horizontal', color: '#4FC3F7' },
+  fillInTheBlank: { label: 'Fill Blank', icon: 'puzzle', color: '#F48FB1' },
+  spotTheError: { label: 'Spot Error', icon: 'magnify', color: '#EF9A9A' },
+  intervalQuiz: { label: 'Intervals', icon: 'ruler', color: '#A5D6A7' },
+  chordBuilder: { label: 'Build Chord', icon: 'shape', color: '#80CBC4' },
+  bossBattle: { label: 'Boss Battle', icon: 'skull-crossbones', color: '#FF5252' },
+  duet: { label: 'Duet', icon: 'account-group', color: '#B39DDB' },
+  speedRun: { label: 'Speed Run', icon: 'flash', color: '#FFB74D' },
+};
 
 /** Metadata for each tier */
 const TIER_META: Record<number, { title: string; icon: string; description: string }> = {
@@ -260,6 +278,10 @@ function SkillRow({
   const handLabel = hints?.hand === 'left' ? 'LH' : hints?.hand === 'right' ? 'RH' : hints?.hand === 'both' ? 'Both' : null;
   const progressRatio = exerciseCount > 0 ? completedCount / exerciseCount : 0;
 
+  // Resolve exercise type for this skill
+  const exType: ExerciseType = exerciseTypeForCategory(skill.category) ?? 'play';
+  const typeInfo = EXERCISE_TYPE_LABELS[exType] ?? EXERCISE_TYPE_LABELS.play;
+
   return (
     <View style={styles.skillRow}>
       <View style={styles.skillRowLeft}>
@@ -278,9 +300,10 @@ function SkillRow({
             {skill.name}
           </Text>
           <View style={styles.skillMetaRow}>
-            <Text style={styles.skillDescription} numberOfLines={1}>
-              {skill.description}
-            </Text>
+            <View style={[styles.exerciseTypeBadge, { backgroundColor: typeInfo.color + '20' }]}>
+              <MaterialCommunityIcons name={typeInfo.icon as any} size={10} color={typeInfo.color} />
+              <Text style={[styles.exerciseTypeText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
+            </View>
           </View>
           {exerciseCount > 0 && (
             <View style={styles.skillProgressRow}>
@@ -801,7 +824,13 @@ const styles = StyleSheet.create({
   skillName: { ...TYPOGRAPHY.body.md, fontWeight: '500', color: COLORS.textPrimary },
   skillNameMastered: { color: COLORS.textMuted },
   skillDescription: { ...TYPOGRAPHY.caption.md, color: COLORS.textMuted, marginTop: 1 },
-  skillMetaRow: { flexDirection: 'row', alignItems: 'center' },
+  skillMetaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  exerciseTypeBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 6, paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  exerciseTypeText: { ...TYPOGRAPHY.caption.sm, fontWeight: '600', fontSize: 10 },
   skillProgressRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4,
   },
