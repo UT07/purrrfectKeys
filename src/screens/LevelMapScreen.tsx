@@ -34,6 +34,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { hasTierMasteryTestPassed } from '../core/curriculum/tierMasteryTest';
+import { getExercise } from '../content/ContentLoader';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, NEON, glowColor } from '../theme/tokens';
@@ -163,6 +164,7 @@ interface TierNodeData {
   state: NodeState;
   masteredCount: number;
   totalSkills: number;
+  exerciseCount: number;
   firstUnmasteredSkillId: string | null;
   testPassed: boolean;
 }
@@ -198,9 +200,16 @@ function useTierNodes(): TierNodeData[] {
       const isComplete = totalSkills > 0 && masteredCount === totalSkills;
       const meta = TIER_META[tier] ?? { title: `Tier ${tier}`, icon: 'star' };
       const firstUnmastered = skills.find((s) => !masteredSet.has(s.id));
+      // Count static exercises across all skills in this tier
+      let exerciseCount = 0;
+      for (const skill of skills) {
+        for (const exId of skill.targetExerciseIds) {
+          if (getExercise(exId)) exerciseCount++;
+        }
+      }
       return {
         tier, title: meta.title, icon: meta.icon,
-        masteredCount, totalSkills, isComplete,
+        masteredCount, totalSkills, isComplete, exerciseCount,
         firstUnmasteredSkillId: firstUnmastered?.id ?? null,
       };
     });
@@ -220,6 +229,7 @@ function useTierNodes(): TierNodeData[] {
       return {
         tier: raw.tier, title: raw.title, icon: raw.icon, state,
         masteredCount: raw.masteredCount, totalSkills: raw.totalSkills,
+        exerciseCount: raw.exerciseCount,
         firstUnmasteredSkillId: raw.firstUnmasteredSkillId,
         testPassed: hasTierMasteryTestPassed(raw.tier, tierTestResults),
       };
@@ -509,7 +519,7 @@ function PathNode({
           </Text>
           {data.state !== 'locked' && data.totalSkills > 0 && (
             <Text style={[styles.nodeProgress, { color: colors.subtitleColor }]}>
-              {data.masteredCount}/{data.totalSkills}
+              {data.masteredCount}/{data.totalSkills}{data.exerciseCount > 0 ? ` · ${data.exerciseCount} ex` : ''}
             </Text>
           )}
         </View>

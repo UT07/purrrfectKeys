@@ -246,14 +246,19 @@ function SkillRow({
   skill,
   index,
   isMastered,
+  exerciseCount,
+  completedCount,
 }: {
   skill: SkillNode;
   index: number;
   isMastered: boolean;
+  exerciseCount: number;
+  completedCount: number;
 }) {
   const color = SKILL_COLORS[index % SKILL_COLORS.length];
   const hints = getGenerationHints(skill.id);
   const handLabel = hints?.hand === 'left' ? 'LH' : hints?.hand === 'right' ? 'RH' : hints?.hand === 'both' ? 'Both' : null;
+  const progressRatio = exerciseCount > 0 ? completedCount / exerciseCount : 0;
 
   return (
     <View style={styles.skillRow}>
@@ -272,9 +277,21 @@ function SkillRow({
           <Text style={[styles.skillName, isMastered && styles.skillNameMastered]} numberOfLines={1}>
             {skill.name}
           </Text>
-          <Text style={styles.skillDescription} numberOfLines={1}>
-            {skill.description}
-          </Text>
+          <View style={styles.skillMetaRow}>
+            <Text style={styles.skillDescription} numberOfLines={1}>
+              {skill.description}
+            </Text>
+          </View>
+          {exerciseCount > 0 && (
+            <View style={styles.skillProgressRow}>
+              <View style={styles.skillProgressBar}>
+                <View style={[styles.skillProgressFill, { width: `${progressRatio * 100}%` }]} />
+              </View>
+              <Text style={styles.skillExerciseCount}>
+                {completedCount}/{exerciseCount}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.skillRowRight}>
@@ -356,24 +373,33 @@ export function TierIntroScreen() {
     return null;
   }, [tierSkills, masteredSet, lessonProgress]);
 
-  /** Count of completed / total static exercises in this tier */
-  const exerciseProgress = useMemo(() => {
+  /** Count of completed / total static exercises — per-skill and total */
+  const { exerciseProgress, perSkillProgress } = useMemo(() => {
     let completed = 0;
     let total = 0;
+    const perSkill: Record<string, { completed: number; total: number }> = {};
     for (const skill of tierSkills) {
+      let skillCompleted = 0;
+      let skillTotal = 0;
       for (const exId of skill.targetExerciseIds) {
         const exercise = getExercise(exId);
         if (!exercise) continue;
+        skillTotal++;
         total++;
         const lessonId = getLessonIdForExercise(exId);
         if (!lessonId) continue;
         const progress = lessonProgress[lessonId]?.exerciseScores?.[exId];
         if (progress && (progress.highScore ?? 0) >= (exercise.scoring?.passingScore ?? 70)) {
+          skillCompleted++;
           completed++;
         }
       }
+      perSkill[skill.id] = { completed: skillCompleted, total: skillTotal };
     }
-    return { completed, total };
+    return {
+      exerciseProgress: { completed, total },
+      perSkillProgress: perSkill,
+    };
   }, [tierSkills, lessonProgress]);
 
   /** Song sidequests — songs whose difficulty matches this tier */
@@ -532,14 +558,19 @@ export function TierIntroScreen() {
         <View style={styles.skillsSection}>
           <Text style={styles.sectionTitle}>Skills</Text>
           <View style={styles.skillsList}>
-            {tierSkills.map((skill, index) => (
-              <SkillRow
-                key={skill.id}
-                skill={skill}
-                index={index}
-                isMastered={masteredSet.has(skill.id)}
-              />
-            ))}
+            {tierSkills.map((skill, index) => {
+              const sp = perSkillProgress[skill.id] ?? { completed: 0, total: 0 };
+              return (
+                <SkillRow
+                  key={skill.id}
+                  skill={skill}
+                  index={index}
+                  isMastered={masteredSet.has(skill.id)}
+                  exerciseCount={sp.total}
+                  completedCount={sp.completed}
+                />
+              );
+            })}
           </View>
         </View>
 
@@ -770,6 +801,22 @@ const styles = StyleSheet.create({
   skillName: { ...TYPOGRAPHY.body.md, fontWeight: '500', color: COLORS.textPrimary },
   skillNameMastered: { color: COLORS.textMuted },
   skillDescription: { ...TYPOGRAPHY.caption.md, color: COLORS.textMuted, marginTop: 1 },
+  skillMetaRow: { flexDirection: 'row', alignItems: 'center' },
+  skillProgressRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4,
+  },
+  skillProgressBar: {
+    flex: 1, height: 4, borderRadius: 2,
+    backgroundColor: COLORS.cardBorder, overflow: 'hidden',
+  },
+  skillProgressFill: {
+    height: '100%', borderRadius: 2,
+    backgroundColor: COLORS.primary,
+  },
+  skillExerciseCount: {
+    ...TYPOGRAPHY.caption.sm, fontWeight: '600',
+    color: COLORS.textMuted, minWidth: 28,
+  },
   skillRowRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   handBadge: {
     paddingHorizontal: SPACING.xs, paddingVertical: 2,
