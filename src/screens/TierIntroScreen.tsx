@@ -26,6 +26,7 @@ import { GradientMeshBackground } from '../components/effects';
 import { SKILL_TREE, getGenerationHints } from '../core/curriculum/SkillTree';
 import type { SkillNode } from '../core/curriculum/SkillTree';
 import { getTierMasteryTestSkillId, hasTierMasteryTestPassed } from '../core/curriculum/tierMasteryTest';
+import { getExercise, getLessonIdForExercise } from '../content/ContentLoader';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -323,12 +324,56 @@ export function TierIntroScreen() {
 
   const showMasteryTest = isAllMastered && !testPassed;
 
+  const lessonProgress = useProgressStore((s) => s.lessonProgress);
+
   const firstUnmasteredSkillId = useMemo(() => {
     for (const skill of tierSkills) {
       if (!masteredSet.has(skill.id)) return skill.id;
     }
     return tierSkills[0]?.id ?? null;
   }, [tierSkills, masteredSet]);
+
+  /**
+   * Find the next unplayed static exercise across all unmastered skills in this tier.
+   * Returns { exerciseId, skillId, lessonId } or null if all static exercises are done.
+   */
+  const nextStaticExercise = useMemo(() => {
+    for (const skill of tierSkills) {
+      if (masteredSet.has(skill.id)) continue;
+      for (const exId of skill.targetExerciseIds) {
+        const exercise = getExercise(exId);
+        if (!exercise) continue;
+        const lessonId = getLessonIdForExercise(exId);
+        if (!lessonId) continue;
+        const progress = lessonProgress[lessonId]?.exerciseScores?.[exId];
+        // Unplayed or scored below passing — serve this exercise
+        if (!progress || (progress.highScore ?? 0) < (exercise.scoring?.passingScore ?? 70)) {
+          return { exerciseId: exId, skillId: skill.id, lessonId };
+        }
+      }
+    }
+    return null;
+  }, [tierSkills, masteredSet, lessonProgress]);
+
+  /** Count of completed / total static exercises in this tier */
+  const exerciseProgress = useMemo(() => {
+    let completed = 0;
+    let total = 0;
+    for (const skill of tierSkills) {
+      for (const exId of skill.targetExerciseIds) {
+        const exercise = getExercise(exId);
+        if (!exercise) continue;
+        total++;
+        const lessonId = getLessonIdForExercise(exId);
+        if (!lessonId) continue;
+        const progress = lessonProgress[lessonId]?.exerciseScores?.[exId];
+        if (progress && (progress.highScore ?? 0) >= (exercise.scoring?.passingScore ?? 70)) {
+          completed++;
+        }
+      }
+    }
+    return { completed, total };
+  }, [tierSkills, lessonProgress]);
 
   const difficulty = useMemo(() => getTierDifficulty(tierSkills), [tierSkills]);
   const estimatedMinutes = useMemo(() => getTierEstimatedMinutes(tierSkills), [tierSkills]);
@@ -339,8 +384,19 @@ export function TierIntroScreen() {
   }, [navigation]);
 
   const handleStart = useCallback(() => {
-    if (!firstUnmasteredSkillId || locked) return;
-    // Look up the skill's category to resolve exercise type
+    if (locked) return;
+
+    // Prefer static exercises: navigate to the next unplayed one
+    if (nextStaticExercise) {
+      navigation.navigate('Exercise', {
+        exerciseId: nextStaticExercise.exerciseId,
+        skillId: nextStaticExercise.skillId,
+      });
+      return;
+    }
+
+    // All static exercises done — fall back to AI-generated exercises
+    if (!firstUnmasteredSkillId) return;
     const skill = SKILL_TREE.find((s) => s.id === firstUnmasteredSkillId);
     const exerciseType = exerciseTypeForCategory(skill?.category);
     navigation.navigate('Exercise', {
@@ -349,7 +405,7 @@ export function TierIntroScreen() {
       skillId: firstUnmasteredSkillId,
       ...(exerciseType ? { exerciseType } : {}),
     });
-  }, [navigation, firstUnmasteredSkillId, locked]);
+  }, [navigation, nextStaticExercise, firstUnmasteredSkillId, locked]);
 
   const handleStartMasteryTest = useCallback(() => {
     if (locked) return;
@@ -428,6 +484,21 @@ export function TierIntroScreen() {
               {masteredCount}/{tierSkills.length}
             </Text>
           </View>
+          {exerciseProgress.total > 0 && (
+            <View style={styles.progressContainer}>
+              <MaterialCommunityIcons
+                name="music-note-outline"
+                size={16}
+                color={exerciseProgress.completed === exerciseProgress.total ? COLORS.success : COLORS.textSecondary}
+              />
+              <Text style={[
+                styles.progressLabel,
+                exerciseProgress.completed === exerciseProgress.total && styles.progressLabelComplete,
+              ]}>
+                {exerciseProgress.completed}/{exerciseProgress.total}
+              </Text>
+            </View>
+          )}
           {testPassed && (
             <View style={styles.testPassedBadge}>
               <MaterialCommunityIcons name="trophy" size={14} color={COLORS.starGold} />
@@ -509,7 +580,11 @@ export function TierIntroScreen() {
                 color={locked ? COLORS.textMuted : COLORS.textPrimary}
               />
               <Text style={[styles.startButtonText, locked && { color: COLORS.textMuted }]}>
-                {locked ? 'Complete Previous Tier' : isAllMastered && testPassed ? 'Practice Again' : isAllMastered ? 'Practice Again' : 'Start Exercises'}
+                {locked ? 'Complete Previous Tier'
+                  : isAllMastered && testPassed ? 'Practice Again'
+                  : isAllMastered ? 'Practice Again'
+                  : nextStaticExercise ? `Continue (${exerciseProgress.completed}/${exerciseProgress.total})`
+                  : 'Start Exercises'}
               </Text>
             </LinearGradient>
           </PressableScale>

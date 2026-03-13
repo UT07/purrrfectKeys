@@ -285,30 +285,52 @@ export function shouldUnlockAnchorLesson(
     'lesson-04': ['c-position-review', 'lh-scale-descending', 'steady-bass'],
     'lesson-05': ['both-hands-review'],
     'lesson-06': ['scale-review', 'both-hands-review'],
-    // Tier 7-8 (future content — unreachable until lessons are added to ContentLoader)
+    // Tier 6: Black Keys
     'lesson-07': ['beginner-songs', 'intermediate-songs'],
     'lesson-08': ['find-black-keys', 'half-steps-whole-steps'],
+    // Tier 7: G & F Major
     'lesson-09': ['g-major-hands'],
-    // Tier 9
+    // Tier 8: Minor Keys
     'lesson-10': ['key-signature-reading'],
     'lesson-11': ['a-minor-melodies'],
     'lesson-12': ['minor-vs-major'],
-    // Tier 10
+    // Tier 9: Chords
     'lesson-13': ['minor-songs'],
     'lesson-14': ['minor-triads', 'major-triads-root'],
     'lesson-15': ['progression-i-v-vi-iv'],
-    // Tier 11
+    // Tier 9 continued: Advanced Chords
+    'lesson-25': ['chord-transitions', 'progression-i-iv-v'],
+    'lesson-26': ['alberti-bass', 'bass-chord-pattern'],
+    // Tier 10: Songs
     'lesson-16': ['chord-transitions'],
+    // Tier 11: Rhythm
     'lesson-17': ['syncopation-intro'],
     'lesson-18': ['6-8-time'],
-    // Tier 12-13
+    'lesson-27': ['syncopation-intro', 'swing-rhythm'],
+    'lesson-28': ['6-8-time', '3-4-time'],
+    // Tier 12: Arpeggios
     'lesson-19': ['mixed-rhythms'],
     'lesson-20': ['hands-arpeggio'],
+    'lesson-29': ['c-major-arpeggio', 'g-major-arpeggio'],
+    // Tier 13: Expression
     'lesson-21': ['expressive-songs'],
-    // Tier 14-15
+    'lesson-30': ['dynamics-p-f', 'crescendo-diminuendo'],
+    'lesson-31': ['pedal-intro', 'legato-technique'],
+    // Tier 14: Sight Reading
     'lesson-22': ['bb-major-scale', 'd-major-scale'],
     'lesson-23': ['sight-reading-mixed'],
+    'lesson-32': ['d-major-scale', 'bb-major-scale'],
+    'lesson-33': ['sight-reading-c', 'sight-reading-g'],
+    // Tier 15: Performance
     'lesson-24': ['intermediate-pop', 'intermediate-classical'],
+    'lesson-34': ['full-piece-classical', 'performance-prep'],
+    'lesson-35': ['full-piece-pop', 'intermediate-pop'],
+    'lesson-36': ['blues-scale', 'year-one-mastery'],
+    // Review lessons (accessible when corresponding tier skills are mastered)
+    'lesson-37': ['scale-review', 'g-major-hands', 'f-major-hands'],
+    'lesson-38': ['chord-transitions', 'progression-i-iv-v'],
+    'lesson-39': ['mixed-rhythms', 'dynamics-p-f'],
+    'lesson-40': ['year-one-mastery', 'full-piece-classical'],
   };
 
   const masteredSet = new Set(masteredSkills);
