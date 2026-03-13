@@ -30,6 +30,7 @@ import { getExercise, getLessonIdForExercise } from '../content/ContentLoader';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useSongStore } from '../stores/songStore';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { exerciseTypeForCategory } from '../core/exercises/types';
@@ -375,6 +376,16 @@ export function TierIntroScreen() {
     return { completed, total };
   }, [tierSkills, lessonProgress]);
 
+  /** Song sidequests — songs whose difficulty matches this tier */
+  const summaries = useSongStore((s) => s.summaries);
+  const songSidequests = useMemo(() => {
+    // Map tier to song difficulty: tiers 1-3 → difficulty 1, 4-6 → 2, 7-9 → 3, 10-12 → 4, 13-15 → 5
+    const songDifficulty = Math.min(5, Math.ceil(tier / 3)) as 1 | 2 | 3 | 4 | 5;
+    return summaries
+      .filter((s) => s.metadata.difficulty === songDifficulty)
+      .slice(0, 5);
+  }, [summaries, tier]);
+
   const difficulty = useMemo(() => getTierDifficulty(tierSkills), [tierSkills]);
   const estimatedMinutes = useMemo(() => getTierEstimatedMinutes(tierSkills), [tierSkills]);
   const mascotMessage = useMemo(() => getMascotMessage(tier), [tier]);
@@ -531,6 +542,54 @@ export function TierIntroScreen() {
             ))}
           </View>
         </View>
+
+        {/* Song Sidequests — bonus songs unlocked at this tier's difficulty */}
+        {songSidequests.length > 0 && !locked && (
+          <View style={styles.sidequestSection}>
+            <View style={styles.sidequestHeader}>
+              <MaterialCommunityIcons name="map-marker-star" size={20} color={COLORS.starGold} />
+              <Text style={styles.sectionTitle}>Song Sidequests</Text>
+            </View>
+            <Text style={styles.sidequestSubtitle}>
+              Bonus songs to practice your Tier {tier} skills
+            </Text>
+            {songSidequests.map((song) => (
+              <PressableScale
+                key={song.id}
+                style={styles.songCard}
+                onPress={() => {
+                  navigation.navigate('SongPlayer', { songId: song.id });
+                }}
+              >
+                <View style={styles.songCardLeft}>
+                  <View style={styles.songDifficultyDots}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <View
+                        key={i}
+                        style={[
+                          styles.songDifficultyDot,
+                          i < song.metadata.difficulty
+                            ? styles.songDifficultyDotFilled
+                            : styles.songDifficultyDotEmpty,
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.songInfo}>
+                    <Text style={styles.songTitle} numberOfLines={1}>{song.metadata.title}</Text>
+                    <Text style={styles.songArtist} numberOfLines={1}>{song.metadata.artist}</Text>
+                  </View>
+                </View>
+                <View style={styles.songCardRight}>
+                  <View style={[styles.songGenreBadge, { backgroundColor: glowColor(COLORS.starGold, 0.1) }]}>
+                    <Text style={styles.songGenreText}>{song.metadata.genre}</Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.textMuted} />
+                </View>
+              </PressableScale>
+            ))}
+          </View>
+        )}
 
         {/* AI badge */}
         <View style={styles.aiBadge}>
@@ -717,6 +776,35 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
   },
   handBadgeText: { ...TYPOGRAPHY.caption.sm, fontWeight: '700', letterSpacing: 0.5 },
+  // Song sidequests
+  sidequestSection: { marginBottom: SPACING.lg },
+  sidequestHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    marginBottom: 2,
+  },
+  sidequestSubtitle: {
+    ...TYPOGRAPHY.caption.md, color: COLORS.textMuted,
+    marginBottom: SPACING.sm,
+  },
+  songCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md, marginBottom: SPACING.xs,
+  },
+  songCardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: SPACING.sm },
+  songDifficultyDots: { flexDirection: 'column', gap: 2 },
+  songDifficultyDot: { width: 6, height: 6, borderRadius: 3 },
+  songDifficultyDotFilled: { backgroundColor: COLORS.starGold },
+  songDifficultyDotEmpty: { backgroundColor: COLORS.cardBorder },
+  songInfo: { flex: 1 },
+  songTitle: { ...TYPOGRAPHY.body.md, fontWeight: '600', color: COLORS.textPrimary },
+  songArtist: { ...TYPOGRAPHY.caption.md, color: COLORS.textMuted, marginTop: 1 },
+  songCardRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  songGenreBadge: {
+    paddingHorizontal: SPACING.xs, paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  songGenreText: { ...TYPOGRAPHY.caption.sm, fontWeight: '600', color: COLORS.starGold },
   // AI badge
   aiBadge: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
