@@ -6,16 +6,25 @@ const config = getDefaultConfig(__dirname);
 // Add support for JSON files in exercises and ONNX models
 config.resolver.assetExts.push('json', 'onnx');
 
-// The local firebase/ directory (Cloud Functions) conflicts with the firebase
-// npm package. When Metro resolves 'firebase/functions', it finds
-// firebase/functions/package.json (Cloud Functions) instead of
-// node_modules/firebase/functions/. Fix by:
-// 1. Blocking the local firebase/ directory from the module graph
-// 2. Explicitly mapping 'firebase' to node_modules
-config.resolver.blockList = [
-  ...(config.resolver.blockList ? [config.resolver.blockList] : []),
+// Block directories and Node.js-only packages from the Metro module graph:
+// 1. firebase/ (local Cloud Functions dir) conflicts with the firebase npm package
+// 2. firebase-admin is Node.js-only (has "main": "lib/index.js" that Metro can't resolve)
+// 3. scripts/ contains Node.js CLI scripts not meant for the RN bundle
+const defaultBlockList = config.resolver.blockList;
+const extraBlockList = [
   new RegExp(path.resolve(__dirname, 'firebase') + '/.*'),
+  new RegExp(path.resolve(__dirname, 'scripts') + '/.*'),
+  /node_modules\/firebase-admin\/.*/,
 ];
+
+// Merge: default blockList can be a single RegExp or an array
+config.resolver.blockList = Array.isArray(defaultBlockList)
+  ? [...defaultBlockList, ...extraBlockList]
+  : defaultBlockList
+    ? [defaultBlockList, ...extraBlockList]
+    : extraBlockList;
+
+// Explicitly resolve 'firebase' to node_modules (not local firebase/ dir)
 config.resolver.extraNodeModules = {
   ...config.resolver.extraNodeModules,
   firebase: path.resolve(__dirname, 'node_modules/firebase'),

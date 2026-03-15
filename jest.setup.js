@@ -27,6 +27,37 @@ jest.mock('react-native-qrcode-svg', () => {
   };
 });
 
+jest.mock('posthog-react-native', () => {
+  const mockPostHog = {
+    capture: jest.fn(),
+    screen: jest.fn(),
+    identify: jest.fn(),
+    reset: jest.fn(),
+    flush: jest.fn(),
+    enable: jest.fn(),
+    disable: jest.fn(),
+    isFeatureEnabled: jest.fn(() => false),
+    getFeatureFlag: jest.fn(() => undefined),
+    reloadFeatureFlags: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: jest.fn(() => mockPostHog),
+    PostHogProvider: ({ children }) => children,
+  };
+});
+
+jest.mock('./src/config/posthog', () => ({
+  posthog: {
+    capture: jest.fn(),
+    screen: jest.fn(),
+    identify: jest.fn(),
+    reset: jest.fn(),
+    flush: jest.fn(),
+  },
+  isPostHogEnabled: false,
+}));
+
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
   OrientationLock: {
@@ -348,4 +379,17 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent: (c) => c,
   };
 });
+
+// Mock Sentry
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  setUser: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  setContext: jest.fn(),
+  setTag: jest.fn(),
+  startSpan: jest.fn((_opts, fn) => fn()),
+  wrap: jest.fn((component) => component),
+}));
 

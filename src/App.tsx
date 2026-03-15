@@ -35,6 +35,7 @@ import { useSoundManagerSync } from './hooks/useSoundManager';
 import { logger } from './utils/logger';
 import { withTimeout } from './utils/withTimeout';
 import { AnalyticsService, analyticsEvents } from './services/analytics/PostHog';
+import { MonitoringService } from './services/monitoring';
 
 // Configure Google Sign-In at module level (synchronous, must run before any signIn call)
 // iosClientId is passed explicitly so the native module doesn't need GoogleService-Info.plist
@@ -66,8 +67,8 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     async function prepare(): Promise<void> {
       try {
-        // ── Phase 0: Analytics init (synchronous, non-blocking) ──────────
-        AnalyticsService.initialize();
+        // ── Phase 0: Monitoring init (Sentry + PostHog, synchronous) ─────
+        MonitoringService.initialize();
 
         // ── Phase 1: Local hydration (fast, AsyncStorage only) ──────────
         // Runs BEFORE auth to ensure hasCompletedOnboarding, progress, and

@@ -7,6 +7,14 @@ module.exports = {
     '!src/**/*.stories.tsx',
     '!src/**/index.ts',
   ],
+  coverageThreshold: {
+    global: {
+      branches: 40,
+      functions: 45,
+      lines: 50,
+      statements: 50,
+    },
+  },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -30,6 +38,6 @@ module.exports = {
     '^.+\\.tsx?$': ['babel-jest', { configFile: './babel.config.js' }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(expo|expo-av|expo-router|expo-font|expo-screen-orientation|expo-haptics|expo-linear-gradient|expo-speech|@expo/vector-icons|@react-native|react-native|@react-native-community|@react-navigation|@shopify/react-native-skia|react-native-reanimated|react-native-gesture-handler|expo-modules-core)/)',
+    'node_modules/(?!(expo|expo-av|expo-router|expo-font|expo-screen-orientation|expo-haptics|expo-linear-gradient|expo-speech|expo-constants|@expo/vector-icons|@react-native|react-native|@react-native-community|@react-navigation|@shopify/react-native-skia|react-native-reanimated|react-native-gesture-handler|expo-modules-core)/)',
   ],
 };

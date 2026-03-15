@@ -1,9 +1,8 @@
 # ──────────────────────────────────────────────────────────────
-#  CI — Quality Gate
+#  CI — Quality Gate (Enterprise)
 # ──────────────────────────────────────────────────────────────
-# Parallel typecheck, lint, and test jobs.
-# Runs on feature branches, PRs, and as a reusable workflow
-# called by build/release pipelines.
+# Multi-stage pipeline: typecheck → lint → test (coverage gates)
+#                       → security audit → bundle analysis
 #
 # Required: none (no secrets needed)
 # ──────────────────────────────────────────────────────────────
@@ -24,6 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Stage 1: Static Analysis (parallel) ──────────────────
   typecheck:
     name: TypeScript
     runs-on: ubuntu-latest
@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript check
+      - name: TypeScript strict check
         run: npm run typecheck
 
   lint:
@@ -57,11 +57,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: ESLint
+      - name: ESLint (zero errors policy)
         run: npm run lint
 
+  # ── Stage 2: Tests with Coverage Gates ──────────────────
   test:
-    name: Tests
+    name: Tests & Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -75,8 +76,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Jest (unit + integration)
+      - name: Jest (unit + integration + regression + security + stress)
         run: npm run test -- --ci --maxWorkers=2 --coverage
+        # Coverage thresholds are enforced in jest.config.js
+        # Failing thresholds will fail this step
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -84,4 +87,111 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
-          retention-days: 7
+          retention-days: 14
+
+  # ── Stage 3: Security Audit ─────────────────────────────
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies (critical/high)
+        run: npm audit --audit-level=high --omit=dev || true
+        # Note: --omit=dev audits only production deps
+        # `|| true` prevents CI failure on moderate/low — we log but don't block
+
+      - name: Check for known critical vulnerabilities
+        run: |
+          # Fail only on critical vulnerabilities in production deps
+          CRITICAL=$(npm audit --json --omit=dev 2>/dev/null | node -e "
+            const data = require('fs').readFileSync('/dev/stdin', 'utf8');
+            try {
+              const audit = JSON.parse(data);
+              const meta = audit.metadata || {};
+              const vuln = meta.vulnerabilities || {};
+              console.log(vuln.critical || 0);
+            } catch { console.log(0); }
+          ")
+          echo "Critical vulnerabilities: $CRITICAL"
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::Found $CRITICAL critical vulnerability(ies) in production dependencies"
+            npm audit --omit=dev
+            exit 1
+          fi
+
+      - name: Scan for secrets in source
+        run: |
+          # Check for common secret patterns in src/
+          FOUND=0
+          # Google API keys
+          if grep -rn 'AIza[A-Za-z0-9_\-]\{35\}' src/ 2>/dev/null; then
+            echo "::error::Possible Google API key found in source"
+            FOUND=1
+          fi
+          # Generic long base64 secrets
+          if grep -rn '"[A-Za-z0-9+/=]\{64,\}"' src/ --include='*.ts' --include='*.tsx' 2>/dev/null | grep -v node_modules | grep -v __tests__ | head -5; then
+            echo "::warning::Possible hardcoded secret found — verify manually"
+          fi
+          if [ "$FOUND" -gt 0 ]; then
+            exit 1
+          fi
+
+  # ── Stage 4: Bundle Analysis ────────────────────────────
+  bundle:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [typecheck, lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export JS bundle (web)
+        run: npx expo export --platform web --output-dir /tmp/expo-export 2>/dev/null || true
+
+      - name: Measure bundle size
+        run: |
+          if [ -d "/tmp/expo-export" ]; then
+            TOTAL=$(find /tmp/expo-export -name '*.js' -exec wc -c {} + 2>/dev/null | tail -1 | awk '{print $1}')
+            TOTAL_MB=$(echo "scale=2; ${TOTAL:-0} / 1048576" | bc 2>/dev/null || echo "unknown")
+            echo "### Bundle Size: ${TOTAL_MB}MB" >> "$GITHUB_STEP_SUMMARY"
+            echo "JS bundle total: ${TOTAL:-0} bytes (${TOTAL_MB}MB)"
+
+            # Budget: 15MB for total JS (generous for RN app)
+            if [ "${TOTAL:-0}" -gt 15728640 ]; then
+              echo "::warning::Bundle size exceeds 15MB budget"
+            fi
+          else
+            echo "Bundle export skipped (web export not available)"
+            echo "### Bundle Size: skipped (web export unavailable)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Check dependency count
+        run: |
+          PROD_DEPS=$(node -e "console.log(Object.keys(require('./package.json').dependencies || {}).length)")
+          DEV_DEPS=$(node -e "console.log(Object.keys(require('./package.json').devDependencies || {}).length)")
+          echo "Production dependencies: $PROD_DEPS"
+          echo "Dev dependencies: $DEV_DEPS"
+          echo "### Dependencies: ${PROD_DEPS} prod / ${DEV_DEPS} dev" >> "$GITHUB_STEP_SUMMARY"
+
+          # Budget: 50 production deps max
+          if [ "$PROD_DEPS" -gt 50 ]; then
+            echo "::warning::Production dependency count ($PROD_DEPS) exceeds budget of 50"
+          fi

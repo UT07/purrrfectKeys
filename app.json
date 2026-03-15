@@ -73,7 +73,14 @@
         }
       ],
       "./plugins/strip-push-entitlement",
-      "expo-asset"
+      "expo-asset",
+      [
+        "@sentry/react-native",
+        {
+          "organization": "purrrfect-keys",
+          "project": "purrrfect-keys-mobile"
+        }
+      ]
     ],
     "extra": {
       "eas": {

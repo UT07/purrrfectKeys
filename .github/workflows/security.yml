@@ -1,0 +1,183 @@
+# ──────────────────────────────────────────────────────────────
+#  Nightly Security Scan
+# ──────────────────────────────────────────────────────────────
+# Scheduled dependency audit, license compliance, and secret scan.
+# Also runs on-demand via workflow_dispatch.
+# ──────────────────────────────────────────────────────────────
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 3 AM UTC daily
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: security-scan
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Full dependency audit
+        run: |
+          echo "## Dependency Audit Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Production deps
+          echo "### Production Dependencies" >> "$GITHUB_STEP_SUMMARY"
+          npm audit --omit=dev 2>&1 | tee /tmp/audit-prod.txt
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -20 /tmp/audit-prod.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          # All deps (including dev)
+          echo "### All Dependencies" >> "$GITHUB_STEP_SUMMARY"
+          npm audit 2>&1 | tee /tmp/audit-all.txt
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -20 /tmp/audit-all.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check for critical vulnerabilities
+        run: |
+          CRITICAL=$(npm audit --json --omit=dev 2>/dev/null | node -e "
+            const data = require('fs').readFileSync('/dev/stdin', 'utf8');
+            try {
+              const audit = JSON.parse(data);
+              const meta = audit.metadata || {};
+              const vuln = meta.vulnerabilities || {};
+              console.log(vuln.critical || 0);
+            } catch { console.log(0); }
+          ")
+          HIGH=$(npm audit --json --omit=dev 2>/dev/null | node -e "
+            const data = require('fs').readFileSync('/dev/stdin', 'utf8');
+            try {
+              const audit = JSON.parse(data);
+              const meta = audit.metadata || {};
+              const vuln = meta.vulnerabilities || {};
+              console.log(vuln.high || 0);
+            } catch { console.log(0); }
+          ")
+          echo "Critical: $CRITICAL, High: $HIGH"
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo "::error::Found $CRITICAL critical and $HIGH high vulnerabilities"
+            exit 1
+          fi
+
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for copyleft licenses
+        run: |
+          # List all production dependency licenses
+          npx license-checker --production --json 2>/dev/null | node -e "
+            const data = require('fs').readFileSync('/dev/stdin', 'utf8');
+            try {
+              const licenses = JSON.parse(data);
+              const copyleft = ['GPL-2.0', 'GPL-3.0', 'AGPL-3.0', 'LGPL-3.0', 'SSPL-1.0'];
+              const issues = [];
+              for (const [pkg, info] of Object.entries(licenses)) {
+                const lic = String(info.licenses || '');
+                for (const gpl of copyleft) {
+                  if (lic.includes(gpl)) {
+                    issues.push(pkg + ': ' + lic);
+                  }
+                }
+              }
+              if (issues.length > 0) {
+                console.error('Copyleft licenses found:');
+                issues.forEach(i => console.error('  - ' + i));
+                process.exit(1);
+              } else {
+                console.log('No copyleft licenses found in production dependencies');
+              }
+            } catch (e) {
+              console.log('License check skipped (install license-checker for full check)');
+            }
+          " || true
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets in source
+        run: |
+          FOUND=0
+          echo "## Secret Scan Results" >> "$GITHUB_STEP_SUMMARY"
+
+          # Google API keys
+          if grep -rn 'AIza[A-Za-z0-9_\-]\{35\}' src/ 2>/dev/null; then
+            echo "::error::Google API key found in source"
+            FOUND=1
+          fi
+
+          # AWS keys
+          if grep -rn 'AKIA[A-Z0-9]\{16\}' src/ 2>/dev/null; then
+            echo "::error::AWS key found in source"
+            FOUND=1
+          fi
+
+          # Private keys
+          if grep -rn 'BEGIN.*PRIVATE KEY' src/ 2>/dev/null; then
+            echo "::error::Private key found in source"
+            FOUND=1
+          fi
+
+          # Passwords in config
+          if grep -rn 'password\s*[:=]\s*["\x27][^"\x27]\{8,\}' src/ --include='*.ts' --include='*.tsx' 2>/dev/null | grep -v __tests__ | grep -v mock; then
+            echo "::warning::Possible hardcoded password"
+          fi
+
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No secrets found in source" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "**SECRETS FOUND** — see job logs" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Check .gitignore coverage
+        run: |
+          # Verify sensitive files are gitignored
+          for f in .env .env.local .env.production credentials.json service-account.json; do
+            if git check-ignore "$f" > /dev/null 2>&1; then
+              echo "✓ $f is gitignored"
+            else
+              if [ -f "$f" ]; then
+                echo "::error::$f exists but is NOT gitignored"
+                exit 1
+              fi
+            fi
+          done

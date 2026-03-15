@@ -6,18 +6,23 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current Sprint (Feb 28, 2026)
+## Current State (Mar 15, 2026)
 
-**Codebase Health:** 139 test suites, 2,831 tests passing, 0 TypeScript errors
+**Codebase Health:** 149 test suites, 3,042 tests passing, 0 TypeScript errors
 
-**Phases 1-10.5 COMPLETE** (Core Loop, Gamification, Auth, Adaptive Learning, Evolution, UI Revamp, All-AI Exercises, Audio Input + Polyphonic Detection, Music Library + 124 songs, Arcade Concert Hall, Social & Leaderboards)
+**Phases 1-13 COMPLETE:**
+- Core Loop, Gamification, Auth, Adaptive Learning, Curriculum, Avatar Evolution, UI Revamp
+- Audio Input (YIN + ONNX polyphonic), Music Library (582 songs), Arcade Concert Hall, Social v1
+- Foundation Cleanup, Exercise Types + UI, Content Explosion (599 exercises, 50 lessons, 120 skill nodes, 5 learning paths)
 
-**In Progress:** Phase 11 — QA + Launch
+**QA runs in parallel** — CI gates (typecheck + lint + test) on every push. Device verification tracked in UNIFIED-PLAN.md.
 
-**Active Roadmap:**
-- **Phase 10: Arcade Concert Hall** — COMPLETE (SoundManager, combo escalation, loot reveal, GameCard system, screen redesigns, rarity borders)
-- **Phase 10.5: Social & Leaderboards** — COMPLETE (friends, leagues, challenges, activity feed, notifications)
-- **Phase 11: QA + Launch** — IN PROGRESS (account deletion, Cloud Functions for Gemini, CI/CD, environment audit, MIDI hardware, 3D models)
+**In Progress:** Phase 13 — Content Explosion (quality verified: exercises 599/599 pass, songs 91% clean — ready for merge to master)
+
+**Infrastructure:**
+- 11 Cloud Functions deployed (nodejs22, us-central1)
+- Firestore rules + indexes deployed
+- EAS Build configured (preview + production channels)
 
 See `docs/plans/UNIFIED-PLAN.md` for the **single source of truth** on all phases.
 See `docs/PRD.md` for product requirements.
@@ -38,7 +43,14 @@ npm run lint               # ESLint + Prettier
 npm run lint:fix           # Auto-fix linting issues
 npm run test               # Run Jest tests
 npm run test:watch         # Watch mode
-npm run test:coverage      # Coverage report
+npm run test:coverage      # Coverage report (enforced thresholds)
+
+# QA Suites
+npm run test:perf          # Performance benchmarks (content loading, scoring throughput)
+npm run test:security      # Security tests (input sanitization, data exposure, auth)
+npm run test:regression    # Critical path regression (scoring, content, ABC parsing)
+npm run test:stress        # Store stress tests (rapid mutations, concurrency, persistence)
+npm run test:qa            # Run all QA suites at once
 
 # Building
 npm run build:ios          # EAS Build for iOS
@@ -165,7 +177,7 @@ src/
 | `src/components/PianoRoll/VerticalPianoRoll.tsx` | Falling-note display (top-to-bottom, Synthesia-style) |
 | `src/services/demoPlayback.ts` | Demo mode: visual-only note playback with cat dialogue |
 | `src/content/catDialogue.ts` | Cat personality dialogue (12 cats, ~600+ messages, 14 trigger types) |
-| `src/core/curriculum/SkillTree.ts` | DAG of 100 skill nodes across 15 tiers, 12 categories, skill decay + review functions |
+| `src/core/curriculum/SkillTree.ts` | DAG of 120 skill nodes across 18 tiers, 12 categories, skill decay + review functions |
 | `src/core/curriculum/CurriculumEngine.ts` | AI session planner: 4 session types (new-material/review/challenge/mixed) + decay-aware scheduling |
 | `src/core/curriculum/WeakSpotDetector.ts` | Pattern-based weak spot detection (note/transition/timing/hand) |
 | `src/core/curriculum/DifficultyEngine.ts` | Progressive difficulty adjustment (5 BPM per mastered exercise) |
@@ -193,7 +205,7 @@ src/
 | `docs/PRD.md` | Product Requirements Document |
 | `docs/design-system.md` | Design system, visual tokens, component inventory, known visual debt |
 | `docs/plans/2026-02-17-16-week-roadmap.md` | 16-week development roadmap |
-| `content/exercises/` | JSON exercise definitions (30 static exercises, 6 lessons; tiers 7-15 use AI generation) |
+| `content/exercises/` | JSON exercise definitions (599 exercises across 50 lessons; lessons 1-6 static, 7-50 AI-generated) |
 | `src/core/songs/songTypes.ts` | Song, SongSection, SongMastery, MasteryTier, SongFilter types |
 | `src/core/songs/abcParser.ts` | ABC notation → NoteEvent[] converter (uses abcjs) |
 | `src/core/songs/songMastery.ts` | Mastery tier computation, best-score merge, gem rewards |
@@ -203,7 +215,7 @@ src/
 | `src/stores/songStore.ts` | Song browsing state, mastery, filters, generation |
 | `src/screens/SongLibraryScreen.tsx` | "Songs" tab — genre carousel, search, song cards, request FAB |
 | `src/screens/SongPlayerScreen.tsx` | Section-based playback with layer toggle, mastery tracking |
-| `scripts/generate-songs.ts` | Batch Gemini song generation (50 curated, standalone — no Firebase) |
+| `scripts/generate-songs.ts` | Batch Gemini song generation (standalone — no Firebase) |
 | `scripts/import-thesession.ts` | TheSession.org folk tune importer (two-step API + ABC header construction) |
 | `scripts/upload-songs-to-firestore.ts` | Batch Firestore upload with skip-existing and dry-run |
 | `scripts/import-pdmx.py` | music21 corpus → Song JSON converter (Beethoven, Mozart, Haydn, Bach) |
@@ -226,6 +238,17 @@ src/
 | `firebase/functions/src/generateSong.ts` | Cloud Function: Gemini AI song generation (httpsCallable) |
 | `firebase/functions/src/generateCoachFeedback.ts` | Cloud Function: Gemini AI coaching feedback (httpsCallable) |
 | `firebase/functions/src/deleteUserData.ts` | Cloud Function: GDPR-compliant account data deletion (Admin SDK) |
+| `firebase/functions/src/dailySightReading.ts` | Cloud Function: daily sight-reading challenge |
+| `src/screens/PostExerciseScreen.tsx` | Post-exercise results + "Review with Salsa" replay coaching |
+| `src/screens/postExerciseCache.ts` | Cache for passing data between ExercisePlayer and PostExerciseScreen |
+| `src/content/ContentLoaderRegistry.generated.ts` | Auto-generated lazy loading registry for 599 exercises |
+| `scripts/batch-generate-exercises.ts` | Batch Gemini exercise generation with skill-specific hints |
+| `scripts/generate-content-registry.ts` | Generates ContentLoaderRegistry.generated.ts from exercise files |
+| `scripts/validate-exercise.ts` | Exercise validation: structural + pedagogical cross-checks |
+| `scripts/fix-exercise-pedagogy.ts` | Auto-fix compound time and dynamics mismatches |
+| `scripts/verify-songs-admin.ts` | Firestore song verification (Admin SDK, bypasses rules) |
+| `scripts/fix-songs-parse-abc.ts` | Parse raw ABC sections → layers in Firestore |
+| `firebase/functions/src/weeklyNewSongs.ts` | Scheduled function: weekly Gemini song generation with ABC parsing |
 | `.github/workflows/ci.yml` | GitHub Actions CI: typecheck + lint + test on push/PR |
 | `.github/workflows/build.yml` | GitHub Actions: EAS Build on version tags |
 
@@ -282,13 +305,24 @@ onAudioBuffer((buffer: Float32Array) => {
 | Core logic | Jest | `src/core/**/__tests__/` |
 | Components | React Testing Library | `src/components/**/__tests__/` |
 | Integration | Jest + mocks | `src/__tests__/integration/` |
+| Performance | Jest benchmarks | `src/__tests__/performance/` |
+| Security | Jest | `src/__tests__/security/` |
+| Regression | Jest critical paths | `src/__tests__/regression/` |
+| Stress | Jest store stress | `src/__tests__/stress/` |
 | E2E | Maestro (planned) | `.maestro/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**2,831 tests, 139 suites**. Run tests before committing:
+**3,042 tests, 149 suites**. Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
+
+## Monitoring
+
+Unified monitoring via `MonitoringService` (`src/services/monitoring/index.ts`):
+- **Sentry** — crash reporting, performance traces (requires `EXPO_PUBLIC_SENTRY_DSN`)
+- **PostHog** — analytics, feature flags (requires `EXPO_PUBLIC_POSTHOG_API_KEY`)
+- Both degrade gracefully when env vars are missing
 
 ## Reference Documentation
 
