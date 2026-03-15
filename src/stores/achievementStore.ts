@@ -14,6 +14,7 @@ import {
   ACHIEVEMENTS,
 } from '@/core/achievements/achievements';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { analyticsEvents } from '../services/analytics/PostHog';
 
 /**
  * Record of achievement ID -> unlock timestamp (ISO string)
@@ -117,6 +118,11 @@ export const useAchievementStore = create<AchievementStoreState>((set, get) => (
       perfectScoreCount: state.perfectScoreCount,
       highScoreCount: state.highScoreCount,
     });
+
+    for (const unlock of newUnlocks) {
+      const achievement = getAchievementById(unlock.id);
+      analyticsEvents.progress.achievementUnlocked(unlock.id, achievement?.title ?? unlock.id);
+    }
 
     return newUnlocks;
   },

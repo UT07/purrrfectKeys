@@ -1,9 +1,8 @@
 /**
  * LevelMapScreen UI Tests
  *
- * Tests the adventure-style winding path level map: circular nodes with SVG
- * bezier connections, zigzag layout, cat companions at each tier, section
- * banners, navigation, header stats, and tier progression.
+ * Tests the adventure-style winding path level map showing 40 lesson nodes
+ * with exercise type indicators, progress bars, and section banners.
  */
 
 // Mock Firebase (imported transitively via stores -> socialService/leagueService)
@@ -29,17 +28,16 @@ import { render, fireEvent } from '@testing-library/react-native';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
-const mockNavigation = {
-  navigate: mockNavigate,
-  goBack: mockGoBack,
-  dispatch: jest.fn(),
-  setOptions: jest.fn(),
-  addListener: jest.fn(() => jest.fn()),
-};
 
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
-  useNavigation: () => mockNavigation,
+  useNavigation: () => ({
+    navigate: mockNavigate,
+    goBack: mockGoBack,
+    dispatch: jest.fn(),
+    setOptions: jest.fn(),
+    addListener: jest.fn(() => jest.fn()),
+  }),
   useNavigationState: (selector: (state: any) => any) =>
     selector({ routes: [{ name: 'LevelMap' }] }),
   useRoute: () => ({ params: {} }),
@@ -84,7 +82,7 @@ jest.mock('react-native-svg', () => {
 jest.mock('react-native-reanimated', () => {
   const RN = require('react-native');
 
-  const Reanimated = {
+  return {
     ...jest.requireActual('react-native-reanimated/mock'),
     default: {
       View: RN.View,
@@ -98,8 +96,6 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (v: any) => v,
     FadeInUp: { delay: () => ({ duration: () => undefined }) },
   };
-
-  return Reanimated;
 });
 
 // ---------------------------------------------------------------------------
@@ -124,20 +120,57 @@ jest.mock('../../components/Mascot/CatAvatar', () => {
   };
 });
 
+// ---------------------------------------------------------------------------
+// ContentLoader mock — returns realistic lesson data
+// ---------------------------------------------------------------------------
+
+const mockLessons = [
+  { id: 'lesson-01', title: 'Getting Started', difficulty: 1 as const, exerciseCount: 3, unlockRequirement: null },
+  { id: 'lesson-02', title: 'Right Hand Basics', difficulty: 1 as const, exerciseCount: 8, unlockRequirement: { type: 'lesson-complete', lessonId: 'lesson-01' } },
+  { id: 'lesson-03', title: 'Left Hand Basics', difficulty: 1 as const, exerciseCount: 5, unlockRequirement: { type: 'lesson-complete', lessonId: 'lesson-02' } },
+  { id: 'lesson-04', title: 'Both Hands Together', difficulty: 2 as const, exerciseCount: 6, unlockRequirement: { type: 'lesson-complete', lessonId: 'lesson-03' } },
+  { id: 'lesson-05', title: 'C Major Scale', difficulty: 2 as const, exerciseCount: 4, unlockRequirement: { type: 'lesson-complete', lessonId: 'lesson-04' } },
+  { id: 'lesson-06', title: 'Simple Songs', difficulty: 2 as const, exerciseCount: 4, unlockRequirement: { type: 'lesson-complete', lessonId: 'lesson-05' } },
+  { id: 'lesson-07', title: 'Black Keys', difficulty: 2 as const, exerciseCount: 10, unlockRequirement: { type: 'lesson-complete', lessonId: 'lesson-06' } },
+];
+
+const mockExercisesForLesson: Record<string, any[]> = {
+  'lesson-01': [
+    { id: 'lesson-01-ex-01', lessonId: 'lesson-01', title: 'Find Middle C', difficulty: 1, skills: [], type: 'play', order: 1 },
+    { id: 'lesson-01-ex-02', lessonId: 'lesson-01', title: 'Keyboard Geography', difficulty: 1, skills: [], type: 'play', order: 2 },
+    { id: 'lesson-01-ex-03', lessonId: 'lesson-01', title: 'White Keys', difficulty: 1, skills: [], type: 'play', order: 3 },
+  ],
+  'lesson-02': [
+    { id: 'lesson-02-ex-01', lessonId: 'lesson-02', title: 'C-D-E', difficulty: 1, skills: [], type: 'play', order: 1 },
+    { id: 'lesson-02-ex-02', lessonId: 'lesson-02', title: 'C-D-E-F-G', difficulty: 1, skills: [], type: 'play', order: 2 },
+  ],
+  'lesson-07': [
+    { id: 'lesson-07-ex-01', lessonId: 'lesson-07', title: 'Find Black Keys', difficulty: 2, skills: [], type: 'play', order: 1 },
+    { id: 'lesson-07-ex-08', lessonId: 'lesson-07', title: 'Ear Training', difficulty: 2, skills: [], type: 'earTraining', order: 8 },
+  ],
+};
+
+jest.mock('../../content/ContentLoader', () => ({
+  getAllLessons: () => mockLessons,
+  getExercisesForLesson: (lessonId: string) => mockExercisesForLesson[lessonId] ?? [],
+  getExercise: jest.fn(),
+  getLessons: jest.fn(() => []),
+  getLessonExercises: jest.fn(() => []),
+}));
 
 // ---------------------------------------------------------------------------
 // Zustand store mocks
 // ---------------------------------------------------------------------------
 
-let mockMasteredSkills: string[] = [];
+let mockLessonProgress: Record<string, any> = {};
 
-jest.mock('../../stores/learnerProfileStore', () => ({
-  useLearnerProfileStore: Object.assign(
+jest.mock('../../stores/progressStore', () => ({
+  useProgressStore: Object.assign(
     (sel?: any) => {
-      const state = { masteredSkills: mockMasteredSkills };
+      const state = { lessonProgress: mockLessonProgress, tierTestResults: {} };
       return sel ? sel(state) : state;
     },
-    { getState: () => ({ masteredSkills: mockMasteredSkills }) },
+    { getState: () => ({ lessonProgress: mockLessonProgress, tierTestResults: {} }) },
   ),
 }));
 
@@ -150,24 +183,34 @@ jest.mock('../../stores/gemStore', () => ({
   ),
 }));
 
-let mockCatEvolutionState: any = {
-  selectedCatId: 'keysie',
-  ownedCats: ['keysie', 'biscuit'],
-  evolutionData: {
-    keysie: { currentStage: 'baby', totalXp: 100 },
-    biscuit: { currentStage: 'teen', totalXp: 500 },
-  },
-};
+jest.mock('../../stores/settingsStore', () => ({
+  useSettingsStore: Object.assign(
+    (sel?: any) => {
+      const state = { selectedCatId: 'mini-meowww' };
+      return sel ? sel(state) : state;
+    },
+    { getState: () => ({ selectedCatId: 'mini-meowww' }) },
+  ),
+}));
 
 jest.mock('../../stores/catEvolutionStore', () => ({
   useCatEvolutionStore: Object.assign(
-    (sel?: any) => (sel ? sel(mockCatEvolutionState) : mockCatEvolutionState),
-    { getState: () => mockCatEvolutionState },
+    (sel?: any) => {
+      const state = {
+        ownedCats: ['mini-meowww'],
+        evolutionData: { 'mini-meowww': { currentStage: 'baby', totalXp: 0 } },
+      };
+      return sel ? sel(state) : state;
+    },
+    { getState: () => ({
+      ownedCats: ['mini-meowww'],
+      evolutionData: { 'mini-meowww': { currentStage: 'baby', totalXp: 0 } },
+    }) },
   ),
 }));
 
 // ---------------------------------------------------------------------------
-// Import component under test AFTER all mocks are set up
+// Import component under test AFTER all mocks
 // ---------------------------------------------------------------------------
 
 import { LevelMapScreen } from '../LevelMapScreen';
@@ -179,15 +222,7 @@ import { LevelMapScreen } from '../LevelMapScreen';
 function resetMocks() {
   mockNavigate.mockClear();
   mockGoBack.mockClear();
-  mockMasteredSkills = [];
-  mockCatEvolutionState = {
-    selectedCatId: 'keysie',
-    ownedCats: ['keysie', 'biscuit'],
-    evolutionData: {
-      keysie: { currentStage: 'baby', totalXp: 100 },
-      biscuit: { currentStage: 'teen', totalXp: 500 },
-    },
-  };
+  mockLessonProgress = {};
 }
 
 // ---------------------------------------------------------------------------
@@ -206,11 +241,11 @@ describe('LevelMapScreen', () => {
     expect(getByText('Your Journey')).toBeTruthy();
   });
 
-  it('renders tier node titles', () => {
+  it('renders lesson node titles', () => {
     const { getByText } = render(<LevelMapScreen />);
-    expect(getByText('Note Finding')).toBeTruthy();
+    expect(getByText('Getting Started')).toBeTruthy();
+    expect(getByText('Right Hand Basics')).toBeTruthy();
     expect(getByText('Black Keys')).toBeTruthy();
-    expect(getByText('Performance')).toBeTruthy();
   });
 
   it('renders gradient header', () => {
@@ -218,21 +253,18 @@ describe('LevelMapScreen', () => {
     expect(getAllByTestId('linear-gradient').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders 15 tier nodes', () => {
+  it('renders all lesson nodes', () => {
     const { getByText } = render(<LevelMapScreen />);
-    expect(getByText('Note Finding')).toBeTruthy();
-    expect(getByText('Right Hand')).toBeTruthy();
-    expect(getByText('Left Hand')).toBeTruthy();
-    expect(getByText('Chords')).toBeTruthy();
-    expect(getByText('Sight Reading')).toBeTruthy();
+    // All 7 mock lessons should appear
+    expect(getByText('Getting Started')).toBeTruthy();
+    expect(getByText('Left Hand Basics')).toBeTruthy();
+    expect(getByText('C Major Scale')).toBeTruthy();
+    expect(getByText('Simple Songs')).toBeTruthy();
   });
 
   it('renders section headers', () => {
     const { getByText } = render(<LevelMapScreen />);
     expect(getByText('Beginner')).toBeTruthy();
-    expect(getByText('Intermediate')).toBeTruthy();
-    expect(getByText('Advanced')).toBeTruthy();
-    expect(getByText('Mastery')).toBeTruthy();
   });
 
   // =========================================================================
@@ -242,30 +274,18 @@ describe('LevelMapScreen', () => {
   it('renders SVG path connections between nodes', () => {
     const { getAllByTestId } = render(<LevelMapScreen />);
     const paths = getAllByTestId('svg-path');
-    // 15 nodes = 14 connecting paths
-    expect(paths.length).toBe(14);
+    // 7 nodes = 6 connecting paths
+    expect(paths.length).toBe(6);
   });
 
   // =========================================================================
-  // Cat companions at every tier
+  // Cat companions at section milestones
   // =========================================================================
 
-  it('renders cat avatar at tier 1 (mini-meowww)', () => {
+  it('renders section cat at Beginner (mini-meowww)', () => {
     const { getAllByTestId } = render(<LevelMapScreen />);
     const cats = getAllByTestId('cat-avatar-mini-meowww');
     expect(cats.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('renders different cats at different tiers', () => {
-    const { getByTestId } = render(<LevelMapScreen />);
-    // Tier 2 = luna, Tier 3 = jazzy
-    expect(getByTestId('cat-avatar-luna')).toBeTruthy();
-    expect(getByTestId('cat-avatar-jazzy')).toBeTruthy();
-  });
-
-  it('renders legendary cat at tier 15', () => {
-    const { getByTestId } = render(<LevelMapScreen />);
-    expect(getByTestId('cat-avatar-chonky-monke')).toBeTruthy();
   });
 
   // =========================================================================
@@ -274,7 +294,6 @@ describe('LevelMapScreen', () => {
 
   it('hides back button when used as tab (single route)', () => {
     const { queryByTestId } = render(<LevelMapScreen />);
-    // When navigation state has only 1 route (tab context), back button is hidden
     expect(queryByTestId('level-map-back')).toBeNull();
   });
 
@@ -284,25 +303,43 @@ describe('LevelMapScreen', () => {
 
   describe('fresh user (no progress)', () => {
     beforeEach(() => {
-      mockMasteredSkills = [];
+      mockLessonProgress = {};
     });
 
-    it('shows tier 1 as current (START chip)', () => {
+    it('shows lesson 1 as current (START chip)', () => {
       const { getByText } = render(<LevelMapScreen />);
       expect(getByText('START')).toBeTruthy();
+    });
+
+    it('shows lesson 1 as current via testID', () => {
+      const { getByTestId } = render(<LevelMapScreen />);
+      expect(getByTestId('lesson-node-current')).toBeTruthy();
     });
   });
 
   // =========================================================================
-  // Node states — tier 1 completed via skill mastery
+  // Node states — lesson 1 completed
   // =========================================================================
 
-  describe('tier 1 completed via skill mastery', () => {
+  describe('lesson 1 completed', () => {
     beforeEach(() => {
-      mockMasteredSkills = ['find-middle-c', 'keyboard-geography', 'white-keys'];
+      mockLessonProgress = {
+        'lesson-01': {
+          lessonId: 'lesson-01',
+          status: 'completed',
+          exerciseScores: {
+            'lesson-01-ex-01': { highScore: 95, stars: 3 },
+            'lesson-01-ex-02': { highScore: 85, stars: 2 },
+            'lesson-01-ex-03': { highScore: 90, stars: 3 },
+          },
+          bestScore: 90,
+          totalAttempts: 5,
+          totalTimeSpentSeconds: 300,
+        },
+      };
     });
 
-    it('shows tier 2 as current', () => {
+    it('shows lesson 2 as current', () => {
       const { getByText } = render(<LevelMapScreen />);
       expect(getByText('START')).toBeTruthy();
     });
@@ -313,29 +350,23 @@ describe('LevelMapScreen', () => {
   // =========================================================================
 
   describe('navigation', () => {
-    it('navigates to TierIntro for current tier', () => {
+    it('navigates to LessonIntro for current lesson', () => {
       const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('Note Finding'));
-      expect(mockNavigate).toHaveBeenCalledWith('TierIntro', { tier: 1, locked: false });
+      fireEvent.press(getByText('Getting Started'));
+      expect(mockNavigate).toHaveBeenCalledWith('LessonIntro', {
+        lessonId: 'lesson-01',
+        locked: false,
+      });
     });
 
-    it('navigates to TierIntro for completed tier (review)', () => {
-      mockMasteredSkills = ['find-middle-c', 'keyboard-geography', 'white-keys'];
+    it('navigates to LessonIntro with locked=true for locked lessons', () => {
       const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('Note Finding'));
-      expect(mockNavigate).toHaveBeenCalledWith('TierIntro', { tier: 1, locked: false });
-    });
-
-    it('navigates to TierIntro with locked=true for locked tier', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('Left Hand'));
-      expect(mockNavigate).toHaveBeenCalledWith('TierIntro', { tier: 3, locked: true });
-    });
-
-    it('navigates to TierIntro even for later tiers (all AI)', () => {
-      const { getByText } = render(<LevelMapScreen />);
-      fireEvent.press(getByText('Black Keys'));
-      expect(mockNavigate).toHaveBeenCalledWith('TierIntro', { tier: 6, locked: true });
+      // Lesson 3 is locked (lesson 2 not completed)
+      fireEvent.press(getByText('Left Hand Basics'));
+      expect(mockNavigate).toHaveBeenCalledWith('LessonIntro', {
+        lessonId: 'lesson-03',
+        locked: true,
+      });
     });
   });
 
@@ -343,19 +374,36 @@ describe('LevelMapScreen', () => {
   // Header stats
   // =========================================================================
 
-  it('displays completed tier count and total skills in header', () => {
+  it('displays lesson count and exercise total in header', () => {
     const { getByText } = render(<LevelMapScreen />);
-    expect(getByText('0/15')).toBeTruthy();
-    expect(getByText('0 skills')).toBeTruthy();
-  });
-
-  it('renders section banners with cat reward previews', () => {
-    const { getByText } = render(<LevelMapScreen />);
-    expect(getByText('Fundamentals')).toBeTruthy();
+    expect(getByText('0/7 lessons')).toBeTruthy();
   });
 
   it('shows gem count in header', () => {
     const { getByText } = render(<LevelMapScreen />);
     expect(getByText('50')).toBeTruthy();
+  });
+
+  // =========================================================================
+  // Exercise type legend
+  // =========================================================================
+
+  it('renders exercise type legend in header', () => {
+    const { getByText } = render(<LevelMapScreen />);
+    expect(getByText('Play')).toBeTruthy();
+    expect(getByText('Rhythm')).toBeTruthy();
+    expect(getByText('Ear')).toBeTruthy();
+    expect(getByText('Chords')).toBeTruthy();
+    expect(getByText('Sight')).toBeTruthy();
+    expect(getByText('Call')).toBeTruthy();
+  });
+
+  // =========================================================================
+  // Salsa coach
+  // =========================================================================
+
+  it('renders Salsa coach', () => {
+    const { getByTestId } = render(<LevelMapScreen />);
+    expect(getByTestId('salsa-coach')).toBeTruthy();
   });
 });

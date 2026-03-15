@@ -2,31 +2,33 @@
  * Upload Song JSON to Firestore
  *
  * Reads a merged songs JSON file and uploads each song as a document
- * in the `songs` collection. Uses Firebase client SDK (no Admin SDK needed).
+ * in the `songs` collection. Uses Firebase Admin SDK (bypasses security rules).
  *
  * Usage:
  *   export $(grep -v '^#' .env.local | xargs)
  *   npx tsx scripts/upload-songs-to-firestore.ts --input /tmp/all-songs.json [--dry-run]
  *
  * Prerequisites:
- *   - EXPO_PUBLIC_FIREBASE_API_KEY and EXPO_PUBLIC_FIREBASE_PROJECT_ID env vars
- *   - Firestore rules that allow writes (or use emulator)
+ *   - EXPO_PUBLIC_FIREBASE_PROJECT_ID env var (or GOOGLE_CLOUD_PROJECT)
+ *   - Application Default Credentials: run `gcloud auth application-default login`
  */
 
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
+import * as admin from 'firebase-admin';
 import { readFileSync } from 'fs';
 
 // ---------------------------------------------------------------------------
-// Firebase init (standalone — no React Native deps)
+// Firebase Admin init (uses ADC — bypasses Firestore security rules)
 // ---------------------------------------------------------------------------
 
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || 'upload-script',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-};
+const projectId =
+  process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ||
+  process.env.GOOGLE_CLOUD_PROJECT;
+
+if (!admin.apps.length) {
+  admin.initializeApp({ projectId });
+}
+
+const db = admin.firestore();
 
 interface Song {
   id: string;
@@ -52,8 +54,8 @@ async function main(): Promise<void> {
 
   const inputFile = args[inputIdx + 1];
 
-  if (!process.env.EXPO_PUBLIC_FIREBASE_API_KEY || !process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID) {
-    console.error('Error: Firebase env vars not set. Run:');
+  if (!projectId) {
+    console.error('Error: Firebase project ID not set. Run:');
     console.error('  export $(grep -v "^#" .env.local | xargs)');
     process.exit(1);
   }
@@ -61,7 +63,7 @@ async function main(): Promise<void> {
   // Load songs
   const songs: Song[] = JSON.parse(readFileSync(inputFile, 'utf-8'));
   console.log(`Loaded ${songs.length} songs from ${inputFile}`);
-  console.log(`Project: ${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID}`);
+  console.log(`Project: ${projectId}`);
   console.log(`Dry run: ${dryRun}\n`);
 
   if (dryRun) {
@@ -72,10 +74,6 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig, 'upload-script');
-  const db = getFirestore(app);
-
   let uploaded = 0;
   let skipped = 0;
   let failed = 0;
@@ -83,15 +81,16 @@ async function main(): Promise<void> {
   // Process in batches
   for (let i = 0; i < songs.length; i += BATCH_SIZE) {
     const batchSongs = songs.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    const batch = db.batch();
+    let batchCount = 0;
 
     for (const song of batchSongs) {
-      const ref = doc(db, 'songs', song.id);
+      const ref = db.collection('songs').doc(song.id);
 
       // Check if already exists
       try {
-        const existing = await getDoc(ref);
-        if (existing.exists()) {
+        const existing = await ref.get();
+        if (existing.exists) {
           console.log(`  Skip (exists): ${song.id}`);
           skipped++;
           continue;
@@ -102,17 +101,19 @@ async function main(): Promise<void> {
 
       batch.set(ref, song);
       console.log(`  Queue: ${song.id} — ${song.metadata.title}`);
-      uploaded++;
+      batchCount++;
     }
+
+    if (batchCount === 0) continue;
 
     // Commit batch
     try {
       await batch.commit();
+      uploaded += batchCount;
       console.log(`  ✓ Batch committed (${Math.min(i + BATCH_SIZE, songs.length)}/${songs.length})`);
     } catch (err) {
       console.error(`  ✗ Batch failed: ${err instanceof Error ? err.message : String(err)}`);
-      failed += batchSongs.length;
-      uploaded -= batchSongs.length;
+      failed += batchCount;
     }
   }
 

@@ -1,0 +1,83 @@
+{
+  "id": "lesson-46",
+  "version": 1,
+  "metadata": {
+    "title": "Cross Rhythms & Mixed Meter",
+    "description": "Challenge your rhythmic sense with polyrhythms, hemiola, and changing time signatures",
+    "difficulty": 5,
+    "estimatedMinutes": 25,
+    "skills": [
+      "cross-rhythms",
+      "mixed-meter"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-46-ex-01",
+      "title": "3 Against 2",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-02",
+      "title": "4 Against 3",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-03",
+      "title": "Hemiola",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-04",
+      "title": "African-Inspired Rhythms",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-05",
+      "title": "5/4 Time",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-06",
+      "title": "7/8 Time",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-07",
+      "title": "Meter Changes",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-08",
+      "title": "Progressive Rock Rhythm",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-46-ex-09",
+      "title": "Rhythmic Masterclass",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-46-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-45"
+  },
+  "xpReward": 950,
+  "estimatedMinutes": 25
+}

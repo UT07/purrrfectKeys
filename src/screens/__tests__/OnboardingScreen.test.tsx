@@ -37,9 +37,11 @@ let mockSettingsState: any = {
   setPreferredInputMethod: jest.fn(),
   updateMidiSettings: jest.fn(),
   setSelectedCatId: jest.fn(),
+  setSelectedPath: jest.fn(),
   setUsername: jest.fn(),
   setDisplayName: jest.fn(),
   preferredInputMethod: 'touch',
+  selectedPath: 'piano-basics',
 };
 
 jest.mock('../../stores/settingsStore', () => ({
@@ -257,6 +259,7 @@ function resetSettingsState(overrides: Partial<typeof mockSettingsState> = {}) {
     learningGoal: 'songs',
     dailyGoalMinutes: 10,
     selectedCatId: 'mini-meowww',
+    selectedPath: 'piano-basics',
     playbackSpeed: 0.5,
     username: '',
     displayName: 'Piano Student',
@@ -268,6 +271,7 @@ function resetSettingsState(overrides: Partial<typeof mockSettingsState> = {}) {
     setPreferredInputMethod: jest.fn(),
     updateMidiSettings: jest.fn(),
     setSelectedCatId: jest.fn(),
+    setSelectedPath: jest.fn(),
     setUsername: jest.fn(),
     setDisplayName: jest.fn(),
     preferredInputMethod: 'touch',
@@ -276,7 +280,7 @@ function resetSettingsState(overrides: Partial<typeof mockSettingsState> = {}) {
 }
 
 /**
- * Helper: navigate through steps 1-5, then complete step 6 (username) and press Finish.
+ * Helper: navigate through steps 1-6, then complete step 7 (username) and press Finish.
  * Must be called in an async test because the username availability check is debounced.
  */
 async function navigateToCompletion(
@@ -294,10 +298,13 @@ async function navigateToCompletion(
   fireEvent.press(getByText('Next'));
   fireEvent.press(getByText(goal));
   fireEvent.press(getByText('Next'));
-  // Step 5: Choose cat → Next
+  // Step 5: Choose path → Next
+  fireEvent.press(getByTestId('onboarding-path-piano-basics'));
+  fireEvent.press(getByTestId('onboarding-path-next'));
+  // Step 6: Choose cat → Next
   fireEvent.press(getByText(`Choose ${cat}`));
   fireEvent.press(getByTestId('onboarding-cat-next'));
-  // Step 6: Username → Finish
+  // Step 7: Username → Finish
   fireEvent.changeText(getByTestId('onboarding-username-input'), 'testuser');
   await waitFor(
     () => { expect(getByText('Username available!')).toBeTruthy(); },
@@ -438,7 +445,7 @@ describe('OnboardingScreen', () => {
       expect(getByText("What's Your Goal?")).toBeTruthy();
     });
 
-    it('advances from Goal Setting (step 4) to Cat Selection (step 5)', () => {
+    it('advances from Goal Setting (step 4) to Path Selection (step 5)', () => {
       const { getByText } = render(<OnboardingScreen />);
 
       fireEvent.press(getByText('Get Started'));
@@ -449,7 +456,7 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Play My Favorite Songs'));
       fireEvent.press(getByText('Next'));
 
-      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+      expect(getByText('Choose Your Path')).toBeTruthy();
     });
   });
 
@@ -503,7 +510,7 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Play My Favorite Songs'));
       fireEvent.press(getByText('Next'));
-      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+      expect(getByText('Choose Your Path')).toBeTruthy();
 
       fireEvent.press(getByText('Back'));
       expect(getByText("What's Your Goal?")).toBeTruthy();
@@ -557,8 +564,8 @@ describe('OnboardingScreen', () => {
       expect(getByText('Just Explore & Have Fun')).toBeTruthy();
     });
 
-    it('step 5: Cat Selection renders title and 3 starter cats', () => {
-      const { getByText } = render(<OnboardingScreen />);
+    it('step 5: Path Selection renders title and 5 path options', () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
 
       fireEvent.press(getByText('Get Started'));
       fireEvent.press(getByText('Complete Beginner'));
@@ -567,6 +574,26 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Next'));
       fireEvent.press(getByText('Play My Favorite Songs'));
       fireEvent.press(getByText('Next'));
+
+      expect(getByText('Choose Your Path')).toBeTruthy();
+      expect(getByTestId('onboarding-path-piano-basics')).toBeTruthy();
+      expect(getByTestId('onboarding-path-classical')).toBeTruthy();
+      expect(getByTestId('onboarding-path-kids')).toBeTruthy();
+    });
+
+    it('step 6: Cat Selection renders title and 3 starter cats', () => {
+      const { getByText, getByTestId } = render(<OnboardingScreen />);
+
+      fireEvent.press(getByText('Get Started'));
+      fireEvent.press(getByText('Complete Beginner'));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText("On-Screen Keyboard"));
+      fireEvent.press(getByText('Next'));
+      fireEvent.press(getByText('Play My Favorite Songs'));
+      fireEvent.press(getByText('Next'));
+      // Path selection
+      fireEvent.press(getByTestId('onboarding-path-piano-basics'));
+      fireEvent.press(getByTestId('onboarding-path-next'));
 
       expect(getByText('Choose Your Cat Companion')).toBeTruthy();
       expect(getByText('Mini Meowww')).toBeTruthy();
@@ -850,7 +877,7 @@ describe('OnboardingScreen', () => {
       expect(getByText("What's Your Goal?")).toBeTruthy();
     });
 
-    it('Next button is disabled on step 5 when no cat selected', () => {
+    it('Next button is disabled on step 5 when no path selected', () => {
       const { getByText, getByTestId } = render(<OnboardingScreen />);
 
       fireEvent.press(getByText('Get Started'));
@@ -861,10 +888,10 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Play My Favorite Songs'));
       fireEvent.press(getByText('Next'));
 
-      // Pressing Next without selecting a cat should NOT advance
-      fireEvent.press(getByTestId('onboarding-cat-next'));
+      // Pressing Next without selecting a path should NOT advance
+      fireEvent.press(getByTestId('onboarding-path-next'));
       // Still on step 5
-      expect(getByText('Choose Your Cat Companion')).toBeTruthy();
+      expect(getByText('Choose Your Path')).toBeTruthy();
     });
   });
 
@@ -900,7 +927,7 @@ describe('OnboardingScreen', () => {
   // Full end-to-end flow
   // -----------------------------------------------------------------------
   describe('Full flow end-to-end', () => {
-    it('completes entire onboarding flow with all 6 steps', async () => {
+    it('completes entire onboarding flow with all 7 steps', async () => {
       const { getByText, getByTestId } = render(<OnboardingScreen />);
 
       // Step 1: Welcome
@@ -922,12 +949,17 @@ describe('OnboardingScreen', () => {
       fireEvent.press(getByText('Just Explore & Have Fun'));
       fireEvent.press(getByText('Next'));
 
-      // Step 5: Choose Cat Companion → Next
+      // Step 5: Learning Path Selection
+      expect(getByText('Choose Your Path')).toBeTruthy();
+      fireEvent.press(getByTestId('onboarding-path-piano-basics'));
+      fireEvent.press(getByTestId('onboarding-path-next'));
+
+      // Step 6: Choose Cat Companion → Next
       expect(getByText('Choose Your Cat Companion')).toBeTruthy();
       fireEvent.press(getByText('Choose Luna'));
       fireEvent.press(getByTestId('onboarding-cat-next'));
 
-      // Step 6: Username → Finish
+      // Step 7: Username → Finish
       expect(getByText('Pick a Username')).toBeTruthy();
       fireEvent.changeText(getByTestId('onboarding-username-input'), 'testuser');
       await waitFor(
@@ -946,6 +978,7 @@ describe('OnboardingScreen', () => {
       expect(mockSettingsState.setLearningGoal).toHaveBeenCalledWith(
         'exploration',
       );
+      expect(mockSettingsState.setSelectedPath).toHaveBeenCalledWith('piano-basics');
       expect(mockInitializeStarterCat).toHaveBeenCalledWith('luna');
       expect(mockSettingsState.setSelectedCatId).toHaveBeenCalledWith('luna');
       expect(mockSettingsState.setUsername).toHaveBeenCalledWith('testuser');

@@ -1,12 +1,13 @@
 /**
  * Onboarding Screen
- * First-time user experience with 6-step flow
+ * First-time user experience with 7-step flow
  * 1. Welcome
  * 2. Experience Level
  * 3. Equipment Check
  * 4. Goal Setting
- * 5. Choose Your Cat Companion
- * 6. Pick Username & Display Name
+ * 5. Learning Path Selection
+ * 6. Choose Your Cat Companion
+ * 7. Pick Username & Display Name
  *
  * Features animated progress bar with walking cat avatar,
  * per-step cat characters, and slide transitions.
@@ -46,6 +47,7 @@ import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor, shadowGlow } from '../theme/tokens';
+import { analyticsEvents } from '../services/analytics/PostHog';
 import { GradientMeshBackground } from '../components/effects';
 
 // ---------------------------------------------------------------------------
@@ -60,12 +62,13 @@ const CAT_SIZE = 28;
 const SLIDE_DURATION = 300;
 const SLIDE_OFFSET = 50;
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 interface OnboardingState {
   experienceLevel?: 'beginner' | 'intermediate' | 'returning';
   inputMethod?: 'midi' | 'mic' | 'touch';
   goal?: 'songs' | 'technique' | 'exploration';
+  selectedPath?: string;
   selectedCatId?: string;
   username?: string;
   usernameDisplayName?: string;
@@ -88,8 +91,9 @@ const STEP_CATS: Record<number, StepCatInfo> = {
   2: { catId: 'jazzy', subtitle: 'Jazzy wants to know your level' },
   3: { catId: 'chonky-monke', subtitle: 'Chonky Monk\u00E9 checks your setup' },
   4: { catId: 'luna', subtitle: 'Luna helps you set goals' },
-  5: { catId: 'mini-meowww', subtitle: 'Choose your companion!' },
-  6: { catId: 'jazzy', subtitle: 'Jazzy wants to know your name!' },
+  5: { catId: 'luna', subtitle: 'Pick your learning adventure!' },
+  6: { catId: 'mini-meowww', subtitle: 'Choose your companion!' },
+  7: { catId: 'jazzy', subtitle: 'Jazzy wants to know your name!' },
 };
 
 // ---------------------------------------------------------------------------
@@ -411,7 +415,77 @@ function GoalSettingStep({
 }
 
 // ---------------------------------------------------------------------------
-// Step 5: Choose Your Cat Companion
+// Step 5: Learning Path Selection
+// ---------------------------------------------------------------------------
+
+const PATH_OPTIONS: Array<{
+  id: string;
+  emoji: string;
+  title: string;
+  description: string;
+  color: string;
+  lessonCount: number;
+}> = [
+  { id: 'piano-basics', emoji: '\uD83C\uDFB9', title: 'Piano Basics', description: 'The well-rounded path \u2014 master all fundamentals', color: '#64B5F6', lessonCount: 40 },
+  { id: 'pop-and-film', emoji: '\uD83C\uDFA4', title: 'Pop & Film', description: 'Play songs you know \u2014 chord-first approach', color: '#FF6B8A', lessonCount: 20 },
+  { id: 'classical', emoji: '\uD83C\uDFBB', title: 'Classical', description: 'Technique & repertoire \u2014 scales to Beethoven', color: '#CE93D8', lessonCount: 24 },
+  { id: 'jazz-and-blues', emoji: '\uD83C\uDFB7', title: 'Jazz & Blues', description: 'Chord voicings, swing & improv', color: '#FFB74D', lessonCount: 21 },
+  { id: 'kids', emoji: '\uD83D\uDC76', title: 'Kids', description: 'Simplified exercises & nursery rhymes', color: '#81C784', lessonCount: 14 },
+];
+
+function PathSelectionStep({
+  onNext,
+  value,
+  onValueChange,
+  direction,
+}: {
+  onNext: () => void;
+  value?: string;
+  onValueChange: (pathId: string) => void;
+  direction: SlideDirection;
+}): React.ReactElement {
+  const catInfo = STEP_CATS[5];
+
+  return (
+    <AnimatedStepWrapper direction={direction} testID="onboarding-step-5">
+      <View style={styles.stepCatRow}>
+        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
+        <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
+      </View>
+      <Text style={styles.stepTitle}>Choose Your Path</Text>
+      <Text style={styles.stepDescription}>
+        Pick a learning journey. You can switch anytime from the Learn tab.
+      </Text>
+
+      <View style={styles.optionsList}>
+        {PATH_OPTIONS.map((path) => (
+          <OptionCard
+            key={path.id}
+            iconName="map-marker-path"
+            iconColor={path.color}
+            title={`${path.emoji} ${path.title}`}
+            description={`${path.description} (${path.lessonCount} lessons)`}
+            selected={value === path.id}
+            onPress={() => onValueChange(path.id)}
+            testID={`onboarding-path-${path.id}`}
+          />
+        ))}
+      </View>
+
+      <Button
+        title="Next"
+        onPress={onNext}
+        disabled={!value}
+        size="large"
+        style={styles.button}
+        testID="onboarding-path-next"
+      />
+    </AnimatedStepWrapper>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 6: Choose Your Cat Companion
 // ---------------------------------------------------------------------------
 
 function CatSelectionStep({
@@ -428,7 +502,7 @@ function CatSelectionStep({
   const starterCats = getStarterCats();
 
   return (
-    <AnimatedStepWrapper direction={direction} testID="onboarding-step-5">
+    <AnimatedStepWrapper direction={direction} testID="onboarding-step-6">
       <Text style={styles.stepTitle}>Choose Your Cat Companion</Text>
       <Text style={styles.stepDescription}>
         Each cat has a unique personality and musical specialty
@@ -466,7 +540,7 @@ function CatSelectionStep({
 }
 
 // ---------------------------------------------------------------------------
-// Step 6: Choose Username & Display Name
+// Step 7: Choose Username & Display Name
 // ---------------------------------------------------------------------------
 
 function UsernameStep({
@@ -484,7 +558,7 @@ function UsernameStep({
   onDisplayNameChange: (name: string) => void;
   direction: SlideDirection;
 }): React.ReactElement {
-  const catInfo = STEP_CATS[6];
+  const catInfo = STEP_CATS[7];
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -547,7 +621,7 @@ function UsernameStep({
     !isChecking;
 
   return (
-    <AnimatedStepWrapper direction={direction} testID="onboarding-step-6">
+    <AnimatedStepWrapper direction={direction} testID="onboarding-step-7">
       <View style={styles.stepCatRow}>
         <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
         <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
@@ -932,6 +1006,12 @@ export function OnboardingScreen(): React.ReactElement {
   const [direction, setDirection] = useState<SlideDirection>('forward');
   const pendingAssessmentReturnRef = useRef(false);
 
+  // Track onboarding entry once
+  useEffect(() => {
+    analyticsEvents.onboarding.started();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const setHasCompletedOnboarding = useSettingsStore((s) => s.setHasCompletedOnboarding);
   const setExperienceLevel = useSettingsStore((s) => s.setExperienceLevel);
@@ -966,6 +1046,7 @@ export function OnboardingScreen(): React.ReactElement {
       }
     }
     if (step === TOTAL_STEPS) {
+      analyticsEvents.onboarding.completed(state.experienceLevel ?? 'unknown');
       // MUST set onboarding flag FIRST -- other setters use debouncedSave which
       // captures get() state. If hasCompletedOnboarding is still false when they
       // snapshot, the debounced write overwrites the immediate save 500ms later.
@@ -980,7 +1061,11 @@ export function OnboardingScreen(): React.ReactElement {
           useSettingsStore.getState().updateMidiSettings({ autoConnectMidi: true });
         }
       }
-      // Persist cat selection from step 5
+      // Persist path selection from step 5
+      if (state.selectedPath) {
+        useSettingsStore.getState().setSelectedPath(state.selectedPath as any);
+      }
+      // Persist cat selection from step 6
       if (state.selectedCatId) {
         useCatEvolutionStore.getState().initializeStarterCat(state.selectedCatId);
         useSettingsStore.getState().setSelectedCatId(state.selectedCatId);
@@ -1041,6 +1126,7 @@ export function OnboardingScreen(): React.ReactElement {
     state.experienceLevel,
     state.inputMethod,
     state.goal,
+    state.selectedPath,
     state.selectedCatId,
     state.username,
     state.usernameDisplayName,
@@ -1098,6 +1184,17 @@ export function OnboardingScreen(): React.ReactElement {
         );
       case 5:
         return (
+          <PathSelectionStep
+            value={state.selectedPath}
+            onValueChange={(pathId) =>
+              setState((prev) => ({ ...prev, selectedPath: pathId }))
+            }
+            onNext={handleNext}
+            direction={direction}
+          />
+        );
+      case 6:
+        return (
           <CatSelectionStep
             selectedCatId={state.selectedCatId}
             onSelect={(catId) => {
@@ -1107,7 +1204,7 @@ export function OnboardingScreen(): React.ReactElement {
             direction={direction}
           />
         );
-      case 6:
+      case 7:
         return (
           <UsernameStep
             username={state.username}

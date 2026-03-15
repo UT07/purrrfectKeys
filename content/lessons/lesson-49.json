@@ -1,0 +1,83 @@
+{
+  "id": "lesson-49",
+  "version": 1,
+  "metadata": {
+    "title": "Advanced Sight Reading & Improvisation",
+    "description": "Read at sight in multiple keys and learn to improvise over chord changes",
+    "difficulty": 5,
+    "estimatedMinutes": 25,
+    "skills": [
+      "advanced-sight-reading",
+      "improvisation-basics"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-49-ex-01",
+      "title": "Sight Read: Sharp Keys",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-02",
+      "title": "Sight Read: Flat Keys",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-03",
+      "title": "Sight Read: Minor Keys",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-04",
+      "title": "Sight Read: Rhythmic Challenge",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-05",
+      "title": "Sight Read: Both Hands",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-06",
+      "title": "Blues Scale Improv",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-07",
+      "title": "Pentatonic Improv",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-08",
+      "title": "Call and Response",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-49-ex-09",
+      "title": "Free Improv over Changes",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-49-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-48"
+  },
+  "xpReward": 1050,
+  "estimatedMinutes": 25
+}

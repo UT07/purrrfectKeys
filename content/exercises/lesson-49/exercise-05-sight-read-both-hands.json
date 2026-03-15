@@ -1,0 +1,224 @@
+{
+  "id": "lesson-49-ex-05",
+  "version": 1,
+  "metadata": {
+    "title": "Sight Read: Both Hands",
+    "description": "Sight-read a two-hand piece at moderate tempo",
+    "difficulty": 5,
+    "estimatedMinutes": 2,
+    "skills": [
+      "advanced-sight-reading",
+      "improvisation-basics"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 63,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "G",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 67,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 74,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 9,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 9.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 10,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 71,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 13,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 13.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 14,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 12,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 14,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 16,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 16,
+      "durationBeats": 2,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 30,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: sight reading in sharp/flat keys with complex rhythms — unfamiliar melody.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Sight Read: Both Hands! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

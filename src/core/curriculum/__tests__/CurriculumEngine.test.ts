@@ -102,7 +102,8 @@ describe('CurriculumEngine', () => {
     it('should include AI exercises when all skills are mastered', () => {
       const allMastered = SKILL_TREE.map((n) => n.id);
       const plan = generateSessionPlan(makeProfile(), allMastered);
-      const hasAI = plan.lesson.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
+      const allRefs = [...plan.warmUp, ...plan.lesson, ...plan.challenge];
+      const hasAI = allRefs.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
       expect(hasAI).toBe(true);
     });
 

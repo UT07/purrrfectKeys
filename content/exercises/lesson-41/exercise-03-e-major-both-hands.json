@@ -1,0 +1,153 @@
+{
+  "id": "lesson-41-ex-03",
+  "version": 1,
+  "metadata": {
+    "title": "E Major Both Hands",
+    "description": "E major scale in parallel motion, both hands",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "e-major-scale",
+      "a-major-scale",
+      "eb-major-scale"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 75,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "E",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 64,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 76,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 66,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 75,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 68,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 73,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 71,
+      "startBeat": 2,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 68,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 73,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 66,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 75,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 76,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: e major scale with 4 sharps (f# c# g# d#).",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on E Major Both Hands! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

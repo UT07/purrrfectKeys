@@ -167,7 +167,10 @@ export function DailySessionScreen() {
           ...(exerciseType ? { exerciseType } : {}),
         });
       } else {
-        navigation.navigate('Exercise', { exerciseId: ref.exerciseId });
+        navigation.navigate('Exercise', {
+          exerciseId: ref.exerciseId,
+          ...(ref.skillNodeId ? { skillId: ref.skillNodeId } : {}),
+        });
       }
     },
     [navigation]

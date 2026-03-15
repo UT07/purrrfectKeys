@@ -178,15 +178,46 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         totalTimeSpentSeconds: 0,
       };
 
+      const updatedScores = {
+        ...lesson.exerciseScores,
+        [exerciseId]: progress,
+      };
+
+      // Auto-detect lesson completion: if all non-test exercises have a passing
+      // score, mark the lesson as completed. Uses the exercise index to know
+      // how many exercises exist in the lesson.
+      let newStatus = lesson.status;
+      if (lesson.status !== 'completed') {
+        try {
+          const { getExercisesForLesson } = require('../content/ContentLoader');
+          const lessonExercises = getExercisesForLesson(lessonId);
+          const nonTestExercises = lessonExercises.filter(
+            (e: { type: string }) => e.type !== 'test',
+          );
+          if (nonTestExercises.length > 0) {
+            const allPassed = nonTestExercises.every((ex: { id: string }) => {
+              const exScore = updatedScores[ex.id];
+              return exScore && exScore.highScore >= 60;
+            });
+            if (allPassed) {
+              newStatus = 'completed';
+            }
+          }
+        } catch {
+          // ContentLoader not available (e.g., in tests) — don't block
+        }
+      }
+
       return {
         lessonProgress: {
           ...state.lessonProgress,
           [lessonId]: {
             ...lesson,
-            exerciseScores: {
-              ...lesson.exerciseScores,
-              [exerciseId]: progress,
-            },
+            status: newStatus,
+            exerciseScores: updatedScores,
+            ...(newStatus === 'completed' && !lesson.completedAt
+              ? { completedAt: Date.now() }
+              : {}),
           },
         },
       };

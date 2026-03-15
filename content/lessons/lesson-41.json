@@ -1,0 +1,84 @@
+{
+  "id": "lesson-41",
+  "version": 1,
+  "metadata": {
+    "title": "New Keys: E Major, A Major & Eb Major",
+    "description": "Expand your key vocabulary with sharps and flats — E major, A major, and Eb major",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "e-major-scale",
+      "a-major-scale",
+      "eb-major-scale"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-41-ex-01",
+      "title": "E Major Scale Right Hand",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-02",
+      "title": "E Major Scale Left Hand",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-03",
+      "title": "E Major Both Hands",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-04",
+      "title": "A Major Scale Right Hand",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-05",
+      "title": "A Major Scale Left Hand",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-06",
+      "title": "A Major Melody",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-07",
+      "title": "Eb Major Scale Right Hand",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-08",
+      "title": "Eb Major Scale Left Hand",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-41-ex-09",
+      "title": "Eb Major Melody",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-41-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-40"
+  },
+  "xpReward": 800,
+  "estimatedMinutes": 25
+}

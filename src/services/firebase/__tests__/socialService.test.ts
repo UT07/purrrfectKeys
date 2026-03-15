@@ -247,12 +247,38 @@ describe('socialService', () => {
       expect(userData.displayName).toBe('Cool Cat');
     });
 
-    it('throws if username already taken', async () => {
-      mockTransaction.get.mockResolvedValue({ exists: () => true });
+    it('throws if username already taken by active user', async () => {
+      // First get: username doc exists with different uid
+      // Second get: old owner's profile also exists (active user)
+      mockTransaction.get
+        .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: 'other-uid' }) })
+        .mockResolvedValueOnce({ exists: () => true });
 
       await expect(registerUsername('uid-123', 'takenuser', 'Name')).rejects.toThrow(
         'Username already taken',
       );
+    });
+
+    it('re-claims username if old owner profile is gone (orphaned)', async () => {
+      // First get: username doc exists with orphaned uid
+      // Second get: old owner's profile does NOT exist
+      mockTransaction.get
+        .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: 'orphaned-uid' }) })
+        .mockResolvedValueOnce({ exists: () => false });
+
+      await registerUsername('uid-123', 'takenuser', 'Name');
+
+      expect(mockTransaction.set).toHaveBeenCalled();
+    });
+
+    it('allows re-registering own username (idempotent)', async () => {
+      // Username doc exists and belongs to current user
+      mockTransaction.get
+        .mockResolvedValueOnce({ exists: () => true, data: () => ({ uid: 'uid-123' }) });
+
+      await registerUsername('uid-123', 'myname', 'Name');
+
+      expect(mockTransaction.update).toHaveBeenCalled();
     });
 
     it('throws for invalid username format', async () => {

@@ -25,6 +25,10 @@ export interface SongMetadata {
   difficulty: 1 | 2 | 3 | 4 | 5;
   durationSeconds: number;
   attribution: string;
+  /** Skill IDs from SkillTree that this song exercises (e.g. ['chords-major', 'rhythm-syncopation']) */
+  requiredSkills?: string[];
+  /** Primary skill category this song targets (e.g. 'chords', 'scales', 'rhythm') */
+  skillCategory?: string;
 }
 
 export interface SongSection {

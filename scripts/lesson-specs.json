@@ -925,6 +925,226 @@
       ],
       "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-39" },
       "xpReward": 1000
+    },
+    {
+      "lessonNumber": 41,
+      "title": "New Keys: E Major, A Major & Eb Major",
+      "description": "Expand your key vocabulary with sharps and flats — E major, A major, and Eb major",
+      "tier": 16,
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "skills": ["e-major-scale", "a-major-scale", "eb-major-scale"],
+      "exercises": [
+        { "skillId": "e-major-scale", "type": "play", "title": "E Major Scale Right Hand", "description": "Play the E major scale (4 sharps) with right hand", "difficulty": 3 },
+        { "skillId": "e-major-scale", "type": "play", "title": "E Major Scale Left Hand", "description": "Play the E major scale with left hand", "difficulty": 3 },
+        { "skillId": "e-major-scale", "type": "play", "title": "E Major Both Hands", "description": "E major scale in parallel motion, both hands", "difficulty": 4 },
+        { "skillId": "a-major-scale", "type": "play", "title": "A Major Scale Right Hand", "description": "Play the A major scale (3 sharps) with right hand", "difficulty": 3 },
+        { "skillId": "a-major-scale", "type": "play", "title": "A Major Scale Left Hand", "description": "Play the A major scale with left hand", "difficulty": 3 },
+        { "skillId": "a-major-scale", "type": "play", "title": "A Major Melody", "description": "A bright melody in A major using eighth note patterns", "difficulty": 4 },
+        { "skillId": "eb-major-scale", "type": "play", "title": "Eb Major Scale Right Hand", "description": "Play the Eb major scale (3 flats) with right hand", "difficulty": 3 },
+        { "skillId": "eb-major-scale", "type": "play", "title": "Eb Major Scale Left Hand", "description": "Play the Eb major scale with left hand", "difficulty": 3 },
+        { "skillId": "eb-major-scale", "type": "play", "title": "Eb Major Melody", "description": "A smooth melody in Eb major with left hand accompaniment", "difficulty": 4 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-40" },
+      "xpReward": 800
+    },
+    {
+      "lessonNumber": 42,
+      "title": "Modulation & Key Changes",
+      "description": "Learn to smoothly transition between keys using pivot chords and common tones",
+      "tier": 16,
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "skills": ["modulation-technique", "relative-key-fluency"],
+      "exercises": [
+        { "skillId": "modulation-technique", "type": "play", "title": "Pivot Chord Modulation", "description": "Move from C major to G major using a shared chord as pivot", "difficulty": 3 },
+        { "skillId": "modulation-technique", "type": "play", "title": "Common Tone Modulation", "description": "Use a common tone to smoothly transition between distant keys", "difficulty": 4 },
+        { "skillId": "modulation-technique", "type": "play", "title": "Step-Up Modulation", "description": "Modulate up a half step — the classic pop key change", "difficulty": 4 },
+        { "skillId": "modulation-technique", "type": "play", "title": "Multi-Key Journey", "description": "A piece that visits C, G, D, and back to C major", "difficulty": 4 },
+        { "skillId": "relative-key-fluency", "type": "play", "title": "Major to Relative Minor", "description": "Smoothly shift from C major to A minor and back", "difficulty": 3 },
+        { "skillId": "relative-key-fluency", "type": "play", "title": "G Major to E Minor", "description": "Navigate between G major and its relative minor", "difficulty": 4 },
+        { "skillId": "relative-key-fluency", "type": "play", "title": "F Major to D Minor", "description": "Explore the F major / D minor relationship", "difficulty": 4 },
+        { "skillId": "relative-key-fluency", "type": "play", "title": "Parallel Major & Minor", "description": "Switch between C major and C minor — same root, different mood", "difficulty": 4 },
+        { "skillId": "relative-key-fluency", "type": "play", "title": "Key Signature Medley", "description": "A medley that travels through 5 different keys", "difficulty": 4 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-41" },
+      "xpReward": 850
+    },
+    {
+      "lessonNumber": 43,
+      "title": "Seventh Chords & Color Chords",
+      "description": "Add richness with major 7th, minor 7th, dominant 7th, sus, and add9 chords",
+      "tier": 17,
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "skills": ["seventh-chords", "sus-and-add-chords"],
+      "exercises": [
+        { "skillId": "seventh-chords", "type": "play", "title": "Major Seventh Chords", "description": "Play Cmaj7, Fmaj7, and Gmaj7 — the dreamy sound", "difficulty": 3 },
+        { "skillId": "seventh-chords", "type": "play", "title": "Minor Seventh Chords", "description": "Play Am7, Dm7, and Em7 — jazzy and smooth", "difficulty": 3 },
+        { "skillId": "seventh-chords", "type": "play", "title": "Dominant Seventh Chords", "description": "Play G7, C7, and D7 — the tension builders", "difficulty": 4 },
+        { "skillId": "seventh-chords", "type": "play", "title": "7th Chord Progressions", "description": "Use seventh chords in ii-V-I and other jazz progressions", "difficulty": 4 },
+        { "skillId": "sus-and-add-chords", "type": "play", "title": "Suspended Chords", "description": "Play sus2 and sus4 chords — the unresolved sound", "difficulty": 3 },
+        { "skillId": "sus-and-add-chords", "type": "play", "title": "Add9 Chords", "description": "Play Cadd9, Gadd9 — the modern pop sound", "difficulty": 3 },
+        { "skillId": "sus-and-add-chords", "type": "play", "title": "Color Chord Song", "description": "A pop song using sus and add chords for texture", "difficulty": 4 },
+        { "skillId": "seventh-chords", "type": "play", "title": "Jazz Ballad Chords", "description": "Play through a jazz ballad chord chart with 7ths", "difficulty": 4 },
+        { "skillId": "sus-and-add-chords", "type": "play", "title": "Chord Voicing Exploration", "description": "Explore different voicings of the same chord for varied color", "difficulty": 4 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-42" },
+      "xpReward": 900
+    },
+    {
+      "lessonNumber": 44,
+      "title": "Advanced Progressions & Comping",
+      "description": "Master jazz and contemporary progressions with rhythmic accompaniment patterns",
+      "tier": 17,
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "skills": ["advanced-progressions", "comping-patterns"],
+      "exercises": [
+        { "skillId": "advanced-progressions", "type": "play", "title": "ii-V-I Progression", "description": "The most important jazz progression: Dm7-G7-Cmaj7", "difficulty": 4 },
+        { "skillId": "advanced-progressions", "type": "play", "title": "Circle of Fifths", "description": "Play through the circle of fifths with 7th chords", "difficulty": 4 },
+        { "skillId": "advanced-progressions", "type": "play", "title": "Autumn Leaves Changes", "description": "The classic jazz standard chord progression", "difficulty": 4 },
+        { "skillId": "advanced-progressions", "type": "play", "title": "Modal Interchange", "description": "Borrow chords from parallel minor in a major key", "difficulty": 4 },
+        { "skillId": "advanced-progressions", "type": "play", "title": "Neo-Soul Chords", "description": "Contemporary R&B/neo-soul chord voicings and movement", "difficulty": 4 },
+        { "skillId": "comping-patterns", "type": "play", "title": "Pop Comping Pattern", "description": "Rhythmic right hand chords over left hand bass — pop style", "difficulty": 3 },
+        { "skillId": "comping-patterns", "type": "play", "title": "Ballad Arpeggiation", "description": "Flowing arpeggiated accompaniment for slow songs", "difficulty": 4 },
+        { "skillId": "comping-patterns", "type": "play", "title": "Swing Comping", "description": "Off-beat chord hits in swing feel — jazz comping basics", "difficulty": 4 },
+        { "skillId": "comping-patterns", "type": "play", "title": "Full Arrangement", "description": "Combine melody, chords, and bass in a complete arrangement", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-43" },
+      "xpReward": 900
+    },
+    {
+      "lessonNumber": 45,
+      "title": "Compound Time & Swing Feel",
+      "description": "Master 6/8 time, 12/8 grooves, swing feel, and shuffle rhythms",
+      "tier": 17,
+      "difficulty": 4,
+      "exerciseCount": 9,
+      "skills": ["compound-time", "swing-and-shuffle"],
+      "exercises": [
+        { "skillId": "compound-time", "type": "play", "title": "6/8 Time Basics", "description": "Feel the 6/8 pulse — two groups of three", "difficulty": 3 },
+        { "skillId": "compound-time", "type": "play", "title": "6/8 Melody", "description": "A flowing melody in 6/8 with barcarolle feel", "difficulty": 4 },
+        { "skillId": "compound-time", "type": "play", "title": "12/8 Blues", "description": "Slow blues in 12/8 — the classic blues shuffle", "difficulty": 4 },
+        { "skillId": "compound-time", "type": "play", "title": "Irish Jig", "description": "A lively jig in 6/8 with quick note passages", "difficulty": 4 },
+        { "skillId": "swing-and-shuffle", "type": "play", "title": "Swing Eighths", "description": "Play straight eighth notes with swing feel — long-short", "difficulty": 3 },
+        { "skillId": "swing-and-shuffle", "type": "play", "title": "Shuffle Pattern", "description": "Left hand shuffle bass with right hand melody", "difficulty": 4 },
+        { "skillId": "swing-and-shuffle", "type": "play", "title": "Boogie-Woogie Bass", "description": "Classic boogie-woogie left hand pattern with swing", "difficulty": 4 },
+        { "skillId": "compound-time", "type": "play", "title": "Waltz to 6/8", "description": "Compare 3/4 waltz with 6/8 — same notes, different feel", "difficulty": 4 },
+        { "skillId": "swing-and-shuffle", "type": "play", "title": "Jazz Standard Swing", "description": "Swing through a classic jazz tune with full arrangement", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-44" },
+      "xpReward": 900
+    },
+    {
+      "lessonNumber": 46,
+      "title": "Cross Rhythms & Mixed Meter",
+      "description": "Challenge your rhythmic sense with polyrhythms, hemiola, and changing time signatures",
+      "tier": 17,
+      "difficulty": 5,
+      "exerciseCount": 9,
+      "skills": ["cross-rhythms", "mixed-meter"],
+      "exercises": [
+        { "skillId": "cross-rhythms", "type": "play", "title": "3 Against 2", "description": "Play triplets in one hand against duplets in the other", "difficulty": 4 },
+        { "skillId": "cross-rhythms", "type": "play", "title": "4 Against 3", "description": "Four notes in one hand against three in the other", "difficulty": 5 },
+        { "skillId": "cross-rhythms", "type": "play", "title": "Hemiola", "description": "Create the hemiola effect — 3 groups of 2 over 2 groups of 3", "difficulty": 4 },
+        { "skillId": "cross-rhythms", "type": "play", "title": "African-Inspired Rhythms", "description": "Polyrhythmic patterns inspired by West African music", "difficulty": 5 },
+        { "skillId": "mixed-meter", "type": "play", "title": "5/4 Time", "description": "Feel the 5/4 groove — Take Five style", "difficulty": 4 },
+        { "skillId": "mixed-meter", "type": "play", "title": "7/8 Time", "description": "Asymmetric rhythm: groups of 2+2+3 or 3+2+2", "difficulty": 4 },
+        { "skillId": "mixed-meter", "type": "play", "title": "Meter Changes", "description": "A piece that alternates between 4/4 and 3/4", "difficulty": 4 },
+        { "skillId": "mixed-meter", "type": "play", "title": "Progressive Rock Rhythm", "description": "Changing meters in a rock-inspired piece", "difficulty": 5 },
+        { "skillId": "mixed-meter", "type": "play", "title": "Rhythmic Masterclass", "description": "The ultimate rhythm challenge: cross-rhythms in mixed meter", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-45" },
+      "xpReward": 950
+    },
+    {
+      "lessonNumber": 47,
+      "title": "Baroque & Romantic Repertoire",
+      "description": "Perform simplified versions of great classical works from Bach to Chopin",
+      "tier": 18,
+      "difficulty": 5,
+      "exerciseCount": 9,
+      "skills": ["baroque-repertoire", "romantic-repertoire"],
+      "exercises": [
+        { "skillId": "baroque-repertoire", "type": "play", "title": "Bach Minuet in G", "description": "A classic Baroque minuet with ornamentation", "difficulty": 4 },
+        { "skillId": "baroque-repertoire", "type": "play", "title": "Bach Prelude in C", "description": "The famous arpeggiated prelude from WTC Book 1", "difficulty": 4 },
+        { "skillId": "baroque-repertoire", "type": "play", "title": "Two-Part Invention", "description": "Bach invention with independent melodic lines in each hand", "difficulty": 5 },
+        { "skillId": "baroque-repertoire", "type": "play", "title": "Baroque Dance Suite", "description": "An allemande or sarabande with period-appropriate style", "difficulty": 5 },
+        { "skillId": "baroque-repertoire", "type": "play", "title": "Counterpoint Exercise", "description": "Practice independent voice leading with two melodic lines", "difficulty": 5 },
+        { "skillId": "romantic-repertoire", "type": "play", "title": "Chopin Prelude in E Minor", "description": "The haunting Prelude Op. 28 No. 4 — simplified", "difficulty": 4 },
+        { "skillId": "romantic-repertoire", "type": "play", "title": "Schumann Scenes", "description": "A character piece from Scenes from Childhood", "difficulty": 4 },
+        { "skillId": "romantic-repertoire", "type": "play", "title": "Romantic Nocturne", "description": "A lyrical nocturne with singing melody and flowing bass", "difficulty": 5 },
+        { "skillId": "romantic-repertoire", "type": "play", "title": "Romantic Expression Study", "description": "Focus on rubato, dynamics, and pedaling in romantic style", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-46" },
+      "xpReward": 1000
+    },
+    {
+      "lessonNumber": 48,
+      "title": "Contemporary & Film Scores",
+      "description": "Play modern minimalist pieces and iconic film score arrangements",
+      "tier": 18,
+      "difficulty": 5,
+      "exerciseCount": 9,
+      "skills": ["contemporary-repertoire", "film-score-performance"],
+      "exercises": [
+        { "skillId": "contemporary-repertoire", "type": "play", "title": "Minimalist Pattern", "description": "Hypnotic repeating patterns inspired by Philip Glass", "difficulty": 4 },
+        { "skillId": "contemporary-repertoire", "type": "play", "title": "Einaudi-Style Piece", "description": "Flowing, atmospheric piece in the style of Ludovico Einaudi", "difficulty": 4 },
+        { "skillId": "contemporary-repertoire", "type": "play", "title": "Yiruma-Style Ballad", "description": "A gentle piano ballad with modern sensibility", "difficulty": 4 },
+        { "skillId": "contemporary-repertoire", "type": "play", "title": "Ambient Textures", "description": "Sustained chords and wide spacing for atmospheric sound", "difficulty": 4 },
+        { "skillId": "contemporary-repertoire", "type": "play", "title": "Modern Classical Fusion", "description": "Blend classical technique with contemporary harmony", "difficulty": 5 },
+        { "skillId": "film-score-performance", "type": "play", "title": "Epic Film Theme", "description": "A dramatic film score arrangement with sweeping dynamics", "difficulty": 4 },
+        { "skillId": "film-score-performance", "type": "play", "title": "Tender Film Moment", "description": "An emotional, quiet film score piece with pedal", "difficulty": 4 },
+        { "skillId": "film-score-performance", "type": "play", "title": "Action Sequence", "description": "Driving rhythms and dramatic chords — the chase scene", "difficulty": 5 },
+        { "skillId": "film-score-performance", "type": "play", "title": "Complete Film Cue", "description": "A full 2-minute film cue with intro, build, and resolution", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-47" },
+      "xpReward": 1000
+    },
+    {
+      "lessonNumber": 49,
+      "title": "Advanced Sight Reading & Improvisation",
+      "description": "Read at sight in multiple keys and learn to improvise over chord changes",
+      "tier": 18,
+      "difficulty": 5,
+      "exerciseCount": 9,
+      "skills": ["advanced-sight-reading", "improvisation-basics"],
+      "exercises": [
+        { "skillId": "advanced-sight-reading", "type": "play", "title": "Sight Read: Sharp Keys", "description": "Sight-read melodies in E major and A major", "difficulty": 4 },
+        { "skillId": "advanced-sight-reading", "type": "play", "title": "Sight Read: Flat Keys", "description": "Sight-read melodies in Eb major and Bb major", "difficulty": 4 },
+        { "skillId": "advanced-sight-reading", "type": "play", "title": "Sight Read: Minor Keys", "description": "Sight-read in various minor keys with accidentals", "difficulty": 4 },
+        { "skillId": "advanced-sight-reading", "type": "play", "title": "Sight Read: Rhythmic Challenge", "description": "Sight-read pieces with syncopation and mixed rhythms", "difficulty": 5 },
+        { "skillId": "advanced-sight-reading", "type": "play", "title": "Sight Read: Both Hands", "description": "Sight-read a two-hand piece at moderate tempo", "difficulty": 5 },
+        { "skillId": "improvisation-basics", "type": "play", "title": "Blues Scale Improv", "description": "Improvise a melody using the blues scale over a 12-bar blues", "difficulty": 4 },
+        { "skillId": "improvisation-basics", "type": "play", "title": "Pentatonic Improv", "description": "Create melodies using the pentatonic scale over pop chords", "difficulty": 4 },
+        { "skillId": "improvisation-basics", "type": "play", "title": "Call and Response", "description": "Answer musical phrases with your own improvised response", "difficulty": 4 },
+        { "skillId": "improvisation-basics", "type": "play", "title": "Free Improv over Changes", "description": "Improvise freely over a jazz chord progression", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-48" },
+      "xpReward": 1050
+    },
+    {
+      "lessonNumber": 50,
+      "title": "Year Two Grand Recital",
+      "description": "Your intermediate capstone — a full concert program showcasing your Year Two mastery",
+      "tier": 18,
+      "difficulty": 5,
+      "exerciseCount": 9,
+      "skills": ["year-two-mastery", "baroque-repertoire", "romantic-repertoire", "contemporary-repertoire", "improvisation-basics"],
+      "exercises": [
+        { "skillId": "year-two-mastery", "type": "play", "title": "Concert Warm-Up", "description": "Scales in multiple keys, arpeggios, and chord sequences", "difficulty": 4 },
+        { "skillId": "year-two-mastery", "type": "play", "title": "Advanced Sight Reading", "description": "Sight-read an unseen piece as concert opener", "difficulty": 5 },
+        { "skillId": "baroque-repertoire", "type": "play", "title": "Baroque Showcase", "description": "A Bach or Handel piece demonstrating counterpoint mastery", "difficulty": 5 },
+        { "skillId": "romantic-repertoire", "type": "play", "title": "Romantic Showcase", "description": "An expressive romantic-era piece with full dynamic range", "difficulty": 5 },
+        { "skillId": "contemporary-repertoire", "type": "play", "title": "Contemporary Showcase", "description": "A modern piece with minimalist or atmospheric character", "difficulty": 5 },
+        { "skillId": "year-two-mastery", "type": "play", "title": "Pop Medley", "description": "A medley of popular songs arranged for solo piano", "difficulty": 4 },
+        { "skillId": "improvisation-basics", "type": "play", "title": "Improvised Interlude", "description": "A free improvisation moment between prepared pieces", "difficulty": 5 },
+        { "skillId": "year-two-mastery", "type": "play", "title": "Film Score Feature", "description": "A dramatic film score arrangement as concert highlight", "difficulty": 5 },
+        { "skillId": "year-two-mastery", "type": "play", "title": "Grand Finale", "description": "Your ultimate Year Two piece — everything mastered in one performance", "difficulty": 5 }
+      ],
+      "unlockRequirement": { "type": "lesson-complete", "lessonId": "lesson-49" },
+      "xpReward": 1200
     }
   ]
 }

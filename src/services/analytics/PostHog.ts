@@ -3,62 +3,52 @@
  * Tracks user behavior and app events for analytics
  *
  * Uses posthog-react-native v4 instance-based API.
+ * The PostHog client is shared from src/config/posthog.ts so it can also be
+ * passed as the `client` prop to PostHogProvider in AppNavigator.
  */
 
-import { PostHog } from 'posthog-react-native';
+import { posthog as posthogClient, isPostHogEnabled } from '../../config/posthog';
 import { logger } from '../../utils/logger';
 
 // ============================================================================
 // PostHog Initialization
 // ============================================================================
 
-/** Module-level PostHog instance (created lazily on initialize) */
-let posthogInstance: PostHog | null = null;
-
 export class AnalyticsService {
   private static initialized = false;
 
   /**
-   * Initialize PostHog analytics.
-   * Creates a singleton PostHog instance with the v4 constructor API.
+   * Mark analytics as initialized.
+   * The PostHog client is already created eagerly in src/config/posthog.ts;
+   * this method exists only to preserve the existing call-site in App.tsx.
    */
   static initialize(): void {
     if (this.initialized) {
       return;
     }
-
-    const apiKey = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
-    if (!apiKey) {
-      logger.warn('EXPO_PUBLIC_POSTHOG_API_KEY is not set. Analytics disabled.');
+    if (!isPostHogEnabled) {
+      logger.warn('[Analytics] PostHog not configured — analytics disabled.');
       return;
     }
-
-    try {
-      posthogInstance = new PostHog(apiKey, {
-        host: 'https://us.posthog.com',
-        captureAppLifecycleEvents: true,
-        enableSessionReplay: false,
-      });
-
-      this.initialized = true;
-      logger.log('[Analytics] PostHog initialized');
-    } catch (error) {
-      console.error('Failed to initialize PostHog:', error);
-    }
+    this.initialized = true;
+    logger.log('[Analytics] PostHog initialized');
   }
 
   /**
    * Set user identity
    */
   static identifyUser(userId: string, properties?: Record<string, any>): void {
-    if (!this.initialized || !posthogInstance) {
+    if (!this.initialized || !isPostHogEnabled) {
       return;
     }
 
     try {
-      posthogInstance.identify(userId, properties);
+      posthogClient.identify(userId, properties);
+      if (__DEV__) {
+        logger.log(`[PostHog] identify: ${userId}`);
+      }
     } catch (error) {
-      console.error('Failed to identify user:', error);
+      logger.error('[PostHog] Failed to identify user:', error);
     }
   }
 
@@ -66,12 +56,12 @@ export class AnalyticsService {
    * Set user properties
    */
   static setUserProperties(properties: Record<string, any>): void {
-    if (!this.initialized || !posthogInstance) {
+    if (!this.initialized || !isPostHogEnabled) {
       return;
     }
 
     try {
-      posthogInstance.setPersonProperties(properties);
+      posthogClient.setPersonProperties(properties);
     } catch (error) {
       console.error('Failed to set user properties:', error);
     }
@@ -81,14 +71,18 @@ export class AnalyticsService {
    * Track event
    */
   static trackEvent(eventName: string, properties?: Record<string, any>): void {
-    if (!this.initialized || !posthogInstance) {
+    if (!this.initialized || !isPostHogEnabled) {
       return;
     }
 
     try {
-      posthogInstance.capture(eventName, properties);
+      posthogClient.capture(eventName, properties);
+      if (__DEV__) {
+        const propsStr = properties ? ` ${JSON.stringify(properties)}` : '';
+        logger.log(`[PostHog] capture: ${eventName}${propsStr}`);
+      }
     } catch (error) {
-      console.error('Failed to track event:', error);
+      logger.error('[PostHog] Failed to track event:', error);
     }
   }
 
@@ -96,12 +90,12 @@ export class AnalyticsService {
    * Reset analytics (when user logs out)
    */
   static reset(): void {
-    if (!this.initialized || !posthogInstance) {
+    if (!this.initialized || !isPostHogEnabled) {
       return;
     }
 
     try {
-      posthogInstance.reset();
+      posthogClient.reset();
     } catch (error) {
       console.error('Failed to reset analytics:', error);
     }
@@ -111,14 +105,17 @@ export class AnalyticsService {
    * Flush pending events
    */
   static flush(): void {
-    if (!this.initialized || !posthogInstance) {
+    if (!this.initialized || !isPostHogEnabled) {
       return;
     }
 
     try {
-      posthogInstance.flush();
+      posthogClient.flush();
+      if (__DEV__) {
+        logger.log('[PostHog] flush requested');
+      }
     } catch (error) {
-      console.error('Failed to flush analytics:', error);
+      logger.error('[PostHog] Failed to flush:', error);
     }
   }
 }

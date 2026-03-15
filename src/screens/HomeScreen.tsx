@@ -50,6 +50,7 @@ import { useLearnerProfileStore } from '../stores/learnerProfileStore';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { useAuthStore } from '../stores/authStore';
 import { FriendActivityStrip } from '../components/FriendActivityStrip';
+import { WeeklyFeaturedSongCard, getWeeklyFeaturedIndex } from '../components/WeeklyFeaturedSongCard';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -138,12 +139,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
   const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(1, minutesPracticedToday / dailyGoalMinutes) : 0;
 
+  // Song summaries loader (must be declared before useFocusEffect that uses it)
+  const loadSongSummaries = useSongStore((s) => s.loadSummaries);
+
   // Recompute session plan when returning from exercises
   const [focusCounter, setFocusCounter] = useState(0);
   useFocusEffect(
     useCallback(() => {
       setFocusCounter((c) => c + 1);
-    }, []),
+      // Load song summaries so Music Library spotlight shows real count
+      const summaries = useSongStore.getState().summaries;
+      if (!summaries || summaries.length === 0) {
+        loadSongSummaries();
+      }
+    }, [loadSongSummaries]),
   );
 
   // Curriculum-driven progress
@@ -351,7 +360,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // Song library data for spotlight card
   const songSummaries = useSongStore((s) => s.summaries);
-  const totalSongs = songSummaries.length || 124;
+  const totalSongs = songSummaries.length;
   const genres = useMemo(() => {
     const genreSet = new Set(songSummaries.map((s) => s.metadata.genre));
     return genreSet.size || 6;
@@ -369,6 +378,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       genre: s.metadata.genre,
       difficulty: s.metadata.difficulty,
     };
+  }, [songSummaries]);
+
+  // Weekly featured song (deterministic per-week selection)
+  const weeklyFeaturedSong = useMemo(() => {
+    if (songSummaries.length === 0) return null;
+    const idx = getWeeklyFeaturedIndex(songSummaries.length);
+    return songSummaries[idx];
   }, [songSummaries]);
 
   // Decayed skills for review card
@@ -401,6 +417,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={styles.gemCountText}>{gems}</Text>
                 </View>
                 <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel="Open settings"
                   style={styles.settingsBtn}
                   onPress={onNavigateToSettings ?? (() => navigation.navigate('MainTabs', { screen: 'Profile' }))}
                 >
@@ -526,6 +544,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <View style={styles.practiceHeader}>
               <Text style={styles.sectionTitle}>Today's Practice</Text>
               <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel="See all daily practice exercises"
                 onPress={() => navigation.navigate('DailySession')}
                 style={styles.seeAllBtn}
               >
@@ -590,7 +610,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* Free Play */}
         <Animated.View style={[styles.section, staggerStyle(4)]}>
-          <PressableScale haptic onPress={() => navigation.navigate('FreePlay')}>
+          <PressableScale accessibilityRole="button" accessibilityLabel="Free Play mode" haptic onPress={() => navigation.navigate('FreePlay')}>
             <View style={styles.freePlayOuter}>
               <View style={styles.freePlayCard} testID="free-play-card">
                 {/* Background music note decorations */}
@@ -637,8 +657,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </GameCard>
         </Animated.View>
 
+        {/* Weekly Featured Song */}
+        {weeklyFeaturedSong && (
+          <Animated.View style={[styles.section, staggerStyle(6)]}>
+            <GameCard rarity="rare" testID="weekly-song-game-card">
+              <WeeklyFeaturedSongCard
+                song={weeklyFeaturedSong}
+                onPlay={(songId) => navigation.navigate('SongPlayer', { songId })}
+              />
+            </GameCard>
+          </Animated.View>
+        )}
+
         {/* Daily Reward Calendar */}
-        <Animated.View style={[styles.section, staggerStyle(6)]}>
+        <Animated.View style={[styles.section, staggerStyle(7)]}>
           <DailyRewardCalendar
             days={dailyRewards.days}
             currentDay={dailyRewards.currentDay}
@@ -649,7 +681,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* Review Challenge (conditional — only when skills are decaying) */}
         {decayedSkillIds.length > 0 && (
-          <Animated.View style={[styles.section, staggerStyle(7)]}>
+          <Animated.View style={[styles.section, staggerStyle(8)]}>
             <GameCard rarity="rare" testID="review-game-card">
               <ReviewChallengeCard
                 decayedSkills={decayedSkillIds}
@@ -669,7 +701,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
 
         {/* Salsa coach greeting */}
-        <Animated.View style={[styles.section, staggerStyle(8)]}>
+        <Animated.View style={[styles.section, staggerStyle(9)]}>
           <SalsaCoach
             mood={mascotMood}
             size="small"
@@ -743,7 +775,7 @@ function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
                 : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore;
 
               return (
-                <PressableScale key={`${ref.exerciseId}-${i}`} haptic onPress={() => onExercisePress(ref)}>
+                <PressableScale key={`${ref.exerciseId}-${i}`} accessibilityRole="button" accessibilityLabel={`${title}${isCompleted ? ', completed' : ''}`} haptic onPress={() => onExercisePress(ref)}>
                   <View style={[styles.practiceExerciseCard, { borderColor: isCompleted ? glowColor(COLORS.success, 0.3) : sec.border, backgroundColor: isCompleted ? glowColor(COLORS.success, 0.06) : sec.bg }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.practiceExerciseTitle, isCompleted && { color: COLORS.success }]} numberOfLines={1}>

@@ -16,8 +16,8 @@
   "settings": {
     "tempo": 63,
     "timeSignature": [
-      4,
-      4
+      6,
+      8
     ],
     "keySignature": "C",
     "countIn": 4,
@@ -28,97 +28,97 @@
     {
       "note": 60,
       "startBeat": 0,
-      "durationBeats": 1,
+      "durationBeats": 1.5,
       "hand": "right"
     },
     {
       "note": 62,
-      "startBeat": 1,
-      "durationBeats": 0.5,
+      "startBeat": 1.5,
+      "durationBeats": 0.75,
       "hand": "right"
     },
     {
       "note": 64,
-      "startBeat": 1.5,
-      "durationBeats": 0.5,
+      "startBeat": 2.25,
+      "durationBeats": 0.75,
       "hand": "right"
     },
     {
       "note": 65,
-      "startBeat": 2,
-      "durationBeats": 1.5,
+      "startBeat": 3,
+      "durationBeats": 2.25,
       "hand": "right"
     },
     {
       "note": 64,
-      "startBeat": 3.5,
-      "durationBeats": 0.5,
+      "startBeat": 5.25,
+      "durationBeats": 0.75,
       "hand": "right"
     },
     {
       "note": 62,
-      "startBeat": 4,
-      "durationBeats": 1,
-      "hand": "right"
-    },
-    {
-      "note": 60,
-      "startBeat": 5,
-      "durationBeats": 0.5,
-      "hand": "right"
-    },
-    {
-      "note": 59,
-      "startBeat": 5.5,
-      "durationBeats": 2,
-      "hand": "right"
-    },
-    {
-      "note": 67,
-      "startBeat": 8,
-      "durationBeats": 1,
-      "hand": "right"
-    },
-    {
-      "note": 69,
-      "startBeat": 9,
-      "durationBeats": 0.5,
-      "hand": "right"
-    },
-    {
-      "note": 71,
-      "startBeat": 9.5,
-      "durationBeats": 0.5,
-      "hand": "right"
-    },
-    {
-      "note": 72,
-      "startBeat": 10,
+      "startBeat": 6,
       "durationBeats": 1.5,
       "hand": "right"
     },
     {
-      "note": 71,
-      "startBeat": 11.5,
-      "durationBeats": 0.5,
+      "note": 60,
+      "startBeat": 7.5,
+      "durationBeats": 0.75,
       "hand": "right"
     },
     {
-      "note": 69,
-      "startBeat": 12,
-      "durationBeats": 1,
+      "note": 59,
+      "startBeat": 8.25,
+      "durationBeats": 3,
       "hand": "right"
     },
     {
       "note": 67,
-      "startBeat": 13,
-      "durationBeats": 0.5,
+      "startBeat": 12,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 13.5,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 14.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 15,
+      "durationBeats": 2.25,
+      "hand": "right"
+    },
+    {
+      "note": 71,
+      "startBeat": 17.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 18,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 19.5,
+      "durationBeats": 0.75,
       "hand": "right"
     },
     {
       "note": 60,
-      "startBeat": 13.5,
-      "durationBeats": 2,
+      "startBeat": 20.25,
+      "durationBeats": 3,
       "hand": "right"
     }
   ],

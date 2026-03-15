@@ -1,0 +1,18 @@
+{
+  "id": "classical",
+  "title": "Classical",
+  "description": "Technique & repertoire — scales, arpeggios, Bach to Beethoven",
+  "icon": "violin",
+  "color": "#CE93D8",
+  "emoji": "\ud83c\udfbb",
+  "lessons": [
+    "lesson-01", "lesson-02", "lesson-03", "lesson-04", "lesson-05",
+    "lesson-07", "lesson-08", "lesson-09", "lesson-10", "lesson-11",
+    "lesson-16", "lesson-19", "lesson-20",
+    "lesson-21", "lesson-22",
+    "lesson-29", "lesson-30", "lesson-31", "lesson-32", "lesson-33",
+    "lesson-34",
+    "lesson-37", "lesson-39", "lesson-40"
+  ],
+  "branchesAt": "lesson-05"
+}

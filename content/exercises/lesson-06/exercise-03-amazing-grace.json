@@ -26,7 +26,7 @@
     "keySignature": "C",
     "countIn": 3,
     "metronomeEnabled": true,
-    "loopEnabled": true
+    "loopEnabled": false
   },
   "notes": [
     {
@@ -132,7 +132,7 @@
   "scoring": {
     "timingToleranceMs": 60,
     "timingGracePeriodMs": 160,
-    "velocitySensitive": false,
+    "velocitySensitive": true,
     "passingScore": 72,
     "starThresholds": [
       72,

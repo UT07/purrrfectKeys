@@ -8,6 +8,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { captureAIGeneration } from './posthogClient';
 
 // ============================================================================
 // Type Definitions (mirrored from client geminiExerciseService.ts)
@@ -331,7 +332,7 @@ export const generateExercise = onCall(
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: {
           responseMimeType: 'application/json',
           temperature: 0.7,
@@ -342,7 +343,15 @@ export const generateExercise = onCall(
       const allowedMidi = data.generationHints?.targetMidi;
 
       // First attempt
+      const aiStart = Date.now();
       let exercise = await attemptGeneration(model, prompt, allowedMidi);
+      captureAIGeneration({
+        distinctId: uid,
+        model: 'gemini-2.5-flash',
+        provider: 'google',
+        latencySeconds: (Date.now() - aiStart) / 1000,
+        isError: exercise === null,
+      });
 
       // Retry once with stronger guidance on failure
       if (!exercise) {
@@ -352,7 +361,15 @@ export const generateExercise = onCall(
         const retryPrompt =
           prompt +
           `\n\nPrevious attempt was invalid. Ensure all MIDI notes are 36-96 and intervals are reasonable.${midiHint}`;
+        const retryStart = Date.now();
         exercise = await attemptGeneration(model, retryPrompt, allowedMidi);
+        captureAIGeneration({
+          distinctId: uid,
+          model: 'gemini-2.5-flash',
+          provider: 'google',
+          latencySeconds: (Date.now() - retryStart) / 1000,
+          isError: exercise === null,
+        });
       }
 
       if (!exercise) {

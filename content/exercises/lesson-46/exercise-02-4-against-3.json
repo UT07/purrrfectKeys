@@ -1,0 +1,260 @@
+{
+  "id": "lesson-46-ex-02",
+  "version": 1,
+  "metadata": {
+    "title": "4 Against 3",
+    "description": "Four notes in one hand against three in the other",
+    "difficulty": 5,
+    "estimatedMinutes": 2,
+    "skills": [
+      "cross-rhythms",
+      "mixed-meter"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      5,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 48,
+      "startBeat": 0,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 0.75,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 1.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 2.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 3,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 3.75,
+      "durationBeats": 0.25,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 52,
+      "startBeat": 4,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 55,
+      "startBeat": 4.75,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 5.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 69,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 6.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 7,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 8,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 8.75,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 9.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 69,
+      "startBeat": 10.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 65,
+      "startBeat": 11,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 12,
+      "durationBeats": 4,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 12,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 12.75,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 13.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 14.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 15,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 15.75,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 16.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 30,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: 3-against-4 polyrhythm and hemiola patterns — different rhythms in each hand.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on 4 Against 3! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

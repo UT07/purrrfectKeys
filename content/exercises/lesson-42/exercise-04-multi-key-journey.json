@@ -1,0 +1,146 @@
+{
+  "id": "lesson-42-ex-04",
+  "version": 1,
+  "metadata": {
+    "title": "Multi-Key Journey",
+    "description": "A piece that visits C, G, D, and back to C major",
+    "difficulty": 4,
+    "estimatedMinutes": 2,
+    "skills": [
+      "modulation-technique",
+      "relative-key-fluency"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 73,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 65,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 8,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 74,
+      "startBeat": 8.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 12,
+      "durationBeats": 4,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: key change exercise using pivot chords — start in c major.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Multi-Key Journey! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

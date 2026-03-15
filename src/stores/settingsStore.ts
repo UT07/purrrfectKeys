@@ -63,6 +63,7 @@ const defaultSettings: SettingsData = {
   displayName: 'Piano Student',
   avatarEmoji: '\uD83C\uDFB9', // piano emoji
   selectedCatId: 'mini-meowww', // default cat character
+  selectedPath: 'piano-basics' as const, // default learning path
   equippedAccessories: {} as Record<string, string>,
   ownedAccessories: [] as string[],
 };
@@ -288,6 +289,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         }
       }
     } catch { /* League sync is best-effort */ }
+  },
+
+  setSelectedPath: (pathId: string) => {
+    set({ selectedPath: pathId as any });
+    debouncedSave({ ...get(), selectedPath: pathId as any });
   },
 
   equipAccessory: (category: string, accessoryId: string) => {

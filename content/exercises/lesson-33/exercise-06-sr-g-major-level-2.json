@@ -22,7 +22,7 @@
     "keySignature": "G",
     "countIn": 4,
     "metronomeEnabled": true,
-    "loopEnabled": true
+    "loopEnabled": false
   },
   "notes": [
     {
@@ -161,5 +161,6 @@
     "highlightHands": false,
     "showPianoRoll": true,
     "showStaffNotation": false
-  }
+  },
+  "type": "sightReading"
 }

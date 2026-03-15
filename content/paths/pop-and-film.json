@@ -1,0 +1,17 @@
+{
+  "id": "pop-and-film",
+  "title": "Pop & Film",
+  "description": "Play songs you know — chord-first approach with familiar melodies",
+  "icon": "music",
+  "color": "#FF6B8A",
+  "emoji": "\ud83c\udfa4",
+  "lessons": [
+    "lesson-01", "lesson-02", "lesson-03", "lesson-04", "lesson-05",
+    "lesson-06", "lesson-13", "lesson-14", "lesson-15", "lesson-25",
+    "lesson-07", "lesson-08", "lesson-09",
+    "lesson-17", "lesson-18",
+    "lesson-34", "lesson-35",
+    "lesson-37", "lesson-38", "lesson-40"
+  ],
+  "branchesAt": "lesson-05"
+}

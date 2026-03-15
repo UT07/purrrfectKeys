@@ -226,7 +226,13 @@ export function AuthScreen(): React.ReactElement {
       });
 
       if (appleCredential.identityToken) {
-        await useAuthStore.getState().signInWithApple(appleCredential.identityToken, rawNonce);
+        // If user is currently anonymous, link to preserve their uid + data.
+        const authState = useAuthStore.getState();
+        if (authState.isAnonymous && authState.user) {
+          await authState.linkWithApple(appleCredential.identityToken, rawNonce);
+        } else {
+          await authState.signInWithApple(appleCredential.identityToken, rawNonce);
+        }
       }
     } catch (err: unknown) {
       const errObj = err as { code?: string; message?: string };
@@ -256,10 +262,33 @@ export function AuthScreen(): React.ReactElement {
         Alert.alert('Sign-In Failed', 'No authentication token received. Please try again.');
         return;
       }
-      await useAuthStore.getState().signInWithGoogle(idToken);
+      // If user is currently anonymous, link the Google credential to preserve their uid + data.
+      // Otherwise sign in fresh (returns existing or creates new Firebase user for that Google account).
+      const authState = useAuthStore.getState();
+      if (authState.isAnonymous && authState.user) {
+        await authState.linkWithGoogle(idToken);
+      } else {
+        await authState.signInWithGoogle(idToken);
+      }
     } catch (err: unknown) {
       const errObj = err as { code?: string; message?: string };
       if (errObj.code === 'SIGN_IN_CANCELLED') return;
+      // If linking fails because the Google account is already linked to another user,
+      // fall back to regular sign-in (user will get that account's data instead).
+      if (errObj.code === 'auth/credential-already-in-use') {
+        try {
+          const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+          const response = await GoogleSignin.signIn();
+          if (response.type === 'cancelled') return;
+          const fallbackToken = response.data?.idToken;
+          if (fallbackToken) {
+            await useAuthStore.getState().signInWithGoogle(fallbackToken);
+            return;
+          }
+        } catch {
+          // Fall through to error alert
+        }
+      }
       logger.warn('[AuthScreen] Google sign-in error:', err);
       Alert.alert('Sign-In Failed', errObj.message ?? 'Google Sign-In failed. Please try again.');
     }

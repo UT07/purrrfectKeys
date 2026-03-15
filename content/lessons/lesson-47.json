@@ -1,0 +1,83 @@
+{
+  "id": "lesson-47",
+  "version": 1,
+  "metadata": {
+    "title": "Baroque & Romantic Repertoire",
+    "description": "Perform simplified versions of great classical works from Bach to Chopin",
+    "difficulty": 5,
+    "estimatedMinutes": 25,
+    "skills": [
+      "baroque-repertoire",
+      "romantic-repertoire"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-47-ex-01",
+      "title": "Bach Minuet in G",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-02",
+      "title": "Bach Prelude in C",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-03",
+      "title": "Two-Part Invention",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-04",
+      "title": "Baroque Dance Suite",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-05",
+      "title": "Counterpoint Exercise",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-06",
+      "title": "Chopin Prelude in E Minor",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-07",
+      "title": "Schumann Scenes",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-08",
+      "title": "Romantic Nocturne",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-47-ex-09",
+      "title": "Romantic Expression Study",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-47-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-46"
+  },
+  "xpReward": 1000,
+  "estimatedMinutes": 25
+}

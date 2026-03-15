@@ -254,8 +254,9 @@ describe('Adaptive Learning Integration', () => {
       const profile = makeProfile({ masteredSkills: allMastered });
       const plan = generateSessionPlan(profile, allMastered);
 
-      // Lesson section should have AI-generated exercises (ai or ai-with-fallback)
-      const hasAI = plan.lesson.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
+      // Endgame session should have AI-generated exercises somewhere (warmUp/lesson/challenge)
+      const allRefs = [...plan.warmUp, ...plan.lesson, ...plan.challenge];
+      const hasAI = allRefs.some((r) => r.source === 'ai' || r.source === 'ai-with-fallback');
       expect(hasAI).toBe(true);
 
       // Reasoning should mention endgame or post-curriculum context

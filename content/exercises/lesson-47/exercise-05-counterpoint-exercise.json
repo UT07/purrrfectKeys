@@ -1,0 +1,218 @@
+{
+  "id": "lesson-47-ex-05",
+  "version": 1,
+  "metadata": {
+    "title": "Counterpoint Exercise",
+    "description": "Practice independent voice leading with two melodic lines",
+    "difficulty": 5,
+    "estimatedMinutes": 2,
+    "skills": [
+      "baroque-repertoire",
+      "romantic-repertoire"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 80,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 48,
+      "startBeat": 0,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 1.5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 50,
+      "startBeat": 2,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 2.5,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 52,
+      "startBeat": 3,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 4,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 5,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 6,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 6,
+      "durationBeats": 2,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 7,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 53,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 52,
+      "startBeat": 9,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 10,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 50,
+      "startBeat": 10,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 48,
+      "startBeat": 11,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 12,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 45,
+      "startBeat": 12,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 43,
+      "startBeat": 13,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 14,
+      "durationBeats": 2,
+      "hand": "right"
+    },
+    {
+      "note": 40,
+      "startBeat": 14,
+      "durationBeats": 4,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 16,
+      "durationBeats": 2,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 30,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: bach invention-style piece — two independent voices.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on Counterpoint Exercise! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

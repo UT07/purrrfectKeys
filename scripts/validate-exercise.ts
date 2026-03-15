@@ -209,6 +209,18 @@ export function validateExercise(exercise: unknown): ValidationResult {
     }
   }
 
+  // --- Pedagogical cross-checks ---
+  if (ex.metadata && ex.settings && ex.scoring && ex.notes) {
+    validatePedagogicalConsistency(
+      ex.metadata as Record<string, unknown>,
+      ex.settings as Record<string, unknown>,
+      ex.scoring as Record<string, unknown>,
+      ex.notes as Array<Record<string, unknown>>,
+      errors,
+      warnings,
+    );
+  }
+
   return {
     exerciseId,
     valid: errors.length === 0,
@@ -561,6 +573,168 @@ function validateHints(hints: Record<string, unknown>, errors: ValidationIssue[]
   }
   if (!Array.isArray(hints.commonMistakes)) {
     warnings.push({ field: 'hints.commonMistakes', message: 'commonMistakes should be an array' });
+  }
+}
+
+// ============================================================================
+// Pedagogical consistency validation
+// ============================================================================
+
+/** Skills that require specific time signatures */
+const COMPOUND_TIME_SKILLS = new Set([
+  'compound-time', '6-8-time', '6-8-time-basics', '12-8-time',
+  'compound-meters', 'mixed-meter', 'irregular-time',
+]);
+
+/** Skills that require velocity-sensitive scoring */
+const DYNAMICS_SKILLS = new Set([
+  'dynamics-p-f', 'dynamics', 'crescendo-diminuendo', 'expression',
+  'dynamic-contrast', 'forte-piano', 'pianissimo', 'fortissimo',
+  'dynamics-control', 'musical-expression',
+]);
+
+/** Skills that indicate left-hand content */
+const LEFT_HAND_SKILLS = new Set([
+  'lh-c-position', 'lh-g-position', 'left-hand', 'lh-melody',
+  'lh-bass-patterns', 'lh-independence', 'bass-line',
+  'accompaniment-patterns', 'alberti-bass',
+]);
+
+/** Skills that indicate both-hands content */
+const BOTH_HANDS_SKILLS = new Set([
+  'hands-together-basic', 'hands-together', 'both-hands',
+  'hand-independence', 'hand-coordination', 'two-hand-playing',
+  'contrary-motion', 'parallel-motion',
+]);
+
+/** Key signature → expected notes (white keys only for major keys) */
+const KEY_SIGNATURE_NOTES: Record<string, Set<number>> = {
+  'C': new Set([0, 2, 4, 5, 7, 9, 11]),       // C D E F G A B
+  'G': new Set([0, 2, 4, 6, 7, 9, 11]),        // includes F#
+  'D': new Set([1, 2, 4, 6, 7, 9, 11]),        // includes C#, F#
+  'F': new Set([0, 2, 4, 5, 7, 9, 10]),        // includes Bb
+  'A': new Set([1, 2, 4, 6, 8, 9, 11]),        // includes C#, F#, G#
+  'E': new Set([1, 3, 4, 6, 8, 9, 11]),        // includes C#, D#, F#, G#
+  'Bb': new Set([0, 2, 3, 5, 7, 9, 10]),       // includes Bb, Eb
+  'Eb': new Set([0, 2, 3, 5, 7, 8, 10]),       // includes Bb, Eb, Ab
+  'Ab': new Set([0, 1, 3, 5, 7, 8, 10]),       // includes Bb, Eb, Ab, Db
+};
+
+function validatePedagogicalConsistency(
+  metadata: Record<string, unknown>,
+  settings: Record<string, unknown>,
+  scoring: Record<string, unknown>,
+  notes: Array<Record<string, unknown>>,
+  errors: ValidationIssue[],
+  warnings: ValidationIssue[],
+): void {
+  const skills = Array.isArray(metadata.skills) ? metadata.skills as string[] : [];
+  const timeSignature = settings.timeSignature as [number, number] | undefined;
+  const keySignature = settings.keySignature as string | undefined;
+  const velocitySensitive = scoring.velocitySensitive as boolean | undefined;
+  const description = (metadata.description as string || '').toLowerCase();
+  const title = (metadata.title as string || '').toLowerCase();
+
+  // 1. Compound time skills must have non-4/4 time signature
+  const hasCompoundTimeSkill = skills.some(s => COMPOUND_TIME_SKILLS.has(s));
+  const descMentionsCompound = /6\/8|12\/8|compound|waltz|3\/4/.test(description) || /6\/8|12\/8|compound/.test(title);
+  if ((hasCompoundTimeSkill || descMentionsCompound) && timeSignature) {
+    const [num, den] = timeSignature;
+    const isCompound = (num === 6 && den === 8) || (num === 12 && den === 8) || (num === 3 && den === 4) || (num === 9 && den === 8);
+    if (!isCompound && num === 4 && den === 4) {
+      errors.push({
+        field: 'pedagogical',
+        message: `Exercise teaches compound time (skills: [${skills.filter(s => COMPOUND_TIME_SKILLS.has(s)).join(',')}]) but time signature is [${num},${den}] — should be [6,8], [3,4], [12,8], etc.`,
+      });
+    }
+  }
+
+  // 2. Dynamics skills must have velocitySensitive = true
+  const hasDynamicsSkill = skills.some(s => DYNAMICS_SKILLS.has(s));
+  const descMentionsDynamics = /dynamics|forte|piano|crescendo|diminuendo|loud|soft|p and f/.test(description);
+  if ((hasDynamicsSkill || descMentionsDynamics) && velocitySensitive === false) {
+    errors.push({
+      field: 'pedagogical',
+      message: `Exercise teaches dynamics (skills: [${skills.filter(s => DYNAMICS_SKILLS.has(s)).join(',')}]) but velocitySensitive is false — dynamics cannot be scored`,
+    });
+  }
+
+  // 3. Left-hand skills should have left-hand notes
+  const hasLeftHandSkill = skills.some(s => LEFT_HAND_SKILLS.has(s));
+  const hasLeftHandNotes = notes.some(n => n.hand === 'left');
+  if (hasLeftHandSkill && !hasLeftHandNotes && notes.length > 0) {
+    warnings.push({
+      field: 'pedagogical',
+      message: `Exercise has left-hand skills [${skills.filter(s => LEFT_HAND_SKILLS.has(s)).join(',')}] but no notes marked hand="left"`,
+    });
+  }
+
+  // 4. Both-hands skills should have both left and right hand notes
+  const hasBothHandsSkill = skills.some(s => BOTH_HANDS_SKILLS.has(s));
+  const hasRightHandNotes = notes.some(n => n.hand === 'right');
+  if (hasBothHandsSkill && notes.length > 0) {
+    if (!hasLeftHandNotes && !hasRightHandNotes) {
+      warnings.push({
+        field: 'pedagogical',
+        message: `Exercise has both-hands skills but no hand assignments on notes`,
+      });
+    } else if (!hasLeftHandNotes) {
+      warnings.push({
+        field: 'pedagogical',
+        message: `Exercise has both-hands skills but no left-hand notes`,
+      });
+    } else if (!hasRightHandNotes) {
+      warnings.push({
+        field: 'pedagogical',
+        message: `Exercise has both-hands skills but no right-hand notes`,
+      });
+    }
+  }
+
+  // 5. Key signature consistency — check if notes actually fit the declared key
+  if (keySignature && KEY_SIGNATURE_NOTES[keySignature] && notes.length > 0) {
+    const expectedPitchClasses = KEY_SIGNATURE_NOTES[keySignature];
+    let outOfKeyCount = 0;
+    const totalNotes = notes.filter(n => typeof n.note === 'number').length;
+    for (const n of notes) {
+      if (typeof n.note !== 'number') continue;
+      const pitchClass = n.note % 12;
+      if (!expectedPitchClasses.has(pitchClass)) {
+        outOfKeyCount++;
+      }
+    }
+    const outOfKeyPct = totalNotes > 0 ? (outOfKeyCount / totalNotes) * 100 : 0;
+    // If > 40% of notes are outside the key, it's likely wrong
+    if (outOfKeyPct > 40 && totalNotes >= 8) {
+      warnings.push({
+        field: 'pedagogical',
+        message: `${outOfKeyCount}/${totalNotes} notes (${Math.round(outOfKeyPct)}%) are outside the declared key of ${keySignature} — key signature may be wrong`,
+      });
+    }
+  }
+
+  // 6. Difficulty vs note complexity
+  const difficulty = metadata.difficulty as number | undefined;
+  if (difficulty !== undefined && notes.length > 0) {
+    const midiNotes = notes.filter(n => typeof n.note === 'number').map(n => n.note as number);
+    const uniquePitches = new Set(midiNotes.map(n => n % 12));
+    const hasBlackKeys = midiNotes.some(n => [1, 3, 6, 8, 10].includes(n % 12));
+
+    // Difficulty 1 with black keys is suspicious
+    if (difficulty === 1 && hasBlackKeys) {
+      warnings.push({
+        field: 'pedagogical',
+        message: `Difficulty 1 exercise uses black keys (sharps/flats) — beginners typically play only white keys`,
+      });
+    }
+
+    // Difficulty 1-2 with > 7 unique pitch classes is complex
+    if (difficulty <= 2 && uniquePitches.size > 7) {
+      warnings.push({
+        field: 'pedagogical',
+        message: `Difficulty ${difficulty} exercise uses ${uniquePitches.size} unique pitch classes — may be too complex for this level`,
+      });
+    }
   }
 }
 

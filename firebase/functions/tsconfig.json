@@ -6,7 +6,9 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -16,6 +18,11 @@
     "declarationMap": true
   },
   "compileOnSave": true,
-  "include": ["src"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
 }

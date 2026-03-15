@@ -1,0 +1,83 @@
+{
+  "id": "lesson-48",
+  "version": 1,
+  "metadata": {
+    "title": "Contemporary & Film Scores",
+    "description": "Play modern minimalist pieces and iconic film score arrangements",
+    "difficulty": 5,
+    "estimatedMinutes": 25,
+    "skills": [
+      "contemporary-repertoire",
+      "film-score-performance"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-48-ex-01",
+      "title": "Minimalist Pattern",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-02",
+      "title": "Einaudi-Style Piece",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-03",
+      "title": "Yiruma-Style Ballad",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-04",
+      "title": "Ambient Textures",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-05",
+      "title": "Modern Classical Fusion",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-06",
+      "title": "Epic Film Theme",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-07",
+      "title": "Tender Film Moment",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-08",
+      "title": "Action Sequence",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-48-ex-09",
+      "title": "Complete Film Cue",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-48-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-47"
+  },
+  "xpReward": 1000,
+  "estimatedMinutes": 25
+}

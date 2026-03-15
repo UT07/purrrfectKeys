@@ -1,0 +1,83 @@
+{
+  "id": "lesson-45",
+  "version": 1,
+  "metadata": {
+    "title": "Compound Time & Swing Feel",
+    "description": "Master 6/8 time, 12/8 grooves, swing feel, and shuffle rhythms",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "compound-time",
+      "swing-and-shuffle"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-45-ex-01",
+      "title": "6/8 Time Basics",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-02",
+      "title": "6/8 Melody",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-03",
+      "title": "12/8 Blues",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-04",
+      "title": "Irish Jig",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-05",
+      "title": "Swing Eighths",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-06",
+      "title": "Shuffle Pattern",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-07",
+      "title": "Boogie-Woogie Bass",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-08",
+      "title": "Waltz to 6/8",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-45-ex-09",
+      "title": "Jazz Standard Swing",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-45-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-44"
+  },
+  "xpReward": 900,
+  "estimatedMinutes": 25
+}

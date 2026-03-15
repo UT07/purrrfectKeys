@@ -1,0 +1,83 @@
+{
+  "id": "lesson-43",
+  "version": 1,
+  "metadata": {
+    "title": "Seventh Chords & Color Chords",
+    "description": "Add richness with major 7th, minor 7th, dominant 7th, sus, and add9 chords",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "seventh-chords",
+      "sus-and-add-chords"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-43-ex-01",
+      "title": "Major Seventh Chords",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-02",
+      "title": "Minor Seventh Chords",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-03",
+      "title": "Dominant Seventh Chords",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-04",
+      "title": "7th Chord Progressions",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-05",
+      "title": "Suspended Chords",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-06",
+      "title": "Add9 Chords",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-07",
+      "title": "Color Chord Song",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-08",
+      "title": "Jazz Ballad Chords",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-43-ex-09",
+      "title": "Chord Voicing Exploration",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-43-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-42"
+  },
+  "xpReward": 900,
+  "estimatedMinutes": 25
+}

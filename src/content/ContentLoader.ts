@@ -163,6 +163,16 @@ const LESSON_REGISTRY: Record<string, LessonManifest> = {
   'lesson-38': require('../../content/lessons/lesson-38.json'),
   'lesson-39': require('../../content/lessons/lesson-39.json'),
   'lesson-40': require('../../content/lessons/lesson-40.json'),
+  'lesson-41': require('../../content/lessons/lesson-41.json'),
+  'lesson-42': require('../../content/lessons/lesson-42.json'),
+  'lesson-43': require('../../content/lessons/lesson-43.json'),
+  'lesson-44': require('../../content/lessons/lesson-44.json'),
+  'lesson-45': require('../../content/lessons/lesson-45.json'),
+  'lesson-46': require('../../content/lessons/lesson-46.json'),
+  'lesson-47': require('../../content/lessons/lesson-47.json'),
+  'lesson-48': require('../../content/lessons/lesson-48.json'),
+  'lesson-49': require('../../content/lessons/lesson-49.json'),
+  'lesson-50': require('../../content/lessons/lesson-50.json'),
 };
 
 // Ordered list of lesson IDs (determines display order)
@@ -174,6 +184,8 @@ const LESSON_ORDER = [
   'lesson-25', 'lesson-26', 'lesson-27', 'lesson-28', 'lesson-29', 'lesson-30',
   'lesson-31', 'lesson-32', 'lesson-33', 'lesson-34', 'lesson-35', 'lesson-36',
   'lesson-37', 'lesson-38', 'lesson-39', 'lesson-40',
+  'lesson-41', 'lesson-42', 'lesson-43', 'lesson-44', 'lesson-45',
+  'lesson-46', 'lesson-47', 'lesson-48', 'lesson-49', 'lesson-50',
 ];
 
 // ============================================================================

@@ -22,7 +22,7 @@ import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../theme/tokens';
 
 const MIN_DISPLAY_MS = 1000;
 /** Safety cap — dismiss even if TTS hangs (e.g. ElevenLabs timeout) */
-const MAX_SPEECH_WAIT_MS = 15000;
+const MAX_SPEECH_WAIT_MS = 8000;
 
 export interface ExerciseLoadingScreenProps {
   /** Controls visibility — returns null when false */

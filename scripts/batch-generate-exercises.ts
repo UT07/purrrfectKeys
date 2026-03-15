@@ -187,6 +187,32 @@ const GENERATION_HINTS: Record<string, GenerationHints> = {
   'full-piece-pop': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Complete pop song arrangement — verse and chorus, chord accompaniment, tempo 72-88' },
   'repertoire-building': { keySignature: 'G major', hand: 'both', exerciseTypes: ['melody'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Concert piece in G major with varied sections — a mini-repertoire showpiece, tempo 80-100' },
   'year-one-mastery': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord', 'scale'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Comprehensive review combining scales, chords, arpeggios, and melody in a single piece, tempo 75-95' },
+
+  // Tier 16: New Keys & Modulation
+  'e-major-scale': { keySignature: 'E major', targetMidi: [64, 66, 68, 69, 71, 73, 75, 76], hand: 'both', exerciseTypes: ['scale'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'E major scale with 4 sharps (F# C# G# D#), both hands, one octave ascending and descending, tempo 65-85' },
+  'a-major-scale': { keySignature: 'A major', targetMidi: [57, 59, 61, 62, 64, 66, 68, 69], hand: 'both', exerciseTypes: ['scale'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'A major scale with 3 sharps (F# C# G#), both hands, one octave, tempo 65-85' },
+  'eb-major-scale': { keySignature: 'Eb major', targetMidi: [63, 65, 67, 68, 70, 72, 74, 75], hand: 'both', exerciseTypes: ['scale'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'Eb major scale with 3 flats (Bb Eb Ab), both hands, one octave, tempo 65-85' },
+  'modulation-technique': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord', 'melody'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'Key change exercise using pivot chords — start in C major, modulate to G major via shared chords, tempo 65-80' },
+  'relative-key-fluency': { keySignature: 'C major', hand: 'both', exerciseTypes: ['scale', 'melody'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'Switch between relative major/minor pairs (C/Am, G/Em, F/Dm) in melodic passages, tempo 65-80' },
+
+  // Tier 17: Advanced Chords & Rhythm
+  'seventh-chords': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'Major 7th (Cmaj7), minor 7th (Am7), dominant 7th (G7) chords — blocked and arpeggiated, tempo 60-75' },
+  'sus-and-add-chords': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord'], minDifficulty: 4, maxDifficulty: 4, promptHint: 'Sus2, sus4, and add9 chords in progressions — Csus2-Csus4-C-Cadd9, tempo 60-75' },
+  'advanced-progressions': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord', 'melody'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Jazz-influenced progressions: ii-V-I (Dm7-G7-Cmaj7), circle of fifths movement, tempo 65-80' },
+  'comping-patterns': { keySignature: 'C major', hand: 'both', exerciseTypes: ['chord', 'rhythm'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Rhythmic chord accompaniment patterns for pop and jazz — syncopated comping over bass, tempo 70-85' },
+  'compound-time': { keySignature: 'C major', hand: 'both', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 4, maxDifficulty: 4, promptHint: '6/8 and 12/8 time with flowing subdivisions — gentle lilting feel, compound meter, tempo 50-65 (dotted quarter = beat)' },
+  'swing-and-shuffle': { keySignature: 'C major', hand: 'both', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Swing feel and shuffle patterns — long-short eighth note pairs, jazz-style walking, tempo 80-100' },
+  'cross-rhythms': { keySignature: 'C major', hand: 'both', exerciseTypes: ['rhythm'], minDifficulty: 4, maxDifficulty: 5, promptHint: '3-against-4 polyrhythm and hemiola patterns — different rhythms in each hand, tempo 60-75' },
+  'mixed-meter': { keySignature: 'C major', hand: 'both', exerciseTypes: ['rhythm', 'melody'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Alternating time signatures (3/4 and 4/4, or 5/4) creating asymmetric phrases, tempo 65-80' },
+
+  // Tier 18: Performance & Repertoire
+  'baroque-repertoire': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Bach invention-style piece — two independent voices, counterpoint, clear articulation, tempo 70-90' },
+  'romantic-repertoire': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Chopin/Schumann-style character piece — expressive melody with arpeggiated accompaniment, tempo 60-80' },
+  'contemporary-repertoire': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Film score or minimalist-style piece — repetitive patterns with evolving harmony, tempo 65-85' },
+  'film-score-performance': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Complete film score arrangement — dramatic dynamics, pedal sustain, wide range, tempo 60-80' },
+  'advanced-sight-reading': { keySignature: 'G major', hand: 'both', exerciseTypes: ['melody'], minDifficulty: 4, maxDifficulty: 5, promptHint: 'Sight reading in sharp/flat keys with complex rhythms — unfamiliar melody, mixed intervals, tempo 55-70' },
+  'improvisation-basics': { keySignature: 'C major', hand: 'right', exerciseTypes: ['melody', 'scale'], minDifficulty: 3, maxDifficulty: 5, promptHint: 'Blues scale and pentatonic improvisation patterns — call-and-response phrases over chord changes, tempo 75-95' },
+  'year-two-mastery': { keySignature: 'C major', hand: 'both', exerciseTypes: ['melody', 'chord', 'scale'], minDifficulty: 5, maxDifficulty: 5, promptHint: 'Grand capstone combining all Year Two skills — modulation, 7th chords, cross-rhythms, expression, 24-32 bars, tempo 75-95' },
 };
 
 // ============================================================================

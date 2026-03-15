@@ -4,9 +4,12 @@
  * Auth flow → Onboarding → Main app
  */
 
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import type { NavigationContainerRef } from '@react-navigation/native';
+import { PostHogProvider } from 'posthog-react-native';
+import { posthog } from '../config/posthog';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigatorScreenParams } from '@react-navigation/native';
@@ -23,6 +26,7 @@ import { AuthScreen } from '../screens/AuthScreen';
 import { EmailAuthScreen } from '../screens/EmailAuthScreen';
 import { AccountScreen } from '../screens/AccountScreen';
 import { TierIntroScreen } from '../screens/TierIntroScreen';
+import { LessonIntroScreen } from '../screens/LessonIntroScreen';
 import { CatSwitchScreen } from '../screens/CatSwitchScreen';
 import { CatStudioScreen } from '../screens/CatStudioScreen';
 import { DebugLogScreen } from '../screens/DebugLogScreen';
@@ -71,8 +75,11 @@ export type RootStackParamList = {
     };
     /** When playing a received challenge — submits score back on completion */
     friendChallengeId?: string;
+    /** Auto-start Salsa replay coaching on mount */
+    replayMode?: boolean;
   };
   TierIntro: { tier: number; locked?: boolean };
+  LessonIntro: { lessonId: string; locked?: boolean };
   SkillAssessment: undefined;
   DailySession: undefined;
   LevelMap: undefined;
@@ -149,6 +156,21 @@ function MainTabs() {
 export function AppNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isInitializing = useAuthStore((s) => s.isInitializing);
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const routeNameRef = useRef<string | undefined>(undefined);
+
+  const onNavigationReady = useCallback(() => {
+    routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
+  }, []);
+
+  const onStateChange = useCallback(() => {
+    const currentRoute = navigationRef.current?.getCurrentRoute();
+    const currentRouteName = currentRoute?.name;
+    if (currentRouteName && currentRouteName !== routeNameRef.current) {
+      posthog.screen(currentRouteName);
+      routeNameRef.current = currentRouteName;
+    }
+  }, []);
 
   // Only block rendering during initial auth state detection (first boot).
   // Do NOT block during in-app operations (sign out, delete account) —
@@ -158,7 +180,8 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} onReady={onNavigationReady} onStateChange={onStateChange}>
+      <PostHogProvider client={posthog} autocapture={{ captureTouches: true, captureScreens: false, propsToCapture: ['testID'] }}>
       <View style={navStyles.root}>
       <OfflineBanner />
       <RootStack.Navigator
@@ -195,6 +218,11 @@ export function AppNavigator() {
             <RootStack.Screen
               name="TierIntro"
               component={TierIntroScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="LessonIntro"
+              component={LessonIntroScreen}
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
@@ -276,6 +304,7 @@ export function AppNavigator() {
         )}
       </RootStack.Navigator>
       </View>
+      </PostHogProvider>
     </NavigationContainer>
   );
 }

@@ -127,9 +127,13 @@ export function parseABC(abcString: string): ABCParseOutput {
     return { error: 'Empty ABC string' };
   }
 
+  // Normalize: collapse double newlines in headers (Gemini often produces \n\n between headers)
+  // ABC spec treats blank lines as tune separators, so X:\n\nT: confuses the parser
+  const normalized = abcString.replace(/\n{2,}/g, '\n');
+
   let tunes: ReturnType<typeof abcjs.parseOnly>;
   try {
-    tunes = abcjs.parseOnly(abcString);
+    tunes = abcjs.parseOnly(normalized);
   } catch {
     return { error: 'Failed to parse ABC notation' };
   }

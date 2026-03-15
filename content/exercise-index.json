@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "generatedAt": "2026-03-11T11:42:37.681Z",
+  "version": 3,
+  "generatedAt": "2026-03-13T20:49:40.341Z",
   "exercises": [
     {
       "id": "lesson-01-ex-01",
@@ -52,7 +52,7 @@
         "keyboard-navigation"
       ],
       "type": "test",
-      "order": 99
+      "order": 4
     },
     {
       "id": "lesson-02-ex-01",
@@ -66,7 +66,7 @@
         "finger-placement"
       ],
       "type": "play",
-      "order": 1
+      "order": 5
     },
     {
       "id": "lesson-02-ex-02",
@@ -80,7 +80,7 @@
         "finger-crossing"
       ],
       "type": "play",
-      "order": 2
+      "order": 6
     },
     {
       "id": "lesson-02-ex-03",
@@ -94,7 +94,7 @@
         "finger-crossing"
       ],
       "type": "play",
-      "order": 3
+      "order": 7
     },
     {
       "id": "lesson-02-ex-04",
@@ -107,8 +107,8 @@
         "c-major",
         "quarter-notes"
       ],
-      "type": "play",
-      "order": 4
+      "type": "earTraining",
+      "order": 8
     },
     {
       "id": "lesson-02-ex-05",
@@ -122,7 +122,7 @@
         "c-major"
       ],
       "type": "play",
-      "order": 5
+      "order": 9
     },
     {
       "id": "lesson-02-ex-06",
@@ -135,8 +135,8 @@
         "c-major",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 6
+      "type": "earTraining",
+      "order": 10
     },
     {
       "id": "lesson-02-ex-07",
@@ -149,8 +149,8 @@
         "rhythm-precision",
         "finger-dexterity"
       ],
-      "type": "play",
-      "order": 7
+      "type": "rhythm",
+      "order": 11
     },
     {
       "id": "lesson-02-ex-08",
@@ -164,7 +164,7 @@
         "finger-placement"
       ],
       "type": "play",
-      "order": 8
+      "order": 12
     },
     {
       "id": "lesson-02-test",
@@ -178,7 +178,7 @@
         "quarter-notes"
       ],
       "type": "test",
-      "order": 99
+      "order": 13
     },
     {
       "id": "lesson-03-ex-01",
@@ -192,7 +192,7 @@
         "note-finding"
       ],
       "type": "play",
-      "order": 1
+      "order": 14
     },
     {
       "id": "lesson-03-ex-02",
@@ -206,7 +206,7 @@
         "finger-placement"
       ],
       "type": "play",
-      "order": 2
+      "order": 15
     },
     {
       "id": "lesson-03-ex-03",
@@ -220,7 +220,7 @@
         "accompaniment"
       ],
       "type": "play",
-      "order": 3
+      "order": 16
     },
     {
       "id": "lesson-03-ex-04",
@@ -234,7 +234,7 @@
         "accompaniment"
       ],
       "type": "play",
-      "order": 4
+      "order": 17
     },
     {
       "id": "lesson-03-ex-05",
@@ -247,8 +247,8 @@
         "rhythm-consistency",
         "bass-pattern"
       ],
-      "type": "play",
-      "order": 5
+      "type": "rhythm",
+      "order": 18
     },
     {
       "id": "lesson-03-test",
@@ -261,7 +261,7 @@
         "accompaniment"
       ],
       "type": "test",
-      "order": 99
+      "order": 19
     },
     {
       "id": "lesson-04-ex-01",
@@ -275,7 +275,7 @@
         "accompaniment"
       ],
       "type": "play",
-      "order": 1
+      "order": 20
     },
     {
       "id": "lesson-04-ex-02",
@@ -289,8 +289,8 @@
         "accompaniment",
         "song-arrangement"
       ],
-      "type": "play",
-      "order": 2
+      "type": "callResponse",
+      "order": 21
     },
     {
       "id": "lesson-04-ex-03",
@@ -304,7 +304,7 @@
         "coordination"
       ],
       "type": "play",
-      "order": 3
+      "order": 22
     },
     {
       "id": "lesson-04-ex-04",
@@ -319,7 +319,7 @@
         "accompaniment"
       ],
       "type": "play",
-      "order": 4
+      "order": 23
     },
     {
       "id": "lesson-04-ex-05",
@@ -332,8 +332,8 @@
         "harmony",
         "simultaneous-notes"
       ],
-      "type": "play",
-      "order": 5
+      "type": "chordId",
+      "order": 24
     },
     {
       "id": "lesson-04-ex-06",
@@ -347,8 +347,8 @@
         "independence",
         "technique"
       ],
-      "type": "play",
-      "order": 6
+      "type": "earTraining",
+      "order": 25
     },
     {
       "id": "lesson-04-test",
@@ -361,7 +361,7 @@
         "hand-independence"
       ],
       "type": "test",
-      "order": 99
+      "order": 26
     },
     {
       "id": "lesson-05-ex-01",
@@ -375,7 +375,7 @@
         "right-hand"
       ],
       "type": "play",
-      "order": 1
+      "order": 27
     },
     {
       "id": "lesson-05-ex-02",
@@ -389,7 +389,7 @@
         "coordination"
       ],
       "type": "play",
-      "order": 2
+      "order": 28
     },
     {
       "id": "lesson-05-ex-03",
@@ -403,8 +403,8 @@
         "right-hand",
         "sixteen-notes"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 29
     },
     {
       "id": "lesson-05-ex-04",
@@ -417,8 +417,8 @@
         "both-hands",
         "musical-expression"
       ],
-      "type": "play",
-      "order": 4
+      "type": "callResponse",
+      "order": 30
     },
     {
       "id": "lesson-05-test",
@@ -432,7 +432,7 @@
         "technique"
       ],
       "type": "test",
-      "order": 99
+      "order": 31
     },
     {
       "id": "lesson-06-ex-01",
@@ -447,7 +447,7 @@
         "music-history"
       ],
       "type": "play",
-      "order": 1
+      "order": 32
     },
     {
       "id": "lesson-06-ex-02",
@@ -461,8 +461,8 @@
         "coordination",
         "classic-tune"
       ],
-      "type": "play",
-      "order": 2
+      "type": "earTraining",
+      "order": 33
     },
     {
       "id": "lesson-06-ex-03",
@@ -477,7 +477,7 @@
         "musical-expression"
       ],
       "type": "play",
-      "order": 3
+      "order": 34
     },
     {
       "id": "lesson-06-ex-04",
@@ -491,8 +491,8 @@
         "coordination",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 4
+      "type": "callResponse",
+      "order": 35
     },
     {
       "id": "lesson-06-test",
@@ -506,7 +506,7 @@
         "rhythm"
       ],
       "type": "test",
-      "order": 99
+      "order": 36
     },
     {
       "id": "lesson-07-ex-01",
@@ -519,7 +519,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 1
+      "order": 37
     },
     {
       "id": "lesson-07-ex-02",
@@ -532,7 +532,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 2
+      "order": 38
     },
     {
       "id": "lesson-07-ex-03",
@@ -545,7 +545,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 3
+      "order": 39
     },
     {
       "id": "lesson-07-ex-04",
@@ -558,7 +558,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 4
+      "order": 40
     },
     {
       "id": "lesson-07-ex-05",
@@ -571,7 +571,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 5
+      "order": 41
     },
     {
       "id": "lesson-07-ex-06",
@@ -584,7 +584,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 6
+      "order": 42
     },
     {
       "id": "lesson-07-ex-07",
@@ -597,7 +597,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 7
+      "order": 43
     },
     {
       "id": "lesson-07-ex-08",
@@ -609,8 +609,8 @@
         "sharp-notes-rh",
         "flat-notes-lh"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 44
     },
     {
       "id": "lesson-07-ex-09",
@@ -622,8 +622,8 @@
         "sharp-notes-rh",
         "flat-notes-lh"
       ],
-      "type": "play",
-      "order": 9
+      "type": "earTraining",
+      "order": 45
     },
     {
       "id": "lesson-07-ex-10",
@@ -636,7 +636,7 @@
         "flat-notes-lh"
       ],
       "type": "play",
-      "order": 10
+      "order": 46
     },
     {
       "id": "lesson-07-test",
@@ -649,7 +649,7 @@
         "flat-notes-lh"
       ],
       "type": "test",
-      "order": 99
+      "order": 47
     },
     {
       "id": "lesson-08-ex-01",
@@ -662,7 +662,7 @@
         "g-major-hands"
       ],
       "type": "play",
-      "order": 1
+      "order": 48
     },
     {
       "id": "lesson-08-ex-02",
@@ -675,7 +675,7 @@
         "g-major-hands"
       ],
       "type": "play",
-      "order": 2
+      "order": 49
     },
     {
       "id": "lesson-08-ex-03",
@@ -688,7 +688,7 @@
         "g-major-hands"
       ],
       "type": "play",
-      "order": 3
+      "order": 50
     },
     {
       "id": "lesson-08-ex-04",
@@ -699,7 +699,7 @@
         "g-major-scale-lh"
       ],
       "type": "play",
-      "order": 4
+      "order": 51
     },
     {
       "id": "lesson-08-ex-05",
@@ -712,7 +712,7 @@
         "g-major-hands"
       ],
       "type": "play",
-      "order": 5
+      "order": 52
     },
     {
       "id": "lesson-08-ex-06",
@@ -725,7 +725,7 @@
         "g-major-hands"
       ],
       "type": "play",
-      "order": 6
+      "order": 53
     },
     {
       "id": "lesson-08-ex-07",
@@ -737,8 +737,8 @@
         "g-major-scale-lh",
         "g-major-hands"
       ],
-      "type": "play",
-      "order": 7
+      "type": "earTraining",
+      "order": 54
     },
     {
       "id": "lesson-08-ex-08",
@@ -750,8 +750,8 @@
         "g-major-scale-lh",
         "g-major-hands"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 55
     },
     {
       "id": "lesson-08-ex-09",
@@ -764,7 +764,7 @@
         "g-major-hands"
       ],
       "type": "play",
-      "order": 9
+      "order": 56
     },
     {
       "id": "lesson-08-test",
@@ -777,7 +777,7 @@
         "g-major-hands"
       ],
       "type": "test",
-      "order": 99
+      "order": 57
     },
     {
       "id": "lesson-09-ex-01",
@@ -790,7 +790,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 1
+      "order": 58
     },
     {
       "id": "lesson-09-ex-02",
@@ -803,7 +803,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 2
+      "order": 59
     },
     {
       "id": "lesson-09-ex-03",
@@ -814,7 +814,7 @@
         "f-major-scale-lh"
       ],
       "type": "play",
-      "order": 3
+      "order": 60
     },
     {
       "id": "lesson-09-ex-04",
@@ -827,7 +827,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 4
+      "order": 61
     },
     {
       "id": "lesson-09-ex-05",
@@ -840,7 +840,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 5
+      "order": 62
     },
     {
       "id": "lesson-09-ex-06",
@@ -853,7 +853,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 6
+      "order": 63
     },
     {
       "id": "lesson-09-ex-07",
@@ -865,8 +865,8 @@
         "f-major-scale-lh",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 7
+      "type": "earTraining",
+      "order": 64
     },
     {
       "id": "lesson-09-ex-08",
@@ -878,8 +878,8 @@
         "f-major-scale-lh",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 65
     },
     {
       "id": "lesson-09-ex-09",
@@ -892,7 +892,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 9
+      "order": 66
     },
     {
       "id": "lesson-09-test",
@@ -905,7 +905,7 @@
         "f-major-hands"
       ],
       "type": "test",
-      "order": 99
+      "order": 67
     },
     {
       "id": "lesson-10-ex-01",
@@ -918,7 +918,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 1
+      "order": 68
     },
     {
       "id": "lesson-10-ex-02",
@@ -931,7 +931,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 2
+      "order": 69
     },
     {
       "id": "lesson-10-ex-03",
@@ -944,7 +944,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 3
+      "order": 70
     },
     {
       "id": "lesson-10-ex-04",
@@ -957,7 +957,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 4
+      "order": 71
     },
     {
       "id": "lesson-10-ex-05",
@@ -970,7 +970,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 5
+      "order": 72
     },
     {
       "id": "lesson-10-ex-06",
@@ -983,7 +983,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 6
+      "order": 73
     },
     {
       "id": "lesson-10-ex-07",
@@ -995,8 +995,8 @@
         "a-minor-melodies",
         "minor-vs-major"
       ],
-      "type": "play",
-      "order": 7
+      "type": "earTraining",
+      "order": 74
     },
     {
       "id": "lesson-10-ex-08",
@@ -1008,8 +1008,8 @@
         "a-minor-melodies",
         "minor-vs-major"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 75
     },
     {
       "id": "lesson-10-ex-09",
@@ -1022,7 +1022,7 @@
         "minor-vs-major"
       ],
       "type": "play",
-      "order": 9
+      "order": 76
     },
     {
       "id": "lesson-10-test",
@@ -1035,7 +1035,7 @@
         "minor-vs-major"
       ],
       "type": "test",
-      "order": 99
+      "order": 77
     },
     {
       "id": "lesson-11-ex-01",
@@ -1048,7 +1048,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 1
+      "order": 78
     },
     {
       "id": "lesson-11-ex-02",
@@ -1061,7 +1061,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 2
+      "order": 79
     },
     {
       "id": "lesson-11-ex-03",
@@ -1074,7 +1074,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 3
+      "order": 80
     },
     {
       "id": "lesson-11-ex-04",
@@ -1087,7 +1087,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 4
+      "order": 81
     },
     {
       "id": "lesson-11-ex-05",
@@ -1100,7 +1100,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 5
+      "order": 82
     },
     {
       "id": "lesson-11-ex-06",
@@ -1113,7 +1113,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 6
+      "order": 83
     },
     {
       "id": "lesson-11-ex-07",
@@ -1125,8 +1125,8 @@
         "d-minor-melodies",
         "e-minor-scale"
       ],
-      "type": "play",
-      "order": 7
+      "type": "earTraining",
+      "order": 84
     },
     {
       "id": "lesson-11-ex-08",
@@ -1138,8 +1138,8 @@
         "d-minor-melodies",
         "e-minor-scale"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 85
     },
     {
       "id": "lesson-11-ex-09",
@@ -1152,7 +1152,7 @@
         "e-minor-scale"
       ],
       "type": "play",
-      "order": 9
+      "order": 86
     },
     {
       "id": "lesson-11-test",
@@ -1165,7 +1165,7 @@
         "e-minor-scale"
       ],
       "type": "test",
-      "order": 99
+      "order": 87
     },
     {
       "id": "lesson-12-ex-01",
@@ -1177,8 +1177,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 1
+      "type": "rhythm",
+      "order": 88
     },
     {
       "id": "lesson-12-ex-02",
@@ -1190,8 +1190,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 2
+      "type": "rhythm",
+      "order": 89
     },
     {
       "id": "lesson-12-ex-03",
@@ -1203,8 +1203,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 90
     },
     {
       "id": "lesson-12-ex-04",
@@ -1216,8 +1216,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 4
+      "type": "rhythm",
+      "order": 91
     },
     {
       "id": "lesson-12-ex-05",
@@ -1229,8 +1229,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 5
+      "type": "rhythm",
+      "order": 92
     },
     {
       "id": "lesson-12-ex-06",
@@ -1242,8 +1242,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 6
+      "type": "rhythm",
+      "order": 93
     },
     {
       "id": "lesson-12-ex-07",
@@ -1256,7 +1256,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 7
+      "order": 94
     },
     {
       "id": "lesson-12-ex-08",
@@ -1269,7 +1269,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 8
+      "order": 95
     },
     {
       "id": "lesson-12-ex-09",
@@ -1281,8 +1281,8 @@
         "syncopation-intro",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 9
+      "type": "rhythm",
+      "order": 96
     },
     {
       "id": "lesson-12-test",
@@ -1295,7 +1295,7 @@
         "ties-across-barline"
       ],
       "type": "test",
-      "order": 99
+      "order": 97
     },
     {
       "id": "lesson-13-ex-01",
@@ -1307,8 +1307,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 1
+      "type": "chordId",
+      "order": 98
     },
     {
       "id": "lesson-13-ex-02",
@@ -1320,8 +1320,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 2
+      "type": "chordId",
+      "order": 99
     },
     {
       "id": "lesson-13-ex-03",
@@ -1333,8 +1333,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 3
+      "type": "chordId",
+      "order": 100
     },
     {
       "id": "lesson-13-ex-04",
@@ -1346,8 +1346,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 4
+      "type": "chordId",
+      "order": 101
     },
     {
       "id": "lesson-13-ex-05",
@@ -1359,8 +1359,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 5
+      "type": "chordId",
+      "order": 102
     },
     {
       "id": "lesson-13-ex-06",
@@ -1372,8 +1372,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 6
+      "type": "chordId",
+      "order": 103
     },
     {
       "id": "lesson-13-ex-07",
@@ -1386,7 +1386,7 @@
         "chord-inversions-intro"
       ],
       "type": "play",
-      "order": 7
+      "order": 104
     },
     {
       "id": "lesson-13-ex-08",
@@ -1399,7 +1399,7 @@
         "chord-inversions-intro"
       ],
       "type": "play",
-      "order": 8
+      "order": 105
     },
     {
       "id": "lesson-13-ex-09",
@@ -1411,8 +1411,8 @@
         "minor-triads",
         "chord-inversions-intro"
       ],
-      "type": "play",
-      "order": 9
+      "type": "chordId",
+      "order": 106
     },
     {
       "id": "lesson-13-test",
@@ -1425,7 +1425,7 @@
         "chord-inversions-intro"
       ],
       "type": "test",
-      "order": 99
+      "order": 107
     },
     {
       "id": "lesson-14-ex-01",
@@ -1437,8 +1437,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 1
+      "type": "chordId",
+      "order": 108
     },
     {
       "id": "lesson-14-ex-02",
@@ -1450,8 +1450,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 2
+      "type": "chordId",
+      "order": 109
     },
     {
       "id": "lesson-14-ex-03",
@@ -1463,8 +1463,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 3
+      "type": "chordId",
+      "order": 110
     },
     {
       "id": "lesson-14-ex-04",
@@ -1476,8 +1476,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 4
+      "type": "chordId",
+      "order": 111
     },
     {
       "id": "lesson-14-ex-05",
@@ -1489,8 +1489,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 5
+      "type": "chordId",
+      "order": 112
     },
     {
       "id": "lesson-14-ex-06",
@@ -1502,8 +1502,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 6
+      "type": "chordId",
+      "order": 113
     },
     {
       "id": "lesson-14-ex-07",
@@ -1516,7 +1516,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "play",
-      "order": 7
+      "order": 114
     },
     {
       "id": "lesson-14-ex-08",
@@ -1529,7 +1529,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "play",
-      "order": 8
+      "order": 115
     },
     {
       "id": "lesson-14-ex-09",
@@ -1541,8 +1541,8 @@
         "progression-i-vi-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 9
+      "type": "chordId",
+      "order": 116
     },
     {
       "id": "lesson-14-test",
@@ -1555,7 +1555,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "test",
-      "order": 99
+      "order": 117
     },
     {
       "id": "lesson-15-ex-01",
@@ -1567,7 +1567,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 1
+      "order": 118
     },
     {
       "id": "lesson-15-ex-02",
@@ -1579,7 +1579,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 2
+      "order": 119
     },
     {
       "id": "lesson-15-ex-03",
@@ -1591,7 +1591,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 3
+      "order": 120
     },
     {
       "id": "lesson-15-ex-04",
@@ -1603,7 +1603,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 4
+      "order": 121
     },
     {
       "id": "lesson-15-ex-05",
@@ -1615,7 +1615,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 5
+      "order": 122
     },
     {
       "id": "lesson-15-ex-06",
@@ -1627,7 +1627,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 6
+      "order": 123
     },
     {
       "id": "lesson-15-ex-07",
@@ -1639,7 +1639,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 7
+      "order": 124
     },
     {
       "id": "lesson-15-ex-08",
@@ -1651,7 +1651,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 8
+      "order": 125
     },
     {
       "id": "lesson-15-ex-09",
@@ -1663,7 +1663,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 9
+      "order": 126
     },
     {
       "id": "lesson-15-test",
@@ -1675,7 +1675,7 @@
         "chord-transitions"
       ],
       "type": "test",
-      "order": 99
+      "order": 127
     },
     {
       "id": "lesson-16-ex-01",
@@ -1688,7 +1688,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 1
+      "order": 128
     },
     {
       "id": "lesson-16-ex-02",
@@ -1701,7 +1701,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 2
+      "order": 129
     },
     {
       "id": "lesson-16-ex-03",
@@ -1714,7 +1714,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 3
+      "order": 130
     },
     {
       "id": "lesson-16-ex-04",
@@ -1727,7 +1727,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 4
+      "order": 131
     },
     {
       "id": "lesson-16-ex-05",
@@ -1740,7 +1740,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 5
+      "order": 132
     },
     {
       "id": "lesson-16-ex-06",
@@ -1753,7 +1753,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 6
+      "order": 133
     },
     {
       "id": "lesson-16-ex-07",
@@ -1766,7 +1766,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 7
+      "order": 134
     },
     {
       "id": "lesson-16-ex-08",
@@ -1779,7 +1779,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 8
+      "order": 135
     },
     {
       "id": "lesson-16-ex-09",
@@ -1792,7 +1792,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 9
+      "order": 136
     },
     {
       "id": "lesson-16-ex-10",
@@ -1805,7 +1805,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 10
+      "order": 137
     },
     {
       "id": "lesson-16-ex-11",
@@ -1818,7 +1818,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 11
+      "order": 138
     },
     {
       "id": "lesson-16-test",
@@ -1831,7 +1831,7 @@
         "minor-arpeggios"
       ],
       "type": "test",
-      "order": 99
+      "order": 139
     },
     {
       "id": "lesson-17-ex-01",
@@ -1843,8 +1843,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 1
+      "type": "rhythm",
+      "order": 140
     },
     {
       "id": "lesson-17-ex-02",
@@ -1856,8 +1856,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 2
+      "type": "rhythm",
+      "order": 141
     },
     {
       "id": "lesson-17-ex-03",
@@ -1869,8 +1869,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 142
     },
     {
       "id": "lesson-17-ex-04",
@@ -1882,8 +1882,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 4
+      "type": "rhythm",
+      "order": 143
     },
     {
       "id": "lesson-17-ex-05",
@@ -1895,8 +1895,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 5
+      "type": "rhythm",
+      "order": 144
     },
     {
       "id": "lesson-17-ex-06",
@@ -1908,8 +1908,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 6
+      "type": "rhythm",
+      "order": 145
     },
     {
       "id": "lesson-17-ex-07",
@@ -1922,7 +1922,7 @@
         "6-8-time"
       ],
       "type": "play",
-      "order": 7
+      "order": 146
     },
     {
       "id": "lesson-17-ex-08",
@@ -1935,7 +1935,7 @@
         "6-8-time"
       ],
       "type": "play",
-      "order": 8
+      "order": 147
     },
     {
       "id": "lesson-17-ex-09",
@@ -1947,8 +1947,8 @@
         "3-4-time",
         "6-8-time"
       ],
-      "type": "play",
-      "order": 9
+      "type": "rhythm",
+      "order": 148
     },
     {
       "id": "lesson-17-test",
@@ -1961,7 +1961,7 @@
         "6-8-time"
       ],
       "type": "test",
-      "order": 99
+      "order": 149
     },
     {
       "id": "lesson-18-ex-01",
@@ -1973,8 +1973,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 1
+      "type": "rhythm",
+      "order": 150
     },
     {
       "id": "lesson-18-ex-02",
@@ -1986,8 +1986,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 2
+      "type": "rhythm",
+      "order": 151
     },
     {
       "id": "lesson-18-ex-03",
@@ -1999,8 +1999,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 152
     },
     {
       "id": "lesson-18-ex-04",
@@ -2012,8 +2012,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 4
+      "type": "rhythm",
+      "order": 153
     },
     {
       "id": "lesson-18-ex-05",
@@ -2025,8 +2025,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 5
+      "type": "rhythm",
+      "order": 154
     },
     {
       "id": "lesson-18-ex-06",
@@ -2038,8 +2038,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 6
+      "type": "rhythm",
+      "order": 155
     },
     {
       "id": "lesson-18-ex-07",
@@ -2052,7 +2052,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 7
+      "order": 156
     },
     {
       "id": "lesson-18-ex-08",
@@ -2065,7 +2065,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 8
+      "order": 157
     },
     {
       "id": "lesson-18-ex-09",
@@ -2077,8 +2077,8 @@
         "rhythm-reading",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 9
+      "type": "rhythm",
+      "order": 158
     },
     {
       "id": "lesson-18-test",
@@ -2091,7 +2091,7 @@
         "mixed-rhythms"
       ],
       "type": "test",
-      "order": 99
+      "order": 159
     },
     {
       "id": "lesson-19-ex-01",
@@ -2104,7 +2104,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 1
+      "order": 160
     },
     {
       "id": "lesson-19-ex-02",
@@ -2117,7 +2117,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 2
+      "order": 161
     },
     {
       "id": "lesson-19-ex-03",
@@ -2130,7 +2130,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 3
+      "order": 162
     },
     {
       "id": "lesson-19-ex-04",
@@ -2143,7 +2143,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 4
+      "order": 163
     },
     {
       "id": "lesson-19-ex-05",
@@ -2156,7 +2156,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 5
+      "order": 164
     },
     {
       "id": "lesson-19-ex-06",
@@ -2169,7 +2169,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 6
+      "order": 165
     },
     {
       "id": "lesson-19-ex-07",
@@ -2182,7 +2182,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 7
+      "order": 166
     },
     {
       "id": "lesson-19-ex-08",
@@ -2195,7 +2195,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 8
+      "order": 167
     },
     {
       "id": "lesson-19-ex-09",
@@ -2208,7 +2208,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 9
+      "order": 168
     },
     {
       "id": "lesson-19-test",
@@ -2221,7 +2221,7 @@
         "staccato-technique"
       ],
       "type": "test",
-      "order": 99
+      "order": 169
     },
     {
       "id": "lesson-20-ex-01",
@@ -2234,7 +2234,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 1
+      "order": 170
     },
     {
       "id": "lesson-20-ex-02",
@@ -2247,7 +2247,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 2
+      "order": 171
     },
     {
       "id": "lesson-20-ex-03",
@@ -2260,7 +2260,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 3
+      "order": 172
     },
     {
       "id": "lesson-20-ex-04",
@@ -2273,7 +2273,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 4
+      "order": 173
     },
     {
       "id": "lesson-20-ex-05",
@@ -2286,7 +2286,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 5
+      "order": 174
     },
     {
       "id": "lesson-20-ex-06",
@@ -2299,7 +2299,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 6
+      "order": 175
     },
     {
       "id": "lesson-20-ex-07",
@@ -2312,7 +2312,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 7
+      "order": 176
     },
     {
       "id": "lesson-20-ex-08",
@@ -2325,7 +2325,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 8
+      "order": 177
     },
     {
       "id": "lesson-20-ex-09",
@@ -2338,7 +2338,7 @@
         "expressive-songs"
       ],
       "type": "play",
-      "order": 9
+      "order": 178
     },
     {
       "id": "lesson-20-test",
@@ -2351,7 +2351,7 @@
         "expressive-songs"
       ],
       "type": "test",
-      "order": 99
+      "order": 179
     },
     {
       "id": "lesson-21-ex-01",
@@ -2364,7 +2364,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 1
+      "order": 180
     },
     {
       "id": "lesson-21-ex-02",
@@ -2377,7 +2377,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 2
+      "order": 181
     },
     {
       "id": "lesson-21-ex-03",
@@ -2390,7 +2390,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 3
+      "order": 182
     },
     {
       "id": "lesson-21-ex-04",
@@ -2403,7 +2403,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 4
+      "order": 183
     },
     {
       "id": "lesson-21-ex-05",
@@ -2416,7 +2416,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 5
+      "order": 184
     },
     {
       "id": "lesson-21-ex-06",
@@ -2429,7 +2429,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 6
+      "order": 185
     },
     {
       "id": "lesson-21-ex-07",
@@ -2441,8 +2441,8 @@
         "bb-major-scale",
         "relative-minor"
       ],
-      "type": "play",
-      "order": 7
+      "type": "earTraining",
+      "order": 186
     },
     {
       "id": "lesson-21-ex-08",
@@ -2454,8 +2454,8 @@
         "bb-major-scale",
         "relative-minor"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 187
     },
     {
       "id": "lesson-21-ex-09",
@@ -2468,7 +2468,7 @@
         "relative-minor"
       ],
       "type": "play",
-      "order": 9
+      "order": 188
     },
     {
       "id": "lesson-21-test",
@@ -2481,7 +2481,7 @@
         "relative-minor"
       ],
       "type": "test",
-      "order": 99
+      "order": 189
     },
     {
       "id": "lesson-22-ex-01",
@@ -2493,8 +2493,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 1
+      "type": "sightReading",
+      "order": 190
     },
     {
       "id": "lesson-22-ex-02",
@@ -2506,8 +2506,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 2
+      "type": "sightReading",
+      "order": 191
     },
     {
       "id": "lesson-22-ex-03",
@@ -2519,8 +2519,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 3
+      "type": "sightReading",
+      "order": 192
     },
     {
       "id": "lesson-22-ex-04",
@@ -2532,8 +2532,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 4
+      "type": "sightReading",
+      "order": 193
     },
     {
       "id": "lesson-22-ex-05",
@@ -2545,8 +2545,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 5
+      "type": "sightReading",
+      "order": 194
     },
     {
       "id": "lesson-22-ex-06",
@@ -2558,8 +2558,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 6
+      "type": "sightReading",
+      "order": 195
     },
     {
       "id": "lesson-22-ex-07",
@@ -2571,8 +2571,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 7
+      "type": "sightReading",
+      "order": 196
     },
     {
       "id": "lesson-22-ex-08",
@@ -2585,7 +2585,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 8
+      "order": 197
     },
     {
       "id": "lesson-22-ex-09",
@@ -2598,7 +2598,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 9
+      "order": 198
     },
     {
       "id": "lesson-22-test",
@@ -2611,7 +2611,7 @@
         "sight-reading-mixed"
       ],
       "type": "test",
-      "order": 99
+      "order": 199
     },
     {
       "id": "lesson-23-ex-01",
@@ -2624,7 +2624,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 1
+      "order": 200
     },
     {
       "id": "lesson-23-ex-02",
@@ -2637,7 +2637,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 2
+      "order": 201
     },
     {
       "id": "lesson-23-ex-03",
@@ -2650,7 +2650,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 3
+      "order": 202
     },
     {
       "id": "lesson-23-ex-04",
@@ -2663,7 +2663,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 4
+      "order": 203
     },
     {
       "id": "lesson-23-ex-05",
@@ -2676,7 +2676,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 5
+      "order": 204
     },
     {
       "id": "lesson-23-ex-06",
@@ -2689,7 +2689,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 6
+      "order": 205
     },
     {
       "id": "lesson-23-ex-07",
@@ -2701,8 +2701,8 @@
         "rubato-intro",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 7
+      "type": "callResponse",
+      "order": 206
     },
     {
       "id": "lesson-23-ex-08",
@@ -2714,8 +2714,8 @@
         "rubato-intro",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 8
+      "type": "callResponse",
+      "order": 207
     },
     {
       "id": "lesson-23-ex-09",
@@ -2727,8 +2727,8 @@
         "rubato-intro",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 9
+      "type": "callResponse",
+      "order": 208
     },
     {
       "id": "lesson-23-test",
@@ -2741,7 +2741,7 @@
         "intermediate-classical"
       ],
       "type": "test",
-      "order": 99
+      "order": 209
     },
     {
       "id": "lesson-24-ex-01",
@@ -2754,7 +2754,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 1
+      "order": 210
     },
     {
       "id": "lesson-24-ex-02",
@@ -2767,7 +2767,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 2
+      "order": 211
     },
     {
       "id": "lesson-24-ex-03",
@@ -2780,7 +2780,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 3
+      "order": 212
     },
     {
       "id": "lesson-24-ex-04",
@@ -2793,7 +2793,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 4
+      "order": 213
     },
     {
       "id": "lesson-24-ex-05",
@@ -2806,7 +2806,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 5
+      "order": 214
     },
     {
       "id": "lesson-24-ex-06",
@@ -2819,7 +2819,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 6
+      "order": 215
     },
     {
       "id": "lesson-24-ex-07",
@@ -2831,8 +2831,8 @@
         "full-piece-pop",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 7
+      "type": "callResponse",
+      "order": 216
     },
     {
       "id": "lesson-24-ex-08",
@@ -2844,8 +2844,8 @@
         "full-piece-pop",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 8
+      "type": "callResponse",
+      "order": 217
     },
     {
       "id": "lesson-24-ex-09",
@@ -2857,8 +2857,8 @@
         "full-piece-pop",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 9
+      "type": "callResponse",
+      "order": 218
     },
     {
       "id": "lesson-24-test",
@@ -2871,7 +2871,7 @@
         "repertoire-building"
       ],
       "type": "test",
-      "order": 99
+      "order": 219
     },
     {
       "id": "lesson-25-ex-01",
@@ -2883,8 +2883,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 1
+      "type": "chordId",
+      "order": 220
     },
     {
       "id": "lesson-25-ex-02",
@@ -2896,8 +2896,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 2
+      "type": "chordId",
+      "order": 221
     },
     {
       "id": "lesson-25-ex-03",
@@ -2909,8 +2909,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 3
+      "type": "chordId",
+      "order": 222
     },
     {
       "id": "lesson-25-ex-04",
@@ -2922,8 +2922,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 4
+      "type": "chordId",
+      "order": 223
     },
     {
       "id": "lesson-25-ex-05",
@@ -2935,8 +2935,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 5
+      "type": "chordId",
+      "order": 224
     },
     {
       "id": "lesson-25-ex-06",
@@ -2948,8 +2948,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 6
+      "type": "chordId",
+      "order": 225
     },
     {
       "id": "lesson-25-ex-07",
@@ -2961,8 +2961,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 7
+      "type": "chordId",
+      "order": 226
     },
     {
       "id": "lesson-25-ex-08",
@@ -2974,8 +2974,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 8
+      "type": "chordId",
+      "order": 227
     },
     {
       "id": "lesson-25-ex-09",
@@ -2987,8 +2987,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 9
+      "type": "chordId",
+      "order": 228
     },
     {
       "id": "lesson-25-ex-10",
@@ -3000,8 +3000,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 10
+      "type": "chordId",
+      "order": 229
     },
     {
       "id": "lesson-25-ex-11",
@@ -3013,8 +3013,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 11
+      "type": "chordId",
+      "order": 230
     },
     {
       "id": "lesson-25-ex-12",
@@ -3026,8 +3026,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 12
+      "type": "chordId",
+      "order": 231
     },
     {
       "id": "lesson-25-ex-13",
@@ -3039,8 +3039,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 13
+      "type": "earTraining",
+      "order": 232
     },
     {
       "id": "lesson-25-ex-14",
@@ -3052,8 +3052,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 14
+      "type": "earTraining",
+      "order": 233
     },
     {
       "id": "lesson-25-ex-15",
@@ -3065,8 +3065,8 @@
         "progression-i-v-vi-iv",
         "chord-transitions"
       ],
-      "type": "play",
-      "order": 15
+      "type": "earTraining",
+      "order": 234
     },
     {
       "id": "lesson-25-ex-16",
@@ -3079,7 +3079,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 16
+      "order": 235
     },
     {
       "id": "lesson-25-ex-17",
@@ -3092,7 +3092,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 17
+      "order": 236
     },
     {
       "id": "lesson-25-ex-18",
@@ -3105,7 +3105,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 18
+      "order": 237
     },
     {
       "id": "lesson-25-test",
@@ -3118,7 +3118,7 @@
         "chord-transitions"
       ],
       "type": "test",
-      "order": 99
+      "order": 238
     },
     {
       "id": "lesson-26-ex-01",
@@ -3131,7 +3131,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 1
+      "order": 239
     },
     {
       "id": "lesson-26-ex-02",
@@ -3144,7 +3144,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 2
+      "order": 240
     },
     {
       "id": "lesson-26-ex-03",
@@ -3157,7 +3157,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 3
+      "order": 241
     },
     {
       "id": "lesson-26-ex-04",
@@ -3170,7 +3170,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 4
+      "order": 242
     },
     {
       "id": "lesson-26-ex-05",
@@ -3183,7 +3183,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 5
+      "order": 243
     },
     {
       "id": "lesson-26-ex-06",
@@ -3196,7 +3196,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 6
+      "order": 244
     },
     {
       "id": "lesson-26-ex-07",
@@ -3209,7 +3209,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 7
+      "order": 245
     },
     {
       "id": "lesson-26-ex-08",
@@ -3222,7 +3222,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 8
+      "order": 246
     },
     {
       "id": "lesson-26-ex-09",
@@ -3235,7 +3235,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 9
+      "order": 247
     },
     {
       "id": "lesson-26-ex-10",
@@ -3248,7 +3248,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 10
+      "order": 248
     },
     {
       "id": "lesson-26-ex-11",
@@ -3261,7 +3261,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 11
+      "order": 249
     },
     {
       "id": "lesson-26-ex-12",
@@ -3274,7 +3274,7 @@
         "broken-chord-patterns"
       ],
       "type": "play",
-      "order": 12
+      "order": 250
     },
     {
       "id": "lesson-26-ex-13",
@@ -3286,8 +3286,8 @@
         "bass-chord-pattern",
         "broken-chord-patterns"
       ],
-      "type": "play",
-      "order": 13
+      "type": "callResponse",
+      "order": 251
     },
     {
       "id": "lesson-26-ex-14",
@@ -3299,8 +3299,8 @@
         "bass-chord-pattern",
         "broken-chord-patterns"
       ],
-      "type": "play",
-      "order": 14
+      "type": "callResponse",
+      "order": 252
     },
     {
       "id": "lesson-26-ex-15",
@@ -3312,8 +3312,8 @@
         "bass-chord-pattern",
         "broken-chord-patterns"
       ],
-      "type": "play",
-      "order": 15
+      "type": "callResponse",
+      "order": 253
     },
     {
       "id": "lesson-26-ex-16",
@@ -3325,8 +3325,8 @@
         "bass-chord-pattern",
         "broken-chord-patterns"
       ],
-      "type": "play",
-      "order": 16
+      "type": "callResponse",
+      "order": 254
     },
     {
       "id": "lesson-26-ex-17",
@@ -3338,8 +3338,8 @@
         "bass-chord-pattern",
         "broken-chord-patterns"
       ],
-      "type": "play",
-      "order": 17
+      "type": "callResponse",
+      "order": 255
     },
     {
       "id": "lesson-26-ex-18",
@@ -3351,8 +3351,8 @@
         "bass-chord-pattern",
         "broken-chord-patterns"
       ],
-      "type": "play",
-      "order": 18
+      "type": "callResponse",
+      "order": 256
     },
     {
       "id": "lesson-26-test",
@@ -3365,7 +3365,7 @@
         "broken-chord-patterns"
       ],
       "type": "test",
-      "order": 99
+      "order": 257
     },
     {
       "id": "lesson-27-ex-01",
@@ -3377,8 +3377,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 1
+      "type": "rhythm",
+      "order": 258
     },
     {
       "id": "lesson-27-ex-02",
@@ -3390,8 +3390,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 2
+      "type": "rhythm",
+      "order": 259
     },
     {
       "id": "lesson-27-ex-03",
@@ -3403,8 +3403,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 260
     },
     {
       "id": "lesson-27-ex-04",
@@ -3416,8 +3416,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 4
+      "type": "rhythm",
+      "order": 261
     },
     {
       "id": "lesson-27-ex-05",
@@ -3429,8 +3429,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 5
+      "type": "rhythm",
+      "order": 262
     },
     {
       "id": "lesson-27-ex-06",
@@ -3442,8 +3442,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 6
+      "type": "rhythm",
+      "order": 263
     },
     {
       "id": "lesson-27-ex-07",
@@ -3455,8 +3455,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 7
+      "type": "rhythm",
+      "order": 264
     },
     {
       "id": "lesson-27-ex-08",
@@ -3468,8 +3468,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 8
+      "type": "rhythm",
+      "order": 265
     },
     {
       "id": "lesson-27-ex-09",
@@ -3481,8 +3481,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 9
+      "type": "rhythm",
+      "order": 266
     },
     {
       "id": "lesson-27-ex-10",
@@ -3494,8 +3494,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 10
+      "type": "rhythm",
+      "order": 267
     },
     {
       "id": "lesson-27-ex-11",
@@ -3507,8 +3507,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 11
+      "type": "rhythm",
+      "order": 268
     },
     {
       "id": "lesson-27-ex-12",
@@ -3520,8 +3520,8 @@
         "swing-rhythm",
         "mixed-rhythms"
       ],
-      "type": "play",
-      "order": 12
+      "type": "rhythm",
+      "order": 269
     },
     {
       "id": "lesson-27-ex-13",
@@ -3534,7 +3534,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 13
+      "order": 270
     },
     {
       "id": "lesson-27-ex-14",
@@ -3547,7 +3547,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 14
+      "order": 271
     },
     {
       "id": "lesson-27-ex-15",
@@ -3560,7 +3560,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 15
+      "order": 272
     },
     {
       "id": "lesson-27-ex-16",
@@ -3573,7 +3573,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 16
+      "order": 273
     },
     {
       "id": "lesson-27-ex-17",
@@ -3586,7 +3586,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 17
+      "order": 274
     },
     {
       "id": "lesson-27-ex-18",
@@ -3599,7 +3599,7 @@
         "mixed-rhythms"
       ],
       "type": "play",
-      "order": 18
+      "order": 275
     },
     {
       "id": "lesson-27-test",
@@ -3612,7 +3612,7 @@
         "mixed-rhythms"
       ],
       "type": "test",
-      "order": 99
+      "order": 276
     },
     {
       "id": "lesson-28-ex-01",
@@ -3624,8 +3624,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 1
+      "type": "rhythm",
+      "order": 277
     },
     {
       "id": "lesson-28-ex-02",
@@ -3637,8 +3637,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 2
+      "type": "rhythm",
+      "order": 278
     },
     {
       "id": "lesson-28-ex-03",
@@ -3650,8 +3650,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 279
     },
     {
       "id": "lesson-28-ex-04",
@@ -3663,8 +3663,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 4
+      "type": "rhythm",
+      "order": 280
     },
     {
       "id": "lesson-28-ex-05",
@@ -3676,8 +3676,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 5
+      "type": "rhythm",
+      "order": 281
     },
     {
       "id": "lesson-28-ex-06",
@@ -3689,8 +3689,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 6
+      "type": "rhythm",
+      "order": 282
     },
     {
       "id": "lesson-28-ex-07",
@@ -3702,8 +3702,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 7
+      "type": "rhythm",
+      "order": 283
     },
     {
       "id": "lesson-28-ex-08",
@@ -3715,8 +3715,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 8
+      "type": "rhythm",
+      "order": 284
     },
     {
       "id": "lesson-28-ex-09",
@@ -3728,8 +3728,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 9
+      "type": "rhythm",
+      "order": 285
     },
     {
       "id": "lesson-28-ex-10",
@@ -3741,8 +3741,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 10
+      "type": "rhythm",
+      "order": 286
     },
     {
       "id": "lesson-28-ex-11",
@@ -3754,8 +3754,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 11
+      "type": "rhythm",
+      "order": 287
     },
     {
       "id": "lesson-28-ex-12",
@@ -3767,8 +3767,8 @@
         "3-4-time",
         "ties-across-barline"
       ],
-      "type": "play",
-      "order": 12
+      "type": "rhythm",
+      "order": 288
     },
     {
       "id": "lesson-28-ex-13",
@@ -3781,7 +3781,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 13
+      "order": 289
     },
     {
       "id": "lesson-28-ex-14",
@@ -3794,7 +3794,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 14
+      "order": 290
     },
     {
       "id": "lesson-28-ex-15",
@@ -3807,7 +3807,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 15
+      "order": 291
     },
     {
       "id": "lesson-28-ex-16",
@@ -3820,7 +3820,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 16
+      "order": 292
     },
     {
       "id": "lesson-28-ex-17",
@@ -3833,7 +3833,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 17
+      "order": 293
     },
     {
       "id": "lesson-28-ex-18",
@@ -3846,7 +3846,7 @@
         "ties-across-barline"
       ],
       "type": "play",
-      "order": 18
+      "order": 294
     },
     {
       "id": "lesson-28-test",
@@ -3859,7 +3859,7 @@
         "ties-across-barline"
       ],
       "type": "test",
-      "order": 99
+      "order": 295
     },
     {
       "id": "lesson-29-ex-01",
@@ -3872,7 +3872,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 1
+      "order": 296
     },
     {
       "id": "lesson-29-ex-02",
@@ -3885,7 +3885,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 2
+      "order": 297
     },
     {
       "id": "lesson-29-ex-03",
@@ -3898,7 +3898,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 3
+      "order": 298
     },
     {
       "id": "lesson-29-ex-04",
@@ -3911,7 +3911,7 @@
         "dynamics"
       ],
       "type": "play",
-      "order": 4
+      "order": 299
     },
     {
       "id": "lesson-29-ex-05",
@@ -3924,7 +3924,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 5
+      "order": 300
     },
     {
       "id": "lesson-29-ex-06",
@@ -3937,7 +3937,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 6
+      "order": 301
     },
     {
       "id": "lesson-29-ex-07",
@@ -3950,7 +3950,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 7
+      "order": 302
     },
     {
       "id": "lesson-29-ex-08",
@@ -3963,7 +3963,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 8
+      "order": 303
     },
     {
       "id": "lesson-29-ex-09",
@@ -3976,7 +3976,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 9
+      "order": 304
     },
     {
       "id": "lesson-29-ex-10",
@@ -3989,7 +3989,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 10
+      "order": 305
     },
     {
       "id": "lesson-29-ex-11",
@@ -4002,7 +4002,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 11
+      "order": 306
     },
     {
       "id": "lesson-29-ex-12",
@@ -4015,7 +4015,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 12
+      "order": 307
     },
     {
       "id": "lesson-29-ex-13",
@@ -4028,7 +4028,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 13
+      "order": 308
     },
     {
       "id": "lesson-29-ex-14",
@@ -4041,7 +4041,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 14
+      "order": 309
     },
     {
       "id": "lesson-29-ex-15",
@@ -4054,7 +4054,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 15
+      "order": 310
     },
     {
       "id": "lesson-29-ex-16",
@@ -4067,7 +4067,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 16
+      "order": 311
     },
     {
       "id": "lesson-29-ex-17",
@@ -4080,7 +4080,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 17
+      "order": 312
     },
     {
       "id": "lesson-29-ex-18",
@@ -4093,7 +4093,7 @@
         "minor-arpeggios"
       ],
       "type": "play",
-      "order": 18
+      "order": 313
     },
     {
       "id": "lesson-29-test",
@@ -4106,7 +4106,7 @@
         "minor-arpeggios"
       ],
       "type": "test",
-      "order": 99
+      "order": 314
     },
     {
       "id": "lesson-30-ex-01",
@@ -4119,7 +4119,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 1
+      "order": 315
     },
     {
       "id": "lesson-30-ex-02",
@@ -4132,7 +4132,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 2
+      "order": 316
     },
     {
       "id": "lesson-30-ex-03",
@@ -4145,7 +4145,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 3
+      "order": 317
     },
     {
       "id": "lesson-30-ex-04",
@@ -4158,7 +4158,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 4
+      "order": 318
     },
     {
       "id": "lesson-30-ex-05",
@@ -4171,7 +4171,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 5
+      "order": 319
     },
     {
       "id": "lesson-30-ex-06",
@@ -4184,7 +4184,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 6
+      "order": 320
     },
     {
       "id": "lesson-30-ex-07",
@@ -4197,7 +4197,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 7
+      "order": 321
     },
     {
       "id": "lesson-30-ex-08",
@@ -4210,7 +4210,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 8
+      "order": 322
     },
     {
       "id": "lesson-30-ex-09",
@@ -4223,7 +4223,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 9
+      "order": 323
     },
     {
       "id": "lesson-30-ex-10",
@@ -4236,7 +4236,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 10
+      "order": 324
     },
     {
       "id": "lesson-30-ex-11",
@@ -4249,7 +4249,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 11
+      "order": 325
     },
     {
       "id": "lesson-30-ex-12",
@@ -4262,7 +4262,7 @@
         "staccato-technique"
       ],
       "type": "play",
-      "order": 12
+      "order": 326
     },
     {
       "id": "lesson-30-ex-13",
@@ -4274,8 +4274,8 @@
         "crescendo-diminuendo",
         "staccato-technique"
       ],
-      "type": "play",
-      "order": 13
+      "type": "earTraining",
+      "order": 327
     },
     {
       "id": "lesson-30-ex-14",
@@ -4287,8 +4287,8 @@
         "crescendo-diminuendo",
         "staccato-technique"
       ],
-      "type": "play",
-      "order": 14
+      "type": "earTraining",
+      "order": 328
     },
     {
       "id": "lesson-30-ex-15",
@@ -4300,8 +4300,8 @@
         "crescendo-diminuendo",
         "staccato-technique"
       ],
-      "type": "play",
-      "order": 15
+      "type": "earTraining",
+      "order": 329
     },
     {
       "id": "lesson-30-ex-16",
@@ -4313,8 +4313,8 @@
         "crescendo-diminuendo",
         "staccato-technique"
       ],
-      "type": "play",
-      "order": 16
+      "type": "earTraining",
+      "order": 330
     },
     {
       "id": "lesson-30-ex-17",
@@ -4326,8 +4326,8 @@
         "crescendo-diminuendo",
         "staccato-technique"
       ],
-      "type": "play",
-      "order": 17
+      "type": "earTraining",
+      "order": 331
     },
     {
       "id": "lesson-30-ex-18",
@@ -4339,8 +4339,8 @@
         "crescendo-diminuendo",
         "staccato-technique"
       ],
-      "type": "play",
-      "order": 18
+      "type": "earTraining",
+      "order": 332
     },
     {
       "id": "lesson-30-test",
@@ -4353,7 +4353,7 @@
         "staccato-technique"
       ],
       "type": "test",
-      "order": 99
+      "order": 333
     },
     {
       "id": "lesson-31-ex-01",
@@ -4366,7 +4366,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 1
+      "order": 334
     },
     {
       "id": "lesson-31-ex-02",
@@ -4379,7 +4379,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 2
+      "order": 335
     },
     {
       "id": "lesson-31-ex-03",
@@ -4392,7 +4392,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 3
+      "order": 336
     },
     {
       "id": "lesson-31-ex-04",
@@ -4405,7 +4405,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 4
+      "order": 337
     },
     {
       "id": "lesson-31-ex-05",
@@ -4418,7 +4418,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 5
+      "order": 338
     },
     {
       "id": "lesson-31-ex-06",
@@ -4431,7 +4431,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 6
+      "order": 339
     },
     {
       "id": "lesson-31-ex-07",
@@ -4444,7 +4444,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 7
+      "order": 340
     },
     {
       "id": "lesson-31-ex-08",
@@ -4457,7 +4457,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 8
+      "order": 341
     },
     {
       "id": "lesson-31-ex-09",
@@ -4470,7 +4470,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 9
+      "order": 342
     },
     {
       "id": "lesson-31-ex-10",
@@ -4483,7 +4483,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 10
+      "order": 343
     },
     {
       "id": "lesson-31-ex-11",
@@ -4496,7 +4496,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 11
+      "order": 344
     },
     {
       "id": "lesson-31-ex-12",
@@ -4509,7 +4509,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 12
+      "order": 345
     },
     {
       "id": "lesson-31-ex-13",
@@ -4522,7 +4522,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 13
+      "order": 346
     },
     {
       "id": "lesson-31-ex-14",
@@ -4535,7 +4535,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 14
+      "order": 347
     },
     {
       "id": "lesson-31-ex-15",
@@ -4548,7 +4548,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 15
+      "order": 348
     },
     {
       "id": "lesson-31-ex-16",
@@ -4561,7 +4561,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 16
+      "order": 349
     },
     {
       "id": "lesson-31-ex-17",
@@ -4574,7 +4574,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 17
+      "order": 350
     },
     {
       "id": "lesson-31-ex-18",
@@ -4587,7 +4587,7 @@
         "chord-transitions"
       ],
       "type": "play",
-      "order": 18
+      "order": 351
     },
     {
       "id": "lesson-31-test",
@@ -4600,7 +4600,7 @@
         "chord-transitions"
       ],
       "type": "test",
-      "order": 99
+      "order": 352
     },
     {
       "id": "lesson-32-ex-01",
@@ -4613,7 +4613,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 1
+      "order": 353
     },
     {
       "id": "lesson-32-ex-02",
@@ -4626,7 +4626,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 2
+      "order": 354
     },
     {
       "id": "lesson-32-ex-03",
@@ -4639,7 +4639,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 3
+      "order": 355
     },
     {
       "id": "lesson-32-ex-04",
@@ -4652,7 +4652,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 4
+      "order": 356
     },
     {
       "id": "lesson-32-ex-05",
@@ -4665,7 +4665,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 5
+      "order": 357
     },
     {
       "id": "lesson-32-ex-06",
@@ -4678,7 +4678,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 6
+      "order": 358
     },
     {
       "id": "lesson-32-ex-07",
@@ -4691,7 +4691,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 7
+      "order": 359
     },
     {
       "id": "lesson-32-ex-08",
@@ -4704,7 +4704,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 8
+      "order": 360
     },
     {
       "id": "lesson-32-ex-09",
@@ -4717,7 +4717,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 9
+      "order": 361
     },
     {
       "id": "lesson-32-ex-10",
@@ -4730,7 +4730,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 10
+      "order": 362
     },
     {
       "id": "lesson-32-ex-11",
@@ -4743,7 +4743,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 11
+      "order": 363
     },
     {
       "id": "lesson-32-ex-12",
@@ -4756,7 +4756,7 @@
         "key-fluency"
       ],
       "type": "play",
-      "order": 12
+      "order": 364
     },
     {
       "id": "lesson-32-ex-13",
@@ -4768,8 +4768,8 @@
         "bb-major-scale",
         "key-fluency"
       ],
-      "type": "play",
-      "order": 13
+      "type": "earTraining",
+      "order": 365
     },
     {
       "id": "lesson-32-ex-14",
@@ -4781,8 +4781,8 @@
         "bb-major-scale",
         "key-fluency"
       ],
-      "type": "play",
-      "order": 14
+      "type": "earTraining",
+      "order": 366
     },
     {
       "id": "lesson-32-ex-15",
@@ -4794,8 +4794,8 @@
         "bb-major-scale",
         "key-fluency"
       ],
-      "type": "play",
-      "order": 15
+      "type": "earTraining",
+      "order": 367
     },
     {
       "id": "lesson-32-ex-16",
@@ -4807,8 +4807,8 @@
         "bb-major-scale",
         "key-fluency"
       ],
-      "type": "play",
-      "order": 16
+      "type": "earTraining",
+      "order": 368
     },
     {
       "id": "lesson-32-ex-17",
@@ -4820,8 +4820,8 @@
         "bb-major-scale",
         "key-fluency"
       ],
-      "type": "play",
-      "order": 17
+      "type": "earTraining",
+      "order": 369
     },
     {
       "id": "lesson-32-ex-18",
@@ -4833,8 +4833,8 @@
         "bb-major-scale",
         "key-fluency"
       ],
-      "type": "play",
-      "order": 18
+      "type": "earTraining",
+      "order": 370
     },
     {
       "id": "lesson-32-test",
@@ -4847,7 +4847,7 @@
         "key-fluency"
       ],
       "type": "test",
-      "order": 99
+      "order": 371
     },
     {
       "id": "lesson-33-ex-01",
@@ -4859,8 +4859,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 1
+      "type": "sightReading",
+      "order": 372
     },
     {
       "id": "lesson-33-ex-02",
@@ -4872,8 +4872,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 2
+      "type": "sightReading",
+      "order": 373
     },
     {
       "id": "lesson-33-ex-03",
@@ -4885,8 +4885,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 3
+      "type": "sightReading",
+      "order": 374
     },
     {
       "id": "lesson-33-ex-04",
@@ -4898,8 +4898,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 4
+      "type": "sightReading",
+      "order": 375
     },
     {
       "id": "lesson-33-ex-05",
@@ -4911,8 +4911,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 5
+      "type": "sightReading",
+      "order": 376
     },
     {
       "id": "lesson-33-ex-06",
@@ -4924,8 +4924,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 6
+      "type": "sightReading",
+      "order": 377
     },
     {
       "id": "lesson-33-ex-07",
@@ -4937,8 +4937,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 7
+      "type": "sightReading",
+      "order": 378
     },
     {
       "id": "lesson-33-ex-08",
@@ -4950,8 +4950,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 8
+      "type": "sightReading",
+      "order": 379
     },
     {
       "id": "lesson-33-ex-09",
@@ -4963,8 +4963,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 9
+      "type": "sightReading",
+      "order": 380
     },
     {
       "id": "lesson-33-ex-10",
@@ -4976,8 +4976,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 10
+      "type": "sightReading",
+      "order": 381
     },
     {
       "id": "lesson-33-ex-11",
@@ -4989,8 +4989,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 11
+      "type": "sightReading",
+      "order": 382
     },
     {
       "id": "lesson-33-ex-12",
@@ -5002,8 +5002,8 @@
         "sight-reading-g",
         "sight-reading-mixed"
       ],
-      "type": "play",
-      "order": 12
+      "type": "sightReading",
+      "order": 383
     },
     {
       "id": "lesson-33-ex-13",
@@ -5016,7 +5016,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 13
+      "order": 384
     },
     {
       "id": "lesson-33-ex-14",
@@ -5029,7 +5029,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 14
+      "order": 385
     },
     {
       "id": "lesson-33-ex-15",
@@ -5042,7 +5042,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 15
+      "order": 386
     },
     {
       "id": "lesson-33-ex-16",
@@ -5055,7 +5055,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 16
+      "order": 387
     },
     {
       "id": "lesson-33-ex-17",
@@ -5068,7 +5068,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 17
+      "order": 388
     },
     {
       "id": "lesson-33-ex-18",
@@ -5081,7 +5081,7 @@
         "sight-reading-mixed"
       ],
       "type": "play",
-      "order": 18
+      "order": 389
     },
     {
       "id": "lesson-33-test",
@@ -5094,7 +5094,7 @@
         "sight-reading-mixed"
       ],
       "type": "test",
-      "order": 99
+      "order": 390
     },
     {
       "id": "lesson-34-ex-01",
@@ -5107,7 +5107,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 1
+      "order": 391
     },
     {
       "id": "lesson-34-ex-02",
@@ -5120,7 +5120,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 2
+      "order": 392
     },
     {
       "id": "lesson-34-ex-03",
@@ -5133,7 +5133,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 3
+      "order": 393
     },
     {
       "id": "lesson-34-ex-04",
@@ -5146,7 +5146,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 4
+      "order": 394
     },
     {
       "id": "lesson-34-ex-05",
@@ -5159,7 +5159,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 5
+      "order": 395
     },
     {
       "id": "lesson-34-ex-06",
@@ -5172,7 +5172,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 6
+      "order": 396
     },
     {
       "id": "lesson-34-ex-07",
@@ -5185,7 +5185,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 7
+      "order": 397
     },
     {
       "id": "lesson-34-ex-08",
@@ -5198,7 +5198,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 8
+      "order": 398
     },
     {
       "id": "lesson-34-ex-09",
@@ -5211,7 +5211,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 9
+      "order": 399
     },
     {
       "id": "lesson-34-ex-10",
@@ -5224,7 +5224,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 10
+      "order": 400
     },
     {
       "id": "lesson-34-ex-11",
@@ -5237,7 +5237,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 11
+      "order": 401
     },
     {
       "id": "lesson-34-ex-12",
@@ -5250,7 +5250,7 @@
         "rubato-intro"
       ],
       "type": "play",
-      "order": 12
+      "order": 402
     },
     {
       "id": "lesson-34-ex-13",
@@ -5262,8 +5262,8 @@
         "performance-prep",
         "rubato-intro"
       ],
-      "type": "play",
-      "order": 13
+      "type": "callResponse",
+      "order": 403
     },
     {
       "id": "lesson-34-ex-14",
@@ -5275,8 +5275,8 @@
         "performance-prep",
         "rubato-intro"
       ],
-      "type": "play",
-      "order": 14
+      "type": "callResponse",
+      "order": 404
     },
     {
       "id": "lesson-34-ex-15",
@@ -5288,8 +5288,8 @@
         "performance-prep",
         "rubato-intro"
       ],
-      "type": "play",
-      "order": 15
+      "type": "callResponse",
+      "order": 405
     },
     {
       "id": "lesson-34-ex-16",
@@ -5301,8 +5301,8 @@
         "performance-prep",
         "rubato-intro"
       ],
-      "type": "play",
-      "order": 16
+      "type": "callResponse",
+      "order": 406
     },
     {
       "id": "lesson-34-ex-17",
@@ -5314,8 +5314,8 @@
         "performance-prep",
         "rubato-intro"
       ],
-      "type": "play",
-      "order": 17
+      "type": "callResponse",
+      "order": 407
     },
     {
       "id": "lesson-34-ex-18",
@@ -5327,8 +5327,8 @@
         "performance-prep",
         "rubato-intro"
       ],
-      "type": "play",
-      "order": 18
+      "type": "callResponse",
+      "order": 408
     },
     {
       "id": "lesson-34-test",
@@ -5341,7 +5341,7 @@
         "rubato-intro"
       ],
       "type": "test",
-      "order": 99
+      "order": 409
     },
     {
       "id": "lesson-35-ex-01",
@@ -5354,7 +5354,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 1
+      "order": 410
     },
     {
       "id": "lesson-35-ex-02",
@@ -5367,7 +5367,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 2
+      "order": 411
     },
     {
       "id": "lesson-35-ex-03",
@@ -5380,7 +5380,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 3
+      "order": 412
     },
     {
       "id": "lesson-35-ex-04",
@@ -5393,7 +5393,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 4
+      "order": 413
     },
     {
       "id": "lesson-35-ex-05",
@@ -5406,7 +5406,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 5
+      "order": 414
     },
     {
       "id": "lesson-35-ex-06",
@@ -5419,7 +5419,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 6
+      "order": 415
     },
     {
       "id": "lesson-35-ex-07",
@@ -5432,7 +5432,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 7
+      "order": 416
     },
     {
       "id": "lesson-35-ex-08",
@@ -5445,7 +5445,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 8
+      "order": 417
     },
     {
       "id": "lesson-35-ex-09",
@@ -5458,7 +5458,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 9
+      "order": 418
     },
     {
       "id": "lesson-35-ex-10",
@@ -5471,7 +5471,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 10
+      "order": 419
     },
     {
       "id": "lesson-35-ex-11",
@@ -5484,7 +5484,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 11
+      "order": 420
     },
     {
       "id": "lesson-35-ex-12",
@@ -5497,7 +5497,7 @@
         "intermediate-classical"
       ],
       "type": "play",
-      "order": 12
+      "order": 421
     },
     {
       "id": "lesson-35-ex-13",
@@ -5509,8 +5509,8 @@
         "intermediate-pop",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 13
+      "type": "callResponse",
+      "order": 422
     },
     {
       "id": "lesson-35-ex-14",
@@ -5522,8 +5522,8 @@
         "intermediate-pop",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 14
+      "type": "callResponse",
+      "order": 423
     },
     {
       "id": "lesson-35-ex-15",
@@ -5535,8 +5535,8 @@
         "intermediate-pop",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 15
+      "type": "callResponse",
+      "order": 424
     },
     {
       "id": "lesson-35-ex-16",
@@ -5548,8 +5548,8 @@
         "intermediate-pop",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 16
+      "type": "callResponse",
+      "order": 425
     },
     {
       "id": "lesson-35-ex-17",
@@ -5561,8 +5561,8 @@
         "intermediate-pop",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 17
+      "type": "callResponse",
+      "order": 426
     },
     {
       "id": "lesson-35-ex-18",
@@ -5574,8 +5574,8 @@
         "intermediate-pop",
         "intermediate-classical"
       ],
-      "type": "play",
-      "order": 18
+      "type": "callResponse",
+      "order": 427
     },
     {
       "id": "lesson-35-test",
@@ -5588,7 +5588,7 @@
         "intermediate-classical"
       ],
       "type": "test",
-      "order": 99
+      "order": 428
     },
     {
       "id": "lesson-36-ex-01",
@@ -5600,8 +5600,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 1
+      "type": "callResponse",
+      "order": 429
     },
     {
       "id": "lesson-36-ex-02",
@@ -5613,8 +5613,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 2
+      "type": "callResponse",
+      "order": 430
     },
     {
       "id": "lesson-36-ex-03",
@@ -5626,8 +5626,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 3
+      "type": "callResponse",
+      "order": 431
     },
     {
       "id": "lesson-36-ex-04",
@@ -5639,8 +5639,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 4
+      "type": "callResponse",
+      "order": 432
     },
     {
       "id": "lesson-36-ex-05",
@@ -5652,8 +5652,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 5
+      "type": "callResponse",
+      "order": 433
     },
     {
       "id": "lesson-36-ex-06",
@@ -5665,8 +5665,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 6
+      "type": "callResponse",
+      "order": 434
     },
     {
       "id": "lesson-36-ex-07",
@@ -5678,8 +5678,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 7
+      "type": "callResponse",
+      "order": 435
     },
     {
       "id": "lesson-36-ex-08",
@@ -5691,8 +5691,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 8
+      "type": "callResponse",
+      "order": 436
     },
     {
       "id": "lesson-36-ex-09",
@@ -5704,8 +5704,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 9
+      "type": "callResponse",
+      "order": 437
     },
     {
       "id": "lesson-36-ex-10",
@@ -5717,8 +5717,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 10
+      "type": "callResponse",
+      "order": 438
     },
     {
       "id": "lesson-36-ex-11",
@@ -5730,8 +5730,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 11
+      "type": "callResponse",
+      "order": 439
     },
     {
       "id": "lesson-36-ex-12",
@@ -5743,8 +5743,8 @@
         "year-one-mastery",
         "repertoire-building"
       ],
-      "type": "play",
-      "order": 12
+      "type": "callResponse",
+      "order": 440
     },
     {
       "id": "lesson-36-ex-13",
@@ -5757,7 +5757,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 13
+      "order": 441
     },
     {
       "id": "lesson-36-ex-14",
@@ -5770,7 +5770,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 14
+      "order": 442
     },
     {
       "id": "lesson-36-ex-15",
@@ -5783,7 +5783,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 15
+      "order": 443
     },
     {
       "id": "lesson-36-ex-16",
@@ -5796,7 +5796,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 16
+      "order": 444
     },
     {
       "id": "lesson-36-ex-17",
@@ -5809,7 +5809,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 17
+      "order": 445
     },
     {
       "id": "lesson-36-ex-18",
@@ -5822,7 +5822,7 @@
         "repertoire-building"
       ],
       "type": "play",
-      "order": 18
+      "order": 446
     },
     {
       "id": "lesson-36-test",
@@ -5835,7 +5835,7 @@
         "repertoire-building"
       ],
       "type": "test",
-      "order": 99
+      "order": 447
     },
     {
       "id": "lesson-37-ex-01",
@@ -5848,7 +5848,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 1
+      "order": 448
     },
     {
       "id": "lesson-37-ex-02",
@@ -5861,7 +5861,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 2
+      "order": 449
     },
     {
       "id": "lesson-37-ex-03",
@@ -5874,7 +5874,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 3
+      "order": 450
     },
     {
       "id": "lesson-37-ex-04",
@@ -5886,7 +5886,7 @@
         "f-major-hands"
       ],
       "type": "play",
-      "order": 4
+      "order": 451
     },
     {
       "id": "lesson-37-ex-05",
@@ -5898,8 +5898,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 5
+      "type": "sightReading",
+      "order": 452
     },
     {
       "id": "lesson-37-ex-06",
@@ -5911,8 +5911,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 6
+      "type": "sightReading",
+      "order": 453
     },
     {
       "id": "lesson-37-ex-07",
@@ -5924,8 +5924,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 7
+      "type": "sightReading",
+      "order": 454
     },
     {
       "id": "lesson-37-ex-08",
@@ -5937,8 +5937,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 8
+      "type": "sightReading",
+      "order": 455
     },
     {
       "id": "lesson-37-ex-09",
@@ -5950,8 +5950,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 9
+      "type": "rhythm",
+      "order": 456
     },
     {
       "id": "lesson-37-ex-10",
@@ -5963,8 +5963,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 10
+      "type": "rhythm",
+      "order": 457
     },
     {
       "id": "lesson-37-ex-11",
@@ -5976,8 +5976,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 11
+      "type": "rhythm",
+      "order": 458
     },
     {
       "id": "lesson-37-ex-12",
@@ -5989,8 +5989,8 @@
         "g-major-hands",
         "f-major-hands"
       ],
-      "type": "play",
-      "order": 12
+      "type": "rhythm",
+      "order": 459
     },
     {
       "id": "lesson-37-test",
@@ -6003,7 +6003,7 @@
         "f-major-hands"
       ],
       "type": "test",
-      "order": 99
+      "order": 460
     },
     {
       "id": "lesson-38-ex-01",
@@ -6015,8 +6015,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 1
+      "type": "chordId",
+      "order": 461
     },
     {
       "id": "lesson-38-ex-02",
@@ -6028,8 +6028,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 2
+      "type": "chordId",
+      "order": 462
     },
     {
       "id": "lesson-38-ex-03",
@@ -6041,8 +6041,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 3
+      "type": "chordId",
+      "order": 463
     },
     {
       "id": "lesson-38-ex-04",
@@ -6054,8 +6054,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 4
+      "type": "chordId",
+      "order": 464
     },
     {
       "id": "lesson-38-ex-05",
@@ -6067,8 +6067,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 5
+      "type": "earTraining",
+      "order": 465
     },
     {
       "id": "lesson-38-ex-06",
@@ -6080,8 +6080,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 6
+      "type": "earTraining",
+      "order": 466
     },
     {
       "id": "lesson-38-ex-07",
@@ -6093,8 +6093,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 7
+      "type": "earTraining",
+      "order": 467
     },
     {
       "id": "lesson-38-ex-08",
@@ -6106,8 +6106,8 @@
         "progression-i-iv-v",
         "progression-i-v-vi-iv"
       ],
-      "type": "play",
-      "order": 8
+      "type": "earTraining",
+      "order": 468
     },
     {
       "id": "lesson-38-ex-09",
@@ -6120,7 +6120,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "play",
-      "order": 9
+      "order": 469
     },
     {
       "id": "lesson-38-ex-10",
@@ -6133,7 +6133,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "play",
-      "order": 10
+      "order": 470
     },
     {
       "id": "lesson-38-ex-11",
@@ -6146,7 +6146,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "play",
-      "order": 11
+      "order": 471
     },
     {
       "id": "lesson-38-ex-12",
@@ -6159,7 +6159,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "play",
-      "order": 12
+      "order": 472
     },
     {
       "id": "lesson-38-test",
@@ -6172,7 +6172,7 @@
         "progression-i-v-vi-iv"
       ],
       "type": "test",
-      "order": 99
+      "order": 473
     },
     {
       "id": "lesson-39-ex-01",
@@ -6184,8 +6184,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 1
+      "type": "rhythm",
+      "order": 474
     },
     {
       "id": "lesson-39-ex-02",
@@ -6197,8 +6197,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 2
+      "type": "rhythm",
+      "order": 475
     },
     {
       "id": "lesson-39-ex-03",
@@ -6210,8 +6210,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 3
+      "type": "rhythm",
+      "order": 476
     },
     {
       "id": "lesson-39-ex-04",
@@ -6223,8 +6223,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 4
+      "type": "rhythm",
+      "order": 477
     },
     {
       "id": "lesson-39-ex-05",
@@ -6237,7 +6237,7 @@
         "phrasing"
       ],
       "type": "play",
-      "order": 5
+      "order": 478
     },
     {
       "id": "lesson-39-ex-06",
@@ -6250,7 +6250,7 @@
         "phrasing"
       ],
       "type": "play",
-      "order": 6
+      "order": 479
     },
     {
       "id": "lesson-39-ex-07",
@@ -6263,7 +6263,7 @@
         "phrasing"
       ],
       "type": "play",
-      "order": 7
+      "order": 480
     },
     {
       "id": "lesson-39-ex-08",
@@ -6276,7 +6276,7 @@
         "phrasing"
       ],
       "type": "play",
-      "order": 8
+      "order": 481
     },
     {
       "id": "lesson-39-ex-09",
@@ -6288,8 +6288,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 9
+      "type": "callResponse",
+      "order": 482
     },
     {
       "id": "lesson-39-ex-10",
@@ -6301,8 +6301,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 10
+      "type": "callResponse",
+      "order": 483
     },
     {
       "id": "lesson-39-ex-11",
@@ -6314,8 +6314,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 11
+      "type": "callResponse",
+      "order": 484
     },
     {
       "id": "lesson-39-ex-12",
@@ -6327,8 +6327,8 @@
         "dynamics-p-f",
         "phrasing"
       ],
-      "type": "play",
-      "order": 12
+      "type": "callResponse",
+      "order": 485
     },
     {
       "id": "lesson-39-test",
@@ -6341,7 +6341,7 @@
         "phrasing"
       ],
       "type": "test",
-      "order": 99
+      "order": 486
     },
     {
       "id": "lesson-40-ex-01",
@@ -6354,7 +6354,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 1
+      "order": 487
     },
     {
       "id": "lesson-40-ex-02",
@@ -6367,7 +6367,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 2
+      "order": 488
     },
     {
       "id": "lesson-40-ex-03",
@@ -6380,7 +6380,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 3
+      "order": 489
     },
     {
       "id": "lesson-40-ex-04",
@@ -6393,7 +6393,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 4
+      "order": 490
     },
     {
       "id": "lesson-40-ex-05",
@@ -6406,7 +6406,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 5
+      "order": 491
     },
     {
       "id": "lesson-40-ex-06",
@@ -6419,7 +6419,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 6
+      "order": 492
     },
     {
       "id": "lesson-40-ex-07",
@@ -6432,7 +6432,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 7
+      "order": 493
     },
     {
       "id": "lesson-40-ex-08",
@@ -6445,7 +6445,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 8
+      "order": 494
     },
     {
       "id": "lesson-40-ex-09",
@@ -6458,7 +6458,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 9
+      "order": 495
     },
     {
       "id": "lesson-40-ex-10",
@@ -6471,7 +6471,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 10
+      "order": 496
     },
     {
       "id": "lesson-40-ex-11",
@@ -6484,7 +6484,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 11
+      "order": 497
     },
     {
       "id": "lesson-40-ex-12",
@@ -6497,7 +6497,7 @@
         "full-piece-pop"
       ],
       "type": "play",
-      "order": 12
+      "order": 498
     },
     {
       "id": "lesson-40-test",
@@ -6510,7 +6510,7 @@
         "full-piece-pop"
       ],
       "type": "test",
-      "order": 99
+      "order": 499
     }
   ],
   "lessons": [
@@ -6518,14 +6518,14 @@
       "id": "lesson-01",
       "title": "Getting Started",
       "difficulty": 1,
-      "exerciseCount": 3,
+      "exerciseCount": 4,
       "unlockRequirement": null
     },
     {
       "id": "lesson-02",
       "title": "Right Hand Basics",
       "difficulty": 1,
-      "exerciseCount": 8,
+      "exerciseCount": 9,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-01"
@@ -6535,7 +6535,7 @@
       "id": "lesson-03",
       "title": "Left Hand Basics",
       "difficulty": 1,
-      "exerciseCount": 5,
+      "exerciseCount": 6,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-02"
@@ -6545,7 +6545,7 @@
       "id": "lesson-04",
       "title": "Both Hands Together",
       "difficulty": 2,
-      "exerciseCount": 6,
+      "exerciseCount": 7,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-03"
@@ -6555,7 +6555,7 @@
       "id": "lesson-05",
       "title": "C Major Scale Mastery",
       "difficulty": 2,
-      "exerciseCount": 4,
+      "exerciseCount": 5,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-04"
@@ -6565,7 +6565,7 @@
       "id": "lesson-06",
       "title": "Simple Songs Collection",
       "difficulty": 2,
-      "exerciseCount": 4,
+      "exerciseCount": 5,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-05"
@@ -6575,17 +6575,17 @@
       "id": "lesson-07",
       "title": "Black Keys & Sharps/Flats",
       "difficulty": 2,
-      "exerciseCount": 10,
+      "exerciseCount": 11,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-05"
+        "lessonId": "lesson-06"
       }
     },
     {
       "id": "lesson-08",
       "title": "G Major Scale & Melodies",
       "difficulty": 2,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-07"
@@ -6595,7 +6595,7 @@
       "id": "lesson-09",
       "title": "F Major & Key Signatures",
       "difficulty": 2,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-08"
@@ -6605,7 +6605,7 @@
       "id": "lesson-10",
       "title": "A Minor & Minor Keys",
       "difficulty": 2,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-09"
@@ -6615,7 +6615,7 @@
       "id": "lesson-11",
       "title": "D Minor & E Minor",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-10"
@@ -6625,7 +6625,7 @@
       "id": "lesson-12",
       "title": "Dotted Rhythms & Syncopation",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-11"
@@ -6635,7 +6635,7 @@
       "id": "lesson-13",
       "title": "Major & Minor Triads",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-12"
@@ -6645,7 +6645,7 @@
       "id": "lesson-14",
       "title": "Chord Progressions",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-13"
@@ -6655,7 +6655,7 @@
       "id": "lesson-15",
       "title": "Chord Songs & Transitions",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-14"
@@ -6665,7 +6665,7 @@
       "id": "lesson-16",
       "title": "Arpeggios & Patterns",
       "difficulty": 3,
-      "exerciseCount": 11,
+      "exerciseCount": 12,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-15"
@@ -6675,17 +6675,17 @@
       "id": "lesson-17",
       "title": "Triplets & Waltz Time",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-12"
+        "lessonId": "lesson-16"
       }
     },
     {
       "id": "lesson-18",
       "title": "Swing & Mixed Rhythms",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-17"
@@ -6695,17 +6695,17 @@
       "id": "lesson-19",
       "title": "Expression & Dynamics",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-16"
+        "lessonId": "lesson-18"
       }
     },
     {
       "id": "lesson-20",
       "title": "Phrasing & Pedal",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-19"
@@ -6715,7 +6715,7 @@
       "id": "lesson-21",
       "title": "D Major & Bb Major",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-20"
@@ -6725,7 +6725,7 @@
       "id": "lesson-22",
       "title": "Sight Reading",
       "difficulty": 3,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-21"
@@ -6735,7 +6735,7 @@
       "id": "lesson-23",
       "title": "Performance Skills",
       "difficulty": 4,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-22"
@@ -6745,7 +6745,7 @@
       "id": "lesson-24",
       "title": "Year One Finale",
       "difficulty": 4,
-      "exerciseCount": 9,
+      "exerciseCount": 10,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-23"
@@ -6755,17 +6755,17 @@
       "id": "lesson-25",
       "title": "Chord Progressions in New Keys",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-15"
+        "lessonId": "lesson-24"
       }
     },
     {
       "id": "lesson-26",
       "title": "Accompaniment Mastery",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-25"
@@ -6775,17 +6775,17 @@
       "id": "lesson-27",
       "title": "Advanced Rhythm Patterns",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-18"
+        "lessonId": "lesson-26"
       }
     },
     {
       "id": "lesson-28",
       "title": "Compound Meters & Special Time Signatures",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-27"
@@ -6795,27 +6795,27 @@
       "id": "lesson-29",
       "title": "Advanced Arpeggios & Technique",
       "difficulty": 4,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-20"
+        "lessonId": "lesson-28"
       }
     },
     {
       "id": "lesson-30",
       "title": "Dynamics & Expression Deep Dive",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-21"
+        "lessonId": "lesson-29"
       }
     },
     {
       "id": "lesson-31",
       "title": "Pedaling & Sustained Sound",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-30"
@@ -6825,37 +6825,37 @@
       "id": "lesson-32",
       "title": "New Keys: D Major & B-Flat Major",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-22"
+        "lessonId": "lesson-31"
       }
     },
     {
       "id": "lesson-33",
       "title": "Sight Reading Intensive",
       "difficulty": 3,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-23"
+        "lessonId": "lesson-32"
       }
     },
     {
       "id": "lesson-34",
       "title": "Performance Repertoire: Classical",
       "difficulty": 4,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
-        "lessonId": "lesson-24"
+        "lessonId": "lesson-33"
       }
     },
     {
       "id": "lesson-35",
       "title": "Performance Repertoire: Pop & Contemporary",
       "difficulty": 4,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-34"
@@ -6865,7 +6865,7 @@
       "id": "lesson-36",
       "title": "Improvisation & Creativity",
       "difficulty": 4,
-      "exerciseCount": 18,
+      "exerciseCount": 19,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-35"
@@ -6875,7 +6875,7 @@
       "id": "lesson-37",
       "title": "Comprehensive Review: Scales & Keys",
       "difficulty": 4,
-      "exerciseCount": 12,
+      "exerciseCount": 13,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-36"
@@ -6885,7 +6885,7 @@
       "id": "lesson-38",
       "title": "Comprehensive Review: Chords & Harmony",
       "difficulty": 4,
-      "exerciseCount": 12,
+      "exerciseCount": 13,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-37"
@@ -6895,7 +6895,7 @@
       "id": "lesson-39",
       "title": "Comprehensive Review: Rhythm & Expression",
       "difficulty": 4,
-      "exerciseCount": 12,
+      "exerciseCount": 13,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-38"
@@ -6905,7 +6905,7 @@
       "id": "lesson-40",
       "title": "Year One Grand Recital",
       "difficulty": 5,
-      "exerciseCount": 12,
+      "exerciseCount": 13,
       "unlockRequirement": {
         "type": "lesson-complete",
         "lessonId": "lesson-39"

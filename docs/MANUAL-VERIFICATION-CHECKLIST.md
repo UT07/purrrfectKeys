@@ -3,13 +3,14 @@
 **Purpose:** Concrete steps YOU need to execute before launch — things that require your Firebase Console, GCP access, Apple Developer account, physical devices, or human judgment.
 **Companion:** `docs/system-design-analysis.md` (architecture analysis), `docs/plans/UNIFIED-PLAN.md` Phase 11 (full QA audit)
 
-**Last updated:** March 10, 2026
-**Codebase health:** 139 test suites, 2,831 tests, 0 failures, 0 TypeScript errors
+**Last updated:** March 15, 2026
+**Codebase health:** 145 test suites, 2,953 tests, 0 failures, 0 TypeScript errors
+**Content:** 599 exercises across 50 lessons, 582 songs in Firestore, 120 skill nodes across 18 tiers
 **GitHub issues:** 0 open (all closed as of Mar 8-9)
 **Key completions since initial draft:**
 - CI/CD workflows created (`.github/workflows/ci.yml` + `build.yml`)
 - Account deletion Cloud Function + client-side fallback implemented (10 tests)
-- 9 Cloud Functions written (4 Gemini + sync + recommendations + weekly summary + deletion + cache cleanup)
+- 11 Cloud Functions deployed on nodejs22 (4 Gemini + sync + recommendations + weekly summary + deletion + cache cleanup + daily sight reading + weekly new songs)
 - Audio session race condition fixed (AudioManager synchronous config)
 - Mic pipeline tuned for real iPhone signal levels (measurement mode, RMS threshold, release hold)
 - ExerciseLoadingScreen now waits for Salsa TTS to finish before transitioning
@@ -45,29 +46,28 @@
 
 ### A1. Firestore Security Rules [BLOCKER]
 
-**Status: Rules WRITTEN** — comprehensive rules exist in `firebase/firestore.rules` covering all collections: users, songs, songMastery, songRequests, leagues, league members, friendCodes, friends, activityFeed, challenges, usernames, gamification, progress, xpLog, syncLog, settings.
+**Status: DEPLOYED (Mar 15).** Comprehensive rules in `firebase/firestore.rules` covering all collections: users, songs, songMastery, songRequests, leagues, league members, friendCodes, friends, activityFeed, challenges, usernames, gamification, progress, xpLog, syncLog, settings.
 
 - [x] ~~Add rules for social/songs/leagues collections~~ — Done (all 12+ collections covered)
-- [ ] Deploy rules: `firebase deploy --only firestore:rules`
+- [x] ~~Deploy rules~~ — Deployed Mar 15
 - [ ] **Test from a second account** that you CANNOT read another user's progress, friends, or songMastery
 
 ### A2. Firestore Composite Indexes [BLOCKER]
 
-**Status: Indexes DEFINED** in `firebase/firestore.indexes.json` (songs x3, leagues x1). Need deployment.
+**Status: DEPLOYED (Mar 15).** 4 indexes in `firebase/firestore.indexes.json` (songs x3, leagues x1).
 
 - [x] ~~Define composite indexes~~ — Done (4 indexes in firestore.indexes.json)
-- [ ] Deploy: `firebase deploy --only firestore:indexes`
+- [x] ~~Deploy~~ — Deployed Mar 15
 - [ ] **Test:** Open SongLibraryScreen, filter by genre, filter by difficulty — no errors in console
 
 ### A3. Gemini API Key Security [CRITICAL]
 
 The Gemini API key is currently embedded in the client bundle (`EXPO_PUBLIC_GEMINI_API_KEY`). Anyone who decompiles the APK can extract it and run arbitrary Gemini prompts on your billing.
 
-**Status: 9 Cloud Functions written** in `firebase/functions/src/`: generateExercise, generateSong, generateCoachFeedback, deleteUserAllData, syncProgress, completeExercise, getExerciseRecommendations, getWeeklySummary, cleanupCoachFeedbackCache. Client services fall back to direct Gemini API if Cloud Functions are unavailable.
+**Status: 11 Cloud Functions DEPLOYED (Mar 15, nodejs22)** in `firebase/functions/src/`: generateExercise, generateSong, generateCoachFeedback, deleteUserAllData, syncProgress, completeExercise, getExerciseRecommendations, getWeeklySummary, cleanupCoachFeedbackCache, dailySightReading, weeklyNewSongs. Client services fall back to direct Gemini API if Cloud Functions are unavailable.
 
 **Remaining steps:**
-- [ ] Verify deployment: `firebase functions:list` (may have been deployed Mar 3 — verify)
-- [ ] If not deployed: `cd firebase/functions && npm run build && firebase deploy --only functions`
+- [x] ~~Deploy functions~~ — 11 functions deployed on nodejs22 (Mar 15)
 - [ ] Set `GEMINI_API_KEY` as a Firebase secret: `firebase functions:secrets:set GEMINI_API_KEY`
 - [ ] Verify Cloud Functions respond correctly (test exercise generation, song generation, coaching)
 - [ ] Once confirmed, remove `EXPO_PUBLIC_GEMINI_API_KEY` from client `.env`
@@ -102,7 +102,7 @@ App Store requires functional account deletion.
 **Implemented deletions:** 9 subcollections (progress, settings, songs, mastery, friends, activity, achievements, learnerProfile, catEvolution), `friendCodes/{code}`, league membership, challenges (bidirectional), friend list cleanup (removes user from all friends' lists), root user document.
 
 **Remaining steps:**
-- [ ] Deploy Cloud Function: `firebase deploy --only functions:deleteUserData`
+- [x] ~~Deploy Cloud Function~~ — Deployed as `deleteUserAllData` (Mar 15)
 - [ ] **Test on real account:** Create test account → add progress, friends, song mastery, league membership → delete account → verify Firestore is clean (all subcollections, friend codes, league entries, challenges removed)
 - [ ] Verify `AccountScreen.tsx` delete button triggers the full flow correctly
 - [ ] Verify anonymous users cannot trigger account deletion (or handle gracefully)
@@ -299,8 +299,9 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ### E1. Verify Existing Firestore Data
 
-- [ ] Check `songs` collection: 124 documents present
-- [ ] Spot-check 5 songs: verify `metadata`, `sections`, `abcNotation` fields are populated
+- [x] ~~Check `songs` collection~~ — 582 documents present (494 gemini, 50 thesession, 38 pdmx)
+- [x] ~~Song quality verification~~ — 91% clean (529/582), 6 errors (1 unparseable Besame Mucho + 2 Amazing Grace reference mismatch), 223 warnings (mostly pdmx large intervals)
+- [ ] Spot-check 5 songs: verify `metadata`, `sections`, `layers` fields are populated
 - [ ] Check `users` collection structure: at least your test account has correct subcollections
 - [ ] Check `leagues` collection: verify structure matches leagueService expectations
 
@@ -502,35 +503,95 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ---
 
+## J. Content Quality Verification (Phase 13)
+
+### J1. Exercise Content Validation [BLOCKER]
+
+**Status: VERIFIED (Mar 15).** All 599 exercises pass automated validation with 0 errors.
+
+**Automated checks run:**
+- [x] Structural integrity: MIDI range (21-108), beat alignment, duration validity, scoring consistency
+- [x] Pedagogical consistency: compound time skills ↔ time signatures, dynamics skills ↔ velocitySensitive, hand assignments, key signature consistency
+- [x] Cross-exercise validation: duplicate IDs, prerequisite existence, lesson manifest integrity
+- [x] **134 exercises auto-fixed** (56 time signatures + 78 dynamics settings) via `scripts/fix-exercise-pedagogy.ts`
+- [x] Post-fix re-validation: 599/599 pass, 0 errors
+
+**Manual spot-checks needed:**
+- [ ] Play 3 exercises from each lesson tier (1-6 static, 7-18 AI-generated) — verify notes make musical sense
+- [ ] Play exercises with compound time (6/8, 3/4) — verify metronome and beat feel are correct
+- [ ] Play dynamics exercises — verify velocity sensitivity affects scoring
+- [ ] Play both-hands exercises — verify split keyboard and hand assignment display correctly
+
+**Scripts:**
+- `npx tsx scripts/validate-exercise.ts` — full validation (structural + pedagogical)
+- `npx tsx scripts/fix-exercise-pedagogy.ts [--dry-run]` — auto-fix compound time and dynamics mismatches
+
+### J2. Song Library Content Validation [IMPORTANT]
+
+**Status: VERIFIED (Mar 15).** 582 songs in Firestore, 91% clean (529/582).
+
+**Findings:**
+- **TheSession (50 songs):** 100% clean, 0 errors, 0 warnings
+- **PDMX classical (38 songs):** 0 errors, 187 warnings (large interval jumps — expected for chamber music arrangements)
+- **Gemini (494 songs):** 6 errors, 36 warnings
+  - **177 songs fixed:** Had raw ABC notation (melodyABC) instead of parsed layers — fixed via `scripts/fix-songs-parse-abc.ts` + ABC parser normalization
+  - **1 unfixable:** "Besame Mucho" intro section has empty ABC (no notes)
+  - **2 reference mismatches:** "Amazing Grace" arrangements don't match reference melody intervals
+  - Warnings: Repeated notes in outros, one 72-beat long note in "My Funny Valentine"
+
+**Manual spot-checks needed:**
+- [ ] Open SongLibraryScreen → verify all genres load (pop, classical, folk, film, game, holiday, etc.)
+- [ ] Play 1 song per genre — verify sections have playable notes
+- [ ] Play a song with accompaniment — verify left-hand layer shows correctly
+- [ ] Search for "Besame Mucho" — verify it still loads (has a working Simplified version)
+- [ ] Verify song mastery tracking works (play a section → earn bronze/silver/gold/platinum)
+
+**Scripts:**
+- `npx tsx scripts/verify-songs-admin.ts [--source gemini|thesession|pdmx] [--verbose]` — Firestore song verification (requires ADC)
+- `npx tsx scripts/fix-songs-parse-abc.ts [--dry-run]` — parse raw ABC and update Firestore
+
+### J3. Skill Tree & Curriculum Integrity [IMPORTANT]
+
+**Status: Code-verified.** 120 skill nodes across 18 tiers, DAG-validated. Integration tests confirm full traversal.
+
+- [x] All skills reachable via prerequisite chain (integration test: `yearLongProgression.test.ts`)
+- [x] No circular dependencies in skill DAG
+- [x] Post-curriculum mode: CurriculumEngine generates varied AI sessions when all 100+ skills mastered
+- [ ] **Manual check:** Walk through 5 consecutive sessions via DailySessionScreen — verify lesson progression makes sense
+- [ ] **Manual check:** Master a skill → verify next skill unlocks in LevelMapScreen
+
+---
+
 ## Quick Reference: Priority Order
 
 | Priority | Section | Est. Time | Status | Must Complete Before |
 |----------|---------|-----------|--------|---------------------|
-| 1 | A1: Firestore Rules | Deploy + test | RULES WRITTEN — need deploy | Any beta testing |
-| 2 | A2: Firestore Indexes | Deploy | INDEXES DEFINED — need deploy | Any beta testing |
-| 3 | A3: Cloud Functions | Deploy + test | 9 FUNCTIONS WRITTEN — verify deploy | Any beta testing |
-| 4 | A6: Account Deletion | Deploy + test | CODE DONE (10 tests) | App Store submission |
-| 5 | D3/D3a: Mic Pipeline + Tuning | Device test | CODE FIXED (Mar 7-8) | Before beta |
-| 6 | D7: Exercise Types (6 types) | Device test | CODE DONE (Mar 9-10) | Before beta |
-| 7 | C1: Privacy Policy | 1 day | TODO | App Store submission |
-| 8 | A4: Budget Alerts | 15 min | TODO | Public launch |
-| 9 | B1: CI/CD | Verify runs | DONE (ci.yml + build.yml) | Before team grows |
-| 10 | B3: Crash Reporting | 2 hours | TODO | Before beta |
-| 11 | C2-C3: App Store Assets | 2-3 days | TODO | App Store submission |
-| 12 | D1-D5: Device Testing (audio, TTS, perf) | 2-3 days | TODO | Before beta |
-| 13 | D8: Replay System | 1 hour | CODE DONE (Mar 9) | Before beta |
-| 14 | D6: Maestro E2E | 1-2 days | SCAFFOLDED (needs selectors) | Before beta |
-| 15 | A5: App Check | 2 hours | TODO | Public launch |
-| 16 | E1-E3: Data Integrity | 1 day | TODO | Before beta |
-| 17 | F1-F3: Security Checks | half day | TODO | Before beta |
-| 18 | G5e-G5g: Social Overhaul | 2 hours | CODE DONE (Mar 9-10) | Before beta |
-| 19 | I1-I3: Recent Bug Fixes | 1 hour | CODE DONE (Mar 9-10) | Before beta |
-| 20 | B2: Environment Mgmt | half day | TODO | Before public launch |
-| 21 | G1-G4: Third-party verify | 2 hours | TODO | Before beta |
-| 22 | B4-B5: OTA + Build | half day | TODO | Before beta |
-| 23 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
+| 1 | A1: Firestore Rules | Test cross-user | DEPLOYED (Mar 15) | Any beta testing |
+| 2 | A2: Firestore Indexes | Test queries | DEPLOYED (Mar 15) | Any beta testing |
+| 3 | A3: Cloud Functions | Set secrets + test | 11 DEPLOYED (Mar 15) | Any beta testing |
+| 4 | A6: Account Deletion | Test on real account | DEPLOYED (Mar 15) | App Store submission |
+| 5 | J1-J3: Content Quality | Manual spot-checks | AUTO-VERIFIED (Mar 15) | Before merge to master |
+| 6 | D3/D3a: Mic Pipeline + Tuning | Device test | CODE FIXED (Mar 7-8) | Before beta |
+| 7 | D7: Exercise Types (6 types) | Device test | CODE DONE (Mar 9-10) | Before beta |
+| 8 | C1: Privacy Policy | 1 day | TODO | App Store submission |
+| 9 | A4: Budget Alerts | 15 min | TODO | Public launch |
+| 10 | B1: CI/CD | Verify runs | DONE (ci.yml + build.yml) | Before team grows |
+| 11 | B3: Crash Reporting | 2 hours | TODO | Before beta |
+| 12 | C2-C3: App Store Assets | 2-3 days | TODO | App Store submission |
+| 13 | D1-D5: Device Testing (audio, TTS, perf) | 2-3 days | TODO | Before beta |
+| 14 | D8: Replay System | 1 hour | CODE DONE (Mar 9) | Before beta |
+| 15 | D6: Maestro E2E | 1-2 days | SCAFFOLDED (needs selectors) | Before beta |
+| 16 | A5: App Check | 2 hours | TODO | Public launch |
+| 17 | E1-E3: Data Integrity | 1 day | TODO | Before beta |
+| 18 | F1-F3: Security Checks | half day | TODO | Before beta |
+| 19 | G5e-G5g: Social Overhaul | 2 hours | CODE DONE (Mar 9-10) | Before beta |
+| 20 | I1-I3: Recent Bug Fixes | 1 hour | CODE DONE (Mar 9-10) | Before beta |
+| 21 | B2: Environment Mgmt | half day | TODO | Before public launch |
+| 22 | G1-G4: Third-party verify | 2 hours | TODO | Before beta |
+| 23 | B4-B5: OTA + Build | half day | TODO | Before beta |
+| 24 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
 
-**Total estimated effort: ~9-11 working days** (includes new exercise types, social overhaul, replay, and bug fix verification)
+**Total estimated effort: ~9-11 working days** (content quality automated verification done, manual spot-checks + device testing remaining)
 
 ---
 

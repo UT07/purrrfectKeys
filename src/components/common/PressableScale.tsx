@@ -61,7 +61,7 @@ export function PressableScale({
   testID,
   hitSlop,
   accessibilityLabel,
-  accessibilityRole,
+  accessibilityRole = 'button',
 }: PressableScaleProps): React.JSX.Element {
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);

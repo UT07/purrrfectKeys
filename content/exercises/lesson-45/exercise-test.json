@@ -1,0 +1,147 @@
+{
+  "id": "lesson-45-test",
+  "version": 1,
+  "metadata": {
+    "title": "Lesson 45 Mastery Test",
+    "description": "Prove your compound time & swing feel skills -- play from memory!",
+    "difficulty": 5,
+    "estimatedMinutes": 3,
+    "skills": [
+      "compound-time",
+      "swing-and-shuffle"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 58,
+    "timeSignature": [
+      6,
+      8
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": false
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1.5,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 2.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 2.25,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 5.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 6,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 62,
+      "startBeat": 7.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 8.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 9,
+      "durationBeats": 3,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 12,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 59,
+      "startBeat": 13.5,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 14.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 15,
+      "durationBeats": 2.25,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 17.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 57,
+      "startBeat": 18,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 19.5,
+      "durationBeats": 4.5,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 30,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Mastery test -- play from memory! No green hints this time.",
+    "commonMistakes": [],
+    "successMessage": "You've mastered Compound Time & Swing Feel! Ready for the next lesson."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

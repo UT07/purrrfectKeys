@@ -163,11 +163,14 @@ export interface OnboardingSettings {
   learningGoal: 'songs' | 'technique' | 'exploration' | null;
 }
 
+export type LearningPathId = 'piano-basics' | 'pop-and-film' | 'classical' | 'jazz-and-blues' | 'kids';
+
 export interface ProfileSettings {
   username: string; // Unique invite code (3-20 chars, a-z0-9_-, lowercase)
   displayName: string;
   avatarEmoji: string; // Emoji used as avatar
   selectedCatId: string; // Cat character avatar ID
+  selectedPath: LearningPathId; // Active learning path
   equippedAccessories: Record<string, string>; // category → accessory ID
   ownedAccessories: string[]; // purchased accessory IDs
 }
@@ -202,6 +205,7 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   setDisplayName: (name: string) => void;
   setAvatarEmoji: (emoji: string) => void;
   setSelectedCatId: (id: string) => void;
+  setSelectedPath: (pathId: LearningPathId) => void;
   equipAccessory: (category: string, accessoryId: string) => void;
   unequipAccessory: (category: string) => void;
   addOwnedAccessory: (accessoryId: string) => void;

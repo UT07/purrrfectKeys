@@ -153,19 +153,29 @@ export async function speakWithElevenLabs(
       ...options?.voiceSettings,
     };
 
-    const response = await fetch(`${API_BASE}/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg',
-      },
-      body: JSON.stringify({
-        text,
-        model_id: MODEL_ID,
-        voice_settings: settings,
-      }),
-    });
+    // 5-second timeout to avoid blocking the loading screen
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), 5000);
+
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text,
+          model_id: MODEL_ID,
+          voice_settings: settings,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(fetchTimeout);
+    }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');

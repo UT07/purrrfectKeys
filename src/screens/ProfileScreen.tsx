@@ -360,7 +360,8 @@ export function ProfileScreen(): React.ReactElement {
     setUsernameChecking(true);
     usernameDebounceRef.current = setTimeout(async () => {
       try {
-        const available = await checkUsernameAvailable(normalized);
+        const currentUid = useAuthStore.getState().user?.uid;
+        const available = await checkUsernameAvailable(normalized, currentUid);
         setUsernameAvailable(available);
         if (!available) setUsernameError('Username already taken');
       } catch {

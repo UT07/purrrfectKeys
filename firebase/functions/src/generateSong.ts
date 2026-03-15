@@ -11,6 +11,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { captureAIGeneration } from './posthogClient';
 
 // ============================================================================
 // Type Definitions
@@ -184,7 +185,7 @@ export const generateSong = onCall(
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: {
           responseMimeType: 'application/json',
           temperature: 0.8,
@@ -194,13 +195,29 @@ export const generateSong = onCall(
       const prompt = buildSongPrompt(data);
 
       // First attempt
+      const aiStart = Date.now();
       let validatedSong = await attemptGeneration(model, prompt);
+      captureAIGeneration({
+        distinctId: uid,
+        model: 'gemini-2.5-flash',
+        provider: 'google',
+        latencySeconds: (Date.now() - aiStart) / 1000,
+        isError: validatedSong === null,
+      });
 
       // Retry once with stronger guidance on failure
       if (!validatedSong) {
         const retryPrompt = prompt +
           '\n\nPrevious attempt failed. Ensure each section has valid ABC notation with all required headers (X:, T:, M:, L:, K:).';
+        const retryStart = Date.now();
         validatedSong = await attemptGeneration(model, retryPrompt);
+        captureAIGeneration({
+          distinctId: uid,
+          model: 'gemini-2.5-flash',
+          provider: 'google',
+          latencySeconds: (Date.now() - retryStart) / 1000,
+          isError: validatedSong === null,
+        });
       }
 
       if (!validatedSong) {

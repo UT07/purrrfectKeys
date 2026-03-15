@@ -22,7 +22,7 @@
     "keySignature": "C",
     "countIn": 4,
     "metronomeEnabled": true,
-    "loopEnabled": true
+    "loopEnabled": false
   },
   "notes": [
     {
@@ -257,5 +257,6 @@
     "highlightHands": true,
     "showPianoRoll": true,
     "showStaffNotation": false
-  }
+  },
+  "type": "chordId"
 }

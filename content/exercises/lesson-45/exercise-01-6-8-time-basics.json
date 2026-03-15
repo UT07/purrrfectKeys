@@ -1,0 +1,140 @@
+{
+  "id": "lesson-45-ex-01",
+  "version": 1,
+  "metadata": {
+    "title": "6/8 Time Basics",
+    "description": "Feel the 6/8 pulse — two groups of three",
+    "difficulty": 3,
+    "estimatedMinutes": 2,
+    "skills": [
+      "compound-time",
+      "swing-and-shuffle"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 58,
+    "timeSignature": [
+      6,
+      8
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": true
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 62,
+      "startBeat": 1.5,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 64,
+      "startBeat": 2.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 3,
+      "durationBeats": 2.25,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 5.25,
+      "durationBeats": 0.75,
+      "hand": "right"
+    },
+    {
+      "note": 65,
+      "startBeat": 6,
+      "durationBeats": 3,
+      "hand": "right"
+    },
+    {
+      "note": 55,
+      "startBeat": 9,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 10.5,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 11.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 12,
+      "durationBeats": 2.25,
+      "hand": "left"
+    },
+    {
+      "note": 59,
+      "startBeat": 14.25,
+      "durationBeats": 0.75,
+      "hand": "left"
+    },
+    {
+      "note": 57,
+      "startBeat": 15,
+      "durationBeats": 6,
+      "hand": "left"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 50,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Focus on: 6/8 and 12/8 time with flowing subdivisions — gentle lilting feel.",
+    "commonMistakes": [
+      {
+        "pattern": "rushing",
+        "advice": "Listen to the metronome. Each note should land exactly on a beat.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": -100
+        }
+      },
+      {
+        "pattern": "dragging",
+        "advice": "Stay with the metronome — try counting the beats out loud.",
+        "triggerCondition": {
+          "type": "timing",
+          "threshold": 100
+        }
+      }
+    ],
+    "successMessage": "Great work on 6/8 Time Basics! Keep practicing to improve your score."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": true,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

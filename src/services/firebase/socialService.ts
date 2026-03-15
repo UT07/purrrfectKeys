@@ -92,13 +92,16 @@ export async function registerFriendCode(uid: string): Promise<string> {
  * Check if a username is available.
  * Reads usernames/{username_lowercase} to see if it exists.
  */
-export async function checkUsernameAvailable(username: string): Promise<boolean> {
+export async function checkUsernameAvailable(username: string, currentUid?: string): Promise<boolean> {
   const normalized = username.toLowerCase();
   if (!isValidUsername(normalized)) return false;
 
   const usernameRef = doc(db, 'usernames', normalized);
   const snap = await getDoc(usernameRef);
-  return !snap.exists();
+  if (!snap.exists()) return true;
+  // If the username belongs to the current user, it's "available" (they can keep it)
+  if (currentUid && snap.data()?.uid === currentUid) return true;
+  return false;
 }
 
 /**
@@ -123,10 +126,24 @@ export async function registerUsername(
 
   // Use a transaction to atomically check availability and claim the username.
   // This prevents TOCTOU races where two users check the same name simultaneously.
+  // Also allows re-claiming if the username belongs to the same user (idempotent)
+  // or if the old owner no longer has a Firestore profile (orphaned anonymous account).
   await runTransaction(db, async (transaction) => {
     const existing = await transaction.get(usernameRef);
     if (existing.exists()) {
-      throw new Error('Username already taken');
+      const existingUid = existing.data()?.uid;
+      if (existingUid === uid) {
+        // Already owned by this user — just update the user profile
+        transaction.update(userRef, { username: normalized, displayName });
+        return;
+      }
+      // Check if the existing owner's profile still exists (not an orphaned account)
+      const oldOwnerRef = doc(db, 'users', existingUid);
+      const oldOwner = await transaction.get(oldOwnerRef);
+      if (oldOwner.exists()) {
+        throw new Error('Username already taken');
+      }
+      // Old owner's profile doesn't exist — re-claim the username
     }
 
     transaction.set(usernameRef, { uid, createdAt: Date.now() });

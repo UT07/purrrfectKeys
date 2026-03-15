@@ -86,7 +86,7 @@ import { SightReadingOverlay } from './SightReadingOverlay';
 import { CallResponsePhase } from './CallResponsePhase';
 import type { CallResponsePhaseType } from './CallResponsePhase';
 import { GlassmorphismCard } from '../../components/effects';
-import { buildReplayPlan } from '../../services/replayCoachingService';
+import { buildReplayPlan, buildReplayPlanSync } from '../../services/replayCoachingService';
 import { getIntroData } from '../../services/replayCoachingService';
 import type { ReplayPlan } from '../../core/exercises/replayTypes';
 import ReAnimated, { FadeIn } from 'react-native-reanimated';
@@ -99,7 +99,7 @@ import { detectWeakPatterns, generateDrillParams } from '../../core/curriculum/W
 import type { WeakPattern } from '../../core/curriculum/WeakSpotDetector';
 import { applyAbilities, createDefaultConfig } from '../../core/abilities/AbilityEngine';
 import { XPTransitionOverlay } from '../../components/transitions/XPTransitionOverlay';
-import { setPostExerciseData } from '../postExerciseCache';
+import { setPostExerciseData, setReplayPlanCache, getReplayPlanCache, clearReplayPlanCache } from '../postExerciseCache';
 import type { ExerciseAbilityConfig } from '../../core/abilities/AbilityEngine';
 import { midiToNoteName } from '../../core/music/MusicTheory';
 import { COLORS, NEON, glowColor } from '../../theme/tokens';
@@ -266,6 +266,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const exerciseTypeParam = route.params?.exerciseType ?? null;
   const challengeTarget = route.params?.challengeTarget ?? null;
   const friendChallengeId = route.params?.friendChallengeId ?? null;
+  const replayModeParam = route.params?.replayMode ?? false;
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
@@ -804,12 +805,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       analyticsEvents.exercise.failed(ex.id, failCount + 1);
     }
 
-    // Build replay plan in background (parallel with CompletionModal animation)
-    // Plan is ready by the time user taps "Review with Salsa"
+    // Build replay plan: set algorithmic plan synchronously so "Review with Salsa"
+    // button is immediately visible, then upgrade with Gemini AI in background
+    const syncPlan = buildReplayPlanSync(ex, score);
+    if (syncPlan) setReplayPlan(syncPlan);
+
     buildReplayPlan(ex, score).then((plan) => {
       if (mountedRef.current) setReplayPlan(plan);
-    }).catch(() => {
-      // Silently fail — replay just won't be available
+    }).catch((err) => {
+      console.warn('[ExercisePlayer] Async replay plan failed:', err);
     });
 
     // Track consecutive fails for demo prompt
@@ -881,13 +885,46 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     });
 
     // Save exercise score to lesson progress and compute sync data
-    const exLessonId = getLessonIdForExercise(ex.id);
+    let exLessonId = getLessonIdForExercise(ex.id);
+    let resolvedExerciseId = ex.id;
+
+    // For AI exercises with a skillId, map completion to the skill's target exercise
+    // so it counts toward the real lesson progress (not the __ai__ bucket)
+    if (!exLessonId && skillIdParam) {
+      const skillNode = getSkillById(skillIdParam);
+      if (skillNode && skillNode.targetExerciseIds.length > 0) {
+        const progressData = useProgressStore.getState().lessonProgress;
+        let targetExId: string | null = null;
+
+        // Find first uncompleted target exercise for this skill
+        for (const tid of skillNode.targetExerciseIds) {
+          const tLessonId = getLessonIdForExercise(tid);
+          if (tLessonId) {
+            const lp = progressData[tLessonId];
+            if (!lp?.exerciseScores[tid]?.completedAt) {
+              targetExId = tid;
+              break;
+            }
+          }
+        }
+
+        // Fall back to first target exercise if all are already completed
+        if (!targetExId) targetExId = skillNode.targetExerciseIds[0];
+
+        const targetLessonId = getLessonIdForExercise(targetExId);
+        if (targetLessonId) {
+          exLessonId = targetLessonId;
+          resolvedExerciseId = targetExId;
+        }
+      }
+    }
+
     // Use real lesson ID or synthetic "__ai__" bucket for non-lesson exercises
     const effectiveLessonId = exLessonId ?? '__ai__';
 
-    // For AI exercises, use a stable key (based on skillId) so scores accumulate
-    // across attempts instead of each unique ID being treated as a brand-new exercise.
-    const stableExId = isAiExercise && skillIdParam ? `ai-skill-${skillIdParam}` : ex.id;
+    // Use the resolved exercise ID (real target) when mapped to a lesson,
+    // or ai-skill-{skillId} for exercises that couldn't be mapped
+    const stableExId = exLessonId ? resolvedExerciseId : (isAiExercise && skillIdParam ? `ai-skill-${skillIdParam}` : ex.id);
 
     // Capture whether this exercise was previously completed BEFORE we update lesson progress
     // (used for first-completion gem bonus below)
@@ -965,6 +1002,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               completedAt,
             });
             progressStore.addXp(lesson.xpReward);
+            analyticsEvents.progress.lessonCompleted(exLessonId, 0);
 
             if (lessonSyncData) {
               lessonSyncData.status = 'completed';
@@ -2181,6 +2219,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       nextExerciseId: nextExerciseId ?? undefined,
     });
 
+    // Cache replay plan separately (survives PostExercise → Exercise round trip)
+    setReplayPlanCache(replayPlan);
+
     // If lesson was just completed, show celebration first, then navigate
     if (lessonCompleteData) {
       // Don't clear lessonCompleteData here — LessonCompleteScreen needs it for rendering.
@@ -2278,6 +2319,24 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setReplaySectionIndex(0);
     startReplayFromBeat(0);
   }, [replayPlan, exercise.id, finalScore, startReplayFromBeat]);
+
+  // Auto-start replay when navigated with replayMode=true (from PostExerciseScreen)
+  useEffect(() => {
+    if (!replayModeParam) return undefined;
+    const cached = getReplayPlanCache();
+    if (!cached) return undefined;
+    setReplayPlan(cached);
+    clearReplayPlanCache();
+    // Delay slightly to let exercise load settle
+    const timer = setTimeout(() => {
+      if (mountedRef.current) {
+        setPlayerMode('replay');
+        setReplaySectionIndex(0);
+        startReplayFromBeat(0);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [replayModeParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Stop replay. If replay finished naturally, navigate away.

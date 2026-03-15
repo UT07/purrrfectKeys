@@ -15,6 +15,8 @@ export * from './generateCoachFeedback';
 export * from './deleteUserData';
 export * from './generateExercise';
 export * from './generateSong';
+export * from './dailySightReading';
+export * from './weeklyNewSongs';
 
 // ============================================================================
 // Additional Cloud Functions

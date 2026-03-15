@@ -1,0 +1,18 @@
+{
+  "id": "jazz-and-blues",
+  "title": "Jazz & Blues",
+  "description": "Chord voicings, swing, improv — find your groove",
+  "icon": "saxophone",
+  "color": "#FFB74D",
+  "emoji": "\ud83c\udfb7",
+  "lessons": [
+    "lesson-01", "lesson-02", "lesson-03", "lesson-04", "lesson-05",
+    "lesson-06", "lesson-07", "lesson-08", "lesson-09", "lesson-10",
+    "lesson-13", "lesson-14",
+    "lesson-17", "lesson-18",
+    "lesson-25", "lesson-26", "lesson-27", "lesson-28",
+    "lesson-36",
+    "lesson-38", "lesson-40"
+  ],
+  "branchesAt": "lesson-10"
+}

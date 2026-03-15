@@ -1,0 +1,17 @@
+{
+  "id": "kids",
+  "title": "Kids",
+  "description": "Simplified exercises, more cat interactions, nursery rhymes & Disney",
+  "icon": "baby-face-outline",
+  "color": "#81C784",
+  "emoji": "\ud83d\udc76",
+  "lessons": [
+    "lesson-01", "lesson-02", "lesson-03",
+    "lesson-04", "lesson-05", "lesson-06",
+    "lesson-07", "lesson-08",
+    "lesson-12", "lesson-13",
+    "lesson-15", "lesson-17",
+    "lesson-23"
+  ],
+  "branchesAt": "lesson-01"
+}

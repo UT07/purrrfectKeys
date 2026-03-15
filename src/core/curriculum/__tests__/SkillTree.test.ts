@@ -222,11 +222,11 @@ describe('SkillTree', () => {
         const hints = getGenerationHints(node.id);
         if (hints?.minDifficulty) {
           expect(hints.minDifficulty).toBeGreaterThanOrEqual(1);
-          expect(hints.minDifficulty).toBeLessThanOrEqual(3);
+          expect(hints.minDifficulty).toBeLessThanOrEqual(5);
         }
         if (hints?.maxDifficulty) {
           expect(hints.maxDifficulty).toBeGreaterThanOrEqual(1);
-          expect(hints.maxDifficulty).toBeLessThanOrEqual(3);
+          expect(hints.maxDifficulty).toBeLessThanOrEqual(5);
         }
       }
     });

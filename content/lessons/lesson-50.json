@@ -1,0 +1,86 @@
+{
+  "id": "lesson-50",
+  "version": 1,
+  "metadata": {
+    "title": "Year Two Grand Recital",
+    "description": "Your intermediate capstone — a full concert program showcasing your Year Two mastery",
+    "difficulty": 5,
+    "estimatedMinutes": 25,
+    "skills": [
+      "year-two-mastery",
+      "baroque-repertoire",
+      "romantic-repertoire",
+      "contemporary-repertoire",
+      "improvisation-basics"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-50-ex-01",
+      "title": "Concert Warm-Up",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-02",
+      "title": "Advanced Sight Reading",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-03",
+      "title": "Baroque Showcase",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-04",
+      "title": "Romantic Showcase",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-05",
+      "title": "Contemporary Showcase",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-06",
+      "title": "Pop Medley",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-07",
+      "title": "Improvised Interlude",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-08",
+      "title": "Film Score Feature",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-50-ex-09",
+      "title": "Grand Finale",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-50-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-49"
+  },
+  "xpReward": 1200,
+  "estimatedMinutes": 25
+}

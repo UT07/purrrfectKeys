@@ -1,0 +1,147 @@
+{
+  "id": "lesson-43-test",
+  "version": 1,
+  "metadata": {
+    "title": "Lesson 43 Mastery Test",
+    "description": "Prove your seventh chords & color chords skills -- play from memory!",
+    "difficulty": 5,
+    "estimatedMinutes": 3,
+    "skills": [
+      "seventh-chords",
+      "sus-and-add-chords"
+    ],
+    "prerequisites": []
+  },
+  "settings": {
+    "tempo": 68,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": "C",
+    "countIn": 4,
+    "metronomeEnabled": true,
+    "loopEnabled": false
+  },
+  "notes": [
+    {
+      "note": 60,
+      "startBeat": 0,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 1,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 1.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 2,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 3.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 4,
+      "durationBeats": 1,
+      "hand": "right"
+    },
+    {
+      "note": 67,
+      "startBeat": 5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 5.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 76,
+      "startBeat": 6,
+      "durationBeats": 1.5,
+      "hand": "right"
+    },
+    {
+      "note": 72,
+      "startBeat": 7.5,
+      "durationBeats": 0.5,
+      "hand": "right"
+    },
+    {
+      "note": 60,
+      "startBeat": 8,
+      "durationBeats": 1,
+      "hand": "left"
+    },
+    {
+      "note": 64,
+      "startBeat": 9,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 9.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 72,
+      "startBeat": 10,
+      "durationBeats": 1.5,
+      "hand": "left"
+    },
+    {
+      "note": 67,
+      "startBeat": 11.5,
+      "durationBeats": 0.5,
+      "hand": "left"
+    },
+    {
+      "note": 60,
+      "startBeat": 12,
+      "durationBeats": 4,
+      "hand": "right"
+    }
+  ],
+  "scoring": {
+    "timingToleranceMs": 30,
+    "timingGracePeriodMs": 150,
+    "velocitySensitive": false,
+    "passingScore": 70,
+    "starThresholds": [
+      75,
+      88,
+      96
+    ]
+  },
+  "hints": {
+    "beforeStart": "Mastery test -- play from memory! No green hints this time.",
+    "commonMistakes": [],
+    "successMessage": "You've mastered Seventh Chords & Color Chords! Ready for the next lesson."
+  },
+  "display": {
+    "showFingerNumbers": false,
+    "showNoteNames": false,
+    "highlightHands": true,
+    "showPianoRoll": true,
+    "showStaffNotation": false
+  }
+}

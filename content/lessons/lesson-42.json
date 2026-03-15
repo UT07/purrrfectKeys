@@ -1,0 +1,83 @@
+{
+  "id": "lesson-42",
+  "version": 1,
+  "metadata": {
+    "title": "Modulation & Key Changes",
+    "description": "Learn to smoothly transition between keys using pivot chords and common tones",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "modulation-technique",
+      "relative-key-fluency"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-42-ex-01",
+      "title": "Pivot Chord Modulation",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-02",
+      "title": "Common Tone Modulation",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-03",
+      "title": "Step-Up Modulation",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-04",
+      "title": "Multi-Key Journey",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-05",
+      "title": "Major to Relative Minor",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-06",
+      "title": "G Major to E Minor",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-07",
+      "title": "F Major to D Minor",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-08",
+      "title": "Parallel Major & Minor",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-42-ex-09",
+      "title": "Key Signature Medley",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-42-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-41"
+  },
+  "xpReward": 850,
+  "estimatedMinutes": 25
+}

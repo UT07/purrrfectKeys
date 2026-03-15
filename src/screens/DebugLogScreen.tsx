@@ -20,10 +20,12 @@ import { useNavigation } from '@react-navigation/native';
 import { PressableScale } from '../components/common/PressableScale';
 import { DeviceLog, type LogEntry } from '../utils/DeviceLog';
 import { COLORS, glowColor } from '../theme/tokens';
+import { AnalyticsService } from '../services/analytics/PostHog';
 
 // Known subsystem tags for quick filtering
 const FILTER_TAGS = [
   'All',
+  'PostHog',
   'MicrophoneInput',
   'NoteTracker',
   'AudioCapture',
@@ -98,6 +100,14 @@ export function DebugLogScreen() {
     setLogs([]);
   }, []);
 
+  const handleTestPostHog = useCallback(() => {
+    AnalyticsService.trackEvent('debug_test_event', {
+      timestamp: new Date().toISOString(),
+      source: 'DebugLogScreen',
+    });
+    AnalyticsService.flush();
+  }, []);
+
   const handleShare = useCallback(async () => {
     const text = filteredLogs
       .map(
@@ -124,6 +134,11 @@ export function DebugLogScreen() {
         </PressableScale>
         <Text style={styles.title}>Debug Log</Text>
         <View style={styles.headerActions}>
+          <PressableScale onPress={handleTestPostHog} style={styles.headerBtn}>
+            <Text style={[styles.headerBtnText, { color: '#69F0AE' }]}>
+              Test PH
+            </Text>
+          </PressableScale>
           <PressableScale onPress={handleShare} style={styles.headerBtn}>
             <Text style={styles.headerBtnText}>Share</Text>
           </PressableScale>

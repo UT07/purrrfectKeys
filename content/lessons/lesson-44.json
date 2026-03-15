@@ -1,0 +1,83 @@
+{
+  "id": "lesson-44",
+  "version": 1,
+  "metadata": {
+    "title": "Advanced Progressions & Comping",
+    "description": "Master jazz and contemporary progressions with rhythmic accompaniment patterns",
+    "difficulty": 4,
+    "estimatedMinutes": 25,
+    "skills": [
+      "advanced-progressions",
+      "comping-patterns"
+    ]
+  },
+  "exercises": [
+    {
+      "id": "lesson-44-ex-01",
+      "title": "ii-V-I Progression",
+      "order": 1,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-02",
+      "title": "Circle of Fifths",
+      "order": 2,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-03",
+      "title": "Autumn Leaves Changes",
+      "order": 3,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-04",
+      "title": "Modal Interchange",
+      "order": 4,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-05",
+      "title": "Neo-Soul Chords",
+      "order": 5,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-06",
+      "title": "Pop Comping Pattern",
+      "order": 6,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-07",
+      "title": "Ballad Arpeggiation",
+      "order": 7,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-08",
+      "title": "Swing Comping",
+      "order": 8,
+      "required": true
+    },
+    {
+      "id": "lesson-44-ex-09",
+      "title": "Full Arrangement",
+      "order": 9,
+      "required": true
+    },
+    {
+      "id": "lesson-44-test",
+      "title": "Mastery Test",
+      "order": 99,
+      "required": true,
+      "test": true
+    }
+  ],
+  "unlockRequirement": {
+    "type": "lesson-complete",
+    "lessonId": "lesson-43"
+  },
+  "xpReward": 900,
+  "estimatedMinutes": 25
+}

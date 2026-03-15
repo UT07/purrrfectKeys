@@ -9,6 +9,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { captureAIGeneration } from './posthogClient';
 
 // ============================================================================
 // Type Definitions
@@ -251,7 +252,7 @@ export const generateCoachFeedback = onCall(
       // Call Gemini API
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
       const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: COACH_SYSTEM_PROMPT,
         generationConfig: {
           maxOutputTokens: 150,
@@ -260,7 +261,30 @@ export const generateCoachFeedback = onCall(
       });
 
       const prompt = buildPrompt(data);
-      const result = await model.generateContent(prompt);
+      const aiStart = Date.now();
+      let result;
+      try {
+        result = await model.generateContent(prompt);
+      } catch (geminiError) {
+        captureAIGeneration({
+          distinctId: uid,
+          model: 'gemini-2.5-flash',
+          provider: 'google',
+          latencySeconds: (Date.now() - aiStart) / 1000,
+          isError: true,
+          errorMessage: String(geminiError),
+        });
+        throw geminiError;
+      }
+      captureAIGeneration({
+        distinctId: uid,
+        model: 'gemini-2.5-flash',
+        provider: 'google',
+        inputTokens: result.response.usageMetadata?.promptTokenCount,
+        outputTokens: result.response.usageMetadata?.candidatesTokenCount,
+        latencySeconds: (Date.now() - aiStart) / 1000,
+        isError: false,
+      });
       const response = result.response;
       const text = response.text();
 

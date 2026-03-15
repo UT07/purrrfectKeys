@@ -21,6 +21,38 @@ import {
 const logger = console;
 
 /**
+ * Build a replay plan synchronously using algorithmic fallback only.
+ * Always succeeds — no network calls. Returns null if input data is invalid.
+ */
+export function buildReplayPlanSync(
+  exercise: Exercise,
+  score: ExerciseScore,
+): ReplayPlan | null {
+  try {
+    const details = score.details ?? [];
+    const notes = exercise.notes ?? [];
+    if (details.length === 0 && notes.length === 0) return null;
+
+    const entries = buildReplayEntries(details);
+    const totalBeats = notes.reduce(
+      (max, n) => Math.max(max, n.startBeat + n.durationBeats),
+      0,
+    );
+    const pausePoints = selectAlgorithmicPausePoints(details);
+    const comments = generateFallbackComments(details, totalBeats);
+    const summary = generateFallbackSummary(details, score.overall);
+    const speedZones = buildSpeedZones(entries, pausePoints, totalBeats);
+    const beatsPerMeasure = exercise.settings?.timeSignature?.[0] ?? 4;
+    const sections = buildReplaySections(entries, totalBeats, beatsPerMeasure);
+
+    return { entries, pausePoints, comments, summary, speedZones, totalBeats, sections };
+  } catch (error) {
+    logger.warn('[ReplayCoaching] Sync plan build failed:', error);
+    return null;
+  }
+}
+
+/**
  * Build a complete ReplayPlan from exercise score.
  * Tries Gemini AI first, falls back to algorithmic approach.
  * Never throws — always returns a valid plan.
@@ -29,16 +61,18 @@ export async function buildReplayPlan(
   exercise: Exercise,
   score: ExerciseScore,
 ): Promise<ReplayPlan> {
-  const entries = buildReplayEntries(score.details);
-  const totalBeats = exercise.notes.reduce(
+  const details = score.details ?? [];
+  const notes = exercise.notes ?? [];
+  const entries = buildReplayEntries(details);
+  const totalBeats = notes.reduce(
     (max, n) => Math.max(max, n.startBeat + n.durationBeats),
     0,
   );
 
   // Try Gemini AI for intelligent pause points (only if there are actual mistakes)
-  let pausePoints = selectAlgorithmicPausePoints(score.details);
-  let comments = generateFallbackComments(score.details, totalBeats);
-  let summary = generateFallbackSummary(score.details, score.overall);
+  let pausePoints = selectAlgorithmicPausePoints(details);
+  let comments = generateFallbackComments(details, totalBeats);
+  let summary = generateFallbackSummary(details, score.overall);
 
   // Skip Gemini for high scores — no mistakes to analyze, and AI may hallucinate
   // issues by comparing exercise title (e.g. "C practice") with actual notes (e.g. A)
@@ -47,7 +81,7 @@ export async function buildReplayPlan(
       const aiResponse = await callGeminiReplay(
         exercise.metadata.title,
         exercise.metadata.difficulty,
-        score.details,
+        details,
         score.overall,
       );
       if (aiResponse) {
@@ -135,7 +169,7 @@ async function callGeminiReplay(
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     systemInstruction: REPLAY_SYSTEM_PROMPT,
     generationConfig: {
       maxOutputTokens: 500,
@@ -164,7 +198,7 @@ async function callGeminiIntro(
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     systemInstruction: INTRO_SYSTEM_PROMPT,
     generationConfig: {
       maxOutputTokens: 300,
