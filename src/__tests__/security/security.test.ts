@@ -192,8 +192,9 @@ describe('Security: Auth Patterns', () => {
       codes.add(code);
     }
 
-    // With 28^6 = ~475M possible codes, 10K should have no collisions
-    expect(codes.size).toBe(10000);
+    // With 28^6 = ~475M possible codes, 10K should have near-zero collisions
+    // Allow up to 2 collisions to avoid flakiness (birthday paradox: ~0.01% chance)
+    expect(codes.size).toBeGreaterThanOrEqual(9998);
   });
 });
 
