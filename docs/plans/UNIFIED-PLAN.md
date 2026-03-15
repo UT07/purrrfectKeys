@@ -2,8 +2,8 @@
 
 **Last Updated:** March 15, 2026
 **Vision:** The best piano learning app on the App Store. Industry game-changer.
-**Codebase Health:** 0 TypeScript errors, 2,953 tests passing, 145 suites
-**Current Phase:** Phase 13 — Content Explosion (VERIFICATION)
+**Codebase Health:** 0 TypeScript errors, 3,043 tests passing, 149 suites
+**Current Phase:** Phase 13 — Content Explosion (MERGED TO MASTER)
 
 > **This is the single source of truth.** Every feature, every phase, every audit.
 > Historical plans are in `docs/plans/archive/`.
@@ -107,7 +107,14 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 | Gate | Tool | Status |
 |------|------|--------|
 | TypeScript | `npm run typecheck` | ✅ 0 errors |
-| Tests | `npm run test` | ✅ 145 suites, 2,953 tests, 0 failures |
+| Tests | `npm run test` | ✅ 149 suites, 3,043 tests, 0 failures |
+| Performance | `npm run test:perf` | ✅ 17 benchmarks |
+| Security | `npm run test:security` | ✅ 24 tests (sanitization, exposure, auth) |
+| Regression | `npm run test:regression` | ✅ 29 critical path tests |
+| Stress | `npm run test:stress` | ✅ 20 store concurrency tests |
+| Coverage | `npm run test:coverage` | ✅ Thresholds: 40% branch, 45% func, 50% lines |
+| Nightly Security Scan | `.github/workflows/security.yml` | ✅ Dependency audit + secret scan |
+| Sentry Monitoring | `MonitoringService` | ✅ Crash reporting + performance traces |
 | Lint | `npm run lint` | ✅ 0 errors (~531 warnings, non-blocking) |
 | Build | EAS Build (preview channel) | ✅ iOS + Android configured |
 
@@ -118,7 +125,8 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 | Firestore rules | ✅ Deployed (Mar 15) |
 | Firestore indexes | ✅ Deployed |
 | Cloud Functions | ✅ 11 functions deployed (nodejs22, us-central1) |
-| CI/CD (GitHub Actions) | ✅ Active (ci.yml + build.yml) |
+| CI/CD (GitHub Actions) | ✅ 5-stage pipeline (ci.yml) + EAS Build (build.yml) |
+| Sentry DSN | ✅ Configured (local + EAS secrets) |
 | Piano samples | ✅ FluidR3 GM (C2-C6, 132KB) |
 | ElevenLabs TTS | ✅ 13 per-cat neural voices |
 | Firebase Auth | ✅ Anonymous + Email + Google + Apple |
