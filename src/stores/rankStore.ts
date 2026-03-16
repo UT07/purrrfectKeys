@@ -24,6 +24,7 @@ import {
   getDemotionGraceInitial,
   getTierAfterDemotion,
 } from '../core/ranking/promotionEngine';
+import { logger } from '../utils/logger';
 
 const MAX_RECENT_SCORES = 30;
 
@@ -127,6 +128,43 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
 
     set({ rating: updated });
     debouncedSave({ rating: updated });
+
+    // Post rank change events to rich feed (fire-and-forget)
+    if (tier !== current.tier) {
+      try {
+        const { postRichFeedItem, buildRichFeedItem } = require('../services/firebase/feedService');
+        const { auth } = require('../services/firebase/config');
+        const user = auth.currentUser;
+        if (user && !user.isAnonymous) {
+          const { useSettingsStore } = require('./settingsStore');
+          const catId = useSettingsStore.getState().selectedCatId ?? '';
+          const tierIndex = (t: RankedTier) => ['novice','apprentice','performer','virtuoso','maestro','prodigy','luminary','legend','grandmaster'].indexOf(t);
+          const isPromotion = tierIndex(tier) > tierIndex(current.tier);
+          const feedItem = buildRichFeedItem(
+            isPromotion ? 'rank_promotion' : 'rank_demotion',
+            {
+              uid: user.uid,
+              displayName: user.displayName ?? 'Player',
+              catId,
+              rankTier: tier,
+              rankDivision: division,
+            },
+            {
+              previousTier: current.tier,
+              newTier: tier,
+              previousDivision: current.division,
+              newDivision: division,
+              mmr,
+            },
+            { isEngagementTrigger: isPromotion },
+          );
+          postRichFeedItem(user.uid, feedItem)
+            .catch((err: Error) => logger.warn('[rankStore] postRichFeedItem failed:', err?.message));
+        }
+      } catch {
+        // feedService or auth not initialized during tests
+      }
+    }
   },
 
   clearPromotionSeries: () => {
