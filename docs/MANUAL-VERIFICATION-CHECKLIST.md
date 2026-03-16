@@ -4,7 +4,7 @@
 **Companion:** `docs/system-design-analysis.md` (architecture analysis), `docs/plans/UNIFIED-PLAN.md` Phase 11 (full QA audit)
 
 **Last updated:** March 16, 2026
-**Codebase health:** 157 test suites, 3,178 tests, 0 failures, 0 TypeScript errors
+**Codebase health:** 159 test suites, 3,216 tests, 0 failures, 0 TypeScript errors
 **Content:** 599 exercises across 50 lessons, 582 songs in Firestore, 120 skill nodes across 18 tiers
 **GitHub issues:** 0 open (all closed as of Mar 8-9)
 **Key completions since initial draft:**
@@ -497,7 +497,22 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] **rankStore persistence:** Verify Firestore rules allow `users/{uid}` fields: mmr, tier, division, rp, peakMmr, peakTier
 - [ ] **seasonRewards subcollection:** Verify `users/{uid}/seasonRewards/{rewardId}` readable/writable by owner, writable by Cloud Functions (admin)
 - [ ] **richFeed subcollection:** Verify `users/{uid}/richFeed/{itemId}` — owner can write, friends can read, anyone authenticated can update reactions
-- [ ] **Deploy updated rules:** `firebase deploy --only firestore:rules` after adding richFeed/seasonRewards rules
+- [ ] **guilds collection:** Verify `guilds/{guildId}` readable by authenticated, writable by leader/co_leader; `guilds/{guildId}/members/{uid}` — owner can write own, leader can kick
+- [ ] **guildWars collection:** Verify `guildWars/{warId}` readable by members of either guild, only Cloud Functions can complete
+- [ ] **Deploy updated rules:** `firebase deploy --only firestore:rules` after adding all Phase 14 collection rules
+
+### G6e. Guilds & Guild Wars
+
+- [ ] **Create guild:** Sign in, create guild with name/icon/description/banner color. Verify Firestore `guilds/{id}` document created with correct fields
+- [ ] **Join guild:** Second user finds guild via search or open guild list. Verify join succeeds for open guild, rejected for closed
+- [ ] **Member capacity:** Verify join rejects when guild has 30 members (MAX_GUILD_MEMBERS)
+- [ ] **Promote/demote:** Leader promotes member to co_leader. Verify role change persists. Demote back to member.
+- [ ] **Transfer leadership:** Leader transfers to another member. Verify old leader becomes co_leader, new leader is reflected in guild doc
+- [ ] **Kick member:** Leader kicks a member. Verify member removed and memberCount decremented
+- [ ] **Leave guild:** Non-leader member leaves. Verify clean removal. Leader cannot leave without transferring.
+- [ ] **Guild XP tracking:** Complete an exercise while in a guild. Verify member's weeklyXp and guild's weeklyXp both increment
+- [ ] **Guild war:** Start a war between two guilds. Verify war document created with status 'active'. Add war points. Complete war and verify winner determined.
+- [ ] **Guild store persistence:** Close and reopen app. Verify currentGuild survives via AsyncStorage hydration
 
 ---
 
@@ -649,6 +664,7 @@ No Crashlytics integration exists. Production crashes will be invisible.
 | 26 | G6b: Seasons & Battle Pass | 1 hour | CODE DONE (Phase 14) | Before beta |
 | 27 | G6c: Rich Activity Feed | 30 min | CODE DONE (Phase 14) | Before beta |
 | 28 | G6d: Firestore Rules (Phase 14) | 30 min | TODO | Before beta |
+| 29 | G6e: Guilds & Guild Wars | 1 hour | CODE DONE (Phase 14) | Before beta |
 
 **Total estimated effort: ~10-12 working days** (content quality automated verification done, manual spot-checks + device testing remaining)
 

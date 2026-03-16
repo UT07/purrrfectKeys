@@ -61,6 +61,7 @@ export const STORAGE_KEYS = {
   LEAGUE: 'purrrfect_league_state',
   RANK: 'purrrfect_rank_state',
   SEASON: 'purrrfect_season_state',
+  GUILD: 'purrrfect_guild_state',
 } as const;
 
 /**
