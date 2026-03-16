@@ -18,6 +18,7 @@ export * from './generateSong';
 export * from './dailySightReading';
 export * from './weeklyNewSongs';
 export * from './weeklyLeagueRewards';
+export * from './weeklyLeagueAssignment';
 
 // ============================================================================
 // Additional Cloud Functions

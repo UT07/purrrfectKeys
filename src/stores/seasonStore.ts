@@ -18,7 +18,10 @@ import {
   BATTLE_PASS_MAX_TIER,
   gemsForPlacement,
   tierGemBonus,
+  generateBattlePassTiers,
 } from '../core/ranking/seasonConfig';
+import type { BattlePassReward } from '../core/ranking/seasonConfig';
+import { logger } from '../utils/logger';
 
 // ─────────────────────────────────────────────────
 // Default state
@@ -47,8 +50,15 @@ interface SeasonStoreActions {
   /** Add battle pass XP and auto-advance tiers */
   addBattlePassXp: (xp: number) => void;
 
-  /** Claim a battle pass reward by key (e.g., "free-3" or "premium-10") */
+  /** Claim a battle pass reward by key (e.g., "free-3" or "premium-10") — records only */
   claimReward: (rewardKey: string) => void;
+
+  /**
+   * Claim and deliver a battle pass reward.
+   * Dispatches gems to gemStore, accessories to catEvolutionStore, etc.
+   * Returns the reward that was delivered, or null if already claimed / not available.
+   */
+  claimBattlePassReward: (tier: number, track: 'free' | 'premium') => BattlePassReward | null;
 
   /** Check if a reward has been claimed */
   hasClaimedReward: (rewardKey: string) => boolean;
@@ -70,6 +80,32 @@ interface SeasonStoreActions {
 
   /** Reset store */
   reset: () => void;
+}
+
+/** Claim pending season placement rewards from Firestore on app open */
+export async function claimPendingSeasonRewards(uid: string): Promise<void> {
+  try {
+    const { doc, getDoc, deleteDoc } = require('firebase/firestore');
+    const { db } = require('../services/firebase/config');
+    const rewardRef = doc(db, 'users', uid, 'seasonRewards', 'pending');
+    const snap = await getDoc(rewardRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data() as { gems?: number; claimedAt?: number };
+    if (data.claimedAt) return; // Already processed
+
+    // Deliver gems
+    if (data.gems && data.gems > 0) {
+      const { useGemStore } = require('./gemStore');
+      useGemStore.getState().claimReward(`season-placement-${Date.now()}`, data.gems);
+    }
+
+    // Remove the pending reward doc
+    await deleteDoc(rewardRef);
+    logger.log('[seasonStore] Claimed pending season rewards:', data.gems, 'gems');
+  } catch (err) {
+    logger.warn('[seasonStore] Failed to claim pending season rewards:', err);
+  }
 }
 
 type SeasonStoreState = SeasonState & SeasonStoreActions;
@@ -125,6 +161,66 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
       claimedRewards: [...state.claimedRewards, rewardKey],
     }));
     debouncedSave(get());
+  },
+
+  claimBattlePassReward: (tier: number, track: 'free' | 'premium') => {
+    const rewardKey = `${track}-${tier}`;
+    const state = get();
+
+    // Guard: already claimed
+    if (state.claimedRewards.includes(rewardKey)) return null;
+
+    // Guard: tier not yet reached
+    if (tier > state.battlePassTier) return null;
+
+    // Look up the reward definition
+    const tiers = generateBattlePassTiers();
+    const tierDef = tiers.find((t) => t.tier === tier);
+    if (!tierDef) return null;
+
+    const reward = track === 'free' ? tierDef.freeReward : tierDef.premiumReward;
+    if (!reward) return null;
+
+    // Record claim
+    set((s) => ({
+      claimedRewards: [...s.claimedRewards, rewardKey],
+    }));
+    debouncedSave(get());
+
+    // Deliver reward to the appropriate store
+    try {
+      switch (reward.type) {
+        case 'gems': {
+          const { useGemStore } = require('./gemStore');
+          useGemStore.getState().claimReward(rewardKey, reward.amount ?? 0);
+          break;
+        }
+        case 'accessory': {
+          const { useCatEvolutionStore } = require('./catEvolutionStore');
+          if (reward.itemId) {
+            useCatEvolutionStore.getState().unlockAccessory?.(reward.itemId);
+          }
+          break;
+        }
+        case 'title': {
+          const { useSettingsStore } = require('./settingsStore');
+          if (reward.itemId) {
+            useSettingsStore.getState().addTitle?.(reward.itemId);
+          }
+          break;
+        }
+        case 'xp_boost': {
+          const { useSettingsStore } = require('./settingsStore');
+          useSettingsStore.getState().setXpBoostMultiplier?.(reward.amount ?? 1);
+          break;
+        }
+      }
+    } catch (err) {
+      // Store not available (tests or init timing) — reward key is still recorded
+      logger.warn('[seasonStore] Failed to deliver battle pass reward:', rewardKey, err);
+    }
+
+    return reward;
   },
 
   hasClaimedReward: (rewardKey: string) => {
