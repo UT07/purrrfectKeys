@@ -2,13 +2,13 @@ appId: com.purrrfectkeys.app
 name: Dismiss Dev Launcher
 ---
 # Helper: Dismiss Expo dev client launcher if present
-# Handles three states: server list, intro modal, and dev tools menu.
+# Handles: server list → dev tools menu → intro modal (in any order)
 
 # Wait for the app to render
 - waitForAnimationToEnd:
     timeout: 3000
 
-# State 1: Dev server list (fresh clearState launch)
+# State 1: Dev server list (fresh clearState launch) — connect to Metro
 - runFlow:
     when:
       visible: "Development servers"
@@ -18,19 +18,7 @@ name: Dismiss Dev Launcher
       - waitForAnimationToEnd:
           timeout: 35000
 
-# State 2: Dev tools menu (shows Reload, Go home, etc.)
-# Dismiss by tapping the X close button in the top-right
-- runFlow:
-    when:
-      visible: "Reload"
-    commands:
-      - tapOn:
-          point: "93%,6%"
-      - waitForAnimationToEnd:
-          timeout: 3000
-
-# State 3: Dev client intro modal ("This is the developer menu...")
-# Only matches the intro text, not the full menu
+# State 2: Dev client intro modal — tap Continue
 - runFlow:
     when:
       visible: "This is the developer menu"
@@ -38,14 +26,24 @@ name: Dismiss Dev Launcher
       - tapOn:
           text: "Continue"
       - waitForAnimationToEnd:
-          timeout: 5000
+          timeout: 3000
 
-# If dev tools menu appeared again after Continue, dismiss with X
+# State 3: Dev tools menu (Reload, Go home, etc.) — tap "Go home" to close
 - runFlow:
     when:
-      visible: "Reload"
+      visible: "Go home"
     commands:
       - tapOn:
-          point: "93%,6%"
+          text: "Go home"
       - waitForAnimationToEnd:
-          timeout: 3000
+          timeout: 5000
+
+# Retry: if dev tools menu appeared again, dismiss once more
+- runFlow:
+    when:
+      visible: "Go home"
+    commands:
+      - tapOn:
+          text: "Go home"
+      - waitForAnimationToEnd:
+          timeout: 5000

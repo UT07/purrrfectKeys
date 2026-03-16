@@ -40,12 +40,15 @@ name: Complete Onboarding
 - waitForAnimationToEnd:
     timeout: 3000
 
-# Step 5: Choose learning path (scrollable)
+# Step 5: Choose learning path (scrollable — need to scroll past 5 options to reach Next)
 - tapOn:
     id: "onboarding-path-piano-basics"
 - swipe:
-    direction: UP
-    duration: 300
+    start: "50%,80%"
+    end: "50%,20%"
+- swipe:
+    start: "50%,80%"
+    end: "50%,20%"
 - tapOn:
     id: "onboarding-path-next"
 - waitForAnimationToEnd:

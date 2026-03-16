@@ -179,7 +179,8 @@ export class SoundManager {
 
     const entries = Object.entries(SOUND_ASSETS) as [SoundName, AVPlaybackSource][];
 
-    const results = await Promise.allSettled(
+    // Use Promise.all with per-entry catch (Hermes doesn't support Promise.allSettled)
+    await Promise.all(
       entries.map(async ([name, source]) => {
         try {
           const { sound } = await Audio.Sound.createAsync(
@@ -192,13 +193,6 @@ export class SoundManager {
         }
       }),
     );
-
-    // Log failures but don't crash
-    for (const r of results) {
-      if (r.status === 'rejected') {
-        logger.warn('[SoundManager] Preload rejected:', r.reason);
-      }
-    }
 
     this.preloaded = true;
     logger.log(`[SoundManager] Preloaded ${this.sounds.size}/${entries.length} sounds`);

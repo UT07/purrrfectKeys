@@ -128,15 +128,18 @@ export class PersistenceManager {
    * Clear all KeySense data
    */
   static async clearAll(): Promise<void> {
-    const results = await Promise.allSettled(
+    // Hermes doesn't support Promise.allSettled — use Promise.all with per-key catch
+    const failures: unknown[] = [];
+    await Promise.all(
       Object.values(STORAGE_KEYS).map(key =>
-        typeof key === 'string' ? storage.delete(key) : Promise.resolve()
+        typeof key === 'string'
+          ? storage.delete(key).catch((err: unknown) => { failures.push(err); })
+          : Promise.resolve()
       )
     );
 
-    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
     if (failures.length > 0) {
-      console.error(`[PERSIST] Failed to clear ${failures.length} keys:`, failures.map(f => f.reason));
+      console.error(`[PERSIST] Failed to clear ${failures.length} keys:`, failures);
     } else if (process.env.NODE_ENV === 'development') {
       logger.log('[PERSIST] Cleared all KeySense data');
     }
@@ -201,7 +204,8 @@ export async function flushAllPendingSaves(): Promise<void> {
     promises.push(execute().catch(err => console.error('[PERSIST] Flush save failed:', err)));
   }
   pendingSaves.clear();
-  await Promise.allSettled(promises);
+  // Hermes doesn't support Promise.allSettled — promises already have .catch()
+  await Promise.all(promises);
 }
 
 /**
