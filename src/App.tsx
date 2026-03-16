@@ -275,11 +275,13 @@ function AppRoot(): React.ReactElement {
               let membership = await getCurrentLeagueMembership(user.uid);
               if (!membership) {
                 const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
+                const { useRankStore } = require('./stores/rankStore');
+                const playerTier = useRankStore.getState().tier;
                 membership = await assignToLeague(
                   user.uid,
                   user.displayName ?? 'Player',
                   catId,
-                  'novice',
+                  playerTier,
                 );
               }
               useLeagueStore.getState().setMembership(membership);

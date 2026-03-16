@@ -100,11 +100,13 @@ function LeagueCard(): React.JSX.Element {
       let m = await getCurrentLeagueMembership(user.uid);
       if (!m) {
         const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
+        const { useRankStore } = require('../stores/rankStore');
+        const playerTier = useRankStore.getState().tier;
         m = await assignToLeague(
           user.uid,
           user.displayName ?? 'Player',
           catId,
-          'novice',
+          playerTier,
         );
       }
       setMembership(m);

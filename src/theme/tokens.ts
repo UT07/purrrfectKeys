@@ -345,3 +345,50 @@ export const RARITY = {
 } as const;
 
 export type RarityLevel = keyof typeof RARITY;
+
+// ─────────────────────────────────────────────────
+// ARENA — Ranked competitive system tokens
+// ─────────────────────────────────────────────────
+
+export const ARENA = {
+  // Rank tier colors (match leagueTiers.ts)
+  rank: {
+    novice:      '#A0AEC0',
+    apprentice:  '#CD7F32',
+    performer:   '#C0C0C0',
+    virtuoso:    '#FFD700',
+    maestro:     '#4FC3F7',
+    prodigy:     '#BA68C8',
+    luminary:    '#F06292',
+    legend:      '#FF6E40',
+    grandmaster: '#B9F2FF',
+  },
+
+  // Surfaces
+  cardBackground: '#12101A',
+  cardBorder: '#2A2640',
+  divisionBadge: '#1E1B2E',
+
+  // Promotion / demotion
+  promotionGlow: 'rgba(76, 175, 80, 0.25)',
+  demotionGlow: 'rgba(244, 67, 54, 0.25)',
+  promotionText: '#66BB6A',
+  demotionText: '#EF5350',
+
+  // Season
+  seasonAccent: '#7C4DFF',
+  seasonGradient: ['#1A0A3E', '#0E0B1A'] as const,
+
+  // Activity feed
+  feedReaction: '#2A2640',
+  feedHighlight: 'rgba(124, 77, 255, 0.12)',
+
+  // Battle pass
+  passFree: '#A0AEC0',
+  passPremium: '#FFD700',
+  passLocked: '#444444',
+
+  // Guild
+  guildAccent: '#26C6A0',
+  guildWar: '#FF6E40',
+} as const;
