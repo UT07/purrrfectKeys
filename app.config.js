@@ -11,17 +11,6 @@ module.exports = {
     posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
     posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
   },
-  // Sentry auth token for source map uploads (build-time only, never in app bundle)
-  hooks: {
-    postPublish: [
-      {
-        file: '@sentry/react-native/expo',
-        config: {
-          organization: 'purrrfect-keys',
-          project: 'purrrfect-keys-mobile',
-          authToken: process.env.SENTRY_AUTH_TOKEN,
-        },
-      },
-    ],
-  },
+  // Sentry source maps are uploaded automatically via the @sentry/react-native
+  // config plugin in app.json (EAS Build handles this, no hooks needed).
 };
