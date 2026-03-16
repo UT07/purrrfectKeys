@@ -1,0 +1,88 @@
+# Exercise Retry & Next — Complete exercise, retry, then advance
+# Verifies: completion → retry → completion → next exercise flow
+appId: com.purrrfectkeys.app
+name: Exercise Retry and Next
+tags:
+  - exercise
+  - completion
+  - critical
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+- runFlow: ../helpers/navigate-to-exercise.yaml
+
+# Play through exercise
+- runFlow: ../helpers/play-exercise-touch.yaml
+
+# Wait for PostExerciseScreen
+- extendedWaitUntil:
+    visible:
+      id: "post-exercise-exit"
+    timeout: 15000
+
+# Retry the exercise
+- runFlow:
+    when:
+      visible:
+        id: "post-exercise-retry"
+    commands:
+      - tapOn:
+          id: "post-exercise-retry"
+      - takeScreenshot: screenshots/14-retry
+
+# If retry isn't visible, try retry-improve
+- runFlow:
+    when:
+      visible:
+        id: "post-exercise-retry-improve"
+    commands:
+      - tapOn:
+          id: "post-exercise-retry-improve"
+
+# Exercise should reload
+- extendedWaitUntil:
+    visible:
+      id: "exercise-player"
+    timeout: 10000
+
+# Play through again
+- runFlow: ../helpers/play-exercise-touch.yaml
+
+# Wait for post-exercise
+- extendedWaitUntil:
+    visible:
+      id: "post-exercise-exit"
+    timeout: 15000
+- takeScreenshot: screenshots/14-second-completion
+
+# Now advance to next exercise (if available)
+- runFlow:
+    when:
+      visible:
+        id: "post-exercise-next"
+    commands:
+      - tapOn:
+          id: "post-exercise-next"
+      - extendedWaitUntil:
+          visible:
+            id: "exercise-player"
+          timeout: 15000
+      - takeScreenshot: screenshots/14-next-exercise
+      - tapOn:
+          id: "control-exit"
+
+# Exit to level map
+- runFlow:
+    when:
+      visible:
+        id: "post-exercise-exit"
+    commands:
+      - tapOn:
+          id: "post-exercise-exit"
+
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 10000

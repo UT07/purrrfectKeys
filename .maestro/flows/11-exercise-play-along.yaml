@@ -1,0 +1,93 @@
+# Exercise: Play-Along — Core exercise type (tap notes in time)
+# Verifies: exercise loads, count-in, keyboard input, scoring, completion, post-exercise
+appId: com.purrrfectkeys.app
+name: Exercise Play-Along Flow
+tags:
+  - exercise
+  - play-along
+  - critical
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+
+# Navigate to Learn tab and open first exercise
+- tapOn:
+    id: "tab-learn"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 5000
+- takeScreenshot: screenshots/11-level-map
+
+# Tap current lesson node
+- tapOn:
+    id: "lesson-node-current"
+
+# Exercise player should load
+- extendedWaitUntil:
+    visible:
+      id: "exercise-player"
+    timeout: 15000
+- takeScreenshot: screenshots/11-exercise-loaded
+
+# Verify key UI elements are visible
+- assertVisible:
+    id: "exercise-controls"
+- assertVisible:
+    id: "exercise-piano-roll"
+
+# Start playback
+- tapOn:
+    id: "control-play"
+
+# Wait for count-in to finish
+- extendedWaitUntil:
+    notVisible:
+      id: "exercise-count-in"
+    timeout: 15000
+
+# Play notes on the keyboard
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-62"
+- tapOn:
+    id: "key-64"
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-62"
+- tapOn:
+    id: "key-64"
+- tapOn:
+    id: "key-65"
+- tapOn:
+    id: "key-67"
+
+# Wait for exercise to complete and XP overlay to appear
+- extendedWaitUntil:
+    visible:
+      id: "xp-transition"
+    timeout: 30000
+- takeScreenshot: screenshots/11-xp-transition
+
+# Wait for PostExerciseScreen
+- extendedWaitUntil:
+    visible:
+      id: "post-exercise-exit"
+    timeout: 15000
+- takeScreenshot: screenshots/11-post-exercise
+
+# Verify post-exercise elements
+- assertVisible:
+    id: "post-exercise-exit"
+
+# Exit back to level map
+- tapOn:
+    id: "post-exercise-exit"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 10000

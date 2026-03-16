@@ -1,0 +1,99 @@
+# Complete Learning Flow — Full user journey: onboarding → exercise → completion → progress
+# This is the critical path integration test.
+# Verifies: fresh install → onboarding → first exercise → scoring → XP → level map update
+appId: com.purrrfectkeys.app
+name: Complete Learning Flow (Critical Path)
+tags:
+  - critical
+  - integration
+  - smoke
+
+---
+
+- launchApp:
+    clearState: true
+
+# === PHASE 1: Onboarding ===
+- runFlow: ../helpers/dismiss-dev-launcher.yaml
+- runFlow: ../helpers/complete-onboarding.yaml
+
+# === PHASE 2: Auth Skip ===
+- runFlow:
+    when:
+      visible:
+        id: "auth-screen"
+    commands:
+      - tapOn:
+          id: "skip-signin"
+
+# === PHASE 3: Home Screen ===
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 10000
+- takeScreenshot: screenshots/20-home-fresh
+
+# === PHASE 4: Navigate to First Exercise ===
+- tapOn:
+    id: "tab-learn"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 5000
+
+# Tap current lesson
+- tapOn:
+    id: "lesson-node-current"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-player"
+    timeout: 15000
+- takeScreenshot: screenshots/20-first-exercise
+
+# === PHASE 5: Play Exercise ===
+- tapOn:
+    id: "control-play"
+- extendedWaitUntil:
+    notVisible:
+      id: "exercise-count-in"
+    timeout: 15000
+
+# Tap keys (first exercise is Find Middle C — just need to tap C4)
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-60"
+
+# Wait for completion
+- extendedWaitUntil:
+    visible:
+      id: "xp-transition"
+    timeout: 30000
+- takeScreenshot: screenshots/20-first-completion
+
+# === PHASE 6: Post-Exercise ===
+- extendedWaitUntil:
+    visible:
+      id: "post-exercise-exit"
+    timeout: 15000
+- takeScreenshot: screenshots/20-post-exercise
+
+# Exit back
+- tapOn:
+    id: "post-exercise-exit"
+
+# === PHASE 7: Verify Progress ===
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 10000
+- takeScreenshot: screenshots/20-progress-updated
+
+# Check home screen shows updated stats
+- tapOn:
+    id: "tab-home"
+- takeScreenshot: screenshots/20-home-after-exercise

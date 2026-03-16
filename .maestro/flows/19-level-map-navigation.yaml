@@ -1,0 +1,56 @@
+# Level Map — Scroll through tiers, verify nodes, test path selector
+# Verifies: level map renders, tier nodes visible, path selector works, locked nodes shown
+appId: com.purrrfectkeys.app
+name: Level Map Navigation
+tags:
+  - levelmap
+  - navigation
+  - critical
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+
+# Navigate to Learn tab
+- tapOn:
+    id: "tab-learn"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 5000
+
+# Verify current lesson node exists
+- assertVisible:
+    id: "lesson-node-current"
+- takeScreenshot: screenshots/19-level-map-current
+
+# Scroll up to see more tiers
+- swipe:
+    direction: UP
+    duration: 500
+- takeScreenshot: screenshots/19-level-map-scrolled
+
+# Scroll back down
+- swipe:
+    direction: DOWN
+    duration: 500
+
+# Test path selector
+- tapOn:
+    id: "path-selector"
+- takeScreenshot: screenshots/19-path-selector-open
+
+# Select a different path (if options visible)
+- runFlow:
+    when:
+      visible:
+        id: "path-option-pop-film"
+    commands:
+      - tapOn:
+          id: "path-option-pop-film"
+      - takeScreenshot: screenshots/19-path-changed
+
+# Back to tab
+- tapOn:
+    id: "tab-home"

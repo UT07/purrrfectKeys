@@ -1,0 +1,25 @@
+appId: com.purrrfectkeys.app
+name: Navigate to First Exercise
+---
+# Helper: Navigate from HomeScreen to the first available exercise via LevelMap
+
+# Ensure we're on home
+- runFlow: ensure-home.yaml
+
+# Go to Learn tab
+- tapOn:
+    id: "tab-learn"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 5000
+
+# Tap the current lesson node (always has this testID)
+- tapOn:
+    id: "lesson-node-current"
+
+# Wait for exercise to load (may show loading screen for AI exercises)
+- extendedWaitUntil:
+    visible:
+      id: "exercise-player"
+    timeout: 15000

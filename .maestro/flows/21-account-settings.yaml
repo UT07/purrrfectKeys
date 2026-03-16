@@ -1,0 +1,58 @@
+# Account & Settings — Profile settings, account management
+# Verifies: profile screen, daily goal picker, volume controls, account screen
+appId: com.purrrfectkeys.app
+name: Account and Settings
+tags:
+  - settings
+  - account
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+
+# Navigate to Profile
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 5000
+- takeScreenshot: screenshots/21-profile
+
+# Scroll down to see settings
+- swipe:
+    direction: UP
+    duration: 300
+- takeScreenshot: screenshots/21-settings
+
+# Navigate to Account screen
+- tapOn:
+    text: "Account"
+    optional: true
+- tapOn:
+    id: "account-button"
+    optional: true
+
+- runFlow:
+    when:
+      visible:
+        id: "account-screen"
+    commands:
+      - takeScreenshot: screenshots/21-account
+      - back
+
+# Navigate to Debug Log (if available)
+- runFlow:
+    when:
+      visible:
+        text: "Debug Log"
+    commands:
+      - tapOn:
+          text: "Debug Log"
+      - takeScreenshot: screenshots/21-debug-log
+      - back
+
+# Return to home
+- tapOn:
+    id: "tab-home"

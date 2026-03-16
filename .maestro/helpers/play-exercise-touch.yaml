@@ -1,0 +1,52 @@
+appId: com.purrrfectkeys.app
+name: Play Exercise via Touch
+---
+# Helper: Play through an exercise using touch keyboard input
+# Waits for count-in, taps keyboard keys, waits for completion
+
+# Wait for exercise player to be ready
+- extendedWaitUntil:
+    visible:
+      id: "exercise-player"
+    timeout: 10000
+
+# Wait for count-in to start (play button may need to be tapped)
+- runFlow:
+    when:
+      visible:
+        id: "control-play"
+    commands:
+      - tapOn:
+          id: "control-play"
+
+# Wait for count-in animation to finish and playback to start
+- extendedWaitUntil:
+    notVisible:
+      id: "exercise-count-in"
+    timeout: 15000
+
+# Tap Middle C and surrounding keys rapidly to generate note input
+# The scoring system uses nearest-note matching, so even imprecise taps score
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-62"
+- tapOn:
+    id: "key-64"
+- tapOn:
+    id: "key-60"
+- tapOn:
+    id: "key-62"
+- tapOn:
+    id: "key-64"
+- tapOn:
+    id: "key-65"
+- tapOn:
+    id: "key-67"
+
+# Wait for the exercise to auto-complete (exercises are typically 4-8 bars)
+# The XP transition overlay appears after scoring
+- extendedWaitUntil:
+    visible:
+      id: "xp-transition"
+    timeout: 30000

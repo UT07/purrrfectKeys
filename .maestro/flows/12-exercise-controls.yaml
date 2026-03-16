@@ -1,0 +1,61 @@
+# Exercise Controls — Pause, resume, restart, exit
+# Verifies: playback control buttons work correctly
+appId: com.purrrfectkeys.app
+name: Exercise Controls
+tags:
+  - exercise
+  - controls
+  - critical
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+- runFlow: ../helpers/navigate-to-exercise.yaml
+
+# Verify exercise loaded
+- assertVisible:
+    id: "exercise-player"
+
+# Start playback
+- tapOn:
+    id: "control-play"
+
+# Wait for count-in
+- extendedWaitUntil:
+    notVisible:
+      id: "exercise-count-in"
+    timeout: 15000
+
+# Pause
+- tapOn:
+    id: "control-pause"
+- takeScreenshot: screenshots/12-paused
+
+# Resume
+- tapOn:
+    id: "control-play"
+
+# Pause again
+- tapOn:
+    id: "control-pause"
+
+# Restart
+- tapOn:
+    id: "control-restart"
+- takeScreenshot: screenshots/12-restarted
+
+# Should show count-in again after restart
+- assertVisible:
+    id: "exercise-count-in"
+    optional: true
+
+# Exit exercise
+- tapOn:
+    id: "control-exit"
+
+# Should return to level map or home
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 10000

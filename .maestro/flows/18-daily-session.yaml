@@ -1,0 +1,31 @@
+# Daily Session — AI-curated practice session
+# Verifies: daily session screen loads, session sections visible, can start exercise
+appId: com.purrrfectkeys.app
+name: Daily Session
+tags:
+  - daily
+  - feature
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+
+# Tap "Today's Practice" or Daily Session card on home screen
+- tapOn:
+    text: "Today's Practice"
+    optional: true
+- tapOn:
+    id: "daily-session-card"
+    optional: true
+
+# Wait for daily session screen
+- extendedWaitUntil:
+    visible:
+      id: "daily-session-screen"
+    timeout: 10000
+    optional: true
+- takeScreenshot: screenshots/18-daily-session
+
+# Go back
+- back

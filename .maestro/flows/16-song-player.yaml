@@ -1,0 +1,70 @@
+# Song Player — Browse songs, open player, play a section
+# Verifies: song library browse, song player loads, section selection, playback
+appId: com.purrrfectkeys.app
+name: Song Player Flow
+tags:
+  - songs
+  - feature
+  - critical
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+
+# Navigate to song library (via tab or home card)
+- tapOn:
+    id: "tab-songs"
+    optional: true
+
+# Fallback: home screen song spotlight
+- runFlow:
+    when:
+      notVisible:
+        id: "song-library-screen"
+    commands:
+      - tapOn:
+          id: "tab-home"
+      - swipe:
+          direction: UP
+          duration: 300
+      - tapOn:
+          text: "Browse"
+          optional: true
+
+- extendedWaitUntil:
+    visible:
+      id: "song-library-screen"
+    timeout: 10000
+- takeScreenshot: screenshots/16-song-library
+
+# Tap the first song card
+- tapOn:
+    index: 0
+    id: "song-card"
+    optional: true
+
+# If no song-card testID, try tapping first visible song
+- runFlow:
+    when:
+      notVisible:
+        id: "song-player-screen"
+    commands:
+      - tapOn:
+          text: ".*"
+          index: 3
+
+# Wait for song player
+- extendedWaitUntil:
+    visible:
+      id: "song-player-screen"
+    timeout: 10000
+    optional: true
+- takeScreenshot: screenshots/16-song-player
+
+# Go back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "song-library-screen"
+    timeout: 5000

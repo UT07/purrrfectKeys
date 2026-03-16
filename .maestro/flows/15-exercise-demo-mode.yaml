@@ -1,0 +1,44 @@
+# Exercise Demo Mode — Watch Salsa play the exercise
+# Verifies: demo button, demo banner, visual-only playback
+appId: com.purrrfectkeys.app
+name: Exercise Demo Mode
+tags:
+  - exercise
+  - demo
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+- runFlow: ../helpers/navigate-to-exercise.yaml
+
+# Verify exercise loaded
+- assertVisible:
+    id: "exercise-player"
+
+# Tap demo button (in secondary controls)
+- runFlow:
+    when:
+      visible:
+        id: "demo-button"
+    commands:
+      - tapOn:
+          id: "demo-button"
+      - takeScreenshot: screenshots/15-demo-playing
+      # Demo banner should appear
+      - assertVisible:
+          id: "demo-banner"
+      # Wait for demo to finish (or timeout)
+      - extendedWaitUntil:
+          notVisible:
+            id: "demo-banner"
+          timeout: 30000
+      - takeScreenshot: screenshots/15-demo-complete
+
+# Exit
+- tapOn:
+    id: "control-exit"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 10000

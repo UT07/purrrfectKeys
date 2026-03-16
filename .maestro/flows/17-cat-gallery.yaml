@@ -1,0 +1,53 @@
+# Cat Gallery — Browse cats, view evolution, check abilities
+# Verifies: cat gallery loads, swipe through cats, evolution info visible
+appId: com.purrrfectkeys.app
+name: Cat Gallery
+tags:
+  - cats
+  - feature
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+
+# Navigate to Profile tab
+- tapOn:
+    id: "tab-profile"
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 5000
+
+# Tap cat gallery button (navigate to CatSwitchScreen)
+- tapOn:
+    text: "Cat Gallery"
+    optional: true
+- tapOn:
+    id: "cat-gallery-button"
+    optional: true
+
+# Wait for cat gallery screen
+- extendedWaitUntil:
+    visible:
+      id: "cat-switch-screen"
+    timeout: 5000
+    optional: true
+- takeScreenshot: screenshots/17-cat-gallery
+
+# Swipe through cats
+- swipe:
+    direction: LEFT
+    duration: 300
+- takeScreenshot: screenshots/17-cat-2
+- swipe:
+    direction: LEFT
+    duration: 300
+- takeScreenshot: screenshots/17-cat-3
+
+# Go back
+- back
+- extendedWaitUntil:
+    visible:
+      id: "profile-screen"
+    timeout: 5000

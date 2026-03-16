@@ -1,0 +1,39 @@
+# Exercise Speed & Metronome — Toggle metronome, change playback speed
+# Verifies: metronome toggle, speed selector
+appId: com.purrrfectkeys.app
+name: Exercise Speed and Metronome
+tags:
+  - exercise
+  - settings
+
+---
+
+- launchApp
+- runFlow: ../helpers/ensure-home.yaml
+- runFlow: ../helpers/navigate-to-exercise.yaml
+
+# Verify exercise loaded
+- assertVisible:
+    id: "exercise-player"
+
+# Toggle metronome off
+- tapOn:
+    id: "metronome-toggle"
+- takeScreenshot: screenshots/13-metronome-toggled
+
+# Toggle metronome back on
+- tapOn:
+    id: "metronome-toggle"
+
+# Open speed selector
+- tapOn:
+    id: "speed-selector"
+- takeScreenshot: screenshots/13-speed-selector
+
+# Exit
+- tapOn:
+    id: "control-exit"
+- extendedWaitUntil:
+    visible:
+      id: "level-map-screen"
+    timeout: 10000
