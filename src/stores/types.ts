@@ -349,7 +349,11 @@ export interface DailyRewardDay {
  * ============================================================================
  */
 
-export type LeagueTier = 'bronze' | 'silver' | 'gold' | 'diamond';
+export type RankedTier = 'novice' | 'apprentice' | 'performer' | 'virtuoso'
+  | 'maestro' | 'prodigy' | 'luminary' | 'legend' | 'grandmaster';
+
+/** @deprecated Use RankedTier directly. Alias kept for migration. */
+export type LeagueTier = RankedTier;
 
 export type FriendStatus = 'pending_outgoing' | 'pending_incoming' | 'accepted';
 
@@ -373,7 +377,7 @@ export interface ActivityFeedItem {
 
 export interface LeagueMembership {
   leagueId: string;
-  tier: LeagueTier;
+  tier: RankedTier;
   weekStart: string; // ISO date
   weeklyXp: number;
   rank: number;
@@ -403,6 +407,124 @@ export interface ShareCardData {
   value: string;
   catId: string;
   evolutionStage: number;
+}
+
+/**
+ * ============================================================================
+ * RANKED & COMPETITIVE TYPES (Phase 14)
+ * ============================================================================
+ */
+
+export interface PlayerRating {
+  mmr: number;
+  tier: RankedTier;
+  division: 1 | 2 | 3;
+  rp: number;
+  peakMmr: number;
+  peakTier: RankedTier;
+  recentScores: number[];
+  exerciseTypesCompleted: string[];
+  promotionSeries: { wins: number; losses: number; active: boolean } | null;
+  demotionGrace: number;
+}
+
+export type FeedItemType =
+  | 'exercise_completion' | 'level_up' | 'cat_evolution' | 'song_mastery'
+  | 'rank_promotion' | 'rank_demotion' | 'season_placement' | 'battle_pass_milestone'
+  | 'challenge_result' | 'guild_event' | 'new_friend'
+  | 'score_beaten' | 'league_overtake' | 'cat_unlock';
+
+export type ReactionType = '🔥' | '👏' | '😮' | '💪' | '😂';
+
+export interface RichFeedItem {
+  id: string;
+  type: FeedItemType;
+  actorUid: string;
+  actorDisplayName: string;
+  actorCatId: string;
+  actorRankTier: RankedTier;
+  actorRankDivision: number;
+  payload: Record<string, unknown>;
+  timestamp: number;
+  reactions: Record<string, string[]>;
+  isEngagementTrigger: boolean;
+  targetUid?: string;
+}
+
+export interface SeasonState {
+  currentSeason: number;
+  seasonStartDate: string;
+  seasonEndDate: string;
+  placementComplete: boolean;
+  placementScores: number[];
+  battlePassTier: number;
+  battlePassXp: number;
+  claimedRewards: string[];
+  peakTier: RankedTier;
+  seasonHistory: SeasonRecord[];
+}
+
+export interface SeasonRecord {
+  seasonNumber: number;
+  peakTier: RankedTier;
+  peakDivision: number;
+  finalMmr: number;
+  battlePassTier: number;
+  gemsEarned: number;
+  exclusivesEarned: string[];
+}
+
+export interface Guild {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  joinPolicy: 'open' | 'invite_only' | 'closed';
+  leaderUid: string;
+  level: number;
+  guildXp: number;
+  memberCount: number;
+  weeklyXp: number;
+  minWeeklyXp: number;
+  bannerColor: string;
+  createdAt: number;
+}
+
+export interface GuildMember {
+  uid: string;
+  displayName: string;
+  catId: string;
+  rankTier: RankedTier;
+  role: 'leader' | 'co_leader' | 'member';
+  weeklyXp: number;
+  totalGuildXp: number;
+  joinedAt: number;
+  lastActiveAt: number;
+  warStrikes: number;
+}
+
+export interface GuildWar {
+  id: string;
+  guildAId: string;
+  guildBId: string;
+  guildAName: string;
+  guildBName: string;
+  startedAt: number;
+  endsAt: number;
+  status: 'matching' | 'active' | 'completed';
+  guildAWarPoints: number;
+  guildBWarPoints: number;
+  winnerId: string | null;
+  mvpUid: string | null;
+}
+
+export interface Referral {
+  inviterUid: string;
+  inviteeUid: string;
+  inviteCode: string;
+  installedAt: number;
+  rewardClaimedAt: number | null;
+  platform: 'sms' | 'whatsapp' | 'social' | 'qr' | 'link';
 }
 
 /**
