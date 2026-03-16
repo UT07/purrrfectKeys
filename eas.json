@@ -9,6 +9,9 @@
       "channel": "development",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "development-device": {
@@ -17,6 +20,9 @@
       "channel": "development",
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "preview": {
@@ -24,6 +30,9 @@
       "channel": "preview",
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "preview-simulator": {
@@ -31,6 +40,9 @@
       "channel": "preview",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {

@@ -54,6 +54,7 @@ jest.mock('./src/config/posthog', () => ({
     identify: jest.fn(),
     reset: jest.fn(),
     flush: jest.fn(),
+    getDistinctId: jest.fn(() => 'test-distinct-id'),
   },
   isPostHogEnabled: false,
 }));
@@ -390,6 +391,13 @@ jest.mock('@sentry/react-native', () => ({
   setContext: jest.fn(),
   setTag: jest.fn(),
   startSpan: jest.fn((_opts, fn) => fn()),
+  withScope: jest.fn((callback) => {
+    const scope = { setContext: jest.fn() };
+    callback(scope);
+  }),
+  reactNavigationIntegration: jest.fn(() => ({})),
+  mobileReplayIntegration: jest.fn(() => ({})),
+  addIntegration: jest.fn(),
   wrap: jest.fn((component) => component),
 }));
 

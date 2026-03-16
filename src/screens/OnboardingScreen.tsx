@@ -1333,7 +1333,6 @@ const styles = StyleSheet.create({
 
   // Steps
   stepContainer: {
-    flex: 1,
     width: '100%',
     paddingTop: SPACING.sm,
   },

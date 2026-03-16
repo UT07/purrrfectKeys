@@ -78,7 +78,11 @@
         "@sentry/react-native",
         {
           "organization": "purrrfect-keys",
-          "project": "purrrfect-keys-mobile"
+          "project": "purrrfect-keys-mobile",
+          "experimental_android": {
+            "autoUploadNativeSymbols": false,
+            "autoUploadProguardMapping": false
+          }
         }
       ]
     ],
