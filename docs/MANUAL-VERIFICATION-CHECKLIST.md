@@ -4,7 +4,7 @@
 **Companion:** `docs/system-design-analysis.md` (architecture analysis), `docs/plans/UNIFIED-PLAN.md` Phase 11 (full QA audit)
 
 **Last updated:** March 16, 2026
-**Codebase health:** 159 test suites, 3,216 tests, 0 failures, 0 TypeScript errors
+**Codebase health:** 160 test suites, 3,240 tests, 0 failures, 0 TypeScript errors
 **Content:** 599 exercises across 50 lessons, 582 songs in Firestore, 120 skill nodes across 18 tiers
 **GitHub issues:** 0 open (all closed as of Mar 8-9)
 **Key completions since initial draft:**
@@ -513,6 +513,23 @@ No Crashlytics integration exists. Production crashes will be invisible.
 - [ ] **Guild XP tracking:** Complete an exercise while in a guild. Verify member's weeklyXp and guild's weeklyXp both increment
 - [ ] **Guild war:** Start a war between two guilds. Verify war document created with status 'active'. Add war points. Complete war and verify winner determined.
 - [ ] **Guild store persistence:** Close and reopen app. Verify currentGuild survives via AsyncStorage hydration
+
+### G6f. Arena UI (Chunk 6) [IMPORTANT]
+
+**Status: Code complete.** SocialScreen now serves as the Arena hub with RankHeroCard hero element, 3 navigation pills (League/Battle Pass/Guild), and dedicated screens for each sub-system.
+
+- [ ] **RankHeroCard:** Open Social tab → verify tier icon, tier name + division, MMR, RP, progress bar displayed correctly
+- [ ] **Progress bar:** Verify progress bar fills proportionally between current tier's MMR floor and ceiling
+- [ ] **Promotion series pips:** When in an active promotion series → verify 3 pips shown (green=win, red=loss, hollow=pending)
+- [ ] **Navigation pill — League:** Tap "League" pill → navigates to LeaderboardScreen
+- [ ] **Navigation pill — Battle Pass:** Tap "Battle Pass" pill → navigates to BattlePassScreen with 30 tiers, XP progress bar, free/premium tracks
+- [ ] **Navigation pill — Guild:** Tap "Guild" pill → navigates to GuildScreen (discovery or detail view)
+- [ ] **Guild pill label:** When user has a guild → pill shows guild name instead of "Guild"
+- [ ] **Battle Pass tier claiming:** Tap an unlocked reward slot → verify reward claimed (checkmark overlay)
+- [ ] **Battle Pass premium vs free:** Verify free (grey) and premium (gold) tracks visually distinct
+- [ ] **Guild discovery:** Search for guilds by name, browse open guilds, create a new guild
+- [ ] **Guild detail:** View member list, guild wars, management actions (promote/demote/kick)
+- [ ] **Auth gate:** Anonymous users → Social tab shows "The Arena" sign-in prompt (not crash)
 
 ---
 

@@ -26,6 +26,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useSocialStore } from '../stores/socialStore';
 import { useLeagueStore } from '../stores/leagueStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useGuildStore } from '../stores/guildStore';
 import { getFriends, getUserPublicProfile, getChallengesForUser } from '../services/firebase/socialService';
 import { sendLocalNotification } from '../services/notificationService';
 import {
@@ -33,12 +34,13 @@ import {
   assignToLeague,
   getLeagueStandings,
 } from '../services/firebase/leagueService';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, ARENA, glowColor } from '../theme/tokens';
 import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS } from '../theme/leagueTiers';
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot';
 import { LeagueTransitionCard } from '../components/LeagueTransitionCard';
+import { RankHeroCard } from '../components/arena/RankHeroCard';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -623,6 +625,20 @@ export function SocialScreen(): React.JSX.Element {
     navigation.navigate('Account');
   }, [navigation]);
 
+  const handleNavBattlePass = useCallback(() => {
+    navigation.navigate('BattlePass');
+  }, [navigation]);
+
+  const handleNavGuild = useCallback(() => {
+    navigation.navigate('Guild');
+  }, [navigation]);
+
+  const handleNavLeaderboard = useCallback(() => {
+    navigation.navigate('Leaderboard');
+  }, [navigation]);
+
+  const guildName = useGuildStore((s) => s.currentGuild?.name);
+
   if (isAnonymous) {
     return <AuthGate onSignIn={handleSignIn} />;
   }
@@ -658,6 +674,44 @@ export function SocialScreen(): React.JSX.Element {
             onDismiss={clearTierTransition}
           />
         )}
+
+        {/* Rank Hero Card */}
+        <RankHeroCard />
+
+        {/* Navigation Pills */}
+        <View style={styles.navPills}>
+          <PressableScale
+            onPress={handleNavLeaderboard}
+            style={[styles.navPill, { borderColor: COLORS.primary }]}
+            accessibilityLabel="View League"
+            accessibilityRole="button"
+          >
+            <MaterialCommunityIcons name="trophy" size={18} color={COLORS.primary} />
+            <Text style={[styles.navPillText, { color: COLORS.primary }]}>League</Text>
+          </PressableScale>
+
+          <PressableScale
+            onPress={handleNavBattlePass}
+            style={[styles.navPill, { borderColor: ARENA.seasonAccent }]}
+            accessibilityLabel="View Battle Pass"
+            accessibilityRole="button"
+          >
+            <MaterialCommunityIcons name="ticket-outline" size={18} color={ARENA.seasonAccent} />
+            <Text style={[styles.navPillText, { color: ARENA.seasonAccent }]}>Battle Pass</Text>
+          </PressableScale>
+
+          <PressableScale
+            onPress={handleNavGuild}
+            style={[styles.navPill, { borderColor: ARENA.guildAccent }]}
+            accessibilityLabel="View Guild"
+            accessibilityRole="button"
+          >
+            <MaterialCommunityIcons name="shield-home" size={18} color={ARENA.guildAccent} />
+            <Text style={[styles.navPillText, { color: ARENA.guildAccent }]} numberOfLines={1}>
+              {guildName || 'Guild'}
+            </Text>
+          </PressableScale>
+        </View>
 
         <LeagueCard />
         <FriendsSection />
@@ -763,6 +817,30 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption.lg,
     color: COLORS.warning,
     flex: 1,
+  },
+
+  // Navigation pills
+  navPills: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+    marginTop: SPACING.md,
+  },
+  navPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1.5,
+    backgroundColor: ARENA.cardBackground,
+  },
+  navPillText: {
+    ...TYPOGRAPHY.caption.lg,
+    fontWeight: '700',
   },
 
   // Card base — glassmorphism

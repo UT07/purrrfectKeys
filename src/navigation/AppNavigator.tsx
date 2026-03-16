@@ -40,6 +40,8 @@ import { LeaderboardScreen } from '../screens/LeaderboardScreen';
 import { FriendsScreen } from '../screens/FriendsScreen';
 import { AddFriendScreen } from '../screens/AddFriendScreen';
 import { PostExerciseScreen } from '../screens/PostExerciseScreen';
+import { BattlePassScreen } from '../screens/BattlePassScreen';
+import { GuildScreen } from '../screens/GuildScreen';
 // Navigation
 import { CustomTabBar } from './CustomTabBar';
 import { OfflineBanner } from '../components/common/OfflineBanner';
@@ -96,6 +98,8 @@ export type RootStackParamList = {
   Leaderboard: undefined;
   Friends: undefined;
   AddFriend: undefined;
+  BattlePass: undefined;
+  Guild: undefined;
 };
 
 export type MainTabParamList = {
@@ -291,6 +295,16 @@ export function AppNavigator() {
               name="AddFriend"
               component={AddFriendScreen}
               options={{ animation: 'slide_from_bottom' }}
+            />
+            <RootStack.Screen
+              name="BattlePass"
+              component={BattlePassScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="Guild"
+              component={GuildScreen}
+              options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
               name="CatSwitch"
