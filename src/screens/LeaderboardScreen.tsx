@@ -291,7 +291,7 @@ export function LeaderboardScreen(): React.JSX.Element {
     return () => { cancelled = true; };
   }, [membership?.leagueId, setStandings, setLoadingStandings]);
 
-  const tier = membership?.tier ?? 'bronze';
+  const tier = membership?.tier ?? 'novice';
   const config = LEAGUE_TIER_CONFIG[tier];
   const totalMembers = standings.length || membership?.totalMembers || 0;
 
@@ -395,7 +395,7 @@ export function LeaderboardScreen(): React.JSX.Element {
         <View style={styles.headerCenter}>
           <View style={styles.headerTierRow}>
             <MaterialCommunityIcons
-              name={config.icon}
+              name={config.icon as any}
               size={22}
               color={config.color}
             />

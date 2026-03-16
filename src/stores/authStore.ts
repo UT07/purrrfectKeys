@@ -199,7 +199,7 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
     let membership = await getCurrentLeagueMembership(uid);
     if (!membership) {
       const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
-      membership = await assignToLeague(uid, displayName, catId, 'bronze');
+      membership = await assignToLeague(uid, displayName, catId, 'novice');
     }
     useLeagueStore.getState().setMembership(membership);
   } catch (err) {

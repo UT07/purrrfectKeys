@@ -8,7 +8,7 @@
  */
 
 import { create } from 'zustand';
-import type { LeagueMembership, LeagueTier } from './types';
+import type { LeagueMembership, RankedTier } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 
 /**
@@ -50,7 +50,7 @@ export type TierTransition = 'promoted' | 'demoted' | 'same' | null;
 
 export interface LeagueStoreState {
   membership: LeagueMembership | null;
-  previousTier: LeagueTier | null;
+  previousTier: RankedTier | null;
   tierTransition: TierTransition;
   standings: LeagueStandingEntry[];
   isLoadingStandings: boolean;
@@ -71,9 +71,12 @@ const defaultData: LeagueData = {
   previousTier: null,
 };
 
-const TIER_ORDER: readonly LeagueTier[] = ['bronze', 'silver', 'gold', 'diamond'];
+const TIER_ORDER: readonly RankedTier[] = [
+  'novice', 'apprentice', 'performer', 'virtuoso', 'maestro',
+  'prodigy', 'luminary', 'legend', 'grandmaster',
+];
 
-function computeTierTransition(oldTier: LeagueTier | null, newTier: LeagueTier | null): TierTransition {
+function computeTierTransition(oldTier: RankedTier | null, newTier: RankedTier | null): TierTransition {
   if (oldTier == null || newTier == null || oldTier === newTier) return null;
   const oldIndex = TIER_ORDER.indexOf(oldTier);
   const newIndex = TIER_ORDER.indexOf(newTier);

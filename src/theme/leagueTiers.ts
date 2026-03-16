@@ -1,17 +1,23 @@
 import { COLORS } from './tokens';
+import type { RankedTier } from '../stores/types';
 
 export interface LeagueTierConfig {
   label: string;
   color: string;
-  icon: 'shield-outline' | 'shield-half-full' | 'shield-star' | 'shield-crown';
+  icon: string;
   arenaGlow: string;
 }
 
-export const LEAGUE_TIER_CONFIG: Record<string, LeagueTierConfig> = {
-  bronze:  { label: 'Bronze',  color: '#CD7F32', icon: 'shield-outline',   arenaGlow: 'rgba(205, 127, 50, 0.12)' },
-  silver:  { label: 'Silver',  color: '#C0C0C0', icon: 'shield-half-full', arenaGlow: 'rgba(192, 192, 192, 0.12)' },
-  gold:    { label: 'Gold',    color: '#FFD700', icon: 'shield-star',      arenaGlow: 'rgba(255, 215, 0, 0.12)' },
-  diamond: { label: 'Diamond', color: '#B9F2FF', icon: 'shield-crown',     arenaGlow: 'rgba(185, 242, 255, 0.15)' },
+export const LEAGUE_TIER_CONFIG: Record<RankedTier, LeagueTierConfig> = {
+  novice:      { label: 'Novice',      color: '#A0AEC0', icon: 'shield-outline',     arenaGlow: 'rgba(160, 174, 192, 0.12)' },
+  apprentice:  { label: 'Apprentice',  color: '#CD7F32', icon: 'shield-outline',     arenaGlow: 'rgba(205, 127, 50, 0.12)' },
+  performer:   { label: 'Performer',   color: '#C0C0C0', icon: 'shield-half-full',   arenaGlow: 'rgba(192, 192, 192, 0.12)' },
+  virtuoso:    { label: 'Virtuoso',    color: '#FFD700', icon: 'shield-star',         arenaGlow: 'rgba(255, 215, 0, 0.12)' },
+  maestro:     { label: 'Maestro',     color: '#4FC3F7', icon: 'shield-star',         arenaGlow: 'rgba(79, 195, 247, 0.12)' },
+  prodigy:     { label: 'Prodigy',     color: '#BA68C8', icon: 'shield-crown',        arenaGlow: 'rgba(186, 104, 200, 0.12)' },
+  luminary:    { label: 'Luminary',    color: '#F06292', icon: 'shield-crown',        arenaGlow: 'rgba(240, 98, 146, 0.15)' },
+  legend:      { label: 'Legend',      color: '#FF6E40', icon: 'shield-crown',        arenaGlow: 'rgba(255, 110, 64, 0.15)' },
+  grandmaster: { label: 'Grandmaster', color: '#B9F2FF', icon: 'shield-crown',        arenaGlow: 'rgba(185, 242, 255, 0.18)' },
 };
 
 export const MEDAL_COLORS = {

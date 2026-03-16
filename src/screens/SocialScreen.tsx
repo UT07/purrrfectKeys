@@ -84,7 +84,7 @@ function LeagueCard(): React.JSX.Element {
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
-  const tier = membership?.tier ?? 'bronze';
+  const tier = membership?.tier ?? 'novice';
   const config = LEAGUE_TIER_CONFIG[tier];
 
   const handleViewLeaderboard = useCallback(() => {
@@ -104,7 +104,7 @@ function LeagueCard(): React.JSX.Element {
           user.uid,
           user.displayName ?? 'Player',
           catId,
-          'bronze',
+          'novice',
         );
       }
       setMembership(m);
@@ -171,7 +171,7 @@ function LeagueCard(): React.JSX.Element {
       <View style={styles.leagueHeader}>
         <View style={[styles.tierBadge, { backgroundColor: glowColor(config.color, 0.15) }]}>
           <MaterialCommunityIcons
-            name={config.icon}
+            name={config.icon as any}
             size={32}
             color={config.color}
           />

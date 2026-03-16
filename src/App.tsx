@@ -279,7 +279,7 @@ function AppRoot(): React.ReactElement {
                   user.uid,
                   user.displayName ?? 'Player',
                   catId,
-                  'bronze',
+                  'novice',
                 );
               }
               useLeagueStore.getState().setMembership(membership);

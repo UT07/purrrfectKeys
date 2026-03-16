@@ -267,7 +267,7 @@ describe('deleteUserData', () => {
       // Mock leagueStore to return a membership
       const { useLeagueStore } = require('../../../stores/leagueStore');
       (useLeagueStore.getState as jest.Mock).mockReturnValue({
-        membership: { leagueId: 'league-abc', tier: 'bronze', weekStart: '2026-02-23' },
+        membership: { leagueId: 'league-abc', tier: 'novice', weekStart: '2026-02-23' },
       });
 
       // Mock getDoc to return the member doc exists

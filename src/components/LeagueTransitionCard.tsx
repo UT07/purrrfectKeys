@@ -13,10 +13,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import { LEAGUE_TIER_CONFIG } from '../theme/leagueTiers';
 import { PressableScale } from './common/PressableScale';
+import type { RankedTier } from '../stores/types';
 
 export interface LeagueTransitionCardProps {
   transition: 'promoted' | 'demoted';
-  newTier: string;
+  newTier: RankedTier;
   onDismiss: () => void;
 }
 
@@ -28,7 +29,7 @@ export function LeagueTransitionCard({
   onDismiss,
 }: LeagueTransitionCardProps): React.JSX.Element {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const config = LEAGUE_TIER_CONFIG[newTier] ?? LEAGUE_TIER_CONFIG.bronze;
+  const config = LEAGUE_TIER_CONFIG[newTier] ?? LEAGUE_TIER_CONFIG.novice;
   const isPromotion = transition === 'promoted';
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export function LeagueTransitionCard({
         >
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons
-              name={config.icon}
+              name={config.icon as any}
               size={36}
               color={isPromotion ? config.color : COLORS.textMuted}
             />
