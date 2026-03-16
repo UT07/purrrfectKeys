@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cat Accessory Preview</title>
+<style>
+  body { background: #1a1a2e; margin: 0; padding: 20px; font-family: system-ui; color: #fff; }
+  h1 { text-align: center; color: #c4b5fd; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 1200px; margin: 0 auto; }
+  .card { background: #2a2a4a; border-radius: 12px; padding: 12px; text-align: center; }
+  .card h3 { margin: 8px 0 0; font-size: 13px; color: #a5b4fc; }
+  .card .rarity { font-size: 11px; color: #888; }
+  svg { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<h1>Cat Accessory Preview - Top 12</h1>
+<div class="grid">
+
+<!-- Each card shows a cat silhouette + accessory -->
+<!-- Cat anatomy: head cx=50 cy=35 r=32, body y=66-91, eyes cy=36, ears above head -->
+
+<!-- 1. Bow Tie -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <!-- Cat silhouette -->
+    <defs>
+      <radialGradient id="catfur" cx="50%" cy="40%" r="50%">
+        <stop offset="0%" stop-color="#5a5a7a"/>
+        <stop offset="100%" stop-color="#3a3a5a"/>
+      </radialGradient>
+    </defs>
+    <!-- Ears -->
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <path d="M 30 20 L 26 8 L 36 17 Z" fill="#ff9999" opacity="0.4"/>
+    <path d="M 70 20 L 74 8 L 64 17 Z" fill="#ff9999" opacity="0.4"/>
+    <!-- Head -->
+    <circle cx="50" cy="35" r="22" fill="url(#catfur)"/>
+    <!-- Eyes -->
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/>
+    <circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <!-- Nose -->
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <!-- Mouth -->
+    <path d="M 47 42 Q 50 44 53 42" stroke="#555" stroke-width="0.5" fill="none"/>
+    <!-- Body -->
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur)"/>
+    <!-- Belly -->
+    <path d="M 50 60 C 56 60 60 64 60 69 C 60 74 56 76 50 76 C 44 76 40 74 40 69 C 40 64 44 60 50 60 Z" fill="#6a6a8a" opacity="0.4"/>
+
+    <!-- ACCESSORY: Bow Tie -->
+    <g id="acc-bowtie">
+      <defs>
+        <linearGradient id="bowtie-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FF6B8A"/>
+          <stop offset="100%" stop-color="#CC3355"/>
+        </linearGradient>
+      </defs>
+      <!-- Left wing -->
+      <path d="M 43 53 Q 35 49 37 54 Q 35 59 43 56 L 47 54.5 Z" fill="url(#bowtie-g)"/>
+      <!-- Right wing -->
+      <path d="M 57 53 Q 65 49 63 54 Q 65 59 57 56 L 53 54.5 Z" fill="url(#bowtie-g)"/>
+      <!-- Center knot -->
+      <ellipse cx="50" cy="54.5" rx="3" ry="2.2" fill="#CC3355"/>
+      <ellipse cx="49.5" cy="54" rx="1.5" ry="1" fill="#FF8FAA" opacity="0.5"/>
+      <!-- Fabric folds -->
+      <path d="M 44 52 Q 46 54 44 56" stroke="#AA2244" stroke-width="0.4" fill="none"/>
+      <path d="M 56 52 Q 54 54 56 56" stroke="#AA2244" stroke-width="0.4" fill="none"/>
+    </g>
+  </svg>
+  <h3>Bow Tie</h3>
+  <div class="rarity">Common - Collar</div>
+</div>
+
+<!-- 2. Beanie -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <use href="#cat-base" x="0" y="0"/>
+    <defs>
+      <radialGradient id="catfur2" cx="50%" cy="40%" r="50%">
+        <stop offset="0%" stop-color="#5a5a7a"/>
+        <stop offset="100%" stop-color="#3a3a5a"/>
+      </radialGradient>
+      <linearGradient id="beanie-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7EC8E3"/>
+        <stop offset="60%" stop-color="#4A90B8"/>
+        <stop offset="100%" stop-color="#2D6080"/>
+      </linearGradient>
+    </defs>
+    <!-- Cat -->
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur2)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/>
+    <circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 47 42 Q 50 44 53 42" stroke="#555" stroke-width="0.5" fill="none"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur2)"/>
+
+    <!-- ACCESSORY: Beanie -->
+    <g>
+      <!-- Hat dome - sits on top of head, between ears -->
+      <path d="M 30 24 Q 34 10 50 7 Q 66 10 70 24 Q 65 22 50 20 Q 35 22 30 24 Z" fill="url(#beanie-g)"/>
+      <!-- Ribbed band -->
+      <path d="M 30 24 Q 50 20 70 24" stroke="#2D6080" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <!-- Pompom -->
+      <circle cx="50" cy="6" r="5" fill="#7EC8E3"/>
+      <circle cx="48.5" cy="4.5" r="1.5" fill="#A8E0F0" opacity="0.6"/>
+      <!-- Knit texture -->
+      <path d="M 36 20 Q 38 16 40 20" stroke="#3A7A98" stroke-width="0.5" fill="none"/>
+      <path d="M 44 18 Q 46 14 48 18" stroke="#3A7A98" stroke-width="0.5" fill="none"/>
+      <path d="M 52 18 Q 54 14 56 18" stroke="#3A7A98" stroke-width="0.5" fill="none"/>
+      <path d="M 60 20 Q 62 16 64 20" stroke="#3A7A98" stroke-width="0.5" fill="none"/>
+    </g>
+  </svg>
+  <h3>Beanie</h3>
+  <div class="rarity">Common - Hat</div>
+</div>
+
+<!-- 3. Crown -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur3" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="crown-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FFF0A0"/>
+        <stop offset="50%" stop-color="#FFD700"/>
+        <stop offset="100%" stop-color="#CC9B00"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur3)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur3)"/>
+
+    <!-- ACCESSORY: Crown -->
+    <g>
+      <!-- Crown body with 5 points -->
+      <path d="M 36 19 L 38 8 L 43 14 L 47 5 L 50 2 L 53 5 L 57 14 L 62 8 L 64 19 Z"
+        fill="url(#crown-g)" stroke="#B8860B" stroke-width="0.6"/>
+      <!-- Crown base band -->
+      <rect x="36" y="18" width="28" height="3.5" rx="0.5" fill="#FFD700" stroke="#B8860B" stroke-width="0.4"/>
+      <!-- Red velvet inside -->
+      <path d="M 38 18 L 40 12 L 44 16 L 48 8 L 50 5 L 52 8 L 56 16 L 60 12 L 62 18 Z" fill="#CC2244" opacity="0.3"/>
+      <!-- Gems -->
+      <circle cx="43" cy="14" r="2" fill="#FF4444" stroke="#CC0000" stroke-width="0.3"/>
+      <circle cx="50" cy="8" r="2.5" fill="#4444FF" stroke="#0000CC" stroke-width="0.3"/>
+      <circle cx="57" cy="14" r="2" fill="#44FF44" stroke="#00CC00" stroke-width="0.3"/>
+      <!-- Gem sparkles -->
+      <circle cx="49" cy="7" r="0.7" fill="#fff" opacity="0.8"/>
+      <circle cx="42" cy="13" r="0.5" fill="#fff" opacity="0.7"/>
+      <circle cx="56" cy="13" r="0.5" fill="#fff" opacity="0.7"/>
+      <!-- Point tips -->
+      <circle cx="38" cy="8" r="0.7" fill="#FFF8DC"/>
+      <circle cx="50" cy="2" r="0.8" fill="#FFF8DC"/>
+      <circle cx="62" cy="8" r="0.7" fill="#FFF8DC"/>
+      <!-- Metallic highlight -->
+      <path d="M 38 17 Q 50 15.5 62 17" stroke="#FFF8DC" stroke-width="0.5" fill="none" opacity="0.5"/>
+    </g>
+  </svg>
+  <h3>Crown</h3>
+  <div class="rarity">Legendary - Hat</div>
+</div>
+
+<!-- 4. Sunglasses -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur4" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="shades-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#333"/>
+        <stop offset="100%" stop-color="#111"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur4)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur4)"/>
+
+    <!-- ACCESSORY: Sunglasses -->
+    <g>
+      <!-- Left lens - aviator shape -->
+      <path d="M 30 30 Q 30 26 38 26 Q 46 26 46 30 Q 46 38 40 40 Q 32 40 30 36 Z"
+        fill="url(#shades-g)" stroke="#444" stroke-width="0.8"/>
+      <!-- Right lens -->
+      <path d="M 54 30 Q 54 26 62 26 Q 70 26 70 30 Q 70 38 64 40 Q 56 40 54 36 Z"
+        fill="url(#shades-g)" stroke="#444" stroke-width="0.8"/>
+      <!-- Lens shine -->
+      <path d="M 33 28 Q 38 26 43 28" stroke="#fff" stroke-width="0.7" fill="none" opacity="0.3"/>
+      <path d="M 57 28 Q 62 26 67 28" stroke="#fff" stroke-width="0.7" fill="none" opacity="0.3"/>
+      <!-- Bridge -->
+      <path d="M 46 32 Q 50 30 54 32" stroke="#555" stroke-width="1.8" fill="none"/>
+      <!-- Arms -->
+      <path d="M 30 30 Q 26 26 22 18" stroke="#555" stroke-width="1.2" fill="none"/>
+      <path d="M 70 30 Q 74 26 78 18" stroke="#555" stroke-width="1.2" fill="none"/>
+    </g>
+  </svg>
+  <h3>Sunglasses</h3>
+  <div class="rarity">Common - Glasses</div>
+</div>
+
+<!-- 5. Round Glasses -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur5" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur5)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur5)"/>
+
+    <!-- ACCESSORY: Round Glasses -->
+    <g>
+      <!-- Left lens -->
+      <circle cx="39" cy="33" r="8" stroke="#C8A86E" stroke-width="1.2" fill="none"/>
+      <circle cx="39" cy="33" r="7" fill="#DDCCAA" opacity="0.06"/>
+      <path d="M 34 30 Q 39 28 44 30" stroke="#fff" stroke-width="0.5" fill="none" opacity="0.25"/>
+      <!-- Right lens -->
+      <circle cx="61" cy="33" r="8" stroke="#C8A86E" stroke-width="1.2" fill="none"/>
+      <circle cx="61" cy="33" r="7" fill="#DDCCAA" opacity="0.06"/>
+      <path d="M 56 30 Q 61 28 66 30" stroke="#fff" stroke-width="0.5" fill="none" opacity="0.25"/>
+      <!-- Bridge -->
+      <path d="M 47 32 Q 50 30 53 32" stroke="#C8A86E" stroke-width="1" fill="none"/>
+      <!-- Arms -->
+      <path d="M 31 32 Q 26 26 22 18" stroke="#C8A86E" stroke-width="0.9" fill="none"/>
+      <path d="M 69 32 Q 74 26 78 18" stroke="#C8A86E" stroke-width="0.9" fill="none"/>
+    </g>
+  </svg>
+  <h3>Round Glasses</h3>
+  <div class="rarity">Common - Glasses</div>
+</div>
+
+<!-- 6. Scarf -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur6" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="scarf-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FF8888"/>
+        <stop offset="100%" stop-color="#CC4444"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur6)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur6)"/>
+
+    <!-- ACCESSORY: Scarf -->
+    <g>
+      <!-- Scarf wrap around neck -->
+      <path d="M 32 52 Q 38 48 50 47 Q 62 48 68 52 Q 66 56 50 55 Q 34 56 32 52 Z"
+        fill="url(#scarf-g)" stroke="#AA3333" stroke-width="0.4"/>
+      <!-- Wrap overlap fold -->
+      <path d="M 50 48 Q 56 48 62 50 Q 60 53 54 52 Q 50 51 50 48 Z" fill="#DD5555" opacity="0.5"/>
+      <!-- Knot at front-right -->
+      <ellipse cx="57" cy="54" rx="3.5" ry="2.5" fill="#DD5555"/>
+      <ellipse cx="56.5" cy="53.5" rx="1.8" ry="1.2" fill="#FF9999" opacity="0.4"/>
+      <!-- Hanging tail 1 — flat ribbon shape -->
+      <path d="M 54 55 L 52 62 L 50 68 L 48 70 L 52 70 L 54 64 L 56 57 Z"
+        fill="url(#scarf-g)" stroke="#AA3333" stroke-width="0.3"/>
+      <!-- Hanging tail 2 — flat ribbon, slightly offset -->
+      <path d="M 58 55 L 60 62 L 61 67 L 63 69 L 59 69 L 58 63 L 56 57 Z"
+        fill="#DD5555" stroke="#AA3333" stroke-width="0.3"/>
+      <!-- Stripe details on wrap -->
+      <path d="M 34 51 Q 42 49 50 48" stroke="#EE7777" stroke-width="0.8" fill="none" opacity="0.5"/>
+      <path d="M 50 48 Q 58 49 66 51" stroke="#EE7777" stroke-width="0.8" fill="none" opacity="0.5"/>
+      <!-- Fringe on tail ends -->
+      <line x1="48" y1="70" x2="47" y2="73" stroke="#CC4444" stroke-width="0.7"/>
+      <line x1="50" y1="70" x2="50" y2="73" stroke="#CC4444" stroke-width="0.7"/>
+      <line x1="52" y1="70" x2="52.5" y2="73" stroke="#CC4444" stroke-width="0.7"/>
+      <line x1="59" y1="69" x2="58" y2="72" stroke="#AA3333" stroke-width="0.7"/>
+      <line x1="61" y1="69" x2="61" y2="72" stroke="#AA3333" stroke-width="0.7"/>
+      <line x1="63" y1="69" x2="63.5" y2="72" stroke="#AA3333" stroke-width="0.7"/>
+    </g>
+  </svg>
+  <h3>Scarf</h3>
+  <div class="rarity">Common - Collar</div>
+</div>
+
+<!-- 7. Hoodie -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur7" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="hoodie-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6A6ADA"/>
+        <stop offset="100%" stop-color="#4A4AAA"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur7)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur7)"/>
+
+    <!-- ACCESSORY: Hoodie -->
+    <g>
+      <!-- Hood behind head — visible as outline peeking out -->
+      <path d="M 28 52 Q 26 40 28 28 Q 32 18 50 15 Q 68 18 72 28 Q 74 40 72 52"
+        fill="#5858C0" stroke="#3A3A8A" stroke-width="0.6"/>
+      <!-- Hood inner shadow -->
+      <path d="M 31 50 Q 30 40 32 30 Q 36 22 50 19 Q 64 22 68 30 Q 70 40 69 50"
+        fill="#4A4AAA" opacity="0.5"/>
+
+      <!-- Hoodie body — just covers the cat body area, not head -->
+      <path d="M 50 54 C 63 54 70 60 70 68 C 70 76 62 82 50 82 C 38 82 30 76 30 68 C 30 60 37 54 50 54 Z"
+        fill="url(#hoodie-g)" stroke="#3A3A8A" stroke-width="0.5"/>
+      <!-- Collar/neckline -->
+      <path d="M 36 55 Q 43 51 50 50 Q 57 51 64 55"
+        stroke="#3A3A8A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- Front zipper -->
+      <line x1="50" y1="52" x2="50" y2="80" stroke="#8888CC" stroke-width="0.8"/>
+      <!-- Zipper pull -->
+      <rect x="49" y="54" width="2" height="3" rx="0.5" fill="#AAAADD"/>
+      <!-- Kangaroo pocket -->
+      <path d="M 40 68 Q 40 66 50 66 Q 60 66 60 68 Q 60 73 50 73 Q 40 73 40 68 Z"
+        fill="#5555BB" stroke="#3A3A8A" stroke-width="0.4"/>
+      <!-- Pocket opening highlight -->
+      <path d="M 42 67 Q 50 66.5 58 67" stroke="#7777CC" stroke-width="0.4" fill="none" opacity="0.5"/>
+      <!-- Drawstrings -->
+      <line x1="45" y1="51" x2="44" y2="58" stroke="#9999DD" stroke-width="0.6"/>
+      <line x1="55" y1="51" x2="56" y2="58" stroke="#9999DD" stroke-width="0.6"/>
+      <circle cx="44" cy="58.5" r="0.8" fill="#9999DD"/>
+      <circle cx="56" cy="58.5" r="0.8" fill="#9999DD"/>
+    </g>
+  </svg>
+  <h3>Hoodie</h3>
+  <div class="rarity">Common - Outfit</div>
+</div>
+
+<!-- 8. Red Cape -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur8" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="cape-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FF4444"/>
+        <stop offset="100%" stop-color="#AA1111"/>
+      </linearGradient>
+    </defs>
+    <!-- Cape BEHIND cat -->
+    <path d="M 36 50 Q 20 60 18 85 Q 30 90 40 88 Q 50 92 60 88 Q 70 90 82 85 Q 80 60 64 50 Z"
+      fill="url(#cape-g)" stroke="#881111" stroke-width="0.5"/>
+    <!-- Cape inner lining -->
+    <path d="M 38 52 Q 24 62 22 82 Q 34 86 44 84 Q 50 88 56 84 Q 66 86 78 82 Q 76 62 62 52 Z"
+      fill="#CC3333" opacity="0.3"/>
+    <!-- Fold lines -->
+    <path d="M 30 60 Q 35 70 32 80" stroke="#CC2222" stroke-width="0.5" fill="none" opacity="0.4"/>
+    <path d="M 70 60 Q 65 70 68 80" stroke="#CC2222" stroke-width="0.5" fill="none" opacity="0.4"/>
+
+    <!-- Cat ON TOP of cape -->
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur8)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur8)"/>
+
+    <!-- Cape clasp at neck -->
+    <circle cx="50" cy="52" r="3" fill="#FFD700" stroke="#CC9B00" stroke-width="0.5"/>
+    <circle cx="50" cy="52" r="1.5" fill="#FF4444"/>
+    <circle cx="49.5" cy="51.5" r="0.5" fill="#fff" opacity="0.5"/>
+  </svg>
+  <h3>Red Cape</h3>
+  <div class="rarity">Common - Cape</div>
+</div>
+
+<!-- 9. Santa Hat -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur9" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="santa-g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FF3333"/>
+        <stop offset="100%" stop-color="#CC1111"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur9)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur9)"/>
+
+    <!-- ACCESSORY: Santa Hat -->
+    <g>
+      <!-- Hat body - droops to the right -->
+      <path d="M 28 22 Q 36 8 50 6 Q 58 5 68 10 Q 75 14 78 8"
+        fill="url(#santa-g)" stroke="#AA0000" stroke-width="0.4"/>
+      <path d="M 28 22 Q 36 8 50 6 Q 58 5 68 10 Q 75 14 78 8 Q 76 16 68 14 Q 56 10 50 10 Q 38 12 28 22 Z"
+        fill="url(#santa-g)"/>
+      <!-- Fur trim band -->
+      <path d="M 26 24 Q 38 18 50 17 Q 62 18 74 24"
+        stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- Fur trim texture dots -->
+      <circle cx="30" cy="22" r="0.6" fill="#E8E8E8"/>
+      <circle cx="38" cy="19" r="0.5" fill="#E8E8E8"/>
+      <circle cx="46" cy="18" r="0.6" fill="#E8E8E8"/>
+      <circle cx="54" cy="18" r="0.5" fill="#E8E8E8"/>
+      <circle cx="62" cy="19" r="0.6" fill="#E8E8E8"/>
+      <circle cx="70" cy="22" r="0.5" fill="#E8E8E8"/>
+      <!-- Pompom -->
+      <circle cx="78" cy="8" r="4.5" fill="#FFFFFF"/>
+      <circle cx="77" cy="7" r="1.5" fill="#F0F0F0" opacity="0.6"/>
+      <!-- Fabric shadow -->
+      <path d="M 40 12 Q 55 8 70 12" stroke="#AA0000" stroke-width="0.4" fill="none" opacity="0.4"/>
+    </g>
+  </svg>
+  <h3>Santa Hat</h3>
+  <div class="rarity">Rare - Hat</div>
+</div>
+
+<!-- 10. Golden Headphones -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur10" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="hp-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FFE066"/>
+        <stop offset="50%" stop-color="#FFD700"/>
+        <stop offset="100%" stop-color="#CC9B00"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur10)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur10)"/>
+
+    <!-- ACCESSORY: Golden Headphones -->
+    <g>
+      <!-- Headband arc -->
+      <path d="M 22 38 Q 22 10 50 8 Q 78 10 78 38"
+        stroke="url(#hp-g)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Headband highlight -->
+      <path d="M 26 34 Q 26 14 50 12 Q 74 14 74 34"
+        stroke="#FFF0A0" stroke-width="0.6" fill="none" opacity="0.4"/>
+      <!-- Left ear cup -->
+      <ellipse cx="22" cy="40" rx="6" ry="8" fill="url(#hp-g)" stroke="#B8860B" stroke-width="0.6"/>
+      <ellipse cx="22" cy="40" rx="4" ry="6" fill="#333" stroke="#555" stroke-width="0.4"/>
+      <ellipse cx="22" cy="40" rx="2.5" ry="3.5" fill="#222"/>
+      <!-- Speaker mesh -->
+      <circle cx="22" cy="38" r="1" fill="#444"/>
+      <circle cx="22" cy="40" r="1" fill="#444"/>
+      <circle cx="22" cy="42" r="1" fill="#444"/>
+      <!-- Right ear cup -->
+      <ellipse cx="78" cy="40" rx="6" ry="8" fill="url(#hp-g)" stroke="#B8860B" stroke-width="0.6"/>
+      <ellipse cx="78" cy="40" rx="4" ry="6" fill="#333" stroke="#555" stroke-width="0.4"/>
+      <ellipse cx="78" cy="40" rx="2.5" ry="3.5" fill="#222"/>
+      <circle cx="78" cy="38" r="1" fill="#444"/>
+      <circle cx="78" cy="40" r="1" fill="#444"/>
+      <circle cx="78" cy="42" r="1" fill="#444"/>
+      <!-- Gold shine -->
+      <circle cx="20" cy="36" r="0.8" fill="#FFF8DC" opacity="0.5"/>
+      <circle cx="76" cy="36" r="0.8" fill="#FFF8DC" opacity="0.5"/>
+    </g>
+  </svg>
+  <h3>Golden Headphones</h3>
+  <div class="rarity">Rare - Hat</div>
+</div>
+
+<!-- 11. Bandana -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur11" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <linearGradient id="bandana-g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#E85555"/>
+        <stop offset="100%" stop-color="#BB2222"/>
+      </linearGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur11)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur11)"/>
+
+    <!-- ACCESSORY: Bandana (triangle fold at front) -->
+    <g>
+      <!-- Bandana wrap around neck -->
+      <path d="M 30 52 Q 40 48 50 47 Q 60 48 70 52 Q 68 55 50 54 Q 32 55 30 52 Z"
+        fill="url(#bandana-g)" stroke="#991111" stroke-width="0.4"/>
+      <!-- Front triangle point — wider, more natural fold -->
+      <path d="M 40 54 Q 44 54 50 62 Q 56 54 60 54 L 55 55 L 50 64 L 45 55 Z"
+        fill="url(#bandana-g)" stroke="#991111" stroke-width="0.3"/>
+      <!-- Triangle fold shadow -->
+      <path d="M 46 55 L 50 62 L 54 55" stroke="#881111" stroke-width="0.4" fill="none" opacity="0.5"/>
+      <!-- Paisley/dot pattern -->
+      <circle cx="45" cy="56" r="0.7" fill="#FFaaaa" opacity="0.4"/>
+      <circle cx="50" cy="58" r="0.9" fill="#FFaaaa" opacity="0.4"/>
+      <circle cx="55" cy="56" r="0.7" fill="#FFaaaa" opacity="0.4"/>
+      <circle cx="47" cy="59" r="0.5" fill="#FFaaaa" opacity="0.3"/>
+      <circle cx="53" cy="59" r="0.5" fill="#FFaaaa" opacity="0.3"/>
+      <!-- Back knot — two small ribbon tails -->
+      <path d="M 67 51 Q 72 49 74 51 Q 72 53 68 52 Z" fill="#DD4444"/>
+      <!-- Ribbon tail 1 -->
+      <path d="M 72 51 L 76 49 L 78 50 L 74 52 Z" fill="#DD4444" stroke="#991111" stroke-width="0.2"/>
+      <!-- Ribbon tail 2 -->
+      <path d="M 72 52 L 77 53 L 78 55 L 74 53 Z" fill="#CC3333" stroke="#991111" stroke-width="0.2"/>
+    </g>
+  </svg>
+  <h3>Bandana</h3>
+  <div class="rarity">Rare - Collar</div>
+</div>
+
+<!-- 12. Bell Charm -->
+<div class="card">
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <defs>
+      <radialGradient id="catfur12" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#5a5a7a"/><stop offset="100%" stop-color="#3a3a5a"/></radialGradient>
+      <radialGradient id="bell-g" cx="40%" cy="30%" r="60%">
+        <stop offset="0%" stop-color="#FFE88A"/>
+        <stop offset="50%" stop-color="#FFD700"/>
+        <stop offset="100%" stop-color="#B8860B"/>
+      </radialGradient>
+    </defs>
+    <path d="M 28 22 L 22 4 L 38 16 Z" fill="#4a4a6a"/>
+    <path d="M 72 22 L 78 4 L 62 16 Z" fill="#4a4a6a"/>
+    <circle cx="50" cy="35" r="22" fill="url(#catfur12)"/>
+    <ellipse cx="40" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <ellipse cx="60" cy="34" rx="4" ry="4.5" fill="#2a2a2a"/>
+    <circle cx="41" cy="33" r="2" fill="#3DFF88"/><circle cx="61" cy="33" r="2" fill="#3DFF88"/>
+    <circle cx="41.5" cy="32.5" r="0.8" fill="#fff"/><circle cx="61.5" cy="32.5" r="0.8" fill="#fff"/>
+    <path d="M 48 39 L 50 41 L 52 39 Z" fill="#ff6b8a"/>
+    <path d="M 50 56 C 60 56 66 62 66 69 C 66 76 58 81 50 81 C 42 81 34 76 34 69 C 34 62 40 56 50 56 Z" fill="url(#catfur12)"/>
+
+    <!-- ACCESSORY: Bell Charm on collar -->
+    <g>
+      <!-- Collar band -->
+      <path d="M 34 52 Q 42 49 50 48 Q 58 49 66 52"
+        stroke="#CC3333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Collar highlight -->
+      <path d="M 36 51 Q 44 48.5 50 47.5 Q 56 48.5 64 51"
+        stroke="#FF6666" stroke-width="0.5" fill="none" opacity="0.4"/>
+      <!-- Bell body -->
+      <circle cx="50" cy="56" r="4.5" fill="url(#bell-g)" stroke="#B8860B" stroke-width="0.5"/>
+      <!-- Bell slit -->
+      <line x1="46" y1="57" x2="54" y2="57" stroke="#996600" stroke-width="0.6"/>
+      <!-- Bell clapper -->
+      <circle cx="50" cy="59" r="1.2" fill="#996600"/>
+      <!-- Bell top ring -->
+      <circle cx="50" cy="52" r="1.5" fill="#FFD700" stroke="#B8860B" stroke-width="0.4"/>
+      <!-- Shine highlights -->
+      <circle cx="48" cy="54" r="1" fill="#FFF8DC" opacity="0.5"/>
+      <path d="M 47 54 Q 50 52 53 54" stroke="#FFF8DC" stroke-width="0.4" fill="none" opacity="0.4"/>
+      <!-- Sound lines -->
+      <path d="M 44 53 Q 42 52 43 50" stroke="#FFD700" stroke-width="0.4" fill="none" opacity="0.4"/>
+      <path d="M 56 53 Q 58 52 57 50" stroke="#FFD700" stroke-width="0.4" fill="none" opacity="0.4"/>
+    </g>
+  </svg>
+  <h3>Bell Charm</h3>
+  <div class="rarity">Common - Collar</div>
+</div>
+
+</div>
+</body>
+</html>

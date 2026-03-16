@@ -2,19 +2,65 @@ appId: com.purrrfectkeys.app
 name: Ensure Home Screen
 ---
 # Helper: Ensure we're on the HomeScreen
-# Handles dev launcher, onboarding, and auth skip if needed
+# Handles dev launcher, onboarding, and auth skip — waits between each phase.
 
 # Handle dev client launcher if present
 - runFlow: dismiss-dev-launcher.yaml
 
-# Complete onboarding if shown
+# Give the app time to render the initial screen after JS bundle loads
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Complete onboarding if shown (4-step wizard)
 - runFlow:
     when:
       visible:
-        id: "onboarding-screen"
-    file: complete-onboarding.yaml
+        id: "onboarding-step-1"
+    commands:
+      - tapOn:
+          id: "onboarding-get-started"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          id: "onboarding-experience-beginner"
+      - tapOn:
+          id: "onboarding-experience-next"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          id: "onboarding-input-touch"
+      - tapOn:
+          id: "onboarding-input-next"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          id: "onboarding-goal-songs"
+      - tapOn:
+          id: "onboarding-goal-next"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          id: "onboarding-finish"
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 5000
 
-# Skip auth if shown
+# Cat selection step (part of onboarding)
+- runFlow:
+    when:
+      visible:
+        id: "onboarding-cat-select"
+    commands:
+      - tapOn:
+          id: "onboarding-cat-mini-meowww"
+          optional: true
+      - tapOn:
+          text: "Choose"
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+# Skip auth if shown (guest mode)
 - runFlow:
     when:
       visible:
@@ -22,9 +68,11 @@ name: Ensure Home Screen
     commands:
       - tapOn:
           id: "skip-signin"
+      - waitForAnimationToEnd:
+          timeout: 5000
 
-# Wait for home screen
+# Final wait for home screen
 - extendedWaitUntil:
     visible:
       id: "home-screen"
-    timeout: 10000
+    timeout: 15000

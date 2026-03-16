@@ -399,6 +399,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     const STREAK_MILESTONES: { streak: number; gems: number }[] = [
       { streak: 7, gems: 50 },
       { streak: 30, gems: 200 },
+      { streak: 100, gems: 500 },
     ];
     for (const m of STREAK_MILESTONES) {
       if (streak >= m.streak && !claimed.includes(m.streak)) {

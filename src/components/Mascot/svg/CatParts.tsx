@@ -594,46 +594,46 @@ export function CatTail({
     case 'straight':
       return (
         <G>
-          {/* Tapered filled shape — thick base, thin tip with upward hook */}
-          <Path d="M 66 82 Q 72 78 78 70 Q 82 64 84 58 L 85 56 Q 86 54 84 54 L 83 55 Q 80 62 76 68 Q 70 76 64 80 Z"
+          {/* Tapered filled shape — thick base anchored to body, thin tip with upward hook */}
+          <Path d="M 64 79 Q 70 76 76 68 Q 80 62 82 56 L 83 54 Q 84 52 82 52 L 81 53 Q 78 60 74 66 Q 68 74 62 78 Z"
             fill={bodyColor} />
           {/* Fur direction strokes */}
-          <Path d="M 70 76 Q 74 72 77 66" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
-          <Path d="M 68 78 Q 72 74 75 69" stroke={furStroke} strokeWidth="0.3" fill="none" opacity={0.15} />
+          <Path d="M 68 74 Q 72 70 75 64" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
+          <Path d="M 66 76 Q 70 72 73 67" stroke={furStroke} strokeWidth="0.3" fill="none" opacity={0.15} />
           {/* Tip accent */}
-          <Circle cx="84.5" cy="54" r="2.5" fill={accentColor} />
+          <Circle cx="82.5" cy="52" r="2.5" fill={accentColor} />
         </G>
       );
     case 'fluffy':
       return (
         <G>
-          {/* Wide bushy shape with scalloped edge */}
-          <Path d="M 66 82 Q 72 76 78 68 Q 82 62 86 58 Q 90 54 88 50 Q 86 48 82 50 Q 80 52 84 56 Q 82 62 76 68 Q 70 74 64 80 Z"
+          {/* Wide bushy shape with scalloped edge — anchored to body */}
+          <Path d="M 64 79 Q 70 74 76 66 Q 80 60 84 56 Q 88 52 86 48 Q 84 46 80 48 Q 78 50 82 54 Q 80 60 74 66 Q 68 72 62 78 Z"
             fill={bodyColor} />
           {/* Scalloped fluff bumps */}
-          <Path d="M 86 58 Q 90 56 88 53" fill={bodyColor} stroke={bodyColor} strokeWidth="1.5" />
-          <Path d="M 84 54 Q 88 51 86 48" fill={bodyColor} stroke={bodyColor} strokeWidth="1.5" />
+          <Path d="M 84 56 Q 88 54 86 51" fill={bodyColor} stroke={bodyColor} strokeWidth="1.5" />
+          <Path d="M 82 52 Q 86 49 84 46" fill={bodyColor} stroke={bodyColor} strokeWidth="1.5" />
           {/* Fur strokes */}
-          <Path d="M 72 74 Q 76 70 80 64" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
-          <Path d="M 70 76 Q 74 72 78 66" stroke={furStroke} strokeWidth="0.3" fill="none" opacity={0.15} />
+          <Path d="M 70 72 Q 74 68 78 62" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
+          <Path d="M 68 74 Q 72 70 76 64" stroke={furStroke} strokeWidth="0.3" fill="none" opacity={0.15} />
           {/* Fluffy tip */}
-          <Circle cx="87" cy="50" r="4" fill={bodyColor} />
-          <Circle cx="87" cy="50" r="3" fill={accentColor} opacity={0.25} />
+          <Circle cx="85" cy="48" r="4" fill={bodyColor} />
+          <Circle cx="85" cy="48" r="3" fill={accentColor} opacity={0.25} />
         </G>
       );
     case 'curled':
     default:
       return (
         <G>
-          {/* Tapered curl — thick base flowing into spiral tip */}
-          <Path d="M 66 82 Q 74 76 82 68 Q 88 60 90 54 Q 91 50 88 48 Q 85 46 84 50 Q 83 54 86 52 Q 84 56 80 62 Q 74 72 64 80 Z"
+          {/* Tapered curl — thick base anchored to body right edge, flowing into spiral tip */}
+          <Path d="M 64 79 Q 70 76 76 70 Q 82 62 86 56 Q 88 52 86 48 Q 83 46 82 50 Q 81 54 84 52 Q 82 58 78 64 Q 72 72 62 78 Z"
             fill={bodyColor} />
           {/* Fur direction strokes */}
-          <Path d="M 72 74 Q 78 68 82 60" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
+          <Path d="M 70 72 Q 76 66 80 58" stroke={furStroke} strokeWidth="0.4" fill="none" opacity={0.2} />
           {/* Spiral tip accent tuft */}
-          <Circle cx="87" cy="48" r="3.5" fill={accentColor} />
-          <Circle cx="88.5" cy="47" r="1.5" fill={accentColor} opacity={0.6} />
-          <Circle cx="85.5" cy="49" r="1.5" fill={accentColor} opacity={0.4} />
+          <Circle cx="85" cy="48" r="3.5" fill={accentColor} />
+          <Circle cx="86.5" cy="47" r="1.5" fill={accentColor} opacity={0.6} />
+          <Circle cx="83.5" cy="49" r="1.5" fill={accentColor} opacity={0.4} />
         </G>
       );
   }

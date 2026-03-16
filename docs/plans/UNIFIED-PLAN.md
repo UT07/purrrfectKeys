@@ -1,9 +1,9 @@
 # Purrrfect Keys — Unified Master Plan
 
-**Last Updated:** March 15, 2026
+**Last Updated:** March 16, 2026
 **Vision:** The best piano learning app on the App Store. Industry game-changer.
 **Codebase Health:** 0 TypeScript errors, 3,043 tests passing, 149 suites
-**Current Phase:** Phase 13 — Content Explosion (MERGED TO MASTER)
+**Current Phase:** Phase 14 — Social Revamp (Competitive League + Guilds)
 
 > **This is the single source of truth.** Every feature, every phase, every audit.
 > Historical plans are in `docs/plans/archive/`.
@@ -17,30 +17,29 @@
 Phases 1–10.5 were the original build-out. QA is a continuous parallel track, not a numbered phase. New work continues sequentially from **Phase 11**.
 
 ```
-╔══════════════════════════════════════════════════════════╗
-║  COMPLETED (Legacy Phases 1–10.5)                        ║
-║  Core Loop, Gamification, Auth, Adaptive Learning,       ║
-║  Curriculum, Avatar Evolution, UI Revamp, Audio Input,   ║
-║  Music Library, Arcade Concert Hall, Social v1           ║
-╠══════════════════════════════════════════════════════════╣
-║  🔄 QA & DEVICE VERIFICATION — ONGOING PARALLEL TRACK   ║
-║  Not a numbered phase. Always active.                    ║
-╠══════════════════════════════════════════════════════════╣
-║  PHASE 11: Foundation Cleanup              ✅ DONE       ║
-║  PHASE 12: Exercise Types + UI             ✅ DONE       ║
-║  PHASE 13: Content Explosion               ← NOW        ║
-║  PHASE 14: Cat Progression Rebalance                     ║
-║  PHASE 15: The Arena + Music Guilds                      ║
-║  PHASE 16: Cat Studio                                    ║
-║  PHASE 17: "Play First" Onboarding                       ║
-║  PHASE 18: Retention Engine                              ║
-║  PHASE 19: Analytics + Crash Reporting                   ║
-║  PHASE 20: System Design Hardening                       ║
-║  PHASE 21: App Store Launch (Limited Users)               ║
-║  PHASE 22: Monetization (Subscriptions + Gems + Stripe)  ║
-║  PHASE 23: Feedback Automation Pipeline                  ║
-║  PHASE 24+: Production Path (Post-v1 Expansion)         ║
-╚══════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════╗
+║  COMPLETED (Legacy Phases 1–10.5)                            ║
+║  Core Loop, Gamification, Auth, Adaptive Learning,           ║
+║  Curriculum, Avatar Evolution, UI Revamp, Audio Input,       ║
+║  Music Library, Arcade Concert Hall, Social v1               ║
+╠══════════════════════════════════════════════════════════════╣
+║  🔄 QA & DEVICE VERIFICATION — ONGOING PARALLEL TRACK       ║
+║  Not a numbered phase. Always active.                        ║
+╠══════════════════════════════════════════════════════════════╣
+║  PHASE 11: Foundation Cleanup                    ✅ DONE     ║
+║  PHASE 12: Exercise Types + UI                   ✅ DONE     ║
+║  PHASE 13: Content Explosion                     ✅ DONE     ║
+║  PHASE 14: Social Revamp — Competitive League    ← NEXT     ║
+║  PHASE 15: Cat Progression + Cat Studio                      ║
+║  PHASE 16: "Play First" Onboarding                           ║
+║  PHASE 17: UI/UX Revamp                                      ║
+║  PHASE 18: Retention Engine                                  ║
+║  PHASE 19: Analytics + Crash Reporting                       ║
+║  PHASE 20: System Design Hardening                           ║
+║  PHASE 21: Web Version                                       ║
+║  PHASE 22: Monetization + Production Path (parallel)         ║
+║  PHASE 23: App Store Launch (v1 live, production continues)  ║
+╚══════════════════════════════════════════════════════════════╝
 ```
 
 ---
@@ -167,10 +166,10 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 
 ---
 
-## Phase 13: Content Explosion ← NOW
+## Phase 13: Content Explosion ✅ DONE
 
 **Goal:** 500+ exercises, 500+ songs, 5 learning paths. Content is king.
-**Generation done. Quality verification in progress.**
+**Complete. All content generated, verified, and merged.**
 
 ### Final Numbers
 
@@ -217,11 +216,150 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 
 ---
 
-## Phase 14: Cat Progression Rebalance
+## Phase 14: Social Revamp — Valorant-Style Competitive League ← NEXT
 
-**Goal:** Make cat evolution a meaningful months-long journey, not a week-long sprint.
+**Goal:** Social becomes the #1 retention driver. Ranked competitive play, gem-only cat economy, guilds.
 
-### New Progression Model
+### Ranked League System (Music-Themed Tiers)
+
+9 ranks, each with 3 divisions (except Grandmaster). Inspired by Valorant's competitive model.
+
+```
+╔═══════════════════════════════════════════════════════════╗
+║  GRANDMASTER  ♛  Top 1% — no divisions, exclusive aura   ║
+╠═══════════════════════════════════════════════════════════╣
+║  LEGEND        III → II → I                               ║
+║  LUMINARY      III → II → I                               ║
+║  PRODIGY       III → II → I                               ║
+║  MAESTRO       III → II → I                               ║
+║  VIRTUOSO      III → II → I                               ║
+║  PERFORMER     III → II → I                               ║
+║  APPRENTICE    III → II → I                               ║
+║  NOVICE        III → II → I    ← Everyone starts here     ║
+╚═══════════════════════════════════════════════════════════╝
+```
+
+**Ranking Points (RP):**
+- Earned from exercise scores, challenge completions, song mastery
+- Weekly RP contributes to rank progression
+- Promotion series at division boundaries (win 2/3 to promote)
+- Demotion protection: 3-exercise grace period at new division floor
+- Soft reset between seasons (drop ~2 divisions)
+
+**Seasonal System:**
+- Seasons last 4 weeks
+- 5 placement exercises at season start
+- End-of-season rewards based on peak rank
+- Season history + badges on profile
+
+### Gem Economy (Gems-Only Cat Unlocks)
+
+**Cats are purchased exclusively with gems. No real-money cat purchases.**
+
+| Cat Tier | Count | Price | Casual (~700/mo) | Competitive (~4,000/mo) |
+|----------|-------|-------|-------------------|-------------------------|
+| Free | 1 | Onboarding pick | — | — |
+| Common | 4 | 500 gems | ~3 weeks | ~4 days |
+| Rare | 3 | 1,500 gems | ~2 months | ~2 weeks |
+| Epic | 3 | 3,000 gems | ~4 months | ~3 weeks |
+| Legendary | 1 | 5,000 gems | ~7 months | ~5 weeks |
+
+**Weekly League Gem Payouts (most lucrative source):**
+
+| Rank | Weekly Gems | Monthly |
+|------|-------------|---------|
+| Novice | 15 | 60 |
+| Apprentice | 30 | 120 |
+| Performer | 60 | 240 |
+| Virtuoso | 100 | 400 |
+| Maestro | 150 | 600 |
+| Prodigy | 225 | 900 |
+| Luminary | 325 | 1,300 |
+| Legend | 450 | 1,800 |
+| Grandmaster | 600 | 2,400 |
+
+**Other Gem Sources:**
+
+| Source | Gems |
+|--------|------|
+| Daily challenge | 10-25 |
+| Weekly challenge | 50-100 |
+| Monthly challenge | 150-300 |
+| Friend challenge win | 15-30 |
+| Exercise first completion | 5 |
+| 3-star exercise | 10 |
+| Song mastery tier up | 25-75 |
+| Streak milestones (7/30/100 days) | 50/200/500 |
+
+**Season-End Bonus (by peak rank):**
+
+| Peak Rank | Bonus Gems |
+|-----------|------------|
+| Novice | 25 |
+| Apprentice | 50 |
+| Performer | 100 |
+| Virtuoso | 200 |
+| Maestro | 350 |
+| Prodigy | 500 |
+| Luminary | 750 |
+| Legend | 1,000 |
+| Grandmaster | 1,500 + exclusive accessory |
+
+### The Arena (Social Tab Redesign)
+- Arena entrance animation (rank-specific skins)
+- Battle log (challenge cards with cat vs cat)
+- Rank badge on profile + leaderboard
+- Promotion/demotion cinematic animations
+- Reaction system on activity feed
+- Friend profile cards with rank display
+
+### Music Guilds (Bands)
+- Create/join band (150 gems, max 8-12 members)
+- Band leaderboard (aggregate weekly XP)
+- Band chat (emoji-only, kid-safe)
+- Band vs band weekly challenges
+- Band banner + roles (Leader, Co-leader, Member)
+- Band-exclusive challenges with bonus gem multiplier
+
+### Social Quick Actions
+- Challenge from CompletionModal (with gem stake option)
+- Share score card (with rank badge) to social media (Instagram, TikTok, Twitter/X)
+- QR code friend discovery
+- League promotion/demotion animations
+
+### Contact Invites & Social Sharing
+- Connect contacts (expo-contacts) to find friends already using the app
+- Invite friends via SMS/WhatsApp/social media with deep link
+- Share achievements, scores, and cat evolutions to Instagram Stories, TikTok, Twitter/X
+- Referral rewards: both inviter and invitee earn gems on first exercise completion
+
+### Tasks
+
+| # | Task |
+|---|------|
+| 14.1 | Ranked league system (9 tiers, RP calculation, promotion/demotion) |
+| 14.2 | Season system (4-week seasons, placement, soft reset, history) |
+| 14.3 | Gem economy overhaul (cats = gems only, remove direct purchases) |
+| 14.4 | Weekly league gem payouts (Cloud Function: `weeklyLeagueRewards`) |
+| 14.5 | Season-end rewards (Cloud Function: `seasonEndRewards`) |
+| 14.6 | Arena UI redesign (entrance, battle log, rank badges) |
+| 14.7 | Promotion/demotion cinematic animations |
+| 14.8 | Music Guilds (create/join, leaderboard, chat, challenges) |
+| 14.9 | Friend challenge gem stakes |
+| 14.10 | Rank badge integration (profile, leaderboard, activity feed) |
+| 14.11 | QR code friend discovery |
+| 14.12 | Contact-based friend discovery (expo-contacts) |
+| 14.13 | Social media sharing (Instagram/TikTok/X share cards) |
+| 14.14 | Invite system with deep links + referral gem rewards |
+| 14.15 | Firestore: `leagues/`, `guilds/`, `seasons/`, `referrals/` collections + rules |
+
+---
+
+## Phase 15: Cat Progression + Cat Studio
+
+**Goal:** Make cat evolution a meaningful journey AND give players full accessory customization.
+
+### Cat Progression Rebalance
 
 | Stage | New XP | Target Time |
 |-------|--------|-------------|
@@ -229,62 +367,47 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 | Teen → Adult | 8,000 | 2-3 months daily |
 | Adult → Master | 25,000 | 6+ months daily |
 
-### New XP Sources
-
+**Cat XP Sources:**
 Exercise completion (10-85), song mastery tier up (50-200), daily challenge (25-75), weekly challenge (150), streak milestones (100-500), new skill mastered (100), lesson completed first time (200).
 
-### Milestone Rewards
+**Evolution Milestone Rewards:**
+- Teen: 200 gems + Common accessories unlocked
+- Adult: 500 gems + Rare/Epic accessories unlocked
+- Master: 1,000 gems + Legendary accessories unlocked + exclusive effect
 
-Teen: 200 gems + Common accessories. Adult: 500 gems + Rare/Epic. Master: 1000 gems + Legendary + exclusive.
+### Cat Studio (Accessory System)
+
+**Goal:** Full Bitmoji-style accessory equip. 48 items, 6 categories.
+
+Categories: Hats, Glasses, Outfits, Capes/Back, Collars/Neck, Effects.
+
+**Accessory Prices:**
+
+| Rarity | Price | Evolution Gate |
+|--------|-------|----------------|
+| Common | 50-100 gems | Teen+ |
+| Rare | 200-400 gems | Adult+ |
+| Epic | 600-1,000 gems | Adult+ |
+| Legendary | 1,500-2,500 gems | Master only |
+
+State: `settingsStore.equippedAccessories` + `ownedAccessories`. Data already in `src/data/accessories.ts`.
 
 ### Tasks
 
 | # | Task |
 |---|------|
-| 14.1 | Update `EVOLUTION_XP_THRESHOLDS` |
-| 14.2 | Add new XP sources |
-| 14.3 | Milestone reward system |
-| 14.4 | Grandfather existing users |
-| 14.5 | Update progress displays |
+| 15.1 | Update `EVOLUTION_XP_THRESHOLDS` in catEvolutionStore |
+| 15.2 | New cat XP sources wired to exercise/challenge/streak flows |
+| 15.3 | Evolution milestone gem rewards |
+| 15.4 | Grandfather existing users (recalculate stages from current XP) |
+| 15.5 | Cat Studio UI (equip screen, preview, purchase confirmation) |
+| 15.6 | Accessory rendering on CatAvatar SVG |
+| 15.7 | Evolution-gated accessory shop |
+| 15.8 | Update progress displays (gallery, profile, social cards) |
 
 ---
 
-## Phase 15: The Arena + Music Guilds
-
-**Goal:** Social becomes the #1 retention driver.
-
-### The Arena (Social Tab Redesign)
-- Arena entrance animation (tier-specific skins)
-- Battle log (challenge cards with cat vs cat)
-- Reaction system on activity feed
-- Friend profile cards
-
-### Music Guilds (Bands)
-- Create/join band (150 gems, max 8-12 members)
-- Band leaderboard (aggregate weekly XP)
-- Band chat (emoji-only, kid-safe)
-- Band vs band weekly challenges
-- Band banner + roles
-
-### Social Quick Actions
-- Challenge from CompletionModal
-- Share score card
-- QR code friend discovery
-- League promotion/demotion animations
-
----
-
-## Phase 16: Cat Studio
-
-**Goal:** Full Bitmoji-style accessory equip. 48 items, 6 categories.
-
-Categories: Hats, Glasses, Outfits, Capes/Back, Collars/Neck, Effects.
-Evolution-gated: Baby=none, Teen=Common, Adult=Rare/Epic, Master=Legendary.
-State: `settingsStore.equippedAccessories` + `ownedAccessories`. Data already in `src/data/accessories.ts`.
-
----
-
-## Phase 17: "Play First" Onboarding
+## Phase 16: "Play First" Onboarding
 
 **Goal:** User plays piano within 15 seconds.
 
@@ -296,26 +419,119 @@ STEP 4 (75-90s): Choose cat + learning path
 STEP 5 (90-110s): Quick setup (experience + input + goal)
 ```
 
+### Tasks
+
+| # | Task |
+|---|------|
+| 16.1 | Interactive piano intro (Middle C highlight + confetti) |
+| 16.2 | Guided melody sequence (C-D-E-F-G with visual cues) |
+| 16.3 | Mini-exercise (Twinkle Twinkle with simplified scoring) |
+| 16.4 | Cat selection + learning path picker |
+| 16.5 | Experience/input/goal quick setup |
+
+---
+
+## Phase 17: UI/UX Revamp
+
+**Goal:** Full visual overhaul + sound design. Every screen polished to App Store flagship quality.
+
+### Scope
+- Audit all screens against design system tokens
+- Accessibility pass (P0 labels, contrast, reduce-motion support)
+- Animation polish (micro-interactions, transitions, loading states)
+- Empty states and error states for all screens
+- Responsive layout improvements
+- Dark mode refinement
+- Typography and spacing consistency
+
+### Sound Pack
+- Complete set of UI sound effects (button taps, navigation, rewards, errors, combo escalation)
+- Exercise sounds (correct note, wrong note, perfect streak, combo break, star earned)
+- Ambient/background mood audio (optional, per-screen)
+- Victory/completion fanfares (exercise complete, lesson complete, evolution, chest open)
+- **Mute toggle in Settings** (separate toggles: SFX, Music, Haptics)
+- All sounds via `SoundManager` — preloaded pools, no latency on first play
+
+### Key Screens
+- HomeScreen: hero section, daily summary, quick actions
+- ExercisePlayer: in-exercise UI, feedback overlays, completion flow
+- LevelMap: node animations, path rendering, tier transitions
+- SongLibrary: browse, search, mastery display
+- Social/Arena: rank display, challenge cards, guild UI
+- Profile: stats dashboard, settings, cat showcase
+- Cat Studio: accessory preview, purchase flow
+
+### Tasks
+
+| # | Task |
+|---|------|
+| 17.1 | Full accessibility audit + fix P0/P1 issues from UX audit doc |
+| 17.2 | Empty/loading/error states for all screens |
+| 17.3 | Animation polish pass (micro-interactions, transitions) |
+| 17.4 | Typography + spacing consistency audit |
+| 17.5 | Dark mode refinement |
+| 17.6 | Reduce-motion support (`AccessibilityInfo` + `prefers-reduced-motion`) |
+| 17.7 | Screen-by-screen visual QA against design system |
+| 17.8 | Sound pack: source/create all SFX + fanfares |
+| 17.9 | Sound mute toggles in Settings (SFX, Music, Haptics as separate controls) |
+| 17.10 | Wire sound pack into SoundManager with preloaded pools |
+
 ---
 
 ## Phase 18: Retention Engine
 
-**Goal:** Users come back daily.
+**Goal:** Users come back daily. Push notifications drive re-engagement.
 
+### Core Retention Mechanics
 - Cat mood ↔ streak (0 days=sad, 7+=excited, 30+=legendary rainbow aura)
 - Streak freeze (30 gems, max 3 stockpiled)
 - Re-engagement: push after 3+ days, sad cat return screen
 - Weekly featured song (3x gem multiplier)
 
+### Push Notifications (FCM)
+- **Daily reminder**: configurable time, personalized message with cat name
+- **Streak at risk**: "Your 14-day streak expires in 2 hours! [Cat name] is worried!"
+- **Challenge received**: real-time push when friend sends a challenge
+- **League results**: weekly summary of rank changes, gem earnings
+- **New content**: weekly featured songs, new exercises
+- **Re-engagement**: 3-day, 7-day, 14-day with escalating sadness from cat
+- **Permission prompt**: defer push notification permission to after first 3 exercises (not on first launch)
+- Settings: granular notification toggles (daily reminder, social, challenges, promotions)
+
+### Tasks
+
+| # | Task |
+|---|------|
+| 18.1 | Cat mood system (streak-based mood transitions) |
+| 18.2 | Streak freeze purchase + stockpile (gemStore integration) |
+| 18.3 | FCM setup (expo-notifications + Firebase Cloud Messaging) |
+| 18.4 | Push notification categories (daily, social, streak, content, re-engagement) |
+| 18.5 | Notification permission flow (deferred to after 3rd exercise) |
+| 18.6 | Granular notification toggles in Settings |
+| 18.7 | Re-engagement push sequence (3/7/14-day with cat mood) |
+| 18.8 | Sad cat return screen (emotional re-onboarding) |
+| 18.9 | Weekly featured song gem multiplier |
+
 ---
 
 ## Phase 19: Analytics + Crash Reporting
 
-**Goal:** Full visibility before launch.
+**Goal:** Full visibility before hardening.
 
 - PostHog: 5 funnels (onboarding, session depth, retention, content quality, coaching)
 - Crashlytics: `@react-native-firebase/crashlytics` + ErrorBoundary
 - In-app feedback: ProfileScreen → Firestore `feedback` collection
+- Feedback automation: Cloud Function → GitHub issue creation via Gemini classification
+
+### Tasks
+
+| # | Task |
+|---|------|
+| 19.1 | PostHog funnels (5 key funnels) |
+| 19.2 | Crashlytics integration + ErrorBoundary |
+| 19.3 | In-app feedback form + Firestore collection |
+| 19.4 | Feedback → GitHub issue automation (Cloud Function) |
+| 19.5 | Weekly digest (crash-free rate, retention, top feedback) |
 
 ---
 
@@ -335,34 +551,48 @@ STEP 5 (90-110s): Quick setup (experience + input + goal)
 
 ---
 
-## Phase 21: App Store Launch (Limited Users)
+## Phase 21: Web Version
 
-**Goal:** Ship to real users. iOS first.
+**Goal:** Full Purrrfect Keys experience on the web. Next.js + React Native Web.
 
-### TestFlight Beta (2 weeks)
-- 50-100 testers (piano teachers + students)
-- Crash reporting + PostHog + feedback channel active
-- Fix critical bugs from beta
+**Full design:** `docs/plans/production-path-and-web-expansion.md`
 
-### App Store Submission
-- App icon, screenshots (6.7", 6.5", 5.5")
-- Privacy URL, support URL, privacy manifest
-- Production Firebase + production API keys
+### Scope
+- Next.js app with React Native Web
+- WebAudioEngine + Web MIDI API from day 1
+- Stripe payments (no 30% App Store cut)
+- Shared Firebase backend (auth, Firestore, Cloud Functions)
+- Responsive layout (desktop + tablet + mobile web)
+- Same subscription tiers, synced via Firebase
+
+### Tasks
+
+| # | Task |
+|---|------|
+| 21.1 | Next.js project setup with React Native Web |
+| 21.2 | WebAudioEngine (Web Audio API piano synthesis) |
+| 21.3 | Web MIDI API integration |
+| 21.4 | Stripe subscription + gem IAP integration |
+| 21.5 | Responsive layouts (desktop/tablet/mobile) |
+| 21.6 | Auth flow (Firebase web SDK) |
+| 21.7 | Cross-platform feature parity verification |
 
 ---
 
-## Phase 22: Monetization
+## Phase 22: Monetization + Production Path (Parallel Tracks)
 
-**Goal:** Sustainable revenue. Subscriptions for content, gems for cosmetics.
+**Goal:** Revenue + multi-discipline expansion, running in parallel.
 
-### Subscription (RevenueCat)
+### Track A: Monetization
+
+**Subscription (RevenueCat — mobile / Stripe — web):**
 
 | Tier | Price | Access |
 |------|-------|--------|
 | Free | $0 | Lessons 1-6, 10 songs/week, 1 cat, touch input, local-only |
-| Pro | $9.99/mo or $59.99/yr | Everything unlimited, all cats, cloud sync, AI coaching, all paths |
+| Pro | $9.99/mo or $59.99/yr | Everything unlimited, all cats earnable, cloud sync, AI coaching, all paths |
 
-### Gem IAP (Cosmetics Only)
+**Gem IAP (Cosmetics Only):**
 
 | Pack | Price |
 |------|-------|
@@ -370,73 +600,113 @@ STEP 5 (90-110s): Quick setup (experience + input + goal)
 | 600 gems | $4.99 |
 | 1,500 gems | $9.99 |
 
-Gems buy: accessories, streak freezes, band creation. **Never gameplay advantage.**
+Gems buy: accessories, streak freezes, band creation. **Never gameplay advantage.** Cats are earned through gameplay gems, not purchased directly.
 
-### Stripe (Web — Phase 24+)
-- Web subscriptions via Stripe (no 30% App Store cut)
-- Same tier structure, synced via Firebase
-
-### Implementation
-- RevenueCat SDK integration (iOS + Android)
-- Paywall triggers (content gates, cat collection, AI coaching)
-- Server-side receipt validation (Cloud Function)
-- Gem purchase + restore flow
-- Subscription status cached locally
-- A/B test: paywall placement and pricing
-
----
-
-## Phase 23: Feedback Automation Pipeline
-
-**Goal:** Turn user feedback into actionable bug reports automatically.
-
-### Pipeline
-1. In-app "Send Feedback" → Firestore `feedback` collection
-2. Cloud Function processes new feedback → creates GitHub issue (via GitHub API)
-3. Crash reports (Crashlytics) → auto-triage by severity
-4. PostHog session recordings for UX bug reproduction
-5. Weekly digest: top feedback themes, crash-free rate, retention metrics
-
-### Automation
-- GitHub issue auto-labeling (bug/feature/UX) via Gemini classification
-- Slack channel for high-severity crashes
-- User response: "Thanks, we fixed this in v{X}" auto-notification
-
----
-
-## Phase 24+: Production Path (Post-v1 Expansion)
+### Track B: Production Path
 
 **Full design:** `docs/plans/production-path-and-web-expansion.md`
 
 Expand from piano-only to multi-discipline music education (Duolingo multi-language model).
 
-### Critical Findings (Verified in Codebase)
+**Critical Prerequisites (must fix first):**
 
-These must be fixed before Production Path work begins:
+1. **CurriculumEngine is NOT path-agnostic** — 14+ direct `SKILL_TREE` references. Fix: `DisciplineConfig` injection.
+2. **SkillTree is piano-only** — global constant with piano-specific hints. Fix: parameterized `SkillTreeOps` module.
+3. **ContentLoader has no abstraction** — hardcoded `require()` calls. Fix: `getDisciplineContentLoader(discipline)`.
+4. **Store restructuring would break everything** — Fix: additive parallel keys (`productionLessonProgress`).
+5. **ExercisePlayer IS extensible** — 6+ types via type-based branching. Can add production types.
 
-1. **CurriculumEngine is NOT path-agnostic** — 14+ direct `SKILL_TREE` references, hardcoded piano fallbacks. Fix: `DisciplineConfig` injection.
-2. **SkillTree is piano-only** — 100 nodes as global constant, piano-specific generation hints. Fix: parameterized `SkillTreeOps` module.
-3. **ContentLoader has no abstraction** — hardcoded `require()` calls, no factory. Fix: `getDisciplineContentLoader(discipline)`.
-4. **Store restructuring would break everything** — Don't wrap `lessonProgress` in `disciplineProgress`. Fix: additive parallel keys (`productionLessonProgress`).
-5. **ExercisePlayer IS extensible** — 6+ types via type-based branching, modular scoring. Can add production types.
+**Sub-phases:**
 
-### Phases (Post-v1)
+| # | Name | Duration |
+|---|------|----------|
+| 22.B.0 | Refactor for path-agnosticism | 1-2 weeks |
+| 22.B.1 | Production content + types (120-150 skill nodes, 9 exercise types) | 4-6 weeks |
+| 22.B.2 | Interactive components (StepSequencer, synth UI, mixer) | 2-3 weeks |
+| 22.B.3 | App integration (navigation, stores, Firestore) | 2-3 weeks |
+| 22.B.4 | Export system (MIDI + WAV) | 1 week |
 
-| Phase | Name | Duration |
-|-------|------|----------|
-| 24.0 | Refactor for path-agnosticism (DisciplineConfig, SkillTreeOps, ContentLoader factory) | 1-2 weeks |
-| 24.1 | Production content + types (120-150 skill nodes, 9 exercise types, 200 exercises) | 4-6 weeks |
-| 24.2 | Interactive components (StepSequencer, synth UI, mixer, drag-and-drop) | 2-3 weeks |
-| 24.3 | App integration (navigation, stores, Firestore collections) | 2-3 weeks |
-| 24.4 | Export system (MIDI + WAV via midi-writer-js + OfflineAudioContext) | 1 week |
-| 24.5 | Web version (Next.js + React Native Web, Stripe payments) | 8-12 weeks |
-
-### Synth Teaching (Plugin/Serum-style)
-Build our OWN simplified UIs (never screenshot actual plugins). Teaches concepts like "what Serum does" without trademark issues. All components play real audio via Web Audio API.
+**Synth Teaching (Plugin/Serum-style):**
+Build our OWN simplified UIs (never screenshot actual plugins). All components play real audio via Web Audio API.
 
 Components: OscillatorSelector, FilterKnob, EnvelopeEditor, WavetableDisplay, EffectsChainBuilder, FrequencyChart, WaveformVisualizer.
 
-Exercise types: synth-build, filter-match, effects-chain-order, patch-from-scratch.
+### Tasks
+
+| # | Task |
+|---|------|
+| 22.1 | RevenueCat SDK integration (iOS + Android) |
+| 22.2 | Stripe integration (web) |
+| 22.3 | Paywall triggers + A/B testing |
+| 22.4 | Server-side receipt validation (Cloud Function) |
+| 22.5 | Gem IAP purchase + restore flow |
+| 22.6 | Production Path: path-agnosticism refactor |
+| 22.7 | Production Path: content + exercise types |
+| 22.8 | Production Path: interactive components |
+| 22.9 | Production Path: app integration |
+
+---
+
+## Phase 23: App Store Launch + Marketing
+
+**Goal:** Ship to real users. v1 goes live. Build organic + paid growth. Don't break the bank.
+
+### TestFlight Beta (2 weeks)
+- 50-100 testers (piano teachers + students)
+- Crash reporting + PostHog + feedback channel active
+- Fix critical bugs from beta
+
+### App Store + Play Store Submission
+- App icon, screenshots (6.7", 6.5", 5.5")
+- Privacy URL, support URL, privacy manifest
+- Production Firebase + production API keys
+- Play Store listing + review
+
+### Marketing Strategy (Budget-Friendly)
+
+**Organic Content (Free)**
+- TikTok/Reels: 15-30s clips of cat evolution + piano gameplay (3-5x/week, automated via templates)
+- "Before/After" format: beginner → 30 days later (user progress showcase)
+- Cat personality content: daily cat quotes, cat mood reactions to music
+- Piano tips content: "Can you play this?" challenges with app demo
+- User-generated content: encourage sharing via in-app ShareCard (referral rewards)
+
+**Automated Social Campaigns**
+- Pre-schedule 30 days of content using Buffer/Later (free tier)
+- Template library: 10 video templates with cat animations + piano audio
+- Auto-post user milestones (with permission) — "Just hit 100-day streak!"
+- Cross-post to Instagram, TikTok, Twitter/X, YouTube Shorts
+
+**Paid Ads (Low Budget — $5-20/day)**
+- Apple Search Ads: target "piano learning", "piano practice", "learn piano" ($5-10/day)
+- TikTok Spark Ads: boost top-performing organic content ($5-10/day)
+- Focus on: cat evolution clips (hook) + gameplay (demonstrate value) + social proof
+- A/B test: cat-focused ads vs piano-focused ads vs social/competitive focused
+- Kill underperformers after 3 days, scale winners
+
+**Influencer Outreach (Free/Barter)**
+- Piano teachers on YouTube/TikTok: free Pro account in exchange for review
+- Music education bloggers: guest post or mention
+- Cat-themed accounts: cross-promotion with cat content
+
+**Launch Week Push**
+- Product Hunt launch
+- Reddit posts (r/piano, r/pianolearning, r/musictheory, r/learnmusic)
+- Discord piano communities
+- Press release to music education outlets
+
+**Metrics to Track**
+- Cost per install (CPI) — target: <$1.50
+- Day 1/7/30 retention — target: 60%/30%/15%
+- Organic vs paid install ratio — target: 3:1 organic
+- Share/invite conversion rate
+- App Store rating (target: 4.5+ stars)
+
+### Post-Launch
+- Production Path development continues alongside live app
+- User feedback → iteration cycle
+- Feature flags for gradual rollout of production path content
+- Scale ad spend based on LTV:CPI ratio (only if >3:1)
 
 ---
 
@@ -466,23 +736,29 @@ npm run lint             # Must be 0 errors (warnings OK)
 ## Priority Order (The Path to Launch)
 
 ```
-1. Piano app: stable, polished, industry game-changer
+1. Social-first competitive experience
    ✅ Phase 13 (Content Explosion) — DONE
-   └── Phases 14-18 (Progression, Social, Studio, Onboarding, Retention) — NEXT
+   └── Phase 14 (Social Revamp — Competitive League + Guilds) — NEXT
+   └── Phase 15 (Cat Progression + Cat Studio)
 
    QA runs in parallel at ALL TIMES (CI gates + device verification)
 
-2. Ship to limited users
-   └── Phase 19 (Analytics) — visibility before launch
-   └── Phase 20 (Hardening) — security + performance
-   └── Phase 21 (App Store Launch) — TestFlight → App Store
+2. Polish and retain
+   └── Phase 16 (Play First Onboarding) — hook users instantly
+   └── Phase 17 (UI/UX Revamp) — flagship visual quality
+   └── Phase 18 (Retention Engine) — daily engagement loops
 
-3. Make money
-   └── Phase 22 (Monetization) — RevenueCat + Gem IAP + Stripe
+3. Harden and observe
+   └── Phase 19 (Analytics + Crash Reporting) — visibility
+   └── Phase 20 (System Design Hardening) — production-grade
 
-4. Close the feedback loop
-   └── Phase 23 (Feedback Automation) — user bugs → GitHub issues
+4. Go web
+   └── Phase 21 (Web Version) — Next.js + Stripe (no 30% cut)
 
-5. Expand the platform
-   └── Phase 24+ (Production Path, Web, Multi-discipline)
+5. Monetize + expand (parallel)
+   └── Phase 22 (Monetization + Production Path) — revenue + multi-discipline
+   └── Production path continues post-launch
+
+6. Ship it
+   └── Phase 23 (App Store Launch) — TestFlight → App Store → Play Store
 ```
