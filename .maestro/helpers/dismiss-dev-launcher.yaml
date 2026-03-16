@@ -2,20 +2,35 @@ appId: com.purrrfectkeys.app
 name: Dismiss Dev Launcher
 ---
 # Helper: Dismiss Expo dev client launcher if present
-# In development builds, clearState resets the dev server connection.
-# This helper auto-connects to localhost and dismisses the dev menu intro.
+# Handles three states: server list, intro modal, and dev tools menu.
 
+# Wait for the app to render
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# State 1: Dev server list (fresh clearState launch)
 - runFlow:
     when:
       visible: "Development servers"
     commands:
       - tapOn:
           text: "http://localhost:8081"
-      # Wait for JS bundle to load from Metro (can take 15-30s on first load)
       - waitForAnimationToEnd:
           timeout: 35000
 
-# Dismiss the dev client intro modal ("This is the developer menu...")
+# State 2: Dev tools menu (shows Reload, Go home, etc.)
+# Dismiss by tapping the X close button in the top-right
+- runFlow:
+    when:
+      visible: "Reload"
+    commands:
+      - tapOn:
+          point: "93%,6%"
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# State 3: Dev client intro modal ("This is the developer menu...")
+# Only matches the intro text, not the full menu
 - runFlow:
     when:
       visible: "This is the developer menu"
@@ -24,3 +39,13 @@ name: Dismiss Dev Launcher
           text: "Continue"
       - waitForAnimationToEnd:
           timeout: 5000
+
+# If dev tools menu appeared again after Continue, dismiss with X
+- runFlow:
+    when:
+      visible: "Reload"
+    commands:
+      - tapOn:
+          point: "93%,6%"
+      - waitForAnimationToEnd:
+          timeout: 3000

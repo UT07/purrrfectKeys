@@ -1,31 +1,100 @@
 appId: com.purrrfectkeys.app
 name: Complete Onboarding
 ---
-# Helper: Complete onboarding if it appears
-# Skip silently if already completed (home/auth screen shown instead)
+# Helper: Complete the 7-step onboarding wizard
+# Step 1: Welcome → Get Started
+# Step 2: Experience level → Beginner
+# Step 3: Input method → Touch
+# Step 4: Learning goal → Songs
+# Step 5: Choose Path → Piano Basics
+# Step 6: Choose Cat → first cat
+# Step 7: Ready to Play → Finish
 
-- assertVisible:
-    id: "onboarding-screen"
-    optional: true
+# Step 1: Welcome
+- tapOn:
+    id: "onboarding-get-started"
+- waitForAnimationToEnd:
+    timeout: 3000
 
+# Step 2: Experience level
+- tapOn:
+    id: "onboarding-experience-beginner"
+- tapOn:
+    id: "onboarding-experience-next"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Step 3: Input method
+- tapOn:
+    id: "onboarding-input-touch"
+- tapOn:
+    id: "onboarding-input-next"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Step 4: Learning goal
+- tapOn:
+    id: "onboarding-goal-songs"
+- tapOn:
+    id: "onboarding-goal-next"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Step 5: Choose learning path (scrollable)
+- tapOn:
+    id: "onboarding-path-piano-basics"
+- swipe:
+    direction: UP
+    duration: 300
+- tapOn:
+    id: "onboarding-path-next"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Step 6: Choose cat companion (tap "Choose Mini Meowww" button, then Next)
 - runFlow:
     when:
       visible:
-        id: "onboarding-step-1"
+        id: "onboarding-step-6"
     commands:
       - tapOn:
-          id: "onboarding-get-started"
+          id: "onboarding-choose-mini-meowww"
+      - waitForAnimationToEnd:
+          timeout: 2000
       - tapOn:
-          id: "onboarding-experience-beginner"
+          id: "onboarding-cat-next"
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Step 7: Pick Username → type username → wait for validation → Finish
+- runFlow:
+    when:
+      visible:
+        id: "onboarding-step-7"
+    commands:
       - tapOn:
-          id: "onboarding-experience-next"
-      - tapOn:
-          id: "onboarding-input-touch"
-      - tapOn:
-          id: "onboarding-input-next"
-      - tapOn:
-          id: "onboarding-goal-songs"
-      - tapOn:
-          id: "onboarding-goal-next"
+          id: "onboarding-username-input"
+      - inputText: "e2etester"
+      # Wait for debounced username availability check
+      - waitForAnimationToEnd:
+          timeout: 3000
+      # Tap Finish (may need to wait for it to become enabled)
+      - extendedWaitUntil:
+          visible:
+            id: "onboarding-finish"
+          timeout: 10000
       - tapOn:
           id: "onboarding-finish"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+# Fallback: if step 7 isn't shown (older onboarding), try Finish directly
+- runFlow:
+    when:
+      visible:
+        id: "onboarding-finish"
+    commands:
+      - tapOn:
+          id: "onboarding-finish"
+      - waitForAnimationToEnd:
+          timeout: 5000

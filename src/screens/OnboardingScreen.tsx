@@ -448,38 +448,40 @@ function PathSelectionStep({
 
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-5">
-      <View style={styles.stepCatRow}>
-        <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
-        <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
-      </View>
-      <Text style={styles.stepTitle}>Choose Your Path</Text>
-      <Text style={styles.stepDescription}>
-        Pick a learning journey. You can switch anytime from the Learn tab.
-      </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.stepCatRow}>
+          <CatAvatar catId={catInfo.catId} size="small" skipEntryAnimation />
+          <Text style={styles.catIntro}>{catInfo.subtitle}</Text>
+        </View>
+        <Text style={styles.stepTitle}>Choose Your Path</Text>
+        <Text style={styles.stepDescription}>
+          Pick a learning journey. You can switch anytime from the Learn tab.
+        </Text>
 
-      <View style={styles.optionsList}>
-        {PATH_OPTIONS.map((path) => (
-          <OptionCard
-            key={path.id}
-            iconName="map-marker-path"
-            iconColor={path.color}
-            title={`${path.emoji} ${path.title}`}
-            description={`${path.description} (${path.lessonCount} lessons)`}
-            selected={value === path.id}
-            onPress={() => onValueChange(path.id)}
-            testID={`onboarding-path-${path.id}`}
-          />
-        ))}
-      </View>
+        <View style={styles.optionsList}>
+          {PATH_OPTIONS.map((path) => (
+            <OptionCard
+              key={path.id}
+              iconName="map-marker-path"
+              iconColor={path.color}
+              title={`${path.emoji} ${path.title}`}
+              description={`${path.description} (${path.lessonCount} lessons)`}
+              selected={value === path.id}
+              onPress={() => onValueChange(path.id)}
+              testID={`onboarding-path-${path.id}`}
+            />
+          ))}
+        </View>
 
-      <Button
-        title="Next"
-        onPress={onNext}
-        disabled={!value}
-        size="large"
-        style={styles.button}
-        testID="onboarding-path-next"
-      />
+        <Button
+          title="Next"
+          onPress={onNext}
+          disabled={!value}
+          size="large"
+          style={styles.button}
+          testID="onboarding-path-next"
+        />
+      </ScrollView>
     </AnimatedStepWrapper>
   );
 }
@@ -1332,6 +1334,7 @@ const styles = StyleSheet.create({
 
   // Steps
   stepContainer: {
+    flex: 1,
     width: '100%',
     paddingTop: SPACING.sm,
   },

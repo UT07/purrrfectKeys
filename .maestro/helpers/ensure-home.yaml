@@ -2,65 +2,29 @@ appId: com.purrrfectkeys.app
 name: Ensure Home Screen
 ---
 # Helper: Ensure we're on the HomeScreen
-# Handles dev launcher, onboarding, and auth skip — waits between each phase.
+# The app can be in multiple states after launch:
+# 1. Dev launcher → connect to Metro
+# 2. Dev menu (tools) → dismiss
+# 3. Onboarding → complete 4 steps
+# 4. Auth → skip sign-in
+# 5. Onboarding again (appears after auth skip for first-time users)
+# 6. Home screen
 
-# Handle dev client launcher if present
+# Phase 1: Dismiss dev launcher/menu
 - runFlow: dismiss-dev-launcher.yaml
 
-# Give the app time to render the initial screen after JS bundle loads
+# Phase 2: Wait for the app to settle
 - waitForAnimationToEnd:
     timeout: 5000
 
-# Complete onboarding if shown (4-step wizard)
+# Phase 2a: Handle onboarding if it's the first screen
 - runFlow:
     when:
       visible:
-        id: "onboarding-step-1"
-    commands:
-      - tapOn:
-          id: "onboarding-get-started"
-      - waitForAnimationToEnd:
-          timeout: 3000
-      - tapOn:
-          id: "onboarding-experience-beginner"
-      - tapOn:
-          id: "onboarding-experience-next"
-      - waitForAnimationToEnd:
-          timeout: 3000
-      - tapOn:
-          id: "onboarding-input-touch"
-      - tapOn:
-          id: "onboarding-input-next"
-      - waitForAnimationToEnd:
-          timeout: 3000
-      - tapOn:
-          id: "onboarding-goal-songs"
-      - tapOn:
-          id: "onboarding-goal-next"
-      - waitForAnimationToEnd:
-          timeout: 3000
-      - tapOn:
-          id: "onboarding-finish"
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 5000
+        id: "onboarding-get-started"
+    file: complete-onboarding.yaml
 
-# Cat selection step (part of onboarding)
-- runFlow:
-    when:
-      visible:
-        id: "onboarding-cat-select"
-    commands:
-      - tapOn:
-          id: "onboarding-cat-mini-meowww"
-          optional: true
-      - tapOn:
-          text: "Choose"
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 5000
-
-# Skip auth if shown (guest mode)
+# Phase 3: Skip auth if shown
 - runFlow:
     when:
       visible:
@@ -69,9 +33,16 @@ name: Ensure Home Screen
       - tapOn:
           id: "skip-signin"
       - waitForAnimationToEnd:
-          timeout: 5000
+          timeout: 8000
 
-# Final wait for home screen
+# Phase 4: Handle onboarding AFTER auth skip (first-time user flow)
+- runFlow:
+    when:
+      visible:
+        id: "onboarding-get-started"
+    file: complete-onboarding.yaml
+
+# Phase 5: Final wait for home screen
 - extendedWaitUntil:
     visible:
       id: "home-screen"
