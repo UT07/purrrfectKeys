@@ -32,6 +32,7 @@ import { createUserProfile, getUserProfile, updateUserProfile, deleteUserData } 
 import { PersistenceManager, cancelAllPendingSaves, STORAGE_KEYS } from './persistence';
 import { useProgressStore } from './progressStore';
 import { useSettingsStore } from './settingsStore';
+import { MonitoringService } from '../services/monitoring';
 import { useExerciseStore } from './exerciseStore';
 import { useCatEvolutionStore } from './catEvolutionStore';
 import { useGemStore } from './gemStore';
@@ -849,6 +850,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await firebaseSignOut(auth);
       signOutSucceeded = true;
       analyticsEvents.auth.signOut();
+      MonitoringService.clearUser();
       AnalyticsService.reset();
 
       cancelAllPendingSaves();

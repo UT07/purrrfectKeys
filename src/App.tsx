@@ -36,6 +36,7 @@ import { logger } from './utils/logger';
 import { withTimeout } from './utils/withTimeout';
 import { AnalyticsService, analyticsEvents } from './services/analytics/PostHog';
 import { MonitoringService } from './services/monitoring';
+import { SentryService } from './services/monitoring/SentryService';
 
 // Configure Google Sign-In at module level (synchronous, must run before any signIn call)
 // iosClientId is passed explicitly so the native module doesn't need GoogleService-Info.plist
@@ -61,7 +62,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   // Catching errors in case SplashScreen is not available
 });
 
-export default function App(): React.ReactElement {
+function AppRoot(): React.ReactElement {
   const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
@@ -212,6 +213,23 @@ export default function App(): React.ReactElement {
         if (authUser?.displayName) {
           useSettingsStore.getState().setDisplayName(authUser.displayName);
         }
+
+        // Identify user across Sentry + PostHog for error context and analytics
+        if (authUser) {
+          const settings = useSettingsStore.getState();
+          const progress = useProgressStore.getState();
+          MonitoringService.identifyUser(authUser.uid, {
+            username: settings.username || settings.displayName || undefined,
+            level: progress.level,
+            selectedCat: settings.selectedCatId || undefined,
+            inputMethod: settings.preferredInputMethod,
+            isAnonymous: useAuthStore.getState().isAnonymous,
+          });
+          SentryService.addBreadcrumb('auth', 'User authenticated', {
+            isAnonymous: String(useAuthStore.getState().isAnonymous),
+            level: String(progress.level),
+          });
+        }
       } catch (e) {
         logger.warn('[App] Failed during app preparation:', e);
       } finally {
@@ -350,3 +368,6 @@ function AppContent(): React.ReactElement {
     <AppNavigator />
   );
 }
+
+// Wrap with Sentry for automatic error boundary + performance transaction on root
+export default SentryService.wrapApp(AppRoot);

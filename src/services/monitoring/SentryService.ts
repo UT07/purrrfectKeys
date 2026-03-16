@@ -1,8 +1,8 @@
 /**
  * Sentry Error Monitoring Service
  *
- * Provides crash reporting, performance monitoring, and error tracking.
- * Integrates with PostHog for unified observability.
+ * Provides crash reporting, performance monitoring, session replay,
+ * and structured error tracking.
  *
  * Setup requires EXPO_PUBLIC_SENTRY_DSN in environment.
  */
@@ -26,77 +26,192 @@ const SENTRY_DSN = typeof process !== 'undefined'
   ? process.env.EXPO_PUBLIC_SENTRY_DSN
   : undefined;
 
+// Navigation integration instance — shared with AppNavigator
+let _navigationIntegration: ReturnType<typeof import('@sentry/react-native').reactNavigationIntegration> | null = null;
+
 export class SentryService {
   private static initialized = false;
 
+  /**
+   * Initialize Sentry with full configuration.
+   * Call once in App.tsx before any other operations.
+   */
   static initialize(): void {
     if (this.initialized) return;
 
     const sentry = getSentry();
     if (!sentry || !SENTRY_DSN) {
-      logger.warn('[Sentry] Not configured — error monitoring disabled');
+      logger.warn('[Sentry] Not configured — error monitoring disabled. Set EXPO_PUBLIC_SENTRY_DSN.');
       return;
     }
 
     try {
+      // Create navigation integration for automatic screen tracking + performance spans
+      _navigationIntegration = sentry.reactNavigationIntegration({
+        enableTimeToInitialDisplay: true,
+      });
+
+      const integrations: any[] = [_navigationIntegration];
+
+      // Add mobile session replay (visual debugging with touch events)
+      if (sentry.mobileReplayIntegration) {
+        integrations.push(
+          sentry.mobileReplayIntegration({
+            maskAllText: false,
+            maskAllImages: false,
+            maskAllVectors: false,
+          }),
+        );
+      }
+
       sentry.init({
         dsn: SENTRY_DSN,
         debug: __DEV__,
+
+        // Session tracking
         enableAutoSessionTracking: true,
         sessionTrackingIntervalMillis: 30000,
-        tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+
+        // Performance sampling
+        tracesSampleRate: __DEV__ ? 1.0 : 0.3,
         profilesSampleRate: __DEV__ ? 1.0 : 0.1,
+
+        // Session replay sampling
+        replaysSessionSampleRate: __DEV__ ? 1.0 : 0.1,
+        replaysOnErrorSampleRate: 1.0, // Always replay on error
+
         environment: __DEV__ ? 'development' : 'production',
+
+        // Propagate traces to our Firebase Cloud Functions
+        tracePropagationTargets: [
+          'us-central1-keysense-app.cloudfunctions.net',
+          /^https:\/\/firestore\.googleapis\.com/,
+        ],
+
+        integrations,
+
+        // Scrub PII before sending events
         beforeSend(event) {
-          // Scrub sensitive data
           if (event.user) {
             delete event.user.email;
             delete event.user.ip_address;
           }
           return event;
         },
+
+        // Filter breadcrumbs to reduce noise
+        beforeBreadcrumb(breadcrumb) {
+          // Drop console breadcrumbs in production (too noisy)
+          if (!__DEV__ && breadcrumb.category === 'console') {
+            return null;
+          }
+          return breadcrumb;
+        },
       });
 
       this.initialized = true;
-      logger.log('[Sentry] Initialized');
+      logger.log('[Sentry] Initialized with tracing, replay, and navigation integration');
     } catch (error) {
       logger.error('[Sentry] Failed to initialize:', error);
     }
   }
 
-  static setUser(userId: string, username?: string): void {
+  /**
+   * Get the navigation integration instance for registering with NavigationContainer.
+   */
+  static getNavigationIntegration() {
+    return _navigationIntegration;
+  }
+
+  /**
+   * Wrap the root App component with Sentry's error boundary and performance wrapper.
+   * Returns a no-op wrapper if Sentry isn't available.
+   */
+  static wrapApp<P extends Record<string, unknown>>(
+    AppComponent: React.ComponentType<P>,
+  ): React.ComponentType<P> {
+    const sentry = getSentry();
+    if (!sentry || !this.initialized) return AppComponent;
+    return sentry.wrap(AppComponent);
+  }
+
+  /**
+   * Set user identity on auth state change.
+   */
+  static setUser(userId: string, properties?: {
+    username?: string;
+    level?: number;
+    selectedCat?: string;
+    inputMethod?: string;
+  }): void {
     const sentry = getSentry();
     if (!sentry || !this.initialized) return;
 
     sentry.setUser({
       id: userId,
-      username: username || undefined,
+      username: properties?.username,
     });
+
+    // Set user context as tags for easy filtering in Sentry dashboard
+    if (properties?.level !== undefined) {
+      sentry.setTag('user.level', String(properties.level));
+    }
+    if (properties?.selectedCat) {
+      sentry.setTag('user.cat', properties.selectedCat);
+    }
+    if (properties?.inputMethod) {
+      sentry.setTag('user.input_method', properties.inputMethod);
+    }
   }
 
+  /**
+   * Clear user identity on sign-out.
+   */
   static clearUser(): void {
     const sentry = getSentry();
     if (!sentry || !this.initialized) return;
     sentry.setUser(null);
   }
 
-  static captureException(error: Error, context?: Record<string, string>): void {
+  /**
+   * Capture an exception with optional structured context.
+   */
+  static captureException(
+    error: Error,
+    context?: Record<string, string | number | boolean>,
+  ): void {
     const sentry = getSentry();
     if (!sentry || !this.initialized) return;
 
-    if (context) {
-      sentry.setContext('custom', context);
-    }
-    sentry.captureException(error);
+    sentry.withScope((scope) => {
+      if (context) {
+        scope.setContext('custom', context);
+      }
+      sentry.captureException(error);
+    });
   }
 
-  static captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): void {
+  /**
+   * Capture a message at a specific severity level.
+   */
+  static captureMessage(
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info',
+  ): void {
     const sentry = getSentry();
     if (!sentry || !this.initialized) return;
     sentry.captureMessage(message, level);
   }
 
-  static addBreadcrumb(category: string, message: string, data?: Record<string, string>): void {
+  /**
+   * Add a structured breadcrumb for debugging context.
+   */
+  static addBreadcrumb(
+    category: string,
+    message: string,
+    data?: Record<string, string | number | boolean>,
+    level: 'info' | 'warning' | 'error' = 'info',
+  ): void {
     const sentry = getSentry();
     if (!sentry || !this.initialized) return;
 
@@ -104,20 +219,50 @@ export class SentryService {
       category,
       message,
       data,
-      level: 'info',
+      level,
     });
   }
 
-  static startTransaction(name: string, op: string) {
+  /**
+   * Create a performance span for measuring operations.
+   * Returns a finish callback (or no-op if Sentry unavailable).
+   */
+  static startSpan(
+    name: string,
+    op: string,
+    callback: () => void,
+  ): void {
     const sentry = getSentry();
-    if (!sentry || !this.initialized) return null;
+    if (!sentry || !this.initialized) {
+      callback();
+      return;
+    }
 
-    return sentry.startSpan({ name, op }, () => {});
+    sentry.startSpan({ name, op }, callback);
   }
 
+  /**
+   * Set a tag on the current scope for filtering events in the dashboard.
+   */
   static setTag(key: string, value: string): void {
     const sentry = getSentry();
     if (!sentry || !this.initialized) return;
     sentry.setTag(key, value);
+  }
+
+  /**
+   * Set extra context data on the current scope.
+   */
+  static setContext(name: string, data: Record<string, unknown>): void {
+    const sentry = getSentry();
+    if (!sentry || !this.initialized) return;
+    sentry.setContext(name, data);
+  }
+
+  /**
+   * Check if Sentry is initialized and ready.
+   */
+  static get isInitialized(): boolean {
+    return this.initialized;
   }
 }

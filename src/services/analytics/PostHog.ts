@@ -292,6 +292,85 @@ export const analyticsEvents = {
     unlocked: (catId: string, cost: number) =>
       AnalyticsService.trackEvent('cat_unlocked', { catId, cost }),
   },
+
+  // Gem economy events
+  gems: {
+    earned: (amount: number, source: string) =>
+      AnalyticsService.trackEvent('gems_earned', { amount, source }),
+    spent: (amount: number, item: string) =>
+      AnalyticsService.trackEvent('gems_spent', { amount, item }),
+    balanceChanged: (newBalance: number) =>
+      AnalyticsService.trackEvent('gems_balance_changed', { balance: newBalance }),
+  },
+
+  // Challenge events
+  challenge: {
+    dailyCompleted: (challengeType: string, gemsEarned: number) =>
+      AnalyticsService.trackEvent('daily_challenge_completed', { challengeType, gemsEarned }),
+    weeklyCompleted: (gemsEarned: number) =>
+      AnalyticsService.trackEvent('weekly_challenge_completed', { gemsEarned }),
+    monthlyCompleted: (gemsEarned: number) =>
+      AnalyticsService.trackEvent('monthly_challenge_completed', { gemsEarned }),
+    friendSent: (exerciseId: string) =>
+      AnalyticsService.trackEvent('friend_challenge_sent', { exerciseId }),
+    friendCompleted: (exerciseId: string, score: number) =>
+      AnalyticsService.trackEvent('friend_challenge_completed', { exerciseId, score }),
+  },
+
+  // League & social events
+  league: {
+    joined: (leagueId: string, tier: string) =>
+      AnalyticsService.trackEvent('league_joined', { leagueId, tier }),
+    xpUpdated: (weeklyXp: number) =>
+      AnalyticsService.trackEvent('league_xp_updated', { weeklyXp }),
+    promoted: (newTier: string) =>
+      AnalyticsService.trackEvent('league_promoted', { newTier }),
+    demoted: (newTier: string) =>
+      AnalyticsService.trackEvent('league_demoted', { newTier }),
+  },
+
+  social: {
+    friendAdded: () =>
+      AnalyticsService.trackEvent('friend_added'),
+    friendRemoved: () =>
+      AnalyticsService.trackEvent('friend_removed'),
+    friendCodeShared: () =>
+      AnalyticsService.trackEvent('friend_code_shared'),
+    scoreShared: (platform: string) =>
+      AnalyticsService.trackEvent('score_shared', { platform }),
+  },
+
+  // Free play events
+  freePlay: {
+    started: (inputMethod: string) =>
+      AnalyticsService.trackEvent('free_play_started', { inputMethod }),
+    ended: (durationSeconds: number, notesPlayed: number) =>
+      AnalyticsService.trackEvent('free_play_ended', { durationSeconds, notesPlayed }),
+    keyDetected: (key: string, scale: string) =>
+      AnalyticsService.trackEvent('free_play_key_detected', { key, scale }),
+  },
+
+  // Content & curriculum events
+  content: {
+    skillMastered: (skillId: string, tier: number) =>
+      AnalyticsService.trackEvent('skill_mastered', { skillId, tier }),
+    tierCompleted: (tier: number) =>
+      AnalyticsService.trackEvent('tier_completed', { tier }),
+    aiExerciseGenerated: (skillId: string) =>
+      AnalyticsService.trackEvent('ai_exercise_generated', { skillId }),
+    masteryTestPassed: (tier: number, score: number) =>
+      AnalyticsService.trackEvent('mastery_test_passed', { tier, score }),
+    masteryTestFailed: (tier: number, score: number) =>
+      AnalyticsService.trackEvent('mastery_test_failed', { tier, score }),
+  },
+
+  // Chest & reward events
+  rewards: {
+    chestOpened: (chestType: string, gemsEarned: number) =>
+      AnalyticsService.trackEvent('chest_opened', { chestType, gemsEarned }),
+    dailyGoalCompleted: () =>
+      AnalyticsService.trackEvent('daily_goal_completed'),
+  },
 };
 
 // ============================================================================
@@ -306,6 +385,12 @@ export function updateUserAnalyticsProperties(profile: {
   preferredInputMethod?: string;
   totalMinutesPracticed?: number;
   lessonCompletionRate?: number;
+  masteredSkills?: number;
+  exercisesCompleted?: number;
+  selectedCat?: string;
+  inputMethod?: string;
+  gemBalance?: number;
+  songsCompleted?: number;
 }): void {
   const props: Record<string, any> = {};
 
@@ -316,10 +401,22 @@ export function updateUserAnalyticsProperties(profile: {
     props.has_midi_keyboard = profile.hasMidiKeyboard;
   if (profile.preferredInputMethod)
     props.preferred_input_method = profile.preferredInputMethod;
+  if (profile.inputMethod)
+    props.preferred_input_method = profile.inputMethod;
   if (profile.totalMinutesPracticed !== undefined)
     props.total_minutes_practiced = profile.totalMinutesPracticed;
   if (profile.lessonCompletionRate !== undefined)
     props.lesson_completion_rate = profile.lessonCompletionRate;
+  if (profile.masteredSkills !== undefined)
+    props.mastered_skills = profile.masteredSkills;
+  if (profile.exercisesCompleted !== undefined)
+    props.exercises_completed = profile.exercisesCompleted;
+  if (profile.selectedCat)
+    props.selected_cat = profile.selectedCat;
+  if (profile.gemBalance !== undefined)
+    props.gem_balance = profile.gemBalance;
+  if (profile.songsCompleted !== undefined)
+    props.songs_completed = profile.songsCompleted;
 
   if (Object.keys(props).length > 0) {
     AnalyticsService.setUserProperties(props);

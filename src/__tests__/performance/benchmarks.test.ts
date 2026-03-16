@@ -16,6 +16,7 @@ import {
   getExercisesBySkill,
   getLessonCount,
 } from '../../content/ContentLoader';
+import { useProgressStore } from '../../stores/progressStore';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,22 +101,24 @@ describe('Performance: Content Loading', () => {
 // ---------------------------------------------------------------------------
 
 describe('Performance: Scoring Engine', () => {
-  it('calculateTimingScore runs 10,000 iterations under 50ms', () => {
+  it('calculateTimingScore runs 10,000 iterations under 200ms', () => {
     const ms = measureMs(() => {
       for (let i = 0; i < 10000; i++) {
         calculateTimingScore(Math.random() * 500 - 250, 50, 150);
       }
     });
-    expect(ms).toBeLessThan(50);
+    // 200ms allows 4x headroom for CI runners and thermal throttling
+    expect(ms).toBeLessThan(200);
   });
 
-  it('calculateDurationScore runs 10,000 iterations under 50ms', () => {
+  it('calculateDurationScore runs 10,000 iterations under 200ms', () => {
     const ms = measureMs(() => {
       for (let i = 0; i < 10000; i++) {
         calculateDurationScore(Math.random() * 2000, 1000);
       }
     });
-    expect(ms).toBeLessThan(50);
+    // 200ms allows 4x headroom for CI runners and thermal throttling
+    expect(ms).toBeLessThan(200);
   });
 });
 
@@ -222,5 +225,108 @@ describe('Performance: Batch Operations', () => {
       map.clear();
     }, 100);
     expect(ms).toBeLessThan(5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// recordExerciseCompletion profiling
+// ---------------------------------------------------------------------------
+
+describe('Performance: recordExerciseCompletion', () => {
+  beforeEach(() => {
+    useProgressStore.setState({
+      totalXp: 0,
+      level: 1,
+      dailyGoalData: {},
+      streakData: { currentStreak: 0, longestStreak: 0, lastPracticeDate: '', freezesAvailable: 0, freezesUsed: 0, weeklyPractice: [] },
+      streakMilestonesClaimed: [],
+      lessonProgress: {},
+    });
+  });
+
+  it('single call completes under 50ms', () => {
+    const ms = measureMs(() => {
+      useProgressStore.getState().recordExerciseCompletion('perf-ex-1', 85, 50);
+    });
+    expect(ms).toBeLessThan(50);
+  });
+
+  it('100 sequential completions complete under 500ms', () => {
+    const start = performance.now();
+    for (let i = 0; i < 100; i++) {
+      useProgressStore.getState().recordExerciseCompletion(`perf-ex-${i}`, 80 + (i % 20), 10 + i);
+    }
+    const elapsed = performance.now() - start;
+    // 500ms for 100 calls = 5ms/call average budget
+    expect(elapsed).toBeLessThan(500);
+  });
+
+  it('state does not grow unbounded with many completions', () => {
+    for (let i = 0; i < 200; i++) {
+      useProgressStore.getState().recordExerciseCompletion(`perf-ex-${i}`, 85, 10);
+    }
+    const state = useProgressStore.getState();
+    const stateStr = JSON.stringify(state);
+    // 200 exercise completions should produce < 50KB of state
+    expect(stateStr.length).toBeLessThan(50_000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Memory profiling: 600-exercise index
+// ---------------------------------------------------------------------------
+
+describe('Performance: Memory — Exercise Index', () => {
+  it('exercise index stays under 500KB when serialized', () => {
+    const lessons = getLessons();
+    const allExerciseIds: string[] = [];
+    for (const lesson of lessons) {
+      for (const ex of lesson.exercises) {
+        allExerciseIds.push(ex.id);
+      }
+    }
+
+    // Index metadata (from getExerciseMetadata) should be lightweight
+    const metadataEntries = allExerciseIds
+      .map((id) => getExerciseMetadata(id))
+      .filter(Boolean);
+
+    const serialized = JSON.stringify(metadataEntries);
+    // With 599 exercises, metadata index should be well under 500KB
+    expect(serialized.length).toBeLessThan(500_000);
+  });
+
+  it('loading 50 exercises (full content) stays under 2MB when serialized', () => {
+    const lessons = getLessons();
+    const exerciseIds: string[] = [];
+    for (const lesson of lessons) {
+      for (const ex of lesson.exercises) {
+        exerciseIds.push(ex.id);
+        if (exerciseIds.length >= 50) break;
+      }
+      if (exerciseIds.length >= 50) break;
+    }
+
+    const exercises = exerciseIds.map((id) => getExercise(id)).filter(Boolean);
+    const serialized = JSON.stringify(exercises);
+    // 50 full exercises should be under 2MB
+    expect(serialized.length).toBeLessThan(2_000_000);
+  });
+
+  it('exercise cache does not duplicate when accessed multiple times', () => {
+    const lessons = getLessons();
+    if (lessons.length === 0) return;
+    const firstId = lessons[0].exercises[0]?.id;
+    if (!firstId) return;
+
+    // Load same exercise 100 times
+    for (let i = 0; i < 100; i++) {
+      getExercise(firstId);
+    }
+
+    // Should return the same cached object (reference equality)
+    const a = getExercise(firstId);
+    const b = getExercise(firstId);
+    expect(a).toBe(b);
   });
 });

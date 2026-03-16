@@ -108,7 +108,31 @@ function main(): void {
   );
 
   // 4. Memory info
-  console.log(`Memory: exercise-index.json = ${fileSizeKB(INDEX_PATH)}KB`);
+  console.log(`\nMemory:`);
+  console.log(`  exercise-index.json = ${fileSizeKB(INDEX_PATH)}KB`);
+
+  // Total exercise content on disk
+  let totalExerciseBytes = 0;
+  for (const f of exerciseFiles) {
+    totalExerciseBytes += fs.statSync(f).size;
+  }
+  console.log(`  All exercise files = ${(totalExerciseBytes / 1024).toFixed(1)}KB (${exerciseFiles.length} files)`);
+  console.log(`  Avg exercise file = ${(totalExerciseBytes / exerciseFiles.length / 1024).toFixed(1)}KB`);
+
+  // Runtime memory: load all exercises and measure heap
+  const heapBefore = process.memoryUsage().heapUsed;
+  const allExercises = [];
+  for (const f of exerciseFiles) {
+    delete require.cache[require.resolve(f)];
+    allExercises.push(require(f));
+  }
+  const heapAfter = process.memoryUsage().heapUsed;
+  const heapDeltaMB = (heapAfter - heapBefore) / (1024 * 1024);
+  console.log(`  Heap delta (${exerciseFiles.length} exercises loaded) = ${heapDeltaMB.toFixed(1)}MB`);
+
+  // Serialized size of all exercises
+  const serialized = JSON.stringify(allExercises);
+  console.log(`  Serialized (all exercises) = ${(serialized.length / 1024).toFixed(1)}KB`);
 }
 
 main();

@@ -66,6 +66,7 @@ import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 import { DemoPlaybackService } from '../../services/demoPlayback';
 import { createAudioEngine } from '../../audio/createAudioEngine';
 import { ttsService } from '../../services/tts/TTSService';
+import { perfTrace } from '../../utils/perfTrace';
 import { createChallenge, updateChallengeResult } from '../../services/firebase/socialService';
 import { useSocialStore } from '../../stores/socialStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -744,6 +745,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    */
   const handleExerciseCompletion = useCallback((initialScore: ExerciseScore) => {
     if (!mountedRef.current) return;
+    const trace = perfTrace('ExerciseCompletion');
     let score = { ...initialScore };
 
     // Read exercise from ref to avoid stale closure in AI mode
@@ -863,6 +865,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       exerciseCategory = paramSkill?.category;
     }
 
+    trace.mark('recordPracticeSession');
     // Record practice time BEFORE challenge validation so minutesPracticedToday is accurate
     let elapsedMinutes = 0;
     if (playbackStartTimeRef.current > 0) {
@@ -875,6 +878,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const freshGoalData = useProgressStore.getState().dailyGoalData[todayISO];
     const minutesSoFar = freshGoalData?.minutesPracticed ?? elapsedMinutes;
 
+    trace.mark('recordExerciseCompletion');
     progressStore.recordExerciseCompletion(ex.id, score.overall, score.xpEarned, {
       score: score.overall,
       maxCombo,
@@ -884,6 +888,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       minutesPracticedToday: minutesSoFar,
     });
 
+    trace.mark('lessonProgress');
     // Save exercise score to lesson progress and compute sync data
     let exLessonId = getLessonIdForExercise(ex.id);
     let resolvedExerciseId = ex.id;
@@ -1046,6 +1051,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
+    trace.mark('cloudSync');
     // Sync score + lesson progress to cloud (fire-and-forget, failures retry automatically)
     syncManager.syncAfterExercise(ex.id, {
       overall: score.overall,
@@ -1058,6 +1064,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       // Silently caught — SyncManager handles retries internally
     });
 
+    trace.mark('learnerProfile');
     // Feed per-note accuracy into learner profile for adaptive learning
     const noteResults = score.details
       .filter((d) => !d.isExtraNote)  // Exclude extra notes (not in exercise)
@@ -1140,6 +1147,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       setTempoChangeForModal(0);
     }
 
+    trace.mark('streakAndAchievements');
     // Update streak using XpSystem's proper streak logic (handles freezes, weekly tracking)
     // Re-read from fresh state since recordExerciseCompletion may have mutated streakData
     const freshProgressStore = useProgressStore.getState();
@@ -1192,6 +1200,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       setToastQueue(toasts);
     }
 
+    trace.mark('gemsAndRewards');
     // --- Gem earning ---
     const gemStore = useGemStore.getState();
 
@@ -1235,6 +1244,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     setGemsEarnedForModal(totalGemsForModal);
 
+    trace.mark('catEvolution');
     // --- Cat evolution XP (with evolution detection) ---
     // Use settingsStore.selectedCatId as canonical source (catEvolutionStore may be stale)
     const catEvolutionStore = useCatEvolutionStore.getState();
@@ -1315,6 +1325,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         `Exercise complete! Score: ${score.overall}%`
       );
     }
+
+    trace.end();
   }, [onExerciseComplete, abilityConfig, challengeTarget, friendChallengeId]);
 
   // Metronome toggle — defaults to exercise setting, user can toggle during play

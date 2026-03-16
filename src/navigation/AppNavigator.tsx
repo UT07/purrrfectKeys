@@ -10,6 +10,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import type { NavigationContainerRef } from '@react-navigation/native';
 import { PostHogProvider } from 'posthog-react-native';
 import { posthog } from '../config/posthog';
+import { SentryService } from '../services/monitoring/SentryService';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigatorScreenParams } from '@react-navigation/native';
@@ -161,13 +162,19 @@ export function AppNavigator() {
 
   const onNavigationReady = useCallback(() => {
     routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
+    // Register navigation container with Sentry for automatic screen tracking + performance spans
+    const sentryNav = SentryService.getNavigationIntegration();
+    if (sentryNav && navigationRef.current) {
+      sentryNav.registerNavigationContainer(navigationRef);
+    }
   }, []);
 
   const onStateChange = useCallback(() => {
     const currentRoute = navigationRef.current?.getCurrentRoute();
     const currentRouteName = currentRoute?.name;
     if (currentRouteName && currentRouteName !== routeNameRef.current) {
-      posthog.screen(currentRouteName);
+      posthog.screen(currentRouteName, currentRoute?.params as Record<string, any>);
+      SentryService.addBreadcrumb('navigation', `Navigate to ${currentRouteName}`);
       routeNameRef.current = currentRouteName;
     }
   }, []);

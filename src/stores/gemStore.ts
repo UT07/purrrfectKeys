@@ -11,6 +11,7 @@
 import { create } from 'zustand';
 import type { GemTransaction } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
+import { analyticsEvents } from '../services/analytics/PostHog';
 
 const MAX_TRANSACTIONS = 50;
 
@@ -66,6 +67,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
       };
     });
     debouncedSave(get());
+    analyticsEvents.gems.earned(amount, source);
   },
 
   spendGems: (amount: number, item: string) => {
@@ -93,6 +95,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
     });
     if (success) {
       debouncedSave(get());
+      analyticsEvents.gems.spent(amount, item);
     }
     return success;
   },

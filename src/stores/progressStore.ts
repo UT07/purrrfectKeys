@@ -379,6 +379,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     // Bonus gems when the full daily goal (minutes + exercises) is met
     if (dailyGoalJustCompleted) {
       useGemStore.getState().earnGems(10, 'daily-goal');
+      analyticsEvents.rewards.dailyGoalCompleted();
     }
 
     // Analytics: track XP earned and level-ups from exercise completion

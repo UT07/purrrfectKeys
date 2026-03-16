@@ -9,6 +9,19 @@ module.exports = {
   extra: {
     ...baseConfig.expo.extra,
     posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
-    posthogHost: process.env.POSTHOG_HOST,
+    posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
+  },
+  // Sentry auth token for source map uploads (build-time only, never in app bundle)
+  hooks: {
+    postPublish: [
+      {
+        file: '@sentry/react-native/expo',
+        config: {
+          organization: 'purrrfect-keys',
+          project: 'purrrfect-keys-mobile',
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+        },
+      },
+    ],
   },
 };

@@ -9,6 +9,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PressableScale } from './common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme/tokens';
 import { analyticsEvents } from '../services/analytics/PostHog';
+import { SentryService } from '../services/monitoring/SentryService';
 
 interface Props {
   children: ReactNode;
@@ -31,6 +32,11 @@ export class ErrorBoundary extends Component<Props, State> {
     if (__DEV__) {
       console.error('[ErrorBoundary] Uncaught error:', error, info.componentStack);
     }
+    // Report to Sentry with component stack context
+    SentryService.captureException(error, {
+      componentStack: (info.componentStack ?? '').slice(0, 500),
+    });
+    // Report to PostHog for analytics
     analyticsEvents.error.crashReported(
       error.message,
       info.componentStack ?? error.stack ?? '',
