@@ -7,7 +7,7 @@
  */
 
 import type { RankedTier } from '../../stores/types';
-import { tierFromMMR, getTierFloor, RANK_CONFIGS } from './rankThresholds';
+import { getTierFloor, RANK_CONFIGS } from './rankThresholds';
 
 export interface PromotionSeries {
   wins: number;

@@ -423,6 +423,14 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       );
     }
 
+    // ── MMR / Rank update ──
+    try {
+      const { useRankStore } = require('./rankStore');
+      useRankStore.getState().updateAfterExercise(_score, 5, 'play');
+    } catch {
+      // rankStore not yet initialized during tests — safe to ignore
+    }
+
     // ── Post level-up activity (fire-and-forget with logged failure) ──
     const newLevel = get().level;
     if (newLevel > oldLevel && auth.currentUser && !auth.currentUser.isAnonymous) {
