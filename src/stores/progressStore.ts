@@ -427,8 +427,14 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     try {
       const { useRankStore } = require('./rankStore');
       useRankStore.getState().updateAfterExercise(_score, 5, 'play');
+
+      // Update season peak tier + battle pass XP
+      const { useSeasonStore } = require('./seasonStore');
+      const rankState = useRankStore.getState();
+      useSeasonStore.getState().updatePeakTier(rankState.tier);
+      useSeasonStore.getState().addBattlePassXp(effectiveXp);
     } catch {
-      // rankStore not yet initialized during tests — safe to ignore
+      // stores not yet initialized during tests — safe to ignore
     }
 
     // ── Post level-up activity (fire-and-forget with logged failure) ──
