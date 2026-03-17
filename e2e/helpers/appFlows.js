@@ -92,24 +92,54 @@ async function completeOnboardingBeginnerFlow() {
       continue;
     }
 
+    // Step 5: Choose Path → Piano Basics
     if (await isVisibleById('onboarding-step-5', 800)) {
+      await tapIfVisibleById('onboarding-path-piano-basics', 600);
+      // Scroll to reveal Next button below the 5 path options
+      if (!(await isVisibleById('onboarding-path-next', 500)) && (await isVisibleById('onboarding-scroll', 500))) {
+        try {
+          await waitFor(element(by.id('onboarding-path-next')))
+            .toBeVisible()
+            .whileElement(by.id('onboarding-scroll'))
+            .scroll(220, 'down');
+        } catch {
+          // Transient animation may block — retry next loop
+        }
+      }
+      if (await tapIfVisibleById('onboarding-path-next', 800)) {
+        await sleep(700);
+      } else {
+        await sleep(350);
+      }
+      continue;
+    }
+
+    // Step 6: Choose Cat → Mini Meowww
+    if (await isVisibleById('onboarding-step-6', 800)) {
       for (const chooseId of starterCatChooseIds) {
         if (await tapIfVisibleById(chooseId, 350)) {
           break;
         }
       }
+      if (await tapIfVisibleById('onboarding-cat-next', 800)) {
+        await sleep(700);
+      } else {
+        await sleep(350);
+      }
+      continue;
+    }
 
-      if (!(await isVisibleById('onboarding-finish', 500)) && (await isVisibleById('onboarding-scroll', 500))) {
+    // Step 7: Username → type and finish
+    if (await isVisibleById('onboarding-step-7', 800)) {
+      if (await isVisibleById('onboarding-username-input', 600)) {
         try {
-          await waitFor(element(by.id('onboarding-finish')))
-            .toBeVisible()
-            .whileElement(by.id('onboarding-scroll'))
-            .scroll(220, 'down');
+          await element(by.id('onboarding-username-input')).tap();
+          await element(by.id('onboarding-username-input')).typeText(`e2e${Date.now()}`);
+          await sleep(2000); // Wait for username availability check
         } catch {
-          // Ignore if already near the bottom or transient animation blocks scrolling.
+          // Username input may already have text
         }
       }
-
       if (await tapIfVisibleById('onboarding-finish', 800)) {
         await sleep(1200);
       } else {

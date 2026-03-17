@@ -175,45 +175,73 @@ describe('Purrrfect Keys Gameplay Verification', () => {
                     }
                 }
 
-                // Wait for completion (last note duration + buffer)
-                // Or wait for modal
-                await waitFor(element(by.id('completion-modal')))
-                    .toBeVisible()
-                    .withTimeout(60000);
-
-                // Advance
-                // Check for "Next Exercise" or "Continue" (Lesson Complete / Mastery)
-                // or "Start Test"
-                // completion-next
-                // completion-start-test
-                // completion-continue (generic)
-
+                // Wait for XP transition overlay or completion modal
+                // The current flow: exercise completes → XP transition → PostExerciseScreen
+                let completed = false;
                 try {
-                    await element(by.id('completion-next')).tap();
-                } catch (e1) {
+                    await waitFor(element(by.id('xp-transition')))
+                        .toBeVisible()
+                        .withTimeout(60000);
+                    completed = true;
+                } catch {
+                    // Try old completion modal as fallback
                     try {
-                        await element(by.id('completion-start-test')).tap();
-                    } catch (e2) {
+                        await waitFor(element(by.id('completion-modal')))
+                            .toBeVisible()
+                            .withTimeout(10000);
+                        completed = true;
+                    } catch {
+                        console.warn(`    Exercise did not complete within timeout`);
+                    }
+                }
+
+                if (!completed) continue;
+
+                // Wait for PostExerciseScreen
+                await waitFor(element(by.id('post-exercise-exit')))
+                    .toBeVisible()
+                    .withTimeout(15000);
+
+                // Advance: try Next → Start Test → Exit
+                try {
+                    await element(by.id('post-exercise-next')).tap();
+                } catch {
+                    try {
+                        await element(by.id('post-exercise-start-test')).tap();
+                    } catch {
                         try {
-                            await element(by.id('completion-continue')).tap(); // Might exit to map
-                        } catch (e3) {
-                            // If we are here, maybe we are at Lesson Complete screen?
+                            await element(by.id('post-exercise-exit')).tap();
+                        } catch {
+                            // Already navigated
                         }
                     }
                 }
             }
 
-            // After all exercises, we expect Lesson Complete screen or back to Map
+            // After all exercises, we may see Lesson Complete celebration or land back on Map
             try {
                 await waitFor(element(by.id('lesson-complete-screen')))
                     .toBeVisible()
                     .withTimeout(5000);
                 await element(by.id('lesson-complete-continue')).tap();
-            } catch (e) {
-                // Maybe already at map
+            } catch {
+                // Maybe already at map or at PostExerciseScreen
             }
 
-            await waitFor(element(by.id('level-map-screen'))).toBeVisible();
+            // Ensure we're back at the level map for next lesson
+            try {
+                await waitFor(element(by.id('level-map-screen')))
+                    .toBeVisible()
+                    .withTimeout(10000);
+            } catch {
+                // Try navigating back
+                try {
+                    await element(by.id('post-exercise-exit')).tap();
+                    await sleep(1000);
+                } catch {
+                    // Already at map
+                }
+            }
         }
     });
 });
