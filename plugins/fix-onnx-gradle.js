@@ -13,7 +13,8 @@ const { withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
-const ONNX_VERSION = '1.20.0';
+// Must match onnxruntime-react-native npm package version (C++ headers must be API-compatible)
+const ONNX_VERSION = '1.24.3';
 
 function fixOnnxGradle(config) {
   return withDangerousMod(config, [
