@@ -6,6 +6,7 @@ jest.mock('../persistence', () => ({
   PersistenceManager: {
     loadState: jest.fn(),
     saveState: jest.fn(),
+    deleteState: jest.fn().mockResolvedValue(undefined),
   },
   STORAGE_KEYS: { SEASON: 'purrrfect_season_state' },
   createDebouncedSave: () => jest.fn(),

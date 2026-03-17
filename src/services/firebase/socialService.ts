@@ -72,13 +72,20 @@ export async function registerFriendCode(uid: string): Promise<string> {
   for (let attempt = 0; attempt < MAX_CODE_RETRIES; attempt++) {
     const code = generateFriendCode();
     const codeRef = doc(db, 'friendCodes', code);
-    const existing = await getDoc(codeRef);
 
-    if (!existing.exists()) {
-      await setDoc(codeRef, { uid });
+    try {
+      await runTransaction(db, async (transaction) => {
+        const existing = await transaction.get(codeRef);
+        if (existing.exists()) {
+          throw new Error('CODE_COLLISION');
+        }
+        transaction.set(codeRef, { uid });
+      });
       return code;
+    } catch (err) {
+      if ((err as Error)?.message === 'CODE_COLLISION') continue;
+      throw err;
     }
-    // Collision — retry with a new code
   }
 
   throw new Error('Failed to generate unique friend code after maximum retries');

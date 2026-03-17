@@ -204,22 +204,18 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
           break;
         }
         case 'accessory': {
-          const { useCatEvolutionStore } = require('./catEvolutionStore');
-          if (reward.itemId) {
-            useCatEvolutionStore.getState().unlockAccessory?.(reward.itemId);
-          }
+          // TODO: implement unlockAccessory in catEvolutionStore
+          logger.warn(`[Season] Accessory reward "${reward.itemId}" not yet deliverable — skipping`);
           break;
         }
         case 'title': {
-          const { useSettingsStore } = require('./settingsStore');
-          if (reward.itemId) {
-            useSettingsStore.getState().addTitle?.(reward.itemId);
-          }
+          // TODO: implement addTitle in settingsStore
+          logger.warn(`[Season] Title reward "${reward.itemId}" not yet deliverable — skipping`);
           break;
         }
         case 'xp_boost': {
-          const { useSettingsStore } = require('./settingsStore');
-          useSettingsStore.getState().setXpBoostMultiplier?.(reward.amount ?? 1);
+          // TODO: implement setXpBoostMultiplier in settingsStore
+          logger.warn(`[Season] XP boost reward not yet deliverable — skipping`);
           break;
         }
       }
@@ -317,7 +313,7 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
 
   reset: () => {
     set(defaultSeasonState);
-    debouncedSave(get());
+    PersistenceManager.deleteState(STORAGE_KEYS.SEASON);
   },
 }));
 

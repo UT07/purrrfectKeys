@@ -143,36 +143,49 @@ describe('socialService', () => {
   });
 
   describe('registerFriendCode', () => {
-    it('registers a code when no collision occurs', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
-      (setDoc as jest.Mock).mockResolvedValue(undefined);
+    it('registers a code when no collision occurs (via transaction)', async () => {
+      mockTransaction.get.mockResolvedValueOnce({ exists: () => false });
 
       const code = await registerFriendCode('user-123');
 
       expect(code).toHaveLength(6);
-      expect(setDoc).toHaveBeenCalledTimes(1);
+      expect(runTransaction).toHaveBeenCalledTimes(1);
+      expect(mockTransaction.set).toHaveBeenCalledTimes(1);
     });
 
     it('retries on collision and succeeds', async () => {
-      // First attempt: collision, second: success
-      (getDoc as jest.Mock)
-        .mockResolvedValueOnce({ exists: () => true })
-        .mockResolvedValueOnce({ exists: () => false });
-      (setDoc as jest.Mock).mockResolvedValue(undefined);
+      // First transaction: collision (throws CODE_COLLISION), second: success
+      (runTransaction as jest.Mock)
+        .mockImplementationOnce(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<void>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => true }) };
+          return fn(t);
+        })
+        .mockImplementationOnce(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<void>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => false }) };
+          return fn(t);
+        });
 
       const code = await registerFriendCode('user-123');
 
       expect(code).toHaveLength(6);
-      expect(getDoc).toHaveBeenCalledTimes(2);
+      expect(runTransaction).toHaveBeenCalledTimes(2);
     });
 
     it('throws after max retries on persistent collision', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true });
+      // Use mockImplementationOnce x5 to avoid poisoning the default mock for later tests
+      for (let i = 0; i < 5; i++) {
+        (runTransaction as jest.Mock).mockImplementationOnce(
+          async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<void>) => {
+            const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => true }) };
+            return fn(t);
+          },
+        );
+      }
 
       await expect(registerFriendCode('user-123')).rejects.toThrow(
         'Failed to generate unique friend code',
       );
-      expect(getDoc).toHaveBeenCalledTimes(5); // MAX_CODE_RETRIES
+      expect(runTransaction).toHaveBeenCalledTimes(5); // MAX_CODE_RETRIES
     });
   });
 

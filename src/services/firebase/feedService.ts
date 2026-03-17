@@ -101,13 +101,13 @@ export async function getAggregatedRichFeed(
 ): Promise<RichFeedItem[]> {
   if (friendUids.length === 0) return [];
 
-  const settled = await Promise.allSettled(
-    friendUids.map((uid) => getFriendRichFeed(uid, perFriend)),
+  // Use Promise.all + per-entry catch (Hermes may not support Promise.allSettled)
+  const results = await Promise.all(
+    friendUids.map((uid) => getFriendRichFeed(uid, perFriend).catch(() => [] as RichFeedItem[])),
   );
 
-  return settled
-    .filter((r): r is PromiseFulfilledResult<RichFeedItem[]> => r.status === 'fulfilled')
-    .flatMap((r) => r.value)
+  return results
+    .flat()
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, maxTotal);
 }

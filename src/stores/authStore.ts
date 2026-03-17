@@ -446,7 +446,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       authUnsubscribe = null;
     }
 
-    return new Promise<void>((resolve) => {
+    const AUTH_TIMEOUT_MS = 8000;
+
+    const authPromise = new Promise<void>((resolveAuth) => {
       authUnsubscribe = onAuthStateChanged(auth, (user) => {
         set({
           user,
@@ -457,9 +459,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isInitializing: false,
           error: null,
         });
-        resolve();
+        resolveAuth();
       });
     });
+
+    const timeoutPromise = new Promise<void>((resolveTimeout) => {
+      setTimeout(() => {
+        logger.warn('[Auth] initAuth timed out after 8s — entering offline guest mode');
+        set({
+          user: null,
+          isAuthenticated: false,
+          isAnonymous: false,
+          isLoading: false,
+          isInitializing: false,
+          error: null,
+        });
+        resolveTimeout();
+      }, AUTH_TIMEOUT_MS);
+    });
+
+    return Promise.race([authPromise, timeoutPromise]);
   },
 
   signInAnonymously: async () => {
