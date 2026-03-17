@@ -74,6 +74,7 @@
       ],
       "./plugins/strip-push-entitlement",
       "./plugins/fix-onnx-gradle",
+      "./plugins/exclude-midi-android",
       "expo-asset",
       [
         "@sentry/react-native",
