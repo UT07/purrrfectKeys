@@ -203,8 +203,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
               newStatus = 'completed';
             }
           }
-        } catch {
-          // ContentLoader not available (e.g., in tests) — don't block
+        } catch (err) {
+          logger.warn('[progressStore] ContentLoader not available for lesson completion check:', err);
         }
       }
 
@@ -451,8 +451,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
           'addGuildMemberXp',
         );
       }
-    } catch {
-      // guildStore/guildService not available
+    } catch (err) {
+      logger.warn('[progressStore] Guild XP update failed:', err);
     }
 
     // ── Post level-up activity (fire-and-forget with logged failure) ──

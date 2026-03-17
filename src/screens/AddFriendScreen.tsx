@@ -44,6 +44,7 @@ import { GradientMeshBackground } from '../components/effects';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import QRCode from 'react-native-qrcode-svg';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { logger } from '../utils/logger';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -55,7 +56,8 @@ let ClipboardModule: { setStringAsync: (s: string) => Promise<boolean> } | null 
 try {
 
   ClipboardModule = require('expo-clipboard');
-} catch {
+} catch (err) {
+  logger.warn('[AddFriendScreen] expo-clipboard not available:', err);
   ClipboardModule = null;
 }
 
@@ -68,7 +70,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
     // Fallback: use Share sheet which also lets user copy
     await Share.share({ message: text });
     return true;
-  } catch {
+  } catch (err) {
+    logger.warn('[AddFriendScreen] Copy to clipboard failed:', err);
     return false;
   }
 }
@@ -118,8 +121,8 @@ export function AddFriendScreen(): React.JSX.Element {
             await registerUsername(user.uid, storedUsername, displayName || storedUsername);
             setFriendCode(storedUsername);
             return;
-          } catch {
-            // Username taken — fall through to legacy code
+          } catch (err) {
+            logger.warn('[AddFriendScreen] Username taken — fall through to legacy code:', err);
           }
         }
         const code = await registerFriendCode(user.uid);
@@ -156,8 +159,8 @@ export function AddFriendScreen(): React.JSX.Element {
       await Share.share({
         message: `Add me on Purrrfect Keys! My username is: ${friendCode}`,
       });
-    } catch {
-      // User cancelled or error — no action needed
+    } catch (err) {
+      logger.warn('[AddFriendScreen] Share failed or user cancelled:', err);
     }
   }, [friendCode]);
 
@@ -227,7 +230,8 @@ export function AddFriendScreen(): React.JSX.Element {
 
       setSuccess('Friend request sent!');
       setInputCode('');
-    } catch {
+    } catch (err) {
+      logger.warn('[AddFriendScreen] Add friend failed:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setIsLooking(false);
@@ -249,7 +253,8 @@ export function AddFriendScreen(): React.JSX.Element {
       let Contacts: typeof import('expo-contacts');
       try {
         Contacts = require('expo-contacts');
-      } catch {
+      } catch (err) {
+        logger.warn('[AddFriendScreen] expo-contacts not available:', err);
         setContactsError(
           'Contact access requires a development build. This feature is not available in Expo Go.',
         );
@@ -299,7 +304,8 @@ export function AddFriendScreen(): React.JSX.Element {
 
       setContactMatches(newMatches);
       setContactsSearched(true);
-    } catch {
+    } catch (err) {
+      logger.warn('[AddFriendScreen] Contact search failed:', err);
       setContactsError('Failed to search contacts. Please try again.');
     } finally {
       setIsSearchingContacts(false);
@@ -334,7 +340,8 @@ export function AddFriendScreen(): React.JSX.Element {
         });
 
         setSentUids((prev) => new Set(prev).add(match.uid));
-      } catch {
+      } catch (err) {
+        logger.warn('[AddFriendScreen] Send contact friend request failed:', err);
         Alert.alert('Error', 'Failed to send friend request. Please try again.');
       } finally {
         setSendingToUid(null);

@@ -460,8 +460,9 @@ export function getMidiInput(): MidiInput {
         try {
           require('@motiz88/react-native-midi');
           useNative = true;
-        } catch {
+        } catch (err) {
           // Native MIDI module not linked in this build
+          logger.warn('[MIDI] Failed to require @motiz88/react-native-midi:', err);
         }
       }
     }

@@ -66,7 +66,7 @@ import {
   removeFriendConnection,
   getFriends,
 } from '../socialService';
-import { doc, getDoc, setDoc, getDocs, writeBatch, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, getDocs, writeBatch, runTransaction } from 'firebase/firestore';
 
 // Access the batch mock helpers
 const firestoreMock = jest.requireMock('firebase/firestore');

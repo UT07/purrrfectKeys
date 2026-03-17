@@ -10,6 +10,7 @@ import type { ExerciseScore } from '@/core/exercises/types';
 import { GeminiCoach, type CoachRequest } from './GeminiCoach';
 import type { LearnerProfileData } from '../../stores/learnerProfileStore';
 import { getOfflineCoachingText } from '../../content/offlineCoachingTemplates';
+import { logger } from '../../utils/logger';
 
 // ============================================================================
 // Types
@@ -61,7 +62,8 @@ export async function generateVoiceCoaching(
     const text = await GeminiCoach.getFeedback(request);
     const emphasis = extractEmphasis(text);
     return { text, emphasis };
-  } catch {
+  } catch (err) {
+    logger.warn('[VoiceCoachingService] Failed to generate voice coaching:', err);
     const fallbackText = getOfflineCoachingText(
       input.score.overall,
       input.score.isPassed,
@@ -103,7 +105,8 @@ export async function generatePreExerciseTip(
   try {
     const text = await GeminiCoach.getFeedback(tipRequest);
     return text;
-  } catch {
+  } catch (err) {
+    logger.warn('[VoiceCoachingService] Failed to generate pre-exercise tip:', err);
     // Fallback pre-exercise tips
     const tips = [
       'Take a deep breath and relax your hands before starting.',

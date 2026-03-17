@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PressableScale } from './common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, GRADIENTS, SHADOWS } from '../theme/tokens';
 import type { ShareCardData } from '../stores/types';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Icon mapping per card type
@@ -68,8 +69,9 @@ export function ShareCard({ data }: ShareCardProps): React.JSX.Element {
         mimeType: 'image/png',
         dialogTitle: 'Share your achievement',
       });
-    } catch {
-      // User cancelled or sharing failed — silently ignore
+    } catch (err) {
+      // User cancelled or sharing failed
+      logger.warn('[ShareCard] Sharing failed or cancelled:', err);
     } finally {
       setIsSharing(false);
     }

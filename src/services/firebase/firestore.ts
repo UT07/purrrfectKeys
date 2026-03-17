@@ -313,8 +313,8 @@ export async function addXp(uid: string, amount: number, source: string): Promis
       newTotal: updatedData.xp,
       timestamp: serverTimestamp(),
     });
-  } catch {
-    // xpLog write failure is non-critical — gamification doc was already updated
+  } catch (err) {
+    logger.warn('[Firestore] xpLog write failed (non-critical):', err);
   }
 
   return newLevel;
@@ -699,8 +699,8 @@ async function deleteLeagueMembership(uid: string): Promise<number> {
     if (membership?.leagueId) {
       leagueId = membership.leagueId;
     }
-  } catch {
-    // Store not available, fall through to query
+  } catch (err) {
+    logger.warn('[Firestore] leagueStore not available for deleteLeagueMembership:', err);
   }
 
   if (leagueId) {
@@ -743,8 +743,8 @@ async function deleteLeagueMembership(uid: string): Promise<number> {
           break; // Users have at most one league membership per week
         }
       }
-    } catch {
-      // League cleanup failure is non-fatal
+    } catch (err) {
+      logger.warn('[Firestore] League cleanup fallback query failed:', err);
     }
   }
 

@@ -32,7 +32,8 @@ function isGoogleAuthAvailable(): boolean {
   try {
     const { GoogleSignin } = require('@react-native-google-signin/google-signin');
     return GoogleSignin != null && typeof GoogleSignin.signIn === 'function';
-  } catch {
+  } catch (err) {
+    logger.warn('[AccountScreen] Google auth module not available:', err);
     return false;
   }
 }
@@ -41,7 +42,8 @@ function isAppleAuthAvailable(): boolean {
   try {
     const AppleAuth = require('expo-apple-authentication');
     return AppleAuth.isAvailableAsync != null;
-  } catch {
+  } catch (err) {
+    logger.warn('[AccountScreen] Apple auth module not available:', err);
     return false;
   }
 }
@@ -222,7 +224,9 @@ export function AccountScreen(): React.ReactElement {
               },
             ],
           );
-        } catch { /* user cancelled re-auth */ }
+        } catch (err2) {
+          logger.warn('[AccountScreen] Google re-auth after credential-already-in-use failed:', err2);
+        }
         return;
       }
 
@@ -293,7 +297,9 @@ export function AccountScreen(): React.ReactElement {
               ],
             );
           }
-        } catch { /* user cancelled re-auth */ }
+        } catch (err2) {
+          logger.warn('[AccountScreen] Apple re-auth after credential-already-in-use failed:', err2);
+        }
         return;
       }
 

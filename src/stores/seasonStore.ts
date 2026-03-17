@@ -280,8 +280,8 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
       const current = useRankStore.getState().rating;
       const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
       useRankStore.setState({ rating: resetRating });
-    } catch {
-      // rankStore may not be initialized yet
+    } catch (err) {
+      logger.warn('[seasonStore] rankStore not available for startNewSeason MMR reset:', err);
     }
 
     set(() => ({
@@ -330,23 +330,46 @@ export async function hydrateSeasonStore(): Promise<void> {
   // Check if we need a season rollover
   const currentSeason = seasonNumberFromDate();
   if (saved.currentSeason < currentSeason) {
-    // Season has advanced — keep history, reset current season state
-    // Also soft-reset MMR and zero RP
+    // Season has advanced — create a history record, then reset
+
+    // 1. Archive the completed season before resetting
+    let finalMmr = 500;
+    try {
+      const { useRankStore } = require('./rankStore');
+      finalMmr = useRankStore.getState().rating.mmr;
+    } catch (err) {
+      logger.warn('[seasonStore] Could not read MMR for season record:', err);
+    }
+
+    const seasonRecord: SeasonRecord = {
+      seasonNumber: saved.currentSeason,
+      peakTier: saved.peakTier,
+      peakDivision: 1, // division tracking is within-season only
+      finalMmr,
+      battlePassTier: saved.battlePassTier,
+      gemsEarned: 0, // actual gem amount comes from reward docs
+      exclusivesEarned: saved.claimedRewards.filter(k => k.startsWith('premium-')),
+    };
+    const updatedHistory = [...saved.seasonHistory, seasonRecord];
+
+    // 2. Soft-reset MMR and zero RP
     try {
       const { useRankStore } = require('./rankStore');
       const { softResetMMR } = require('../core/ranking/seasonConfig');
       const current = useRankStore.getState().rating;
       const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
       useRankStore.setState({ rating: resetRating });
-    } catch {
-      // rankStore may not be initialized yet during early hydration
+    } catch (err) {
+      logger.warn('[seasonStore] rankStore not available for MMR reset:', err);
     }
 
+    // 3. Reset season state, preserving history
     useSeasonStore.setState({
       ...defaultSeasonState,
-      seasonHistory: saved.seasonHistory,
+      seasonHistory: updatedHistory,
       currentSeason,
     });
+    debouncedSave(useSeasonStore.getState());
   } else {
     useSeasonStore.setState(saved);
   }

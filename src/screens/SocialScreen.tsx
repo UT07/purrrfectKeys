@@ -563,8 +563,8 @@ export function SocialScreen(): React.JSX.Element {
                   if (profile) {
                     return { ...f, displayName: profile.displayName, selectedCatId: profile.selectedCatId || f.selectedCatId };
                   }
-                } catch {
-                  // keep original
+                } catch (err) {
+                  logger.warn('[SocialScreen] Profile fetch failed — keep original:', err);
                 }
                 return f;
               }),

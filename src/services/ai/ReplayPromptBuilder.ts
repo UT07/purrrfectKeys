@@ -2,6 +2,7 @@
 
 import type { NoteScore } from '../../core/exercises/types';
 import type { ReplayAIResponse, IntroAIResponse } from '../../core/exercises/replayTypes';
+import { logger } from '../../utils/logger';
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -147,7 +148,8 @@ export function parseReplayResponse(text: string): ReplayAIResponse | null {
     parsed.continuousComments = parsed.continuousComments.slice(0, 5);
 
     return parsed as ReplayAIResponse;
-  } catch {
+  } catch (err) {
+    logger.warn('[ReplayPromptBuilder] Failed to parse replay response:', err);
     return null;
   }
 }
@@ -162,7 +164,8 @@ export function parseIntroResponse(text: string): IntroAIResponse | null {
     }
 
     return parsed as IntroAIResponse;
-  } catch {
+  } catch (err) {
+    logger.warn('[ReplayPromptBuilder] Failed to parse intro response:', err);
     return null;
   }
 }

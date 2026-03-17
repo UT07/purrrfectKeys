@@ -231,7 +231,8 @@ function GuildDiscovery(): React.JSX.Element {
     try {
       const guilds = await guildService.searchGuilds(searchQuery.trim());
       setResults(guilds);
-    } catch {
+    } catch (err) {
+      logger.warn('[GuildScreen] Guild search failed:', err);
       Alert.alert('Error', 'Failed to search guilds. Please try again.');
     } finally {
       setIsSearching(false);
@@ -243,7 +244,8 @@ function GuildDiscovery(): React.JSX.Element {
     try {
       const guilds = await guildService.getOpenGuilds();
       setResults(guilds);
-    } catch {
+    } catch (err) {
+      logger.warn('[GuildScreen] Browse open guilds failed:', err);
       Alert.alert('Error', 'Failed to load guilds. Please try again.');
     } finally {
       setIsSearching(false);
@@ -576,7 +578,8 @@ function GuildDetail(): React.JSX.Element {
               try {
                 await guildService.kickMember(currentGuild.id, uid, user?.uid);
                 removeMember(uid);
-              } catch {
+              } catch (err) {
+                logger.warn('[GuildScreen] Kick member failed:', err);
                 Alert.alert('Error', 'Failed to kick member.');
               }
             },
@@ -601,7 +604,8 @@ function GuildDetail(): React.JSX.Element {
               try {
                 await guildService.promoteMember(currentGuild.id, uid, 'co_leader');
                 updateMemberRole(uid, 'co_leader');
-              } catch {
+              } catch (err) {
+                logger.warn('[GuildScreen] Promote member failed:', err);
                 Alert.alert('Error', 'Failed to promote member.');
               }
             },
@@ -626,7 +630,8 @@ function GuildDetail(): React.JSX.Element {
               try {
                 await guildService.demoteMember(currentGuild.id, uid);
                 updateMemberRole(uid, 'member');
-              } catch {
+              } catch (err) {
+                logger.warn('[GuildScreen] Demote member failed:', err);
                 Alert.alert('Error', 'Failed to demote member.');
               }
             },

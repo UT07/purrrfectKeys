@@ -48,6 +48,7 @@ import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { logger } from '../utils/logger';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -364,7 +365,8 @@ export function ProfileScreen(): React.ReactElement {
         const available = await checkUsernameAvailable(normalized, currentUid);
         setUsernameAvailable(available);
         if (!available) setUsernameError('Username already taken');
-      } catch {
+      } catch (err) {
+        logger.warn('[ProfileScreen] Username availability check failed:', err);
         setUsernameAvailable(null);
         setUsernameError('Could not verify — check your connection');
       } finally {

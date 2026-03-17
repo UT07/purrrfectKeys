@@ -56,8 +56,9 @@ try {
   } else {
     logger.warn('[App] EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID not set — Google Sign-In will not work');
   }
-} catch {
+} catch (err) {
   // Package not available (e.g. Expo Go) — Google Sign-In button will show "Coming Soon"
+  logger.warn('[App] Google Sign-In configuration failed:', err);
 }
 
 // Keep splash screen visible while loading

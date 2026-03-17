@@ -262,8 +262,8 @@ export function PlayScreen(): React.JSX.Element {
       try {
         await audioEngineRef.current.initialize();
         if (mounted) setIsAudioReady(true);
-      } catch {
-        logger.warn('[PlayScreen] Audio init failed');
+      } catch (err) {
+        logger.warn('[PlayScreen] Audio init failed:', err);
       }
     };
     init();
@@ -306,7 +306,8 @@ export function PlayScreen(): React.JSX.Element {
           else if (event.type === 'noteOff') handleNoteOffRef.current(event.note);
         });
         await manager.start();
-      } catch {
+      } catch (err) {
+        logger.warn('[PlayScreen] InputManager init failed, falling back to touch:', err);
         if (mounted) setActiveInput('touch');
       }
     };

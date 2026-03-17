@@ -56,7 +56,8 @@ function isAppleAuthInstalled(): boolean {
   try {
     const AppleAuth = require('expo-apple-authentication');
     return AppleAuth.isAvailableAsync != null;
-  } catch {
+  } catch (err) {
+    logger.warn('[AuthScreen] Apple auth module not available:', err);
     return false;
   }
 }
@@ -69,7 +70,8 @@ function isGoogleAuthAvailable(): boolean {
   try {
     const { GoogleSignin } = require('@react-native-google-signin/google-signin');
     return GoogleSignin != null && typeof GoogleSignin.signIn === 'function';
-  } catch {
+  } catch (err) {
+    logger.warn('[AuthScreen] Google auth module not available:', err);
     return false;
   }
 }
@@ -285,8 +287,8 @@ export function AuthScreen(): React.ReactElement {
             await useAuthStore.getState().signInWithGoogle(fallbackToken);
             return;
           }
-        } catch {
-          // Fall through to error alert
+        } catch (err) {
+          logger.warn('[AuthScreen] Google sign-in fallback after credential-already-in-use failed:', err);
         }
       }
       logger.warn('[AuthScreen] Google sign-in error:', err);

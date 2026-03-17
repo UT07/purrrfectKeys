@@ -145,7 +145,7 @@ describe('guildService', () => {
   describe('updateGuildSettings', () => {
     it('updates guild document with partial data', async () => {
       await updateGuildSettings('guild-1', { name: 'New Name', joinPolicy: 'closed' });
-      expect(mockedUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', { name: 'New Name', joinPolicy: 'closed' });
+      expect(mockedUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', { name: 'New Name', joinPolicy: 'closed', nameLowerCase: 'new name' });
     });
   });
 

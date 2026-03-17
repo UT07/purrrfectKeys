@@ -168,7 +168,9 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     try {
       const { useSettingsStore } = require('./settingsStore');
       useSettingsStore.getState().setSelectedCatId(catId);
-    } catch { /* settings sync is best-effort */ }
+    } catch (err) {
+      logger.warn('[catEvolution] Settings sync failed on selectCat:', err);
+    }
   },
 
   unlockCat: (catId: string) => {
@@ -421,7 +423,9 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     try {
       const { useSettingsStore } = require('./settingsStore');
       useSettingsStore.getState().setSelectedCatId(catId);
-    } catch { /* settings sync is best-effort */ }
+    } catch (err) {
+      logger.warn('[catEvolution] Settings sync failed on initOnboardingCat:', err);
+    }
   },
 
   reset: () => {

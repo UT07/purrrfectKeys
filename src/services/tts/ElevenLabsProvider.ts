@@ -45,8 +45,8 @@ function getFileSystem(): FileSystemModule | null {
   if (!_FileSystem) {
     try {
       _FileSystem = require('expo-file-system') as FileSystemModule;
-    } catch {
-      logger.warn('[ElevenLabs] expo-file-system not available');
+    } catch (err) {
+      logger.warn('[ElevenLabs] expo-file-system not available:', err);
     }
   }
   return _FileSystem;
@@ -57,8 +57,8 @@ function getAudio(): AudioModule['Audio'] | null {
     try {
       const mod = require('expo-av') as AudioModule;
       _Audio = mod.Audio;
-    } catch {
-      logger.warn('[ElevenLabs] expo-av not available');
+    } catch (err) {
+      logger.warn('[ElevenLabs] expo-av not available:', err);
     }
   }
   return _Audio;
@@ -109,7 +109,8 @@ let _currentSound: any = null;
 function getApiKey(): string | null {
   try {
     return process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? null;
-  } catch {
+  } catch (err) {
+    logger.warn('[ElevenLabs] Failed to read API key from env:', err);
     return null;
   }
 }
@@ -204,8 +205,9 @@ export async function stopElevenLabs(): Promise<void> {
     try {
       await _currentSound.stopAsync();
       await _currentSound.unloadAsync();
-    } catch {
+    } catch (err) {
       // Ignore errors on cleanup
+      logger.warn('[ElevenLabs] Error stopping current sound:', err);
     }
     _currentSound = null;
   }
@@ -226,8 +228,9 @@ export async function clearElevenLabsCache(): Promise<void> {
     if (info.exists) {
       await fs.deleteAsync(dir, { idempotent: true });
     }
-  } catch {
+  } catch (err) {
     // Ignore cleanup errors
+    logger.warn('[ElevenLabs] Failed to clear cache:', err);
   }
 }
 

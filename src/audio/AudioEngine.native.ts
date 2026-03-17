@@ -230,8 +230,9 @@ export class NativeAudioEngine implements IAudioEngine {
       if (existingNote) {
         try {
           existingNote.source.stop();
-        } catch {
+        } catch (err) {
           // Already stopped
+          logger.warn('[AudioEngine] Failed to stop existing note:', err);
         }
         this.activeNotes.delete(note);
       }
@@ -296,8 +297,9 @@ export class NativeAudioEngine implements IAudioEngine {
       // Ensure source stops even if envelope fails
       try {
         source.stop();
-      } catch {
+      } catch (err) {
         // Already stopped
+        logger.warn('[AudioEngine] Failed to force-stop source during release:', err);
       }
     }
   }
@@ -326,8 +328,9 @@ export class NativeAudioEngine implements IAudioEngine {
     for (const [_note, noteState] of this.activeNotes.entries()) {
       try {
         noteState.source.stop();
-      } catch {
+      } catch (err) {
         // Already stopped
+        logger.warn('[AudioEngine] Failed to stop note during releaseAll:', err);
       }
     }
     this.activeNotes.clear();
@@ -399,8 +402,9 @@ export class NativeAudioEngine implements IAudioEngine {
 
       osc.start(now);
       osc.stop(now + 0.04);
-    } catch {
+    } catch (err) {
       // Non-critical — metronome click failure should not crash playback
+      logger.warn('[AudioEngine] Metronome click failed:', err);
     }
   }
 

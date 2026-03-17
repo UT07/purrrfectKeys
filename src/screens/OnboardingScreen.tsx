@@ -49,6 +49,7 @@ import { checkUsernameAvailable, isValidUsername, registerUsername } from '../se
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor, shadowGlow } from '../theme/tokens';
 import { analyticsEvents } from '../services/analytics/PostHog';
 import { GradientMeshBackground } from '../components/effects';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -600,7 +601,8 @@ function UsernameStep({
           if (!available) {
             setValidationError('Username already taken');
           }
-        } catch {
+        } catch (err) {
+          logger.warn('[OnboardingScreen] Username availability check failed:', err);
           // Network/permission error — do NOT assume available.
           // Block proceeding until a successful check.
           setIsAvailable(null);
@@ -1108,7 +1110,7 @@ export function OnboardingScreen(): React.ReactElement {
             });
           }
         }
-      } catch { /* Firestore sync is best-effort */ }
+      } catch (err) { logger.warn('[OnboardingScreen] Firestore sync is best-effort:', err); }
       // Pre-fill buffer with tier-1 exercises for immediate play (fire-and-forget)
       prefillOnboardingBuffer().catch(() => {});
       // Dismiss the onboarding modal and return to MainTabs

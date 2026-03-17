@@ -218,9 +218,9 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
           const { registerUsername } = require('../services/firebase/socialService');
           await registerUsername(uid, username, displayName);
           useSocialStore.getState().setFriendCode(username);
-        } catch {
+        } catch (usernameErr) {
           // Username taken or failed — fall back to legacy random code
-          logger.warn('[Social] Username registration failed, falling back to legacy code');
+          logger.warn('[Social] Username registration failed, falling back to legacy code:', usernameErr);
           const { registerFriendCode } = require('../services/firebase/socialService');
           const code = await registerFriendCode(uid);
           useSocialStore.getState().setFriendCode(code);
@@ -570,7 +570,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Sync display name to settings store so ProfileScreen shows it
       try {
         useSettingsStore.getState().setDisplayName(displayName);
-      } catch { /* settings sync is best-effort */ }
+      } catch (err) {
+        logger.warn('[Auth] Settings displayName sync failed after sign-up:', err);
+      }
 
       analyticsEvents.auth.signUp('email');
       AnalyticsService.identifyUser(result.user.uid, { email, displayName });
@@ -614,8 +616,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             displayName: result.user.displayName ?? 'Learner',
           });
         }
-      } catch {
-        // Non-critical: display name restoration failure doesn't block sign-in
+      } catch (err) {
+        logger.warn('[Auth] Google sign-in display name restoration failed:', err);
       }
 
       analyticsEvents.auth.signIn('google');
@@ -815,7 +817,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (profile?.displayName && profile.displayName !== result.user.displayName) {
           await updateProfile(result.user, { displayName: profile.displayName });
         }
-      } catch { /* non-critical */ }
+      } catch (err) {
+        logger.warn('[Auth] Apple sign-in display name restoration failed:', err);
+      }
 
       set({
         user: result.user,
@@ -1082,13 +1086,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Persist to Firestore so it survives Google sign-in re-auth
       try {
         await updateUserProfile(user.uid, { displayName: name });
-      } catch { /* Firestore sync is best-effort */ }
+      } catch (err) {
+        logger.warn('[Auth] Firestore displayName sync failed:', err);
+      }
 
       // Sync to settings store so ProfileScreen shows updated name
       try {
         const { useSettingsStore } = require('./settingsStore');
         useSettingsStore.getState().setDisplayName(name);
-      } catch { /* settings sync is best-effort */ }
+      } catch (err) {
+        logger.warn('[Auth] Settings displayName sync failed:', err);
+      }
 
       set({ isLoading: false, error: null });
     } catch (error) {

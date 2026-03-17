@@ -352,7 +352,8 @@ export class InputManager {
             'switchMethod:auto:createMicrophoneInput',
           );
           this._activeMethod = this.micInput ? 'mic' : 'touch';
-        } catch {
+        } catch (err) {
+          logger.warn('[InputManager] Auto-mode mic init failed, falling back to touch:', err);
           this._activeMethod = 'touch';
         }
       } else {

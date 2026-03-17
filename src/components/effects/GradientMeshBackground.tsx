@@ -14,6 +14,7 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
+import { logger } from '../../utils/logger';
 
 // Safe wrapper: useIsFocused throws if not inside a NavigationContainer
 // (e.g. in Jest tests). Default to "focused" when navigation is unavailable.
@@ -21,14 +22,16 @@ let _useIsFocused: () => boolean;
 try {
    
   _useIsFocused = require('@react-navigation/native').useIsFocused;
-} catch {
+} catch (err) {
+  logger.warn('[GradientMeshBackground] @react-navigation/native not available:', err);
   _useIsFocused = () => true;
 }
 
 function useSafeIsFocused(): boolean {
   try {
     return _useIsFocused();
-  } catch {
+  } catch (err) {
+    logger.warn('[GradientMeshBackground] useIsFocused() failed:', err);
     return true;
   }
 }

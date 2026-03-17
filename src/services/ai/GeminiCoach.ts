@@ -242,7 +242,8 @@ export class GeminiCoach {
       }
       // Cache expired, delete it
       await cache.delete(cacheKey);
-    } catch {
+    } catch (err) {
+      logger.warn('[GeminiCoach] Failed to parse cached response:', err);
       await cache.delete(cacheKey);
     }
 

@@ -62,6 +62,9 @@ export async function createGuild(
     createdAt: now,
   };
 
+  // Denormalized lowercase name for case-insensitive search
+  const guildWithSearch = { ...guild, nameLowerCase: guildData.name.toLowerCase() };
+
   const member: GuildMember = {
     uid: creator.uid,
     displayName: creator.displayName,
@@ -76,7 +79,7 @@ export async function createGuild(
   };
 
   const batch = writeBatch(db);
-  batch.set(guildRef, guild);
+  batch.set(guildRef, guildWithSearch);
   batch.set(doc(db, 'guilds', guildRef.id, 'members', creator.uid), member);
   await batch.commit();
 
@@ -99,19 +102,28 @@ export async function updateGuildSettings(
   guildId: string,
   updates: Partial<Pick<Guild, 'name' | 'description' | 'joinPolicy' | 'icon' | 'bannerColor' | 'minWeeklyXp'>>,
 ): Promise<void> {
-  await updateDoc(doc(db, 'guilds', guildId), updates);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const firestoreUpdates: Record<string, any> = { ...updates };
+  if (updates.name) {
+    firestoreUpdates.nameLowerCase = updates.name.toLowerCase();
+  }
+  await updateDoc(doc(db, 'guilds', guildId), firestoreUpdates);
 }
 
 /**
- * Search guilds by name prefix (case-insensitive approximation via range query).
+ * Search guilds by name prefix (case-insensitive via nameLowerCase field).
+ *
+ * Requires guilds to store a `nameLowerCase` field alongside `name`.
+ * createGuild() and updateGuildSettings() maintain this field automatically.
  */
 export async function searchGuilds(namePrefix: string, maxResults: number = 20): Promise<Guild[]> {
   const col = collection(db, 'guilds');
-  const end = namePrefix + '\uf8ff';
+  const lower = namePrefix.toLowerCase();
+  const end = lower + '\uf8ff';
   const q = query(
     col,
-    where('name', '>=', namePrefix),
-    where('name', '<=', end),
+    where('nameLowerCase', '>=', lower),
+    where('nameLowerCase', '<=', end),
     limit(maxResults),
   );
   const snap = await getDocs(q);

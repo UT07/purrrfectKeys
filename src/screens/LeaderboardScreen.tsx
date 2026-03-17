@@ -35,6 +35,7 @@ import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { logger } from '../utils/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -310,7 +311,8 @@ export function LeaderboardScreen(): React.JSX.Element {
     try {
       const data = await getLeagueStandings(membership.leagueId);
       setStandings(data);
-    } catch {
+    } catch (err) {
+      logger.warn('[LeaderboardScreen] Load standings failed:', err);
       setFetchError('Could not load standings. Pull down to retry.');
     } finally {
       setRefreshing(false);
