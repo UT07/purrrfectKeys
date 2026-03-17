@@ -161,8 +161,8 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
           postRichFeedItem(user.uid, feedItem)
             .catch((err: Error) => logger.warn('[rankStore] postRichFeedItem failed:', err?.message));
         }
-      } catch {
-        // feedService or auth not initialized during tests
+      } catch (err) {
+        logger.warn('[rankStore] Post rank change feed failed:', (err as Error)?.message);
       }
     }
   },

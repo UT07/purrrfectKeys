@@ -42,6 +42,7 @@ import { CatAvatar } from '../components/Mascot';
 import { LeagueTransitionCard } from '../components/LeagueTransitionCard';
 import { RankHeroCard } from '../components/arena/RankHeroCard';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { logger } from '../utils/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -570,7 +571,8 @@ export function SocialScreen(): React.JSX.Element {
             );
             if (!cancelled) setFriends(enriched);
           }
-        } catch {
+        } catch (err) {
+          logger.warn('[SocialScreen] Friends sync failed:', (err as Error)?.message);
           hadError = true;
         }
 
@@ -592,7 +594,8 @@ export function SocialScreen(): React.JSX.Element {
               );
             }
           }
-        } catch {
+        } catch (err) {
+          logger.warn('[SocialScreen] Challenges sync failed:', (err as Error)?.message);
           hadError = true;
         }
 
@@ -604,11 +607,12 @@ export function SocialScreen(): React.JSX.Element {
             try {
               const s = await getLeagueStandings(m.leagueId);
               if (!cancelled) setStandings(s);
-            } catch {
-              // standings fetch failed — not critical
+            } catch (err) {
+              logger.warn('[SocialScreen] Standings fetch failed:', (err as Error)?.message);
             }
           }
-        } catch {
+        } catch (err) {
+          logger.warn('[SocialScreen] League sync failed:', (err as Error)?.message);
           hadError = true;
         }
 

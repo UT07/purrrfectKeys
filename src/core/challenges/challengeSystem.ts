@@ -62,6 +62,10 @@ export interface ExerciseChallengeContext {
   playbackSpeed: number; // 1.0 = normal
   category?: SkillCategory;
   minutesPracticedToday: number;
+  /** Exercise difficulty (1-5), used for MMR calculation */
+  exerciseTier?: number;
+  /** Exercise type (e.g. 'play', 'rhythm', 'sight-reading'), used for MMR calculation */
+  exerciseType?: string;
 }
 
 // ============================================================================

@@ -85,28 +85,38 @@ interface SeasonStoreActions {
 /** Claim pending season placement rewards from Firestore on app open */
 export async function claimPendingSeasonRewards(uid: string): Promise<void> {
   try {
-    const { doc, getDoc, deleteDoc } = require('firebase/firestore');
+    const { collection, query, where, getDocs, updateDoc, deleteDoc } = require('firebase/firestore');
     const { db } = require('../services/firebase/config');
-    const rewardRef = doc(db, 'users', uid, 'seasonRewards', 'pending');
-    const snap = await getDoc(rewardRef);
-    if (!snap.exists()) return;
 
-    const data = snap.data() as { gems?: number; claimedAt?: number };
-    if (data.claimedAt) return; // Already processed
+    // Cloud Function writes reward docs with auto-generated IDs — query for unclaimed ones
+    const rewardsCol = collection(db, 'users', uid, 'seasonRewards');
+    const q = query(rewardsCol, where('claimedAt', '==', null));
+    const snap = await getDocs(q);
 
-    // Mark claimed BEFORE delivering gems to prevent double-delivery on crash
-    const { updateDoc } = require('firebase/firestore');
-    await updateDoc(rewardRef, { claimedAt: Date.now() });
+    if (snap.empty) return;
 
-    // Deliver gems
-    if (data.gems && data.gems > 0) {
-      const { useGemStore } = require('./gemStore');
-      useGemStore.getState().claimReward(`season-placement-${Date.now()}`, data.gems);
+    let totalGems = 0;
+    for (const rewardDoc of snap.docs) {
+      const data = rewardDoc.data() as { gems?: number; claimedAt?: number };
+      if (data.claimedAt) continue; // Already processed
+
+      // Mark claimed BEFORE delivering gems to prevent double-delivery on crash
+      await updateDoc(rewardDoc.ref, { claimedAt: Date.now() });
+
+      // Deliver gems
+      if (data.gems && data.gems > 0) {
+        const { useGemStore } = require('./gemStore');
+        useGemStore.getState().claimReward(`season-${rewardDoc.id}`, data.gems);
+        totalGems += data.gems;
+      }
+
+      // Clean up the reward doc
+      await deleteDoc(rewardDoc.ref);
     }
 
-    // Clean up the reward doc
-    await deleteDoc(rewardRef);
-    logger.log('[seasonStore] Claimed pending season rewards:', data.gems, 'gems');
+    if (totalGems > 0) {
+      logger.log('[seasonStore] Claimed pending season rewards:', totalGems, 'gems');
+    }
   } catch (err) {
     logger.warn('[seasonStore] Failed to claim pending season rewards:', err);
   }
@@ -185,13 +195,7 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
     const reward = track === 'free' ? tierDef.freeReward : tierDef.premiumReward;
     if (!reward) return null;
 
-    // Record claim
-    set((s) => ({
-      claimedRewards: [...s.claimedRewards, rewardKey],
-    }));
-    debouncedSave(get());
-
-    // Deliver reward to the appropriate store
+    // Deliver reward FIRST, then record claim — if delivery fails, user can retry
     try {
       switch (reward.type) {
         case 'gems': {
@@ -220,9 +224,16 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
         }
       }
     } catch (err) {
-      // Store not available (tests or init timing) — reward key is still recorded
+      // Store not available (tests or init timing) — don't record claim so user can retry
       logger.warn('[seasonStore] Failed to deliver battle pass reward:', rewardKey, err);
+      return null;
     }
+
+    // Record claim AFTER successful delivery
+    set((s) => ({
+      claimedRewards: [...s.claimedRewards, rewardKey],
+    }));
+    debouncedSave(get());
 
     return reward;
   },

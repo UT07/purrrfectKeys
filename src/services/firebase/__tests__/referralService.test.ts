@@ -11,16 +11,26 @@
  * - wasAlreadyReferred() / markAsReferred() double-redemption guard
  */
 
+const mockTransaction = {
+  get: jest.fn().mockResolvedValue({ exists: () => false }),
+  set: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+
 jest.mock('firebase/firestore', () => ({
   doc: jest.fn(() => 'mock-doc-ref'),
   collection: jest.fn(() => 'mock-col-ref'),
-  getDoc: jest.fn().mockResolvedValue({ exists: () => false }),
+  getDoc: jest.fn().mockResolvedValue({ exists: () => false, data: () => ({}) }),
   getDocs: jest.fn().mockResolvedValue({ docs: [], size: 0 }),
   setDoc: jest.fn().mockResolvedValue(undefined),
   updateDoc: jest.fn().mockResolvedValue(undefined),
   query: jest.fn((...args: unknown[]) => args),
   where: jest.fn(),
   orderBy: jest.fn(),
+  runTransaction: jest.fn(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<unknown>) => {
+    return fn(mockTransaction);
+  }),
 }));
 
 jest.mock('../config', () => ({
@@ -80,28 +90,41 @@ describe('referralService', () => {
   });
 
   describe('registerInviteCode', () => {
-    it('registers code in Firestore on first attempt', async () => {
-      mockedGetDoc.mockResolvedValueOnce({ exists: () => false } as ReturnType<typeof getDoc> extends Promise<infer T> ? T : never);
+    it('registers code in Firestore on first attempt (via transaction)', async () => {
+      mockTransaction.get.mockResolvedValueOnce({ exists: () => false });
 
       const code = await registerInviteCode('user-1');
       expect(code).toHaveLength(8);
-      expect(mockedSetDoc).toHaveBeenCalledTimes(1);
+      expect(mockTransaction.set).toHaveBeenCalledTimes(1);
     });
 
     it('retries on collision', async () => {
-      mockedGetDoc
-        .mockResolvedValueOnce({ exists: () => true } as ReturnType<typeof getDoc> extends Promise<infer T> ? T : never)
-        .mockResolvedValueOnce({ exists: () => false } as ReturnType<typeof getDoc> extends Promise<infer T> ? T : never);
+      // First call: code exists → collision → throws CODE_COLLISION inside transaction
+      // Second call: code does not exist → succeeds
+      const { runTransaction } = require('firebase/firestore');
+      (runTransaction as jest.Mock)
+        .mockImplementationOnce(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<unknown>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => true }) };
+          return fn(t);
+        })
+        .mockImplementationOnce(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<unknown>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => false }) };
+          return fn(t);
+        });
 
       const code = await registerInviteCode('user-1');
       expect(code).toHaveLength(8);
-      expect(mockedGetDoc).toHaveBeenCalledTimes(2);
+      expect(runTransaction).toHaveBeenCalledTimes(2);
     });
 
     it('throws after max retries', async () => {
-      for (let i = 0; i < 5; i++) {
-        mockedGetDoc.mockResolvedValueOnce({ exists: () => true } as ReturnType<typeof getDoc> extends Promise<infer T> ? T : never);
-      }
+      const { runTransaction } = require('firebase/firestore');
+      (runTransaction as jest.Mock).mockImplementation(
+        async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<unknown>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => true }) };
+          return fn(t);
+        },
+      );
 
       await expect(registerInviteCode('user-1')).rejects.toThrow('Failed to generate unique invite code');
     });

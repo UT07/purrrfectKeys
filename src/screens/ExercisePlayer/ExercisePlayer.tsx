@@ -886,6 +886,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       playbackSpeed: useSettingsStore.getState().playbackSpeed,
       category: exerciseCategory,
       minutesPracticedToday: minutesSoFar,
+      exerciseTier: ex.metadata?.difficulty ?? 3,
+      exerciseType: getExerciseType(ex) ?? 'play',
     });
 
     trace.mark('lessonProgress');

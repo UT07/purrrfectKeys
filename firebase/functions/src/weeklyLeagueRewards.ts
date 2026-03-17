@@ -99,67 +99,87 @@ export const weeklyLeagueRewards = onSchedule(
     let totalGemsDistributed = 0;
 
     for (const leagueDoc of leaguesSnap.docs) {
-      const leagueData = leagueDoc.data();
-      const leagueId = leagueDoc.id;
-      const tier = leagueData.tier as string;
+      try {
+        const leagueData = leagueDoc.data();
+        const leagueId = leagueDoc.id;
+        const tier = leagueData.tier as string;
 
-      // Get members sorted by weeklyXp descending
-      const membersSnap = await db
-        .collection('leagues')
-        .doc(leagueId)
-        .collection('members')
-        .orderBy('weeklyXp', 'desc')
-        .get();
+        // Get members sorted by weeklyXp descending
+        const membersSnap = await db
+          .collection('leagues')
+          .doc(leagueId)
+          .collection('members')
+          .orderBy('weeklyXp', 'desc')
+          .get();
 
-      if (membersSnap.empty) continue;
+        if (membersSnap.empty) continue;
 
-      totalLeagues++;
-      const batch = db.batch();
+        totalLeagues++;
 
-      membersSnap.docs.forEach((memberDoc, index) => {
-        const rank = index + 1;
-        const uid = memberDoc.id;
-        const placementGems = gemsForPlacement(rank);
-        const tierBonus = TIER_GEM_BONUS[tier] ?? 0;
-        const totalGems = placementGems + tierBonus;
+        // Pre-fetch user docs to get actual MMR values (not stored on member doc)
+        const userDocs = await Promise.all(
+          membersSnap.docs.map((m) => db.collection('users').doc(m.id).get()),
+        );
+        const userMmrMap = new Map<string, number>();
+        for (const userDoc of userDocs) {
+          if (userDoc.exists) {
+            const userData = userDoc.data()!;
+            // MMR stored under rating.mmr (PlayerRating shape) or top-level mmr (legacy)
+            const mmr = userData.rating?.mmr ?? userData.mmr ?? 500;
+            userMmrMap.set(userDoc.id, mmr);
+          }
+        }
 
-        // Write reward record to user's rewards subcollection
-        const rewardRef = db.collection('users').doc(uid).collection('seasonRewards').doc();
-        batch.set(rewardRef, {
-          weekStart,
-          leagueId,
-          tier,
-          rank,
-          totalMembers: membersSnap.size,
-          placementGems,
-          tierBonus,
-          totalGems,
-          weeklyXp: memberDoc.data().weeklyXp,
-          claimedAt: null, // client claims on next app open
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        const batch = db.batch();
+
+        membersSnap.docs.forEach((memberDoc, index) => {
+          const rank = index + 1;
+          const uid = memberDoc.id;
+          const placementGems = gemsForPlacement(rank);
+          const tierBonus = TIER_GEM_BONUS[tier] ?? 0;
+          const totalGems = placementGems + tierBonus;
+
+          // Write reward record to user's rewards subcollection
+          const rewardRef = db.collection('users').doc(uid).collection('seasonRewards').doc();
+          batch.set(rewardRef, {
+            weekStart,
+            leagueId,
+            tier,
+            rank,
+            totalMembers: membersSnap.size,
+            placementGems,
+            tierBonus,
+            gems: totalGems,
+            weeklyXp: memberDoc.data().weeklyXp,
+            claimedAt: null, // client claims on next app open
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          // Apply soft MMR reset on user document
+          const userRef = db.collection('users').doc(uid);
+          const currentMmr = userMmrMap.get(uid) ?? 500;
+          batch.update(userRef, {
+            mmr: softResetMMR(currentMmr),
+            lastSeasonRank: rank,
+            lastSeasonTier: tier,
+            lastSeasonWeek: weekStart,
+          });
+
+          totalRewards++;
+          totalGemsDistributed += totalGems;
         });
 
-        // Apply soft MMR reset on user document
-        const userRef = db.collection('users').doc(uid);
-        const currentMmr = memberDoc.data().mmr ?? 500;
-        batch.update(userRef, {
-          mmr: softResetMMR(currentMmr),
-          lastSeasonRank: rank,
-          lastSeasonTier: tier,
-          lastSeasonWeek: weekStart,
+        // Mark league as completed
+        batch.update(leagueDoc.ref, {
+          status: 'completed',
+          completedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        totalRewards++;
-        totalGemsDistributed += totalGems;
-      });
-
-      // Mark league as completed
-      batch.update(leagueDoc.ref, {
-        status: 'completed',
-        completedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      await batch.commit();
+        await batch.commit();
+      } catch (err) {
+        logger.error(`[weeklyLeagueRewards] Failed to process league ${leagueDoc.id}:`, err);
+        // Continue processing remaining leagues
+      }
     }
 
     logger.info(

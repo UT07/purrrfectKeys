@@ -22,6 +22,7 @@ import {
   query,
   where,
   orderBy,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { Referral } from '../../stores/types';
@@ -63,11 +64,19 @@ export async function registerInviteCode(uid: string): Promise<string> {
   for (let attempt = 0; attempt < MAX_CODE_RETRIES; attempt++) {
     const code = generateInviteCode();
     const codeRef = doc(db, 'inviteCodes', code);
-    const existing = await getDoc(codeRef);
 
-    if (!existing.exists()) {
-      await setDoc(codeRef, { uid, createdAt: Date.now() });
+    try {
+      await runTransaction(db, async (transaction) => {
+        const existing = await transaction.get(codeRef);
+        if (existing.exists()) {
+          throw new Error('CODE_COLLISION');
+        }
+        transaction.set(codeRef, { uid, createdAt: Date.now() });
+      });
       return code;
+    } catch (err) {
+      if ((err as Error)?.message === 'CODE_COLLISION') continue;
+      throw err;
     }
   }
 

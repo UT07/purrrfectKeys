@@ -74,7 +74,8 @@ export const weeklyLeagueAssignment = onSchedule(
       // Skip anonymous users
       if (data.isAnonymous) continue;
 
-      const tier = data.tier || 'novice';
+      // Tier is stored under rating.tier (PlayerRating shape) or top-level tier (legacy)
+      const tier = data.rating?.tier || data.tier || 'novice';
       if (!tierGroups[tier]) tierGroups[tier] = [];
       tierGroups[tier].push({
         uid: userDoc.id,

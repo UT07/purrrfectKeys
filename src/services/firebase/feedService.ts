@@ -101,12 +101,13 @@ export async function getAggregatedRichFeed(
 ): Promise<RichFeedItem[]> {
   if (friendUids.length === 0) return [];
 
-  const results = await Promise.all(
+  const settled = await Promise.allSettled(
     friendUids.map((uid) => getFriendRichFeed(uid, perFriend)),
   );
 
-  return results
-    .flat()
+  return settled
+    .filter((r): r is PromiseFulfilledResult<RichFeedItem[]> => r.status === 'fulfilled')
+    .flatMap((r) => r.value)
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, maxTotal);
 }

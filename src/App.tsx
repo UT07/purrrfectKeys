@@ -27,6 +27,9 @@ import { hydrateCatEvolutionStore } from './stores/catEvolutionStore';
 import { hydrateSongStore } from './stores/songStore';
 import { hydrateSocialStore, useSocialStore } from './stores/socialStore';
 import { hydrateLeagueStore, useLeagueStore } from './stores/leagueStore';
+import { hydrateRankStore } from './stores/rankStore';
+import { hydrateSeasonStore, claimPendingSeasonRewards } from './stores/seasonStore';
+import { hydrateGuildStore } from './stores/guildStore';
 import { getCurrentLeagueMembership, assignToLeague } from './services/firebase/leagueService';
 // Import DeviceLog early so it hooks into logger before any subsystem logs
 import './utils/DeviceLog';
@@ -189,6 +192,9 @@ function AppRoot(): React.ReactElement {
           hydrateSongStore().then(() => logger.log('[App] Song store hydrated')).catch((e) => logger.warn('[App] Song store hydration failed:', e)),
           hydrateSocialStore().then(() => logger.log('[App] Social store hydrated')).catch((e) => logger.warn('[App] Social store hydration failed:', e)),
           hydrateLeagueStore().then(() => logger.log('[App] League store hydrated')).catch((e) => logger.warn('[App] League store hydration failed:', e)),
+          hydrateRankStore().then(() => logger.log('[App] Rank store hydrated')).catch((e) => logger.warn('[App] Rank store hydration failed:', e)),
+          hydrateSeasonStore().then(() => logger.log('[App] Season store hydrated')).catch((e) => logger.warn('[App] Season store hydration failed:', e)),
+          hydrateGuildStore().then(() => logger.log('[App] Guild store hydrated')).catch((e) => logger.warn('[App] Guild store hydration failed:', e)),
         ]);
 
         // ── Phase 2: Firebase Auth (network, may be slow) ──────────────
@@ -293,6 +299,10 @@ function AppRoot(): React.ReactElement {
                 useSocialStore.getState().setFriendCode(code);
                 logger.log('[App] Friend code registered:', code);
               }
+
+              // Claim pending season rewards (gems from league placements)
+              claimPendingSeasonRewards(user.uid)
+                .catch((err) => logger.warn('[App] Season reward claim failed:', err));
             }
           } catch (err) {
             logger.warn('[App] Social setup failed (non-blocking):', err);

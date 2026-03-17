@@ -426,15 +426,33 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     // ── MMR / Rank update ──
     try {
       const { useRankStore } = require('./rankStore');
-      useRankStore.getState().updateAfterExercise(_score, 5, 'play');
+      const exerciseTier = challengeContext?.exerciseTier ?? 3;
+      const exerciseType = challengeContext?.exerciseType ?? 'play';
+      useRankStore.getState().updateAfterExercise(_score, exerciseTier, exerciseType);
 
       // Update season peak tier + battle pass XP
       const { useSeasonStore } = require('./seasonStore');
       const rankState = useRankStore.getState();
-      useSeasonStore.getState().updatePeakTier(rankState.tier);
+      useSeasonStore.getState().updatePeakTier(rankState.rating.tier);
       useSeasonStore.getState().addBattlePassXp(effectiveXp);
+    } catch (err) {
+      logger.warn('[progressStore] MMR/rank update failed:', (err as Error)?.message);
+    }
+
+    // ── Guild XP update (fire-and-forget) ──
+    try {
+      const { useGuildStore } = require('./guildStore');
+      const guild = useGuildStore.getState().currentGuild;
+      if (guild && auth.currentUser && !auth.currentUser.isAnonymous) {
+        const { addGuildMemberXp } = require('../services/firebase/guildService');
+        useGuildStore.getState().updateMemberXp(auth.currentUser.uid, effectiveXp);
+        fireAndRetry(
+          () => addGuildMemberXp(guild.id, auth.currentUser!.uid, effectiveXp),
+          'addGuildMemberXp',
+        );
+      }
     } catch {
-      // stores not yet initialized during tests — safe to ignore
+      // guildStore/guildService not available
     }
 
     // ── Post level-up activity (fire-and-forget with logged failure) ──

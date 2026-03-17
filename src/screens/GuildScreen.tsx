@@ -30,6 +30,7 @@ import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, ARENA, glowColor } from '..
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -548,8 +549,8 @@ function GuildDetail(): React.JSX.Element {
         setMembers(memberList);
         setActiveWars(warList);
       })
-      .catch(() => {
-        // Silently fail — user sees cached data
+      .catch((err) => {
+        logger.warn('[GuildScreen] Failed to load guild data:', (err as Error)?.message);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -573,7 +574,7 @@ function GuildDetail(): React.JSX.Element {
             style: 'destructive',
             onPress: async () => {
               try {
-                await guildService.kickMember(currentGuild.id, uid);
+                await guildService.kickMember(currentGuild.id, uid, user?.uid);
                 removeMember(uid);
               } catch {
                 Alert.alert('Error', 'Failed to kick member.');

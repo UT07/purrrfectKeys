@@ -20,6 +20,8 @@ import {
   limit,
   increment,
   runTransaction,
+  writeBatch,
+  collectionGroup,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { Guild, GuildMember, GuildWar, RankedTier } from '../../stores/types';
@@ -73,8 +75,10 @@ export async function createGuild(
     warStrikes: 0,
   };
 
-  await setDoc(guildRef, guild);
-  await setDoc(doc(db, 'guilds', guildRef.id, 'members', creator.uid), member);
+  const batch = writeBatch(db);
+  batch.set(guildRef, guild);
+  batch.set(doc(db, 'guilds', guildRef.id, 'members', creator.uid), member);
+  await batch.commit();
 
   return guild;
 }
@@ -193,12 +197,26 @@ export async function leaveGuild(guildId: string, uid: string): Promise<void> {
 /**
  * Kick a member from a guild. Only leader/co_leader can kick.
  */
-export async function kickMember(guildId: string, targetUid: string): Promise<void> {
+export async function kickMember(guildId: string, targetUid: string, callerUid?: string): Promise<void> {
   const guildRef = doc(db, 'guilds', guildId);
 
   await runTransaction(db, async (transaction) => {
     const guildSnap = await transaction.get(guildRef);
     if (!guildSnap.exists()) throw new Error('Guild not found');
+
+    // Verify caller has authority to kick (leader or co_leader)
+    if (callerUid) {
+      const callerRef = doc(db, 'guilds', guildId, 'members', callerUid);
+      const callerSnap = await transaction.get(callerRef);
+      if (!callerSnap.exists()) throw new Error('Caller is not a member');
+      const callerRole = (callerSnap.data() as GuildMember).role;
+      if (callerRole !== 'leader' && callerRole !== 'co_leader') {
+        throw new Error('Only leaders and co-leaders can kick members');
+      }
+    }
+
+    const guild = guildSnap.data() as Guild;
+    if (targetUid === guild.leaderUid) throw new Error('Cannot kick the guild leader');
 
     transaction.update(guildRef, { memberCount: increment(-1) });
     transaction.delete(doc(db, 'guilds', guildId, 'members', targetUid));
@@ -276,22 +294,19 @@ export async function addGuildMemberXp(
  * Find which guild a user belongs to (if any).
  */
 export async function getUserGuild(uid: string): Promise<Guild | null> {
-  // Query all guilds where user is a member via collectionGroup
-  // For simplicity, we store guildId on the user's profile in the store
-  // This function is a fallback for when local state is missing
-  const guildsCol = collection(db, 'guilds');
-  const q = query(guildsCol, orderBy('createdAt', 'desc'), limit(50));
+  // Use collectionGroup query on 'members' to find the user's guild in 1 read
+  const membersGroup = collectionGroup(db, 'members');
+  const q = query(membersGroup, where('uid', '==', uid), limit(1));
   const snap = await getDocs(q);
 
-  for (const guildDoc of snap.docs) {
-    const memberRef = doc(db, 'guilds', guildDoc.id, 'members', uid);
-    const memberSnap = await getDoc(memberRef);
-    if (memberSnap.exists()) {
-      return guildDoc.data() as Guild;
-    }
-  }
+  if (snap.empty) return null;
 
-  return null;
+  // The member doc path is guilds/{guildId}/members/{uid} — extract guildId
+  const memberDoc = snap.docs[0];
+  const guildId = memberDoc.ref.parent.parent?.id;
+  if (!guildId) return null;
+
+  return getGuild(guildId);
 }
 
 // ---------------------------------------------------------------------------

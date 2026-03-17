@@ -12,6 +12,7 @@
 jest.mock('firebase/firestore', () => ({
   doc: jest.fn(() => 'mock-doc-ref'),
   collection: jest.fn(() => 'mock-col-ref'),
+  collectionGroup: jest.fn(() => 'mock-col-group-ref'),
   getDoc: jest.fn().mockResolvedValue({ exists: () => false }),
   getDocs: jest.fn().mockResolvedValue({ docs: [] }),
   setDoc: jest.fn().mockResolvedValue(undefined),
@@ -22,6 +23,12 @@ jest.mock('firebase/firestore', () => ({
   orderBy: jest.fn(),
   limit: jest.fn(),
   increment: jest.fn((val: number) => ({ _type: 'increment', val })),
+  writeBatch: jest.fn(() => ({
+    set: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    commit: jest.fn().mockResolvedValue(undefined),
+  })),
   runTransaction: jest.fn(async (_db: unknown, fn: (t: Record<string, unknown>) => Promise<unknown>) => {
     const mockTransaction = {
       get: jest.fn().mockResolvedValue({
@@ -106,7 +113,13 @@ describe('guildService', () => {
       expect(guild.memberCount).toBe(1);
       expect(guild.level).toBe(1);
       expect(guild.joinPolicy).toBe('open');
-      expect(mockedSetDoc).toHaveBeenCalledTimes(2); // guild + member
+
+      // createGuild uses writeBatch for atomic guild+member creation
+      const { writeBatch } = require('firebase/firestore');
+      expect(writeBatch).toHaveBeenCalledTimes(1);
+      const batchInstance = writeBatch.mock.results[0].value;
+      expect(batchInstance.set).toHaveBeenCalledTimes(2); // guild + member
+      expect(batchInstance.commit).toHaveBeenCalledTimes(1);
     });
   });
 
