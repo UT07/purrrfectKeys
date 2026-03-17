@@ -73,6 +73,7 @@
         }
       ],
       "./plugins/strip-push-entitlement",
+      "./plugins/fix-onnx-gradle",
       "expo-asset",
       [
         "@sentry/react-native",
