@@ -67,7 +67,7 @@ import { DemoPlaybackService } from '../../services/demoPlayback';
 import { createAudioEngine } from '../../audio/createAudioEngine';
 import { ttsService } from '../../services/tts/TTSService';
 import { perfTrace } from '../../utils/perfTrace';
-import { createChallenge, updateChallengeResult } from '../../services/firebase/socialService';
+import { createChallenge, updateChallengeResult, resolveChallengeGemStake } from '../../services/firebase/socialService';
 import { useSocialStore } from '../../stores/socialStore';
 import { useAuthStore } from '../../stores/authStore';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
@@ -110,6 +110,8 @@ import { getTemplateForSkill, getTemplateExercise, getTemplateForType } from '..
 import { getChestType, getChestReward } from '../../core/rewards/chestSystem';
 import { analyticsEvents } from '../../services/analytics/PostHog';
 import { soundManager } from '../../audio/SoundManager';
+import { useRankStore } from '../../stores/rankStore';
+import { RankChangeOverlay } from '../../components/arena/RankChangeOverlay';
 
 /** Resolve the exercise type from explicit param, or infer from skill category */
 function resolveExerciseType(
@@ -532,6 +534,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (!cat || activeAbilityIds.length === 0) return [];
     return cat.abilities.filter((a) => activeAbilityIds.includes(a.id));
   }, [selectedCatId, activeAbilityIds]);
+
+  // Rank change overlay — promotion/demotion animation after tier change
+  const pendingRankChange = useRankStore((s) => s.pendingRankChange);
+  const clearPendingRankChange = useRankStore((s) => s.clearPendingRankChange);
 
   // Responsive layout — supports both portrait and landscape
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -1311,11 +1317,49 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       });
       // Update local store so UI reflects completion immediately
       const { challenges, setChallenges } = useSocialStore.getState();
+      const matchedChallenge = challenges.find((c) => c.id === friendChallengeId);
       setChallenges(challenges.map((c) =>
         c.id === friendChallengeId
           ? { ...c, toScore: score.overall, status: 'completed' as const }
           : c,
       ));
+
+      // --- Resolve gem stake if present ---
+      if (matchedChallenge?.gemStake && matchedChallenge.gemStake > 0) {
+        // Deduct receiver's stake
+        const receiverStakeSpent = useGemStore.getState().spendGems(
+          matchedChallenge.gemStake,
+          `challenge-stake-${friendChallengeId}`,
+        );
+        if (!receiverStakeSpent) {
+          logger.warn('[ExercisePlayer] Receiver could not afford gem stake — skipping stake resolution');
+        } else {
+          const authUser = useAuthStore.getState().user;
+          resolveChallengeGemStake(
+            friendChallengeId,
+            matchedChallenge.fromScore,
+            score.overall,
+            matchedChallenge.fromUid,
+            authUser?.uid ?? '',
+          ).then((result) => {
+            if (result && result.winnerUid === authUser?.uid) {
+              // Receiver won — award the pot
+              useGemStore.getState().earnGems(result.winnerGems, `challenge-win-${friendChallengeId}`);
+              logger.log(`[ExercisePlayer] Challenge won! Earned ${result.winnerGems} gems`);
+            }
+            // Update local challenge with resolution data
+            if (result) {
+              useSocialStore.getState().updateChallenge(friendChallengeId, {
+                winnerUid: result.winnerUid,
+                winnerGems: result.winnerGems,
+                resolvedAt: Date.now(),
+              });
+            }
+          }).catch((err) => {
+            logger.warn('[ExercisePlayer] Failed to resolve challenge gem stake:', err);
+          });
+        }
+      }
     }
 
     // Show XP transition overlay first, then navigate to PostExerciseScreen.
@@ -3295,6 +3339,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           onDismiss={() => setEvolutionRevealData(null)}
         />
       )}
+
+      {/* Rank promotion/demotion overlay — shown after tier change */}
+      <RankChangeOverlay
+        visible={pendingRankChange != null}
+        fromTier={pendingRankChange?.fromTier ?? 'novice'}
+        toTier={pendingRankChange?.toTier ?? 'novice'}
+        isPromotion={pendingRankChange?.isPromotion ?? true}
+        onDismiss={clearPendingRankChange}
+      />
     </SafeAreaView>
   );
 };

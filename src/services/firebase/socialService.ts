@@ -400,6 +400,43 @@ export async function updateChallengeResult(
 }
 
 /**
+ * Resolve gem stake for a completed challenge.
+ * Determines the winner (higher score wins, tie goes to challenger),
+ * updates the challenge doc with winnerUid/winnerGems/resolvedAt,
+ * and returns the result so the caller can award gems locally.
+ *
+ * Returns null if the challenge has no stake or was already resolved.
+ */
+export async function resolveChallengeGemStake(
+  challengeId: string,
+  fromScore: number,
+  toScore: number,
+  fromUid: string,
+  toUid: string,
+): Promise<{ winnerUid: string; winnerGems: number } | null> {
+  const challengeRef = doc(db, 'challenges', challengeId);
+  const snap = await getDoc(challengeRef);
+
+  if (!snap.exists()) return null;
+
+  const challenge = snap.data() as FriendChallenge;
+  if (!challenge.gemStake || challenge.gemStake <= 0) return null;
+  if (challenge.resolvedAt) return null; // Already resolved
+
+  // Higher score wins; tie goes to challenger (fromUid)
+  const winnerUid = toScore > fromScore ? toUid : fromUid;
+  const winnerGems = challenge.gemStake * 2;
+
+  await updateDoc(challengeRef, {
+    winnerUid,
+    winnerGems,
+    resolvedAt: Date.now(),
+  });
+
+  return { winnerUid, winnerGems };
+}
+
+/**
  * Delete all challenges between two users.
  * Called when a friend connection is removed.
  */

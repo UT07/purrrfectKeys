@@ -398,6 +398,14 @@ export interface FriendChallenge {
   status: 'pending' | 'completed' | 'expired';
   createdAt: number;
   expiresAt: number;
+  /** Optional gem stake — 0 or undefined means no stake */
+  gemStake?: number;
+  /** Total pot awarded to winner (2x stake). Set when challenge resolves. */
+  winnerGems?: number;
+  /** UID of the winner. Set when challenge resolves. */
+  winnerUid?: string;
+  /** Epoch ms when gem stake was resolved */
+  resolvedAt?: number;
 }
 
 export interface ShareCardData {

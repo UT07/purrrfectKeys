@@ -1,8 +1,10 @@
 /**
  * Challenge Friend Sheet
  *
- * A slide-up modal that displays accepted friends as a horizontal list.
- * Tapping a friend immediately sends a challenge via `createChallenge()`.
+ * A slide-up modal that displays accepted friends as a horizontal list
+ * with an optional gem stake picker ([0, 10, 25, 50]).
+ * Tapping a friend sends a challenge via `createChallenge()`.
+ * If a gem stake is selected, gems are deducted from the sender immediately.
  * Shows a brief "Challenge Sent!" confirmation after sending.
  */
 
@@ -22,6 +24,7 @@ import { CatAvatar } from './Mascot/CatAvatar';
 import { useSocialStore } from '../stores/socialStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useGemStore } from '../stores/gemStore';
 import { createChallenge } from '../services/firebase/socialService';
 import type { FriendChallenge } from '../stores/types';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
@@ -36,6 +39,7 @@ export interface ChallengeFriendSheetProps {
 }
 
 const CHALLENGE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const STAKE_OPTIONS = [0, 10, 25, 50] as const;
 
 export function ChallengeFriendSheet({
   visible,
@@ -46,13 +50,22 @@ export function ChallengeFriendSheet({
 }: ChallengeFriendSheetProps): React.ReactElement {
   const friends = useSocialStore((s) => s.friends);
   const acceptedFriends = friends.filter((f) => f.status === 'accepted');
+  const gems = useGemStore((s) => s.gems);
 
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [selectedStake, setSelectedStake] = useState(0);
 
   const handleChallenge = useCallback(
     async (friendUid: string, friendName: string) => {
       if (sendingTo) return;
+
+      // Validate gem balance before proceeding
+      if (selectedStake > 0 && !useGemStore.getState().canAfford(selectedStake)) {
+        Alert.alert('Not Enough Gems', `You need ${selectedStake} gems to stake this challenge.`);
+        return;
+      }
+
       setSendingTo(friendUid);
 
       try {
@@ -60,6 +73,16 @@ export function ChallengeFriendSheet({
         const settings = useSettingsStore.getState();
         const uid = user?.uid ?? 'unknown';
         const now = Date.now();
+
+        // Deduct gems from sender (escrow) before creating challenge
+        if (selectedStake > 0) {
+          const spent = useGemStore.getState().spendGems(selectedStake, `challenge-stake-${friendUid}`);
+          if (!spent) {
+            Alert.alert('Not Enough Gems', `You need ${selectedStake} gems to stake this challenge.`);
+            setSendingTo(null);
+            return;
+          }
+        }
 
         const challenge: FriendChallenge = {
           id: `challenge-${uid}-${friendUid}-${now}`,
@@ -74,6 +97,7 @@ export function ChallengeFriendSheet({
           status: 'pending',
           createdAt: now,
           expiresAt: now + CHALLENGE_EXPIRY_MS,
+          gemStake: selectedStake > 0 ? selectedStake : undefined,
         };
 
         // Add to local store immediately (offline-first)
@@ -89,6 +113,7 @@ export function ChallengeFriendSheet({
         setSentTo(friendName);
         setTimeout(() => {
           setSentTo(null);
+          setSelectedStake(0);
           onClose();
         }, 1500);
       } catch (err) {
@@ -98,7 +123,7 @@ export function ChallengeFriendSheet({
         setSendingTo(null);
       }
     },
-    [sendingTo, exerciseId, exerciseTitle, score, onClose],
+    [sendingTo, exerciseId, exerciseTitle, score, onClose, selectedStake],
   );
 
   const renderFriend = useCallback(
@@ -162,11 +187,70 @@ export function ChallengeFriendSheet({
           </PressableScale>
         </View>
 
+        {/* Gem stake picker */}
+        <View style={styles.stakeSection}>
+          <View style={styles.stakeLabelRow}>
+            <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
+            <Text style={styles.stakeLabel}>Wager Gems</Text>
+            <Text style={styles.stakeBalance}>{gems} available</Text>
+          </View>
+          <View style={styles.stakeOptions}>
+            {STAKE_OPTIONS.map((amount) => {
+              const isSelected = selectedStake === amount;
+              const canAfford = amount === 0 || gems >= amount;
+              return (
+                <PressableScale
+                  key={amount}
+                  onPress={() => setSelectedStake(amount)}
+                  disabled={!canAfford}
+                  style={[
+                    styles.stakeChip,
+                    isSelected && styles.stakeChipSelected,
+                    !canAfford && styles.stakeChipDisabled,
+                  ]}
+                  testID={`stake-option-${amount}`}
+                >
+                  <Text
+                    style={[
+                      styles.stakeChipText,
+                      isSelected && styles.stakeChipTextSelected,
+                      !canAfford && styles.stakeChipTextDisabled,
+                    ]}
+                  >
+                    {amount === 0 ? 'Free' : `${amount}`}
+                  </Text>
+                  {amount > 0 && (
+                    <MaterialCommunityIcons
+                      name="diamond-stone"
+                      size={12}
+                      color={
+                        !canAfford
+                          ? COLORS.textMuted
+                          : isSelected
+                            ? COLORS.textPrimary
+                            : COLORS.gemGold
+                      }
+                    />
+                  )}
+                </PressableScale>
+              );
+            })}
+          </View>
+          {selectedStake > 0 && (
+            <Text style={styles.stakeHint}>
+              Winner takes {selectedStake * 2} gems!
+            </Text>
+          )}
+        </View>
+
         {/* Sent confirmation */}
         {sentTo && (
           <View style={styles.sentBanner}>
             <MaterialCommunityIcons name="check-circle" size={18} color={COLORS.success} />
-            <Text style={styles.sentText}>Challenge sent to {sentTo}!</Text>
+            <Text style={styles.sentText}>
+              Challenge sent to {sentTo}!
+              {selectedStake > 0 && ` (${selectedStake} gems staked)`}
+            </Text>
           </View>
         )}
 
@@ -227,6 +311,70 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: SPACING.xs,
+  },
+  stakeSection: {
+    marginBottom: SPACING.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  stakeLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  stakeLabel: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+    flex: 1,
+  },
+  stakeBalance: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.textMuted,
+  },
+  stakeOptions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  stakeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1.5,
+    borderColor: COLORS.textMuted,
+    backgroundColor: 'transparent',
+  },
+  stakeChipSelected: {
+    borderColor: COLORS.gemGold,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  stakeChipDisabled: {
+    opacity: 0.4,
+  },
+  stakeChipText: {
+    ...TYPOGRAPHY.body.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  stakeChipTextSelected: {
+    color: COLORS.textPrimary,
+  },
+  stakeChipTextDisabled: {
+    color: COLORS.textMuted,
+  },
+  stakeHint: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.gemGold,
+    marginTop: SPACING.xs,
+    textAlign: 'center',
   },
   sentBanner: {
     flexDirection: 'row',

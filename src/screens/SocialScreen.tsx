@@ -27,6 +27,7 @@ import { useSocialStore } from '../stores/socialStore';
 import { useLeagueStore } from '../stores/leagueStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useGuildStore } from '../stores/guildStore';
+import { useGemStore } from '../stores/gemStore';
 import { getFriends, getUserPublicProfile, getChallengesForUser } from '../services/firebase/socialService';
 import { sendLocalNotification } from '../services/notificationService';
 import {
@@ -41,6 +42,8 @@ import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot';
 import { LeagueTransitionCard } from '../components/LeagueTransitionCard';
 import { RankHeroCard } from '../components/arena/RankHeroCard';
+import { RankBadge } from '../components/arena/RankBadge';
+import { useRankStore } from '../stores/rankStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -364,6 +367,9 @@ function ChallengeCard({
     toScore: number | null;
     status: 'pending' | 'completed' | 'expired';
     expiresAt: number;
+    gemStake?: number;
+    winnerGems?: number;
+    winnerUid?: string;
   };
   myUid: string;
 }): React.JSX.Element {
@@ -461,6 +467,27 @@ function ChallengeCard({
         </View>
       </View>
 
+      {/* Gem stake badge */}
+      {challenge.gemStake != null && challenge.gemStake > 0 && (
+        <View style={styles.challengeStakeBadge}>
+          <MaterialCommunityIcons name="diamond-stone" size={14} color={COLORS.gemGold} />
+          {challenge.status === 'completed' && challenge.winnerUid ? (
+            <Text style={[
+              styles.challengeStakeText,
+              { color: challenge.winnerUid === myUid ? COLORS.success : COLORS.error },
+            ]}>
+              {challenge.winnerUid === myUid
+                ? `You won ${challenge.winnerGems ?? challenge.gemStake * 2} gems!`
+                : `You lost ${challenge.gemStake} gems`}
+            </Text>
+          ) : (
+            <Text style={styles.challengeStakeText}>
+              {challenge.gemStake} gems at stake (winner takes {challenge.gemStake * 2})
+            </Text>
+          )}
+        </View>
+      )}
+
       <View style={styles.challengeFooter}>
         <Text style={[styles.challengeStatus, { color: statusColor }]}>
           {challenge.status === 'completed'
@@ -539,6 +566,7 @@ export function SocialScreen(): React.JSX.Element {
   const tierTransition = useLeagueStore((s) => s.tierTransition);
   const membership = useLeagueStore((s) => s.membership);
   const clearTierTransition = useLeagueStore((s) => s.clearTierTransition);
+  const rankRating = useRankStore((s) => s.rating);
   const [syncError, setSyncError] = useState<string | null>(null);
 
   // Sync friends + league + challenges from Firestore on mount and on tab focus
@@ -585,6 +613,28 @@ export function SocialScreen(): React.JSX.Element {
             const newIncoming = remoteChallenges.filter(
               (c) => c.status === 'pending' && c.toUid === user.uid && !existingIds.has(c.id),
             );
+            // Award gems for resolved staked challenges where this user won
+            // (handles the sender seeing the result when receiver completed the challenge)
+            const localChallenges = useSocialStore.getState().challenges;
+            for (const rc of remoteChallenges) {
+              if (
+                rc.winnerUid === user.uid &&
+                rc.winnerGems &&
+                rc.winnerGems > 0 &&
+                rc.resolvedAt
+              ) {
+                // Check if we already processed this resolution locally
+                const localVersion = localChallenges.find((lc) => lc.id === rc.id);
+                if (!localVersion?.resolvedAt) {
+                  useGemStore.getState().earnGems(
+                    rc.winnerGems,
+                    `challenge-win-${rc.id}`,
+                  );
+                  logger.log(`[SocialScreen] Claimed ${rc.winnerGems} gems from challenge win: ${rc.id}`);
+                }
+              }
+            }
+
             setChallenges(remoteChallenges);
             // Fire a local notification for each new incoming challenge
             for (const c of newIncoming) {
@@ -658,10 +708,11 @@ export function SocialScreen(): React.JSX.Element {
       >
         <View style={styles.screenTitleRow}>
           <MaterialCommunityIcons name="shield-sword" size={32} color={COLORS.primary} />
-          <View>
+          <View style={styles.screenTitleTextCol}>
             <Text style={styles.screenTitle}>The Arena</Text>
             <Text style={styles.screenSubtitle}>Compete, challenge, conquer</Text>
           </View>
+          <RankBadge tier={rankRating.tier} division={rankRating.division} size="md" />
         </View>
 
         {syncError && (
@@ -746,6 +797,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     marginBottom: SPACING.lg,
+  },
+  screenTitleTextCol: {
+    flex: 1,
   },
   screenTitle: {
     ...TYPOGRAPHY.display.lg,
@@ -1141,6 +1195,21 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.heading.sm,
     color: COLORS.textMuted,
     fontWeight: '800',
+  },
+  challengeStakeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
+  challengeStakeText: {
+    ...TYPOGRAPHY.caption.md,
+    color: COLORS.gemGold,
+    fontWeight: '600',
   },
   challengeFooter: {
     flexDirection: 'row',

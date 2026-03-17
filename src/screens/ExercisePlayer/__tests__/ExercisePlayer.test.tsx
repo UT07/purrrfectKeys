@@ -606,6 +606,34 @@ jest.mock('../../../theme/tokens', () => ({
     duration: { instant: 100, fast: 200, normal: 300, slow: 500 },
     stagger: { fast: 50, normal: 80, slow: 120 },
   },
+  ARENA: {
+    rank: {
+      novice: '#A0AEC0', apprentice: '#CD7F32', performer: '#C0C0C0',
+      virtuoso: '#FFD700', maestro: '#4FC3F7', prodigy: '#BA68C8',
+      luminary: '#F06292', legend: '#FF6E40', grandmaster: '#B9F2FF',
+    },
+    cardBackground: '#12101A', cardBorder: '#2A2640', divisionBadge: '#1E1B2E',
+    promotionGlow: 'rgba(76, 175, 80, 0.25)', demotionGlow: 'rgba(244, 67, 54, 0.25)',
+    promotionText: '#66BB6A', demotionText: '#EF5350',
+    seasonAccent: '#7C4DFF', seasonGradient: ['#1A0A3E', '#0E0B1A'],
+    feedReaction: '#2A2640', feedHighlight: 'rgba(124, 77, 255, 0.12)',
+    passFree: '#A0AEC0', passPremium: '#FFD700', passLocked: '#444444',
+    guildAccent: '#26C6A0', guildWar: '#FF6E40',
+  },
+  SCREEN_ACCENTS: {
+    home: { from: '#2D1B4E', to: '#0E0B1A' },
+    social: { from: '#0D2B3E', to: '#0E0B1A' },
+    learn: { from: '#0D2E1A', to: '#0E0B1A' },
+    songs: { from: '#2E2000', to: '#0E0B1A' },
+    catStudio: { from: '#2E0D2B', to: '#0E0B1A' },
+    exercise: { from: '#1A0A2E', to: '#0A0A14' },
+  },
+  RARITY: {
+    common: { borderColor: '#555555', glowColor: 'rgba(100,100,100,0.2)', label: 'Common', gradient: ['#3A3A3A', '#2A2A2A'] },
+    rare: { borderColor: '#4FC3F7', glowColor: 'rgba(79,195,247,0.3)', label: 'Rare', gradient: ['#1A3A5C', '#0D2137'] },
+    epic: { borderColor: '#CE93D8', glowColor: 'rgba(206,147,216,0.4)', label: 'Epic', gradient: ['#3A1A4A', '#1F0A2A'] },
+    legendary: { borderColor: '#FFD700', glowColor: 'rgba(255,215,0,0.5)', label: 'Legendary', gradient: ['#4A3A0A', '#2A1F00'] },
+  },
 }));
 
 // Mock navigation

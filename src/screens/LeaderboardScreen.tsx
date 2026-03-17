@@ -34,6 +34,8 @@ import { LEAGUE_TIER_CONFIG, PODIUM_MEDAL_COLORS, MEDAL_COLORS } from '../theme/
 import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
+import { RankBadge } from '../components/arena/RankBadge';
+import { useRankStore } from '../stores/rankStore';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -164,6 +166,7 @@ function StandingsRow({
   isCurrentUser: boolean;
   totalMembers: number;
 }): React.JSX.Element {
+  const myRating = useRankStore((s) => s.rating);
   const isTopThree = entry.rank <= 3;
   const isPromotion = entry.rank <= PROMOTION_CUTOFF;
   const isDemotion = entry.rank > totalMembers - DEMOTION_FROM_BOTTOM;
@@ -227,16 +230,21 @@ function StandingsRow({
 
       {/* User info */}
       <View style={styles.userInfo}>
-        <Text
-          style={[
-            styles.displayName,
-            isCurrentUser && styles.displayNameCurrent,
-          ]}
-          numberOfLines={1}
-        >
-          {entry.displayName}
-          {isCurrentUser ? ' (You)' : ''}
-        </Text>
+        <View style={styles.nameWithBadge}>
+          {isCurrentUser && (
+            <RankBadge tier={myRating.tier} division={myRating.division} size="sm" />
+          )}
+          <Text
+            style={[
+              styles.displayName,
+              isCurrentUser && styles.displayNameCurrent,
+            ]}
+            numberOfLines={1}
+          >
+            {entry.displayName}
+            {isCurrentUser ? ' (You)' : ''}
+          </Text>
+        </View>
       </View>
 
       {/* Weekly XP */}
@@ -630,9 +638,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: SPACING.sm,
   },
+  nameWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
   displayName: {
     ...TYPOGRAPHY.body.lg,
     color: COLORS.textPrimary,
+    flexShrink: 1,
   },
   displayNameCurrent: {
     fontWeight: '700',

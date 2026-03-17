@@ -28,11 +28,19 @@ import { logger } from '../utils/logger';
 
 const MAX_RECENT_SCORES = 30;
 
+export interface PendingRankChange {
+  fromTier: RankedTier;
+  toTier: RankedTier;
+  isPromotion: boolean;
+}
+
 export interface RankStoreState {
   rating: PlayerRating;
+  pendingRankChange: PendingRankChange | null;
 
   // Actions
   updateAfterExercise: (score: number, exerciseTier: number, exerciseType: string) => void;
+  clearPendingRankChange: () => void;
   clearPromotionSeries: () => void;
   reset: () => void;
 }
@@ -56,6 +64,7 @@ const debouncedSave = createDebouncedSave<RankData>(STORAGE_KEYS.RANK, 500);
 
 export const useRankStore = create<RankStoreState>((set, get) => ({
   rating: { ...defaultRating },
+  pendingRankChange: null,
 
   updateAfterExercise: (score: number, exerciseTier: number, exerciseType: string) => {
     const current = get().rating;
@@ -129,8 +138,20 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
     set({ rating: updated });
     debouncedSave({ rating: updated });
 
-    // Post rank change events to rich feed (fire-and-forget)
+    // Detect tier change — set pending rank change for overlay + post to feed
     if (tier !== current.tier) {
+      const tierIndex = (t: RankedTier) => ['novice','apprentice','performer','virtuoso','maestro','prodigy','luminary','legend','grandmaster'].indexOf(t);
+      const isPromotion = tierIndex(tier) > tierIndex(current.tier);
+
+      // Set pending rank change so ExercisePlayer shows the overlay
+      set({
+        pendingRankChange: {
+          fromTier: current.tier,
+          toTier: tier,
+          isPromotion,
+        },
+      });
+
       try {
         const { postRichFeedItem, buildRichFeedItem } = require('../services/firebase/feedService');
         const { auth } = require('../services/firebase/config');
@@ -138,8 +159,6 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
         if (user && !user.isAnonymous) {
           const { useSettingsStore } = require('./settingsStore');
           const catId = useSettingsStore.getState().selectedCatId ?? '';
-          const tierIndex = (t: RankedTier) => ['novice','apprentice','performer','virtuoso','maestro','prodigy','luminary','legend','grandmaster'].indexOf(t);
-          const isPromotion = tierIndex(tier) > tierIndex(current.tier);
           const feedItem = buildRichFeedItem(
             isPromotion ? 'rank_promotion' : 'rank_demotion',
             {
@@ -165,6 +184,10 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
         logger.warn('[rankStore] Post rank change feed failed:', (err as Error)?.message);
       }
     }
+  },
+
+  clearPendingRankChange: () => {
+    set({ pendingRankChange: null });
   },
 
   clearPromotionSeries: () => {

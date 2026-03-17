@@ -46,6 +46,8 @@ import { getLevelProgress } from '../core/progression/XpSystem';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
 import { useAuthStore } from '../stores/authStore';
+import { useRankStore } from '../stores/rankStore';
+import { RankBadge, TIER_DISPLAY_NAMES } from '../components/arena/RankBadge';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
@@ -286,6 +288,9 @@ export function ProfileScreen(): React.ReactElement {
   const selectedCat = getCatById(selectedCatId) ?? CAT_CHARACTERS[0];
   const catColor = selectedCat.color;
 
+  // Rank
+  const rankRating = useRankStore((s) => s.rating);
+
   // Gem balance
   const gems = useGemStore((s) => s.gems);
 
@@ -506,6 +511,7 @@ export function ProfileScreen(): React.ReactElement {
           ) : (
             <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }} testID="name-display">
               <View style={styles.nameRow}>
+                <RankBadge tier={rankRating.tier} division={rankRating.division} size="sm" />
                 <Text style={styles.displayNameText}>{displayName}</Text>
                 <View style={styles.nameEditBtn}>
                   <MaterialCommunityIcons name="pencil" size={12} color={COLORS.textPrimary} />
@@ -516,7 +522,9 @@ export function ProfileScreen(): React.ReactElement {
           {username ? (
             <Text style={styles.usernameSubtext}>@{username}</Text>
           ) : null}
-          <Text style={styles.changeCatLink}>{selectedCat.name} &middot; {selectedCat.musicSkill}</Text>
+          <Text style={styles.changeCatLink}>
+            {selectedCat.name} &middot; {selectedCat.musicSkill} &middot; {TIER_DISPLAY_NAMES[rankRating.tier]}
+          </Text>
         </LinearGradient>
 
         {/* Tab Toggle */}
