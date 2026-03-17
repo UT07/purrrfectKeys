@@ -200,7 +200,7 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
     if (!membership) {
       const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
       const { useRankStore } = require('./rankStore');
-      const playerTier = useRankStore.getState().tier;
+      const playerTier = useRankStore.getState().rating.tier;
       membership = await assignToLeague(uid, displayName, catId, playerTier);
     }
     useLeagueStore.getState().setMembership(membership);

@@ -81,8 +81,9 @@ export function RankHeroCard(): React.JSX.Element {
           <View style={styles.promoRow}>
             <Text style={styles.promoLabel}>Promo</Text>
             {Array.from({ length: 3 }, (_, i) => {
-              const isWin = i < rating.promotionSeries!.wins;
-              const isLoss = i >= 3 - rating.promotionSeries!.losses;
+              const { wins, losses } = rating.promotionSeries!;
+              const isWin = i < wins;
+              const isLoss = !isWin && i < wins + losses;
               return (
                 <View
                   key={i}

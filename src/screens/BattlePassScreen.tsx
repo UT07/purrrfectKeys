@@ -13,7 +13,7 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, Platform } from 'reac
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSeasonStore } from '../stores/seasonStore';
-import { generateBattlePassTiers, cumulativeXpForTier } from '../core/ranking/seasonConfig';
+import { generateBattlePassTiers, cumulativeXpForTier, BATTLE_PASS_MAX_TIER } from '../core/ranking/seasonConfig';
 import type { BattlePassReward } from '../core/ranking/seasonConfig';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, ARENA, glowColor } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
@@ -234,20 +234,21 @@ function XpProgressBar({
   currentXp: number;
   currentTier: number;
 }) {
+  const isMaxTier = currentTier >= BATTLE_PASS_MAX_TIER;
   const tierStart = currentTier > 0 ? cumulativeXpForTier(currentTier) : 0;
-  const tierEnd = cumulativeXpForTier(currentTier + 1);
+  const tierEnd = isMaxTier ? tierStart : cumulativeXpForTier(currentTier + 1);
   const tierRange = tierEnd - tierStart;
-  const progress = tierRange > 0 ? Math.min((currentXp - tierStart) / tierRange, 1) : 0;
-  const xpRemaining = Math.max(tierEnd - currentXp, 0);
+  const progress = isMaxTier ? 1 : tierRange > 0 ? Math.min((currentXp - tierStart) / tierRange, 1) : 0;
+  const xpRemaining = isMaxTier ? 0 : Math.max(tierEnd - currentXp, 0);
 
   return (
     <View style={styles.xpContainer}>
       <View style={styles.xpLabelRow}>
         <Text style={styles.xpLabel}>
-          Tier {currentTier} {'\u2192'} {currentTier + 1}
+          {isMaxTier ? 'Max Tier!' : `Tier ${currentTier} \u2192 ${currentTier + 1}`}
         </Text>
         <Text style={styles.xpValue}>
-          {xpRemaining} XP to next tier
+          {isMaxTier ? 'All tiers unlocked' : `${xpRemaining} XP to next tier`}
         </Text>
       </View>
       <View style={styles.xpBarBackground}>
@@ -259,7 +260,7 @@ function XpProgressBar({
         />
       </View>
       <Text style={styles.xpDetail}>
-        {currentXp} / {tierEnd} XP
+        {isMaxTier ? `${currentXp} XP total` : `${currentXp} / ${tierEnd} XP`}
       </Text>
     </View>
   );

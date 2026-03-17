@@ -94,13 +94,17 @@ export async function claimPendingSeasonRewards(uid: string): Promise<void> {
     const data = snap.data() as { gems?: number; claimedAt?: number };
     if (data.claimedAt) return; // Already processed
 
+    // Mark claimed BEFORE delivering gems to prevent double-delivery on crash
+    const { updateDoc } = require('firebase/firestore');
+    await updateDoc(rewardRef, { claimedAt: Date.now() });
+
     // Deliver gems
     if (data.gems && data.gems > 0) {
       const { useGemStore } = require('./gemStore');
       useGemStore.getState().claimReward(`season-placement-${Date.now()}`, data.gems);
     }
 
-    // Remove the pending reward doc
+    // Clean up the reward doc
     await deleteDoc(rewardRef);
     logger.log('[seasonStore] Claimed pending season rewards:', data.gems, 'gems');
   } catch (err) {
@@ -262,6 +266,17 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
     const { start: newStart, end: newEnd } = getCurrentSeasonDates();
     const newSeasonNumber = seasonNumberFromDate();
 
+    // Soft-reset MMR and zero RP for the new season
+    try {
+      const { useRankStore } = require('./rankStore');
+      const { softResetMMR } = require('../core/ranking/seasonConfig');
+      const current = useRankStore.getState().rating;
+      const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
+      useRankStore.setState({ rating: resetRating });
+    } catch {
+      // rankStore may not be initialized yet
+    }
+
     set(() => ({
       currentSeason: newSeasonNumber,
       seasonStartDate: newStart,
@@ -309,6 +324,17 @@ export async function hydrateSeasonStore(): Promise<void> {
   const currentSeason = seasonNumberFromDate();
   if (saved.currentSeason < currentSeason) {
     // Season has advanced — keep history, reset current season state
+    // Also soft-reset MMR and zero RP
+    try {
+      const { useRankStore } = require('./rankStore');
+      const { softResetMMR } = require('../core/ranking/seasonConfig');
+      const current = useRankStore.getState().rating;
+      const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
+      useRankStore.setState({ rating: resetRating });
+    } catch {
+      // rankStore may not be initialized yet during early hydration
+    }
+
     useSeasonStore.setState({
       ...defaultSeasonState,
       seasonHistory: saved.seasonHistory,
