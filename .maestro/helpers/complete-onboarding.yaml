@@ -2,104 +2,84 @@ appId: com.purrrfectkeys.app
 name: Complete Onboarding
 ---
 # Helper: Complete the 7-step onboarding wizard
-# Step 1: Welcome → Get Started
-# Step 2: Experience level → Beginner
-# Step 3: Input method → Touch
-# Step 4: Learning goal → Songs
-# Step 5: Choose Path → Piano Basics
-# Step 6: Choose Cat → first cat
-# Step 7: Ready to Play → Finish
+# Uses extendedWaitUntil between steps to ensure transitions complete
 
-# Step 1: Welcome
+# Step 1: Welcome → Get Started
 - tapOn:
     id: "onboarding-get-started"
-- waitForAnimationToEnd:
-    timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-step-2"
+    timeout: 8000
 
 # Step 2: Experience level
 - tapOn:
     id: "onboarding-experience-beginner"
 - tapOn:
     id: "onboarding-experience-next"
-- waitForAnimationToEnd:
-    timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-step-3"
+    timeout: 8000
 
 # Step 3: Input method
 - tapOn:
     id: "onboarding-input-touch"
 - tapOn:
     id: "onboarding-input-next"
-- waitForAnimationToEnd:
-    timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-step-4"
+    timeout: 8000
 
 # Step 4: Learning goal
 - tapOn:
     id: "onboarding-goal-songs"
 - tapOn:
     id: "onboarding-goal-next"
-- waitForAnimationToEnd:
-    timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-step-5"
+    timeout: 8000
 
-# Step 5: Choose learning path (scrollable — 5 options + Next button)
+# Step 5: Choose learning path (list overflows screen on smaller devices)
 - tapOn:
     id: "onboarding-path-piano-basics"
-# Scroll the parent ScrollView until the Next button is visible
-- scrollUntilVisible:
-    element:
-      id: "onboarding-path-next"
-    direction: DOWN
-    timeout: 10000
-    speed: 60
-    visibilityPercentage: 50
+# Swipe up to reveal Next button below the 5 path options
+- swipe:
+    direction: UP
+    duration: 500
+# Tap Next by point (PressableScale testID not detected by Maestro on iOS)
 - tapOn:
-    id: "onboarding-path-next"
+    point: "50%,83%"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-step-6"
+    timeout: 8000
+
+# Step 6: Choose cat companion
+- tapOn:
+    id: "onboarding-choose-mini-meowww"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: "onboarding-cat-next"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-step-7"
+    timeout: 8000
+
+# Step 7: Pick Username → Finish
+- tapOn:
+    id: "onboarding-username-input"
+- inputText: "e2etester"
 - waitForAnimationToEnd:
     timeout: 3000
-
-# Step 6: Choose cat companion (tap "Choose Mini Meowww" button, then Next)
-- runFlow:
-    when:
-      visible:
-        id: "onboarding-step-6"
-    commands:
-      - tapOn:
-          id: "onboarding-choose-mini-meowww"
-      - waitForAnimationToEnd:
-          timeout: 2000
-      - tapOn:
-          id: "onboarding-cat-next"
-      - waitForAnimationToEnd:
-          timeout: 3000
-
-# Step 7: Pick Username → type username → wait for validation → Finish
-- runFlow:
-    when:
-      visible:
-        id: "onboarding-step-7"
-    commands:
-      - tapOn:
-          id: "onboarding-username-input"
-      - inputText: "e2etester"
-      # Wait for debounced username availability check
-      - waitForAnimationToEnd:
-          timeout: 3000
-      # Tap Finish (may need to wait for it to become enabled)
-      - extendedWaitUntil:
-          visible:
-            id: "onboarding-finish"
-          timeout: 10000
-      - tapOn:
-          id: "onboarding-finish"
-      - waitForAnimationToEnd:
-          timeout: 5000
-
-# Fallback: if step 7 isn't shown (older onboarding), try Finish directly
-- runFlow:
-    when:
-      visible:
-        id: "onboarding-finish"
-    commands:
-      - tapOn:
-          id: "onboarding-finish"
-      - waitForAnimationToEnd:
-          timeout: 5000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-finish"
+    timeout: 10000
+- tapOn:
+    id: "onboarding-finish"
+- waitForAnimationToEnd:
+    timeout: 5000
