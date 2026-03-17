@@ -91,6 +91,9 @@ export const Button = React.memo(
         disabled={disabled || loading}
         testID={testID}
         style={style}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ disabled: disabled || loading }}
       >
         <View
           style={[

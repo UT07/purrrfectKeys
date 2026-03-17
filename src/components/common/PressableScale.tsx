@@ -5,7 +5,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { AccessibilityRole, Pressable, ViewStyle, StyleProp, Platform, Insets } from 'react-native';
+import { AccessibilityRole, AccessibilityState, Pressable, ViewStyle, StyleProp, Platform, Insets } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -44,6 +44,7 @@ export interface PressableScaleProps {
   hitSlop?: Insets | number;
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
 }
 
 export function PressableScale({
@@ -62,6 +63,7 @@ export function PressableScale({
   hitSlop,
   accessibilityLabel,
   accessibilityRole = 'button',
+  accessibilityState,
 }: PressableScaleProps): React.JSX.Element {
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
@@ -107,6 +109,7 @@ export function PressableScale({
       hitSlop={hitSlop}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
       style={[animatedStyle, style]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
