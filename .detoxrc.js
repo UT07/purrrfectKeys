@@ -17,11 +17,14 @@ module.exports = {
         'xcodebuild -workspace ios/PurrrfectKeys.xcworkspace -scheme PurrrfectKeys -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build -quiet',
     },
     // EAS Build simulator binary — download from EAS and place in artifacts/
-    // Usage: eas build --profile preview-simulator, then download and unzip the .app
-    // Run: npx detox test -c ios.sim.eas
     'ios.eas': {
       type: 'ios.app',
       binaryPath: 'artifacts/PurrrfectKeys.app',
+    },
+    // EAS Build Android APK — download from EAS and place in artifacts/
+    'android.eas': {
+      type: 'android.apk',
+      binaryPath: 'artifacts/purrrfect-keys.apk',
     },
   },
   devices: {
@@ -31,17 +34,39 @@ module.exports = {
         type: 'iPhone 17 Pro',
       },
     },
+    emulator: {
+      type: 'android.emulator',
+      device: {
+        avdName: 'Pixel_7_API_34',
+      },
+    },
+    'attached.android': {
+      type: 'android.attached',
+      device: {
+        adbName: '.*',
+      },
+    },
   },
   configurations: {
-    // Local build config
+    // iOS: local build
     'ios.sim.debug': {
       device: 'simulator',
       app: 'ios.debug',
     },
-    // EAS build config (no local build step — uses pre-built .app)
+    // iOS: EAS build (no local build step)
     'ios.sim.eas': {
       device: 'simulator',
       app: 'ios.eas',
+    },
+    // Android: EAS build on emulator
+    'android.emu.eas': {
+      device: 'emulator',
+      app: 'android.eas',
+    },
+    // Android: EAS build on attached device
+    'android.att.eas': {
+      device: 'attached.android',
+      app: 'android.eas',
     },
   },
 };
