@@ -14,6 +14,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { formatSeasonWeekKey } from './leagueUtils';
 
 // ─────────────────────────────────────────────────
 // Constants (mirrored from client-side seasonConfig.ts)
@@ -62,7 +63,7 @@ function getCurrentWeekMonday(): string {
   const monday = new Date(now);
   monday.setUTCDate(now.getUTCDate() - daysFromMonday);
   monday.setUTCHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
+  return formatSeasonWeekKey(monday);
 }
 
 // ─────────────────────────────────────────────────

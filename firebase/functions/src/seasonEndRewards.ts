@@ -19,6 +19,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { formatSeasonWeekKey } from './leagueUtils';
 
 // ─────────────────────────────────────────────────
 // Constants
@@ -87,7 +88,7 @@ function getSeasonWeekMondays(seasonNumber: number): string[] {
   for (let w = 0; w < WEEKS_PER_SEASON; w++) {
     const mondayMs = SEASON_EPOCH + (seasonStartWeek + w) * MS_PER_WEEK;
     const monday = new Date(mondayMs);
-    mondays.push(monday.toISOString().split('T')[0]);
+    mondays.push(formatSeasonWeekKey(monday));
   }
 
   return mondays;

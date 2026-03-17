@@ -27,6 +27,7 @@ import { PersistenceManager } from '../persistence';
 describe('rankStore', () => {
   beforeEach(() => {
     useRankStore.getState().reset();
+    useRankStore.getState().clearPendingRankChange();
   });
 
   describe('initial state', () => {
@@ -116,6 +117,103 @@ describe('rankStore', () => {
     it('calls PersistenceManager.deleteState', () => {
       useRankStore.getState().reset();
       expect(PersistenceManager.deleteState).toHaveBeenCalled();
+    });
+  });
+
+  describe('pendingRankChange', () => {
+    it('starts as null', () => {
+      expect(useRankStore.getState().pendingRankChange).toBeNull();
+    });
+
+    it('sets pendingRankChange on promotion', () => {
+      // Seed state: novice with an active promotion series (1 win already)
+      // so a single high-score exercise completes the promotion.
+      useRankStore.setState({
+        rating: {
+          mmr: 0,
+          tier: 'novice',
+          division: 3,
+          rp: 0,
+          peakMmr: 0,
+          peakTier: 'novice',
+          recentScores: [95, 95],
+          exerciseTypesCompleted: ['play'],
+          promotionSeries: { wins: 1, losses: 0, active: true },
+          demotionGrace: 3,
+        },
+      });
+
+      // Score >= 70 at high tier → wins the promotion series (2/2)
+      // MMR from [95,95,95] at tier 15 = 378 → apprentice
+      useRankStore.getState().updateAfterExercise(95, 15, 'play');
+
+      const { pendingRankChange } = useRankStore.getState();
+      expect(pendingRankChange).not.toBeNull();
+      expect(pendingRankChange!.fromTier).toBe('novice');
+      expect(pendingRankChange!.toTier).toBe('apprentice');
+      expect(pendingRankChange!.isPromotion).toBe(true);
+    });
+
+    it('sets pendingRankChange with isPromotion false on demotion', () => {
+      // Seed state: apprentice, but with low recent scores so that
+      // adding another low score at tier 1 drops MMR below 200.
+      // No promotion series → tier = newTier directly.
+      useRankStore.setState({
+        rating: {
+          mmr: 210,
+          tier: 'apprentice',
+          division: 3,
+          rp: 50,
+          peakMmr: 210,
+          peakTier: 'apprentice',
+          recentScores: [50, 50, 50],
+          exerciseTypesCompleted: ['play'],
+          promotionSeries: null,
+          demotionGrace: 3,
+        },
+      });
+
+      // Low score at low tier → MMR drops well below 200 → novice
+      useRankStore.getState().updateAfterExercise(10, 1, 'play');
+
+      const { pendingRankChange } = useRankStore.getState();
+      expect(pendingRankChange).not.toBeNull();
+      expect(pendingRankChange!.fromTier).toBe('apprentice');
+      expect(pendingRankChange!.toTier).toBe('novice');
+      expect(pendingRankChange!.isPromotion).toBe(false);
+    });
+
+    it('clearPendingRankChange resets to null', () => {
+      // Trigger a rank change first using the promotion path
+      useRankStore.setState({
+        rating: {
+          mmr: 0,
+          tier: 'novice',
+          division: 3,
+          rp: 0,
+          peakMmr: 0,
+          peakTier: 'novice',
+          recentScores: [95, 95],
+          exerciseTypesCompleted: ['play'],
+          promotionSeries: { wins: 1, losses: 0, active: true },
+          demotionGrace: 3,
+        },
+      });
+      useRankStore.getState().updateAfterExercise(95, 15, 'play');
+      expect(useRankStore.getState().pendingRankChange).not.toBeNull();
+
+      // Clear it
+      useRankStore.getState().clearPendingRankChange();
+      expect(useRankStore.getState().pendingRankChange).toBeNull();
+    });
+
+    it('remains null when tier does not change', () => {
+      // Low score at low tier → MMR stays in novice range, no tier change
+      useRankStore.getState().updateAfterExercise(50, 1, 'play');
+
+      const { rating, pendingRankChange } = useRankStore.getState();
+      expect(rating.tier).toBe('novice');
+      expect(pendingRankChange).toBeNull();
     });
   });
 

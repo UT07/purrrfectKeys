@@ -341,76 +341,11 @@ jest.mock('../../audio/SoundManager', () => ({
   soundManager: { play: jest.fn(), preload: jest.fn(), setSuppressNoteSFX: jest.fn(), isSuppressNoteSFX: jest.fn(() => false) },
 }));
 
+// Mock theme tokens — use real values, only override Platform-dependent exports
 jest.mock('../../theme/tokens', () => ({
-  getComboTier: (combo: number) => {
-    if (combo >= 20) return { name: 'LEGENDARY', minCombo: 20, color: '#FF2D55', glowColor: 'rgba(255,45,85,0.6)', borderColor: '#FF2D55', label: 'LEGENDARY!' };
-    if (combo >= 15) return { name: 'SUPER', minCombo: 15, color: '#FFD700', glowColor: 'rgba(255,215,0,0.5)', borderColor: '#FFD700', label: 'SUPER!' };
-    if (combo >= 10) return { name: 'FIRE', minCombo: 10, color: '#FF6B35', glowColor: 'rgba(255,107,53,0.4)', borderColor: '#FF6B35', label: 'FIRE!' };
-    if (combo >= 5) return { name: 'GOOD', minCombo: 5, color: '#4CAF50', glowColor: 'rgba(76,175,80,0.3)', borderColor: '#4CAF50', label: 'NICE!' };
-    return { name: 'NORMAL', minCombo: 0, color: '#FFFFFF', glowColor: 'rgba(255,255,255,0)', borderColor: '#FFFFFF', label: '' };
-  },
-  COMBO_TIERS: [
-    { name: 'NORMAL', minCombo: 0, color: '#FFFFFF', glowColor: 'rgba(255,255,255,0)', borderColor: '#FFFFFF', label: '' },
-    { name: 'GOOD', minCombo: 5, color: '#4CAF50', glowColor: 'rgba(76,175,80,0.3)', borderColor: '#4CAF50', label: 'NICE!' },
-    { name: 'FIRE', minCombo: 10, color: '#FF6B35', glowColor: 'rgba(255,107,53,0.4)', borderColor: '#FF6B35', label: 'FIRE!' },
-    { name: 'SUPER', minCombo: 15, color: '#FFD700', glowColor: 'rgba(255,215,0,0.5)', borderColor: '#FFD700', label: 'SUPER!' },
-    { name: 'LEGENDARY', minCombo: 20, color: '#FF2D55', glowColor: 'rgba(255,45,85,0.6)', borderColor: '#FF2D55', label: 'LEGENDARY!' },
-  ],
-  COLORS: {
-    background: '#0A0A0A', surface: '#141414', surfaceElevated: '#1C1C1C',
-    surfaceOverlay: 'rgba(0, 0, 0, 0.85)', primary: '#DC143C', primaryLight: '#FF2D55',
-    primaryDark: '#8B0000', cardSurface: '#181818', cardBorder: '#2A2A2A', cardHighlight: '#222222',
-    textPrimary: '#FFFFFF', textSecondary: '#A0A0A0', textMuted: '#666666', textAccent: '#DC143C',
-    success: '#4CAF50', warning: '#FF9800', error: '#F44336', info: '#2196F3',
-    starGold: '#FFD700', starEmpty: '#444444', gemGold: '#FFD700', gemDiamond: '#4FC3F7',
-    evolutionGlow: '#FFD54F', evolutionFlash: '#FFFFFF',
-    streakFlame: '#FF6B35', streakFlameWarm: '#FF9800', streakFlameMedium: '#FF6B00', streakFlameHot: '#FF4500',
-    feedbackPerfect: '#00E676', feedbackGood: '#69F0AE', feedbackOk: '#FFD740',
-    feedbackEarly: '#40C4FF', feedbackLate: '#FFAB40', feedbackMiss: '#FF5252', feedbackDefault: '#757575',
-    comboGold: '#FFD700',
-  },
-  GRADIENTS: { dark: ['#141414', '#0A0A0A'], gold: ['#FFD700', '#FFA500'], heroGlow: ['#2A0A0A', '#1A0A0A', '#0A0A0A'], cardWarm: ['#1C1C1C', '#181818'], header: ['#1C1C1C', '#0A0A0A'], crimson: ['#DC143C', '#8B0000'], lavaLamp: { duration: 8000, palettes: [['#1A0000', '#0A0A0A', '#0A0A0A']] } },
-  NEON: { crimson: '#DC143C', purple: '#9B59B6', blue: '#4FC3F7', gold: '#FFD700', green: '#2ECC71', orange: '#FF8C00' },
-  GLOW: { crimson: 'rgba(220, 20, 60, 0.3)', gold: 'rgba(255, 215, 0, 0.3)', dark: 'rgba(28, 28, 28, 0.3)', success: 'rgba(76, 175, 80, 0.3)' },
-  glowColor: (_hex: string, opacity = 0.3) => `rgba(0, 0, 0, ${opacity})`,
-  TYPOGRAPHY: {
-    display: { lg: { fontSize: 36, lineHeight: 44, fontWeight: '800' }, md: { fontSize: 28, lineHeight: 36, fontWeight: '700' }, sm: { fontSize: 24, lineHeight: 32, fontWeight: '700' } },
-    heading: { lg: { fontSize: 20, lineHeight: 28, fontWeight: '700' }, md: { fontSize: 18, lineHeight: 26, fontWeight: '600' }, sm: { fontSize: 16, lineHeight: 24, fontWeight: '600' } },
-    body: { lg: { fontSize: 16, lineHeight: 24, fontWeight: '400' }, md: { fontSize: 14, lineHeight: 22, fontWeight: '400' }, sm: { fontSize: 13, lineHeight: 20, fontWeight: '400' } },
-    caption: { lg: { fontSize: 12, lineHeight: 18, fontWeight: '400' }, md: { fontSize: 11, lineHeight: 16, fontWeight: '400' }, sm: { fontSize: 10, lineHeight: 14, fontWeight: '400' } },
-    button: { lg: { fontSize: 16, lineHeight: 24, fontWeight: '600' }, md: { fontSize: 14, lineHeight: 22, fontWeight: '600' }, sm: { fontSize: 12, lineHeight: 18, fontWeight: '600' } },
-    special: { score: { fontSize: 48, lineHeight: 56, fontWeight: '800' }, badge: { fontSize: 11, lineHeight: 14, fontWeight: '700', textTransform: 'uppercase' } },
-  },
+  ...jest.requireActual('../../theme/tokens'),
   SHADOWS: { sm: {}, md: {}, lg: {} },
   shadowGlow: () => ({}),
-  SPACING: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 },
-  BORDER_RADIUS: { sm: 8, md: 12, lg: 16, xl: 24, full: 9999 },
-  ANIMATION_CONFIG: { spring: { damping: 15, stiffness: 150 }, duration: { instant: 100, fast: 200, normal: 300, slow: 500 } },
-  ARENA: {
-    rank: {
-      novice: '#A0AEC0', apprentice: '#CD7F32', performer: '#C0C0C0',
-      virtuoso: '#FFD700', maestro: '#4FC3F7', prodigy: '#BA68C8',
-      luminary: '#F06292', legend: '#FF6E40', grandmaster: '#B9F2FF',
-    },
-    cardBackground: '#12101A', cardBorder: '#2A2640', divisionBadge: '#1E1B2E',
-    promotionGlow: 'rgba(76, 175, 80, 0.25)', demotionGlow: 'rgba(244, 67, 54, 0.25)',
-    promotionText: '#66BB6A', demotionText: '#EF5350',
-    seasonAccent: '#7C4DFF', seasonGradient: ['#1A0A3E', '#0E0B1A'],
-    feedReaction: '#2A2640', feedHighlight: 'rgba(124, 77, 255, 0.12)',
-    passFree: '#A0AEC0', passPremium: '#FFD700', passLocked: '#444444',
-    guildAccent: '#26C6A0', guildWar: '#FF6E40',
-  },
-  SCREEN_ACCENTS: {
-    home: { from: '#2D1B4E', to: '#0E0B1A' }, social: { from: '#0D2B3E', to: '#0E0B1A' },
-    learn: { from: '#0D2E1A', to: '#0E0B1A' }, songs: { from: '#2E2000', to: '#0E0B1A' },
-    catStudio: { from: '#2E0D2B', to: '#0E0B1A' }, exercise: { from: '#1A0A2E', to: '#0A0A14' },
-  },
-  RARITY: {
-    common: { borderColor: '#555', glowColor: 'rgba(100,100,100,0.2)', label: 'Common', gradient: ['#3A3A3A', '#2A2A2A'] },
-    rare: { borderColor: '#4FC3F7', glowColor: 'rgba(79,195,247,0.3)', label: 'Rare', gradient: ['#1A3A5C', '#0D2137'] },
-    epic: { borderColor: '#CE93D8', glowColor: 'rgba(206,147,216,0.4)', label: 'Epic', gradient: ['#3A1A4A', '#1F0A2A'] },
-    legendary: { borderColor: '#FFD700', glowColor: 'rgba(255,215,0,0.5)', label: 'Legendary', gradient: ['#4A3A0A', '#2A1F00'] },
-  },
 }));
 
 const mockNavigate = jest.fn();
