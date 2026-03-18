@@ -255,6 +255,10 @@ function GuildDiscovery(): React.JSX.Element {
   const handleJoin = useCallback(
     async (guild: Guild) => {
       if (!user?.uid) return;
+      if (user.isAnonymous) {
+        Alert.alert('Sign In Required', 'You need to sign in with an account to join a guild.', [{ text: 'OK' }]);
+        return;
+      }
       setIsJoining(true);
       try {
         await guildService.joinGuild(guild.id, {
@@ -279,6 +283,10 @@ function GuildDiscovery(): React.JSX.Element {
 
   const handleCreate = useCallback(async () => {
     if (!user?.uid || !newName.trim()) return;
+    if (user.isAnonymous) {
+      Alert.alert('Sign In Required', 'You need to sign in with an account to create a guild.', [{ text: 'OK' }]);
+      return;
+    }
     setIsCreating(true);
     try {
       const guild = await guildService.createGuild(

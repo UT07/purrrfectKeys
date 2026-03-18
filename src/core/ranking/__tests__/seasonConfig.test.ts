@@ -119,17 +119,14 @@ describe('generateBattlePassTiers', () => {
     }
   });
 
-  it('has free rewards every 3 tiers', () => {
+  it('every tier has a free reward', () => {
     const freeRewardTiers = tiers.filter(t => t.freeReward !== null);
-    expect(freeRewardTiers.length).toBe(10); // 30 / 3
-    for (const t of freeRewardTiers) {
-      expect(t.tier % 3).toBe(0);
-    }
+    expect(freeRewardTiers.length).toBe(30);
   });
 
-  it('has premium rewards every 2 tiers', () => {
+  it('most tiers have premium rewards', () => {
     const premiumRewardTiers = tiers.filter(t => t.premiumReward !== null);
-    expect(premiumRewardTiers.length).toBe(15); // 30 / 2
+    expect(premiumRewardTiers.length).toBe(22);
   });
 
   it('tier 30 premium reward is season champion title', () => {

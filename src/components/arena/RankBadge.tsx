@@ -90,7 +90,7 @@ interface RankBadgeProps {
 
 export function RankBadge({ tier, division, size = 'md' }: RankBadgeProps): React.JSX.Element {
   const config = SIZE_CONFIGS[size];
-  const color = TIER_COLORS[tier];
+  const color = TIER_COLORS[tier] ?? TIER_COLORS.novice;
   const initial = TIER_INITIALS[tier];
   const isGrandmaster = tier === 'grandmaster';
   const showDivision = division != null && size !== 'sm';

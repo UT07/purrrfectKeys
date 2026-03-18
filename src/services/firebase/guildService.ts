@@ -21,7 +21,6 @@ import {
   increment,
   runTransaction,
   writeBatch,
-  collectionGroup,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { Guild, GuildMember, GuildWar, RankedTier } from '../../stores/types';
@@ -304,18 +303,19 @@ export async function addGuildMemberXp(
 
 /**
  * Find which guild a user belongs to (if any).
+ *
+ * Looks up the guildId stored on the user's profile document.
+ * Falls back to null if not found.
+ *
+ * TODO: Write guildId to user profile doc on join/create, clear on leave.
+ * For now, the guildStore persists locally and this is a server-side fallback.
  */
 export async function getUserGuild(uid: string): Promise<Guild | null> {
-  // Use collectionGroup query on 'members' to find the user's guild in 1 read
-  const membersGroup = collectionGroup(db, 'members');
-  const q = query(membersGroup, where('uid', '==', uid), limit(1));
-  const snap = await getDocs(q);
+  // Check user profile for guildId
+  const userDoc = await getDoc(doc(db, 'users', uid));
+  if (!userDoc.exists()) return null;
 
-  if (snap.empty) return null;
-
-  // The member doc path is guilds/{guildId}/members/{uid} — extract guildId
-  const memberDoc = snap.docs[0];
-  const guildId = memberDoc.ref.parent.parent?.id;
+  const guildId = userDoc.data()?.guildId as string | undefined;
   if (!guildId) return null;
 
   return getGuild(guildId);

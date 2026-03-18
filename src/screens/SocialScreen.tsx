@@ -91,7 +91,7 @@ function LeagueCard(): React.JSX.Element {
   const [joinError, setJoinError] = useState<string | null>(null);
 
   const tier = membership?.tier ?? 'novice';
-  const config = LEAGUE_TIER_CONFIG[tier];
+  const config = LEAGUE_TIER_CONFIG[tier] ?? LEAGUE_TIER_CONFIG.novice;
 
   const handleViewLeaderboard = useCallback(() => {
     navigation.navigate('Leaderboard');

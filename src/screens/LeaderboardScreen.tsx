@@ -301,7 +301,7 @@ export function LeaderboardScreen(): React.JSX.Element {
   }, [membership?.leagueId, setStandings, setLoadingStandings]);
 
   const tier = membership?.tier ?? 'novice';
-  const config = LEAGUE_TIER_CONFIG[tier];
+  const config = LEAGUE_TIER_CONFIG[tier] ?? LEAGUE_TIER_CONFIG.novice;
   const totalMembers = standings.length || membership?.totalMembers || 0;
 
   // Compute current user's rank from standings

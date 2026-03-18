@@ -32,6 +32,14 @@
         { "fieldPath": "weekStart", "order": "ASCENDING" },
         { "fieldPath": "tier", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "guilds",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "joinPolicy", "order": "ASCENDING" },
+        { "fieldPath": "memberCount", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

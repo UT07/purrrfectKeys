@@ -18,7 +18,7 @@ import { getRankConfig } from '../../core/ranking/rankThresholds';
 
 export function RankHeroCard(): React.JSX.Element {
   const rating = useRankStore((s) => s.rating);
-  const config = LEAGUE_TIER_CONFIG[rating.tier];
+  const config = LEAGUE_TIER_CONFIG[rating.tier] ?? LEAGUE_TIER_CONFIG.novice;
 
   // Progress toward next tier (0-1)
   const progress = useMemo(() => {

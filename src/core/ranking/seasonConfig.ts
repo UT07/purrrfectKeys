@@ -133,29 +133,36 @@ export function generateBattlePassTiers(): BattlePassTier[] {
 }
 
 function getBattlePassFreeReward(tier: number): BattlePassReward | null {
-  // Free rewards every 3 tiers
-  if (tier % 3 !== 0) return null;
-
-  if (tier % 6 === 0) {
-    return { type: 'gems', amount: 25, label: `${25} Gems` };
+  // Every tier has a free reward to keep the track feeling full
+  if (tier % 5 === 0) {
+    return { type: 'gems', amount: 25, label: '25 Gems' };
   }
-  return { type: 'gems', amount: 10, label: `${10} Gems` };
+  if (tier % 3 === 0) {
+    return { type: 'gems', amount: 15, label: '15 Gems' };
+  }
+  if (tier % 2 === 0) {
+    return { type: 'gems', amount: 10, label: '10 Gems' };
+  }
+  return { type: 'gems', amount: 5, label: '5 Gems' };
 }
 
 function getBattlePassPremiumReward(tier: number): BattlePassReward | null {
-  // Premium rewards every 2 tiers
-  if (tier % 2 !== 0) return null;
-
   if (tier === BATTLE_PASS_MAX_TIER) {
     return { type: 'title', itemId: 'season-champion', label: 'Season Champion Title' };
   }
   if (tier % 10 === 0) {
     return { type: 'accessory', itemId: `bp-accessory-t${tier}`, label: `Tier ${tier} Accessory` };
   }
-  if (tier % 4 === 0) {
-    return { type: 'gems', amount: 30, label: `${30} Gems` };
+  if (tier % 5 === 0) {
+    return { type: 'gems', amount: 50, label: '50 Gems' };
   }
-  return { type: 'xp_boost', amount: 1.5, label: '1.5x XP Boost' };
+  if (tier % 3 === 0) {
+    return { type: 'gems', amount: 30, label: '30 Gems' };
+  }
+  if (tier % 2 === 0) {
+    return { type: 'xp_boost', amount: 1.5, label: '1.5x XP Boost' };
+  }
+  return null;
 }
 
 // ─────────────────────────────────────────────────

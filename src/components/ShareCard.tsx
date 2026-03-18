@@ -82,7 +82,7 @@ export function ShareCard({ data, rankTier, rankDivision }: ShareCardProps): Rea
 
   const iconName = CARD_ICONS[data.type];
   const iconColor = CARD_ICON_COLORS[data.type];
-  const tierAccentColor = rankTier ? TIER_COLORS[rankTier] : undefined;
+  const tierAccentColor = rankTier ? (TIER_COLORS[rankTier] ?? TIER_COLORS.novice) : undefined;
 
   return (
     <View style={styles.container}>

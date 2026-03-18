@@ -211,8 +211,8 @@ export function RankChangeOverlay({
 
   if (!visible) return null;
 
-  const fromColor = TIER_COLORS[fromTier];
-  const toColor = TIER_COLORS[toTier];
+  const fromColor = TIER_COLORS[fromTier] ?? TIER_COLORS.novice;
+  const toColor = TIER_COLORS[toTier] ?? TIER_COLORS.novice;
 
   return (
     <Pressable
