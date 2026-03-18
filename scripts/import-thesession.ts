@@ -103,9 +103,10 @@ function tuneTypeToMeter(type: string): string {
 
 function tuneTypeToDefaultLength(type: string): string {
   switch (type) {
+    case 'waltz': return '1/4'; // 3/4 time: default note length is quarter
     case 'jig':
     case 'slip jig': return '1/8';
-    default: return '1/8';
+    default: return '1/8'; // reel, hornpipe, polka
   }
 }
 
