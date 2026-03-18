@@ -67,7 +67,7 @@ service cloud.firestore {
       match /gamification/{docId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) &&
-                                 docId in ['data', 'catEvolution', 'gems'];
+                                 docId in ['data', 'catEvolution', 'gems', 'learnerProfile', 'achievements'];
         // Allow owner to delete own gamification data (GDPR account deletion)
         allow delete: if isOwner(userId);
       }
@@ -168,6 +168,33 @@ service cloud.firestore {
       }
 
       // ====================================================================
+      // Rich Feed (users/{uid}/richFeed/{itemId})
+      // ====================================================================
+
+      match /richFeed/{itemId} {
+        // Owner and confirmed friends can read the rich feed
+        allow read: if isOwner(userId) ||
+          (isAuthenticated() &&
+           exists(/databases/$(database)/documents/users/$(userId)/friends/$(request.auth.uid)));
+        // Any authenticated non-anonymous user can post (feedService writes to friend feeds)
+        allow create: if isAuthenticated() && isNotAnonymous();
+        allow update: if false;
+        allow delete: if isOwner(userId);
+      }
+
+      // ====================================================================
+      // Referrals (users/{uid}/referrals/{inviteeUid})
+      // ====================================================================
+
+      match /referrals/{inviteeUid} {
+        allow read: if isOwner(userId);
+        // Any authenticated non-anonymous user can create (referral claiming)
+        allow create: if isAuthenticated() && isNotAnonymous();
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // ====================================================================
       // Season Rewards (users/{uid}/seasonRewards/{rewardId})
       // Ranked season rewards — written by Cloud Functions, claimed by owner.
       // ====================================================================
@@ -225,6 +252,21 @@ service cloud.firestore {
       // No updates from client
       allow update: if false;
       // Owner can delete their code (account cleanup)
+      allow delete: if isAuthenticated() &&
+                       resource.data.uid == request.auth.uid;
+    }
+
+    // ========================================================================
+    // Invite Codes (inviteCodes/{code}) — Referral system
+    // ========================================================================
+
+    match /inviteCodes/{code} {
+      // Any authenticated user can look up an invite code
+      allow read: if isAuthenticated();
+      // Non-anonymous users can register their invite code (uid must match)
+      allow create: if isAuthenticated() && isNotAnonymous() &&
+                       request.resource.data.uid == request.auth.uid;
+      allow update: if false;
       allow delete: if isAuthenticated() &&
                        resource.data.uid == request.auth.uid;
     }

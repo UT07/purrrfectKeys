@@ -620,6 +620,9 @@ const USER_SUBCOLLECTIONS = [
   'activity',
   'songMastery',
   'songRequests',
+  'seasonRewards',
+  'richFeed',
+  'referrals',
 ] as const;
 
 /**

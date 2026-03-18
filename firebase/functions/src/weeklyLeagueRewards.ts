@@ -160,6 +160,9 @@ export const weeklyLeagueRewards = onSchedule(
           const userRef = db.collection('users').doc(uid);
           const currentMmr = userMmrMap.get(uid) ?? 500;
           batch.update(userRef, {
+            // Write to both paths: rating.mmr (current client format) and
+            // top-level mmr (legacy) to handle both data shapes
+            'rating.mmr': softResetMMR(currentMmr),
             mmr: softResetMMR(currentMmr),
             lastSeasonRank: rank,
             lastSeasonTier: tier,
