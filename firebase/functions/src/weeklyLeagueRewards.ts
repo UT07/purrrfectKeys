@@ -84,6 +84,15 @@ export const weeklyLeagueRewards = onSchedule(
 
     logger.info(`[weeklyLeagueRewards] Processing leagues for week ${weekStart}`);
 
+    // Idempotency guard: skip if already processed this week
+    const guardRef = db.collection('leagueRewardsProcessed').doc(weekStart);
+    const guardDoc = await guardRef.get();
+    if (guardDoc.exists) {
+      logger.info(`[weeklyLeagueRewards] Already processed week ${weekStart} — skipping`);
+      return;
+    }
+    await guardRef.set({ processedAt: admin.firestore.FieldValue.serverTimestamp() });
+
     // Find all leagues for this week
     const leaguesSnap = await db
       .collection('leagues')

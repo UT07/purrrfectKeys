@@ -513,7 +513,14 @@ async function attemptGeneration(
 ): Promise<AIExercise | null> {
   const result = await model.generateContent(prompt);
   const text = result.response.text();
-  const parsed: unknown = JSON.parse(text);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    logger.warn('Gemini returned invalid JSON for exercise generation');
+    return null;
+  }
 
   if (validateAIExercise(parsed, allowedMidi)) {
     return parsed;
