@@ -241,13 +241,19 @@ export function createDebouncedSave<T>(
   key: string,
   delayMs: number = 1000
 ): (state: T) => void {
+  // Keep a reference to the latest state so the timer always writes
+  // the most recent value, not the stale one captured at the first call.
+  let latestState: T;
+
   return (state: T) => {
+    latestState = state;
+
     const existing = pendingSaves.get(key);
     if (existing) {
       clearTimeout(existing.timerId);
     }
 
-    const execute = () => PersistenceManager.saveState(key, state);
+    const execute = () => PersistenceManager.saveState(key, latestState);
     const timerId = setTimeout(() => {
       pendingSaves.delete(key);
       execute().catch(err =>

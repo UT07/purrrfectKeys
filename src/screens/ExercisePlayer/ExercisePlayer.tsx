@@ -1290,7 +1290,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // --- Friend challenge creation ---
     if (challengeTarget) {
       const authUser = useAuthStore.getState().user;
-      if (authUser) {
+      if (authUser && authUser.uid !== challengeTarget.uid) {
+        // Deduct sender's gem stake upfront (if any)
+        const gemStake = challengeTarget.gemStake ?? 0;
+        let senderStakeDeducted = true;
+        if (gemStake > 0) {
+          senderStakeDeducted = useGemStore.getState().spendGems(
+            gemStake,
+            `challenge-stake-send-${authUser.uid}-${challengeTarget.uid}-${Date.now()}`,
+          );
+          if (!senderStakeDeducted) {
+            logger.warn('[ExercisePlayer] Sender could not afford gem stake — creating challenge without stake');
+          }
+        }
         const challengeDoc = {
           id: `challenge-${authUser.uid}-${challengeTarget.uid}-${Date.now()}`,
           fromUid: authUser.uid,
@@ -1305,6 +1317,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           status: 'pending' as const,
           createdAt: Date.now(),
           expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+          ...(senderStakeDeducted && gemStake > 0 ? { gemStake } : {}),
         };
         useSocialStore.getState().addChallenge(challengeDoc);
         createChallenge(challengeDoc).catch((err) => {

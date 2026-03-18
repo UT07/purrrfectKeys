@@ -67,79 +67,92 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
   pendingRankChange: null,
 
   updateAfterExercise: (score: number, exerciseTier: number, exerciseType: string) => {
-    const current = get().rating;
+    // Perform the entire read-modify-write atomically inside set() to prevent
+    // concurrent calls from overwriting each other's state
+    let prevTier: RankedTier | null = null;
+    let newTierValue: RankedTier | null = null;
+    let newDivisionValue = 0;
+    let newMmrValue = 0;
 
-    // Update recent scores (keep last 30)
-    const recentScores = [...current.recentScores, score].slice(-MAX_RECENT_SCORES);
+    set((state) => {
+      const current = state.rating;
+      prevTier = current.tier;
 
-    // Update exercise types (unique set)
-    const exerciseTypesCompleted = current.exerciseTypesCompleted.includes(exerciseType)
-      ? current.exerciseTypesCompleted
-      : [...current.exerciseTypesCompleted, exerciseType];
+      // Update recent scores (keep last 30)
+      const recentScores = [...current.recentScores, score].slice(-MAX_RECENT_SCORES);
 
-    // Recalculate MMR
-    const mmr = calculateMMR(recentScores, exerciseTier, exerciseTypesCompleted);
+      // Update exercise types (unique set)
+      const exerciseTypesCompleted = current.exerciseTypesCompleted.includes(exerciseType)
+        ? current.exerciseTypesCompleted
+        : [...current.exerciseTypesCompleted, exerciseType];
 
-    // Add RP
-    const rpGained = calculateRP(score, exerciseTier);
-    const rp = current.rp + rpGained;
+      // Recalculate MMR
+      const mmr = calculateMMR(recentScores, exerciseTier, exerciseTypesCompleted);
 
-    // Determine tier/division from new MMR
-    const newTier = tierFromMMR(mmr);
-    const division = divisionFromMMR(mmr, newTier);
+      // Add RP
+      const rpGained = calculateRP(score, exerciseTier);
+      const rp = current.rp + rpGained;
 
-    // Peak tracking
-    const peakMmr = Math.max(mmr, current.peakMmr);
-    const peakTier = mmr >= current.peakMmr ? newTier : current.peakTier;
+      // Determine tier/division from new MMR
+      const newTier = tierFromMMR(mmr);
+      const division = divisionFromMMR(mmr, newTier);
 
-    // Promotion logic
-    let promotionSeries = current.promotionSeries;
-    let tier: RankedTier = current.tier;
+      // Peak tracking
+      const peakMmr = Math.max(mmr, current.peakMmr);
+      const peakTier = mmr >= current.peakMmr ? newTier : current.peakTier;
 
-    if (promotionSeries?.active) {
-      // In active promotion series — record result
-      const passed = score >= 70;
-      const result = recordPromotionResult(promotionSeries, passed);
-      promotionSeries = result.series;
-      if (result.promoted) {
-        tier = newTier; // Confirm promotion
-      } else if (result.failed) {
-        // Stay at current tier
-        promotionSeries = null;
+      // Promotion logic
+      let promotionSeries = current.promotionSeries;
+      let tier: RankedTier = current.tier;
+
+      if (promotionSeries?.active) {
+        const passed = score >= 70;
+        const result = recordPromotionResult(promotionSeries, passed);
+        promotionSeries = result.series;
+        if (result.promoted) {
+          tier = newTier;
+        } else if (result.failed) {
+          promotionSeries = null;
+        }
+      } else if (shouldStartPromotion(current.tier, newTier, promotionSeries)) {
+        promotionSeries = createPromotionSeries();
+      } else {
+        tier = newTier;
       }
-    } else if (shouldStartPromotion(current.tier, newTier, promotionSeries)) {
-      // Start new promotion series
-      promotionSeries = createPromotionSeries();
-      // Don't change tier yet — wait for series completion
-    } else {
-      tier = newTier;
-    }
 
-    // Demotion logic
-    let demotionGrace = updateDemotionGrace(mmr, tier, current.demotionGrace);
-    if (shouldDemote(mmr, tier, demotionGrace)) {
-      tier = getTierAfterDemotion(tier);
-      demotionGrace = getDemotionGraceInitial();
-    }
+      // Demotion logic
+      let demotionGrace = updateDemotionGrace(mmr, tier, current.demotionGrace);
+      if (shouldDemote(mmr, tier, demotionGrace)) {
+        tier = getTierAfterDemotion(tier);
+        demotionGrace = getDemotionGraceInitial();
+      }
 
-    const updated: PlayerRating = {
-      mmr,
-      tier,
-      division,
-      rp,
-      peakMmr,
-      peakTier,
-      recentScores,
-      exerciseTypesCompleted,
-      promotionSeries,
-      demotionGrace,
-    };
+      const updated: PlayerRating = {
+        mmr,
+        tier,
+        division,
+        rp,
+        peakMmr,
+        peakTier,
+        recentScores,
+        exerciseTypesCompleted,
+        promotionSeries,
+        demotionGrace,
+      };
 
-    set({ rating: updated });
-    debouncedSave({ rating: updated });
+      newTierValue = tier;
+      newDivisionValue = division;
+      newMmrValue = mmr;
+
+      return { rating: updated };
+    });
+
+    debouncedSave({ rating: get().rating });
 
     // Detect tier change — set pending rank change for overlay + post to feed
-    if (tier !== current.tier) {
+    const tier = newTierValue!;
+    const current = { tier: prevTier! } as { tier: RankedTier; division: number };
+    if (tier !== prevTier) {
       const tierIdx = (t: RankedTier) => RANK_CONFIGS.findIndex((r) => r.tier === t);
       const isPromotion = tierIdx(tier) > tierIdx(current.tier);
 
@@ -166,14 +179,14 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
               displayName: user.displayName ?? 'Player',
               catId,
               rankTier: tier,
-              rankDivision: division,
+              rankDivision: newDivisionValue,
             },
             {
-              previousTier: current.tier,
+              previousTier: prevTier!,
               newTier: tier,
-              previousDivision: current.division,
-              newDivision: division,
-              mmr,
+              previousDivision: 0,
+              newDivision: newDivisionValue,
+              mmr: newMmrValue,
             },
             { isEngagementTrigger: isPromotion },
           );
