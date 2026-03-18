@@ -189,23 +189,23 @@ describe('Evolution Flow Integration', () => {
       expect(state.ownedCats.length).toBe(1);
     });
 
-    it('should evolve from baby to teen at 500 XP', () => {
+    it('should evolve from baby to teen at 2000 XP', () => {
       const store = useCatEvolutionStore.getState();
       store.initializeStarterCat('mini-meowww');
 
       // Add XP in increments to simulate earning over time
-      let evolved = store.addEvolutionXp('mini-meowww', 200);
+      let evolved = store.addEvolutionXp('mini-meowww', 500);
       expect(evolved).toBeNull(); // No evolution yet
 
-      evolved = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 200);
-      expect(evolved).toBeNull(); // Still baby at 400
+      evolved = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 1000);
+      expect(evolved).toBeNull(); // Still baby at 1500
 
-      evolved = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 100);
-      expect(evolved).toBe('teen'); // Evolved at 500!
+      evolved = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500);
+      expect(evolved).toBe('teen'); // Evolved at 2000!
 
       const state = useCatEvolutionStore.getState();
       expect(state.evolutionData['mini-meowww'].currentStage).toBe('teen');
-      expect(state.evolutionData['mini-meowww'].xpAccumulated).toBe(500);
+      expect(state.evolutionData['mini-meowww'].xpAccumulated).toBe(2000);
       expect(state.evolutionData['mini-meowww'].evolvedAt.teen).not.toBeNull();
     });
 
@@ -213,21 +213,21 @@ describe('Evolution Flow Integration', () => {
       const store = useCatEvolutionStore.getState();
       store.initializeStarterCat('mini-meowww');
 
-      // Baby to teen (500 XP)
-      const teenResult = store.addEvolutionXp('mini-meowww', 500);
+      // Baby to teen (2000 XP)
+      const teenResult = store.addEvolutionXp('mini-meowww', 2000);
       expect(teenResult).toBe('teen');
 
-      // Teen to adult (2000 XP total)
-      const adultResult = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 1500);
+      // Teen to adult (8000 XP total)
+      const adultResult = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 6000);
       expect(adultResult).toBe('adult');
 
-      // Adult to master (5000 XP total)
-      const masterResult = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 3000);
+      // Adult to master (25000 XP total)
+      const masterResult = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 17000);
       expect(masterResult).toBe('master');
 
       const state = useCatEvolutionStore.getState();
       expect(state.evolutionData['mini-meowww'].currentStage).toBe('master');
-      expect(state.evolutionData['mini-meowww'].xpAccumulated).toBe(5000);
+      expect(state.evolutionData['mini-meowww'].xpAccumulated).toBe(25000);
       expect(state.evolutionData['mini-meowww'].evolvedAt.baby).not.toBeNull();
       expect(state.evolutionData['mini-meowww'].evolvedAt.teen).not.toBeNull();
       expect(state.evolutionData['mini-meowww'].evolvedAt.adult).not.toBeNull();
@@ -252,7 +252,7 @@ describe('Evolution Flow Integration', () => {
       store.initializeStarterCat('mini-meowww');
 
       // Evolve to teen
-      store.addEvolutionXp('mini-meowww', 500);
+      store.addEvolutionXp('mini-meowww', 2000);
 
       const state = useCatEvolutionStore.getState();
       const abilities = state.evolutionData['mini-meowww'].abilitiesUnlocked;
@@ -268,7 +268,7 @@ describe('Evolution Flow Integration', () => {
       store.initializeStarterCat('mini-meowww');
 
       // Evolve to master in one jump
-      store.addEvolutionXp('mini-meowww', 5000);
+      store.addEvolutionXp('mini-meowww', 25000);
 
       const state = useCatEvolutionStore.getState();
       const abilities = state.evolutionData['mini-meowww'].abilitiesUnlocked;
@@ -282,7 +282,7 @@ describe('Evolution Flow Integration', () => {
     it('should return active abilities for selected cat', () => {
       const store = useCatEvolutionStore.getState();
       store.initializeStarterCat('mini-meowww');
-      store.addEvolutionXp('mini-meowww', 500); // evolve to teen
+      store.addEvolutionXp('mini-meowww', 2000); // evolve to teen
 
       const abilities = useCatEvolutionStore.getState().getActiveAbilities();
       expect(abilities).toContain('mm-note-preview');
@@ -321,7 +321,7 @@ describe('Evolution Flow Integration', () => {
       useCatEvolutionStore.getState().unlockCat('jazzy');
 
       // Evolve mini-meowww to teen
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500);
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
 
       // Jazzy should still be baby
       const state = useCatEvolutionStore.getState();
@@ -455,24 +455,24 @@ describe('Evolution Flow Integration', () => {
       expect(stageFromXp(0)).toBe('baby');
     });
 
-    it('should return baby for 499 XP', () => {
-      expect(stageFromXp(499)).toBe('baby');
+    it('should return baby for 1999 XP', () => {
+      expect(stageFromXp(1999)).toBe('baby');
     });
 
-    it('should return teen for 500 XP', () => {
-      expect(stageFromXp(500)).toBe('teen');
+    it('should return teen for 2000 XP', () => {
+      expect(stageFromXp(2000)).toBe('teen');
     });
 
-    it('should return adult for 2000 XP', () => {
-      expect(stageFromXp(2000)).toBe('adult');
+    it('should return adult for 8000 XP', () => {
+      expect(stageFromXp(8000)).toBe('adult');
     });
 
-    it('should return master for 5000 XP', () => {
-      expect(stageFromXp(5000)).toBe('master');
+    it('should return master for 25000 XP', () => {
+      expect(stageFromXp(25000)).toBe('master');
     });
 
-    it('should return master for 10000 XP', () => {
-      expect(stageFromXp(10000)).toBe('master');
+    it('should return master for 50000 XP', () => {
+      expect(stageFromXp(50000)).toBe('master');
     });
   });
 
@@ -481,42 +481,42 @@ describe('Evolution Flow Integration', () => {
       const result = xpToNextStage(0);
       expect(result).not.toBeNull();
       expect(result!.nextStage).toBe('teen');
-      expect(result!.xpNeeded).toBe(500);
+      expect(result!.xpNeeded).toBe(2000);
     });
 
     it('should return adult info for teen stage', () => {
-      const result = xpToNextStage(500);
+      const result = xpToNextStage(2000);
       expect(result).not.toBeNull();
       expect(result!.nextStage).toBe('adult');
-      expect(result!.xpNeeded).toBe(1500);
+      expect(result!.xpNeeded).toBe(6000);
     });
 
     it('should return master info for adult stage', () => {
-      const result = xpToNextStage(2000);
+      const result = xpToNextStage(8000);
       expect(result).not.toBeNull();
       expect(result!.nextStage).toBe('master');
-      expect(result!.xpNeeded).toBe(3000);
+      expect(result!.xpNeeded).toBe(17000);
     });
 
     it('should return null for master stage', () => {
-      const result = xpToNextStage(5000);
+      const result = xpToNextStage(25000);
       expect(result).toBeNull();
     });
 
     it('should return partial XP needed mid-stage', () => {
-      const result = xpToNextStage(250);
+      const result = xpToNextStage(1000);
       expect(result).not.toBeNull();
       expect(result!.nextStage).toBe('teen');
-      expect(result!.xpNeeded).toBe(250);
+      expect(result!.xpNeeded).toBe(1000);
     });
   });
 
   describe('EVOLUTION_XP_THRESHOLDS', () => {
     it('should have correct threshold values', () => {
       expect(EVOLUTION_XP_THRESHOLDS.baby).toBe(0);
-      expect(EVOLUTION_XP_THRESHOLDS.teen).toBe(500);
-      expect(EVOLUTION_XP_THRESHOLDS.adult).toBe(2000);
-      expect(EVOLUTION_XP_THRESHOLDS.master).toBe(5000);
+      expect(EVOLUTION_XP_THRESHOLDS.teen).toBe(2000);
+      expect(EVOLUTION_XP_THRESHOLDS.adult).toBe(8000);
+      expect(EVOLUTION_XP_THRESHOLDS.master).toBe(25000);
     });
   });
 });
