@@ -178,7 +178,7 @@ function calculateBreakdownFromNotes(
   const completeness = (playedCount / totalExpected) * 100;
 
   const extraCount = noteScores.filter((n) => n.isExtraNote).length;
-  const extraNotes = Math.max(0, 100 - extraCount * 10);
+  const extraNotes = extraCount === 0 ? 100 : Math.round(100 / (1 + extraCount * 0.5));
 
   const duration =
     expectedNoteScores.length > 0

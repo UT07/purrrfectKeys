@@ -207,7 +207,7 @@ function calculateBreakdown(
       accuracy: 0,
       timing: 0,
       completeness: 0,
-      extraNotes: noteScores.length === 0 ? 0 : Math.max(0, 100 - noteScores.filter((n) => n.isExtraNote).length * 10),
+      extraNotes: noteScores.length === 0 ? 0 : Math.round(100 / (1 + noteScores.filter((n) => n.isExtraNote).length * 0.5)),
       duration: 0,
     };
   }
@@ -228,9 +228,10 @@ function calculateBreakdown(
   const playedCount = noteScores.filter((n) => !n.isMissedNote && !n.isExtraNote).length;
   const completeness = (playedCount / totalExpected) * 100;
 
-  // Extra notes penalty: 0-100 based on number of extra notes
+  // Extra notes penalty: smooth decay so additional extra notes always increase penalty
+  // Formula: 100 / (1 + extraCount * 0.5) — ranges from 100 (0 extras) to ~7 (25 extras)
   const extraCount = noteScores.filter((n) => n.isExtraNote).length;
-  const extraNotes = Math.max(0, 100 - extraCount * 10);
+  const extraNotes = extraCount === 0 ? 100 : Math.round(100 / (1 + extraCount * 0.5));
 
   // Duration: average duration score across ALL expected notes (missed = 0)
   const duration =

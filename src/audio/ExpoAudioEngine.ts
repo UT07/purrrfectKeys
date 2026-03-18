@@ -466,6 +466,19 @@ export class ExpoAudioEngine implements IAudioEngine {
       this.metronomeSound = null;
     }
     this.initialized = false;
+
+    // Clean up cached WAV files to prevent cache bloat
+    try {
+      const FileSystem = require('expo-file-system');
+      const cacheDir = FileSystem.cacheDirectory;
+      if (cacheDir) {
+        FileSystem.deleteAsync(cacheDir + 'piano-tone.wav', { idempotent: true }).catch(() => {});
+        FileSystem.deleteAsync(cacheDir + 'metronome-click.wav', { idempotent: true }).catch(() => {});
+      }
+    } catch {
+      // expo-file-system may not be available
+    }
+
     logger.log('[ExpoAudioEngine] Disposed');
   }
 

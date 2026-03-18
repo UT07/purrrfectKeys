@@ -465,9 +465,13 @@ function generateLesson(
     const categories = [...byCategory.keys()].sort();
     const recentCount = _recentSet.size;
     const offset = recentCount % categories.length;
-    const selectedCategories = categories.slice(offset, offset + 3)
-      .concat(categories.slice(0, Math.max(0, 3 - (categories.length - offset))));
-    const uniqueCategories = [...new Set(selectedCategories)].slice(0, 3);
+    // Circular selection: pick 3 categories starting from offset, wrapping around
+    const pickCount = Math.min(3, categories.length);
+    const selectedCategories = Array.from(
+      { length: pickCount },
+      (_, i) => categories[(offset + i) % categories.length],
+    );
+    const uniqueCategories = [...new Set(selectedCategories)];
 
     for (const cat of uniqueCategories) {
       const skills = byCategory.get(cat) ?? [];
