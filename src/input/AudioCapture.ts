@@ -42,6 +42,7 @@ export class AudioCapture {
   private callbacks: Set<AudioBufferCallback> = new Set();
   private isCapturing = false;
   private isInitialized = false;
+  private ownedBuffer: Float32Array | null = null;
   private bufferCount = 0;
   private bufferWatchdogTimer: ReturnType<typeof setTimeout> | null = null;
   /** Actual sample rate detected from the first audio buffer (may differ from requested) */
@@ -76,14 +77,15 @@ export class AudioCapture {
       (event) => {
       if (!this.isCapturing) return;
 
-      // getChannelData() may return a shared/reused native buffer that gets
-      // overwritten by the audio system before callbacks finish processing.
-      // We must create an owned copy. Using .slice() instead of a pre-allocated
-      // buffer + subarray() view — a subarray is still a view into the same
-      // ArrayBuffer, so async consumers would see corrupted data on the next
-      // callback cycle.
+      // getChannelData() returns a shared/reused native buffer that gets
+      // overwritten on the next callback. Copy into a pre-allocated owned buffer
+      // to avoid GC pressure from allocating on every audio callback (~43/sec).
       const rawSamples = event.buffer.getChannelData(0);
-      const samples = new Float32Array(rawSamples);
+      if (!this.ownedBuffer || this.ownedBuffer.length !== rawSamples.length) {
+        this.ownedBuffer = new Float32Array(rawSamples.length);
+      }
+      this.ownedBuffer.set(rawSamples);
+      const samples = this.ownedBuffer;
       // event.when may be undefined in some react-native-audio-api versions;
       // fall back to Date.now() for a reasonable timestamp
       const timestamp = typeof event.when === 'number' ? event.when * 1000 : Date.now();

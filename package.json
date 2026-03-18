@@ -49,7 +49,7 @@
     "@react-navigation/native": "^7.0.0",
     "@react-navigation/native-stack": "^7.14.5",
     "@sentry/react-native": "~6.14.0",
-    "@shopify/react-native-skia": "^2.5.2",
+    "@shopify/react-native-skia": "v2.0.0-next.4",
     "abcjs": "^6.6.2",
     "expo": "~53",
     "expo-apple-authentication": "~7.2.4",

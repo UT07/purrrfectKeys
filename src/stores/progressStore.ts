@@ -343,7 +343,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     const effectiveXp = Math.round(xpEarned * xpMultiplier);
     const oldLevel = get().level;
 
-    let dailyGoalJustCompleted = false;
+    // Capture pre-update daily goal state for side-effect detection
+    const preUpdateGoal = get().dailyGoalData[today];
+    const wasDailyGoalComplete = preUpdateGoal?.isComplete ?? false;
 
     set((state) => {
       const dailyGoal = state.dailyGoalData[today] || {
@@ -352,14 +354,11 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         minutesTarget: userMinutesTarget,
       };
       const minutesTarget = dailyGoal.minutesTarget || userMinutesTarget;
-      const wasDailyGoalComplete = dailyGoal.isComplete;
       const newTotalXp = state.totalXp + effectiveXp;
       const newExercisesCompleted = dailyGoal.exercisesCompleted + 1;
       const nowComplete =
         dailyGoal.minutesPracticed >= minutesTarget &&
         newExercisesCompleted >= dailyGoal.exercisesTarget;
-
-      dailyGoalJustCompleted = nowComplete && !wasDailyGoalComplete;
 
       return {
         totalXp: newTotalXp,
@@ -377,7 +376,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     });
 
     // Bonus gems when the full daily goal (minutes + exercises) is met
-    if (dailyGoalJustCompleted) {
+    const postUpdateGoal = get().dailyGoalData[today];
+    if (postUpdateGoal?.isComplete && !wasDailyGoalComplete) {
       useGemStore.getState().earnGems(10, 'daily-goal');
       analyticsEvents.rewards.dailyGoalCompleted();
     }
@@ -395,13 +395,13 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
 
     // BUG-023 fix: Streak gem milestones — only award once per milestone
     const streak = get().streakData.currentStreak;
-    const claimed = get().streakMilestonesClaimed ?? [];
     const STREAK_MILESTONES: { streak: number; gems: number }[] = [
       { streak: 7, gems: 50 },
       { streak: 30, gems: 200 },
       { streak: 100, gems: 500 },
     ];
     for (const m of STREAK_MILESTONES) {
+      const claimed = get().streakMilestonesClaimed ?? [];
       if (streak >= m.streak && !claimed.includes(m.streak)) {
         useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
         set((state) => ({
