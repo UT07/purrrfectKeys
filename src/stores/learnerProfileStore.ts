@@ -153,6 +153,20 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
     // Gem reward for mastering a skill
     useGemStore.getState().earnGems(15, 'skill-mastered');
 
+    // Cat evolution XP for skill mastery
+    try {
+      const { useSettingsStore } = require('./settingsStore');
+      const { useCatEvolutionStore } = require('./catEvolutionStore');
+      const catId =
+        useSettingsStore.getState().selectedCatId ||
+        useCatEvolutionStore.getState().selectedCatId;
+      if (catId) {
+        useCatEvolutionStore.getState().addEvolutionXp(catId, 100);
+      }
+    } catch (err) {
+      // silent — non-critical
+    }
+
     // Use immediate save — skill mastery is critical state that must persist
     // before the user navigates away (debounced save could lose it)
     immediateSave(get());

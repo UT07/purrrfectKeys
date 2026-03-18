@@ -4,6 +4,34 @@
  * weak area detection, and rolling average convergence
  */
 
+// Mock gem store (called inside markSkillMastered)
+const mockEarnGems = jest.fn();
+jest.mock('../gemStore', () => ({
+  useGemStore: {
+    getState: () => ({ earnGems: mockEarnGems }),
+  },
+}));
+
+// Mock cat evolution store (called inside markSkillMastered for cat XP)
+const mockAddEvolutionXp = jest.fn();
+jest.mock('../catEvolutionStore', () => ({
+  useCatEvolutionStore: {
+    getState: () => ({
+      addEvolutionXp: mockAddEvolutionXp,
+      selectedCatId: 'mini-meowww',
+    }),
+  },
+}));
+
+// Mock settings store (primary source for selectedCatId)
+jest.mock('../settingsStore', () => ({
+  useSettingsStore: {
+    getState: () => ({
+      selectedCatId: 'mini-meowww',
+    }),
+  },
+}));
+
 import { useLearnerProfileStore } from '../learnerProfileStore';
 
 describe('Learner Profile Store', () => {
@@ -230,5 +258,37 @@ describe('Learner Profile Store', () => {
 
     // Total exercises should be incremented
     expect(state.totalExercisesCompleted).toBe(1);
+  });
+
+  describe('cat XP for skill mastery', () => {
+    beforeEach(() => {
+      mockAddEvolutionXp.mockClear();
+      mockEarnGems.mockClear();
+    });
+
+    it('awards 100 cat XP when a skill is first mastered', () => {
+      useLearnerProfileStore.getState().markSkillMastered('test-skill-1');
+
+      expect(mockAddEvolutionXp).toHaveBeenCalledTimes(1);
+      expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 100);
+    });
+
+    it('does NOT award cat XP for already-mastered skill', () => {
+      // Pre-populate masteredSkills so the skill is already mastered
+      useLearnerProfileStore.setState({ masteredSkills: ['already-mastered-skill'] });
+
+      useLearnerProfileStore.getState().markSkillMastered('already-mastered-skill');
+
+      expect(mockAddEvolutionXp).not.toHaveBeenCalled();
+    });
+
+    it('awards cat XP for each newly mastered skill independently', () => {
+      useLearnerProfileStore.getState().markSkillMastered('skill-a');
+      useLearnerProfileStore.getState().markSkillMastered('skill-b');
+
+      expect(mockAddEvolutionXp).toHaveBeenCalledTimes(2);
+      expect(mockAddEvolutionXp).toHaveBeenNthCalledWith(1, 'mini-meowww', 100);
+      expect(mockAddEvolutionXp).toHaveBeenNthCalledWith(2, 'mini-meowww', 100);
+    });
   });
 });
