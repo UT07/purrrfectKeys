@@ -80,6 +80,8 @@ export type RootStackParamList = {
     friendChallengeId?: string;
     /** Auto-start Salsa replay coaching on mount */
     replayMode?: boolean;
+    /** Override playback speed for this session (e.g. speed-run challenge forces 1.0) */
+    requiredPlaybackSpeed?: number;
   };
   TierIntro: { tier: number; locked?: boolean };
   LessonIntro: { lessonId: string; locked?: boolean };

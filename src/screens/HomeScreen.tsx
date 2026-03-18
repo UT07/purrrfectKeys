@@ -578,6 +578,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 aiMode: true,
                 skillId,
                 ...(exerciseType ? { exerciseType } : {}),
+                // Speed-run challenges must force 1.0x speed
+                ...(challenge.type === 'speed-run' ? { requiredPlaybackSpeed: 1.0 } : {}),
               });
             }} />
           </GameCard>

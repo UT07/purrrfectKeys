@@ -270,6 +270,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const challengeTarget = route.params?.challengeTarget ?? null;
   const friendChallengeId = route.params?.friendChallengeId ?? null;
   const replayModeParam = route.params?.replayMode ?? false;
+  const requiredPlaybackSpeed = route.params?.requiredPlaybackSpeed ?? null;
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
@@ -518,7 +519,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Speed selector — adjusts exercise tempo for more comfortable playback
   // MIDI keyboard users get 1.0x (real piano, 10 fingers), touch keyboard gets 0.75x
-  const playbackSpeed = useSettingsStore((s) => s.playbackSpeed);
+  // When requiredPlaybackSpeed is set (e.g. speed-run challenge), it overrides the stored setting
+  const storedPlaybackSpeed = useSettingsStore((s) => s.playbackSpeed);
+  const playbackSpeed = (requiredPlaybackSpeed ?? storedPlaybackSpeed) as PlaybackSpeed;
   const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
   const lastMidiDeviceId = useSettingsStore((s) => s.lastMidiDeviceId);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
@@ -2860,11 +2863,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           )}
 
           {/* Speed pill — always visible, active styling when slowed */}
+          {/* Disabled when requiredPlaybackSpeed is set (e.g. speed-run challenge) */}
           <PressableScale
-            onPress={cycleSpeed}
-            style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
+            onPress={requiredPlaybackSpeed ? undefined : cycleSpeed}
+            style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive, requiredPlaybackSpeed != null && { opacity: 0.5 }]}
             testID="speed-selector"
             soundOnPress={false}
+            disabled={requiredPlaybackSpeed != null}
           >
             <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
               {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
@@ -2888,11 +2893,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
             {/* Speed selector */}
             <PressableScale
-              onPress={cycleSpeed}
-              style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
+              onPress={requiredPlaybackSpeed ? undefined : cycleSpeed}
+              style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive, requiredPlaybackSpeed != null && { opacity: 0.5 }]}
               testID="speed-selector-full"
-              accessibilityLabel={`Playback speed ${playbackSpeed}x. Tap to change.`}
+              accessibilityLabel={`Playback speed ${playbackSpeed}x.${requiredPlaybackSpeed ? ' Locked for this challenge.' : ' Tap to change.'}`}
               soundOnPress={false}
+              disabled={requiredPlaybackSpeed != null}
             >
               <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
                 {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
