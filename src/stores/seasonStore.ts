@@ -273,12 +273,24 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
     const { start: newStart, end: newEnd } = getCurrentSeasonDates();
     const newSeasonNumber = seasonNumberFromDate();
 
-    // Soft-reset MMR and zero RP for the new season
+    // Soft-reset MMR and zero RP for the new season, recalculate tier/division
     try {
       const { useRankStore } = require('./rankStore');
       const { softResetMMR } = require('../core/ranking/seasonConfig');
+      const { tierFromMMR, divisionFromMMR } = require('../core/ranking/rankThresholds');
       const current = useRankStore.getState().rating;
-      const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
+      const newMmr = softResetMMR(current.mmr);
+      const newTier = tierFromMMR(newMmr);
+      const newDivision = divisionFromMMR(newMmr, newTier);
+      const resetRating = {
+        ...current,
+        mmr: newMmr,
+        tier: newTier,
+        division: newDivision,
+        rp: 0,
+        promotionSeries: null,
+        demotionGrace: 3,
+      };
       useRankStore.setState({ rating: resetRating });
     } catch (err) {
       logger.warn('[seasonStore] rankStore not available for startNewSeason MMR reset:', err);

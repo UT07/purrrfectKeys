@@ -117,11 +117,20 @@ describe('leagueStore', () => {
       expect(useLeagueStore.getState().membership).toBeNull();
     });
 
-    it('overwrites previous weekly XP', () => {
+    it('accumulates weekly XP additively', () => {
       useLeagueStore.getState().setMembership(makeMembership({ weeklyXp: 50 }));
       useLeagueStore.getState().updateWeeklyXp(200);
 
-      expect(useLeagueStore.getState().membership?.weeklyXp).toBe(200);
+      expect(useLeagueStore.getState().membership?.weeklyXp).toBe(250);
+    });
+
+    it('accumulates multiple XP additions', () => {
+      useLeagueStore.getState().setMembership(makeMembership({ weeklyXp: 0 }));
+      useLeagueStore.getState().updateWeeklyXp(100);
+      useLeagueStore.getState().updateWeeklyXp(50);
+      useLeagueStore.getState().updateWeeklyXp(25);
+
+      expect(useLeagueStore.getState().membership?.weeklyXp).toBe(175);
     });
   });
 

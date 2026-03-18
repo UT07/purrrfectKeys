@@ -13,7 +13,7 @@ import { create } from 'zustand';
 import type { PlayerRating, RankedTier } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 import { calculateMMR } from '../core/ranking/mmrCalculator';
-import { tierFromMMR, divisionFromMMR } from '../core/ranking/rankThresholds';
+import { tierFromMMR, divisionFromMMR, RANK_CONFIGS } from '../core/ranking/rankThresholds';
 import { calculateRP } from '../core/ranking/rpCalculator';
 import {
   shouldStartPromotion,
@@ -140,8 +140,8 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
 
     // Detect tier change — set pending rank change for overlay + post to feed
     if (tier !== current.tier) {
-      const tierIndex = (t: RankedTier) => ['novice','apprentice','performer','virtuoso','maestro','prodigy','luminary','legend','grandmaster'].indexOf(t);
-      const isPromotion = tierIndex(tier) > tierIndex(current.tier);
+      const tierIdx = (t: RankedTier) => RANK_CONFIGS.findIndex((r) => r.tier === t);
+      const isPromotion = tierIdx(tier) > tierIdx(current.tier);
 
       // Set pending rank change so ExercisePlayer shows the overlay
       set({

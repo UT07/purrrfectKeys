@@ -415,8 +415,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     // ── League XP update (fire-and-forget) ──
     const leagueMembership = useLeagueStore.getState().membership;
     if (leagueMembership && auth.currentUser && !auth.currentUser.isAnonymous) {
-      const newWeeklyXp = leagueMembership.weeklyXp + effectiveXp;
-      useLeagueStore.getState().updateWeeklyXp(newWeeklyXp);
+      useLeagueStore.getState().updateWeeklyXp(effectiveXp);
       fireAndRetry(
         () => addLeagueXp(leagueMembership.leagueId, auth.currentUser!.uid, effectiveXp),
         'addLeagueXp',
