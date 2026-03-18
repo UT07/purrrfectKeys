@@ -66,3 +66,9 @@ firebase-config.json
 *-firebase-adminsdk-*.json
 google-services-sa.json
 *.app
+
+# Detox/E2E artifacts
+artifacts/*.apk
+artifacts/*.app
+artifacts/ios.sim.*
+artifacts/android.*
