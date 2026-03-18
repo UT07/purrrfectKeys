@@ -12,7 +12,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import type { ReactElement } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,8 +26,6 @@ import Animated, {
 import type { RankedTier } from '../../stores/types';
 import { COLORS, SPACING, ARENA } from '../../theme/tokens';
 import { soundManager } from '../../audio/SoundManager';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const TIER_COLORS: Record<RankedTier, string> = {
   novice: ARENA.rank.novice,
@@ -72,6 +70,7 @@ export function RankChangeOverlay({
   isPromotion,
   onDismiss,
 }: RankChangeOverlayProps): ReactElement | null {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Shared values
@@ -232,21 +231,23 @@ export function RankChangeOverlay({
         <SparkleParticles
           color={toColor}
           progress={sparkleProgress}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
         />
       )}
 
       {/* Old tier badge */}
-      <Animated.View style={[styles.badgeContainer, oldBadgeStyle]}>
+      <Animated.View style={[styles.badgeContainer, { top: screenHeight / 2 - BADGE_SIZE / 2 - 40, left: screenWidth / 2 - BADGE_SIZE / 2 }, oldBadgeStyle]}>
         <TierBadge tier={fromTier} color={fromColor} />
       </Animated.View>
 
       {/* New tier badge */}
-      <Animated.View style={[styles.badgeContainer, newBadgeStyle]}>
+      <Animated.View style={[styles.badgeContainer, { top: screenHeight / 2 - BADGE_SIZE / 2 - 40, left: screenWidth / 2 - BADGE_SIZE / 2 }, newBadgeStyle]}>
         <TierBadge tier={toTier} color={toColor} isNew />
       </Animated.View>
 
       {/* Title text */}
-      <Animated.View style={[styles.titleContainer, titleStyle]}>
+      <Animated.View style={[styles.titleContainer, { top: screenHeight / 2 + BADGE_SIZE / 2 }, titleStyle]}>
         <Text
           style={[
             styles.titleText,
@@ -304,9 +305,13 @@ function TierBadge({
 function SparkleParticles({
   color,
   progress,
+  screenWidth,
+  screenHeight,
 }: {
   color: string;
   progress: Animated.SharedValue<number>;
+  screenWidth: number;
+  screenHeight: number;
 }): ReactElement {
   const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
     const angle = (i / SPARKLE_COUNT) * Math.PI * 2;
@@ -321,6 +326,8 @@ function SparkleParticles({
           angle={angle}
           color={color}
           progress={progress}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
         />
       ))}
     </>
@@ -331,10 +338,14 @@ function SparkleParticle({
   angle,
   color,
   progress,
+  screenWidth,
+  screenHeight,
 }: {
   angle: number;
   color: string;
   progress: Animated.SharedValue<number>;
+  screenWidth: number;
+  screenHeight: number;
 }): ReactElement {
   const style = useAnimatedStyle(() => {
     const p = progress.value;
@@ -344,8 +355,8 @@ function SparkleParticle({
 
     return {
       position: 'absolute',
-      left: SCREEN_WIDTH / 2 + Math.cos(angle) * radius - 4,
-      top: SCREEN_HEIGHT / 2 - 40 + Math.sin(angle) * radius - 4,
+      left: screenWidth / 2 + Math.cos(angle) * radius - 4,
+      top: screenHeight / 2 - 40 + Math.sin(angle) * radius - 4,
       width: 8,
       height: 8,
       borderRadius: 4,
@@ -379,8 +390,6 @@ const styles = StyleSheet.create({
   },
   badgeContainer: {
     position: 'absolute',
-    top: SCREEN_HEIGHT / 2 - BADGE_SIZE / 2 - 40,
-    left: SCREEN_WIDTH / 2 - BADGE_SIZE / 2,
     width: BADGE_SIZE,
     height: BADGE_SIZE,
     justifyContent: 'center',
@@ -417,7 +426,6 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     position: 'absolute',
-    top: SCREEN_HEIGHT / 2 + BADGE_SIZE / 2,
     left: 0,
     right: 0,
     alignItems: 'center',

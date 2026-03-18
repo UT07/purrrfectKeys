@@ -9,7 +9,7 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -65,8 +65,6 @@ const MESSAGE_FONT_SIZES = {
   large: 15,
 };
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 /**
  * MascotBubble - Keysie mascot with animated speech bubble
  * Uses emoji rendering as MVP, with mood-based color tinting
@@ -80,6 +78,7 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
   catId,
   speakMessage = true,
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
   const hasSpokenRef = useRef(false);
@@ -189,7 +188,7 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
             style={[
               styles.bubble,
               {
-                maxWidth: SCREEN_WIDTH * 0.65,
+                maxWidth: screenWidth * 0.65,
                 borderColor: borderColor,
               },
             ]}
