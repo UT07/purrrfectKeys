@@ -274,6 +274,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
+  // Refs for route params used inside handleExerciseCompletion callback.
+  // Using refs avoids stale closures when navigation.replace changes params
+  // without remounting the component (the callback reads current values).
+  const skillIdParamRef = useRef(skillIdParam);
+  skillIdParamRef.current = skillIdParam;
+  const testModeRef = useRef(testMode);
+  testModeRef.current = testMode;
+  const aiModeRef = useRef(aiMode);
+  aiModeRef.current = aiMode;
+  const exerciseTypeParamRef = useRef(exerciseTypeParam);
+  exerciseTypeParamRef.current = exerciseTypeParam;
+
   // Store integration
   const exerciseStore = useExerciseStore();
 
@@ -754,6 +766,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    */
   const handleExerciseCompletion = useCallback((initialScore: ExerciseScore) => {
     if (!mountedRef.current) return;
+    // Read route params from refs to avoid stale closures when
+    // navigation.replace changes params without remounting.
+    const skillIdParam = skillIdParamRef.current;
+    const testMode = testModeRef.current;
     const trace = perfTrace('ExerciseCompletion');
     let score = { ...initialScore };
 
@@ -2051,7 +2067,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           shakeRef.current?.shake('medium');
           setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: COLORS.feedbackMiss, trigger: Date.now() });
           setShowMissFlash(true);
-          setTimeout(() => setShowMissFlash(false), 150);
+          setTimeout(() => { if (mountedRef.current) setShowMissFlash(false); }, 150);
         }
         setFeedback({
           type: 'miss',
