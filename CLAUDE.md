@@ -6,22 +6,21 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current State (Mar 15, 2026)
+## Current State (Mar 18, 2026)
 
-**Codebase Health:** 149 test suites, 3,042 tests passing, 0 TypeScript errors
+**Codebase Health:** 160 test suites, 3,253 tests passing, 0 TypeScript errors
 
-**Phases 1-13 COMPLETE:**
+**Phases 1-14 COMPLETE:**
 - Core Loop, Gamification, Auth, Adaptive Learning, Curriculum, Avatar Evolution, UI Revamp
 - Audio Input (YIN + ONNX polyphonic), Music Library (582 songs), Arcade Concert Hall, Social v1
 - Foundation Cleanup, Exercise Types + UI, Content Explosion (599 exercises, 50 lessons, 120 skill nodes, 5 learning paths)
+- Social Revamp: Ranked leagues (9 tiers), guilds, battle pass, friend challenges with gem stakes, QR friend discovery, season automation
 
 **QA runs in parallel** — CI gates (typecheck + lint + test) on every push. Device verification tracked in UNIFIED-PLAN.md.
 
-**In Progress:** Phase 13 — Content Explosion (quality verified: exercises 599/599 pass, songs 91% clean — ready for merge to master)
-
 **Infrastructure:**
-- 11 Cloud Functions deployed (nodejs22, us-central1)
-- Firestore rules + indexes deployed
+- 14 Cloud Functions deployed (nodejs22, us-central1)
+- Firestore rules + indexes deployed (guilds, guildWars, referrals, seasonRewards added)
 - EAS Build configured (preview + production channels)
 
 See `docs/plans/UNIFIED-PLAN.md` for the **single source of truth** on all phases.
@@ -98,7 +97,7 @@ src/
 │   ├── PolyphonicDetector.ts  # ONNX Basic Pitch model wrapper (polyphonic)
 │   ├── MultiNoteTracker.ts  # Multi-note hysteresis for polyphonic detection
 │   └── AmbientNoiseCalibrator.ts  # RMS-based noise calibration for mic thresholds
-├── stores/               # Zustand stores (15 stores)
+├── stores/               # Zustand stores (18 stores)
 │   ├── persistence.ts    # AsyncStorage persistence (debounced + immediate save)
 │   ├── exerciseStore.ts  # Current exercise state
 │   ├── progressStore.ts  # User progress, XP, streaks, lesson progress
@@ -109,7 +108,10 @@ src/
 │   ├── achievementStore.ts  # Achievement tracking, unlock checking
 │   ├── authStore.ts      # Firebase auth state
 │   ├── socialStore.ts    # Friends, activity feed, challenges, friend codes
-│   └── leagueStore.ts    # Weekly league membership + standings
+│   ├── leagueStore.ts    # Weekly league membership + standings
+│   ├── rankStore.ts      # MMR, tier/division, promotion series, demotion grace
+│   ├── seasonStore.ts    # Season state, battle pass progression, season history
+│   └── guildStore.ts     # Guild membership, wars, XP tracking
 ├── screens/              # Screen components
 │   └── ExercisePlayer/   # Main exercise gameplay screen
 ├── components/           # Reusable UI components
@@ -224,13 +226,28 @@ src/
 | `src/content/templateExercises.ts` | Offline template exercises with tier-specific skill mapping for mastery tests |
 | `src/stores/socialStore.ts` | Friends list, activity feed, friend challenges, friend code management |
 | `src/stores/leagueStore.ts` | Weekly league membership, standings, loading state |
-| `src/services/firebase/socialService.ts` | Firestore CRUD: friend codes, requests, activity feed, challenges |
+| `src/stores/rankStore.ts` | MMR, tier/division, promotion series, demotion grace, pendingRankChange |
+| `src/stores/seasonStore.ts` | Season state, battle pass XP/tiers, reward claiming, season history |
+| `src/stores/guildStore.ts` | Guild membership, wars, XP tracking |
+| `src/core/ranking/mmrCalculator.ts` | MMR calculation from recent scores, exercise tier, type diversity |
+| `src/core/ranking/rankThresholds.ts` | MMR → tier/division mapping (9 tiers, 3 divisions each) |
+| `src/core/ranking/promotionEngine.ts` | Promotion series (win 2/3), demotion grace counter |
+| `src/core/ranking/seasonConfig.ts` | Season timing, soft MMR reset, battle pass tier generation |
+| `src/services/firebase/socialService.ts` | Firestore CRUD: friend codes, requests, activity feed, challenges, gem stakes |
 | `src/services/firebase/leagueService.ts` | Firestore CRUD: league assignment, standings, XP updates |
+| `src/services/firebase/guildService.ts` | Firestore CRUD: guild create/join/leave, wars, XP |
+| `src/services/firebase/feedService.ts` | Rich activity feed: rank changes, achievements, social events |
+| `src/services/firebase/referralService.ts` | Referral code generation, claiming, reward delivery |
 | `src/services/notificationService.ts` | Local notifications: daily reminders, streak alerts |
-| `src/screens/SocialScreen.tsx` | Social tab hub: league card, friends, active challenges |
+| `src/screens/SocialScreen.tsx` | Social/Arena tab hub: rank hero, league, friends, challenges with gem stakes |
 | `src/screens/LeaderboardScreen.tsx` | Weekly league standings with tier-colored promotion/demotion zones |
-| `src/screens/AddFriendScreen.tsx` | Friend code display/copy + code lookup to add friends |
+| `src/screens/AddFriendScreen.tsx` | Friend code display/copy + code lookup + QR scan to add friends |
 | `src/screens/FriendsScreen.tsx` | Friends list + activity feed (two-tab layout) |
+| `src/screens/BattlePassScreen.tsx` | 30-tier battle pass with free/premium reward tracks |
+| `src/screens/GuildScreen.tsx` | Guild management: create/join, members, wars, XP leaderboard |
+| `src/components/arena/RankHeroCard.tsx` | Rank display card with tier badge, RP bar, promotion series pips |
+| `src/components/arena/RankBadge.tsx` | Reusable rank tier badge (sm/md/lg sizes) |
+| `src/components/arena/RankChangeOverlay.tsx` | Full-screen promotion/demotion cinematic animation |
 | `src/components/ShareCard.tsx` | Shareable score/streak/evolution image cards (view-shot + expo-sharing) |
 | `src/services/firebase/__tests__/deleteUserData.test.ts` | Account deletion tests (10 tests: Cloud Function + client-side fallback, subcollections, friend cleanup) |
 | `src/services/firebase/firestore.ts` | Firestore CRUD + `deleteUserData()` (Cloud Function primary, client-side fallback) |
@@ -239,6 +256,10 @@ src/
 | `firebase/functions/src/generateCoachFeedback.ts` | Cloud Function: Gemini AI coaching feedback (httpsCallable) |
 | `firebase/functions/src/deleteUserData.ts` | Cloud Function: GDPR-compliant account data deletion (Admin SDK) |
 | `firebase/functions/src/dailySightReading.ts` | Cloud Function: daily sight-reading challenge |
+| `firebase/functions/src/weeklyLeagueRewards.ts` | Scheduled: weekly league gem rewards + soft MMR reset |
+| `firebase/functions/src/weeklyLeagueAssignment.ts` | Scheduled: assign players to leagues by tier |
+| `firebase/functions/src/seasonEndRewards.ts` | Scheduled: 4-week season-end bonus gem rewards by peak tier |
+| `firebase/functions/src/leagueUtils.ts` | Shared: `formatSeasonWeekKey()` date format for league/season functions |
 | `src/screens/PostExerciseScreen.tsx` | Post-exercise results + "Review with Salsa" replay coaching |
 | `src/screens/postExerciseCache.ts` | Cache for passing data between ExercisePlayer and PostExerciseScreen |
 | `src/content/ContentLoaderRegistry.generated.ts` | Auto-generated lazy loading registry for 599 exercises |
@@ -312,7 +333,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Maestro (planned) | `.maestro/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**3,042 tests, 149 suites**. Run tests before committing:
+**3,253 tests, 160 suites**. Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
