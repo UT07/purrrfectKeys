@@ -197,8 +197,9 @@ export class MicrophoneInput {
             if (frame.notes.length > 0) this.voicedCount++;
             this.multiTracker!.update(frame);
           }
-        }).catch(() => {
+        }).catch((err) => {
           this.polyBusy = false;
+          logger.warn('[MicrophoneInput] Polyphonic detection error:', err);
         });
       });
 

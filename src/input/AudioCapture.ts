@@ -198,8 +198,9 @@ export class AudioCapture {
     if (this.isCapturing) {
       try {
         this.recorder?.stop();
-      } catch {
+      } catch (err) {
         // Ignore stop errors during dispose
+        logger.warn('[AudioCapture] Error stopping recorder during dispose:', err);
       }
     }
     this.isCapturing = false;
@@ -381,7 +382,7 @@ export async function checkMicrophonePermission(): Promise<boolean> {
       if (granted !== cached) {
         useSettingsStore.getState().setMicPermissionGranted(granted);
       }
-    } catch { /* store not ready yet — ignore */ }
+    } catch (err) { /* store not ready yet — ignore */ logger.warn('[AudioCapture] Settings store not ready during permission sync:', err); }
     return granted;
   } catch (error) {
     logger.warn('[AudioCapture] AudioManager permission check failed, trying expo-av:', error);
@@ -409,7 +410,8 @@ export function isMicPermissionCached(): boolean {
   try {
     const { useSettingsStore } = require('../stores/settingsStore');
     return useSettingsStore.getState().micPermissionGranted;
-  } catch {
+  } catch (err) {
+    logger.warn('[AudioCapture] Failed to read cached mic permission:', err);
     return false;
   }
 }

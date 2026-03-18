@@ -65,3 +65,4 @@ firebase-config.json
 # Firebase service account keys (admin credentials)
 *-firebase-adminsdk-*.json
 google-services-sa.json
+*.app

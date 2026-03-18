@@ -65,8 +65,9 @@ import {
   acceptFriendRequest,
   removeFriendConnection,
   getFriends,
+  resolveChallengeGemStake,
 } from '../socialService';
-import { doc, getDoc, setDoc, getDocs, writeBatch, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, getDocs, updateDoc, writeBatch, runTransaction } from 'firebase/firestore';
 
 // Access the batch mock helpers
 const firestoreMock = jest.requireMock('firebase/firestore');
@@ -143,36 +144,49 @@ describe('socialService', () => {
   });
 
   describe('registerFriendCode', () => {
-    it('registers a code when no collision occurs', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => false });
-      (setDoc as jest.Mock).mockResolvedValue(undefined);
+    it('registers a code when no collision occurs (via transaction)', async () => {
+      mockTransaction.get.mockResolvedValueOnce({ exists: () => false });
 
       const code = await registerFriendCode('user-123');
 
       expect(code).toHaveLength(6);
-      expect(setDoc).toHaveBeenCalledTimes(1);
+      expect(runTransaction).toHaveBeenCalledTimes(1);
+      expect(mockTransaction.set).toHaveBeenCalledTimes(1);
     });
 
     it('retries on collision and succeeds', async () => {
-      // First attempt: collision, second: success
-      (getDoc as jest.Mock)
-        .mockResolvedValueOnce({ exists: () => true })
-        .mockResolvedValueOnce({ exists: () => false });
-      (setDoc as jest.Mock).mockResolvedValue(undefined);
+      // First transaction: collision (throws CODE_COLLISION), second: success
+      (runTransaction as jest.Mock)
+        .mockImplementationOnce(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<void>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => true }) };
+          return fn(t);
+        })
+        .mockImplementationOnce(async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<void>) => {
+          const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => false }) };
+          return fn(t);
+        });
 
       const code = await registerFriendCode('user-123');
 
       expect(code).toHaveLength(6);
-      expect(getDoc).toHaveBeenCalledTimes(2);
+      expect(runTransaction).toHaveBeenCalledTimes(2);
     });
 
     it('throws after max retries on persistent collision', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true });
+      // Use mockImplementationOnce x5 to avoid poisoning the default mock for later tests
+      for (let i = 0; i < 5; i++) {
+        (runTransaction as jest.Mock).mockImplementationOnce(
+          async (_db: unknown, fn: (t: typeof mockTransaction) => Promise<void>) => {
+            const t = { ...mockTransaction, get: jest.fn().mockResolvedValue({ exists: () => true }) };
+            return fn(t);
+          },
+        );
+      }
 
       await expect(registerFriendCode('user-123')).rejects.toThrow(
         'Failed to generate unique friend code',
       );
-      expect(getDoc).toHaveBeenCalledTimes(5); // MAX_CODE_RETRIES
+      expect(runTransaction).toHaveBeenCalledTimes(5); // MAX_CODE_RETRIES
     });
   });
 
@@ -418,6 +432,152 @@ describe('socialService', () => {
 
       const result = await getFriends('lonely-user');
       expect(result).toEqual([]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // resolveChallengeGemStake
+  // -------------------------------------------------------------------------
+
+  describe('resolveChallengeGemStake', () => {
+    const FROM_UID = 'sender-uid';
+    const TO_UID = 'receiver-uid';
+    const CHALLENGE_ID = 'challenge-123';
+
+    /** Helper: build a mock challenge doc snapshot */
+    function mockChallengeSnap(overrides: Record<string, unknown> = {}) {
+      const base = {
+        id: CHALLENGE_ID,
+        fromUid: FROM_UID,
+        toUid: TO_UID,
+        gemStake: 50,
+        resolvedAt: undefined,
+        status: 'completed',
+        fromScore: 80,
+        toScore: 90,
+        exerciseId: 'ex-1',
+        exerciseTitle: 'Test Exercise',
+        fromDisplayName: 'Alice',
+        fromCatId: 'luna',
+        createdAt: 1000,
+        expiresAt: 9999,
+        ...overrides,
+      };
+      return {
+        exists: () => true,
+        data: () => base,
+      };
+    }
+
+    it('sender wins when sender has higher score', async () => {
+      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 50 }));
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID,
+        95, // fromScore (sender)
+        80, // toScore (receiver)
+        FROM_UID,
+        TO_UID,
+      );
+
+      expect(result).toEqual({ winnerUid: FROM_UID, winnerGems: 100 });
+      expect(updateDoc).toHaveBeenCalledTimes(1);
+      const updateData = (updateDoc as jest.Mock).mock.calls[0][1];
+      expect(updateData.winnerUid).toBe(FROM_UID);
+      expect(updateData.winnerGems).toBe(100);
+      expect(typeof updateData.resolvedAt).toBe('number');
+    });
+
+    it('receiver wins when receiver has higher score', async () => {
+      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 30 }));
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID,
+        70, // fromScore (sender)
+        85, // toScore (receiver)
+        FROM_UID,
+        TO_UID,
+      );
+
+      expect(result).toEqual({ winnerUid: TO_UID, winnerGems: 60 });
+      expect(updateDoc).toHaveBeenCalledTimes(1);
+      const updateData = (updateDoc as jest.Mock).mock.calls[0][1];
+      expect(updateData.winnerUid).toBe(TO_UID);
+      expect(updateData.winnerGems).toBe(60);
+    });
+
+    it('tie goes to challenger (fromUid)', async () => {
+      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 25 }));
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID,
+        85, // fromScore
+        85, // toScore — same
+        FROM_UID,
+        TO_UID,
+      );
+
+      expect(result).toEqual({ winnerUid: FROM_UID, winnerGems: 50 });
+    });
+
+    it('returns null when gemStake is 0', async () => {
+      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 0 }));
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID, 90, 80, FROM_UID, TO_UID,
+      );
+
+      expect(result).toBeNull();
+      expect(updateDoc).not.toHaveBeenCalled();
+    });
+
+    it('returns null when gemStake is undefined', async () => {
+      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: undefined }));
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID, 90, 80, FROM_UID, TO_UID,
+      );
+
+      expect(result).toBeNull();
+      expect(updateDoc).not.toHaveBeenCalled();
+    });
+
+    it('returns null when challenge was already resolved', async () => {
+      (getDoc as jest.Mock).mockResolvedValue(
+        mockChallengeSnap({ gemStake: 50, resolvedAt: 1234567890 }),
+      );
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID, 90, 80, FROM_UID, TO_UID,
+      );
+
+      expect(result).toBeNull();
+      expect(updateDoc).not.toHaveBeenCalled();
+    });
+
+    it('returns null when challenge document does not exist', async () => {
+      (getDoc as jest.Mock).mockResolvedValue({
+        exists: () => false,
+      });
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID, 90, 80, FROM_UID, TO_UID,
+      );
+
+      expect(result).toBeNull();
+      expect(updateDoc).not.toHaveBeenCalled();
+    });
+
+    it('winner gets exactly 2x the gem stake', async () => {
+      const stake = 75;
+      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: stake }));
+
+      const result = await resolveChallengeGemStake(
+        CHALLENGE_ID, 100, 50, FROM_UID, TO_UID,
+      );
+
+      expect(result).not.toBeNull();
+      expect(result!.winnerGems).toBe(stake * 2);
     });
   });
 });

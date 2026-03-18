@@ -13,7 +13,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PressableScale } from './common/PressableScale';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, GRADIENTS, SHADOWS } from '../theme/tokens';
-import type { ShareCardData } from '../stores/types';
+import type { ShareCardData, RankedTier } from '../stores/types';
+import { RankBadge, TIER_COLORS } from './arena/RankBadge';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Icon mapping per card type
@@ -39,13 +41,15 @@ const CARD_ICON_COLORS: Record<ShareCardData['type'], string> = {
 
 interface ShareCardProps {
   data: ShareCardData;
+  rankTier?: RankedTier;
+  rankDivision?: 1 | 2 | 3;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function ShareCard({ data }: ShareCardProps): React.JSX.Element {
+export function ShareCard({ data, rankTier, rankDivision }: ShareCardProps): React.JSX.Element {
   const viewShotRef = useRef<ViewShot>(null);
   const [isSharing, setIsSharing] = useState(false);
 
@@ -68,8 +72,9 @@ export function ShareCard({ data }: ShareCardProps): React.JSX.Element {
         mimeType: 'image/png',
         dialogTitle: 'Share your achievement',
       });
-    } catch {
-      // User cancelled or sharing failed — silently ignore
+    } catch (err) {
+      // User cancelled or sharing failed
+      logger.warn('[ShareCard] Sharing failed or cancelled:', err);
     } finally {
       setIsSharing(false);
     }
@@ -77,6 +82,7 @@ export function ShareCard({ data }: ShareCardProps): React.JSX.Element {
 
   const iconName = CARD_ICONS[data.type];
   const iconColor = CARD_ICON_COLORS[data.type];
+  const tierAccentColor = rankTier ? TIER_COLORS[rankTier] : undefined;
 
   return (
     <View style={styles.container}>
@@ -90,15 +96,28 @@ export function ShareCard({ data }: ShareCardProps): React.JSX.Element {
           colors={GRADIENTS.cardWarm}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.card}
+          style={[
+            styles.card,
+            tierAccentColor != null && {
+              borderColor: tierAccentColor,
+              borderWidth: 2,
+            },
+          ]}
         >
-          {/* Icon */}
-          <View style={styles.iconContainer}>
-            <MaterialCommunityIcons
-              name={iconName}
-              size={40}
-              color={iconColor}
-            />
+          {/* Icon + optional rank badge row */}
+          <View style={rankTier ? styles.iconRankRow : undefined}>
+            <View style={styles.iconContainer}>
+              <MaterialCommunityIcons
+                name={iconName}
+                size={40}
+                color={iconColor}
+              />
+            </View>
+            {rankTier && (
+              <View style={styles.rankBadgeContainer}>
+                <RankBadge tier={rankTier} division={rankDivision} size="md" />
+              </View>
+            )}
           </View>
 
           {/* Title */}
@@ -168,6 +187,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cardBorder,
     ...SHADOWS.md,
   },
+  iconRankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  },
   iconContainer: {
     width: 64,
     height: 64,
@@ -175,6 +200,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  rankBadgeContainer: {
     marginBottom: SPACING.md,
   },
   title: {

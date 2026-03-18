@@ -68,8 +68,8 @@ async function loadBuffer(): Promise<BufferedExercise[]> {
     }
 
     return parsed as BufferedExercise[];
-  } catch {
-    logger.warn('[ExerciseBuffer] Failed to load buffer from storage');
+  } catch (err) {
+    logger.warn('[ExerciseBuffer] Failed to load buffer from storage:', err);
     return [];
   }
 }
@@ -189,8 +189,8 @@ export async function fillBuffer(params: GenerationParams): Promise<void> {
           // Generation returned null — skip but keep trying
           currentSize++; // Prevent infinite loop
         }
-      } catch {
-        logger.warn('[ExerciseBuffer] Single generation attempt failed, continuing');
+      } catch (err) {
+        logger.warn('[ExerciseBuffer] Single generation attempt failed, continuing:', err);
         currentSize++; // Prevent infinite loop
       }
     }
@@ -225,9 +225,9 @@ export async function fillBufferForSkills(
           if (exercise) {
             buffer.push({ exercise, targetSkillId: req.skillId });
           }
-        } catch {
+        } catch (err) {
           logger.warn(
-            `[ExerciseBuffer] Failed to generate for skill ${req.skillId}, skipping`
+            `[ExerciseBuffer] Failed to generate for skill ${req.skillId}, skipping:`, err
           );
         }
       }

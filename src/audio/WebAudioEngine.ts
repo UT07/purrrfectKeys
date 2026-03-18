@@ -418,8 +418,9 @@ export class WebAudioEngine implements IAudioEngine {
       for (const osc of oscillators) {
         try {
           osc.stop(releaseEnd + 0.01);
-        } catch {
+        } catch (err) {
           // Already stopped
+          logger.warn('[WebAudioEngine] osc.stop after release failed:', err);
         }
       }
     } catch (error) {
@@ -428,8 +429,9 @@ export class WebAudioEngine implements IAudioEngine {
       for (const osc of oscillators) {
         try {
           osc.stop();
-        } catch {
+        } catch (err) {
           // Already stopped
+          logger.warn('[WebAudioEngine] osc.stop (force) failed:', err);
         }
       }
     }
@@ -447,8 +449,9 @@ export class WebAudioEngine implements IAudioEngine {
           try { gain.disconnect(); } catch { /* already disconnected */ }
         }
         try { envelope.disconnect(); } catch { /* already disconnected */ }
-      } catch {
+      } catch (err) {
         // Non-critical cleanup failure
+        logger.warn('[WebAudioEngine] Non-critical cleanup failure during disconnect:', err);
       }
 
       // Remove from active notes map.
@@ -541,8 +544,9 @@ export class WebAudioEngine implements IAudioEngine {
         now
       );
       this.limiterGain.gain.linearRampToValueAtTime(targetGain, now + 0.01);
-    } catch {
+    } catch (err) {
       // Fallback: set immediately if ramp fails
+      logger.warn('[WebAudioEngine] Limiter gain ramp failed, setting immediately:', err);
       this.limiterGain.gain.value = targetGain;
     }
   }

@@ -605,20 +605,26 @@ export class ExpoAudioEngine implements IAudioEngine {
   }
 
   releaseAllNotes(): void {
-    for (const [, pool] of this.voicePools) {
-      for (const sound of pool.sounds) {
-        // Micro-fade each voice to prevent clicks
-        sound.setVolumeAsync(0).then(() => {
-          setTimeout(() => {
-            sound.stopAsync().catch(() => {});
-          }, 5);
-        }).catch(() => {
-          sound.stopAsync().catch(() => {});
-        });
-      }
+    // Snapshot only the actively-playing voices to avoid racing with future playNote() calls.
+    // Without this snapshot, the 5ms delayed stopAsync() could kill a note that playNote()
+    // started on the same voice object after activeNotes/activeVoices were cleared.
+    const voicesToStop: Audio.Sound[] = [];
+    for (const [, voice] of this.activeVoices) {
+      voicesToStop.push(voice);
     }
+
     this.activeNotes.clear();
     this.activeVoices.clear();
+
+    for (const sound of voicesToStop) {
+      sound.setVolumeAsync(0).then(() => {
+        setTimeout(() => {
+          sound.stopAsync().catch(() => {});
+        }, 5);
+      }).catch(() => {
+        sound.stopAsync().catch(() => {});
+      });
+    }
   }
 
   setVolume(volume: number): void {

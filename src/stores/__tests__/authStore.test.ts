@@ -62,7 +62,7 @@ jest.mock('../../services/firebase/syncService', () => ({
 
 jest.mock('../../services/firebase/leagueService', () => ({
   getCurrentLeagueMembership: jest.fn().mockResolvedValue(null),
-  assignToLeague: jest.fn().mockResolvedValue({ leagueId: 'test', tier: 'bronze' }),
+  assignToLeague: jest.fn().mockResolvedValue({ leagueId: 'test', tier: 'novice' }),
 }));
 
 jest.mock('../../services/firebase/socialService', () => ({

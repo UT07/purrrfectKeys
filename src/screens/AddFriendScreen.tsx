@@ -1,9 +1,13 @@
 /**
- * AddFriendScreen — Username / friend code display + entry + contacts discovery
+ * AddFriendScreen — Username / friend code display + entry + QR scanning + contacts discovery
  *
- * Top: Shows user's username (or legacy 6-char friend code) with Copy/Share actions
- * Middle: Text input to enter a friend's username or legacy code and send a request
+ * Top: Shows user's username (or legacy 6-char friend code) as QR code or text with Copy/Share actions
+ * Middle: QR code scanner (via expo-camera, lazy-loaded) + text input to enter a friend's username
  * Bottom: "Find from Contacts" — reads device contacts, hashes phone/email, matches in Firestore
+ *
+ * QR code scanning uses expo-camera with lazy-loading (same pattern as expo-contacts).
+ * When expo-camera is not installed (Expo Go), a graceful fallback message is shown.
+ * The QR data format is simply the username string — scanned values are passed to lookupFriendCode().
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -19,6 +23,8 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Alert,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -44,6 +50,7 @@ import { GradientMeshBackground } from '../components/effects';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
 import QRCode from 'react-native-qrcode-svg';
 import type { RootStackParamList } from '../navigation/AppNavigator';
+import { logger } from '../utils/logger';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -55,7 +62,8 @@ let ClipboardModule: { setStringAsync: (s: string) => Promise<boolean> } | null 
 try {
 
   ClipboardModule = require('expo-clipboard');
-} catch {
+} catch (err) {
+  logger.warn('[AddFriendScreen] expo-clipboard not available:', err);
   ClipboardModule = null;
 }
 
@@ -68,7 +76,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
     // Fallback: use Share sheet which also lets user copy
     await Share.share({ message: text });
     return true;
-  } catch {
+  } catch (err) {
+    logger.warn('[AddFriendScreen] Copy to clipboard failed:', err);
     return false;
   }
 }
@@ -105,6 +114,12 @@ export function AddFriendScreen(): React.JSX.Element {
   const [sendingToUid, setSendingToUid] = useState<string | null>(null);
   const [sentUids, setSentUids] = useState<Set<string>>(new Set());
 
+  // QR scanner state
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const [isScanProcessing, setIsScanProcessing] = useState(false);
+  const scanProcessedRef = useRef(false);
+
   const storedUsername = useSettingsStore((s) => s.username);
 
   // Register username/friend code on mount if not yet set
@@ -118,8 +133,8 @@ export function AddFriendScreen(): React.JSX.Element {
             await registerUsername(user.uid, storedUsername, displayName || storedUsername);
             setFriendCode(storedUsername);
             return;
-          } catch {
-            // Username taken — fall through to legacy code
+          } catch (err) {
+            logger.warn('[AddFriendScreen] Username taken — fall through to legacy code:', err);
           }
         }
         const code = await registerFriendCode(user.uid);
@@ -156,8 +171,8 @@ export function AddFriendScreen(): React.JSX.Element {
       await Share.share({
         message: `Add me on Purrrfect Keys! My username is: ${friendCode}`,
       });
-    } catch {
-      // User cancelled or error — no action needed
+    } catch (err) {
+      logger.warn('[AddFriendScreen] Share failed or user cancelled:', err);
     }
   }, [friendCode]);
 
@@ -227,12 +242,141 @@ export function AddFriendScreen(): React.JSX.Element {
 
       setSuccess('Friend request sent!');
       setInputCode('');
-    } catch {
+    } catch (err) {
+      logger.warn('[AddFriendScreen] Add friend failed:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setIsLooking(false);
     }
   }, [inputCode, friendCode, user?.uid, friends, addFriend, displayName, selectedCatId]);
+
+  // ---------------------------------------------------------------------------
+  // QR code scanning
+  // ---------------------------------------------------------------------------
+
+  const handleOpenScanner = useCallback(async () => {
+    setScannerError(null);
+    scanProcessedRef.current = false;
+    setIsScanProcessing(false);
+
+    // Lazy-load expo-camera — requires a dev build (native module)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let ExpoCamera: any;
+    try {
+      ExpoCamera = require('expo-camera');
+    } catch (_err) {
+      logger.warn('[AddFriendScreen] expo-camera not available');
+      Alert.alert(
+        'Camera Not Available',
+        'QR scanning requires a development build with expo-camera installed. You can still add friends by typing their username above.',
+      );
+      return;
+    }
+
+    // Request camera permission
+    const permResult = await (
+      ExpoCamera.Camera?.requestCameraPermissionsAsync ??
+      ExpoCamera.requestCameraPermissionsAsync
+    )?.();
+    const status = permResult?.status ?? 'undetermined';
+    if (status !== 'granted') {
+      Alert.alert(
+        'Camera Permission Required',
+        'Please grant camera access in Settings to scan QR codes.',
+      );
+      return;
+    }
+
+    setShowScanner(true);
+  }, []);
+
+  const handleBarCodeScanned = useCallback(
+    async (result: { type: string; data: string }) => {
+      // Prevent duplicate processing
+      if (scanProcessedRef.current || isScanProcessing) return;
+      scanProcessedRef.current = true;
+      setIsScanProcessing(true);
+
+      const scannedCode = result.data.trim();
+
+      if (scannedCode.length < 3) {
+        setScannerError('Invalid QR code. Not a valid username.');
+        setIsScanProcessing(false);
+        scanProcessedRef.current = false;
+        return;
+      }
+
+      if (scannedCode.toLowerCase() === friendCode?.toLowerCase()) {
+        setScannerError("That's your own QR code!");
+        setIsScanProcessing(false);
+        scanProcessedRef.current = false;
+        return;
+      }
+
+      if (!user?.uid) {
+        setScannerError('You must be signed in to add friends.');
+        setIsScanProcessing(false);
+        scanProcessedRef.current = false;
+        return;
+      }
+
+      try {
+        const friendUid = await lookupFriendCode(scannedCode);
+        if (!friendUid) {
+          setScannerError('No user found for this QR code.');
+          setIsScanProcessing(false);
+          scanProcessedRef.current = false;
+          return;
+        }
+
+        // Check if already friends or pending
+        const existing = friends.find((f) => f.uid === friendUid);
+        if (existing) {
+          setShowScanner(false);
+          if (existing.status === 'accepted') {
+            setError('You are already friends!');
+          } else {
+            setError('A friend request is already pending.');
+          }
+          setIsScanProcessing(false);
+          return;
+        }
+
+        // Fetch profile and send request
+        const friendProfile = await getUserPublicProfile(friendUid);
+        const friendDisplayName = friendProfile?.displayName || 'Player';
+        const friendCatId = friendProfile?.selectedCatId || '';
+
+        await sendFriendRequest(
+          user.uid,
+          friendUid,
+          displayName || 'Player',
+          selectedCatId,
+          friendDisplayName,
+          friendCatId,
+        );
+
+        addFriend({
+          uid: friendUid,
+          displayName: friendDisplayName,
+          selectedCatId: friendCatId,
+          status: 'pending_outgoing',
+          connectedAt: Date.now(),
+        });
+
+        // Close scanner and show success on main screen
+        setShowScanner(false);
+        setSuccess(`Friend request sent to ${friendDisplayName}!`);
+      } catch (err) {
+        logger.warn('[AddFriendScreen] QR scan add friend failed:', err);
+        setScannerError('Something went wrong. Please try again.');
+        scanProcessedRef.current = false;
+      } finally {
+        setIsScanProcessing(false);
+      }
+    },
+    [friendCode, user?.uid, friends, addFriend, displayName, selectedCatId, isScanProcessing],
+  );
 
   // ---------------------------------------------------------------------------
   // Find friends from contacts
@@ -249,7 +393,8 @@ export function AddFriendScreen(): React.JSX.Element {
       let Contacts: typeof import('expo-contacts');
       try {
         Contacts = require('expo-contacts');
-      } catch {
+      } catch (err) {
+        logger.warn('[AddFriendScreen] expo-contacts not available:', err);
         setContactsError(
           'Contact access requires a development build. This feature is not available in Expo Go.',
         );
@@ -299,7 +444,8 @@ export function AddFriendScreen(): React.JSX.Element {
 
       setContactMatches(newMatches);
       setContactsSearched(true);
-    } catch {
+    } catch (err) {
+      logger.warn('[AddFriendScreen] Contact search failed:', err);
       setContactsError('Failed to search contacts. Please try again.');
     } finally {
       setIsSearchingContacts(false);
@@ -334,7 +480,8 @@ export function AddFriendScreen(): React.JSX.Element {
         });
 
         setSentUids((prev) => new Set(prev).add(match.uid));
-      } catch {
+      } catch (err) {
+        logger.warn('[AddFriendScreen] Send contact friend request failed:', err);
         Alert.alert('Error', 'Failed to send friend request. Please try again.');
       } finally {
         setSendingToUid(null);
@@ -503,8 +650,26 @@ export function AddFriendScreen(): React.JSX.Element {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Add a Friend</Text>
           <Text style={styles.sectionSubtitle}>
-            Enter their username or legacy friend code
+            Enter their username, scan their QR code, or use a legacy friend code
           </Text>
+
+          {/* Scan QR Code button */}
+          <PressableScale
+            style={styles.scanQrButton}
+            onPress={handleOpenScanner}
+            testID="scan-qr-button"
+          >
+            <View style={styles.addButtonContent}>
+              <MaterialCommunityIcons name="qrcode-scan" size={22} color={COLORS.textPrimary} />
+              <Text style={styles.addButtonText}>Scan QR Code</Text>
+            </View>
+          </PressableScale>
+
+          <View style={styles.inlineDividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or type username</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
           <View style={styles.inputRow}>
             <View style={styles.inputWrapper}>
@@ -662,8 +827,179 @@ export function AddFriendScreen(): React.JSX.Element {
         </View>
 
         </ScrollView>
+
+        {/* QR Scanner Modal */}
+        <Modal
+          visible={showScanner}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowScanner(false)}
+        >
+          <QRScannerModal
+            onBarCodeScanned={handleBarCodeScanned}
+            onClose={() => {
+              setShowScanner(false);
+              setScannerError(null);
+            }}
+            isProcessing={isScanProcessing}
+            error={scannerError}
+            onClearError={() => {
+              setScannerError(null);
+              scanProcessedRef.current = false;
+            }}
+          />
+        </Modal>
       </SafeAreaView>
     </TouchableWithoutFeedback>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// QR Scanner Modal — lazy-loads expo-camera at render time
+// ---------------------------------------------------------------------------
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCAN_AREA_SIZE = SCREEN_WIDTH * 0.7;
+
+interface QRScannerModalProps {
+  onBarCodeScanned: (result: { type: string; data: string }) => void;
+  onClose: () => void;
+  isProcessing: boolean;
+  error: string | null;
+  onClearError: () => void;
+}
+
+function QRScannerModal({
+  onBarCodeScanned,
+  onClose,
+  isProcessing,
+  error,
+  onClearError,
+}: QRScannerModalProps): React.JSX.Element {
+  // Lazy-load CameraView from expo-camera
+  const [CameraComponent, setCameraComponent] = useState<React.ComponentType<{
+    style?: object;
+    facing?: string;
+    barcodeScannerSettings?: { barcodeTypes: string[] };
+    onBarcodeScanned?: (result: { type: string; data: string }) => void;
+  }> | null>(null);
+  const [cameraLoadError, setCameraLoadError] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cam = require('expo-camera');
+      // expo-camera SDK 52+ exports CameraView
+      const Comp = cam.CameraView ?? cam.Camera;
+      if (Comp) {
+        setCameraComponent(() => Comp);
+      } else {
+        setCameraLoadError(true);
+      }
+    } catch (_err) {
+      logger.warn('[QRScannerModal] expo-camera not available');
+      setCameraLoadError(true);
+    }
+  }, []);
+
+  if (cameraLoadError) {
+    return (
+      <SafeAreaView style={scannerStyles.container}>
+        <View style={scannerStyles.header}>
+          <PressableScale onPress={onClose} style={scannerStyles.closeButton}>
+            <MaterialCommunityIcons name="close" size={28} color={COLORS.textPrimary} />
+          </PressableScale>
+          <Text style={scannerStyles.headerTitle}>Scan QR Code</Text>
+          <View style={scannerStyles.closeButton} />
+        </View>
+        <View style={scannerStyles.fallbackContainer}>
+          <MaterialCommunityIcons name="camera-off" size={64} color={COLORS.textMuted} />
+          <Text style={scannerStyles.fallbackTitle}>Camera Not Available</Text>
+          <Text style={scannerStyles.fallbackText}>
+            QR scanning requires a development build with expo-camera.{'\n'}
+            You can still add friends by typing their username.
+          </Text>
+          <PressableScale style={scannerStyles.fallbackButton} onPress={onClose}>
+            <Text style={scannerStyles.fallbackButtonText}>Go Back</Text>
+          </PressableScale>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!CameraComponent) {
+    return (
+      <SafeAreaView style={scannerStyles.container}>
+        <View style={scannerStyles.loadingContainer}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+          <Text style={scannerStyles.loadingText}>Starting camera...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={scannerStyles.container}>
+      <View style={scannerStyles.header}>
+        <PressableScale onPress={onClose} style={scannerStyles.closeButton} testID="scanner-close">
+          <MaterialCommunityIcons name="close" size={28} color={COLORS.textPrimary} />
+        </PressableScale>
+        <Text style={scannerStyles.headerTitle}>Scan QR Code</Text>
+        <View style={scannerStyles.closeButton} />
+      </View>
+
+      <View style={scannerStyles.cameraContainer}>
+        <CameraComponent
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr'],
+          }}
+          onBarcodeScanned={isProcessing ? undefined : onBarCodeScanned}
+        />
+
+        {/* Scan area overlay */}
+        <View style={scannerStyles.overlay}>
+          <View style={scannerStyles.overlayTop} />
+          <View style={scannerStyles.overlayMiddle}>
+            <View style={scannerStyles.overlaySide} />
+            <View style={scannerStyles.scanArea}>
+              {/* Corner markers */}
+              <View style={[scannerStyles.corner, scannerStyles.cornerTL]} />
+              <View style={[scannerStyles.corner, scannerStyles.cornerTR]} />
+              <View style={[scannerStyles.corner, scannerStyles.cornerBL]} />
+              <View style={[scannerStyles.corner, scannerStyles.cornerBR]} />
+            </View>
+            <View style={scannerStyles.overlaySide} />
+          </View>
+          <View style={scannerStyles.overlayBottom} />
+        </View>
+
+        {/* Processing indicator */}
+        {isProcessing && (
+          <View style={scannerStyles.processingOverlay}>
+            <ActivityIndicator color={COLORS.primary} size="large" />
+            <Text style={scannerStyles.processingText}>Adding friend...</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Bottom section with instructions or error */}
+      <View style={scannerStyles.bottomSection}>
+        {error ? (
+          <View style={scannerStyles.scanError}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={20} color={COLORS.error} />
+            <Text style={scannerStyles.scanErrorText}>{error}</Text>
+            <PressableScale onPress={onClearError} style={scannerStyles.retryButton}>
+              <Text style={scannerStyles.retryButtonText}>Try Again</Text>
+            </PressableScale>
+          </View>
+        ) : (
+          <Text style={scannerStyles.instructionText}>
+            Point your camera at a friend's QR code to add them
+          </Text>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -1025,5 +1361,193 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body.sm,
     color: COLORS.success,
     fontWeight: '600',
+  },
+  // Scan QR button
+  scanQrButton: {
+    backgroundColor: glowColor(COLORS.primary, 0.15),
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.3),
+  },
+  inlineDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+  },
+});
+
+// ---------------------------------------------------------------------------
+// QR Scanner Modal Styles
+// ---------------------------------------------------------------------------
+
+const scannerStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.heading.lg,
+    color: COLORS.textPrimary,
+  },
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlayTop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  overlayMiddle: {
+    flexDirection: 'row',
+    height: SCAN_AREA_SIZE,
+  },
+  overlaySide: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  scanArea: {
+    width: SCAN_AREA_SIZE,
+    height: SCAN_AREA_SIZE,
+  },
+  overlayBottom: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  corner: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderColor: COLORS.primary,
+  },
+  cornerTL: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderTopLeftRadius: 4,
+  },
+  cornerTR: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderTopRightRadius: 4,
+  },
+  cornerBL: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderBottomLeftRadius: 4,
+  },
+  cornerBR: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderBottomRightRadius: 4,
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  processingText: {
+    ...TYPOGRAPHY.body.lg,
+    color: COLORS.textPrimary,
+  },
+  bottomSection: {
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    alignItems: 'center',
+  },
+  instructionText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  scanError: {
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  scanErrorText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.error,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: glowColor(COLORS.primary, 0.15),
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderWidth: 1,
+    borderColor: glowColor(COLORS.primary, 0.3),
+    marginTop: SPACING.xs,
+  },
+  retryButtonText: {
+    ...TYPOGRAPHY.button.md,
+    color: COLORS.textPrimary,
+  },
+  // Fallback (no camera available)
+  fallbackContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
+  },
+  fallbackTitle: {
+    ...TYPOGRAPHY.heading.md,
+    color: COLORS.textPrimary,
+  },
+  fallbackText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  fallbackButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    marginTop: SPACING.sm,
+  },
+  fallbackButtonText: {
+    ...TYPOGRAPHY.button.lg,
+    color: COLORS.textPrimary,
+  },
+  // Loading state
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  loadingText: {
+    ...TYPOGRAPHY.body.md,
+    color: COLORS.textSecondary,
   },
 });

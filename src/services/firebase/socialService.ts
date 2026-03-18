@@ -72,13 +72,20 @@ export async function registerFriendCode(uid: string): Promise<string> {
   for (let attempt = 0; attempt < MAX_CODE_RETRIES; attempt++) {
     const code = generateFriendCode();
     const codeRef = doc(db, 'friendCodes', code);
-    const existing = await getDoc(codeRef);
 
-    if (!existing.exists()) {
-      await setDoc(codeRef, { uid });
+    try {
+      await runTransaction(db, async (transaction) => {
+        const existing = await transaction.get(codeRef);
+        if (existing.exists()) {
+          throw new Error('CODE_COLLISION');
+        }
+        transaction.set(codeRef, { uid });
+      });
       return code;
+    } catch (err) {
+      if ((err as Error)?.message === 'CODE_COLLISION') continue;
+      throw err;
     }
-    // Collision — retry with a new code
   }
 
   throw new Error('Failed to generate unique friend code after maximum retries');
@@ -390,6 +397,43 @@ export async function updateChallengeResult(
     toScore,
     status: 'completed',
   });
+}
+
+/**
+ * Resolve gem stake for a completed challenge.
+ * Determines the winner (higher score wins, tie goes to challenger),
+ * updates the challenge doc with winnerUid/winnerGems/resolvedAt,
+ * and returns the result so the caller can award gems locally.
+ *
+ * Returns null if the challenge has no stake or was already resolved.
+ */
+export async function resolveChallengeGemStake(
+  challengeId: string,
+  fromScore: number,
+  toScore: number,
+  fromUid: string,
+  toUid: string,
+): Promise<{ winnerUid: string; winnerGems: number } | null> {
+  const challengeRef = doc(db, 'challenges', challengeId);
+  const snap = await getDoc(challengeRef);
+
+  if (!snap.exists()) return null;
+
+  const challenge = snap.data() as FriendChallenge;
+  if (!challenge.gemStake || challenge.gemStake <= 0) return null;
+  if (challenge.resolvedAt) return null; // Already resolved
+
+  // Higher score wins; tie goes to challenger (fromUid)
+  const winnerUid = toScore > fromScore ? toUid : fromUid;
+  const winnerGems = challenge.gemStake * 2;
+
+  await updateDoc(challengeRef, {
+    winnerUid,
+    winnerGems,
+    resolvedAt: Date.now(),
+  });
+
+  return { winnerUid, winnerGems };
 }
 
 /**

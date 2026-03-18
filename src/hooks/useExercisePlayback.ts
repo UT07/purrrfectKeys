@@ -310,7 +310,10 @@ export function useExercisePlayback({
       }
     };
 
-  }, [enableAudio, audioEngine, resolvedInputMethod]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resolvedInputMethod intentionally
+    // excluded: changing input preference mid-exercise must NOT reconfigure the audio session,
+    // which would cause audio routing disruption. Session mode is set once at mount.
+  }, [enableAudio, audioEngine]);
 
   /**
    * Subscribe to input events (MIDI + Mic via InputManager)

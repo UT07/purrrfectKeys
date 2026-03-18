@@ -59,6 +59,9 @@ export const STORAGE_KEYS = {
   SONGS: 'purrrfect_songs_state',
   SOCIAL: 'purrrfect_social_state',
   LEAGUE: 'purrrfect_league_state',
+  RANK: 'purrrfect_rank_state',
+  SEASON: 'purrrfect_season_state',
+  GUILD: 'purrrfect_guild_state',
 } as const;
 
 /**
@@ -82,7 +85,7 @@ export class PersistenceManager {
         logger.log(`[PERSIST] Saved ${key}:`, state);
       }
     } catch (error) {
-      console.error(`[PERSIST] Failed to save ${key}:`, error);
+      logger.warn(`[PERSIST] Failed to save ${key}:`, error);
     }
   }
 
@@ -104,7 +107,7 @@ export class PersistenceManager {
 
       return parsed;
     } catch (error) {
-      console.error(`[PERSIST] Failed to load ${key}:`, error);
+      logger.warn(`[PERSIST] Failed to load ${key}:`, error);
       return defaultValue;
     }
   }
@@ -120,7 +123,7 @@ export class PersistenceManager {
         logger.log(`[PERSIST] Deleted ${key}`);
       }
     } catch (error) {
-      console.error(`[PERSIST] Failed to delete ${key}:`, error);
+      logger.warn(`[PERSIST] Failed to delete ${key}:`, error);
     }
   }
 
@@ -139,7 +142,7 @@ export class PersistenceManager {
     );
 
     if (failures.length > 0) {
-      console.error(`[PERSIST] Failed to clear ${failures.length} keys:`, failures);
+      logger.warn(`[PERSIST] Failed to clear ${failures.length} keys:`, failures);
     } else if (process.env.NODE_ENV === 'development') {
       logger.log('[PERSIST] Cleared all KeySense data');
     }
@@ -153,7 +156,7 @@ export class PersistenceManager {
       const version = await storage.getNumber(STORAGE_KEYS.MIGRATION_VERSION);
       return version ?? 0;
     } catch (error) {
-      console.error('[PERSIST] Failed to get migration version:', error);
+      logger.warn('[PERSIST] Failed to get migration version:', error);
       return 0;
     }
   }
@@ -165,7 +168,7 @@ export class PersistenceManager {
     try {
       await storage.setNumber(STORAGE_KEYS.MIGRATION_VERSION, version);
     } catch (error) {
-      console.error('[PERSIST] Failed to set migration version:', error);
+      logger.warn('[PERSIST] Failed to set migration version:', error);
     }
   }
 }

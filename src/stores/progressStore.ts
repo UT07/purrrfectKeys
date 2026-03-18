@@ -203,8 +203,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
               newStatus = 'completed';
             }
           }
-        } catch {
-          // ContentLoader not available (e.g., in tests) — don't block
+        } catch (err) {
+          logger.warn('[progressStore] ContentLoader not available for lesson completion check:', err);
         }
       }
 
@@ -421,6 +421,38 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         () => addLeagueXp(leagueMembership.leagueId, auth.currentUser!.uid, effectiveXp),
         'addLeagueXp',
       );
+    }
+
+    // ── MMR / Rank update ──
+    try {
+      const { useRankStore } = require('./rankStore');
+      const exerciseTier = challengeContext?.exerciseTier ?? 3;
+      const exerciseType = challengeContext?.exerciseType ?? 'play';
+      useRankStore.getState().updateAfterExercise(_score, exerciseTier, exerciseType);
+
+      // Update season peak tier + battle pass XP
+      const { useSeasonStore } = require('./seasonStore');
+      const rankState = useRankStore.getState();
+      useSeasonStore.getState().updatePeakTier(rankState.rating.tier);
+      useSeasonStore.getState().addBattlePassXp(effectiveXp);
+    } catch (err) {
+      logger.warn('[progressStore] MMR/rank update failed:', (err as Error)?.message);
+    }
+
+    // ── Guild XP update (fire-and-forget) ──
+    try {
+      const { useGuildStore } = require('./guildStore');
+      const guild = useGuildStore.getState().currentGuild;
+      if (guild && auth.currentUser && !auth.currentUser.isAnonymous) {
+        const { addGuildMemberXp } = require('../services/firebase/guildService');
+        useGuildStore.getState().updateMemberXp(auth.currentUser.uid, effectiveXp);
+        fireAndRetry(
+          () => addGuildMemberXp(guild.id, auth.currentUser!.uid, effectiveXp),
+          'addGuildMemberXp',
+        );
+      }
+    } catch (err) {
+      logger.warn('[progressStore] Guild XP update failed:', err);
     }
 
     // ── Post level-up activity (fire-and-forget with logged failure) ──

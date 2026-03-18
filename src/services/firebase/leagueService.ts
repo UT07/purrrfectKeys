@@ -19,7 +19,7 @@ import {
   runTransaction,
 } from 'firebase/firestore';
 import { db } from './config';
-import type { LeagueTier, LeagueMembership } from '../../stores/types';
+import type { RankedTier, LeagueMembership } from '../../stores/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,7 +34,7 @@ export interface LeagueStandingEntry {
 }
 
 interface LeagueDocument {
-  tier: LeagueTier;
+  tier: RankedTier;
   weekStart: string;
   memberCount: number;
   createdAt: number;
@@ -82,7 +82,7 @@ export async function assignToLeague(
   uid: string,
   displayName: string,
   selectedCatId: string,
-  tier: LeagueTier = 'bronze',
+  tier: RankedTier = 'novice',
 ): Promise<LeagueMembership> {
   const weekStart = getCurrentWeekMonday();
 

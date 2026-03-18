@@ -45,6 +45,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { getLessonIdForExercise } from '../../content/ContentLoader';
 import { soundManager } from '../../audio/SoundManager';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, GLOW, RARITY, glowColor } from '../../theme/tokens';
+import { logger } from '../../utils/logger';
 import type { Exercise, ExerciseScore } from '../../core/exercises/types';
 import type { ChestType } from '../../core/rewards/chestSystem';
 import { ChallengeFriendSheet } from '../../components/ChallengeFriendSheet';
@@ -299,7 +300,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
           ),
         ]);
         if (!cancelled) setCoachFeedback(result.feedback);
-      } catch {
+      } catch (err) {
+        logger.warn('[CompletionModal] Coach feedback fetch failed:', err);
         if (!cancelled) setCoachFeedback('Keep practicing! You are making great progress.');
       } finally {
         if (!cancelled) setCoachLoading(false);
@@ -451,8 +453,8 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
           ? { message }
           : { message, title: 'Purrrfect Keys' },
       );
-    } catch {
-      // User cancelled or share failed — silently ignore
+    } catch (err) {
+      logger.warn('[CompletionModal] Share failed or user cancelled:', err);
     }
   }, [exercise.metadata?.title, score.overall, score.stars]);
 

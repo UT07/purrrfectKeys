@@ -22,8 +22,8 @@ import {
 let Speech: typeof import('expo-speech') | null = null;
 try {
   Speech = require('expo-speech');
-} catch {
-  logger.warn('[TTSService] expo-speech native module not available — TTS disabled');
+} catch (err) {
+  logger.warn('[TTSService] expo-speech native module not available — TTS disabled:', err);
 }
 
 export interface TTSOptions {
@@ -52,7 +52,8 @@ class TTSServiceImpl {
     try {
       const voices = await Speech.getAvailableVoicesAsync();
       this._availableVoiceIds = new Set(voices.map(v => v.identifier));
-    } catch {
+    } catch (err) {
+      logger.warn('[TTSService] Failed to cache available voices:', err);
       this._availableVoiceIds = new Set();
     }
   }
@@ -178,7 +179,8 @@ class TTSServiceImpl {
     try {
       const voices = await Speech.getAvailableVoicesAsync();
       return voices.length > 0;
-    } catch {
+    } catch (err) {
+      logger.warn('[TTSService] Failed to check TTS availability:', err);
       return false;
     }
   }

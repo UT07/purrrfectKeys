@@ -49,6 +49,7 @@ import type { Exercise, ExerciseScore } from '../core/exercises/types';
 import type { ExerciseType } from '../core/exercises/types';
 import type { MascotMood } from '../components/Mascot/mascotTips';
 import { getPostExerciseData, clearPostExerciseData } from './postExerciseCache';
+import { logger } from '../utils/logger';
 
 type PostExerciseNavProp = NativeStackNavigationProp<RootStackParamList, 'PostExercise'>;
 
@@ -154,7 +155,8 @@ export function PostExerciseScreen(): React.ReactElement {
           ),
         ]);
         if (!cancelled) setCoachFeedback(result.feedback);
-      } catch {
+      } catch (err) {
+        logger.warn('[PostExerciseScreen] Coach feedback fetch failed:', err);
         if (!cancelled) setCoachFeedback('Keep practicing! You are making great progress.');
       } finally {
         if (!cancelled) setCoachLoading(false);
@@ -237,8 +239,8 @@ export function PostExerciseScreen(): React.ReactElement {
           ? { message }
           : { message, title: 'Purrrfect Keys' },
       );
-    } catch {
-      // User cancelled
+    } catch (err) {
+      logger.warn('[PostExerciseScreen] Share failed or user cancelled:', err);
     }
   }, [exercise?.metadata?.title, score]);
 

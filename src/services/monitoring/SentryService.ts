@@ -21,7 +21,8 @@ function getPostHogClient(): { capture: (event: string, properties?: Record<stri
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mod = require('../../config/posthog');
     return mod.posthog ?? null;
-  } catch {
+  } catch (err) {
+    logger.warn('[Sentry] Failed to load PostHog client:', err);
     return null;
   }
 }
@@ -34,7 +35,8 @@ function getSentry() {
   try {
     Sentry = require('@sentry/react-native');
     return Sentry;
-  } catch {
+  } catch (err) {
+    logger.warn('[Sentry] @sentry/react-native not available:', err);
     return null;
   }
 }

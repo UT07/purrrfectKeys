@@ -13,12 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { COLORS } from '../../theme/tokens';
 import { soundManager } from '../../audio/SoundManager';
+import { logger } from '../../utils/logger';
 
 let Haptics: typeof import('expo-haptics') | null = null;
 try {
    
   Haptics = require('expo-haptics');
-} catch {
+} catch (err) {
+  logger.warn('[PressableScale] expo-haptics not available:', err);
   Haptics = null;
 }
 

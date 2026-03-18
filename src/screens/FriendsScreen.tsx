@@ -28,6 +28,7 @@ import { GradientMeshBackground } from '../components/effects';
 import { PressableScale } from '../components/common/PressableScale';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import type { FriendConnection, ActivityFeedItem } from '../stores/types';
+import { logger } from '../utils/logger';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -318,8 +319,8 @@ export function FriendsScreen(): React.JSX.Element {
               if (profile) {
                 return { ...f, displayName: profile.displayName, selectedCatId: profile.selectedCatId || f.selectedCatId };
               }
-            } catch {
-              // Profile fetch failed — keep original
+            } catch (err) {
+              logger.warn('[FriendsScreen] Profile fetch failed — keep original:', err);
             }
             return f;
           }),
@@ -346,13 +347,13 @@ export function FriendsScreen(): React.JSX.Element {
               if (!cancelled) {
                 setActivityFeed(allActivity.slice(0, 50));
               }
-            } catch {
-              // Activity fetch is non-critical
+            } catch (err) {
+              logger.warn('[FriendsScreen] Activity fetch is non-critical:', err);
             }
           }
         }
-      } catch {
-        // Silently fail — local data is still available
+      } catch (err) {
+        logger.warn('[FriendsScreen] Friends sync failed — local data is still available:', err);
       } finally {
         if (!cancelled) setIsSyncing(false);
       }
@@ -383,7 +384,8 @@ export function FriendsScreen(): React.JSX.Element {
       try {
         await acceptFriendRequest(user.uid, friendUid);
         updateFriendStatus(friendUid, 'accepted');
-      } catch {
+      } catch (err) {
+        logger.warn('[FriendsScreen] Accept friend request failed:', err);
         Alert.alert('Error', 'Failed to accept request. Please try again.');
       } finally {
         setProcessingUid(null);
@@ -399,7 +401,8 @@ export function FriendsScreen(): React.JSX.Element {
       try {
         await removeFriendConnection(user.uid, friendUid);
         removeFriend(friendUid);
-      } catch {
+      } catch (err) {
+        logger.warn('[FriendsScreen] Decline friend request failed:', err);
         Alert.alert('Error', 'Failed to decline request. Please try again.');
       } finally {
         setProcessingUid(null);
@@ -415,7 +418,8 @@ export function FriendsScreen(): React.JSX.Element {
       try {
         await removeFriendConnection(user.uid, friendUid);
         removeFriend(friendUid);
-      } catch {
+      } catch (err) {
+        logger.warn('[FriendsScreen] Cancel friend request failed:', err);
         Alert.alert('Error', 'Failed to cancel request. Please try again.');
       } finally {
         setProcessingUid(null);
@@ -450,7 +454,8 @@ export function FriendsScreen(): React.JSX.Element {
           (a) => a.friendUid !== friendUid,
         );
         setActivityFeed(filteredActivity);
-      } catch {
+      } catch (err) {
+        logger.warn('[FriendsScreen] Remove friend failed:', err);
         Alert.alert('Error', 'Failed to remove friend. Please try again.');
       } finally {
         setProcessingUid(null);

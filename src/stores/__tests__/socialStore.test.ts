@@ -5,7 +5,7 @@
  * challenge management, reset, and persistence hydration.
  */
 
-import type { FriendConnection, ActivityFeedItem, FriendChallenge } from '../types';
+import type { FriendConnection, ActivityFeedItem, FriendChallenge, RichFeedItem, RankedTier } from '../types';
 
 // Mock persistence layer
 jest.mock('../persistence', () => ({
@@ -83,6 +83,7 @@ describe('socialStore', () => {
       expect(state.friendCode).toBe('');
       expect(state.friends).toEqual([]);
       expect(state.activityFeed).toEqual([]);
+      expect(state.richFeed).toEqual([]);
       expect(state.challenges).toEqual([]);
     });
   });
@@ -254,6 +255,140 @@ describe('socialStore', () => {
     });
   });
 
+  describe('rich feed', () => {
+    function makeRichItem(overrides: Partial<RichFeedItem> = {}): RichFeedItem {
+      return {
+        id: `rich-${Date.now()}-${Math.random()}`,
+        type: 'level_up',
+        actorUid: 'friend-1',
+        actorDisplayName: 'Friend',
+        actorCatId: 'luna',
+        actorRankTier: 'novice' as RankedTier,
+        actorRankDivision: 3,
+        payload: {},
+        timestamp: Date.now(),
+        reactions: {},
+        isEngagementTrigger: false,
+        ...overrides,
+      };
+    }
+
+    it('adds a rich feed item (prepended)', () => {
+      const item = makeRichItem({ id: 'r1' });
+      useSocialStore.getState().addRichFeedItem(item);
+
+      const { richFeed } = useSocialStore.getState();
+      expect(richFeed).toHaveLength(1);
+      expect(richFeed[0].id).toBe('r1');
+    });
+
+    it('prepends new items (newest first)', () => {
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'r1' }));
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'r2' }));
+
+      const { richFeed } = useSocialStore.getState();
+      expect(richFeed[0].id).toBe('r2');
+      expect(richFeed[1].id).toBe('r1');
+    });
+
+    it('caps at 50 items', () => {
+      for (let i = 0; i < 60; i++) {
+        useSocialStore.getState().addRichFeedItem(makeRichItem({ id: `r-${i}` }));
+      }
+
+      expect(useSocialStore.getState().richFeed).toHaveLength(50);
+      expect(useSocialStore.getState().richFeed[0].id).toBe('r-59');
+    });
+
+    it('setRichFeed replaces and caps at 50', () => {
+      const items = Array.from({ length: 60 }, (_, i) =>
+        makeRichItem({ id: `set-${i}` }),
+      );
+      useSocialStore.getState().setRichFeed(items);
+
+      expect(useSocialStore.getState().richFeed).toHaveLength(50);
+    });
+
+    it('removeFriend also removes their rich feed items', () => {
+      useSocialStore.getState().addFriend(makeFriend({ uid: 'f1' }));
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ actorUid: 'f1', id: 'r1' }));
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ actorUid: 'f2', id: 'r2' }));
+
+      useSocialStore.getState().removeFriend('f1');
+
+      const { richFeed } = useSocialStore.getState();
+      expect(richFeed).toHaveLength(1);
+      expect(richFeed[0].actorUid).toBe('f2');
+    });
+  });
+
+  describe('toggleReaction', () => {
+    function makeRichItem(overrides: Partial<RichFeedItem> = {}): RichFeedItem {
+      return {
+        id: `rich-${Date.now()}-${Math.random()}`,
+        type: 'rank_promotion',
+        actorUid: 'friend-1',
+        actorDisplayName: 'Friend',
+        actorCatId: 'luna',
+        actorRankTier: 'performer' as RankedTier,
+        actorRankDivision: 2,
+        payload: {},
+        timestamp: Date.now(),
+        reactions: {},
+        isEngagementTrigger: false,
+        ...overrides,
+      };
+    }
+
+    it('adds a reaction to an item', () => {
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'item-1', reactions: {} }));
+      useSocialStore.getState().toggleReaction('item-1', '🔥', 'user-a');
+
+      const item = useSocialStore.getState().richFeed[0];
+      expect(item.reactions['🔥']).toEqual(['user-a']);
+    });
+
+    it('removes a reaction when toggled again', () => {
+      useSocialStore.getState().addRichFeedItem(
+        makeRichItem({ id: 'item-1', reactions: { '🔥': ['user-a'] } }),
+      );
+      useSocialStore.getState().toggleReaction('item-1', '🔥', 'user-a');
+
+      const item = useSocialStore.getState().richFeed[0];
+      expect(item.reactions['🔥']).toEqual([]);
+    });
+
+    it('supports multiple users reacting', () => {
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'item-1', reactions: {} }));
+      useSocialStore.getState().toggleReaction('item-1', '👏', 'user-a');
+      useSocialStore.getState().toggleReaction('item-1', '👏', 'user-b');
+
+      const item = useSocialStore.getState().richFeed[0];
+      expect(item.reactions['👏']).toEqual(['user-a', 'user-b']);
+    });
+
+    it('supports multiple emoji types on same item', () => {
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'item-1', reactions: {} }));
+      useSocialStore.getState().toggleReaction('item-1', '🔥', 'user-a');
+      useSocialStore.getState().toggleReaction('item-1', '💪', 'user-a');
+
+      const item = useSocialStore.getState().richFeed[0];
+      expect(item.reactions['🔥']).toEqual(['user-a']);
+      expect(item.reactions['💪']).toEqual(['user-a']);
+    });
+
+    it('does not affect other feed items', () => {
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'item-1', reactions: {} }));
+      useSocialStore.getState().addRichFeedItem(makeRichItem({ id: 'item-2', reactions: {} }));
+      useSocialStore.getState().toggleReaction('item-1', '🔥', 'user-a');
+
+      const items = useSocialStore.getState().richFeed;
+      // item-2 is first (prepended), item-1 is second
+      const item2 = items.find((i) => i.id === 'item-2')!;
+      expect(item2.reactions).toEqual({});
+    });
+  });
+
   describe('reset', () => {
     it('resets all state to defaults', () => {
       useSocialStore.getState().setFriendCode('XYZ789');
@@ -267,6 +402,7 @@ describe('socialStore', () => {
       expect(state.friendCode).toBe('');
       expect(state.friends).toEqual([]);
       expect(state.activityFeed).toEqual([]);
+      expect(state.richFeed).toEqual([]);
       expect(state.challenges).toEqual([]);
     });
 
@@ -309,6 +445,22 @@ describe('socialStore', () => {
       const state = useSocialStore.getState();
       expect(state.friendCode).toBe('');
       expect(state.friends).toEqual([]);
+    });
+
+    it('migrates legacy data without richFeed field', async () => {
+      (PersistenceManager.loadState as jest.Mock).mockResolvedValueOnce({
+        friendCode: 'LEGACY',
+        friends: [],
+        activityFeed: [],
+        challenges: [],
+        // No richFeed field — older saved state
+      });
+
+      await hydrateSocialStore();
+
+      const state = useSocialStore.getState();
+      expect(state.friendCode).toBe('LEGACY');
+      expect(state.richFeed).toEqual([]);
     });
   });
 });

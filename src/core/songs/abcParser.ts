@@ -10,6 +10,7 @@
 
 import abcjs from 'abcjs';
 import type { NoteEvent } from '@/core/exercises/types';
+import { logger } from '../../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -134,7 +135,8 @@ export function parseABC(abcString: string): ABCParseOutput {
   let tunes: ReturnType<typeof abcjs.parseOnly>;
   try {
     tunes = abcjs.parseOnly(normalized);
-  } catch {
+  } catch (err) {
+    logger.warn('[abcParser] Failed to parse ABC notation:', err);
     return { error: 'Failed to parse ABC notation' };
   }
 

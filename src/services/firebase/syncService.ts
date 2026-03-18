@@ -249,8 +249,8 @@ export class SyncManager {
     // Attempt immediate flush (don't throw if it fails)
     try {
       await this.flushQueue();
-    } catch {
-      // Will be retried on next periodic flush or manual sync
+    } catch (err) {
+      logger.warn('[Sync] Immediate flush after exercise failed (will retry):', err);
     }
   }
 
@@ -931,8 +931,9 @@ export class SyncManager {
               0,
             ),
           });
-        } catch {
+        } catch (err) {
           // createLessonProgress uses merge: true, so partial failures are OK
+          logger.warn('[Sync] Partial lesson progress push failed:', err);
         }
       }
       logger.log(`[Sync] Pushed ${lessonIds.length} lesson progress records`);
@@ -953,7 +954,8 @@ export class SyncManager {
     if (!raw) return [];
     try {
       return JSON.parse(raw) as SyncChange[];
-    } catch {
+    } catch (err) {
+      logger.warn('[Sync] Failed to parse sync queue (resetting):', err);
       return [];
     }
   }

@@ -14,6 +14,7 @@ import {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { logger } from '../../utils/logger';
 
 export type ParticleShape = 'circle' | 'star' | 'note' | 'sparkle' | 'paw';
 
@@ -25,8 +26,9 @@ try {
   const skia = require('@shopify/react-native-skia');
   SkiaCanvas = skia.Canvas;
   SkiaCircle = skia.Circle;
-} catch {
+} catch (err) {
   // Native module not available — SkiaParticles will render null
+  logger.warn('[SkiaParticles] @shopify/react-native-skia not available:', err);
 }
 
 interface SkiaParticlesProps {

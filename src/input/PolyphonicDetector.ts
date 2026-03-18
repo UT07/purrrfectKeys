@@ -13,6 +13,8 @@
  * - Adaptive note threshold based on frame energy
  */
 
+import { logger } from '../utils/logger';
+
 // onnxruntime-react-native is imported lazily in initialize() to avoid
 // crashing when the native module isn't linked in the current build.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,7 +114,8 @@ export class PolyphonicDetector {
     if (!OnnxRuntime) {
       try {
         OnnxRuntime = require('onnxruntime-react-native');
-      } catch {
+      } catch (err) {
+        logger.warn('[PolyphonicDetector] onnxruntime-react-native not available:', err);
         throw new Error(
           'onnxruntime-react-native native module not available. ' +
           'Install with: npx expo install onnxruntime-react-native'
@@ -150,7 +153,8 @@ export class PolyphonicDetector {
             throw new Error('not found');
           }
         }
-      } catch {
+      } catch (err) {
+        logger.warn('[PolyphonicDetector] ONNX model not found:', err);
         throw new Error(
           `[PolyphonicDetector] ONNX model '${this.config.modelPath}' not found. ` +
           'Download basic-pitch.onnx and place in the app documents/models/ directory. ' +

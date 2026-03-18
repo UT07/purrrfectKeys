@@ -14,6 +14,7 @@
 import { create } from 'zustand';
 import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { logger } from '../utils/logger';
 
 /** Data-only shape of settings state (excludes actions) */
 type SettingsData = AudioSettings & DisplaySettings & NotificationSettings & MidiSettings & OnboardingSettings & ProfileSettings;
@@ -250,7 +251,9 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         const { updateUserProfile } = require('../services/firebase/firestore');
         updateUserProfile(user.uid, { displayName: trimmed }).catch(() => {});
       }
-    } catch { /* Firebase sync is best-effort */ }
+    } catch (err) {
+      logger.warn('[Settings] Firebase displayName sync failed:', err);
+    }
 
     // Fire-and-forget sync to league member document so leaderboard shows updated name
     try {
@@ -264,7 +267,9 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
           updateLeagueMemberDisplayName(membership.leagueId, user.uid, trimmed).catch(() => {});
         }
       }
-    } catch { /* League sync is best-effort */ }
+    } catch (err) {
+      logger.warn('[Settings] League displayName sync failed:', err);
+    }
   },
 
   setAvatarEmoji: (emoji: string) => {
@@ -288,7 +293,9 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
           updateLeagueMemberSelectedCatId(membership.leagueId, user.uid, id).catch(() => {});
         }
       }
-    } catch { /* League sync is best-effort */ }
+    } catch (err) {
+      logger.warn('[Settings] League catId sync failed:', err);
+    }
   },
 
   setSelectedPath: (pathId: string) => {

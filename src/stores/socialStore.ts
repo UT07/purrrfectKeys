@@ -4,13 +4,13 @@
  * Manages social features:
  * - Friend code for discovery
  * - Friend connections (add/remove/status)
- * - Activity feed from friends (capped at 50 items)
+ * - Activity feed from friends (legacy + rich feed with reactions)
  * - Friend challenges (send/receive/complete)
  * - Persisted to AsyncStorage via debounced save
  */
 
 import { create } from 'zustand';
-import type { FriendConnection, ActivityFeedItem, FriendChallenge } from './types';
+import type { FriendConnection, ActivityFeedItem, FriendChallenge, RichFeedItem, ReactionType } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
 
 const MAX_ACTIVITY_FEED = 50;
@@ -19,6 +19,7 @@ export interface SocialStoreState {
   friendCode: string;
   friends: FriendConnection[];
   activityFeed: ActivityFeedItem[];
+  richFeed: RichFeedItem[];
   challenges: FriendChallenge[];
 
   // Actions
@@ -29,18 +30,22 @@ export interface SocialStoreState {
   setFriends: (friends: FriendConnection[]) => void;
   addActivityItem: (item: ActivityFeedItem) => void;
   setActivityFeed: (items: ActivityFeedItem[]) => void;
+  setRichFeed: (items: RichFeedItem[]) => void;
+  addRichFeedItem: (item: RichFeedItem) => void;
+  toggleReaction: (itemId: string, reaction: ReactionType, uid: string) => void;
   addChallenge: (challenge: FriendChallenge) => void;
   updateChallenge: (id: string, updates: Partial<FriendChallenge>) => void;
   setChallenges: (challenges: FriendChallenge[]) => void;
   reset: () => void;
 }
 
-type SocialData = Pick<SocialStoreState, 'friendCode' | 'friends' | 'activityFeed' | 'challenges'>;
+type SocialData = Pick<SocialStoreState, 'friendCode' | 'friends' | 'activityFeed' | 'richFeed' | 'challenges'>;
 
 const defaultData: SocialData = {
   friendCode: '',
   friends: [],
   activityFeed: [],
+  richFeed: [],
   challenges: [],
 };
 
@@ -74,6 +79,7 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
     set((state) => ({
       friends: state.friends.filter((f) => f.uid !== uid),
       activityFeed: state.activityFeed.filter((item) => item.friendUid !== uid),
+      richFeed: state.richFeed.filter((item) => item.actorUid !== uid),
     }));
     debouncedSave(get());
   },
@@ -92,6 +98,40 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
 
   setActivityFeed: (items: ActivityFeedItem[]) => {
     set({ activityFeed: items.slice(0, MAX_ACTIVITY_FEED) });
+    debouncedSave(get());
+  },
+
+  setRichFeed: (items: RichFeedItem[]) => {
+    set({ richFeed: items.slice(0, MAX_ACTIVITY_FEED) });
+    debouncedSave(get());
+  },
+
+  addRichFeedItem: (item: RichFeedItem) => {
+    set((state) => ({
+      richFeed: [item, ...state.richFeed].slice(0, MAX_ACTIVITY_FEED),
+    }));
+    debouncedSave(get());
+  },
+
+  toggleReaction: (itemId: string, reaction: ReactionType, uid: string) => {
+    set((state) => ({
+      richFeed: state.richFeed.map((item) => {
+        if (item.id !== itemId) return item;
+
+        const currentReactors = item.reactions[reaction] ?? [];
+        const hasReacted = currentReactors.includes(uid);
+
+        return {
+          ...item,
+          reactions: {
+            ...item.reactions,
+            [reaction]: hasReacted
+              ? currentReactors.filter((u) => u !== uid)
+              : [...currentReactors, uid],
+          },
+        };
+      }),
+    }));
     debouncedSave(get());
   },
 
@@ -125,5 +165,9 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
 /** Hydrate social store from AsyncStorage on app launch */
 export async function hydrateSocialStore(): Promise<void> {
   const data = await PersistenceManager.loadState<SocialData>(STORAGE_KEYS.SOCIAL, defaultData);
+  // Handle migration: older saved state won't have richFeed
+  if (!data.richFeed) {
+    data.richFeed = [];
+  }
   useSocialStore.setState(data);
 }

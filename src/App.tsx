@@ -27,6 +27,9 @@ import { hydrateCatEvolutionStore } from './stores/catEvolutionStore';
 import { hydrateSongStore } from './stores/songStore';
 import { hydrateSocialStore, useSocialStore } from './stores/socialStore';
 import { hydrateLeagueStore, useLeagueStore } from './stores/leagueStore';
+import { hydrateRankStore } from './stores/rankStore';
+import { hydrateSeasonStore, claimPendingSeasonRewards } from './stores/seasonStore';
+import { hydrateGuildStore } from './stores/guildStore';
 import { getCurrentLeagueMembership, assignToLeague } from './services/firebase/leagueService';
 // Import DeviceLog early so it hooks into logger before any subsystem logs
 import './utils/DeviceLog';
@@ -53,8 +56,9 @@ try {
   } else {
     logger.warn('[App] EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID not set — Google Sign-In will not work');
   }
-} catch {
+} catch (err) {
   // Package not available (e.g. Expo Go) — Google Sign-In button will show "Coming Soon"
+  logger.warn('[App] Google Sign-In configuration failed:', err);
 }
 
 // Keep splash screen visible while loading
@@ -189,6 +193,9 @@ function AppRoot(): React.ReactElement {
           hydrateSongStore().then(() => logger.log('[App] Song store hydrated')).catch((e) => logger.warn('[App] Song store hydration failed:', e)),
           hydrateSocialStore().then(() => logger.log('[App] Social store hydrated')).catch((e) => logger.warn('[App] Social store hydration failed:', e)),
           hydrateLeagueStore().then(() => logger.log('[App] League store hydrated')).catch((e) => logger.warn('[App] League store hydration failed:', e)),
+          hydrateRankStore().then(() => logger.log('[App] Rank store hydrated')).catch((e) => logger.warn('[App] Rank store hydration failed:', e)),
+          hydrateSeasonStore().then(() => logger.log('[App] Season store hydrated')).catch((e) => logger.warn('[App] Season store hydration failed:', e)),
+          hydrateGuildStore().then(() => logger.log('[App] Guild store hydrated')).catch((e) => logger.warn('[App] Guild store hydration failed:', e)),
         ]);
 
         // ── Phase 2: Firebase Auth (network, may be slow) ──────────────
@@ -275,11 +282,13 @@ function AppRoot(): React.ReactElement {
               let membership = await getCurrentLeagueMembership(user.uid);
               if (!membership) {
                 const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
+                const { useRankStore } = require('./stores/rankStore');
+                const playerTier = useRankStore.getState().rating.tier;
                 membership = await assignToLeague(
                   user.uid,
                   user.displayName ?? 'Player',
                   catId,
-                  'bronze',
+                  playerTier,
                 );
               }
               useLeagueStore.getState().setMembership(membership);
@@ -291,6 +300,10 @@ function AppRoot(): React.ReactElement {
                 useSocialStore.getState().setFriendCode(code);
                 logger.log('[App] Friend code registered:', code);
               }
+
+              // Claim pending season rewards (gems from league placements)
+              claimPendingSeasonRewards(user.uid)
+                .catch((err) => logger.warn('[App] Season reward claim failed:', err));
             }
           } catch (err) {
             logger.warn('[App] Social setup failed (non-blocking):', err);

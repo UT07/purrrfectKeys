@@ -453,8 +453,8 @@ export function SkillAssessmentScreen(): React.ReactElement {
   const releaseAllAudioNotes = useCallback(() => {
     try {
       audioEngineRef.current.releaseAllNotes();
-    } catch {
-      // Audio cleanup is best-effort.
+    } catch (err) {
+      logger.warn('[SkillAssessment] Audio cleanup is best-effort:', err);
     }
     activeNoteHandlesRef.current.clear();
   }, []);
@@ -583,7 +583,8 @@ export function SkillAssessmentScreen(): React.ReactElement {
     try {
       audioEngineRef.current.releaseNote(handle);
       activeNoteHandlesRef.current.delete(note);
-    } catch {
+    } catch (err) {
+      logger.warn('[SkillAssessment] Release audio note failed:', err);
       activeNoteHandlesRef.current.delete(note);
     }
   }, []);

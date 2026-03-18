@@ -41,7 +41,7 @@ function getCurrentWeekMonday(): string {
 function makeMembership(overrides: Partial<LeagueMembership> = {}): LeagueMembership {
   return {
     leagueId: 'league-abc',
-    tier: 'bronze',
+    tier: 'novice',
     weekStart: getCurrentWeekMonday(),
     weeklyXp: 0,
     rank: 1,
@@ -95,10 +95,10 @@ describe('leagueStore', () => {
     });
 
     it('replaces existing membership', () => {
-      useLeagueStore.getState().setMembership(makeMembership({ tier: 'bronze' }));
-      useLeagueStore.getState().setMembership(makeMembership({ tier: 'silver' }));
+      useLeagueStore.getState().setMembership(makeMembership({ tier: 'novice' }));
+      useLeagueStore.getState().setMembership(makeMembership({ tier: 'apprentice' }));
 
-      expect(useLeagueStore.getState().membership?.tier).toBe('silver');
+      expect(useLeagueStore.getState().membership?.tier).toBe('apprentice');
     });
   });
 

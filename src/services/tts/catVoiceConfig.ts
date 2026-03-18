@@ -30,6 +30,7 @@
 
 import { Platform, NativeModules } from 'react-native';
 import type { ElevenLabsVoiceSettings } from './ElevenLabsProvider';
+import { logger } from '../../utils/logger';
 
 export interface CatVoiceSettings {
   // ElevenLabs (primary)
@@ -56,7 +57,8 @@ function getDeviceLanguage(): string {
     // Android
     const locale = NativeModules.I18nManager?.localeIdentifier ?? 'en-IE';
     return locale.replace('_', '-');
-  } catch {
+  } catch (err) {
+    logger.warn('[catVoiceConfig] Failed to detect device language:', err);
     return 'en-IE';
   }
 }

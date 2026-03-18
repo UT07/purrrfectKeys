@@ -3,8 +3,8 @@
 **Purpose:** Concrete steps YOU need to execute before launch — things that require your Firebase Console, GCP access, Apple Developer account, physical devices, or human judgment.
 **Companion:** `docs/system-design-analysis.md` (architecture analysis), `docs/plans/UNIFIED-PLAN.md` Phase 11 (full QA audit)
 
-**Last updated:** March 15, 2026
-**Codebase health:** 149 test suites, 3,049 tests, 0 failures, 0 TypeScript errors
+**Last updated:** March 16, 2026
+**Codebase health:** 160 test suites, 3,240 tests, 0 failures, 0 TypeScript errors
 **Content:** 599 exercises across 50 lessons, 582 songs in Firestore, 120 skill nodes across 18 tiers
 **GitHub issues:** 0 open (all closed as of Mar 8-9)
 **Key completions since initial draft:**
@@ -30,6 +30,7 @@
 - PressableScale migration: replaced TouchableOpacity across codebase (CustomTabBar, GameCard, etc.)
 - songService.ts: all 10 Firestore functions wrapped in try-catch with graceful error handling
 - ChallengeFriendSheet: offline-first pattern (local store update before Firestore write)
+- Phase 14 Social Revamp: MMR calculator, 9 ranked tiers, promotion/demotion engine, rankStore, seasons + battle pass, automated league rewards Cloud Function, rich activity feed with emoji reactions, feedService
 
 ---
 
@@ -446,6 +447,92 @@ No Crashlytics integration exists. Production crashes will be invisible.
 
 ---
 
+## G6. Phase 14: Competitive Social Revamp [IMPORTANT]
+
+### G6a. MMR & Ranked System
+
+**Status: Code complete (Chunk 1-2).** Composite MMR formula (EMA over last 30 scores), 9 ranked tiers with 3 divisions each, promotion series (2/3 wins at 70%+), demotion grace counter, RP accumulation.
+
+- [ ] **MMR calculation:** Complete 10+ exercises → verify MMR changes in rankStore state (check via React DevTools or console)
+- [ ] **Tier assignment:** Accumulate enough MMR to reach `apprentice` tier (MMR ≥ 200) → verify tier updates
+- [ ] **Division tracking:** Within a tier, verify division changes (1/2/3) as MMR fluctuates
+- [ ] **Promotion series:** Cross tier threshold → verify promotion series starts (2/3 wins at 70%+ required)
+- [ ] **Promotion confirmation:** Win 2 of 3 exercises in promotion series → verify tier advances
+- [ ] **Promotion failure:** Lose 2 of 3 in promotion series → verify stays at current tier, series cleared
+- [ ] **Demotion grace:** Score poorly enough to drop below tier floor → verify 3-exercise grace counter before demotion
+- [ ] **Peak tracking:** Verify peakMmr and peakTier always reflect the highest values achieved
+- [ ] **RP accumulation:** Verify RP increases after each exercise completion (baseRP = 10 + tier × 2, scaled by score)
+
+### G6b. Seasons & Battle Pass
+
+**Status: Code complete (Chunk 2).** Weekly seasons, 30-tier battle pass with linear XP curve, season history, placement rewards, automated league rewards Cloud Function.
+
+- [ ] **Season number:** Verify `seasonNumberFromDate()` returns correct season for current week (Season 1 starts 2026-03-16)
+- [ ] **Battle pass XP:** Complete exercises → verify battlePassXp and battlePassTier increase in seasonStore
+- [ ] **Battle pass tiers:** Accumulate 100 XP → reach tier 1, 250 cumulative → tier 2, etc.
+- [ ] **Battle pass cap:** Verify tier caps at 30 (BATTLE_PASS_MAX_TIER)
+- [ ] **Reward claiming:** Call `claimReward('free-3')` → verify tracked in claimedRewards array
+- [ ] **Peak tier update:** When tier changes → verify seasonStore.peakTier updates (only upward)
+- [ ] **Season end:** Verify `endSeason()` creates a SeasonRecord with correct peakTier, battlePassTier, gemsEarned
+- [ ] **New season:** After `startNewSeason()` → verify battlePass/placement/claimedRewards reset, history preserved
+- [ ] **Hydration rollover:** If saved state has older season number → verify auto-rollover on hydration
+- [ ] **Weekly league rewards Cloud Function:** `weeklyLeagueRewards` scheduled function — verify it's deployed (`firebase functions:list`)
+
+### G6c. Rich Activity Feed & Reactions
+
+**Status: Code complete (Chunk 3).** RichFeedItem with 14 event types, 5 emoji reactions (🔥👏😮💪😂), Firestore storage at `users/{uid}/richFeed/{itemId}`.
+
+- [ ] **Rank promotion in feed:** Get promoted to a new tier → verify a `rank_promotion` RichFeedItem posted to your feed
+- [ ] **Rank demotion in feed:** Get demoted → verify a `rank_demotion` RichFeedItem posted
+- [ ] **Feed aggregation:** With 2+ friends → verify feed shows items from all friends, sorted newest-first
+- [ ] **Feed cap:** Verify feed caps at 50 items (doesn't grow unbounded)
+- [ ] **Emoji reactions:** React to a friend's feed item → verify reaction appears in Firestore and local store
+- [ ] **Reaction toggle:** React with same emoji again → verify reaction removed (toggle behavior)
+- [ ] **Multiple reactions:** Multiple users react to same item → verify all reactions tracked correctly
+- [ ] **Remove friend → feed cleanup:** Remove a friend → verify their rich feed items removed from local store
+- [ ] **Firestore rules:** Verify `richFeed` subcollection is readable by friends, writable only by owner (for posts) and authenticated users (for reactions)
+
+### G6d. Firestore Rules for Phase 14 Collections [BLOCKER]
+
+- [ ] **rankStore persistence:** Verify Firestore rules allow `users/{uid}` fields: mmr, tier, division, rp, peakMmr, peakTier
+- [ ] **seasonRewards subcollection:** Verify `users/{uid}/seasonRewards/{rewardId}` readable/writable by owner, writable by Cloud Functions (admin)
+- [ ] **richFeed subcollection:** Verify `users/{uid}/richFeed/{itemId}` — owner can write, friends can read, anyone authenticated can update reactions
+- [ ] **guilds collection:** Verify `guilds/{guildId}` readable by authenticated, writable by leader/co_leader; `guilds/{guildId}/members/{uid}` — owner can write own, leader can kick
+- [ ] **guildWars collection:** Verify `guildWars/{warId}` readable by members of either guild, only Cloud Functions can complete
+- [ ] **Deploy updated rules:** `firebase deploy --only firestore:rules` after adding all Phase 14 collection rules
+
+### G6e. Guilds & Guild Wars
+
+- [ ] **Create guild:** Sign in, create guild with name/icon/description/banner color. Verify Firestore `guilds/{id}` document created with correct fields
+- [ ] **Join guild:** Second user finds guild via search or open guild list. Verify join succeeds for open guild, rejected for closed
+- [ ] **Member capacity:** Verify join rejects when guild has 30 members (MAX_GUILD_MEMBERS)
+- [ ] **Promote/demote:** Leader promotes member to co_leader. Verify role change persists. Demote back to member.
+- [ ] **Transfer leadership:** Leader transfers to another member. Verify old leader becomes co_leader, new leader is reflected in guild doc
+- [ ] **Kick member:** Leader kicks a member. Verify member removed and memberCount decremented
+- [ ] **Leave guild:** Non-leader member leaves. Verify clean removal. Leader cannot leave without transferring.
+- [ ] **Guild XP tracking:** Complete an exercise while in a guild. Verify member's weeklyXp and guild's weeklyXp both increment
+- [ ] **Guild war:** Start a war between two guilds. Verify war document created with status 'active'. Add war points. Complete war and verify winner determined.
+- [ ] **Guild store persistence:** Close and reopen app. Verify currentGuild survives via AsyncStorage hydration
+
+### G6f. Arena UI (Chunk 6) [IMPORTANT]
+
+**Status: Code complete.** SocialScreen now serves as the Arena hub with RankHeroCard hero element, 3 navigation pills (League/Battle Pass/Guild), and dedicated screens for each sub-system.
+
+- [ ] **RankHeroCard:** Open Social tab → verify tier icon, tier name + division, MMR, RP, progress bar displayed correctly
+- [ ] **Progress bar:** Verify progress bar fills proportionally between current tier's MMR floor and ceiling
+- [ ] **Promotion series pips:** When in an active promotion series → verify 3 pips shown (green=win, red=loss, hollow=pending)
+- [ ] **Navigation pill — League:** Tap "League" pill → navigates to LeaderboardScreen
+- [ ] **Navigation pill — Battle Pass:** Tap "Battle Pass" pill → navigates to BattlePassScreen with 30 tiers, XP progress bar, free/premium tracks
+- [ ] **Navigation pill — Guild:** Tap "Guild" pill → navigates to GuildScreen (discovery or detail view)
+- [ ] **Guild pill label:** When user has a guild → pill shows guild name instead of "Guild"
+- [ ] **Battle Pass tier claiming:** Tap an unlocked reward slot → verify reward claimed (checkmark overlay)
+- [ ] **Battle Pass premium vs free:** Verify free (grey) and premium (gold) tracks visually distinct
+- [ ] **Guild discovery:** Search for guilds by name, browse open guilds, create a new guild
+- [ ] **Guild detail:** View member list, guild wars, management actions (promote/demote/kick)
+- [ ] **Auth gate:** Anonymous users → Social tab shows "The Arena" sign-in prompt (not crash)
+
+---
+
 ## H. Monitoring & Alerting Setup (Post-Launch)
 
 ### H1. Firebase Monitoring
@@ -590,8 +677,13 @@ No Crashlytics integration exists. Production crashes will be invisible.
 | 22 | G1-G4: Third-party verify | 2 hours | TODO | Before beta |
 | 23 | B4-B5: OTA + Build | half day | TODO | Before beta |
 | 24 | H1-H3: Monitoring | 1 day | TODO | Within 1 week of launch |
+| 25 | G6a: MMR & Ranked System | 1 hour | CODE DONE (Phase 14) | Before beta |
+| 26 | G6b: Seasons & Battle Pass | 1 hour | CODE DONE (Phase 14) | Before beta |
+| 27 | G6c: Rich Activity Feed | 30 min | CODE DONE (Phase 14) | Before beta |
+| 28 | G6d: Firestore Rules (Phase 14) | 30 min | TODO | Before beta |
+| 29 | G6e: Guilds & Guild Wars | 1 hour | CODE DONE (Phase 14) | Before beta |
 
-**Total estimated effort: ~9-11 working days** (content quality automated verification done, manual spot-checks + device testing remaining)
+**Total estimated effort: ~10-12 working days** (content quality automated verification done, manual spot-checks + device testing remaining)
 
 ---
 

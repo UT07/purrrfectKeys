@@ -166,6 +166,22 @@ service cloud.firestore {
         // Allow owner to delete own rate limit data (GDPR account deletion)
         allow delete: if isOwner(userId);
       }
+
+      // ====================================================================
+      // Season Rewards (users/{uid}/seasonRewards/{rewardId})
+      // Ranked season rewards — written by Cloud Functions, claimed by owner.
+      // ====================================================================
+
+      match /seasonRewards/{rewardId} {
+        // Only the owner can read their own season rewards
+        allow read: if isOwner(userId);
+        // Only Cloud Functions can create rewards (no client writes)
+        allow create: if false;
+        // Owner can update to set claimedAt when claiming
+        allow update: if isOwner(userId);
+        // Owner can delete after claiming (cleanup)
+        allow delete: if isOwner(userId);
+      }
     }
 
     // ========================================================================
@@ -335,6 +351,73 @@ service cloud.firestore {
     match /admins/{userId} {
       allow read: if isOwner(userId);
       allow write: if false;
+    }
+
+    // ========================================================================
+    // Guilds (guilds/{guildId}) — Phase 14 Social Revamp
+    // ========================================================================
+
+    match /guilds/{guildId} {
+      // Any authenticated user can browse guilds
+      allow read: if isAuthenticated();
+      // Non-anonymous users can create guilds
+      allow create: if isAuthenticated() && isNotAnonymous();
+      // Only the guild leader can update guild settings
+      allow update: if isAuthenticated() &&
+                       resource.data.leaderUid == request.auth.uid;
+      // Only the guild leader can delete the guild
+      allow delete: if isAuthenticated() &&
+                       resource.data.leaderUid == request.auth.uid;
+
+      // Guild Members (guilds/{guildId}/members/{uid})
+      match /members/{memberUid} {
+        // Any authenticated user can read guild members (leaderboard)
+        allow read: if isAuthenticated();
+        // Non-anonymous users can join a guild (create their own member doc)
+        allow create: if isAuthenticated() && isNotAnonymous();
+        // Own member doc (XP updates) OR guild leader (role changes)
+        allow update: if isOwner(memberUid) ||
+                         (isAuthenticated() &&
+                          get(/databases/$(database)/documents/guilds/$(guildId)).data.leaderUid == request.auth.uid);
+        // Own member doc (leaving) OR guild leader (kicking)
+        allow delete: if isOwner(memberUid) ||
+                         (isAuthenticated() &&
+                          get(/databases/$(database)/documents/guilds/$(guildId)).data.leaderUid == request.auth.uid);
+      }
+    }
+
+    // ========================================================================
+    // Guild Wars (guildWars/{warId}) — Phase 14 Social Revamp
+    // ========================================================================
+
+    match /guildWars/{warId} {
+      // Any authenticated user can view guild wars
+      allow read: if isAuthenticated();
+      // Non-anonymous users can create guild wars
+      allow create: if isAuthenticated() && isNotAnonymous();
+      // Non-anonymous users can update (adding war points)
+      allow update: if isAuthenticated() && isNotAnonymous();
+      // Only admins can delete guild wars
+      allow delete: if isAdminUser();
+    }
+
+    // ========================================================================
+    // Referrals (referrals/{code}) — Phase 14 Social Revamp
+    // One-time-use referral codes. Created by referrer, claimed once.
+    // ========================================================================
+
+    match /referrals/{code} {
+      // Any authenticated user can verify a referral code
+      allow read: if isAuthenticated();
+      // Non-anonymous users can create a referral code (must own it)
+      allow create: if isAuthenticated() && isNotAnonymous() &&
+                       request.resource.data.referrerUid == request.auth.uid;
+      // Non-anonymous users can claim — only if not yet claimed (claimedByUid is null)
+      allow update: if isAuthenticated() && isNotAnonymous() &&
+                       resource.data.claimedByUid == null &&
+                       request.resource.data.claimedByUid == request.auth.uid;
+      // Referrals are permanent records
+      allow delete: if false;
     }
 
     // ========================================================================

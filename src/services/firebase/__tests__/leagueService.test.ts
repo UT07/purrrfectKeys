@@ -111,9 +111,9 @@ describe('leagueService', () => {
       // No open leagues found
       (getDocs as jest.Mock).mockResolvedValue({ empty: true, docs: [] });
 
-      const membership = await assignToLeague('user-1', 'Alice', 'luna', 'bronze');
+      const membership = await assignToLeague('user-1', 'Alice', 'luna', 'novice');
 
-      expect(membership.tier).toBe('bronze');
+      expect(membership.tier).toBe('novice');
       expect(membership.weeklyXp).toBe(0);
       // Transaction used
       expect(runTransaction).toHaveBeenCalledTimes(1);
@@ -128,7 +128,7 @@ describe('leagueService', () => {
           {
             id: 'existing-league',
             data: () => ({
-              tier: 'bronze',
+              tier: 'novice',
               weekStart: getCurrentWeekMonday(),
               memberCount: 15,
               createdAt: Date.now(),
@@ -140,7 +140,7 @@ describe('leagueService', () => {
       mockTx.get.mockResolvedValue({
         exists: () => true,
         data: () => ({
-          tier: 'bronze',
+          tier: 'novice',
           weekStart: getCurrentWeekMonday(),
           memberCount: 15,
           createdAt: Date.now(),
@@ -163,7 +163,7 @@ describe('leagueService', () => {
           {
             id: 'full-league',
             data: () => ({
-              tier: 'bronze',
+              tier: 'novice',
               weekStart: getCurrentWeekMonday(),
               memberCount: 28,
               createdAt: Date.now(),
@@ -176,7 +176,7 @@ describe('leagueService', () => {
       mockTx.get.mockResolvedValue({
         exists: () => true,
         data: () => ({
-          tier: 'bronze',
+          tier: 'novice',
           weekStart: getCurrentWeekMonday(),
           memberCount: 30,
           createdAt: Date.now(),
