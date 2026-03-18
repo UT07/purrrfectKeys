@@ -176,8 +176,10 @@ service cloud.firestore {
         allow read: if isOwner(userId) ||
           (isAuthenticated() &&
            exists(/databases/$(database)/documents/users/$(userId)/friends/$(request.auth.uid)));
-        // Any authenticated non-anonymous user can post (feedService writes to friend feeds)
-        allow create: if isAuthenticated() && isNotAnonymous();
+        // Owner or confirmed friends can post to the feed
+        allow create: if isAuthenticated() && isNotAnonymous() &&
+          (isOwner(userId) ||
+           exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(userId)));
         allow update: if false;
         allow delete: if isOwner(userId);
       }
@@ -415,8 +417,8 @@ service cloud.firestore {
       match /members/{memberUid} {
         // Any authenticated user can read guild members (leaderboard)
         allow read: if isAuthenticated();
-        // Non-anonymous users can join a guild (create their own member doc)
-        allow create: if isAuthenticated() && isNotAnonymous();
+        // Non-anonymous users can join a guild (create their own member doc only)
+        allow create: if isAuthenticated() && isNotAnonymous() && isOwner(memberUid);
         // Own member doc (XP updates) OR guild leader (role changes)
         allow update: if isOwner(memberUid) ||
                          (isAuthenticated() &&

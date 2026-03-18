@@ -81,9 +81,13 @@ export const syncProgress = onCall(
         }
       }
 
-      // Apply local changes
+      // Apply only non-conflicting local changes (server wins on conflicts)
+      const conflictIds = new Set(
+        conflicts.map((c: Record<string, any>) => c.localValue?.id).filter(Boolean),
+      );
       const batch = admin.firestore().batch();
       for (const change of localChanges) {
+        if (conflictIds.has(change.id)) continue; // Skip — server version wins
         const docRef = changesRef.doc(change.id);
         batch.set(docRef, {
           ...change,
@@ -124,8 +128,12 @@ export const completeExercise = onCall(
     }
 
     const uid = request.auth.uid;
-    const data = request.data as { exerciseId: string; isPerfect: boolean };
-    const { exerciseId, isPerfect } = data;
+    const raw = request.data as Record<string, unknown>;
+    if (typeof raw?.exerciseId !== 'string' || !raw.exerciseId) {
+      throw new HttpsError('invalid-argument', 'exerciseId must be a non-empty string');
+    }
+    const exerciseId = raw.exerciseId;
+    const isPerfect = raw.isPerfect === true;
 
     try {
       const db = admin.firestore();

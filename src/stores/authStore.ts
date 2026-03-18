@@ -448,8 +448,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const AUTH_TIMEOUT_MS = 8000;
 
+    let timedOut = false;
+
     const authPromise = new Promise<void>((resolveAuth) => {
       authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        // If timeout already fired, ignore late auth callbacks to prevent
+        // overwriting the offline guest state.
+        if (timedOut) return;
         set({
           user,
           isAuthenticated: user !== null,
@@ -465,6 +470,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const timeoutPromise = new Promise<void>((resolveTimeout) => {
       setTimeout(() => {
+        timedOut = true;
         logger.warn('[Auth] initAuth timed out after 8s — entering offline guest mode');
         set({
           user: null,
