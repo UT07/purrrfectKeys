@@ -41,6 +41,9 @@ import { useAchievementStore } from './achievementStore';
 import { useLearnerProfileStore } from './learnerProfileStore';
 import { useSocialStore } from './socialStore';
 import { useLeagueStore } from './leagueStore';
+import { useRankStore } from './rankStore';
+import { useSeasonStore } from './seasonStore';
+import { useGuildStore } from './guildStore';
 import { logger } from '../utils/logger';
 import { AnalyticsService, analyticsEvents } from '../services/analytics/PostHog';
 
@@ -95,6 +98,9 @@ function resetAllStores(): void {
     { name: 'songs', reset: () => useSongStore.getState().reset() },
     { name: 'social', reset: () => useSocialStore.getState().reset() },
     { name: 'league', reset: () => useLeagueStore.getState().reset() },
+    { name: 'rank', reset: () => useRankStore.getState().reset() },
+    { name: 'season', reset: () => useSeasonStore.getState().reset() },
+    { name: 'guild', reset: () => useGuildStore.getState().reset() },
   ];
 
   for (const { name, reset } of stores) {

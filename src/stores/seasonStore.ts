@@ -370,8 +370,12 @@ export async function hydrateSeasonStore(): Promise<void> {
     try {
       const { useRankStore } = require('./rankStore');
       const { softResetMMR } = require('../core/ranking/seasonConfig');
+      const { tierFromMMR, divisionFromMMR } = require('../core/ranking/rankThresholds');
       const current = useRankStore.getState().rating;
-      const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
+      const newMmr = softResetMMR(current.mmr);
+      const newTier = tierFromMMR(newMmr);
+      const newDivision = divisionFromMMR(newMmr, newTier);
+      const resetRating = { ...current, mmr: newMmr, rp: 0, promotionSeries: null, tier: newTier, division: newDivision };
       useRankStore.setState({ rating: resetRating });
     } catch (err) {
       logger.warn('[seasonStore] rankStore not available for MMR reset:', err);

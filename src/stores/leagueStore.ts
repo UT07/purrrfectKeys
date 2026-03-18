@@ -120,16 +120,16 @@ export const useLeagueStore = create<LeagueStoreState>((set, get) => ({
   },
 
   updateWeeklyXp: (xp: number) => {
-    const { membership, previousTier } = get();
-    if (!membership) return;
-    // Reset XP if we've crossed into a new week since the membership was stored
-    const fresh = resetWeeklyXpIfStale(membership);
-    if (!fresh) return;
-    // xp is a delta — add to current weekly total to avoid race conditions
-    // where the caller reads a stale weeklyXp before calling this action
-    const updated = { ...fresh, weeklyXp: fresh.weeklyXp + xp };
-    set({ membership: updated });
-    debouncedSave({ membership: updated, previousTier });
+    // Perform entire read-modify-write inside set() to prevent lost updates
+    // when two concurrent calls race (e.g., rapid exercise completions).
+    set((state) => {
+      if (!state.membership) return state;
+      const fresh = resetWeeklyXpIfStale(state.membership);
+      if (!fresh) return state;
+      const updated = { ...fresh, weeklyXp: fresh.weeklyXp + xp };
+      debouncedSave({ membership: updated, previousTier: state.previousTier });
+      return { ...state, membership: updated };
+    });
   },
 
   clearTierTransition: () => {
