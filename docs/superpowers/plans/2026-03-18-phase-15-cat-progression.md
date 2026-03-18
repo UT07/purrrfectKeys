@@ -300,7 +300,47 @@ So we need NEW call sites for:
 - Skill mastery
 - Lesson first-time completion
 
-- [ ] **Step 2: Add cat XP for streak milestones**
+- [ ] **Step 2: Write failing tests for streak milestone cat XP**
+
+Add to `src/stores/__tests__/progressStore.test.ts`:
+
+```typescript
+describe('cat XP for streak milestones', () => {
+  it('awards 100 cat XP on 7-day streak milestone', () => {
+    const addEvolutionXp = require('../catEvolutionStore').useCatEvolutionStore.getState().addEvolutionXp;
+    addEvolutionXp.mockClear();
+    // Set streak to 6, then trigger recordPracticeSession to hit 7
+    useProgressStore.setState({ streak: { current: 6, best: 6, lastPracticeDate: new Date().toISOString() }, streakMilestonesClaimed: [] });
+    useProgressStore.getState().recordPracticeSession(5);
+    expect(addEvolutionXp).toHaveBeenCalledWith(expect.any(String), 100);
+  });
+
+  it('awards 250 cat XP on 30-day streak milestone', () => {
+    const addEvolutionXp = require('../catEvolutionStore').useCatEvolutionStore.getState().addEvolutionXp;
+    addEvolutionXp.mockClear();
+    useProgressStore.setState({ streak: { current: 29, best: 29, lastPracticeDate: new Date().toISOString() }, streakMilestonesClaimed: [7] });
+    useProgressStore.getState().recordPracticeSession(5);
+    expect(addEvolutionXp).toHaveBeenCalledWith(expect.any(String), 250);
+  });
+});
+```
+
+Add mocks at top of test file (if not already present):
+```typescript
+jest.mock('../catEvolutionStore', () => ({
+  useCatEvolutionStore: { getState: () => ({ addEvolutionXp: jest.fn(), selectedCatId: 'mini-meowww' }) },
+}));
+jest.mock('../settingsStore', () => ({
+  useSettingsStore: { getState: () => ({ selectedCatId: 'mini-meowww' }) },
+}));
+```
+
+- [ ] **Step 3: Run tests to verify they fail**
+
+Run: `npx jest src/stores/__tests__/progressStore.test.ts --no-cache`
+Expected: FAIL (addEvolutionXp never called)
+
+- [ ] **Step 4: Add cat XP for streak milestones**
 
 In `src/stores/progressStore.ts`, inside the streak milestones block (around line 396-411), add cat XP alongside the gem reward:
 
@@ -310,8 +350,9 @@ for (const m of STREAK_MILESTONES) {
     useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
     // Cat evolution XP for streak milestones
     try {
+      const { useSettingsStore } = require('./settingsStore');
       const { useCatEvolutionStore } = require('./catEvolutionStore');
-      const catId = useCatEvolutionStore.getState().selectedCatId;
+      const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
       if (catId) {
         const streakCatXp = m.streak === 7 ? 100 : m.streak === 30 ? 250 : 500;
         useCatEvolutionStore.getState().addEvolutionXp(catId, streakCatXp);
@@ -328,18 +369,58 @@ for (const m of STREAK_MILESTONES) {
 
 Streak milestone cat XP: 7-day = 100, 30-day = 250, 100-day = 500
 
-- [ ] **Step 3: Add cat XP for lesson first-time completion**
+- [ ] **Step 5: Write failing test for lesson completion cat XP**
 
-In `src/stores/progressStore.ts`, find where `lessonProgress[lessonId].status` transitions to `'completed'`. This happens in the `updateExerciseProgress` or `recordExerciseCompletion` flow. Add:
-
-After the lesson completion check (where `allExercisesComplete` is computed), add:
+Add to `src/stores/__tests__/progressStore.test.ts`:
 
 ```typescript
-// Cat evolution XP for lesson first-time completion
-if (allExercisesComplete && lessonWasNotPreviouslyComplete) {
+describe('cat XP for lesson completion', () => {
+  it('awards 200 cat XP on first lesson completion', () => {
+    const addEvolutionXp = require('../catEvolutionStore').useCatEvolutionStore.getState().addEvolutionXp;
+    addEvolutionXp.mockClear();
+    // Setup: lesson with 1 exercise, mark it completed
+    useProgressStore.setState({
+      lessonProgress: { 'lesson-01': { status: 'in_progress', exerciseScores: {} } }
+    });
+    // Simulate completing the last exercise in the lesson (triggers status → 'completed')
+    useProgressStore.getState().updateExerciseProgress('lesson-01', 'lesson-01-ex-01', { overall: 90, stars: 3 });
+    expect(addEvolutionXp).toHaveBeenCalledWith(expect.any(String), 200);
+  });
+
+  it('does NOT award cat XP on repeat lesson completion', () => {
+    const addEvolutionXp = require('../catEvolutionStore').useCatEvolutionStore.getState().addEvolutionXp;
+    addEvolutionXp.mockClear();
+    useProgressStore.setState({
+      lessonProgress: { 'lesson-01': { status: 'completed', exerciseScores: { 'lesson-01-ex-01': 85 } } }
+    });
+    useProgressStore.getState().updateExerciseProgress('lesson-01', 'lesson-01-ex-01', { overall: 95, stars: 3 });
+    expect(addEvolutionXp).not.toHaveBeenCalled();
+  });
+});
+```
+
+- [ ] **Step 6: Run tests to verify they fail**
+
+Run: `npx jest src/stores/__tests__/progressStore.test.ts --no-cache`
+Expected: FAIL (addEvolutionXp never called for lesson completion)
+
+- [ ] **Step 7: Add cat XP for lesson first-time completion**
+
+In `src/stores/progressStore.ts`, the lesson completion detection happens inside a `set()` updater function in `updateExerciseProgress` (around lines 170-224). **IMPORTANT:** Do NOT call cross-store mutations inside `set()` — this causes Zustand transaction issues.
+
+Instead, add the cat XP call AFTER the `set()` call returns. The pattern:
+
+```typescript
+// AFTER the set() call that updates lessonProgress (after ~line 224)
+// Check if the lesson just transitioned to 'completed'
+const prevStatus = prevLessonProgress?.status;
+const newStatus = get().lessonProgress[lessonId]?.status;
+if (newStatus === 'completed' && prevStatus !== 'completed') {
+  // Cat evolution XP for lesson first-time completion
   try {
+    const { useSettingsStore } = require('./settingsStore');
     const { useCatEvolutionStore } = require('./catEvolutionStore');
-    const catId = useCatEvolutionStore.getState().selectedCatId;
+    const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
     if (catId) {
       useCatEvolutionStore.getState().addEvolutionXp(catId, 200);
     }
@@ -349,14 +430,14 @@ if (allExercisesComplete && lessonWasNotPreviouslyComplete) {
 }
 ```
 
-Note: Need to check the exact lesson completion detection logic in progressStore first. The key is detecting when a lesson transitions from incomplete → complete for the first time.
+Key implementation detail: Capture `prevLessonProgress` BEFORE the `set()` call using `get().lessonProgress[lessonId]`, then compare with the new state after `set()` completes.
 
-- [ ] **Step 4: Run tests**
+- [ ] **Step 8: Run tests to verify streak + lesson tests pass**
 
 Run: `npx jest src/stores/__tests__/progressStore.test.ts --no-cache`
-Expected: PASS (no assertions yet on cat XP — lazy require prevents failures)
+Expected: ALL PASS (streak milestone + lesson completion cat XP tests green)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add src/stores/progressStore.ts
@@ -368,50 +449,73 @@ git commit -m "feat(phase15): wire cat XP for streak milestones (100/250/500) an
 ### Task 5: Add Cat XP for Song Mastery Tier Up
 
 **Files:**
-- Modify: `src/stores/songStore.ts` (inside mastery recording logic)
+- Modify: `src/screens/SongPlayerScreen.tsx` (where mastery tier transitions are detected)
+- Test: `src/screens/__tests__/SongPlayerScreen.test.tsx`
+
+**Note:** `songStore.updateMastery()` is a simple setter — the actual tier transition detection (comparing `oldTier` vs `newTier` via `isBetterTier()`) happens in `SongPlayerScreen.tsx` (lines ~327-377), next to the existing `useGemStore.getState().earnGems(reward, 'song-mastery')` call. That's where we add cat XP.
 
 When a song's mastery tier increases (none→bronze, bronze→silver, etc.), award cat XP:
 - Bronze: 50, Silver: 100, Gold: 150, Platinum: 200
 
-- [ ] **Step 1: Find the mastery recording function**
+- [ ] **Step 1: Write failing test for song mastery cat XP**
 
-Check `src/stores/songStore.ts` for where mastery tiers are computed and saved. Look for where `MasteryTier` transitions happen.
-
-- [ ] **Step 2: Add cat XP on tier transition**
-
-After the mastery tier is computed and saved, if the tier changed:
+Add to `src/screens/__tests__/SongPlayerScreen.test.tsx`:
 
 ```typescript
+it('awards cat XP on song mastery tier-up', () => {
+  // Setup: mock the tier transition detection and verify addEvolutionXp is called
+  const addEvolutionXp = jest.fn();
+  jest.spyOn(require('../../stores/catEvolutionStore'), 'useCatEvolutionStore')
+    .mockReturnValue({ getState: () => ({ addEvolutionXp, selectedCatId: 'mini-meowww' }) });
+  // Trigger mastery tier-up flow...
+  expect(addEvolutionXp).toHaveBeenCalledWith('mini-meowww', expect.any(Number));
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx jest src/screens/__tests__/SongPlayerScreen.test.tsx --no-cache`
+Expected: FAIL (addEvolutionXp never called)
+
+- [ ] **Step 3: Add cat XP next to existing gem reward**
+
+In `SongPlayerScreen.tsx`, find the block where `useGemStore.getState().earnGems(reward, 'song-mastery')` is called on tier-up. Add immediately after:
+
+```typescript
+// Cat evolution XP for song mastery tier-up
 const MASTERY_CAT_XP: Record<string, number> = {
   bronze: 50,
   silver: 100,
   gold: 150,
   platinum: 200,
 };
-
-if (newTier !== oldTier && newTier !== 'none') {
-  try {
-    const { useCatEvolutionStore } = require('./catEvolutionStore');
-    const catId = useCatEvolutionStore.getState().selectedCatId;
-    if (catId) {
-      const xp = MASTERY_CAT_XP[newTier] ?? 0;
-      if (xp > 0) useCatEvolutionStore.getState().addEvolutionXp(catId, xp);
-    }
-  } catch (err) {
-    // silent — non-critical
+try {
+  const catId = useSettingsStore.getState().selectedCatId;
+  if (catId) {
+    const xp = MASTERY_CAT_XP[updated.tier] ?? 0;
+    if (xp > 0) useCatEvolutionStore.getState().addEvolutionXp(catId, xp);
   }
+} catch (err) {
+  // silent — non-critical
 }
 ```
 
-- [ ] **Step 3: Run tests**
+Note: `useSettingsStore` and `useCatEvolutionStore` are already imported in this screen file — use `useSettingsStore.getState().selectedCatId` as the primary source (matching ExercisePlayer pattern).
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npx jest src/screens/__tests__/SongPlayerScreen.test.tsx --no-cache`
+Expected: PASS
+
+- [ ] **Step 5: Run full test suite**
 
 Run: `npx jest --no-cache`
 Expected: ALL PASS
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/stores/songStore.ts
+git add src/screens/SongPlayerScreen.tsx src/screens/__tests__/SongPlayerScreen.test.tsx
 git commit -m "feat(phase15): wire cat XP for song mastery tier-ups (50-200)"
 ```
 
@@ -421,6 +525,7 @@ git commit -m "feat(phase15): wire cat XP for song mastery tier-ups (50-200)"
 
 **Files:**
 - Modify: `src/stores/learnerProfileStore.ts` (inside skill mastery recording)
+- Test: `src/stores/__tests__/learnerProfileStore.test.ts`
 
 When a skill is newly mastered (`masteredSkills` gains a new entry), award 100 cat XP.
 
@@ -428,15 +533,55 @@ When a skill is newly mastered (`masteredSkills` gains a new entry), award 100 c
 
 Check `src/stores/learnerProfileStore.ts` for `markSkillMastered` or where `masteredSkills` is updated.
 
-- [ ] **Step 2: Add cat XP on skill mastery**
+- [ ] **Step 2: Write failing test for skill mastery cat XP**
+
+Add to `src/stores/__tests__/learnerProfileStore.test.ts`:
+
+```typescript
+describe('cat XP for skill mastery', () => {
+  it('awards 100 cat XP when a skill is first mastered', () => {
+    const addEvolutionXp = require('../catEvolutionStore').useCatEvolutionStore.getState().addEvolutionXp;
+    addEvolutionXp.mockClear();
+    // Trigger skill mastery
+    useLearnerProfileStore.getState().markSkillMastered('note-finding');
+    expect(addEvolutionXp).toHaveBeenCalledWith('mini-meowww', 100);
+  });
+
+  it('does NOT award cat XP for already-mastered skill', () => {
+    const addEvolutionXp = require('../catEvolutionStore').useCatEvolutionStore.getState().addEvolutionXp;
+    useLearnerProfileStore.setState({ masteredSkills: ['note-finding'] });
+    addEvolutionXp.mockClear();
+    useLearnerProfileStore.getState().markSkillMastered('note-finding');
+    expect(addEvolutionXp).not.toHaveBeenCalled();
+  });
+});
+```
+
+Add mocks at top of test file (if not already present):
+```typescript
+jest.mock('../catEvolutionStore', () => ({
+  useCatEvolutionStore: { getState: () => ({ addEvolutionXp: jest.fn(), selectedCatId: 'mini-meowww' }) },
+}));
+jest.mock('../settingsStore', () => ({
+  useSettingsStore: { getState: () => ({ selectedCatId: 'mini-meowww' }) },
+}));
+```
+
+- [ ] **Step 3: Run test to verify it fails**
+
+Run: `npx jest src/stores/__tests__/learnerProfileStore.test.ts --no-cache`
+Expected: FAIL (addEvolutionXp never called)
+
+- [ ] **Step 4: Add cat XP on skill mastery**
 
 After a skill is added to `masteredSkills`:
 
 ```typescript
 // Cat evolution XP for skill mastery
 try {
+  const { useSettingsStore } = require('./settingsStore');
   const { useCatEvolutionStore } = require('./catEvolutionStore');
-  const catId = useCatEvolutionStore.getState().selectedCatId;
+  const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
   if (catId) {
     useCatEvolutionStore.getState().addEvolutionXp(catId, 100);
   }
@@ -445,12 +590,14 @@ try {
 }
 ```
 
-- [ ] **Step 3: Run tests**
+Note: Uses `useSettingsStore.getState().selectedCatId` as primary source (matching ExercisePlayer pattern), with `useCatEvolutionStore.getState().selectedCatId` as fallback.
 
-Run: `npx jest --no-cache`
+- [ ] **Step 5: Run tests to verify they pass**
+
+Run: `npx jest src/stores/__tests__/learnerProfileStore.test.ts --no-cache`
 Expected: ALL PASS
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/stores/learnerProfileStore.ts
@@ -525,23 +672,83 @@ In `src/data/accessories.ts`, update each accessory's `gemCost` based on its rar
 | cape-conductor | rare | 35 | 250 |
 | cape-starry | legendary | 140 | 2500 |
 
-**Collars (remaining 8) and Effects (7):** Apply same rarity formula.
+**Collars (8):**
+| ID | Rarity | Old | New |
+|----|--------|-----|-----|
+| collar-bowtie | common | 10 | 75 |
+| collar-scarf | common | 12 | 60 |
+| collar-bandana | rare | 25 | 250 |
+| collar-necklace | rare | 30 | 300 |
+| collar-medal | epic | 70 | 700 |
+| collar-bell | common | 8 | 50 |
+| collar-musicnote | rare | 30 | 350 |
+| collar-choker | rare | 25 | 200 |
 
-- [ ] **Step 2: Run tests**
+**Effects (7):**
+| ID | Rarity | Old | New |
+|----|--------|-----|-----|
+| effect-sparkle | rare | 40 | 300 |
+| effect-fire | epic | 85 | 800 |
+| effect-rainbow | epic | 90 | 900 |
+| effect-lightning | legendary | 120 | 2000 |
+| effect-notes | rare | 45 | 250 |
+| effect-hearts | rare | 40 | 200 |
+| effect-snowflake | epic | 80 | 650 |
+
+- [ ] **Step 2: Update minStage per spec rarity gates**
+
+The spec defines evolution gates by rarity: Common=Teen+, Rare=Adult+, Epic=Adult+, Legendary=Master. Several accessories currently have `minStage` values that are too lenient. Update these:
+
+| ID | Current minStage | Correct minStage | Reason |
+|----|-----------------|-----------------|--------|
+| hat-santa | baby | teen | Common → Teen+ |
+| hat-nightcap | baby | teen | Common → Teen+ |
+| glass-round | baby | teen | Common → Teen+ |
+| glass-nerd | baby | teen | Common → Teen+ |
+| glass-heart (epic) | teen | adult | Epic → Adult+ |
+| outfit-hoodie | baby | teen | Common → Teen+ |
+| outfit-jersey | baby | teen | Common → Teen+ |
+| collar-bowtie | baby | teen | Common → Teen+ |
+| collar-scarf | baby | teen | Common → Teen+ |
+| collar-bell | baby | teen | Common → Teen+ |
+| collar-bandana (rare) | teen | adult | Rare → Adult+ |
+| collar-necklace (rare) | teen | adult | Rare → Adult+ |
+| collar-musicnote (rare) | teen | adult | Rare → Adult+ |
+| collar-choker (rare) | teen | adult | Rare → Adult+ |
+| hat-beret (common) | teen | teen | Already correct |
+| hat-tophat (rare) | teen | adult | Rare → Adult+ |
+| hat-headphones (rare) | teen | adult | Rare → Adult+ |
+| hat-tinycrown (rare) | teen | adult | Rare → Adult+ |
+| glass-sunglasses (common) | teen | teen | Already correct |
+| glass-monocle (rare) | adult | adult | Already correct |
+| glass-3d (rare) | teen | adult | Rare → Adult+ |
+| outfit-hawaiian (common) | teen | teen | Already correct |
+| outfit-kimono (rare) | teen | adult | Rare → Adult+ |
+| cape-red (common) | teen | teen | Already correct |
+| cape-guitar (rare) | teen | adult | Rare → Adult+ |
+| cape-notes (rare) | adult | adult | Already correct |
+| cape-conductor (rare) | teen | adult | Rare → Adult+ |
+| effect-sparkle (rare) | teen | adult | Rare → Adult+ |
+| effect-notes (rare) | teen | adult | Rare → Adult+ |
+| effect-hearts (rare) | teen | adult | Rare → Adult+ |
+
+All Epic and Legendary items already have correct minStage (adult/master).
+
+- [ ] **Step 3: Run tests**
 
 Run: `npx jest --no-cache`
-Expected: ALL PASS (no tests assert specific gem prices)
+Expected: ALL PASS (no tests assert specific gem prices or minStage values)
 
-- [ ] **Step 3: Run typecheck**
+- [ ] **Step 4: Run typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add src/data/accessories.ts
-git commit -m "feat(phase15): rebalance accessory prices (common 50-100, rare 200-400, epic 600-1000, legendary 1500-2500)"
+git commit -m "feat(phase15): rebalance accessory prices and evolution gates per spec"
 ```
 
 ---
@@ -749,9 +956,9 @@ Expected: ALL pass (perf, security, regression, stress)
 | 1 | 15.1 | Update XP thresholds | types.ts |
 | 2 | 15.1 | Update all tests | 4 test files |
 | 3 | 15.3 | Milestone gem rewards | catEvolutionStore.ts + tests |
-| 4 | 15.2 | Cat XP for streaks + lessons | progressStore.ts |
-| 5 | 15.2 | Cat XP for song mastery | songStore.ts |
-| 6 | 15.2 | Cat XP for skill mastery | learnerProfileStore.ts |
-| 7 | 15.4-15.6 | Accessory price rebalance | accessories.ts |
+| 4 | 15.2 | Cat XP for streaks + lessons | progressStore.ts + tests |
+| 5 | 15.2 | Cat XP for song mastery | SongPlayerScreen.tsx + tests |
+| 6 | 15.2 | Cat XP for skill mastery | learnerProfileStore.ts + tests |
+| 7 | 15.4-15.6 | Accessory prices + minStage gates | accessories.ts |
 | 8 | 15.7 | Verify Cat Studio + CatAvatar | Manual verification |
 | 9 | 15.8 | test:infra skeleton | scripts/infra-stress-test.ts |
