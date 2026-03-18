@@ -47,7 +47,7 @@ import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor, shadowGlow } from '../theme/tokens';
-import { analyticsEvents } from '../services/analytics/PostHog';
+import { analyticsEvents, funnels } from '../services/analytics/PostHog';
 import { GradientMeshBackground } from '../components/effects';
 import { logger } from '../utils/logger';
 
@@ -1011,6 +1011,7 @@ export function OnboardingScreen(): React.ReactElement {
   // Track onboarding entry once
   useEffect(() => {
     analyticsEvents.onboarding.started();
+    funnels.onboarding.started();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1049,6 +1050,7 @@ export function OnboardingScreen(): React.ReactElement {
     }
     if (step === TOTAL_STEPS) {
       analyticsEvents.onboarding.completed(state.experienceLevel ?? 'unknown');
+      funnels.onboarding.completed();
       // MUST set onboarding flag FIRST -- other setters use debouncedSave which
       // captures get() state. If hasCompletedOnboarding is still false when they
       // snapshot, the debounced write overwrites the immediate save 500ms later.

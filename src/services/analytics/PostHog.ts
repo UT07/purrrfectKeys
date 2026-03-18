@@ -470,3 +470,58 @@ export function trackFunnelStep(
 ): void {
   AnalyticsService.trackEvent(`funnel_${funnelName}_${stepName}`, metadata);
 }
+
+// ============================================================================
+// Feature Flags
+// ============================================================================
+
+/**
+ * Check if a feature flag is enabled for the current user.
+ * Flags are preloaded on PostHog init (preloadFeatureFlags: true).
+ */
+export function isFeatureEnabled(flagKey: string): boolean {
+  if (!isPostHogEnabled) return false;
+  try {
+    return posthogClient.isFeatureEnabled(flagKey) ?? false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get a feature flag value (for multivariate flags).
+ */
+export function getFeatureFlagValue(flagKey: string): string | boolean | undefined {
+  if (!isPostHogEnabled) return undefined;
+  try {
+    return posthogClient.getFeatureFlag(flagKey) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// ============================================================================
+// Key Funnels — wire into onboarding, exercise, and conversion flows
+// ============================================================================
+
+export const funnels = {
+  onboarding: {
+    started: () => trackFunnelStep('onboarding', 'started'),
+    experienceSelected: (level: string) => trackFunnelStep('onboarding', 'experience_selected', { level }),
+    inputSelected: (method: string) => trackFunnelStep('onboarding', 'input_selected', { method }),
+    goalSelected: (goal: string) => trackFunnelStep('onboarding', 'goal_selected', { goal }),
+    pathSelected: (path: string) => trackFunnelStep('onboarding', 'path_selected', { path }),
+    catSelected: (catId: string) => trackFunnelStep('onboarding', 'cat_selected', { catId }),
+    completed: () => trackFunnelStep('onboarding', 'completed'),
+  },
+  firstExercise: {
+    started: () => trackFunnelStep('first_exercise', 'started'),
+    completed: (score: number) => trackFunnelStep('first_exercise', 'completed', { score }),
+    retried: () => trackFunnelStep('first_exercise', 'retried'),
+  },
+  retention: {
+    day1Return: () => trackFunnelStep('retention', 'day_1_return'),
+    day7Return: () => trackFunnelStep('retention', 'day_7_return'),
+    firstWeekStreak: () => trackFunnelStep('retention', 'first_week_streak'),
+  },
+};
