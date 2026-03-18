@@ -165,10 +165,11 @@ export const weeklyLeagueRewards = onSchedule(
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
 
-          // Apply soft MMR reset on user document
+          // Apply soft MMR reset on user document.
+          // Use set+merge instead of update to gracefully handle deleted users.
           const userRef = db.collection('users').doc(uid);
           const currentMmr = userMmrMap.get(uid) ?? 500;
-          batch.update(userRef, {
+          batch.set(userRef, {
             // Write to both paths: rating.mmr (current client format) and
             // top-level mmr (legacy) to handle both data shapes
             'rating.mmr': softResetMMR(currentMmr),
@@ -176,7 +177,7 @@ export const weeklyLeagueRewards = onSchedule(
             lastSeasonRank: rank,
             lastSeasonTier: tier,
             lastSeasonWeek: weekStart,
-          });
+          }, { merge: true });
 
           totalRewards++;
           totalGemsDistributed += totalGems;

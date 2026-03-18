@@ -373,12 +373,19 @@ export const cleanupCoachFeedbackCache = onSchedule(
 
       const oldDocs = await cacheRef.where('timestamp', '<', cutoffTime).get();
 
-      const batch = admin.firestore().batch();
-      oldDocs.docs.forEach((doc: admin.firestore.QueryDocumentSnapshot) => batch.delete(doc.ref));
-      await batch.commit();
+      // Process in batches of 500 to respect Firestore batch limit
+      let deleted = 0;
+      const BATCH_LIMIT = 500;
+      for (let i = 0; i < oldDocs.docs.length; i += BATCH_LIMIT) {
+        const batch = admin.firestore().batch();
+        const slice = oldDocs.docs.slice(i, i + BATCH_LIMIT);
+        slice.forEach((doc: admin.firestore.QueryDocumentSnapshot) => batch.delete(doc.ref));
+        await batch.commit();
+        deleted += slice.length;
+      }
 
       logger.info('Coach feedback cache cleanup completed', {
-        deletedDocs: oldDocs.docs.length,
+        deletedDocs: deleted,
       });
     } catch (error) {
       logger.error('Error cleaning up coach feedback cache', {

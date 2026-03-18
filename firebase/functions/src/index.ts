@@ -62,12 +62,18 @@ export const syncProgress = onCall(
       // Detect conflicts (same type + exercise within 5 seconds)
       const conflicts: Array<Record<string, any>> = [];
 
+      const toMillis = (ts: any): number => {
+        if (typeof ts === 'number') return ts;
+        if (ts && typeof ts.toMillis === 'function') return ts.toMillis();
+        return 0;
+      };
+
       for (const localChange of localChanges) {
         const conflict = serverChangesList.find(
           (sc: Record<string, any>) =>
             sc.type === localChange.type &&
             sc.exerciseId === localChange.exerciseId &&
-            Math.abs(sc.timestamp.toMillis() - localChange.timestamp.toMillis()) < 5000,
+            Math.abs(toMillis(sc.timestamp) - toMillis(localChange.timestamp)) < 5000,
         );
 
         if (conflict) {
@@ -82,15 +88,25 @@ export const syncProgress = onCall(
       }
 
       // Apply only non-conflicting local changes (server wins on conflicts)
+      // Limit to 400 changes per call to stay under Firestore batch limit of 500
       const conflictIds = new Set(
         conflicts.map((c: Record<string, any>) => c.localValue?.id).filter(Boolean),
       );
+      const SYNC_BATCH_LIMIT = 400;
+      const changesToApply = localChanges
+        .filter((change) => change.id && !conflictIds.has(change.id))
+        .slice(0, SYNC_BATCH_LIMIT);
+
       const batch = admin.firestore().batch();
-      for (const change of localChanges) {
-        if (conflictIds.has(change.id)) continue; // Skip — server version wins
+      for (const change of changesToApply) {
         const docRef = changesRef.doc(change.id);
+        // Whitelist only expected fields to prevent arbitrary data injection
         batch.set(docRef, {
-          ...change,
+          id: change.id,
+          type: typeof change.type === 'string' ? change.type.slice(0, 50) : 'unknown',
+          exerciseId: typeof change.exerciseId === 'string' ? change.exerciseId.slice(0, 100) : undefined,
+          xpAmount: typeof change.xpAmount === 'number' ? change.xpAmount : undefined,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
           synced: true,
           syncedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -138,10 +154,7 @@ export const completeExercise = onCall(
     try {
       const db = admin.firestore();
       const userRef = db.collection('users').doc(uid);
-
-      // Get current gamification data
-      const gamDoc = await userRef.collection('gamification').doc('data').get();
-      const gamData = gamDoc.data() || {};
+      const gamRef = userRef.collection('gamification').doc('data');
 
       // Calculate XP reward
       const XP_REWARDS = {
@@ -163,33 +176,32 @@ export const completeExercise = onCall(
         xpEarned += XP_REWARDS.exercisePerfect;
       }
 
-      // Calculate new level
-      const newXp = (gamData.xp || 0) + xpEarned;
-      const newLevel = calculateLevel(newXp);
-      const oldLevel = gamData.level || 1;
+      // Use a transaction to atomically read-compute-write XP and level,
+      // preventing race conditions when two completions fire concurrently.
+      const { newXp, newLevel, oldLevel } = await db.runTransaction(async (transaction) => {
+        const gamDoc = await transaction.get(gamRef);
+        const gamData = gamDoc.data() || {};
+        const txNewXp = (gamData.xp || 0) + xpEarned;
+        const txNewLevel = calculateLevel(txNewXp);
+        const txOldLevel = gamData.level || 1;
 
-      // Update gamification
-      const batch = db.batch();
-
-      batch.set(
-        userRef.collection('gamification').doc('data'),
-        {
-          xp: newXp,
-          level: newLevel,
+        transaction.set(gamRef, {
+          xp: txNewXp,
+          level: txNewLevel,
           lastExerciseAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
+        }, { merge: true });
 
-      // Log XP change
+        return { newXp: txNewXp, newLevel: txNewLevel, oldLevel: txOldLevel };
+      });
+
+      // Log XP change and sync log outside the transaction (non-critical)
+      const batch = db.batch();
       batch.set(db.collection(`users/${uid}/xpLog`).doc(), {
         amount: xpEarned,
         source: 'exercise_complete',
         newTotal: newXp,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
-
-      // Log to sync log
       batch.set(db.collection(`users/${uid}/syncLog`).doc(), {
         type: 'xp_earned',
         exerciseId,
@@ -197,7 +209,6 @@ export const completeExercise = onCall(
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         synced: false,
       });
-
       await batch.commit();
 
       const achievements: string[] = [];
@@ -207,7 +218,7 @@ export const completeExercise = onCall(
         achievements.push(`level_${newLevel}`);
       }
 
-      if (newXp >= 1000 && (gamData.xp || 0) < 1000) {
+      if (newXp >= 1000 && (newXp - xpEarned) < 1000) {
         achievements.push('xp_1000');
       }
 

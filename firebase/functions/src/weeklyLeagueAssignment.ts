@@ -51,38 +51,54 @@ export const weeklyLeagueAssignment = onSchedule(
     logger.info(`[weeklyLeagueAssignment] Starting for week ${weekStart}`);
 
     // Find active users (signed in within last 14 days)
+    // Paginate to avoid loading all users into memory at once
     const cutoffDate = new Date();
     cutoffDate.setUTCDate(cutoffDate.getUTCDate() - ACTIVE_DAYS_THRESHOLD);
+    const PAGE_SIZE = 500;
 
-    const usersSnap = await db
-      .collection('users')
-      .where('lastSignInAt', '>=', cutoffDate.getTime())
-      .get();
+    const tierGroups: Record<string, Array<{ uid: string; displayName: string; catId: string }>> = {};
+    let totalUsers = 0;
+    let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
-    if (usersSnap.empty) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let query = db
+        .collection('users')
+        .where('lastSignInAt', '>=', cutoffDate.getTime())
+        .orderBy('lastSignInAt')
+        .limit(PAGE_SIZE);
+
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
+      }
+
+      const page = await query.get();
+      if (page.empty) break;
+
+      for (const userDoc of page.docs) {
+        const data = userDoc.data();
+        if (data.isAnonymous) continue;
+
+        const tier = data.rating?.tier || data.tier || 'novice';
+        if (!tierGroups[tier]) tierGroups[tier] = [];
+        tierGroups[tier].push({
+          uid: userDoc.id,
+          displayName: data.displayName || 'Player',
+          catId: data.selectedCatId || 'mini-meowww',
+        });
+        totalUsers++;
+      }
+
+      lastDoc = page.docs[page.docs.length - 1];
+      if (page.size < PAGE_SIZE) break;
+    }
+
+    if (totalUsers === 0) {
       logger.info('[weeklyLeagueAssignment] No active users found');
       return;
     }
 
-    logger.info(`[weeklyLeagueAssignment] Found ${usersSnap.size} active users`);
-
-    // Group users by tier for assignment
-    const tierGroups: Record<string, Array<{ uid: string; displayName: string; catId: string }>> = {};
-
-    for (const userDoc of usersSnap.docs) {
-      const data = userDoc.data();
-      // Skip anonymous users
-      if (data.isAnonymous) continue;
-
-      // Tier is stored under rating.tier (PlayerRating shape) or top-level tier (legacy)
-      const tier = data.rating?.tier || data.tier || 'novice';
-      if (!tierGroups[tier]) tierGroups[tier] = [];
-      tierGroups[tier].push({
-        uid: userDoc.id,
-        displayName: data.displayName || 'Player',
-        catId: data.selectedCatId || 'mini-meowww',
-      });
-    }
+    logger.info(`[weeklyLeagueAssignment] Found ${totalUsers} active users`);
 
     let totalAssigned = 0;
     let totalLeagues = 0;
