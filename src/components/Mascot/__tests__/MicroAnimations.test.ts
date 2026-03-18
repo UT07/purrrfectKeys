@@ -2,6 +2,7 @@
 
 import { renderHook } from '@testing-library/react-native';
 import type { MascotMood } from '../types';
+import type { MoodTransitionValues } from '../animations/useMoodTransition';
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
@@ -109,7 +110,7 @@ describe('useMoodTransition', () => {
   });
 
   it('tracks previous mood and triggers transition', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<MoodTransitionValues, { mood: MascotMood }>(
       ({ mood }) => useMoodTransition(mood),
       { initialProps: { mood: 'happy' as MascotMood } },
     );
@@ -120,7 +121,7 @@ describe('useMoodTransition', () => {
   });
 
   it('does not animate when mood stays the same', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<MoodTransitionValues, { mood: MascotMood }>(
       ({ mood }) => useMoodTransition(mood),
       { initialProps: { mood: 'happy' as const } },
     );
