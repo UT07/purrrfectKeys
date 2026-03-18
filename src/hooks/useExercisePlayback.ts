@@ -381,7 +381,12 @@ export function useExercisePlayback({
       }
 
       if (midiEvent.type === 'noteOff') {
-        closeLatestNoteDuration(midiEvent.note, Date.now());
+        // Use consistent timestamp domain — MIDI hardware timestamps are normalized
+        // to Date.now() on noteOn, so use Date.now() for noteOff too.
+        // For mic input, use the event's own timestamp for accuracy.
+        const noteOffSource = midiEvent.inputSource ?? manager.activeMethod;
+        const releaseTime = noteOffSource === 'midi' ? Date.now() : midiEvent.timestamp;
+        closeLatestNoteDuration(midiEvent.note, releaseTime);
       }
 
       // Release audio if note off (not mic — mic notes have no audio handle)
@@ -690,13 +695,28 @@ export function useExercisePlayback({
     // Apply timing tolerance multiplier for mic input (BUG FIX: was defined but never applied).
     // Mic detection has ~100-120ms pipeline latency with jitter — widen scoring windows.
     const timingMultiplier = inputManagerRef.current?.getTimingMultiplier() ?? 1.0;
-    const scoringExercise = timingMultiplier !== 1.0
+    const activeMethod = inputManagerRef.current?.activeMethod ?? 'touch';
+
+    // Build scoring exercise with input-method-aware timing tolerances:
+    // - Mic: apply multiplier from InputManager (typically 1.5x)
+    // - Touch: enforce minimum 60ms/160ms (touch screens have inherent variability)
+    // - MIDI: use exercise-authored tolerances as-is (hardware has sub-15ms latency)
+    let adjTolerance = exercise.scoring.timingToleranceMs;
+    let adjGrace = exercise.scoring.timingGracePeriodMs;
+    if (timingMultiplier !== 1.0) {
+      adjTolerance *= timingMultiplier;
+      adjGrace *= timingMultiplier;
+    } else if (activeMethod === 'touch') {
+      adjTolerance = Math.max(adjTolerance, 60);
+      adjGrace = Math.max(adjGrace, 160);
+    }
+    const scoringExercise = (adjTolerance !== exercise.scoring.timingToleranceMs || adjGrace !== exercise.scoring.timingGracePeriodMs)
       ? {
           ...exercise,
           scoring: {
             ...exercise.scoring,
-            timingToleranceMs: exercise.scoring.timingToleranceMs * timingMultiplier,
-            timingGracePeriodMs: exercise.scoring.timingGracePeriodMs * timingMultiplier,
+            timingToleranceMs: adjTolerance,
+            timingGracePeriodMs: adjGrace,
           },
         }
       : exercise;

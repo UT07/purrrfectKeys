@@ -30,21 +30,32 @@ jest.mock('firebase/firestore', () => ({
     commit: jest.fn().mockResolvedValue(undefined),
   })),
   runTransaction: jest.fn(async (_db: unknown, fn: (t: Record<string, unknown>) => Promise<unknown>) => {
+    let callCount = 0;
     const mockTransaction = {
-      get: jest.fn().mockResolvedValue({
-        exists: () => true,
-        data: () => ({
-          id: 'guild-1',
-          name: 'Test Guild',
-          joinPolicy: 'open',
-          memberCount: 5,
-          leaderUid: 'leader-uid',
-          guildAId: 'guild-a',
-          guildBId: 'guild-b',
-          guildAWarPoints: 10,
-          guildBWarPoints: 5,
-          status: 'active',
-        }),
+      get: jest.fn().mockImplementation(() => {
+        callCount++;
+        // First get() call returns guild data, subsequent calls return member data
+        if (callCount === 1) {
+          return Promise.resolve({
+            exists: () => true,
+            data: () => ({
+              id: 'guild-1',
+              name: 'Test Guild',
+              joinPolicy: 'open',
+              memberCount: 5,
+              leaderUid: 'leader-uid',
+              guildAId: 'guild-a',
+              guildBId: 'guild-b',
+              guildAWarPoints: 10,
+              guildBWarPoints: 5,
+              status: 'active',
+            }),
+          });
+        }
+        return Promise.resolve({
+          exists: () => true,
+          data: () => ({ role: 'leader', uid: 'leader-uid' }),
+        });
       }),
       set: jest.fn(),
       update: jest.fn(),
@@ -252,7 +263,7 @@ describe('guildService', () => {
 
   describe('kickMember', () => {
     it('removes member via transaction', async () => {
-      await kickMember('guild-1', 'target-uid');
+      await kickMember('guild-1', 'target-uid', 'leader-uid');
       expect(mockedRunTransaction).toHaveBeenCalledTimes(1);
     });
   });

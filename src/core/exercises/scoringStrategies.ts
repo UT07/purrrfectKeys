@@ -49,8 +49,8 @@ function matchNotesByTimeOnly(
   expectedNotes: NoteEvent[],
   playedNotes: MidiNoteEvent[],
   tempoMs: number
-): Map<number, MidiNoteEvent> {
-  const matched = new Map<number, MidiNoteEvent>();
+): Map<number, { event: MidiNoteEvent; playedIndex: number }> {
+  const matched = new Map<number, { event: MidiNoteEvent; playedIndex: number }>();
   const usedPlayedIndices = new Set<number>();
 
   // Sort expected by startBeat (should already be, but be safe)
@@ -82,7 +82,7 @@ function matchNotesByTimeOnly(
     }
 
     if (bestMatch) {
-      matched.set(expIdx, playedNotes[bestMatch.playedIdx]);
+      matched.set(expIdx, { event: playedNotes[bestMatch.playedIdx], playedIndex: bestMatch.playedIdx });
       usedPlayedIndices.add(bestMatch.playedIdx);
     }
   }
@@ -178,7 +178,7 @@ function calculateBreakdownFromNotes(
   const completeness = (playedCount / totalExpected) * 100;
 
   const extraCount = noteScores.filter((n) => n.isExtraNote).length;
-  const extraNotes = Math.max(0, 100 - extraCount * 10);
+  const extraNotes = extraCount === 0 ? 100 : Math.round(100 / (1 + extraCount * 0.5));
 
   const duration =
     expectedNoteScores.length > 0
@@ -223,10 +223,11 @@ export function scoreRhythmExercise(
   // Score each expected note
   for (let i = 0; i < exercise.notes.length; i++) {
     const expected = exercise.notes[i];
-    const played = matched.get(i);
+    const match = matched.get(i);
 
-    if (played) {
-      usedPlayedIndices.add(playedNotes.indexOf(played));
+    if (match) {
+      const { event: played, playedIndex } = match;
+      usedPlayedIndices.add(playedIndex);
       const expectedTimeMs = expected.startBeat * msPerBeat;
       const timingOffsetMs = played.timestamp - expectedTimeMs;
 

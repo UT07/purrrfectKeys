@@ -274,6 +274,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
+  // Refs for route params used inside handleExerciseCompletion callback.
+  // Using refs avoids stale closures when navigation.replace changes params
+  // without remounting the component (the callback reads current values).
+  const skillIdParamRef = useRef(skillIdParam);
+  skillIdParamRef.current = skillIdParam;
+  const testModeRef = useRef(testMode);
+  testModeRef.current = testMode;
+  const aiModeRef = useRef(aiMode);
+  aiModeRef.current = aiMode;
+  const exerciseTypeParamRef = useRef(exerciseTypeParam);
+  exerciseTypeParamRef.current = exerciseTypeParam;
+
   // Store integration
   const exerciseStore = useExerciseStore();
 
@@ -754,6 +766,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    */
   const handleExerciseCompletion = useCallback((initialScore: ExerciseScore) => {
     if (!mountedRef.current) return;
+    // Read route params from refs to avoid stale closures when
+    // navigation.replace changes params without remounting.
+    const skillIdParam = skillIdParamRef.current;
+    const testMode = testModeRef.current;
     const trace = perfTrace('ExerciseCompletion');
     let score = { ...initialScore };
 
@@ -764,7 +780,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Apply ability boosts BEFORE setting finalScore so CompletionModal shows
     // the correct (boosted) values. Previously setFinalScore ran before the boost,
     // causing the modal to display the raw score.
-    const currentAbilityConfig = abilityConfig;
+    const currentAbilityConfig = abilityConfigRef.current;
     if (currentAbilityConfig) {
       // Score boost (cap at 100)
       if (currentAbilityConfig.scoreBoostPercent > 0) {
@@ -886,6 +902,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // (the todayGoalData snapshot was taken before the mutation and is stale)
     const freshGoalData = useProgressStore.getState().dailyGoalData[todayISO];
     const minutesSoFar = freshGoalData?.minutesPracticed ?? elapsedMinutes;
+
+    // Update streak BEFORE recordExerciseCompletion so streak milestones
+    // see the current day's streak, not yesterday's stale value (BUG-G09)
+    const preCompletionStreak = calculateStreakUpdate(progressStore.streakData);
+    progressStore.updateStreakData(preCompletionStreak);
 
     trace.mark('recordExerciseCompletion');
     progressStore.recordExerciseCompletion(ex.id, score.overall, score.xpEarned, {
@@ -1159,11 +1180,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     trace.mark('streakAndAchievements');
-    // Update streak using XpSystem's proper streak logic (handles freezes, weekly tracking)
-    // Re-read from fresh state since recordExerciseCompletion may have mutated streakData
-    const freshProgressStore = useProgressStore.getState();
-    const updatedStreak = calculateStreakUpdate(freshProgressStore.streakData);
-    freshProgressStore.updateStreakData(updatedStreak);
+    // Streak was already updated before recordExerciseCompletion (BUG-G09 fix)
 
     // Track achievement stats: perfect scores, high scores, notes played
     const achievementState = useAchievementStore.getState();
@@ -1179,11 +1196,25 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       achievementState.incrementNotesPlayed(playedNoteCount);
     }
 
-    // Check for newly unlocked achievements
+    // Check for newly unlocked achievements — populate extras from stores
+    // so evolution, gem, and song achievements can actually unlock
     const currentProgressState = useProgressStore.getState();
-    const ownedCatIds = useCatEvolutionStore.getState().ownedCats;
+    const catEvoState = useCatEvolutionStore.getState();
+    const ownedCatIds = catEvoState.ownedCats;
     const catsUnlocked = getOwnedCats(ownedCatIds).length;
-    const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked);
+    const gemState = useGemStore.getState();
+    const evoEntries = Object.values(catEvoState.evolutionData ?? {});
+    const allAbilities = evoEntries.flatMap((d) => d.abilitiesUnlocked ?? []);
+    const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked, {
+      anyCatEvolvedTeen: evoEntries.some((d) => d.xpAccumulated >= 500),
+      anyCatEvolvedAdult: evoEntries.some((d) => d.xpAccumulated >= 2000),
+      anyCatEvolvedMaster: evoEntries.some((d) => d.xpAccumulated >= 5000),
+      abilitiesUnlocked: new Set(allAbilities).size,
+      catsOwned: ownedCatIds.length,
+      hasChonky: ownedCatIds.includes('chonky-monke'),
+      totalGemsEarned: gemState.totalGemsEarned ?? 0,
+      totalGemsSpent: gemState.totalGemsSpent ?? 0,
+    });
     const newAchievements = achievementState.checkAndUnlock(achievementContext);
 
     // BUG-028 fix: Queue ALL toast notifications (achievements + level-up + XP)
@@ -1228,10 +1259,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       gemsEarned = 5;
     }
 
-    // Apply gem ability bonuses (gem_magnet chance + lucky_gems multiplier)
+    // Apply gem ability bonuses:
+    // - gem_magnet: chance to double gems (gemBonusChance > 0)
+    // - lucky_gems: flat multiplier (gemBonusMultiplier > 1)
+    // These abilities are independent — either one can trigger a bonus.
     if (gemsEarned > 0 && currentAbilityConfig) {
-      if (currentAbilityConfig.gemBonusMultiplier > 1 && Math.random() < currentAbilityConfig.gemBonusChance) {
-        gemsEarned = Math.round(gemsEarned * currentAbilityConfig.gemBonusMultiplier);
+      const hasChance = currentAbilityConfig.gemBonusChance > 0 && Math.random() < currentAbilityConfig.gemBonusChance;
+      const hasMultiplier = currentAbilityConfig.gemBonusMultiplier > 1;
+      if (hasChance || hasMultiplier) {
+        const multiplier = Math.max(currentAbilityConfig.gemBonusMultiplier, hasChance ? 2 : 1);
+        gemsEarned = Math.round(gemsEarned * multiplier);
       }
     }
 
@@ -1300,7 +1337,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // --- Friend challenge creation ---
     if (challengeTarget) {
       const authUser = useAuthStore.getState().user;
-      if (authUser) {
+      if (authUser && authUser.uid !== challengeTarget.uid) {
+        // Deduct sender's gem stake upfront (if any)
+        const gemStake = challengeTarget.gemStake ?? 0;
+        let senderStakeDeducted = true;
+        if (gemStake > 0) {
+          senderStakeDeducted = useGemStore.getState().spendGems(
+            gemStake,
+            `challenge-stake-send-${authUser.uid}-${challengeTarget.uid}-${Date.now()}`,
+          );
+          if (!senderStakeDeducted) {
+            logger.warn('[ExercisePlayer] Sender could not afford gem stake — creating challenge without stake');
+          }
+        }
         const challengeDoc = {
           id: `challenge-${authUser.uid}-${challengeTarget.uid}-${Date.now()}`,
           fromUid: authUser.uid,
@@ -1315,6 +1364,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           status: 'pending' as const,
           createdAt: Date.now(),
           expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
+          ...(senderStakeDeducted && gemStake > 0 ? { gemStake } : {}),
         };
         useSocialStore.getState().addChallenge(challengeDoc);
         createChallenge(challengeDoc).catch((err) => {
@@ -1386,7 +1436,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     trace.end();
-  }, [onExerciseComplete, abilityConfig, challengeTarget, friendChallengeId]);
+  }, [onExerciseComplete, challengeTarget, friendChallengeId]);
 
   // Metronome toggle — defaults to exercise setting, user can toggle during play
   const [metronomeOn, setMetronomeOn] = useState(exercise.settings.metronomeEnabled ?? true);
@@ -1781,6 +1831,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
   }, [startPlayback, isPlaying]);
 
+  // Stable callback for ExerciseLoadingScreen — avoids re-triggering the
+  // effect inside ExerciseLoadingScreen on every ExercisePlayer render.
+  const handleLoadingReady = useCallback(() => {
+    setShowLoadingScreen(false);
+    // Skip the SalsaIntro — loading screen already showed Salsa's coaching
+    setShowIntro(false);
+    handleStart();
+  }, [handleStart]);
+
   /**
    * Pause/resume exercise playback
    */
@@ -2027,7 +2086,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           shakeRef.current?.shake('medium');
           setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: COLORS.feedbackMiss, trigger: Date.now() });
           setShowMissFlash(true);
-          setTimeout(() => setShowMissFlash(false), 150);
+          setTimeout(() => { if (mountedRef.current) setShowMissFlash(false); }, 150);
         }
         setFeedback({
           type: 'miss',
@@ -3129,12 +3188,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         <ExerciseLoadingScreen
           visible={showLoadingScreen}
           exerciseReady={exerciseReady}
-          onReady={() => {
-            setShowLoadingScreen(false);
-            // Skip the SalsaIntro — loading screen already showed Salsa's coaching
-            setShowIntro(false);
-            handleStart();
-          }}
+          onReady={handleLoadingReady}
         />
       )}
 

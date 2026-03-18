@@ -108,6 +108,8 @@ let _currentSound: any = null;
 
 function getApiKey(): string | null {
   try {
+    // Only use direct API key in development — production should route through a Cloud Function proxy
+    if (!__DEV__) return null;
     return process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? null;
   } catch (err) {
     logger.warn('[ElevenLabs] Failed to read API key from env:', err);

@@ -163,7 +163,20 @@ export const generateSong = onCall(
     }
 
     const uid = request.auth.uid;
-    const data = request.data as SongRequestParams;
+    const raw = request.data as Record<string, unknown>;
+
+    // Validate and sanitize inputs
+    const title = typeof raw.title === 'string' ? raw.title.replace(/[\n\r]/g, ' ').slice(0, 200) : '';
+    const artist = typeof raw.artist === 'string' ? raw.artist.replace(/[\n\r]/g, ' ').slice(0, 100) : undefined;
+    const difficulty = typeof raw.difficulty === 'number'
+      ? (Math.max(1, Math.min(5, Math.round(raw.difficulty))) as 1 | 2 | 3 | 4 | 5)
+      : 3 as const;
+
+    if (!title) {
+      throw new HttpsError('invalid-argument', 'Song title is required');
+    }
+
+    const data: SongRequestParams = { title, artist, difficulty };
 
     // Rate limit check
     const withinLimit = await checkAndIncrementRateLimit(uid);
@@ -266,7 +279,14 @@ async function attemptGeneration(
 ): Promise<GeneratedSongABC | null> {
   const result = await model.generateContent(prompt);
   const text = result.response.text();
-  const parsed: unknown = JSON.parse(text);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    logger.warn('Gemini returned invalid JSON for song generation');
+    return null;
+  }
 
   if (validateGeneratedSong(parsed)) {
     return parsed;

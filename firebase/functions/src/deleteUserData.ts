@@ -27,6 +27,9 @@ const USER_SUBCOLLECTIONS = [
   'activity',
   'songMastery',
   'songRequests',
+  'seasonRewards',
+  'richFeed',
+  'referrals',
 ];
 
 /**
@@ -78,8 +81,24 @@ export const deleteUserAllData = onCall(
     try {
       let totalDeleted = 0;
 
-      // 1. Delete all user subcollections
-      for (const subcollection of USER_SUBCOLLECTIONS) {
+      // 1. Delete all user subcollections — dynamically discover + hardcoded fallback
+      const userDocRef = db.doc(`users/${uid}`);
+      let subcollectionNames: string[];
+      try {
+        const collections = await userDocRef.listCollections();
+        subcollectionNames = collections.map((c) => c.id);
+        // Merge with known list to catch any that listCollections might miss
+        for (const known of USER_SUBCOLLECTIONS) {
+          if (!subcollectionNames.includes(known)) {
+            subcollectionNames.push(known);
+          }
+        }
+      } catch {
+        // Fallback to hardcoded list if listCollections fails
+        subcollectionNames = [...USER_SUBCOLLECTIONS];
+      }
+
+      for (const subcollection of subcollectionNames) {
         const path = `users/${uid}/${subcollection}`;
         const count = await deleteCollection(db, path);
         if (count > 0) {

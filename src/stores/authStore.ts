@@ -41,6 +41,9 @@ import { useAchievementStore } from './achievementStore';
 import { useLearnerProfileStore } from './learnerProfileStore';
 import { useSocialStore } from './socialStore';
 import { useLeagueStore } from './leagueStore';
+import { useRankStore } from './rankStore';
+import { useSeasonStore } from './seasonStore';
+import { useGuildStore } from './guildStore';
 import { logger } from '../utils/logger';
 import { AnalyticsService, analyticsEvents } from '../services/analytics/PostHog';
 
@@ -95,6 +98,9 @@ function resetAllStores(): void {
     { name: 'songs', reset: () => useSongStore.getState().reset() },
     { name: 'social', reset: () => useSocialStore.getState().reset() },
     { name: 'league', reset: () => useLeagueStore.getState().reset() },
+    { name: 'rank', reset: () => useRankStore.getState().reset() },
+    { name: 'season', reset: () => useSeasonStore.getState().reset() },
+    { name: 'guild', reset: () => useGuildStore.getState().reset() },
   ];
 
   for (const { name, reset } of stores) {
@@ -448,8 +454,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const AUTH_TIMEOUT_MS = 8000;
 
+    let timedOut = false;
+
     const authPromise = new Promise<void>((resolveAuth) => {
       authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        // If timeout already fired, ignore late auth callbacks to prevent
+        // overwriting the offline guest state.
+        if (timedOut) return;
         set({
           user,
           isAuthenticated: user !== null,
@@ -465,6 +476,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const timeoutPromise = new Promise<void>((resolveTimeout) => {
       setTimeout(() => {
+        timedOut = true;
         logger.warn('[Auth] initAuth timed out after 8s — entering offline guest mode');
         set({
           user: null,

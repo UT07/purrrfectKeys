@@ -80,6 +80,20 @@ type ProgressData = Pick<
   'totalXp' | 'level' | 'streakData' | 'lessonProgress' | 'dailyGoalData' | 'tierTestResults' | 'streakMilestonesClaimed'
 >;
 
+/** Prune dailyGoalData entries older than 90 days to prevent unbounded storage growth */
+export function pruneDailyGoalData(data: Record<string, DailyGoalData>): Record<string, DailyGoalData> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const pruned: Record<string, DailyGoalData> = {};
+  for (const [date, goal] of Object.entries(data)) {
+    if (date >= cutoffStr) {
+      pruned[date] = goal;
+    }
+  }
+  return pruned;
+}
+
 const defaultData: ProgressData = {
   totalXp: 0,
   level: 1,
@@ -419,8 +433,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     // ── League XP update (fire-and-forget) ──
     const leagueMembership = useLeagueStore.getState().membership;
     if (leagueMembership && auth.currentUser && !auth.currentUser.isAnonymous) {
-      const newWeeklyXp = leagueMembership.weeklyXp + effectiveXp;
-      useLeagueStore.getState().updateWeeklyXp(newWeeklyXp);
+      useLeagueStore.getState().updateWeeklyXp(effectiveXp);
       fireAndRetry(
         () => addLeagueXp(leagueMembership.leagueId, auth.currentUser!.uid, effectiveXp),
         'addLeagueXp',
@@ -430,7 +443,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     // ── MMR / Rank update ──
     try {
       const { useRankStore } = require('./rankStore');
-      const exerciseTier = challengeContext?.exerciseTier ?? 3;
+      // Clamp exerciseTier to valid range (1-15) to prevent client-side manipulation
+      const rawTier = challengeContext?.exerciseTier ?? 3;
+      const exerciseTier = Math.max(1, Math.min(15, Math.floor(rawTier)));
       const exerciseType = challengeContext?.exerciseType ?? 'play';
       useRankStore.getState().updateAfterExercise(_score, exerciseTier, exerciseType);
 

@@ -318,7 +318,13 @@ async function attemptGeneration(
 ): Promise<Song | null> {
   const result = await model.generateContent(prompt);
   const text = result.response.text();
-  const parsed: unknown = JSON.parse(text);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
 
   if (!validateGeneratedSong(parsed)) {
     return null;
@@ -346,7 +352,7 @@ function songAlreadyGenerated(existing: Song[], title: string): boolean {
   const normalised = title.toLowerCase().replace(/[^a-z0-9]/g, '');
   return existing.some((s) => {
     const existingNorm = s.metadata.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return existingNorm === normalised || existingNorm.includes(normalised) || normalised.includes(existingNorm);
+    return existingNorm === normalised;
   });
 }
 
@@ -427,22 +433,38 @@ async function main(): Promise<void> {
 
     console.log(`[${idx}/${start + songs.length}] Generating: ${params.title}...`);
 
-    try {
-      const song = await generateSong(model, params);
-      if (song) {
-        console.log(`  ✓ ${song.id} — ${song.sections.length} sections, ${song.metadata.durationSeconds}s`);
-        allSongs.push(song);
-        successCount++;
-        // Save after each success for resume support
-        writeFileSync(outputFile, JSON.stringify(allSongs, null, 2));
-      } else {
-        console.log(`  ✗ Generation returned null (validation or ABC parse failed)`);
+    let generated = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const song = await generateSong(model, params);
+        if (song) {
+          console.log(`  ✓ ${song.id} — ${song.sections.length} sections, ${song.metadata.durationSeconds}s`);
+          allSongs.push(song);
+          successCount++;
+          // Save after each success for resume support
+          writeFileSync(outputFile, JSON.stringify(allSongs, null, 2));
+        } else {
+          console.log(`  ✗ Generation returned null (validation or ABC parse failed)`);
+          failCount++;
+        }
+        generated = true;
+        break;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isRetryable = msg.includes('429') || msg.includes('503') || msg.includes('500');
+        if (isRetryable && attempt < 2) {
+          const backoffMs = (attempt + 1) * 3000;
+          console.log(`  ⟳ Retryable error (${msg}), retrying in ${backoffMs / 1000}s...`);
+          await new Promise((r) => setTimeout(r, backoffMs));
+          continue;
+        }
+        console.error(`  ✗ Error: ${msg}`);
         failCount++;
+        generated = true;
+        break;
       }
-    } catch (err) {
-      console.error(`  ✗ Error: ${err instanceof Error ? err.message : String(err)}`);
-      failCount++;
     }
+    if (!generated) failCount++;
 
     if (i < songs.length - 1) {
       await new Promise((r) => setTimeout(r, DELAY_BETWEEN_SONGS_MS));

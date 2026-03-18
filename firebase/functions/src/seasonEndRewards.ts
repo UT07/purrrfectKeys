@@ -121,6 +121,15 @@ export const seasonEndRewards = onSchedule(
     const seasonWeeks = getSeasonWeekMondays(seasonNumber);
     const db = admin.firestore();
 
+    // Idempotency guard: skip if already processed this season
+    const guardRef = db.collection('seasonEndProcessed').doc(`season-${seasonNumber}`);
+    const guardDoc = await guardRef.get();
+    if (guardDoc.exists) {
+      logger.info(`[seasonEndRewards] Already processed season ${seasonNumber} — skipping`);
+      return;
+    }
+    await guardRef.set({ processedAt: admin.firestore.FieldValue.serverTimestamp() });
+
     logger.info(
       `[seasonEndRewards] Processing season ${seasonNumber} end rewards. ` +
         `Season weeks: ${seasonWeeks.join(', ')}`,

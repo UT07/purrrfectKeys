@@ -84,6 +84,15 @@ export const weeklyLeagueRewards = onSchedule(
 
     logger.info(`[weeklyLeagueRewards] Processing leagues for week ${weekStart}`);
 
+    // Idempotency guard: skip if already processed this week
+    const guardRef = db.collection('leagueRewardsProcessed').doc(weekStart);
+    const guardDoc = await guardRef.get();
+    if (guardDoc.exists) {
+      logger.info(`[weeklyLeagueRewards] Already processed week ${weekStart} — skipping`);
+      return;
+    }
+    await guardRef.set({ processedAt: admin.firestore.FieldValue.serverTimestamp() });
+
     // Find all leagues for this week
     const leaguesSnap = await db
       .collection('leagues')
@@ -156,15 +165,19 @@ export const weeklyLeagueRewards = onSchedule(
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
           });
 
-          // Apply soft MMR reset on user document
+          // Apply soft MMR reset on user document.
+          // Use set+merge instead of update to gracefully handle deleted users.
           const userRef = db.collection('users').doc(uid);
           const currentMmr = userMmrMap.get(uid) ?? 500;
-          batch.update(userRef, {
+          batch.set(userRef, {
+            // Write to both paths: rating.mmr (current client format) and
+            // top-level mmr (legacy) to handle both data shapes
+            'rating.mmr': softResetMMR(currentMmr),
             mmr: softResetMMR(currentMmr),
             lastSeasonRank: rank,
             lastSeasonTier: tier,
             lastSeasonWeek: weekStart,
-          });
+          }, { merge: true });
 
           totalRewards++;
           totalGemsDistributed += totalGems;

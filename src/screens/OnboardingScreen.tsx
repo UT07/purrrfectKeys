@@ -20,7 +20,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   Pressable,
   TextInput,
   ActivityIndicator,
@@ -55,9 +55,7 @@ import { logger } from '../utils/logger';
 // Constants
 // ---------------------------------------------------------------------------
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const PROGRESS_BAR_HORIZONTAL_PADDING = SPACING.lg;
-const PROGRESS_BAR_WIDTH = SCREEN_WIDTH - PROGRESS_BAR_HORIZONTAL_PADDING * 2;
 const PROGRESS_BAR_HEIGHT = 6;
 const CAT_SIZE = 28;
 const SLIDE_DURATION = 300;
@@ -739,13 +737,14 @@ function CatSelectionCard({
   selected: boolean;
   onSelect: () => void;
 }): React.ReactElement {
+  const { width: screenWidth } = useWindowDimensions();
   const traits = CAT_TRAIT_TAGS[cat.id] ?? [];
 
   return (
     <View
       style={[
         styles.catCard,
-        { borderColor: selected ? cat.color : COLORS.cardBorder },
+        { width: screenWidth * 0.65, borderColor: selected ? cat.color : COLORS.cardBorder },
         selected && {
           backgroundColor: glowColor(cat.color, 0.08),
           ...shadowGlow(cat.color, 10),
@@ -948,6 +947,8 @@ function StepDots({ currentStep }: { currentStep: number }): React.ReactElement 
 }
 
 function ProgressBar({ step }: { step: number }): React.ReactElement {
+  const { width: screenWidth } = useWindowDimensions();
+  const progressBarWidth = screenWidth - PROGRESS_BAR_HORIZONTAL_PADDING * 2;
   const fillFraction = useSharedValue(step / TOTAL_STEPS);
   const catInfo = STEP_CATS[step] ?? STEP_CATS[1];
 
@@ -964,8 +965,8 @@ function ProgressBar({ step }: { step: number }): React.ReactElement {
 
   const catStyle = useAnimatedStyle(() => {
     // Keep the cat within bounds: offset by half cat size so it sits at the leading edge
-    const maxTranslate = PROGRESS_BAR_WIDTH - CAT_SIZE;
-    const rawTranslate = fillFraction.value * PROGRESS_BAR_WIDTH - CAT_SIZE / 2;
+    const maxTranslate = progressBarWidth - CAT_SIZE;
+    const rawTranslate = fillFraction.value * progressBarWidth - CAT_SIZE / 2;
     const clampedTranslate = Math.max(0, Math.min(rawTranslate, maxTranslate));
     return {
       transform: [{ translateX: clampedTranslate }],
@@ -1484,7 +1485,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   catCard: {
-    width: SCREEN_WIDTH * 0.65,
+    // width set via inline style using useWindowDimensions
     backgroundColor: COLORS.cardSurface,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,

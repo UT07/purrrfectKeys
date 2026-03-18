@@ -369,6 +369,11 @@ export class SyncManager {
     merged: boolean;
     error?: string;
   }> {
+    // Skip if a full sync is already in progress to avoid concurrent Firestore reads
+    if (this.isSyncing) {
+      return { pulled: false, merged: false, error: 'Sync already in progress' };
+    }
+
     const uid = auth.currentUser?.uid;
     if (!uid) {
       return { pulled: false, merged: false, error: 'No authenticated user' };
