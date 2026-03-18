@@ -222,10 +222,10 @@ export class SoundManager {
     // Always fire haptic (even if sound not loaded)
     this.triggerHaptic(name);
 
-    // Play audio if available
+    // Play audio if available — apply current volume on each play
     const loaded = this.sounds.get(name);
     if (loaded) {
-      loaded.sound.replayAsync().catch(() => {});
+      loaded.sound.replayAsync({ volume: this.volume }).catch(() => {});
     }
   }
 
