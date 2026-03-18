@@ -50,7 +50,6 @@ jest.mock('../settingsStore', () => ({
 }));
 
 import { useProgressStore } from '../progressStore';
-import { useCatEvolutionStore } from '../catEvolutionStore';
 import { PersistenceManager, STORAGE_KEYS } from '../persistence';
 import type { LessonProgress, ExerciseProgress } from '@/core/exercises/types';
 
