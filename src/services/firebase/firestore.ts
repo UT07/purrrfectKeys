@@ -894,6 +894,24 @@ async function deleteUserDataClientSide(uid: string): Promise<void> {
     logger.warn('[deleteUserData] Challenge cleanup failed:', err);
   }
 
+  // 5.5. Delete guild membership
+  try {
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    const guildId = userDoc.exists() ? (userDoc.data()?.guildId as string | undefined) : undefined;
+    if (guildId) {
+      const memberRef = doc(db, 'guilds', guildId, 'members', uid);
+      const memberSnap = await getDoc(memberRef);
+      if (memberSnap.exists()) {
+        await deleteDoc(memberRef);
+        // Decrement guild member count
+        await updateDoc(doc(db, 'guilds', guildId), { memberCount: increment(-1) });
+        logger.log(`[deleteUserData] Removed from guild ${guildId}`);
+      }
+    }
+  } catch (err) {
+    logger.warn('[deleteUserData] Guild membership cleanup failed:', err);
+  }
+
   // 6. Delete all user subcollections
   for (const subcollection of USER_SUBCOLLECTIONS) {
     try {

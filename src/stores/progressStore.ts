@@ -111,6 +111,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   ...defaultData,
 
   addXp: (amount: number) => {
+    if (amount <= 0) return;
     const oldLevel = get().level;
     set((state) => {
       const newTotalXp = state.totalXp + amount;

@@ -229,6 +229,11 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
       }
     } catch (err) {
       logger.warn('[seasonStore] Failed to deliver battle pass reward:', rewardKey, err);
+      // Remove the claim record so the reward can be retried
+      set((s) => ({
+        claimedRewards: s.claimedRewards.filter((k) => k !== rewardKey),
+      }));
+      debouncedSave(get());
       return null;
     }
 

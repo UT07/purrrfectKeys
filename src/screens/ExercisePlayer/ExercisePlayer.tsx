@@ -62,6 +62,7 @@ import { ExerciseBuddy } from '../../components/Mascot/ExerciseBuddy';
 import type { BuddyReaction } from '../../components/Mascot/ExerciseBuddy';
 import { getAchievementById } from '../../core/achievements/achievements';
 import type { PlaybackSpeed } from '../../stores/types';
+import { EVOLUTION_XP_THRESHOLDS } from '../../stores/types';
 import { useDevKeyboardMidi } from '../../input/DevKeyboardMidi';
 import { DemoPlaybackService } from '../../services/demoPlayback';
 import { createAudioEngine } from '../../audio/createAudioEngine';
@@ -1206,9 +1207,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const evoEntries = Object.values(catEvoState.evolutionData ?? {});
     const allAbilities = evoEntries.flatMap((d) => d.abilitiesUnlocked ?? []);
     const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked, {
-      anyCatEvolvedTeen: evoEntries.some((d) => d.xpAccumulated >= 500),
-      anyCatEvolvedAdult: evoEntries.some((d) => d.xpAccumulated >= 2000),
-      anyCatEvolvedMaster: evoEntries.some((d) => d.xpAccumulated >= 5000),
+      anyCatEvolvedTeen: evoEntries.some((d) => d.xpAccumulated >= EVOLUTION_XP_THRESHOLDS.teen),
+      anyCatEvolvedAdult: evoEntries.some((d) => d.xpAccumulated >= EVOLUTION_XP_THRESHOLDS.adult),
+      anyCatEvolvedMaster: evoEntries.some((d) => d.xpAccumulated >= EVOLUTION_XP_THRESHOLDS.master),
       abilitiesUnlocked: new Set(allAbilities).size,
       catsOwned: ownedCatIds.length,
       hasChonky: ownedCatIds.includes('chonky-monke'),

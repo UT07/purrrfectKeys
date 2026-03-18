@@ -24,12 +24,17 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return status === 'granted';
 }
 
+let dailyReminderId: string | null = null;
+
 /** Schedule a daily practice reminder */
 export async function scheduleDailyReminder(
   hour: number,
   minute: number,
 ): Promise<string> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  // Cancel only the previous daily reminder, not all notifications
+  if (dailyReminderId) {
+    await Notifications.cancelScheduledNotificationAsync(dailyReminderId);
+  }
   const id = await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Time to practice!',
@@ -42,6 +47,7 @@ export async function scheduleDailyReminder(
       minute,
     },
   });
+  dailyReminderId = id;
   return id;
 }
 

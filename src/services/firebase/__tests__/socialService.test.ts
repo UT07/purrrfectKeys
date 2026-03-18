@@ -41,8 +41,8 @@ jest.mock('firebase/firestore', () => {
       delete: batchDelete,
       commit: batchCommit,
     })),
-    runTransaction: jest.fn(async (_db: unknown, updateFn: (t: typeof mockTransaction) => Promise<void>) => {
-      await updateFn(mockTransaction);
+    runTransaction: jest.fn(async (_db: unknown, updateFn: (t: typeof mockTransaction) => Promise<unknown>) => {
+      return updateFn(mockTransaction);
     }),
     __mockBatch: { set: batchSet, update: batchUpdate, delete: batchDelete, commit: batchCommit },
     __mockTransaction: mockTransaction,
@@ -470,7 +470,7 @@ describe('socialService', () => {
     }
 
     it('sender wins when sender has higher score', async () => {
-      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 50 }));
+      mockTransaction.get.mockResolvedValue(mockChallengeSnap({ gemStake: 50 }));
 
       const result = await resolveChallengeGemStake(
         CHALLENGE_ID,
@@ -481,15 +481,15 @@ describe('socialService', () => {
       );
 
       expect(result).toEqual({ winnerUid: FROM_UID, winnerGems: 100 });
-      expect(updateDoc).toHaveBeenCalledTimes(1);
-      const updateData = (updateDoc as jest.Mock).mock.calls[0][1];
+      expect(mockTransaction.update).toHaveBeenCalledTimes(1);
+      const updateData = mockTransaction.update.mock.calls[0][1];
       expect(updateData.winnerUid).toBe(FROM_UID);
       expect(updateData.winnerGems).toBe(100);
       expect(typeof updateData.resolvedAt).toBe('number');
     });
 
     it('receiver wins when receiver has higher score', async () => {
-      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 30 }));
+      mockTransaction.get.mockResolvedValue(mockChallengeSnap({ gemStake: 30 }));
 
       const result = await resolveChallengeGemStake(
         CHALLENGE_ID,
@@ -500,14 +500,14 @@ describe('socialService', () => {
       );
 
       expect(result).toEqual({ winnerUid: TO_UID, winnerGems: 60 });
-      expect(updateDoc).toHaveBeenCalledTimes(1);
-      const updateData = (updateDoc as jest.Mock).mock.calls[0][1];
+      expect(mockTransaction.update).toHaveBeenCalledTimes(1);
+      const updateData = mockTransaction.update.mock.calls[0][1];
       expect(updateData.winnerUid).toBe(TO_UID);
       expect(updateData.winnerGems).toBe(60);
     });
 
     it('tie goes to challenger (fromUid)', async () => {
-      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 25 }));
+      mockTransaction.get.mockResolvedValue(mockChallengeSnap({ gemStake: 25 }));
 
       const result = await resolveChallengeGemStake(
         CHALLENGE_ID,
@@ -521,29 +521,29 @@ describe('socialService', () => {
     });
 
     it('returns null when gemStake is 0', async () => {
-      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: 0 }));
+      mockTransaction.get.mockResolvedValue(mockChallengeSnap({ gemStake: 0 }));
 
       const result = await resolveChallengeGemStake(
         CHALLENGE_ID, 90, 80, FROM_UID, TO_UID,
       );
 
       expect(result).toBeNull();
-      expect(updateDoc).not.toHaveBeenCalled();
+      expect(mockTransaction.update).not.toHaveBeenCalled();
     });
 
     it('returns null when gemStake is undefined', async () => {
-      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: undefined }));
+      mockTransaction.get.mockResolvedValue(mockChallengeSnap({ gemStake: undefined }));
 
       const result = await resolveChallengeGemStake(
         CHALLENGE_ID, 90, 80, FROM_UID, TO_UID,
       );
 
       expect(result).toBeNull();
-      expect(updateDoc).not.toHaveBeenCalled();
+      expect(mockTransaction.update).not.toHaveBeenCalled();
     });
 
     it('returns null when challenge was already resolved', async () => {
-      (getDoc as jest.Mock).mockResolvedValue(
+      mockTransaction.get.mockResolvedValue(
         mockChallengeSnap({ gemStake: 50, resolvedAt: 1234567890 }),
       );
 
@@ -552,11 +552,11 @@ describe('socialService', () => {
       );
 
       expect(result).toBeNull();
-      expect(updateDoc).not.toHaveBeenCalled();
+      expect(mockTransaction.update).not.toHaveBeenCalled();
     });
 
     it('returns null when challenge document does not exist', async () => {
-      (getDoc as jest.Mock).mockResolvedValue({
+      mockTransaction.get.mockResolvedValue({
         exists: () => false,
       });
 
@@ -565,12 +565,12 @@ describe('socialService', () => {
       );
 
       expect(result).toBeNull();
-      expect(updateDoc).not.toHaveBeenCalled();
+      expect(mockTransaction.update).not.toHaveBeenCalled();
     });
 
     it('winner gets exactly 2x the gem stake', async () => {
       const stake = 75;
-      (getDoc as jest.Mock).mockResolvedValue(mockChallengeSnap({ gemStake: stake }));
+      mockTransaction.get.mockResolvedValue(mockChallengeSnap({ gemStake: stake }));
 
       const result = await resolveChallengeGemStake(
         CHALLENGE_ID, 100, 50, FROM_UID, TO_UID,
