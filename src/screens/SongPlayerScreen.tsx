@@ -23,6 +23,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSongStore } from '../stores/songStore';
 import { useExerciseStore } from '../stores/exerciseStore';
 import { useGemStore } from '../stores/gemStore';
+import { useCatEvolutionStore } from '../stores/catEvolutionStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import {
   updateSongMastery,
   gemRewardForTier,
@@ -373,6 +375,23 @@ export function SongPlayerScreen() {
         const reward = gemRewardForTier(updated.tier);
         if (reward > 0) {
           useGemStore.getState().earnGems(reward, 'song-mastery');
+        }
+
+        // Cat evolution XP for song mastery tier-up
+        const MASTERY_CAT_XP: Record<string, number> = {
+          bronze: 50,
+          silver: 100,
+          gold: 150,
+          platinum: 200,
+        };
+        try {
+          const catId = useSettingsStore.getState().selectedCatId;
+          if (catId) {
+            const xp = MASTERY_CAT_XP[updated.tier] ?? 0;
+            if (xp > 0) useCatEvolutionStore.getState().addEvolutionXp(catId, xp);
+          }
+        } catch (err) {
+          // silent — non-critical
         }
       }
     }, [currentSong, uid, getMastery, updateMastery]),
