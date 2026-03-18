@@ -299,6 +299,97 @@ async function checkAndIncrementRateLimit(uid: string, subcollection: string = '
 }
 
 // ============================================================================
+// Input Sanitization
+// ============================================================================
+
+const VALID_HANDS = new Set(['left', 'right', 'both']);
+const VALID_KEY_SIGNATURES = new Set([
+  'C', 'G', 'D', 'A', 'E', 'B', 'F', 'Bb', 'Eb', 'Ab', 'Db',
+  'Am', 'Em', 'Bm', 'F#m', 'C#m', 'Dm', 'Gm', 'Cm', 'Fm',
+]);
+const VALID_EXERCISE_TYPES = new Set(['scale', 'melody', 'chord', 'rhythm', 'arpeggio']);
+const VALID_EXERCISE_PURPOSES = new Set(['warmup', 'lesson', 'challenge']);
+
+/** Strip control chars and truncate to prevent prompt injection */
+function sanitizeString(input: unknown, maxLen = 200): string {
+  if (typeof input !== 'string') return '';
+  return input.replace(/[\n\r\t]/g, ' ').replace(/[^\x20-\x7E]/g, '').slice(0, maxLen);
+}
+
+function validateAndSanitizeParams(raw: unknown): GenerationParams {
+  if (raw == null || typeof raw !== 'object') {
+    throw new HttpsError('invalid-argument', 'Missing request data');
+  }
+  const data = raw as Record<string, unknown>;
+
+  const difficulty = typeof data.difficulty === 'number'
+    ? Math.max(1, Math.min(5, Math.round(data.difficulty))) : 3;
+  const noteCount = typeof data.noteCount === 'number'
+    ? Math.max(4, Math.min(64, Math.round(data.noteCount))) : 16;
+
+  const rawTempo = data.tempoRange as Record<string, unknown> | undefined;
+  const tempoRange = {
+    min: typeof rawTempo?.min === 'number' ? Math.max(40, Math.min(200, rawTempo.min)) : 60,
+    max: typeof rawTempo?.max === 'number' ? Math.max(40, Math.min(200, rawTempo.max)) : 120,
+  };
+
+  const rawSkills = data.skills as Record<string, unknown> | undefined;
+  const clampSkill = (v: unknown) => typeof v === 'number' ? Math.max(0, Math.min(1, v)) : 0.5;
+  const skills = {
+    timingAccuracy: clampSkill(rawSkills?.timingAccuracy),
+    pitchAccuracy: clampSkill(rawSkills?.pitchAccuracy),
+    sightReadSpeed: clampSkill(rawSkills?.sightReadSpeed),
+    chordRecognition: clampSkill(rawSkills?.chordRecognition),
+  };
+
+  const weakNotes = Array.isArray(data.weakNotes)
+    ? (data.weakNotes as unknown[]).filter((n): n is number => typeof n === 'number' && n >= 21 && n <= 108).slice(0, 20)
+    : [];
+
+  const rawHints = data.generationHints as Record<string, unknown> | undefined;
+  let generationHints: GenerationHints | undefined;
+  if (rawHints) {
+    const hand = typeof rawHints.hand === 'string' && VALID_HANDS.has(rawHints.hand)
+      ? rawHints.hand as 'left' | 'right' | 'both' : undefined;
+    const exerciseTypes = Array.isArray(rawHints.exerciseTypes)
+      ? (rawHints.exerciseTypes as unknown[]).filter((t): t is string => typeof t === 'string' && VALID_EXERCISE_TYPES.has(t)) as GenerationHints['exerciseTypes']
+      : undefined;
+    const keySignature = typeof rawHints.keySignature === 'string' && VALID_KEY_SIGNATURES.has(rawHints.keySignature)
+      ? rawHints.keySignature : undefined;
+    const targetMidi = Array.isArray(rawHints.targetMidi)
+      ? (rawHints.targetMidi as unknown[]).filter((n): n is number => typeof n === 'number' && n >= 21 && n <= 108).slice(0, 30)
+      : undefined;
+    generationHints = {
+      promptHint: sanitizeString(rawHints.promptHint),
+      hand,
+      exerciseTypes,
+      keySignature,
+      targetMidi,
+      minDifficulty: typeof rawHints.minDifficulty === 'number' ? Math.max(1, Math.min(5, Math.round(rawHints.minDifficulty))) : undefined,
+      maxDifficulty: typeof rawHints.maxDifficulty === 'number' ? Math.max(1, Math.min(5, Math.round(rawHints.maxDifficulty))) : undefined,
+    };
+  }
+
+  const exerciseType = typeof data.exerciseType === 'string' && VALID_EXERCISE_PURPOSES.has(data.exerciseType)
+    ? data.exerciseType as 'warmup' | 'lesson' | 'challenge' : undefined;
+  const keySignature = typeof data.keySignature === 'string' && VALID_KEY_SIGNATURES.has(data.keySignature)
+    ? data.keySignature : undefined;
+
+  return {
+    weakNotes,
+    tempoRange,
+    difficulty,
+    noteCount,
+    skills,
+    targetSkillId: typeof data.targetSkillId === 'string' ? sanitizeString(data.targetSkillId, 100) : undefined,
+    skillContext: sanitizeString(data.skillContext),
+    exerciseType,
+    keySignature,
+    generationHints,
+  };
+}
+
+// ============================================================================
 // Cloud Function
 // ============================================================================
 
@@ -313,7 +404,7 @@ export const generateExercise = onCall(
     }
 
     const uid = request.auth.uid;
-    const data = request.data as GenerationParams;
+    const data = validateAndSanitizeParams(request.data);
 
     // Atomic rate limit check + increment
     const withinLimit = await checkAndIncrementRateLimit(uid, 'exercises');
