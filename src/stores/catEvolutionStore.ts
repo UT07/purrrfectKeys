@@ -190,6 +190,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     // Compute inside set() updater to prevent lost updates from concurrent calls
     let evolved = false;
     let newStage: string | null = null;
+    let oldStageCapture: EvolutionStage | null = null;
 
     set((prev) => {
       let data = prev.evolutionData[catId];
@@ -199,6 +200,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
       }
 
       const oldStage = data.currentStage;
+      oldStageCapture = oldStage;
       const newXp = data.xpAccumulated + amount;
       const computedStage = stageFromXp(newXp);
       evolved = computedStage !== oldStage;
@@ -230,21 +232,53 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
       analyticsEvents.cat.evolved(catId, newStage);
     }
 
-    // Award milestone gems on evolution
-    if (evolved && newStage) {
+    // Award milestone gems on evolution (including all intermediate stages on multi-stage jump)
+    // Uses claimedEvolutionMilestones dedup guard to prevent double-awarding on re-sync
+    if (evolved && newStage && oldStageCapture) {
       const MILESTONE_GEMS: Record<string, number> = {
         teen: 200,
         adult: 500,
         master: 1000,
       };
-      const milestoneGems = MILESTONE_GEMS[newStage];
-      if (milestoneGems) {
-        try {
-          const { useGemStore } = require('./gemStore');
-          useGemStore.getState().earnGems(milestoneGems, `evolution-milestone-${newStage}`);
-        } catch (err) {
-          logger.warn('[catEvolution] Milestone gem award failed:', (err as Error)?.message);
+      const STAGE_ORDER: EvolutionStage[] = ['baby', 'teen', 'adult', 'master'];
+      const oldIdx = STAGE_ORDER.indexOf(oldStageCapture);
+      const newIdx = STAGE_ORDER.indexOf(newStage as EvolutionStage);
+      const catData = get().evolutionData[catId];
+      const alreadyClaimed = new Set(catData?.claimedEvolutionMilestones ?? []);
+      const newlyClaimed: EvolutionStage[] = [];
+
+      // Award gems for EVERY stage crossed (e.g., baby→master awards teen+adult+master)
+      for (let i = oldIdx + 1; i <= newIdx; i++) {
+        const stage = STAGE_ORDER[i];
+        if (alreadyClaimed.has(stage)) continue; // dedup: already awarded
+        const milestoneGems = MILESTONE_GEMS[stage];
+        if (milestoneGems) {
+          try {
+            const { useGemStore } = require('./gemStore');
+            useGemStore.getState().earnGems(milestoneGems, `evolution-milestone-${catId}-${stage}`);
+            newlyClaimed.push(stage);
+          } catch (err) {
+            logger.warn('[catEvolution] Milestone gem award failed:', (err as Error)?.message);
+          }
         }
+      }
+
+      // Persist claimed milestones
+      if (newlyClaimed.length > 0) {
+        set((prev) => {
+          const data = prev.evolutionData[catId];
+          if (!data) return prev;
+          return {
+            evolutionData: {
+              ...prev.evolutionData,
+              [catId]: {
+                ...data,
+                claimedEvolutionMilestones: [...(data.claimedEvolutionMilestones ?? []), ...newlyClaimed],
+              },
+            },
+          };
+        });
+        debouncedSave(get());
       }
     }
 
@@ -499,9 +533,15 @@ function validateOwnedCats(data: EvolutionData): EvolutionData {
     : (validOwned[0] ?? '');
 
   // Ensure every owned cat has evolution data (auto-create if missing)
+  // Also reconcile currentStage from XP (defends against threshold changes)
   const cleanedEvolution: Record<string, CatEvolutionData> = {};
   for (const catId of validOwned) {
-    cleanedEvolution[catId] = data.evolutionData[catId] ?? createDefaultEvolutionData(catId);
+    const existing = data.evolutionData[catId] ?? createDefaultEvolutionData(catId);
+    const computedStage = stageFromXp(existing.xpAccumulated);
+    cleanedEvolution[catId] = {
+      ...existing,
+      currentStage: computedStage,
+    };
   }
 
   return {
@@ -520,4 +560,33 @@ export async function hydrateCatEvolutionStore(): Promise<void> {
   );
   const validated = validateOwnedCats(data);
   useCatEvolutionStore.setState(validated);
+
+  // Validate equipped accessories against current cat evolution stage.
+  // If minStage gates were raised, unequip items the cat can no longer wear.
+  try {
+    const { useSettingsStore } = require('./settingsStore');
+    const { getAccessoryById, canEquipAccessory } = require('@/data/accessories');
+    const settings = useSettingsStore.getState();
+    const catId = settings.selectedCatId || validated.selectedCatId;
+    const catData = validated.evolutionData[catId];
+    if (catData && settings.equippedAccessories) {
+      const currentStage = catData.currentStage;
+      const cleaned: Record<string, string> = {};
+      let changed = false;
+      for (const [category, accId] of Object.entries(settings.equippedAccessories as Record<string, string>)) {
+        const acc = getAccessoryById(accId);
+        if (acc && canEquipAccessory(acc, currentStage)) {
+          cleaned[category] = accId;
+        } else {
+          changed = true;
+          logger.warn(`[catEvolution] Unequipping ${accId}: cat stage ${currentStage} below minStage`);
+        }
+      }
+      if (changed) {
+        useSettingsStore.setState({ equippedAccessories: cleaned });
+      }
+    }
+  } catch (err) {
+    logger.warn('[catEvolution] Accessory validation on hydration failed:', (err as Error)?.message);
+  }
 }

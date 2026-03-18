@@ -618,7 +618,8 @@ export function CatSwitchScreen(): React.ReactElement {
       setAvatarEmoji(cat.emoji);
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Speak a greeting in this cat's unique voice
+    // Stop any in-progress speech before speaking new cat's greeting
+    ttsService.stop();
     const message = getRandomCatMessage(catId, 'idle');
     if (message) {
       ttsService.speak(message, { catId });

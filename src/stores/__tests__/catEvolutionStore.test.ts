@@ -242,27 +242,60 @@ describe('catEvolutionStore', () => {
 
     it('awards 200 gems on teen evolution', () => {
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
-      expect(mockEarnGems).toHaveBeenCalledWith(200, 'evolution-milestone-teen');
+      expect(mockEarnGems).toHaveBeenCalledWith(200, 'evolution-milestone-mini-meowww-teen');
     });
 
     it('awards 500 gems on adult evolution', () => {
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000); // teen
       mockEarnGems.mockClear();
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 6000); // adult at 8000
-      expect(mockEarnGems).toHaveBeenCalledWith(500, 'evolution-milestone-adult');
+      expect(mockEarnGems).toHaveBeenCalledWith(500, 'evolution-milestone-mini-meowww-adult');
     });
 
     it('awards 1000 gems on master evolution', () => {
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 8000); // adult
       mockEarnGems.mockClear();
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 17000); // master at 25000
-      expect(mockEarnGems).toHaveBeenCalledWith(1000, 'evolution-milestone-master');
+      expect(mockEarnGems).toHaveBeenCalledWith(1000, 'evolution-milestone-mini-meowww-master');
     });
 
     it('does NOT award milestone gems when no evolution occurs', () => {
       mockEarnGems.mockClear();
       useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 100);
       expect(mockEarnGems).not.toHaveBeenCalled();
+    });
+
+    it('awards ALL intermediate milestone gems on multi-stage jump', () => {
+      // Jump from baby straight to master in one call
+      mockEarnGems.mockClear();
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 25000);
+      expect(mockEarnGems).toHaveBeenCalledTimes(3);
+      expect(mockEarnGems).toHaveBeenCalledWith(200, 'evolution-milestone-mini-meowww-teen');
+      expect(mockEarnGems).toHaveBeenCalledWith(500, 'evolution-milestone-mini-meowww-adult');
+      expect(mockEarnGems).toHaveBeenCalledWith(1000, 'evolution-milestone-mini-meowww-master');
+    });
+
+    it('does NOT double-award milestone gems (dedup guard)', () => {
+      // Evolve to teen first
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
+      expect(mockEarnGems).toHaveBeenCalledWith(200, 'evolution-milestone-mini-meowww-teen');
+      mockEarnGems.mockClear();
+
+      // Simulate a state reset where XP is preserved but stage gets recalculated
+      const data = useCatEvolutionStore.getState().evolutionData['mini-meowww'];
+      useCatEvolutionStore.setState({
+        evolutionData: {
+          'mini-meowww': {
+            ...data,
+            currentStage: 'baby', // simulate corrupted stage
+          },
+        },
+      });
+
+      // Adding more XP that re-triggers teen evolution
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 100);
+      // Should NOT award teen milestone again because it's already claimed
+      expect(mockEarnGems).not.toHaveBeenCalledWith(200, expect.stringContaining('teen'));
     });
   });
 

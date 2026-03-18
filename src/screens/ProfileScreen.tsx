@@ -49,8 +49,6 @@ import { useAuthStore } from '../stores/authStore';
 import { useRankStore } from '../stores/rankStore';
 import { RankBadge, TIER_DISPLAY_NAMES } from '../components/arena/RankBadge';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
-import { ttsService } from '../services/tts/TTSService';
-import { getRandomCatMessage } from '../content/catDialogue';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -434,10 +432,6 @@ export function ProfileScreen(): React.ReactElement {
           <PressableScale
             style={styles.ringContainer}
             onPress={() => {
-              const message = getRandomCatMessage(selectedCatId, 'idle');
-              if (message) {
-                ttsService.speak(message, { catId: selectedCatId });
-              }
               navigation.navigate('CatSwitch');
             }}
             testID="profile-level-ring"

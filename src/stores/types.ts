@@ -325,6 +325,8 @@ export interface CatEvolutionData {
   xpAccumulated: number;
   abilitiesUnlocked: string[];
   evolvedAt: Record<EvolutionStage, number | null>; // epoch ms or null
+  /** Stages for which milestone gems have already been awarded (dedup guard) */
+  claimedEvolutionMilestones?: EvolutionStage[];
 }
 
 export interface GemTransaction {
