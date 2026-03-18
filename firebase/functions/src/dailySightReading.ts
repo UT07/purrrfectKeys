@@ -144,14 +144,18 @@ export const dailySightReading = onCall(
       return cached.data();
     }
 
-    // Rate limit per user
+    // Rate limit per user — use transaction to prevent race condition
     const rateLimitRef = db.collection('rateLimit').doc(uid).collection('sightReading').doc(dateStr);
-    const rateLimitDoc = await rateLimitRef.get();
-    const count = rateLimitDoc.exists ? (rateLimitDoc.data()?.count ?? 0) : 0;
-    if (count >= MAX_REQUESTS_PER_DAY) {
+    const withinLimit = await db.runTransaction(async (transaction) => {
+      const rateLimitDoc = await transaction.get(rateLimitRef);
+      const count = rateLimitDoc.exists ? (rateLimitDoc.data()?.count ?? 0) : 0;
+      if (count >= MAX_REQUESTS_PER_DAY) return false;
+      transaction.set(rateLimitRef, { count: count + 1, updatedAt: Date.now() }, { merge: true });
+      return true;
+    });
+    if (!withinLimit) {
       throw new HttpsError('resource-exhausted', 'Daily sight-reading limit reached');
     }
-    await rateLimitRef.set({ count: count + 1, updatedAt: Date.now() }, { merge: true });
 
     // Generate
     const apiKey = process.env.GEMINI_API_KEY || '';
@@ -181,18 +185,26 @@ export const dailySightReading = onCall(
 
       // First attempt
       const result = await model.generateContent(prompt);
-      const parsed = JSON.parse(result.response.text());
-      if (validateExercise(parsed)) {
-        exercise = parsed;
+      try {
+        const parsed = JSON.parse(result.response.text());
+        if (validateExercise(parsed)) {
+          exercise = parsed;
+        }
+      } catch {
+        logger.warn('Gemini returned invalid JSON for sight-reading (attempt 1)');
       }
 
       // Retry once
       if (!exercise) {
         const retryPrompt = prompt + '\n\nPrevious attempt was invalid. Ensure all MIDI notes are 48-84 and durations are standard values.';
         const retryResult = await model.generateContent(retryPrompt);
-        const retryParsed = JSON.parse(retryResult.response.text());
-        if (validateExercise(retryParsed)) {
-          exercise = retryParsed;
+        try {
+          const retryParsed = JSON.parse(retryResult.response.text());
+          if (validateExercise(retryParsed)) {
+            exercise = retryParsed;
+          }
+        } catch {
+          logger.warn('Gemini returned invalid JSON for sight-reading (attempt 2)');
         }
       }
 

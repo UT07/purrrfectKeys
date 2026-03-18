@@ -502,6 +502,23 @@ function validateNotes(
     }
   }
 
+  // Check per-hand startBeat ordering (chords at same beat are fine)
+  for (const [hand, ranges] of Object.entries(handNotes)) {
+    if (ranges.length < 2) continue;
+    const sorted = [...ranges].sort((a, b) => a.start - b.start || a.note - b.note);
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      if (Math.abs(curr.start - prev.start) < 0.01) continue; // chord
+      if (curr.start < prev.start) {
+        warnings.push({
+          field: `notes[${curr.idx}]`,
+          message: `Note in ${hand} hand at beat ${curr.start} is out of chronological order (previous note at beat ${prev.start})`,
+        });
+      }
+    }
+  }
+
   // Check first note starts at beat 0
   if (notes.length > 0 && typeof notes[0].startBeat === 'number' && notes[0].startBeat > 0.01) {
     warnings.push({ field: 'notes[0]', message: `First note starts at beat ${notes[0].startBeat}, expected 0` });

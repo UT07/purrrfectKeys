@@ -1,7 +1,7 @@
 /**
  * Cloud Function: Weekly New Songs
  *
- * Scheduled function that runs every Monday at 09:00 UTC.
+ * Scheduled function that runs every Friday at 09:00 UTC.
  * Generates 10 new songs using Gemini 2.0 Flash and saves them to Firestore.
  * Checks existing song titles to avoid duplicates.
  */
@@ -321,29 +321,39 @@ export const weeklyNewSongs = onSchedule(
       try {
         const prompt = buildPrompt(spec);
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const parsed: unknown = JSON.parse(text);
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(result.response.text());
+        } catch {
+          logger.warn(`Gemini returned invalid JSON for "${spec.title}" (attempt 1)`);
+          parsed = null;
+        }
 
-        if (!validateSong(parsed)) {
+        if (!parsed || !validateSong(parsed)) {
           // Retry once
           const retryPrompt = prompt +
             '\n\nPrevious attempt failed validation. Ensure all sections have valid ABC notation with X:, T:, M:, L:, K: headers.';
           const retryResult = await model.generateContent(retryPrompt);
-          const retryText = retryResult.response.text();
-          const retryParsed: unknown = JSON.parse(retryText);
+          let retryParsed: unknown;
+          try {
+            retryParsed = JSON.parse(retryResult.response.text());
+          } catch {
+            logger.warn(`Gemini returned invalid JSON for "${spec.title}" (attempt 2)`);
+            retryParsed = null;
+          }
 
-          if (!validateSong(retryParsed)) {
+          if (!retryParsed || !validateSong(retryParsed)) {
             logger.warn(`Failed to generate valid song: ${spec.title}`);
             failed++;
             continue;
           }
 
-          await saveSong(db, retryParsed, existingTitles);
+          await saveSong(db, retryParsed, weekNum, existingTitles);
           generated++;
           continue;
         }
 
-        await saveSong(db, parsed, existingTitles);
+        await saveSong(db, parsed, weekNum, existingTitles);
         generated++;
       } catch (err) {
         logger.error(`Error generating "${spec.title}": ${err}`);
@@ -362,10 +372,12 @@ export const weeklyNewSongs = onSchedule(
 async function saveSong(
   db: admin.firestore.Firestore,
   raw: GeneratedSongABC,
+  weekNum: number,
   existingTitles: Set<string>,
 ): Promise<void> {
   const slug = slugify(raw.title);
-  const id = `weekly-${slug}-${Date.now().toString(36)}`;
+  // Deterministic ID: re-runs for the same week overwrite rather than duplicate
+  const id = `weekly-${slug}-w${weekNum}`;
 
   // Final duplicate check (race condition guard)
   if (existingTitles.has(raw.title.toLowerCase())) {

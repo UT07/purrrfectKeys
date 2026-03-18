@@ -13,7 +13,7 @@
 
 import { create } from 'zustand';
 import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
 import { logger } from '../utils/logger';
 
 /** Data-only shape of settings state (excludes actions) */
@@ -71,6 +71,8 @@ const defaultSettings: SettingsData = {
 
 // Create debounced save function
 const debouncedSave = createDebouncedSave(STORAGE_KEYS.SETTINGS, 500);
+// Immediate save that cancels pending debounced saves to prevent stale overwrites
+const immediateSave = createImmediateSave<SettingsData>(STORAGE_KEYS.SETTINGS);
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   ...defaultSettings,
@@ -204,14 +206,14 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   // Mic permission — saves IMMEDIATELY so it persists even if app is killed right after granting
   setMicPermissionGranted: (granted: boolean) => {
     set({ micPermissionGranted: granted });
-    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), micPermissionGranted: granted });
+    immediateSave(get() as unknown as SettingsData);
   },
 
   // Onboarding settings — saves IMMEDIATELY (not debounced) because
   // this triggers a navigator swap and debounced save can be lost
   setHasCompletedOnboarding: (completed: boolean) => {
     set({ hasCompletedOnboarding: completed });
-    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), hasCompletedOnboarding: completed });
+    immediateSave(get() as unknown as SettingsData);
   },
 
   setExperienceLevel: (level: 'beginner' | 'intermediate' | 'returning') => {
@@ -230,14 +232,14 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     const normalized = name.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
     if (normalized.length < 3) return;
     set({ username: normalized });
-    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), username: normalized });
+    immediateSave(get() as unknown as SettingsData);
   },
 
   setDisplayName: (name: string) => {
     const trimmed = name.trim().slice(0, 30).trim();
     if (trimmed.length === 0) return;
     set({ displayName: trimmed });
-    PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, { ...get(), displayName: trimmed });
+    immediateSave(get() as unknown as SettingsData);
 
     // Fire-and-forget sync to Firebase Auth profile (non-anonymous users only)
     try {

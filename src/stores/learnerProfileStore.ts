@@ -210,7 +210,7 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
       const record = skillMasteryData[id];
       if (!record) return false;
       const daysSince = (now - record.lastPracticedAt) / msPerDay;
-      const decay = Math.max(0, 1 - daysSince / DECAY_HALF_LIFE_DAYS);
+      const decay = Math.pow(0.5, daysSince / DECAY_HALF_LIFE_DAYS);
       return decay < DECAY_THRESHOLD;
     });
   },

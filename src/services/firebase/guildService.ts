@@ -208,7 +208,8 @@ export async function leaveGuild(guildId: string, uid: string): Promise<void> {
 /**
  * Kick a member from a guild. Only leader/co_leader can kick.
  */
-export async function kickMember(guildId: string, targetUid: string, callerUid?: string): Promise<void> {
+export async function kickMember(guildId: string, targetUid: string, callerUid: string): Promise<void> {
+  if (!callerUid) throw new Error('callerUid is required to kick a member');
   const guildRef = doc(db, 'guilds', guildId);
 
   await runTransaction(db, async (transaction) => {
@@ -216,14 +217,12 @@ export async function kickMember(guildId: string, targetUid: string, callerUid?:
     if (!guildSnap.exists()) throw new Error('Guild not found');
 
     // Verify caller has authority to kick (leader or co_leader)
-    if (callerUid) {
-      const callerRef = doc(db, 'guilds', guildId, 'members', callerUid);
-      const callerSnap = await transaction.get(callerRef);
-      if (!callerSnap.exists()) throw new Error('Caller is not a member');
-      const callerRole = (callerSnap.data() as GuildMember).role;
-      if (callerRole !== 'leader' && callerRole !== 'co_leader') {
-        throw new Error('Only leaders and co-leaders can kick members');
-      }
+    const callerRef = doc(db, 'guilds', guildId, 'members', callerUid);
+    const callerSnap = await transaction.get(callerRef);
+    if (!callerSnap.exists()) throw new Error('Caller is not a member');
+    const callerRole = (callerSnap.data() as GuildMember).role;
+    if (callerRole !== 'leader' && callerRole !== 'co_leader') {
+      throw new Error('Only leaders and co-leaders can kick members');
     }
 
     const guild = guildSnap.data() as Guild;

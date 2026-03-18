@@ -99,8 +99,8 @@ function validateArgs(args: Args): boolean {
     return false;
   }
 
-  if (args.lesson < 1 || args.lesson > 6) {
-    console.error('Error: Lesson must be between 1 and 6');
+  if (args.lesson < 1 || args.lesson > 50) {
+    console.error('Error: Lesson must be between 1 and 50');
     return false;
   }
 

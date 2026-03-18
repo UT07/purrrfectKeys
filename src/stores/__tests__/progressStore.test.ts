@@ -439,69 +439,32 @@ describe('Progress Store', () => {
 
   describe('cat XP for streak milestones', () => {
     it('awards 100 cat XP on 7-day streak milestone', () => {
-      // Set streak to 6 (one away from 7-day milestone)
       useProgressStore.setState({
-        streakData: {
-          currentStreak: 6,
-          longestStreak: 6,
-          lastPracticeDate: new Date().toISOString().split('T')[0],
-          freezesAvailable: 1,
-          freezesUsed: 0,
-          weeklyPractice: [false, false, false, false, false, false, false],
-        },
         streakMilestonesClaimed: [],
       });
 
-      // Manually set streak to 7 to trigger milestone check
-      useProgressStore.setState({
-        streakData: {
-          currentStreak: 7,
-          longestStreak: 7,
-          lastPracticeDate: new Date().toISOString().split('T')[0],
-          freezesAvailable: 1,
-          freezesUsed: 0,
-          weeklyPractice: [false, false, false, false, false, false, false],
-        },
-      });
-
-      // recordExerciseCompletion reads current streak from state and checks milestones
-      useProgressStore.getState().recordExerciseCompletion('ex-1', 85, 10);
+      // updateStreakData is where milestone checks live
+      useProgressStore.getState().updateStreakData({ currentStreak: 7 });
 
       expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 100);
     });
 
     it('awards 250 cat XP on 30-day streak milestone', () => {
       useProgressStore.setState({
-        streakData: {
-          currentStreak: 30,
-          longestStreak: 30,
-          lastPracticeDate: new Date().toISOString().split('T')[0],
-          freezesAvailable: 1,
-          freezesUsed: 0,
-          weeklyPractice: [false, false, false, false, false, false, false],
-        },
         streakMilestonesClaimed: [],
       });
 
-      useProgressStore.getState().recordExerciseCompletion('ex-1', 85, 10);
+      useProgressStore.getState().updateStreakData({ currentStreak: 30 });
 
       expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 250);
     });
 
     it('does not re-award cat XP if streak milestone already claimed', () => {
       useProgressStore.setState({
-        streakData: {
-          currentStreak: 7,
-          longestStreak: 7,
-          lastPracticeDate: new Date().toISOString().split('T')[0],
-          freezesAvailable: 1,
-          freezesUsed: 0,
-          weeklyPractice: [false, false, false, false, false, false, false],
-        },
         streakMilestonesClaimed: [7],
       });
 
-      useProgressStore.getState().recordExerciseCompletion('ex-1', 85, 10);
+      useProgressStore.getState().updateStreakData({ currentStreak: 7 });
 
       expect(mockAddEvolutionXp).not.toHaveBeenCalledWith('mini-meowww', 100);
     });

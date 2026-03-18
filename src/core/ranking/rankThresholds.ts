@@ -40,8 +40,8 @@ export function divisionFromMMR(mmr: number, tier: RankedTier): 1 | 2 | 3 {
   if (!config) return 3;
 
   const range = config.mmrCeiling - config.mmrFloor + 1;
-  const divisionSize = range / 3;
-  const offset = mmr - config.mmrFloor;
+  const divisionSize = Math.floor(range / 3);
+  const offset = Math.max(0, mmr - config.mmrFloor);
 
   if (offset >= divisionSize * 2) return 1; // top division
   if (offset >= divisionSize) return 2;

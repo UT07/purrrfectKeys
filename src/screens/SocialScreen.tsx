@@ -9,7 +9,7 @@
  * Auth gate: anonymous users see a sign-in prompt instead.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -106,7 +106,6 @@ function LeagueCard(): React.JSX.Element {
       let m = await getCurrentLeagueMembership(user.uid);
       if (!m) {
         const catId = useSettingsStore.getState().selectedCatId ?? 'mini-meowww';
-        const { useRankStore } = require('../stores/rankStore');
         const playerTier = useRankStore.getState().rating.tier;
         m = await assignToLeague(
           user.uid,
@@ -377,14 +376,23 @@ function ChallengeCard({
   const iAmSender = challenge.fromUid === myUid;
   const canPlay = !iAmSender && challenge.status === 'pending' && challenge.toScore == null;
 
-  const timeLeft = useMemo(() => {
-    const remaining = challenge.expiresAt - Date.now();
+  const formatTimeLeft = useCallback((expiresAt: number) => {
+    const remaining = expiresAt - Date.now();
     if (remaining <= 0) return 'Expired';
     const hours = Math.floor(remaining / (1000 * 60 * 60));
     const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
     if (hours > 0) return `${hours}h ${minutes}m left`;
     return `${minutes}m left`;
-  }, [challenge.expiresAt]);
+  }, []);
+
+  const [timeLeft, setTimeLeft] = useState(() => formatTimeLeft(challenge.expiresAt));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(formatTimeLeft(challenge.expiresAt));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [challenge.expiresAt, formatTimeLeft]);
 
   const statusColor =
     challenge.status === 'completed'

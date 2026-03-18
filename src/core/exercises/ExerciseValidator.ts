@@ -78,8 +78,8 @@ function matchNotes(
   expectedNotes: NoteEvent[],
   playedNotes: MidiNoteEvent[],
   tempoMs: number // milliseconds per beat
-): Map<number, MidiNoteEvent> {
-  const matched = new Map<number, MidiNoteEvent>();
+): Map<number, { event: MidiNoteEvent; playedIndex: number }> {
+  const matched = new Map<number, { event: MidiNoteEvent; playedIndex: number }>();
   const usedPlayedIndices = new Set<number>();
 
   // For each expected note, find the best matching played note
@@ -105,7 +105,7 @@ function matchNotes(
     }
 
     if (bestMatch) {
-      matched.set(i, playedNotes[bestMatch.index]);
+      matched.set(i, { event: playedNotes[bestMatch.index], playedIndex: bestMatch.index });
       usedPlayedIndices.add(bestMatch.index);
     }
   }
@@ -129,10 +129,11 @@ function scoreNotes(
   // Score each expected note
   for (let i = 0; i < expectedNotes.length; i++) {
     const expected = expectedNotes[i];
-    const played = matched.get(i);
+    const match = matched.get(i);
 
-    if (played) {
-      usedPlayedIndices.add(playedNotes.indexOf(played));
+    if (match) {
+      const { event: played, playedIndex } = match;
+      usedPlayedIndices.add(playedIndex);
       const expectedTimeMs = expected.startBeat * tempoMs;
       const timingOffsetMs = played.timestamp - expectedTimeMs;
 
@@ -207,7 +208,7 @@ function calculateBreakdown(
       accuracy: 0,
       timing: 0,
       completeness: 0,
-      extraNotes: noteScores.length === 0 ? 0 : Math.max(0, 100 - noteScores.filter((n) => n.isExtraNote).length * 10),
+      extraNotes: noteScores.length === 0 ? 0 : Math.round(100 / (1 + noteScores.filter((n) => n.isExtraNote).length * 0.5)),
       duration: 0,
     };
   }
@@ -228,9 +229,10 @@ function calculateBreakdown(
   const playedCount = noteScores.filter((n) => !n.isMissedNote && !n.isExtraNote).length;
   const completeness = (playedCount / totalExpected) * 100;
 
-  // Extra notes penalty: 0-100 based on number of extra notes
+  // Extra notes penalty: smooth decay so additional extra notes always increase penalty
+  // Formula: 100 / (1 + extraCount * 0.5) — ranges from 100 (0 extras) to ~7 (25 extras)
   const extraCount = noteScores.filter((n) => n.isExtraNote).length;
-  const extraNotes = Math.max(0, 100 - extraCount * 10);
+  const extraNotes = extraCount === 0 ? 100 : Math.round(100 / (1 + extraCount * 0.5));
 
   // Duration: average duration score across ALL expected notes (missed = 0)
   const duration =
@@ -259,19 +261,10 @@ export function scoreExercise(
   // Assuming quarter note = 1 beat
   const msPerBeat = (60 * 1000) / exercise.settings.tempo;
 
-  // Enforce minimum tolerances for touch input — even with latency compensation,
-  // touch keyboards have inherent variability that hardware MIDI keyboards don't.
-  const adjustedExercise = {
-    ...exercise,
-    scoring: {
-      ...exercise.scoring,
-      timingToleranceMs: Math.max(exercise.scoring.timingToleranceMs, 60),
-      timingGracePeriodMs: Math.max(exercise.scoring.timingGracePeriodMs, 160),
-    },
-  };
-
-  // Score all notes
-  const noteScores = scoreNotes(adjustedExercise, exercise.notes, playedNotes, msPerBeat);
+  // Score all notes — timing tolerances come from the exercise definition.
+  // Input-method-specific adjustments (e.g., wider windows for touch/mic)
+  // are applied by the caller (useExercisePlayback) before invoking this function.
+  const noteScores = scoreNotes(exercise, exercise.notes, playedNotes, msPerBeat);
 
   // Calculate breakdown
   const breakdown = calculateBreakdown(noteScores, exercise.notes.length);

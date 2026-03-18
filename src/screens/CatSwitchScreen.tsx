@@ -16,7 +16,7 @@ import {
   StyleSheet,
   SafeAreaView,
   FlatList,
-  Dimensions,
+  useWindowDimensions,
   Modal,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -55,10 +55,8 @@ import { analyticsEvents } from '../services/analytics/PostHog';
 import { ttsService } from '../services/tts/TTSService';
 import { getRandomCatMessage } from '../content/catDialogue';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH * 0.88;
+const CARD_WIDTH_RATIO = 0.88;
 const CARD_SPACING = 12;
-const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
 
 const STAGE_LABELS: Record<EvolutionStage, string> = {
   baby: 'Baby',
@@ -337,7 +335,7 @@ function BuyModal({ visible, cat, gems, onConfirm, onCancel }: {
 // Cat Card — full gallery card
 // ───────────────────────────────────────────────────────
 
-function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbilities, onSelect, onBuy, index }: {
+function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbilities, onSelect, onBuy, index, cardWidth }: {
   cat: CatCharacter;
   isSelected: boolean;
   isOwned: boolean;
@@ -347,6 +345,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
   onSelect: (id: string) => void;
   onBuy: (cat: CatCharacter) => void;
   index: number;
+  cardWidth: number;
 }): React.ReactElement {
   const [showBurst, setShowBurst] = useState(false);
   const [expandedAbility, setExpandedAbility] = useState<CatAbility | null>(null);
@@ -394,6 +393,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
       style={[
         styles.card,
         {
+          width: cardWidth,
           borderColor: isSelected ? glowColor(cat.color, 0.50) : rarityStyle.borderColor,
           borderWidth: rarity === 'legendary' ? 2 : isSelected ? 2 : 1,
         },
@@ -581,6 +581,9 @@ function PaginationDots({ total, currentIndex, cats }: {
 // ───────────────────────────────────────────────────────
 
 export function CatSwitchScreen(): React.ReactElement {
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = screenWidth * CARD_WIDTH_RATIO;
+  const snapInterval = cardWidth + CARD_SPACING;
   const navigation = useNavigation();
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
   const setSelectedCatId = useSettingsStore((s) => s.setSelectedCatId);
@@ -674,9 +677,10 @@ export function CatSwitchScreen(): React.ReactElement {
         onSelect={handleSelect}
         onBuy={handleBuy}
         index={index}
+        cardWidth={cardWidth}
       />
     );
-  }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, currentIndex]);
+  }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, currentIndex, cardWidth]);
 
   const keyExtractor = useCallback((item: CatCharacter) => item.id, []);
 
@@ -734,13 +738,13 @@ export function CatSwitchScreen(): React.ReactElement {
           testID="cat-switch-list"
           horizontal
           showsHorizontalScrollIndicator={false}
-          snapToInterval={SNAP_INTERVAL}
+          snapToInterval={snapInterval}
           decelerationRate="fast"
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingHorizontal: (screenWidth - cardWidth) / 2 }]}
           initialScrollIndex={initialIndex}
           getItemLayout={(_data, index) => ({
-            length: SNAP_INTERVAL,
-            offset: SNAP_INTERVAL * index,
+            length: snapInterval,
+            offset: snapInterval * index,
             index,
           })}
           onViewableItemsChanged={onViewableItemsChanged}
@@ -842,12 +846,10 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2,
     gap: CARD_SPACING,
     paddingVertical: SPACING.sm,
   },
   card: {
-    width: CARD_WIDTH,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
     overflow: 'hidden',

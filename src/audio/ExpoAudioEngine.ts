@@ -295,11 +295,14 @@ export class ExpoAudioEngine implements IAudioEngine {
     try {
       const pool = this.voicePools.get(60);
       if (pool) {
+        // Use voice index 0 for warm-up, then advance nextVoice past it
+        // so the first real playNote() uses a fresh voice (avoids race with warm-up stop)
         await pool.sounds[0].replayAsync({
           positionMillis: 0,
           volume: 0.01,
           shouldPlay: true,
         });
+        pool.nextVoice = 1 % pool.sounds.length;
         setTimeout(() => {
           pool.sounds[0].stopAsync().catch(() => {});
         }, 50);
@@ -466,6 +469,19 @@ export class ExpoAudioEngine implements IAudioEngine {
       this.metronomeSound = null;
     }
     this.initialized = false;
+
+    // Clean up cached WAV files to prevent cache bloat
+    try {
+      const FileSystem = require('expo-file-system');
+      const cacheDir = FileSystem.cacheDirectory;
+      if (cacheDir) {
+        FileSystem.deleteAsync(cacheDir + 'piano-tone.wav', { idempotent: true }).catch(() => {});
+        FileSystem.deleteAsync(cacheDir + 'metronome-click.wav', { idempotent: true }).catch(() => {});
+      }
+    } catch {
+      // expo-file-system may not be available
+    }
+
     logger.log('[ExpoAudioEngine] Disposed');
   }
 
@@ -629,13 +645,10 @@ export class ExpoAudioEngine implements IAudioEngine {
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
-    // Propagate to all pre-loaded voice pools so future replayAsync() calls
-    // use the new volume without waiting for the next playNote() call.
-    for (const [, pool] of this.voicePools) {
-      for (const sound of pool.sounds) {
-        sound.setVolumeAsync(this.volume).catch(() => {});
-      }
-    }
+    // Note: we intentionally do NOT propagate volume to currently playing sounds.
+    // Doing so would override the per-note velocity * polyphonyScale calculation,
+    // causing an audible volume jump on sustaining notes. The new volume is applied
+    // naturally on the next playNote() call via the vol = velocity * this.volume * polyphonyScale formula.
   }
 
   getLatency(): number {

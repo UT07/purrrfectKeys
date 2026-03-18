@@ -75,6 +75,7 @@ export type RootStackParamList = {
     challengeTarget?: {
       uid: string;
       displayName: string;
+      gemStake?: number;
     };
     /** When playing a received challenge — submits score back on completion */
     friendChallengeId?: string;
@@ -226,7 +227,7 @@ export function AppNavigator() {
             <RootStack.Screen
               name="Exercise"
               component={ExercisePlayer as unknown as React.ComponentType<Record<string, unknown>>}
-              options={{ animation: 'slide_from_bottom' }}
+              options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
             />
             <RootStack.Screen
               name="TierIntro"

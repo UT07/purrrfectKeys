@@ -303,7 +303,7 @@ export function SongPlayerScreen() {
   useEffect(() => {
     loadSong(songId);
     addRecentSong(songId);
-  }, [songId]);
+  }, [songId, loadSong, addRecentSong]);
 
   // Capture score when returning from Exercise.
   // Uses playContextRef (snapshotted at play-time) to ensure the score is

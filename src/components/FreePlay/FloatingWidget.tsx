@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,7 +21,6 @@ import { COLORS, BORDER_RADIUS, SPACING, SHADOWS, glowColor, shadowGlow } from '
 
 const WIDGET_WIDTH = 200;
 const SIDEBAR_WIDTH = 44;
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface FloatingWidgetProps {
   title: string;
@@ -39,6 +38,7 @@ export function FloatingWidget({
   stackIndex = 0,
   testID,
 }: FloatingWidgetProps): React.ReactElement {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const savedX = useSharedValue(0);
@@ -53,8 +53,8 @@ export function FloatingWidget({
       const newX = savedX.value + e.translationX;
       const newY = savedY.value + e.translationY;
       // Clamp to screen bounds
-      const maxX = SCREEN_WIDTH - SIDEBAR_WIDTH - WIDGET_WIDTH - 16;
-      const maxY = SCREEN_HEIGHT - 200;
+      const maxX = screenWidth - SIDEBAR_WIDTH - WIDGET_WIDTH - 16;
+      const maxY = screenHeight - 200;
       translateX.value = Math.max(0, Math.min(newX, maxX));
       translateY.value = Math.max(-100, Math.min(newY, maxY));
     })

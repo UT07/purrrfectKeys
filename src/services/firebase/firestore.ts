@@ -339,7 +339,9 @@ export async function updateStreak(uid: string, increment: boolean): Promise<voi
   const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
 
   // Check if streak is still active
-  if (lastPracticeDate === yesterday || lastPracticeDate === today) {
+  if (lastPracticeDate === today) {
+    // Already practiced today — don't increment again
+  } else if (lastPracticeDate === yesterday) {
     if (increment) {
       newStreak = gamData.streak.currentStreak + 1;
     }
@@ -620,6 +622,9 @@ const USER_SUBCOLLECTIONS = [
   'activity',
   'songMastery',
   'songRequests',
+  'seasonRewards',
+  'richFeed',
+  'referrals',
 ] as const;
 
 /**
