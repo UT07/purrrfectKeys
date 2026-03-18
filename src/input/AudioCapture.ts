@@ -59,10 +59,7 @@ export class AudioCapture {
     if (this.isInitialized) return;
 
     try {
-      this.recorder = new AudioRecorder({
-        sampleRate: this.config.sampleRate,
-        bufferLengthInSamples: this.config.bufferSize,
-      });
+      this.recorder = new AudioRecorder();
       logger.log(
         `[AudioCapture] AudioRecorder created (sampleRate=${this.config.sampleRate}, bufferSize=${this.config.bufferSize})`
       );
@@ -74,7 +71,9 @@ export class AudioCapture {
       );
     }
 
-    this.recorder.onAudioReady((event) => {
+    this.recorder.onAudioReady(
+      { sampleRate: this.config.sampleRate, bufferLength: this.config.bufferSize, channelCount: 1 },
+      (event) => {
       if (!this.isCapturing) return;
 
       // getChannelData() may return a shared/reused native buffer that gets
@@ -283,7 +282,7 @@ export function configureAudioSessionForRecording(): void {
     AudioManager.setAudioSessionOptions({
       iosCategory: 'playAndRecord',
       iosMode: 'measurement',
-      iosOptions: ['defaultToSpeaker', 'allowBluetooth'],
+      iosOptions: ['defaultToSpeaker', 'allowBluetoothHFP'],
       iosAllowHaptics: true,
     });
     logger.log('[AudioCapture] Audio session configured for playAndRecord (via AudioManager)');

@@ -123,7 +123,7 @@ describe('useMoodTransition', () => {
   it('does not animate when mood stays the same', () => {
     const { result, rerender } = renderHook<MoodTransitionValues, { mood: MascotMood }>(
       ({ mood }) => useMoodTransition(mood),
-      { initialProps: { mood: 'happy' as const } },
+      { initialProps: { mood: 'happy' as MascotMood } },
     );
     expect(result.current.faceScaleY.value).toBe(1);
     rerender({ mood: 'happy' as const });
