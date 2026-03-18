@@ -82,7 +82,7 @@ const PATH_OPTIONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Audio helper — lazy init
+// Audio helper — lazy init with failure recovery
 // ---------------------------------------------------------------------------
 
 let audioEnginePromise: Promise<IAudioEngine> | null = null;
@@ -95,7 +95,11 @@ function getAudioEngine(): Promise<IAudioEngine> {
       const engine = createAudioEngine();
       await engine.initialize();
       return engine;
-    })();
+    })().catch((err) => {
+      // Reset so next call retries instead of caching a rejected promise
+      audioEnginePromise = null;
+      throw err;
+    });
   }
   return audioEnginePromise;
 }
@@ -112,6 +116,19 @@ function PlayFirstNoteStep({
   const [hasPlayedNote, setHasPlayedNote] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const activeHandles = useRef<Map<number, NoteHandle>>(new Map());
+  const hasTriggeredRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup on unmount: clear timer + release held notes
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      activeHandles.current.forEach((handle) => {
+        getAudioEngine().then((engine) => engine.releaseNote(handle)).catch(() => {});
+      });
+      activeHandles.current.clear();
+    };
+  }, []);
 
   // Pulsing glow on Middle C
   const pulseScale = useSharedValue(1);
@@ -137,13 +154,14 @@ function PlayFirstNoteStep({
       activeHandles.current.set(event.note, handle);
     }).catch(() => {});
 
-    if (event.note === MIDDLE_C && !hasPlayedNote) {
+    if (event.note === MIDDLE_C && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
       setHasPlayedNote(true);
       setShowConfetti(true);
       // Auto-advance after celebration
-      setTimeout(onComplete, 1800);
+      timerRef.current = setTimeout(onComplete, 1800);
     }
-  }, [hasPlayedNote, onComplete]);
+  }, [onComplete]);
 
   const handleNoteOff = useCallback((midiNote: number) => {
     const handle = activeHandles.current.get(midiNote);
@@ -219,6 +237,22 @@ function GuidedMelodyStep({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const activeHandles = useRef<Map<number, NoteHandle>>(new Map());
+  const currentIndexRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep ref in sync with state for use in callbacks
+  currentIndexRef.current = currentIndex;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      activeHandles.current.forEach((handle) => {
+        getAudioEngine().then((engine) => engine.releaseNote(handle)).catch(() => {});
+      });
+      activeHandles.current.clear();
+    };
+  }, []);
 
   const isComplete = currentIndex >= SCALE_NOTES.length;
   const currentExpectedNote = isComplete ? null : SCALE_NOTES[currentIndex];
@@ -240,15 +274,19 @@ function GuidedMelodyStep({
       activeHandles.current.set(event.note, handle);
     }).catch(() => {});
 
-    if (event.note === currentExpectedNote) {
-      const nextIndex = currentIndex + 1;
+    // Use ref for current index to avoid stale closure on rapid input
+    const idx = currentIndexRef.current;
+    if (idx >= SCALE_NOTES.length) return;
+    if (event.note === SCALE_NOTES[idx]) {
+      const nextIndex = idx + 1;
+      currentIndexRef.current = nextIndex;
       setCurrentIndex(nextIndex);
       if (nextIndex >= SCALE_NOTES.length) {
         setShowSuccess(true);
-        setTimeout(onComplete, 1500);
+        timerRef.current = setTimeout(onComplete, 1500);
       }
     }
-  }, [currentExpectedNote, currentIndex, onComplete]);
+  }, [onComplete]);
 
   const handleNoteOff = useCallback((midiNote: number) => {
     const handle = activeHandles.current.get(midiNote);
@@ -339,6 +377,22 @@ function MiniExerciseStep({
   const [showScore, setShowScore] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const activeHandles = useRef<Map<number, NoteHandle>>(new Map());
+  const currentIndexRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep ref in sync with state
+  currentIndexRef.current = currentIndex;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      activeHandles.current.forEach((handle) => {
+        getAudioEngine().then((engine) => engine.releaseNote(handle)).catch(() => {});
+      });
+      activeHandles.current.clear();
+    };
+  }, []);
 
   const isComplete = currentIndex >= TWINKLE_NOTES.length;
   const currentExpectedNote = isComplete ? null : TWINKLE_NOTES[currentIndex];
@@ -355,28 +409,33 @@ function MiniExerciseStep({
   const stars = accuracy >= 95 ? 3 : accuracy >= 80 ? 2 : accuracy >= 60 ? 1 : 0;
 
   const handleNoteOn = useCallback((event: MidiNoteEvent) => {
-    if (isComplete) return;
+    // Use ref to avoid stale closure on rapid input
+    const idx = currentIndexRef.current;
+    if (idx >= TWINKLE_NOTES.length) return;
 
     getAudioEngine().then((engine) => {
       const handle = engine.playNote(event.note, 0.8);
       activeHandles.current.set(event.note, handle);
     }).catch(() => {});
 
-    if (event.note === currentExpectedNote) {
+    if (event.note === TWINKLE_NOTES[idx]) {
       setCorrectCount((c) => c + 1);
     } else {
       setWrongCount((c) => c + 1);
     }
     // Always advance to prevent getting stuck
-    const nextIndex = currentIndex + 1;
+    const nextIndex = idx + 1;
+    currentIndexRef.current = nextIndex;
     setCurrentIndex(nextIndex);
 
     if (nextIndex >= TWINKLE_NOTES.length) {
       setShowScore(true);
-      setShowConfetti(true);
-      setTimeout(onComplete, 2500);
+      // Only show confetti if they got at least 1 star
+      const acc = Math.round(((event.note === TWINKLE_NOTES[idx] ? correctCount + 1 : correctCount) / TWINKLE_NOTES.length) * 100);
+      if (acc >= 60) setShowConfetti(true);
+      timerRef.current = setTimeout(onComplete, 2500);
     }
-  }, [currentExpectedNote, currentIndex, isComplete, onComplete]);
+  }, [onComplete, correctCount]);
 
   const handleNoteOff = useCallback((midiNote: number) => {
     const handle = activeHandles.current.get(midiNote);
@@ -587,6 +646,13 @@ function QuickSetupStep({
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const usernameCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Cleanup username check timer on unmount
+  useEffect(() => {
+    return () => {
+      if (usernameCheckTimer.current) clearTimeout(usernameCheckTimer.current);
+    };
+  }, []);
+
   const handleUsernameChange = useCallback((text: string) => {
     const normalized = text.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
     onStateChange({ username: normalized });
@@ -617,7 +683,8 @@ function QuickSetupStep({
   }, [onStateChange]);
 
   const canFinish = state.experienceLevel && state.inputMethod && state.goal
-    && state.username && state.username.length >= 3 && usernameStatus !== 'taken' && usernameStatus !== 'invalid';
+    && state.username && state.username.length >= 3
+    && usernameStatus !== 'taken' && usernameStatus !== 'invalid' && usernameStatus !== 'checking';
 
   return (
     <ScrollView
@@ -793,16 +860,20 @@ export function PlayFirstOnboarding(): React.ReactElement {
   const [step, setStep] = useState(1);
   const [setupState, setSetupState] = useState<SetupState>({ inputMethod: 'touch' });
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const micTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setHasCompletedOnboarding = useSettingsStore((s) => s.setHasCompletedOnboarding);
   const setExperienceLevel = useSettingsStore((s) => s.setExperienceLevel);
   const setLearningGoal = useSettingsStore((s) => s.setLearningGoal);
   const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
 
-  // Track onboarding entry
+  // Track onboarding entry + cleanup
   useEffect(() => {
     analyticsEvents.onboarding.started();
     funnels.onboarding.started();
+    return () => {
+      if (micTimerRef.current) clearTimeout(micTimerRef.current);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -878,7 +949,7 @@ export function PlayFirstOnboarding(): React.ReactElement {
     navigation.goBack();
 
     if (setupState.inputMethod === 'mic') {
-      setTimeout(() => navigation.navigate('MicSetup'), 300);
+      micTimerRef.current = setTimeout(() => navigation.navigate('MicSetup'), 300);
     }
   }, [setupState, setHasCompletedOnboarding, setExperienceLevel, setLearningGoal, setPlaybackSpeed, navigation]);
 
