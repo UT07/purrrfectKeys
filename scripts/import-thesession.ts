@@ -308,6 +308,7 @@ async function fetchTunesForType(
     const batchSize = Math.min(perPage, limit - fetched);
     const searchResponse = await searchTunes(tuneType, page, batchSize);
     if (searchResponse.tunes.length === 0) break;
+    if (page > searchResponse.pages) break; // No more pages available
 
     for (const result of searchResponse.tunes) {
       if (fetched >= limit) break;

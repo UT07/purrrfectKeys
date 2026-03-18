@@ -318,7 +318,13 @@ async function attemptGeneration(
 ): Promise<Song | null> {
   const result = await model.generateContent(prompt);
   const text = result.response.text();
-  const parsed: unknown = JSON.parse(text);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
 
   if (!validateGeneratedSong(parsed)) {
     return null;
@@ -346,7 +352,7 @@ function songAlreadyGenerated(existing: Song[], title: string): boolean {
   const normalised = title.toLowerCase().replace(/[^a-z0-9]/g, '');
   return existing.some((s) => {
     const existingNorm = s.metadata.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return existingNorm === normalised || existingNorm.includes(normalised) || normalised.includes(existingNorm);
+    return existingNorm === normalised;
   });
 }
 

@@ -42,7 +42,9 @@ async function main() {
       uid: userDoc.id,
       username: normalized,
       displayName: data.displayName || normalized,
-      createdAt: data.createdAt || data.hasCompletedOnboarding ? 0 : Date.now(),
+      createdAt: data.createdAt
+        ? (typeof data.createdAt.toMillis === 'function' ? data.createdAt.toMillis() : data.createdAt)
+        : (data.hasCompletedOnboarding ? 0 : Date.now()),
     };
 
     if (!usernameMap.has(normalized)) {
