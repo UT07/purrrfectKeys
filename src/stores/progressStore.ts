@@ -154,6 +154,24 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }
     }
 
+    // Streak gem milestones — checked here (not in recordExerciseCompletion)
+    // because updateStreakData is called AFTER the streak is incremented,
+    // so get().streakData.currentStreak reflects the actual new value.
+    const STREAK_MILESTONES: { streak: number; gems: number }[] = [
+      { streak: 7, gems: 50 },
+      { streak: 30, gems: 200 },
+      { streak: 100, gems: 500 },
+    ];
+    for (const m of STREAK_MILESTONES) {
+      const claimed = get().streakMilestonesClaimed ?? [];
+      if (newStreak >= m.streak && !claimed.includes(m.streak)) {
+        useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
+        set((state) => ({
+          streakMilestonesClaimed: [...(state.streakMilestonesClaimed ?? []), m.streak],
+        }));
+      }
+    }
+
     debouncedSave(get());
   },
 
@@ -393,22 +411,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       currentStreak: get().streakData.currentStreak,
     });
 
-    // BUG-023 fix: Streak gem milestones — only award once per milestone
-    const streak = get().streakData.currentStreak;
-    const STREAK_MILESTONES: { streak: number; gems: number }[] = [
-      { streak: 7, gems: 50 },
-      { streak: 30, gems: 200 },
-      { streak: 100, gems: 500 },
-    ];
-    for (const m of STREAK_MILESTONES) {
-      const claimed = get().streakMilestonesClaimed ?? [];
-      if (streak >= m.streak && !claimed.includes(m.streak)) {
-        useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
-        set((state) => ({
-          streakMilestonesClaimed: [...(state.streakMilestonesClaimed ?? []), m.streak],
-        }));
-      }
-    }
+    // Streak gem milestones moved to updateStreakData() — they need the
+    // post-increment streak value, and updateStreakData runs after this function.
 
     debouncedSave(get());
 

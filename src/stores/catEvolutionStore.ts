@@ -358,7 +358,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     const dayData = state.dailyRewards.days.find(d => d.day === actualDay);
     if (!dayData || dayData.claimed) {
       immediateSave(state);
-      return dayData?.claimed ? dayData.reward : null;
+      return null;
     }
 
     set((prev) => ({
