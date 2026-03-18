@@ -780,7 +780,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Apply ability boosts BEFORE setting finalScore so CompletionModal shows
     // the correct (boosted) values. Previously setFinalScore ran before the boost,
     // causing the modal to display the raw score.
-    const currentAbilityConfig = abilityConfig;
+    const currentAbilityConfig = abilityConfigRef.current;
     if (currentAbilityConfig) {
       // Score boost (cap at 100)
       if (currentAbilityConfig.scoreBoostPercent > 0) {
@@ -1426,7 +1426,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     trace.end();
-  }, [onExerciseComplete, abilityConfig, challengeTarget, friendChallengeId]);
+  }, [onExerciseComplete, challengeTarget, friendChallengeId]);
 
   // Metronome toggle — defaults to exercise setting, user can toggle during play
   const [metronomeOn, setMetronomeOn] = useState(exercise.settings.metronomeEnabled ?? true);
@@ -1820,6 +1820,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       AccessibilityInfo.announceForAccessibility('Exercise started');
     }
   }, [startPlayback, isPlaying]);
+
+  // Stable callback for ExerciseLoadingScreen — avoids re-triggering the
+  // effect inside ExerciseLoadingScreen on every ExercisePlayer render.
+  const handleLoadingReady = useCallback(() => {
+    setShowLoadingScreen(false);
+    // Skip the SalsaIntro — loading screen already showed Salsa's coaching
+    setShowIntro(false);
+    handleStart();
+  }, [handleStart]);
 
   /**
    * Pause/resume exercise playback
@@ -3169,12 +3178,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         <ExerciseLoadingScreen
           visible={showLoadingScreen}
           exerciseReady={exerciseReady}
-          onReady={() => {
-            setShowLoadingScreen(false);
-            // Skip the SalsaIntro — loading screen already showed Salsa's coaching
-            setShowIntro(false);
-            handleStart();
-          }}
+          onReady={handleLoadingReady}
         />
       )}
 

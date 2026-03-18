@@ -21,7 +21,6 @@ import Animated, {
   withSequence,
   withSpring,
   Easing,
-  runOnJS,
   FadeInDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -86,7 +85,7 @@ export function EvolutionReveal({
 
     // Phase 2: Flash after 1.2s
     const flashTimer = setTimeout(() => {
-      runOnJS(triggerFlash)();
+      triggerFlash();
       flashOpacity.value = withSequence(
         withTiming(1, { duration: 150 }),
         withTiming(0, { duration: 400 }),
@@ -100,7 +99,7 @@ export function EvolutionReveal({
 
     // Phase 3: Reveal after 1.8s
     const revealTimer = setTimeout(() => {
-      runOnJS(triggerReveal)();
+      triggerReveal();
       glowOpacity.value = withTiming(0.3, { duration: 500 });
       particleBurst.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) });
       catScale.value = withSpring(1, { damping: 12, stiffness: 120 });
@@ -109,7 +108,7 @@ export function EvolutionReveal({
 
     // Phase 4: Show ability after 2.5s
     const abilityTimer = setTimeout(() => {
-      runOnJS(triggerAbility)();
+      triggerAbility();
     }, 2500);
 
     return () => {
