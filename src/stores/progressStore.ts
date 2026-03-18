@@ -168,6 +168,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   updateExerciseProgress: (lessonId: string, exerciseId: string, progress: ExerciseProgress) => {
+    // Capture prev status BEFORE set() to detect first-time completion
+    const prevStatus = get().lessonProgress[lessonId]?.status;
+
     set((state) => {
       const lesson = state.lessonProgress[lessonId] ?? {
         lessonId,
@@ -222,6 +225,20 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         },
       };
     });
+
+    // Award cat XP for first-time lesson completion (outside set() to avoid transaction issues)
+    const newStatus = get().lessonProgress[lessonId]?.status;
+    if (newStatus === 'completed' && prevStatus !== 'completed') {
+      try {
+        const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
+        if (catId) {
+          useCatEvolutionStore.getState().addEvolutionXp(catId, 200);
+        }
+      } catch (err) {
+        logger.warn('[progressStore] lesson completion cat XP failed:', (err as Error)?.message);
+      }
+    }
+
     debouncedSave(get());
   },
 
@@ -407,6 +424,16 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         set((state) => ({
           streakMilestonesClaimed: [...(state.streakMilestonesClaimed ?? []), m.streak],
         }));
+        // Award cat XP for streak milestone
+        try {
+          const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
+          if (catId) {
+            const streakCatXp = m.streak === 7 ? 100 : m.streak === 30 ? 250 : 500;
+            useCatEvolutionStore.getState().addEvolutionXp(catId, streakCatXp);
+          }
+        } catch (err) {
+          logger.warn('[progressStore] streak milestone cat XP failed:', (err as Error)?.message);
+        }
       }
     }
 

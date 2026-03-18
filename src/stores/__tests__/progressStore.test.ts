@@ -19,6 +19,36 @@ jest.mock('../../services/firebase/leagueService', () => ({
   addLeagueXp: jest.fn().mockResolvedValue(undefined),
 }));
 
+const mockAddEvolutionXp = jest.fn();
+const mockCompleteDailyChallengeAndClaim = jest.fn();
+jest.mock('../catEvolutionStore', () => ({
+  useCatEvolutionStore: {
+    getState: () => ({
+      // Return today's date so daily challenge is considered already claimed (isolates XP tests)
+      get lastDailyChallengeDate() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      },
+      completeDailyChallengeAndClaim: mockCompleteDailyChallengeAndClaim,
+      selectedCatId: 'mini-meowww',
+      addEvolutionXp: mockAddEvolutionXp,
+    }),
+    setState: jest.fn(),
+    subscribe: jest.fn(),
+  },
+}));
+
+jest.mock('../settingsStore', () => ({
+  useSettingsStore: {
+    getState: () => ({
+      dailyGoalMinutes: 10,
+      selectedCatId: 'mini-meowww',
+    }),
+    setState: jest.fn(),
+    subscribe: jest.fn(),
+  },
+}));
+
 import { useProgressStore } from '../progressStore';
 import { useCatEvolutionStore } from '../catEvolutionStore';
 import { PersistenceManager, STORAGE_KEYS } from '../persistence';
@@ -26,6 +56,7 @@ import type { LessonProgress, ExerciseProgress } from '@/core/exercises/types';
 
 describe('Progress Store', () => {
   beforeEach(() => {
+    mockAddEvolutionXp.mockClear();
     useProgressStore.setState({
       totalXp: 0,
       level: 1,
@@ -41,8 +72,6 @@ describe('Progress Store', () => {
       dailyGoalData: {},
       streakMilestonesClaimed: [],
     });
-    // Mark daily challenge completed to isolate XP tests from challenge multiplier
-    useCatEvolutionStore.setState({ lastDailyChallengeDate: new Date().toISOString().split('T')[0] });
     PersistenceManager.deleteState(STORAGE_KEYS.PROGRESS);
   });
 
@@ -406,6 +435,152 @@ describe('Progress Store', () => {
       expect(state.streakData.currentStreak).toBe(0);
       expect(state.lessonProgress).toEqual({});
       expect(state.dailyGoalData).toEqual({});
+    });
+  });
+
+  describe('cat XP for streak milestones', () => {
+    it('awards 100 cat XP on 7-day streak milestone', () => {
+      // Set streak to 6 (one away from 7-day milestone)
+      useProgressStore.setState({
+        streakData: {
+          currentStreak: 6,
+          longestStreak: 6,
+          lastPracticeDate: new Date().toISOString().split('T')[0],
+          freezesAvailable: 1,
+          freezesUsed: 0,
+          weeklyPractice: [false, false, false, false, false, false, false],
+        },
+        streakMilestonesClaimed: [],
+      });
+
+      // Manually set streak to 7 to trigger milestone check
+      useProgressStore.setState({
+        streakData: {
+          currentStreak: 7,
+          longestStreak: 7,
+          lastPracticeDate: new Date().toISOString().split('T')[0],
+          freezesAvailable: 1,
+          freezesUsed: 0,
+          weeklyPractice: [false, false, false, false, false, false, false],
+        },
+      });
+
+      // recordExerciseCompletion reads current streak from state and checks milestones
+      useProgressStore.getState().recordExerciseCompletion('ex-1', 85, 10);
+
+      expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 100);
+    });
+
+    it('awards 250 cat XP on 30-day streak milestone', () => {
+      useProgressStore.setState({
+        streakData: {
+          currentStreak: 30,
+          longestStreak: 30,
+          lastPracticeDate: new Date().toISOString().split('T')[0],
+          freezesAvailable: 1,
+          freezesUsed: 0,
+          weeklyPractice: [false, false, false, false, false, false, false],
+        },
+        streakMilestonesClaimed: [],
+      });
+
+      useProgressStore.getState().recordExerciseCompletion('ex-1', 85, 10);
+
+      expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 250);
+    });
+
+    it('does not re-award cat XP if streak milestone already claimed', () => {
+      useProgressStore.setState({
+        streakData: {
+          currentStreak: 7,
+          longestStreak: 7,
+          lastPracticeDate: new Date().toISOString().split('T')[0],
+          freezesAvailable: 1,
+          freezesUsed: 0,
+          weeklyPractice: [false, false, false, false, false, false, false],
+        },
+        streakMilestonesClaimed: [7],
+      });
+
+      useProgressStore.getState().recordExerciseCompletion('ex-1', 85, 10);
+
+      expect(mockAddEvolutionXp).not.toHaveBeenCalledWith('mini-meowww', 100);
+    });
+  });
+
+  describe('cat XP for lesson completion', () => {
+    it('awards 200 cat XP on first lesson completion', () => {
+      // Set up a lesson in 'in_progress' status
+      useProgressStore.setState({
+        lessonProgress: {
+          'lesson-01': {
+            lessonId: 'lesson-01',
+            status: 'in_progress',
+            exerciseScores: {},
+            bestScore: 0,
+            totalAttempts: 0,
+            totalTimeSpentSeconds: 0,
+          },
+        },
+      });
+
+      // Mock ContentLoader to return 1 exercise so completion is triggered
+      jest.doMock('../../content/ContentLoader', () => ({
+        getExercisesForLesson: () => [{ id: 'lesson-01-ex-01', type: 'play' }],
+      }));
+
+      // Update the single exercise with a passing score — this should complete the lesson
+      useProgressStore.getState().updateExerciseProgress('lesson-01', 'lesson-01-ex-01', {
+        exerciseId: 'lesson-01-ex-01',
+        highScore: 80,
+        stars: 2,
+        attempts: 1,
+        lastAttemptAt: Date.now(),
+        averageScore: 80,
+        completedAt: Date.now(),
+      });
+
+      expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 200);
+    });
+
+    it('does NOT award cat XP on repeat lesson completion', () => {
+      // Set up lesson already completed
+      useProgressStore.setState({
+        lessonProgress: {
+          'lesson-02': {
+            lessonId: 'lesson-02',
+            status: 'completed',
+            exerciseScores: {
+              'lesson-02-ex-01': {
+                exerciseId: 'lesson-02-ex-01',
+                highScore: 90,
+                stars: 3,
+                attempts: 1,
+                lastAttemptAt: Date.now(),
+                averageScore: 90,
+                completedAt: Date.now(),
+              },
+            },
+            bestScore: 90,
+            totalAttempts: 1,
+            totalTimeSpentSeconds: 60,
+            completedAt: Date.now(),
+          },
+        },
+      });
+
+      // Update an exercise score — lesson is already completed, no cat XP
+      useProgressStore.getState().updateExerciseProgress('lesson-02', 'lesson-02-ex-01', {
+        exerciseId: 'lesson-02-ex-01',
+        highScore: 95,
+        stars: 3,
+        attempts: 2,
+        lastAttemptAt: Date.now(),
+        averageScore: 92,
+        completedAt: Date.now(),
+      });
+
+      expect(mockAddEvolutionXp).not.toHaveBeenCalledWith('mini-meowww', 200);
     });
   });
 });
