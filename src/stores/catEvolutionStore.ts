@@ -230,6 +230,24 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
       analyticsEvents.cat.evolved(catId, newStage);
     }
 
+    // Award milestone gems on evolution
+    if (evolved && newStage) {
+      const MILESTONE_GEMS: Record<string, number> = {
+        teen: 200,
+        adult: 500,
+        master: 1000,
+      };
+      const milestoneGems = MILESTONE_GEMS[newStage];
+      if (milestoneGems) {
+        try {
+          const { useGemStore } = require('./gemStore');
+          useGemStore.getState().earnGems(milestoneGems, `evolution-milestone-${newStage}`);
+        } catch (err) {
+          logger.warn('[catEvolution] Milestone gem award failed:', (err as Error)?.message);
+        }
+      }
+    }
+
     // Post evolution activity (fire-and-forget)
     if (evolved && auth.currentUser && !auth.currentUser.isAnonymous) {
       postActivity(auth.currentUser.uid, {

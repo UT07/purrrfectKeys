@@ -17,6 +17,15 @@ jest.mock('../../services/firebase/socialService', () => ({
   postActivity: jest.fn().mockResolvedValue(undefined),
 }));
 
+const mockEarnGems = jest.fn();
+jest.mock('../../stores/gemStore', () => ({
+  useGemStore: {
+    getState: () => ({
+      earnGems: mockEarnGems,
+    }),
+  },
+}));
+
 import { useCatEvolutionStore, stageFromXp, xpToNextStage } from '../catEvolutionStore';
 
 // Mock persistence layer
@@ -36,6 +45,7 @@ jest.mock('../persistence', () => ({
 describe('catEvolutionStore', () => {
   beforeEach(() => {
     useCatEvolutionStore.getState().reset();
+    mockEarnGems.mockClear();
   });
 
   describe('stageFromXp (pure function)', () => {
@@ -228,6 +238,31 @@ describe('catEvolutionStore', () => {
     it('returns null for unknown cat', () => {
       const result = useCatEvolutionStore.getState().addEvolutionXp('nonexistent', 100);
       expect(result).toBeNull();
+    });
+
+    it('awards 200 gems on teen evolution', () => {
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
+      expect(mockEarnGems).toHaveBeenCalledWith(200, 'evolution-milestone-teen');
+    });
+
+    it('awards 500 gems on adult evolution', () => {
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000); // teen
+      mockEarnGems.mockClear();
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 6000); // adult at 8000
+      expect(mockEarnGems).toHaveBeenCalledWith(500, 'evolution-milestone-adult');
+    });
+
+    it('awards 1000 gems on master evolution', () => {
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 8000); // adult
+      mockEarnGems.mockClear();
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 17000); // master at 25000
+      expect(mockEarnGems).toHaveBeenCalledWith(1000, 'evolution-milestone-master');
+    });
+
+    it('does NOT award milestone gems when no evolution occurs', () => {
+      mockEarnGems.mockClear();
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 100);
+      expect(mockEarnGems).not.toHaveBeenCalled();
     });
   });
 
