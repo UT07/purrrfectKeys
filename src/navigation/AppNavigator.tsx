@@ -17,7 +17,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 // Screens
 import { HomeScreen } from '../screens/HomeScreen';
 import { ExercisePlayer } from '../screens/ExercisePlayer/ExercisePlayer';
-import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { PlayFirstOnboarding } from '../screens/PlayFirstOnboarding';
 import { MidiSetupScreen } from '../screens/MidiSetupScreen';
 import { MicSetupScreen } from '../screens/MicSetupScreen';
 import { LevelMapScreen } from '../screens/LevelMapScreen';
@@ -216,7 +216,7 @@ export function AppNavigator() {
             <RootStack.Screen name="MainTabs" component={MainTabs} />
             <RootStack.Screen
               name="Onboarding"
-              component={OnboardingScreen}
+              component={PlayFirstOnboarding}
               options={{
                 presentation: 'transparentModal',
                 animation: 'fade',
