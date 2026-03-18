@@ -149,7 +149,7 @@ export function XPTransitionOverlay({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     }, PHASE.scoreReveal));
 
-    // Stars phase
+    // Stars phase — all timers tracked for cleanup on unmount
     timers.push(setTimeout(() => {
       setPhase('stars');
       if (score.stars >= 1) {
@@ -157,21 +157,21 @@ export function XPTransitionOverlay({
         soundManager.play('star_earn');
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       }
-      if (score.stars >= 2) {
-        setTimeout(() => {
-          star2Scale.value = withSpring(1, { damping: 8, stiffness: 200 });
-          soundManager.play('star_earn');
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        }, 250);
-      }
-      if (score.stars >= 3) {
-        setTimeout(() => {
-          star3Scale.value = withSpring(1, { damping: 8, stiffness: 200 });
-          soundManager.play('star_earn');
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
-        }, 500);
-      }
     }, PHASE.starsReveal));
+    if (score.stars >= 2) {
+      timers.push(setTimeout(() => {
+        star2Scale.value = withSpring(1, { damping: 8, stiffness: 200 });
+        soundManager.play('star_earn');
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      }, PHASE.starsReveal + 250));
+    }
+    if (score.stars >= 3) {
+      timers.push(setTimeout(() => {
+        star3Scale.value = withSpring(1, { damping: 8, stiffness: 200 });
+        soundManager.play('star_earn');
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+      }, PHASE.starsReveal + 500));
+    }
 
     // Rewards phase
     timers.push(setTimeout(() => {

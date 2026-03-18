@@ -84,6 +84,11 @@ export const MascotBubble: React.FC<MascotBubbleProps> = ({
   const scale = useSharedValue(0.8);
   const hasSpokenRef = useRef(false);
 
+  // Reset spoken flag when message changes so new messages are spoken
+  useEffect(() => {
+    hasSpokenRef.current = false;
+  }, [message]);
+
   // Speak the message via TTS
   useEffect(() => {
     if (!speakMessage || !message || !showBubble || hasSpokenRef.current) return;
