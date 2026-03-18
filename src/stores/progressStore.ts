@@ -80,6 +80,20 @@ type ProgressData = Pick<
   'totalXp' | 'level' | 'streakData' | 'lessonProgress' | 'dailyGoalData' | 'tierTestResults' | 'streakMilestonesClaimed'
 >;
 
+/** Prune dailyGoalData entries older than 90 days to prevent unbounded storage growth */
+export function pruneDailyGoalData(data: Record<string, DailyGoalData>): Record<string, DailyGoalData> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const pruned: Record<string, DailyGoalData> = {};
+  for (const [date, goal] of Object.entries(data)) {
+    if (date >= cutoffStr) {
+      pruned[date] = goal;
+    }
+  }
+  return pruned;
+}
+
 const defaultData: ProgressData = {
   totalXp: 0,
   level: 1,
@@ -154,6 +168,33 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }
     }
 
+    // Streak gem milestones — checked here (not in recordExerciseCompletion)
+    // because updateStreakData is called AFTER the streak is incremented,
+    // so newStreak reflects the actual post-increment value.
+    const STREAK_MILESTONES: { streak: number; gems: number }[] = [
+      { streak: 7, gems: 50 },
+      { streak: 30, gems: 200 },
+      { streak: 100, gems: 500 },
+    ];
+    const newlyClaimedMilestones: { streak: number; gems: number }[] = [];
+    set((state) => {
+      const claimed = state.streakMilestonesClaimed ?? [];
+      const toAdd: number[] = [];
+      for (const m of STREAK_MILESTONES) {
+        if (newStreak >= m.streak && !claimed.includes(m.streak)) {
+          toAdd.push(m.streak);
+          newlyClaimedMilestones.push(m);
+        }
+      }
+      if (toAdd.length === 0) return state;
+      return {
+        streakMilestonesClaimed: [...claimed, ...toAdd],
+      };
+    });
+    for (const m of newlyClaimedMilestones) {
+      useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
+    }
+
     debouncedSave(get());
   },
 
@@ -168,9 +209,6 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   updateExerciseProgress: (lessonId: string, exerciseId: string, progress: ExerciseProgress) => {
-    // Capture prev status BEFORE set() to detect first-time completion
-    const prevStatus = get().lessonProgress[lessonId]?.status;
-
     set((state) => {
       const lesson = state.lessonProgress[lessonId] ?? {
         lessonId,
@@ -225,20 +263,6 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         },
       };
     });
-
-    // Award cat XP for first-time lesson completion (outside set() to avoid transaction issues)
-    const newStatus = get().lessonProgress[lessonId]?.status;
-    if (newStatus === 'completed' && prevStatus !== 'completed') {
-      try {
-        const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
-        if (catId) {
-          useCatEvolutionStore.getState().addEvolutionXp(catId, 200);
-        }
-      } catch (err) {
-        logger.warn('[progressStore] lesson completion cat XP failed:', (err as Error)?.message);
-      }
-    }
-
     debouncedSave(get());
   },
 
@@ -360,7 +384,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     const effectiveXp = Math.round(xpEarned * xpMultiplier);
     const oldLevel = get().level;
 
-    let dailyGoalJustCompleted = false;
+    // Capture pre-update daily goal state for side-effect detection
+    const preUpdateGoal = get().dailyGoalData[today];
+    const wasDailyGoalComplete = preUpdateGoal?.isComplete ?? false;
 
     set((state) => {
       const dailyGoal = state.dailyGoalData[today] || {
@@ -369,14 +395,11 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         minutesTarget: userMinutesTarget,
       };
       const minutesTarget = dailyGoal.minutesTarget || userMinutesTarget;
-      const wasDailyGoalComplete = dailyGoal.isComplete;
       const newTotalXp = state.totalXp + effectiveXp;
       const newExercisesCompleted = dailyGoal.exercisesCompleted + 1;
       const nowComplete =
         dailyGoal.minutesPracticed >= minutesTarget &&
         newExercisesCompleted >= dailyGoal.exercisesTarget;
-
-      dailyGoalJustCompleted = nowComplete && !wasDailyGoalComplete;
 
       return {
         totalXp: newTotalXp,
@@ -394,7 +417,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     });
 
     // Bonus gems when the full daily goal (minutes + exercises) is met
-    if (dailyGoalJustCompleted) {
+    const postUpdateGoal = get().dailyGoalData[today];
+    if (postUpdateGoal?.isComplete && !wasDailyGoalComplete) {
       useGemStore.getState().earnGems(10, 'daily-goal');
       analyticsEvents.rewards.dailyGoalCompleted();
     }
@@ -410,40 +434,15 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       currentStreak: get().streakData.currentStreak,
     });
 
-    // BUG-023 fix: Streak gem milestones — only award once per milestone
-    const streak = get().streakData.currentStreak;
-    const claimed = get().streakMilestonesClaimed ?? [];
-    const STREAK_MILESTONES: { streak: number; gems: number }[] = [
-      { streak: 7, gems: 50 },
-      { streak: 30, gems: 200 },
-      { streak: 100, gems: 500 },
-    ];
-    for (const m of STREAK_MILESTONES) {
-      if (streak >= m.streak && !claimed.includes(m.streak)) {
-        useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
-        set((state) => ({
-          streakMilestonesClaimed: [...(state.streakMilestonesClaimed ?? []), m.streak],
-        }));
-        // Award cat XP for streak milestone
-        try {
-          const catId = useSettingsStore.getState().selectedCatId || useCatEvolutionStore.getState().selectedCatId;
-          if (catId) {
-            const streakCatXp = m.streak === 7 ? 100 : m.streak === 30 ? 250 : 500;
-            useCatEvolutionStore.getState().addEvolutionXp(catId, streakCatXp);
-          }
-        } catch (err) {
-          logger.warn('[progressStore] streak milestone cat XP failed:', (err as Error)?.message);
-        }
-      }
-    }
+    // Streak gem milestones moved to updateStreakData() — they need the
+    // post-increment streak value, and updateStreakData runs after this function.
 
     debouncedSave(get());
 
     // ── League XP update (fire-and-forget) ──
     const leagueMembership = useLeagueStore.getState().membership;
     if (leagueMembership && auth.currentUser && !auth.currentUser.isAnonymous) {
-      const newWeeklyXp = leagueMembership.weeklyXp + effectiveXp;
-      useLeagueStore.getState().updateWeeklyXp(newWeeklyXp);
+      useLeagueStore.getState().updateWeeklyXp(effectiveXp);
       fireAndRetry(
         () => addLeagueXp(leagueMembership.leagueId, auth.currentUser!.uid, effectiveXp),
         'addLeagueXp',
@@ -453,7 +452,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     // ── MMR / Rank update ──
     try {
       const { useRankStore } = require('./rankStore');
-      const exerciseTier = challengeContext?.exerciseTier ?? 3;
+      // Clamp exerciseTier to valid range (1-15) to prevent client-side manipulation
+      const rawTier = challengeContext?.exerciseTier ?? 3;
+      const exerciseTier = Math.max(1, Math.min(15, Math.floor(rawTier)));
       const exerciseType = challengeContext?.exerciseType ?? 'play';
       useRankStore.getState().updateAfterExercise(_score, exerciseTier, exerciseType);
 
