@@ -438,6 +438,11 @@ jest.mock('../ExerciseLoadingScreen', () => ({
   ExerciseLoadingScreen: () => null,
 }));
 
+// Mock SalsaIntro (imports SalsaCoach which needs catDialogue)
+jest.mock('../SalsaIntro', () => ({
+  SalsaIntro: () => null,
+}));
+
 // Mock CompletionModal (heavy deps: MascotBubble, CatAvatar, CoachingService, TTSService, etc.)
 jest.mock('../CompletionModal', () => ({
   CompletionModal: () => null,
