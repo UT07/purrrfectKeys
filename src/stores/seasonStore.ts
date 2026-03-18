@@ -179,13 +179,24 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
 
   claimBattlePassReward: (tier: number, track: 'free' | 'premium') => {
     const rewardKey = `${track}-${tier}`;
-    const state = get();
 
-    // Guard: already claimed
-    if (state.claimedRewards.includes(rewardKey)) return null;
+    // Atomic check-and-claim inside a single set() to prevent TOCTOU race
+    let alreadyClaimed = false;
+    let tierNotReached = false;
+    set((s) => {
+      if (s.claimedRewards.includes(rewardKey)) {
+        alreadyClaimed = true;
+        return s;
+      }
+      if (tier > s.battlePassTier) {
+        tierNotReached = true;
+        return s;
+      }
+      // Record claim atomically
+      return { claimedRewards: [...s.claimedRewards, rewardKey] };
+    });
 
-    // Guard: tier not yet reached
-    if (tier > state.battlePassTier) return null;
+    if (alreadyClaimed || tierNotReached) return null;
 
     // Look up the reward definition
     const tiers = generateBattlePassTiers();
@@ -195,7 +206,7 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
     const reward = track === 'free' ? tierDef.freeReward : tierDef.premiumReward;
     if (!reward) return null;
 
-    // Deliver reward FIRST, then record claim — if delivery fails, user can retry
+    // Deliver reward AFTER recording claim (claim is already recorded above)
     try {
       switch (reward.type) {
         case 'gems': {
@@ -204,33 +215,24 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
           break;
         }
         case 'accessory': {
-          // TODO: implement unlockAccessory in catEvolutionStore
           logger.warn(`[Season] Accessory reward "${reward.itemId}" not yet deliverable — skipping`);
           break;
         }
         case 'title': {
-          // TODO: implement addTitle in settingsStore
           logger.warn(`[Season] Title reward "${reward.itemId}" not yet deliverable — skipping`);
           break;
         }
         case 'xp_boost': {
-          // TODO: implement setXpBoostMultiplier in settingsStore
           logger.warn(`[Season] XP boost reward not yet deliverable — skipping`);
           break;
         }
       }
     } catch (err) {
-      // Store not available (tests or init timing) — don't record claim so user can retry
       logger.warn('[seasonStore] Failed to deliver battle pass reward:', rewardKey, err);
       return null;
     }
 
-    // Record claim AFTER successful delivery
-    set((s) => ({
-      claimedRewards: [...s.claimedRewards, rewardKey],
-    }));
     debouncedSave(get());
-
     return reward;
   },
 
@@ -273,12 +275,24 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
     const { start: newStart, end: newEnd } = getCurrentSeasonDates();
     const newSeasonNumber = seasonNumberFromDate();
 
-    // Soft-reset MMR and zero RP for the new season
+    // Soft-reset MMR and zero RP for the new season, recalculate tier/division
     try {
       const { useRankStore } = require('./rankStore');
       const { softResetMMR } = require('../core/ranking/seasonConfig');
+      const { tierFromMMR, divisionFromMMR } = require('../core/ranking/rankThresholds');
       const current = useRankStore.getState().rating;
-      const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
+      const newMmr = softResetMMR(current.mmr);
+      const newTier = tierFromMMR(newMmr);
+      const newDivision = divisionFromMMR(newMmr, newTier);
+      const resetRating = {
+        ...current,
+        mmr: newMmr,
+        tier: newTier,
+        division: newDivision,
+        rp: 0,
+        promotionSeries: null,
+        demotionGrace: 3,
+      };
       useRankStore.setState({ rating: resetRating });
     } catch (err) {
       logger.warn('[seasonStore] rankStore not available for startNewSeason MMR reset:', err);
@@ -356,8 +370,12 @@ export async function hydrateSeasonStore(): Promise<void> {
     try {
       const { useRankStore } = require('./rankStore');
       const { softResetMMR } = require('../core/ranking/seasonConfig');
+      const { tierFromMMR, divisionFromMMR } = require('../core/ranking/rankThresholds');
       const current = useRankStore.getState().rating;
-      const resetRating = { ...current, mmr: softResetMMR(current.mmr), rp: 0, promotionSeries: null };
+      const newMmr = softResetMMR(current.mmr);
+      const newTier = tierFromMMR(newMmr);
+      const newDivision = divisionFromMMR(newMmr, newTier);
+      const resetRating = { ...current, mmr: newMmr, rp: 0, promotionSeries: null, tier: newTier, division: newDivision };
       useRankStore.setState({ rating: resetRating });
     } catch (err) {
       logger.warn('[seasonStore] rankStore not available for MMR reset:', err);

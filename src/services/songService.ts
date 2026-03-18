@@ -98,10 +98,30 @@ export async function getSongSummaries(
     // Client-side sort + pagination when filters are active
     summaries.sort((a, b) => a.metadata.title.localeCompare(b.metadata.title));
     if (hasFilters) {
-      summaries = summaries.slice(0, pageSize);
+      // When using client-side pagination, find cursor position by matching
+      // the last doc ID, then slice from there. Without a cursor, start at 0.
+      let startIndex = 0;
+      if (pageAfter) {
+        const cursorId = pageAfter.id;
+        const cursorIdx = summaries.findIndex((s) => s.id === cursorId);
+        if (cursorIdx >= 0) {
+          startIndex = cursorIdx + 1;
+        }
+      }
+      summaries = summaries.slice(startIndex, startIndex + pageSize);
     }
 
-    const lastDoc = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+    // For filtered queries, use the last summary's matching Firestore doc as cursor.
+    // For unfiltered queries, use the last doc from the snapshot (server-side pagination).
+    let lastDoc = null;
+    if (summaries.length > 0 && snap.docs.length > 0) {
+      if (hasFilters) {
+        const lastSummaryId = summaries[summaries.length - 1]?.id;
+        lastDoc = snap.docs.find((d) => d.id === lastSummaryId) ?? null;
+      } else {
+        lastDoc = snap.docs[snap.docs.length - 1];
+      }
+    }
 
     return { summaries, lastDoc };
   } catch (err) {

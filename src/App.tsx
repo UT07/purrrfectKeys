@@ -13,7 +13,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './navigation/AppNavigator';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PersistenceManager, STORAGE_KEYS, flushAllPendingSaves } from './stores/persistence';
-import { useProgressStore } from './stores/progressStore';
+import { useProgressStore, pruneDailyGoalData } from './stores/progressStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
 import { useAchievementStore } from './stores/achievementStore';
@@ -151,7 +151,7 @@ function AppRoot(): React.ReactElement {
             level: levelFromXp(xp),
             ...(streakData ? { streakData: streakData as any } : {}),
             ...(lessonProgress ? { lessonProgress: lessonProgress as any } : {}),
-            ...(dailyGoalData ? { dailyGoalData: dailyGoalData as any } : {}),
+            ...(dailyGoalData ? { dailyGoalData: pruneDailyGoalData(dailyGoalData as any) } : {}),
             ...(tierTestResults ? { tierTestResults: tierTestResults as any } : {}),
             ...(streakMilestonesClaimed ? { streakMilestonesClaimed: streakMilestonesClaimed as any } : {}),
           });

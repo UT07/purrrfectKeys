@@ -584,7 +584,8 @@ function GuildDetail(): React.JSX.Element {
             style: 'destructive',
             onPress: async () => {
               try {
-                await guildService.kickMember(currentGuild.id, uid, user?.uid);
+                if (!user?.uid) throw new Error('Must be authenticated to kick');
+                await guildService.kickMember(currentGuild.id, uid, user.uid);
                 removeMember(uid);
               } catch (err) {
                 logger.warn('[GuildScreen] Kick member failed:', err);

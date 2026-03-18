@@ -219,7 +219,33 @@ export const generateCoachFeedback = onCall(
     }
 
     const uid = request.auth.uid;
-    const data = request.data as CoachFeedbackRequest;
+    const raw = request.data as CoachFeedbackRequest;
+
+    // Clamp score values to 0-100 to prevent nonsensical coaching prompts
+    const clamp = (v: unknown) => typeof v === 'number' ? Math.max(0, Math.min(100, Math.round(v))) : 50;
+    const data: CoachFeedbackRequest = {
+      ...raw,
+      exerciseTitle: typeof raw.exerciseTitle === 'string' ? raw.exerciseTitle.slice(0, 200) : 'Exercise',
+      difficulty: typeof raw.difficulty === 'number' ? Math.max(1, Math.min(5, raw.difficulty)) : 3,
+      score: {
+        overall: clamp(raw.score?.overall),
+        accuracy: clamp(raw.score?.accuracy),
+        timing: clamp(raw.score?.timing),
+        completeness: clamp(raw.score?.completeness),
+      },
+      issues: {
+        pitchErrors: Array.isArray(raw.issues?.pitchErrors) ? raw.issues.pitchErrors.slice(0, 5) : [],
+        timingErrors: Array.isArray(raw.issues?.timingErrors) ? raw.issues.timingErrors.slice(0, 5) : [],
+        missedCount: typeof raw.issues?.missedCount === 'number' ? Math.max(0, raw.issues.missedCount) : 0,
+        extraCount: typeof raw.issues?.extraCount === 'number' ? Math.max(0, raw.issues.extraCount) : 0,
+      },
+      context: {
+        attemptNumber: typeof raw.context?.attemptNumber === 'number' ? Math.max(1, raw.context.attemptNumber) : 1,
+        previousScore: typeof raw.context?.previousScore === 'number' ? clamp(raw.context.previousScore) : null,
+        userLevel: typeof raw.context?.userLevel === 'number' ? Math.max(1, raw.context.userLevel) : 1,
+        sessionMinutes: typeof raw.context?.sessionMinutes === 'number' ? Math.max(0, raw.context.sessionMinutes) : 0,
+      },
+    };
 
     // Rate limit check
     const withinLimit = await checkAndIncrementRateLimit(uid);
@@ -347,12 +373,19 @@ export const cleanupCoachFeedbackCache = onSchedule(
 
       const oldDocs = await cacheRef.where('timestamp', '<', cutoffTime).get();
 
-      const batch = admin.firestore().batch();
-      oldDocs.docs.forEach((doc: admin.firestore.QueryDocumentSnapshot) => batch.delete(doc.ref));
-      await batch.commit();
+      // Process in batches of 500 to respect Firestore batch limit
+      let deleted = 0;
+      const BATCH_LIMIT = 500;
+      for (let i = 0; i < oldDocs.docs.length; i += BATCH_LIMIT) {
+        const batch = admin.firestore().batch();
+        const slice = oldDocs.docs.slice(i, i + BATCH_LIMIT);
+        slice.forEach((doc: admin.firestore.QueryDocumentSnapshot) => batch.delete(doc.ref));
+        await batch.commit();
+        deleted += slice.length;
+      }
 
       logger.info('Coach feedback cache cleanup completed', {
-        deletedDocs: oldDocs.docs.length,
+        deletedDocs: deleted,
       });
     } catch (error) {
       logger.error('Error cleaning up coach feedback cache', {

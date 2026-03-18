@@ -18,7 +18,7 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -49,8 +49,6 @@ export interface SongReferencePickerProps {
 // Constants
 // ---------------------------------------------------------------------------
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const MODAL_HEIGHT = SCREEN_HEIGHT * 0.7;
 const DEBOUNCE_MS = 300;
 
 // Genre display helpers
@@ -72,6 +70,8 @@ export function SongReferencePicker({
   onSelect,
   onClose,
 }: SongReferencePickerProps): React.JSX.Element {
+  const { height: screenHeight } = useWindowDimensions();
+  const modalHeight = screenHeight * 0.7;
   const summaries = useSongStore((s) => s.summaries);
   const isLoading = useSongStore((s) => s.isLoadingSummaries);
   const loadSummaries = useSongStore((s) => s.loadSummaries);
@@ -187,7 +187,7 @@ export function SongReferencePicker({
         </PressableScale>
 
         {/* Modal sheet */}
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { height: modalHeight }]}>
           {/* Handle bar */}
           <View style={styles.handleBar} />
 
@@ -279,7 +279,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    height: MODAL_HEIGHT,
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: BORDER_RADIUS.xl,
     borderTopRightRadius: BORDER_RADIUS.xl,

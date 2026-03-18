@@ -509,7 +509,13 @@ export class NoteTracker {
     const now = result.timestamp;
 
     if (result.voiced && result.midiNote !== null) {
-      this.lastVoicedTime = now;
+      // Only update lastVoicedTime when the CURRENT note is still being detected,
+      // or when there's no current note yet (pre-onset). Previously this was updated
+      // for ANY voiced frame, which prevented release of the current note while a
+      // different note was being confirmed as a candidate.
+      if (this.currentNote === null || result.midiNote === this.currentNote) {
+        this.lastVoicedTime = now;
+      }
       this.candidateGapCount = 0; // Reset gap counter on any voiced frame
       this.lastRms = result.rms;
 
@@ -530,6 +536,7 @@ export class NoteTracker {
             this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
           }
           this.currentNote = result.midiNote;
+          this.lastVoicedTime = now; // Reset release timer for new note
           this.candidateNote = null;
           this.candidateCount = 0;
           this.emit({
@@ -558,6 +565,7 @@ export class NoteTracker {
               this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
             }
             this.currentNote = result.midiNote;
+            this.lastVoicedTime = now; // Reset release timer for new note
             this.candidateNote = null;
             this.candidateCount = 0;
             this.emit({

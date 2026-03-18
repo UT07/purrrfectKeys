@@ -63,10 +63,15 @@ export function PostExerciseScreen(): React.ReactElement {
     return data;
   }, []);
 
-  // If no cached data (e.g., navigated here directly), go back
+  // If no cached data (e.g., deep link or process restart), navigate away safely.
+  // ExercisePlayer uses navigation.replace, so there may be nothing to goBack to.
   useEffect(() => {
     if (!cachedData) {
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('MainTabs');
+      }
     }
   }, [cachedData, navigation]);
 

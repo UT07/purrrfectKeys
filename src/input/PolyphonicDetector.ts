@@ -215,9 +215,11 @@ export class PolyphonicDetector {
     // Copy accumulated audio into model input buffer
     this.modelInputBuffer.set(this.accumBuffer.subarray(0, MODEL_INPUT_SAMPLES));
 
+    // Capture time BEFORE inference to avoid ONNX latency polluting timestamps
+    const preInferenceTime = Date.now();
     // Shift buffer by hop size (50% overlap) instead of resetting to 0
     const inferenceStartTime = this.windowStartTime;
-    this.shiftAccumBuffer();
+    this.shiftAccumBuffer(preInferenceTime);
 
     // Create input tensor: model expects shape [batch, 43844, 1]
     const inputTensor = new OnnxRuntime.Tensor(
@@ -240,12 +242,15 @@ export class PolyphonicDetector {
    * Shift accumulation buffer by HOP_SAMPLES for 50% overlap sliding window.
    * Keeps the second half of the window as the start of the next window.
    */
-  private shiftAccumBuffer(): void {
+  private shiftAccumBuffer(captureTime?: number): void {
     // Copy second half to beginning (overlap region)
     this.accumBuffer.copyWithin(0, HOP_SAMPLES, MODEL_INPUT_SAMPLES);
     this.accumLength = MODEL_INPUT_SAMPLES - HOP_SAMPLES;
-    // Update window start time: estimate based on how much audio remains in buffer
-    this.windowStartTime = Date.now() - ((this.accumLength / MODEL_SAMPLE_RATE) * 1000);
+    // Update window start time: estimate based on how much audio remains in buffer.
+    // Use captureTime (taken BEFORE inference) if provided, to avoid timestamp drift
+    // from ONNX inference latency (~50ms) being added to the window start time.
+    const refTime = captureTime ?? Date.now();
+    this.windowStartTime = refTime - ((this.accumLength / MODEL_SAMPLE_RATE) * 1000);
   }
 
   /**
