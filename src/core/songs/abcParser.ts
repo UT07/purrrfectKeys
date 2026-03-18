@@ -180,16 +180,24 @@ export function parseABC(abcString: string): ABCParseOutput {
   // --- Walk voice elements --------------------------------------------
 
   const notes: NoteEvent[] = [];
-  let currentBeat = 0;
+
+  // Track beat position per voice index so concurrent voices don't accumulate
+  // sequentially. Voice 0 and Voice 1 in the same staff play simultaneously,
+  // but each voice's beats accumulate across multiple lines (visual line breaks).
+  const voiceBeatPositions = new Map<string, number>();
 
   // Track active ties: MIDI note number → index in notes[] of the tied note
   const activeTies = new Map<number, number>();
 
   for (const line of tune.lines) {
     if (!line.staff) continue;
-    for (const staff of line.staff) {
+    for (let staffIdx = 0; staffIdx < line.staff.length; staffIdx++) {
+      const staff = line.staff[staffIdx];
       if (!staff.voices) continue;
-      for (const voice of staff.voices) {
+      for (let voiceIdx = 0; voiceIdx < staff.voices.length; voiceIdx++) {
+        const voice = staff.voices[voiceIdx];
+        const voiceKey = `${staffIdx}-${voiceIdx}`;
+        let currentBeat = voiceBeatPositions.get(voiceKey) ?? 0;
         for (const element of voice) {
           if (element.el_type !== 'note') continue;
 
@@ -233,6 +241,8 @@ export function parseABC(abcString: string): ABCParseOutput {
 
           currentBeat += beatsForElement;
         }
+        // Save beat position for this voice so it continues correctly on the next line
+        voiceBeatPositions.set(voiceKey, currentBeat);
       }
     }
   }

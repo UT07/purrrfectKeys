@@ -94,7 +94,8 @@ function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise
 
   const ex = exercise as Record<string, unknown>;
 
-  if (!Array.isArray(ex.notes) || ex.notes.length === 0) {
+  const MIN_NOTES = 4;
+  if (!Array.isArray(ex.notes) || ex.notes.length < MIN_NOTES) {
     return false;
   }
 
@@ -151,6 +152,8 @@ function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise
         (d) => Math.abs(d - (n.durationBeats as number)) < 0.05,
       );
       if (!closest) return false;
+      // Snap to the nearest valid duration to avoid subtle timing mismatches
+      n.durationBeats = closest;
     }
 
     if (i > 0) {

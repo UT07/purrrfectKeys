@@ -164,6 +164,8 @@ export function validateAIExercise(exercise: unknown, allowedMidi?: number[]): e
         (d) => Math.abs(d - (n.durationBeats as number)) < 0.05,
       );
       if (!closest) return false;
+      // Snap to the nearest valid duration to avoid subtle timing mismatches
+      n.durationBeats = closest;
     }
 
     // Check interval from previous note
