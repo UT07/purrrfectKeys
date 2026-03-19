@@ -264,7 +264,8 @@ function useLessonNodes(): LessonNodeData[] {
             state = 'available';
           }
         } else {
-          state = foundCurrent ? 'locked' : 'locked';
+          state = foundCurrent ? 'locked' : 'current';
+          if (!foundCurrent) foundCurrent = true;
         }
       }
 

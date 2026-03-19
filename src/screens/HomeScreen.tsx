@@ -54,6 +54,7 @@ import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor } from '
 import { useAuthStore } from '../stores/authStore';
 import { FriendActivityStrip } from '../components/FriendActivityStrip';
 import { WeeklyFeaturedSongCard, getWeeklyFeaturedIndex } from '../components/WeeklyFeaturedSongCard';
+import { getTodayDateString } from '../utils/time';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -136,8 +137,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   }, [hasCompletedOnboarding, navigation, isAuthLoading]);
 
-  // Daily goal progress
-  const today = new Date().toISOString().split('T')[0];
+  // Daily goal progress — use local timezone to match progressStore's localToday()
+  const today = getTodayDateString();
   const todayGoal = dailyGoalData[today];
   const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
   const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(1, minutesPracticedToday / dailyGoalMinutes) : 0;
@@ -176,6 +177,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return totalDone;
   }, [lessonProgress]);
 
+  // Count completed lessons (all exercises passing) — exclude synthetic __ai__ bucket
+  const completedLessonsCount = useMemo(() => {
+    return Object.entries(lessonProgress).filter(
+      ([key, lp]) => key !== '__ai__' && lp.status === 'completed',
+    ).length;
+  }, [lessonProgress]);
+
   // Today's Practice session plan (mini version of DailySessionScreen)
   const sessionPlan = useMemo(() => {
     const profile = useLearnerProfileStore.getState();
@@ -196,7 +204,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       },
       profile.masteredSkills,
     );
-  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- reads fresh store state on every focus
+  }, [focusCounter, lessonProgress]); // eslint-disable-line react-hooks/exhaustive-deps -- reads fresh store state on every focus + recalc when exercises complete
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
@@ -239,7 +247,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const evolutionData = useCatEvolutionStore((s) => s.evolutionData);
   const dailyRewards = useCatEvolutionStore((s) => s.dailyRewards);
   const claimDailyReward = useCatEvolutionStore((s) => s.claimDailyReward);
-  const isDailyChallengeCompleted = useCatEvolutionStore((s) => s.isDailyChallengeCompleted);
+  const lastDailyChallengeDate = useCatEvolutionStore((s) => s.lastDailyChallengeDate);
   const advanceDailyRewardDate = useCatEvolutionStore((s) => s.advanceDailyRewardDate);
 
   // Advance daily rewards calendar on mount
@@ -535,7 +543,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Animated.View style={[styles.section, staggerStyle(1)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
-            <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
+            <StatPill icon="book-open-variant" label="Lessons" value={completedLessonsCount} color={COLORS.info} />
             <StatPill icon="fire" label="Streak" value={streak} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
             <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>
@@ -680,7 +688,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             days={dailyRewards.days}
             currentDay={dailyRewards.currentDay}
             onClaim={(day) => claimDailyReward(day)}
-            dailyChallengeCompleted={isDailyChallengeCompleted()}
+            dailyChallengeCompleted={lastDailyChallengeDate === today}
           />
         </Animated.View>
 

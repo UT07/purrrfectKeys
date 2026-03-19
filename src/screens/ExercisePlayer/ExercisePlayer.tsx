@@ -821,6 +821,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
     score = { ...score, isNewHighScore: score.overall > prevHigh };
 
+    // Fix firstTimeBonus for AI exercises: the hook looks up by exercise.id (e.g. ai-123)
+    // which never matches the stored key (ai-skill-{skillId}), so previousHighScore is
+    // always 0 and the scorer always awards +25 XP firstTimeBonus. Subtract it when
+    // the correctly-keyed lookup found a previous score.
+    if (isAiExercise && prevHigh > 0) {
+      score = { ...score, xpEarned: Math.max(0, score.xpEarned - 25) };
+    }
+
     // Set finalScore AFTER ability boosts so CompletionModal shows the correct values
     setFinalScore(score);
 
@@ -893,8 +901,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Record practice time BEFORE challenge validation so minutesPracticedToday is accurate
     let elapsedMinutes = 0;
     if (playbackStartTimeRef.current > 0) {
-      elapsedMinutes = Math.max(1, Math.round((Date.now() - playbackStartTimeRef.current) / 60000));
-      progressStore.recordPracticeSession(elapsedMinutes);
+      elapsedMinutes = Math.round(((Date.now() - playbackStartTimeRef.current) / 60000) * 10) / 10; // round to 0.1 min
+      if (elapsedMinutes > 0) {
+        progressStore.recordPracticeSession(elapsedMinutes);
+      }
     }
 
     // Read fresh minutesPracticed AFTER recordPracticeSession mutated the store
@@ -1026,7 +1036,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       // Check lesson completion status (only for real lessons)
       if (exLessonId && lesson && score.isPassed) {
         const updatedLP = useProgressStore.getState().lessonProgress[exLessonId];
-        const currentIsTest = isTestExercise(ex.id);
+        const currentIsTest = isTestExercise(ex.id) || testMode;
 
         if (currentIsTest) {
           // Mastery test passed → mark lesson complete
@@ -1279,8 +1289,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     let totalGemsForModal = gemsEarned;
     if (score.isPassed && !wasPreviouslyCompleted) totalGemsForModal += 25;
 
-    // --- Chest rewards ---
-    const chestType = getChestType(score.stars, !wasPreviouslyCompleted);
+    // --- Chest rewards (only on passing exercises) ---
+    const chestType = score.isPassed ? getChestType(score.stars, !wasPreviouslyCompleted) : 'none';
     const chestReward = getChestReward(chestType);
     if (chestReward.gems > 0) {
       gemStore.earnGems(chestReward.gems, `chest-${ex.id}`);
@@ -1977,11 +1987,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         const beatDiffMs = Math.abs(bestMatch.beatDiffSigned) * msPerBeat;
 
         let feedbackType: FeedbackState['type'];
-        if (beatDiffMs <= exercise.scoring.timingToleranceMs * 0.5) {
+        if (beatDiffMs <= exercise.scoring.timingToleranceMs) {
           feedbackType = 'perfect';
-        } else if (beatDiffMs <= exercise.scoring.timingToleranceMs) {
-          feedbackType = 'good';
         } else if (beatDiffMs <= exercise.scoring.timingGracePeriodMs) {
+          feedbackType = 'good';
+        } else if (beatDiffMs <= exercise.scoring.timingGracePeriodMs * 2) {
           feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
         } else {
           feedbackType = 'ok';

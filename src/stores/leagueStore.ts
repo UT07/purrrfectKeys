@@ -128,9 +128,13 @@ export const useLeagueStore = create<LeagueStoreState>((set, get) => ({
       const fresh = resetWeeklyXpIfStale(state.membership);
       if (!fresh) return state;
       const updated = { ...fresh, weeklyXp: fresh.weeklyXp + xp };
-      debouncedSave({ membership: updated, previousTier: state.previousTier });
       return { ...state, membership: updated };
     });
+    // Save AFTER set() — calling inside the updater can schedule duplicate saves in StrictMode
+    const afterState = get();
+    if (afterState.membership) {
+      debouncedSave({ membership: afterState.membership, previousTier: afterState.previousTier });
+    }
   },
 
   clearTierTransition: () => {

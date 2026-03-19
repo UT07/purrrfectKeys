@@ -19,7 +19,7 @@ import { useAuthStore } from './stores/authStore';
 import { useAchievementStore } from './stores/achievementStore';
 import { useLearnerProfileStore } from './stores/learnerProfileStore';
 import { levelFromXp } from './core/progression/XpSystem';
-import type { PlaybackSpeed, PreferredInputMethod, MicDetectionMode } from './stores/types';
+import type { PlaybackSpeed, PreferredInputMethod, MicDetectionMode, LearningPathId } from './stores/types';
 import { syncManager } from './services/firebase/syncService';
 import { migrateLocalToCloud } from './services/firebase/dataMigration';
 import { hydrateGemStore } from './stores/gemStore';
@@ -88,7 +88,7 @@ function AppRoot(): React.ReactElement {
             soundEnabled, hapticEnabled, metronomeVolume, keyboardVolume,
             showFingerNumbers, showNoteNames, preferredHand, darkMode, showTutorials,
             lastMidiDeviceId, lastMidiDeviceName, autoConnectMidi,
-            username, micPermissionGranted, reminderTime,
+            username, micPermissionGranted, reminderTime, selectedPath,
             // Phase 8-11 fields (must be hydrated or they revert to defaults on restart)
             equippedAccessories, ownedAccessories, playbackSpeed,
             uiSoundEnabled, uiSoundVolume, preferredInputMethod, micDetectionMode,
@@ -117,6 +117,7 @@ function AppRoot(): React.ReactElement {
             ...(lastMidiDeviceName !== undefined ? { lastMidiDeviceName: lastMidiDeviceName as string | null } : {}),
             ...(autoConnectMidi != null ? { autoConnectMidi: autoConnectMidi as boolean } : {}),
             ...(username ? { username: username as string } : {}),
+            ...(selectedPath ? { selectedPath: selectedPath as LearningPathId } : {}),
             ...(micPermissionGranted != null ? { micPermissionGranted: micPermissionGranted as boolean } : {}),
             ...(reminderTime ? { reminderTime: reminderTime as string } : {}),
             // Phase 8-11 fields
@@ -216,9 +217,13 @@ function AppRoot(): React.ReactElement {
         }
 
         // Sync Firebase display name to settingsStore AFTER both hydration and auth.
+        // Only overwrite if the user hasn't customized their name (still default or empty).
         const authUser = useAuthStore.getState().user;
         if (authUser?.displayName) {
-          useSettingsStore.getState().setDisplayName(authUser.displayName);
+          const currentName = useSettingsStore.getState().displayName;
+          if (!currentName || currentName === 'Piano Student') {
+            useSettingsStore.getState().setDisplayName(authUser.displayName);
+          }
         }
 
         // Identify user across Sentry + PostHog for error context and analytics

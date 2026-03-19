@@ -461,6 +461,10 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
         ...prev.evolutionData,
         'chonky-monke': createDefaultEvolutionData('chonky-monke'),
       },
+      chonkyUnlockProgress: {
+        daysStreakReached: true,
+        skillsMasteredReached: true,
+      },
     }));
     debouncedSave(get());
   },
