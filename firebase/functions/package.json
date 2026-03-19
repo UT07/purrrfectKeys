@@ -10,7 +10,7 @@
     "start": "npm run build && npm run serve",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "jest"
+    "test": "jest --forceExit --no-cache"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
