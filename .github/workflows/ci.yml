@@ -195,3 +195,21 @@ jobs:
           if [ "$PROD_DEPS" -gt 50 ]; then
             echo "::warning::Production dependency count ($PROD_DEPS) exceeds budget of 50"
           fi
+
+  # ── Required Status Check (branch protection gate) ────
+  typecheck-lint-test:
+    name: typecheck-lint-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    needs: [typecheck, lint, test]
+    if: always()
+    steps:
+      - name: Check required jobs
+        run: |
+          if [ "${{ needs.typecheck.result }}" != "success" ] || \
+             [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ]; then
+            echo "::error::One or more required jobs failed"
+            exit 1
+          fi
+          echo "All required checks passed"
