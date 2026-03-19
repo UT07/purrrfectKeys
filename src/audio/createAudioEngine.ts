@@ -89,7 +89,7 @@ export async function ensureAudioModeConfigured(allowRecording = false): Promise
       iosCategory: allowRecording ? 'playAndRecord' : 'playback',
       iosMode,
       iosOptions: allowRecording
-        ? ['defaultToSpeaker', 'allowBluetoothHFP']
+        ? ['defaultToSpeaker', 'allowBluetooth']
         : ['defaultToSpeaker'],
       iosAllowHaptics: true,
     });

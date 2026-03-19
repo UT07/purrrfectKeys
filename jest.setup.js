@@ -1,6 +1,15 @@
-require('@testing-library/react-native/build/matchers/extend-expect');
+import '@testing-library/jest-native/extend-expect';
 
 // Mock expo modules
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(),
+  useLocalSearchParams: jest.fn(() => ({})),
+  Stack: {
+    Screen: jest.fn(),
+    Navigator: jest.fn(({ children }) => children),
+  },
+}));
+
 jest.mock('expo-status-bar', () => ({
   StatusBar: jest.fn(),
 }));

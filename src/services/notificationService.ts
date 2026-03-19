@@ -10,8 +10,7 @@ import * as Notifications from 'expo-notifications';
 // Configure notification handler (shows when app is foregrounded)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
+    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),

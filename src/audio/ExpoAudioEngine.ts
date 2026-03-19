@@ -604,20 +604,14 @@ export class ExpoAudioEngine implements IAudioEngine {
     const voice = this.activeVoices.get(note);
     if (voice) {
       this.activeVoices.delete(note);
-      // Micro-fade: ramp volume to 0 over 5ms, then stop.
-      // Guard: only stop if the voice hasn't been recycled by a new playNote().
-      const capturedVoice = voice;
+      // Micro-fade: ramp volume to 0 over 5ms, then stop
       voice.setVolumeAsync(0).then(() => {
         setTimeout(() => {
-          // Check that this voice hasn't been re-assigned to the same note by playNote()
-          if (this.activeVoices.get(note) !== capturedVoice) {
-            capturedVoice.stopAsync().catch(() => {});
-          }
+          voice.stopAsync().catch(() => {});
         }, 5);
       }).catch(() => {
-        if (this.activeVoices.get(note) !== capturedVoice) {
-          capturedVoice.stopAsync().catch(() => {});
-        }
+        // Fallback: just stop if volume ramp fails
+        voice.stopAsync().catch(() => {});
       });
     }
   }

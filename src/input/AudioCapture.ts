@@ -42,7 +42,6 @@ export class AudioCapture {
   private callbacks: Set<AudioBufferCallback> = new Set();
   private isCapturing = false;
   private isInitialized = false;
-  private ownedBuffer: Float32Array | null = null;
   private bufferCount = 0;
   private bufferWatchdogTimer: ReturnType<typeof setTimeout> | null = null;
   /** Actual sample rate detected from the first audio buffer (may differ from requested) */
@@ -60,7 +59,10 @@ export class AudioCapture {
     if (this.isInitialized) return;
 
     try {
-      this.recorder = new AudioRecorder();
+      this.recorder = new AudioRecorder({
+        sampleRate: this.config.sampleRate,
+        bufferLengthInSamples: this.config.bufferSize,
+      });
       logger.log(
         `[AudioCapture] AudioRecorder created (sampleRate=${this.config.sampleRate}, bufferSize=${this.config.bufferSize})`
       );
@@ -72,20 +74,17 @@ export class AudioCapture {
       );
     }
 
-    this.recorder.onAudioReady(
-      { sampleRate: this.config.sampleRate, bufferLength: this.config.bufferSize, channelCount: 1 },
-      (event) => {
+    this.recorder.onAudioReady((event) => {
       if (!this.isCapturing) return;
 
-      // getChannelData() returns a shared/reused native buffer that gets
-      // overwritten on the next callback. Copy into a pre-allocated owned buffer
-      // to avoid GC pressure from allocating on every audio callback (~43/sec).
+      // getChannelData() may return a shared/reused native buffer that gets
+      // overwritten by the audio system before callbacks finish processing.
+      // We must create an owned copy. Using .slice() instead of a pre-allocated
+      // buffer + subarray() view — a subarray is still a view into the same
+      // ArrayBuffer, so async consumers would see corrupted data on the next
+      // callback cycle.
       const rawSamples = event.buffer.getChannelData(0);
-      if (!this.ownedBuffer || this.ownedBuffer.length !== rawSamples.length) {
-        this.ownedBuffer = new Float32Array(rawSamples.length);
-      }
-      this.ownedBuffer.set(rawSamples);
-      const samples = this.ownedBuffer;
+      const samples = new Float32Array(rawSamples);
       // event.when may be undefined in some react-native-audio-api versions;
       // fall back to Date.now() for a reasonable timestamp
       const timestamp = typeof event.when === 'number' ? event.when * 1000 : Date.now();
@@ -284,7 +283,7 @@ export function configureAudioSessionForRecording(): void {
     AudioManager.setAudioSessionOptions({
       iosCategory: 'playAndRecord',
       iosMode: 'measurement',
-      iosOptions: ['defaultToSpeaker', 'allowBluetoothHFP'],
+      iosOptions: ['defaultToSpeaker', 'allowBluetooth'],
       iosAllowHaptics: true,
     });
     logger.log('[AudioCapture] Audio session configured for playAndRecord (via AudioManager)');

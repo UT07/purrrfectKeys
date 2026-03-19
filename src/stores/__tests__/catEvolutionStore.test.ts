@@ -555,8 +555,8 @@ describe('catEvolutionStore', () => {
       useCatEvolutionStore.getState().completeDailyChallengeAndClaim();
       // Call again — day is already claimed
       const reward = useCatEvolutionStore.getState().completeDailyChallengeAndClaim();
-      // Should return null — already claimed, prevent double-award
-      expect(reward).toBeNull();
+      // Should return the reward (already claimed) — not null, since challenge is still complete
+      expect(reward).toEqual({ type: 'gems', amount: 10 });
     });
 
     it('returns null when week has expired', () => {
