@@ -398,3 +398,4 @@ POSTHOG_API_KEY=xxx
 5. **Run typecheck before committing** - CI will fail otherwise
 6. **Pitch detection is fallback only** - Optimize for MIDI input first
 7. **react-native-screens unpinned** — was pinned to 4.4.0 for RN 0.76 codegen bug, now on ~4.11.1 with RN 0.79. After version changes, clean iOS build: `rm -rf ios/Pods ios/Podfile.lock ios/build && cd ios && pod install`
+8. **Always push to remote after commits** - User works across devices (Mac + phone). Push after every commit to keep remote in sync. Never let local and remote diverge.
