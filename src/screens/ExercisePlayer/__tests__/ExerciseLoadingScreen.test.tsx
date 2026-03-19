@@ -14,6 +14,7 @@ jest.mock('../../../components/Mascot/SalsaCoach', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     SalsaCoach: (props: any) =>
       React.createElement(View, { testID: 'salsa-coach', ...props }),
   };
@@ -23,6 +24,7 @@ jest.mock('../../../components/FunFact/FunFactCard', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FunFactCard: (props: any) =>
       React.createElement(View, { testID: props.testID || 'fun-fact-card' }),
   };

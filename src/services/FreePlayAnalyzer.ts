@@ -269,9 +269,13 @@ export function analyzeSession(notes: PlayedNote[]): FreePlayAnalysis {
   const suggestedDrillType = determineDrillType(uniqueNotes, commonIntervals);
 
   // Duration and rate
-  const timestamps = notes.map((n) => n.timestamp);
-  const minTime = Math.min(...timestamps);
-  const maxTime = Math.max(...timestamps);
+  // Use reduce instead of spread to avoid stack overflow on large arrays
+  let minTime = Infinity;
+  let maxTime = -Infinity;
+  for (const n of notes) {
+    if (n.timestamp < minTime) minTime = n.timestamp;
+    if (n.timestamp > maxTime) maxTime = n.timestamp;
+  }
   const durationSeconds = Math.max((maxTime - minTime) / 1000, 0.1);
   const notesPerSecond = notes.length / durationSeconds;
 

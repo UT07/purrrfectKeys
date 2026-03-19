@@ -241,6 +241,22 @@ export async function sendFriendRequest(
     throw new Error('Cannot send friend request to yourself');
   }
 
+  // Check for existing connection to prevent overwriting
+  const existingRef = doc(db, 'users', fromUid, 'friends', toUid);
+  const existingSnap = await getDoc(existingRef);
+  if (existingSnap.exists()) {
+    const existing = existingSnap.data() as FriendConnection;
+    if (existing.status === 'accepted') {
+      throw new Error('Already friends');
+    }
+    if (existing.status === 'pending_outgoing') {
+      throw new Error('Friend request already sent');
+    }
+    if (existing.status === 'pending_incoming') {
+      throw new Error('This user already sent you a friend request');
+    }
+  }
+
   const now = Date.now();
 
   const outgoingRef = doc(db, 'users', fromUid, 'friends', toUid);
@@ -415,25 +431,26 @@ export async function resolveChallengeGemStake(
   toUid: string,
 ): Promise<{ winnerUid: string; winnerGems: number } | null> {
   const challengeRef = doc(db, 'challenges', challengeId);
-  const snap = await getDoc(challengeRef);
 
-  if (!snap.exists()) return null;
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(challengeRef);
+    if (!snap.exists()) return null;
 
-  const challenge = snap.data() as FriendChallenge;
-  if (!challenge.gemStake || challenge.gemStake <= 0) return null;
-  if (challenge.resolvedAt) return null; // Already resolved
+    const challenge = snap.data() as FriendChallenge;
+    if (!challenge.gemStake || challenge.gemStake <= 0) return null;
+    if (challenge.resolvedAt) return null; // Already resolved
 
-  // Higher score wins; tie goes to challenger (fromUid)
-  const winnerUid = toScore > fromScore ? toUid : fromUid;
-  const winnerGems = challenge.gemStake * 2;
+    const winnerUid = toScore > fromScore ? toUid : fromUid;
+    const winnerGems = challenge.gemStake * 2;
 
-  await updateDoc(challengeRef, {
-    winnerUid,
-    winnerGems,
-    resolvedAt: Date.now(),
+    transaction.update(challengeRef, {
+      winnerUid,
+      winnerGems,
+      resolvedAt: Date.now(),
+    });
+
+    return { winnerUid, winnerGems };
   });
-
-  return { winnerUid, winnerGems };
 }
 
 /**

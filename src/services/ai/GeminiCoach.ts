@@ -283,7 +283,7 @@ export class GeminiCoach {
 
     // Try Cloud Function first
     try {
-      const fn = httpsCallable<CoachRequest, { feedback: string }>(functions, 'generateCoachFeedback', { timeout: 15000 });
+      const fn = httpsCallable<CoachRequest, { feedback: string }>(functions, 'generateCoachFeedback', { timeout: 5000 });
       const result = await fn(request);
       const text = result.data.feedback;
 
@@ -315,7 +315,7 @@ export class GeminiCoach {
 
       const result = await withTimeout(
         model.generateContent(prompt),
-        15000,
+        8000,
         'GeminiCoach.generateContent',
       );
       const response = result.response;
@@ -443,8 +443,10 @@ export async function getCoachFeedback(request: CoachRequest): Promise<string> {
 
 export function clearCoachCache(exerciseId?: string): void {
   if (exerciseId) {
-    GeminiCoach.clearExerciseCache(exerciseId);
+    GeminiCoach.clearExerciseCache(exerciseId).catch((err) =>
+      logger.warn('[GeminiCoach] clearExerciseCache failed:', (err as Error)?.message));
   } else {
-    GeminiCoach.clearAllCache();
+    GeminiCoach.clearAllCache().catch((err) =>
+      logger.warn('[GeminiCoach] clearAllCache failed:', (err as Error)?.message));
   }
 }

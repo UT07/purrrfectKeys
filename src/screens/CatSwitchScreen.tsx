@@ -22,6 +22,8 @@ import {
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,6 +54,8 @@ import { GradientMeshBackground } from '../components/effects';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import type { RarityLevel } from '../theme/tokens';
 import { analyticsEvents } from '../services/analytics/PostHog';
+import { ttsService } from '../services/tts/TTSService';
+import { getRandomCatMessage } from '../content/catDialogue';
 
 const CARD_WIDTH_RATIO = 0.88;
 const CARD_SPACING = 12;
@@ -582,7 +586,7 @@ export function CatSwitchScreen(): React.ReactElement {
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = screenWidth * CARD_WIDTH_RATIO;
   const snapInterval = cardWidth + CARD_SPACING;
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
   const setSelectedCatId = useSettingsStore((s) => s.setSelectedCatId);
   const setAvatarEmoji = useSettingsStore((s) => s.setAvatarEmoji);
@@ -619,6 +623,12 @@ export function CatSwitchScreen(): React.ReactElement {
       setAvatarEmoji(cat.emoji);
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Stop any in-progress speech before speaking new cat's greeting
+    ttsService.stop();
+    const message = getRandomCatMessage(catId, 'idle');
+    if (message) {
+      ttsService.speak(message, { catId });
+    }
   }, [ownedCats, setSelectedCatId, selectCat, setAvatarEmoji]);
 
   const handleBuy = useCallback((cat: CatCharacter) => {
@@ -672,7 +682,7 @@ export function CatSwitchScreen(): React.ReactElement {
         cardWidth={cardWidth}
       />
     );
-  }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, currentIndex, cardWidth]);
+  }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, cardWidth]);
 
   const keyExtractor = useCallback((item: CatCharacter) => item.id, []);
 
@@ -709,7 +719,7 @@ export function CatSwitchScreen(): React.ReactElement {
           {/* Customize button */}
           <PressableScale
             style={styles.customizeButton}
-            onPress={() => (navigation as any).navigate('CatStudio')}
+            onPress={() => navigation.navigate('CatStudio')}
           >
             <MaterialCommunityIcons name="palette" size={16} color={COLORS.primary} />
             <Text style={styles.customizeText}>Studio</Text>

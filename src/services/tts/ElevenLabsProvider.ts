@@ -104,6 +104,7 @@ function getCachePath(text: string, voiceId: string): string {
 // ────────────────────────────────────────────────
 
 /** Currently playing sound — kept for stop() */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- lazy-loaded Sound instance from expo-av
 let _currentSound: any = null;
 
 function getApiKey(): string | null {
@@ -255,9 +256,13 @@ async function playFromFile(
     );
     _currentSound = sound;
 
-    sound.setOnPlaybackStatusUpdate((status: any) => {
+    sound.setOnPlaybackStatusUpdate((status: { isLoaded: boolean; didJustFinish?: boolean }) => {
       if (status.isLoaded && status.didJustFinish) {
-        _currentSound = null;
+        // Only clear _currentSound if it still points to this sound instance
+        // (prevents clearing a newer sound started by a concurrent speak call)
+        if (_currentSound === sound) {
+          _currentSound = null;
+        }
         sound.unloadAsync().catch(() => {});
         onDone?.();
       }

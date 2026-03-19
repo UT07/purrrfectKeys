@@ -111,6 +111,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   ...defaultData,
 
   addXp: (amount: number) => {
+    if (!Number.isFinite(amount) || amount <= 0) return;
     const oldLevel = get().level;
     set((state) => {
       const newTotalXp = state.totalXp + amount;
@@ -148,7 +149,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   setLevel: (level: number) => {
-    set({ level });
+    const clamped = Math.max(1, Math.floor(level));
+    if (!Number.isFinite(clamped)) return;
+    set({ level: clamped });
     debouncedSave(get());
   },
 
@@ -168,6 +171,38 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }
     }
 
+    // Streak gem milestones — checked here (not in recordExerciseCompletion)
+    // because updateStreakData is called AFTER the streak is incremented,
+    // so newStreak reflects the actual post-increment value.
+    const STREAK_MILESTONES: { streak: number; gems: number; catXp: number }[] = [
+      { streak: 7, gems: 50, catXp: 100 },
+      { streak: 30, gems: 200, catXp: 250 },
+      { streak: 100, gems: 500, catXp: 500 },
+    ];
+    const newlyClaimedMilestones: { streak: number; gems: number; catXp: number }[] = [];
+    set((state) => {
+      const claimed = state.streakMilestonesClaimed ?? [];
+      const toAdd: number[] = [];
+      for (const m of STREAK_MILESTONES) {
+        if (newStreak >= m.streak && !claimed.includes(m.streak)) {
+          toAdd.push(m.streak);
+          newlyClaimedMilestones.push(m);
+        }
+      }
+      if (toAdd.length === 0) return state;
+      return {
+        streakMilestonesClaimed: [...claimed, ...toAdd],
+      };
+    });
+    for (const m of newlyClaimedMilestones) {
+      useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
+      // Award cat evolution XP for streak milestones
+      const selectedCatId = useSettingsStore.getState().selectedCatId;
+      if (selectedCatId) {
+        useCatEvolutionStore.getState().addEvolutionXp(selectedCatId, m.catXp);
+      }
+    }
+
     debouncedSave(get());
   },
 
@@ -182,6 +217,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   updateExerciseProgress: (lessonId: string, exerciseId: string, progress: ExerciseProgress) => {
+    const prevStatus = get().lessonProgress[lessonId]?.status;
     set((state) => {
       const lesson = state.lessonProgress[lessonId] ?? {
         lessonId,
@@ -236,6 +272,16 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         },
       };
     });
+
+    // Award cat XP on first lesson completion
+    const newStatus = get().lessonProgress[lessonId]?.status;
+    if (newStatus === 'completed' && prevStatus !== 'completed') {
+      const selectedCatId = useSettingsStore.getState().selectedCatId;
+      if (selectedCatId) {
+        useCatEvolutionStore.getState().addEvolutionXp(selectedCatId, 200);
+      }
+    }
+
     debouncedSave(get());
   },
 
@@ -254,6 +300,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   recordPracticeSession: (duration: number) => {
+    if (!Number.isFinite(duration) || duration <= 0) return;
     const today = localToday();
     // BUG-011/024 fix: Read user's preferred daily goal from settings
     const userMinutesTarget = useSettingsStore.getState().dailyGoalMinutes ?? 10;
@@ -357,7 +404,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     const effectiveXp = Math.round(xpEarned * xpMultiplier);
     const oldLevel = get().level;
 
-    let dailyGoalJustCompleted = false;
+    // Capture pre-update daily goal state for side-effect detection
+    const preUpdateGoal = get().dailyGoalData[today];
+    const wasDailyGoalComplete = preUpdateGoal?.isComplete ?? false;
 
     set((state) => {
       const dailyGoal = state.dailyGoalData[today] || {
@@ -366,14 +415,11 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         minutesTarget: userMinutesTarget,
       };
       const minutesTarget = dailyGoal.minutesTarget || userMinutesTarget;
-      const wasDailyGoalComplete = dailyGoal.isComplete;
       const newTotalXp = state.totalXp + effectiveXp;
       const newExercisesCompleted = dailyGoal.exercisesCompleted + 1;
       const nowComplete =
         dailyGoal.minutesPracticed >= minutesTarget &&
         newExercisesCompleted >= dailyGoal.exercisesTarget;
-
-      dailyGoalJustCompleted = nowComplete && !wasDailyGoalComplete;
 
       return {
         totalXp: newTotalXp,
@@ -391,7 +437,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
     });
 
     // Bonus gems when the full daily goal (minutes + exercises) is met
-    if (dailyGoalJustCompleted) {
+    const postUpdateGoal = get().dailyGoalData[today];
+    if (postUpdateGoal?.isComplete && !wasDailyGoalComplete) {
       useGemStore.getState().earnGems(10, 'daily-goal');
       analyticsEvents.rewards.dailyGoalCompleted();
     }
@@ -407,33 +454,8 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       currentStreak: get().streakData.currentStreak,
     });
 
-    // BUG-023 fix: Streak gem milestones — only award once per milestone
-    // Atomic check-and-claim inside a single set() to prevent double-award on rapid calls
-    const STREAK_MILESTONES: { streak: number; gems: number }[] = [
-      { streak: 7, gems: 50 },
-      { streak: 30, gems: 200 },
-      { streak: 100, gems: 500 },
-    ];
-    const newlyClaimedMilestones: { streak: number; gems: number }[] = [];
-    set((state) => {
-      const streak = state.streakData.currentStreak;
-      const claimed = state.streakMilestonesClaimed ?? [];
-      const toAdd: number[] = [];
-      for (const m of STREAK_MILESTONES) {
-        if (streak >= m.streak && !claimed.includes(m.streak)) {
-          toAdd.push(m.streak);
-          newlyClaimedMilestones.push(m);
-        }
-      }
-      if (toAdd.length === 0) return state;
-      return {
-        streakMilestonesClaimed: [...claimed, ...toAdd],
-      };
-    });
-    // Award gems AFTER atomic claim (outside set to avoid cross-store in updater)
-    for (const m of newlyClaimedMilestones) {
-      useGemStore.getState().earnGems(m.gems, `${m.streak}-day-streak`);
-    }
+    // Streak gem milestones are in updateStreakData() — they need the
+    // post-increment streak value, and updateStreakData runs after this function.
 
     debouncedSave(get());
 

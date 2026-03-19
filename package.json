@@ -19,6 +19,7 @@
     "test:security": "jest --testPathPattern='security/' --verbose --no-coverage",
     "test:regression": "jest --testPathPattern='regression/' --verbose --no-coverage",
     "test:stress": "jest --testPathPattern='stress/' --verbose --no-coverage",
+    "test:infra": "npx tsx scripts/infra-stress-test.ts",
     "test:qa": "jest --testPathPattern='(performance|security|regression|stress)/' --verbose --no-coverage",
     "audit:security": "npm audit --omit=dev",
     "audit:deps": "npm audit --omit=dev --audit-level=high",
@@ -89,8 +90,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
-    "@testing-library/jest-native": "^5.4.3",
-    "@testing-library/react-native": "^12.9.0",
+    "@testing-library/react-native": "^13.0.0",
     "@types/jest": "^29.5.0",
     "@types/react": "~18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",

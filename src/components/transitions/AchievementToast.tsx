@@ -103,7 +103,7 @@ export function AchievementToast({
     }, autoDismissMs);
 
     return () => clearTimeout(timer);
-  }, [translateY, opacity, autoDismissMs, handleDismiss]);
+  }, [translateY, opacity, autoDismissMs, handleDismiss, type]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

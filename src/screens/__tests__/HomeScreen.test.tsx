@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * HomeScreen UI Tests
  * Tests rendering of key sections: greeting, streak, XP, daily challenge,
@@ -25,9 +26,8 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
   useRoute: () => ({ params: {} }),
   useFocusEffect: (cb: () => void) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const React = require('react');
-    React.useEffect(() => { cb(); }, []);
+    React.useEffect(() => { cb(); }, [cb]);
   },
   NavigationContainer: ({ children }: any) => children,
 }));
@@ -320,7 +320,7 @@ jest.mock('../../stores/catEvolutionStore', () => ({
 }));
 
 jest.mock('../../stores/types', () => ({
-  EVOLUTION_XP_THRESHOLDS: { baby: 0, teen: 500, adult: 2000, master: 5000 },
+  EVOLUTION_XP_THRESHOLDS: { baby: 0, teen: 2000, adult: 8000, master: 25000 },
 }));
 
 // Song store mock

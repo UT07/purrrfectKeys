@@ -36,6 +36,7 @@ const mockSignUpWithEmail = jest.fn(() => Promise.resolve());
 const mockSendPasswordReset = jest.fn(() => Promise.resolve());
 const mockClearError = jest.fn();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mockAuthState: any = {
   isLoading: false,
   error: null,
@@ -47,6 +48,7 @@ let mockAuthState: any = {
 
 jest.mock('../../stores/authStore', () => ({
   useAuthStore: Object.assign(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (sel?: any) => (sel ? sel(mockAuthState) : mockAuthState),
     { getState: () => mockAuthState },
   ),
@@ -63,6 +65,7 @@ import { EmailAuthScreen } from '../EmailAuthScreen';
 // ---------------------------------------------------------------------------
 
 function fillForm(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getByTestId: any,
   { email = 'test@example.com', password = 'password123', displayName = '' } = {},
 ) {

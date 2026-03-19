@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { CatShadows, CatRimLight, CatFurSheen } from '../svg/CatShadows';

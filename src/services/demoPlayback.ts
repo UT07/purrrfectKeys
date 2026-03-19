@@ -209,7 +209,7 @@ export class DemoPlaybackService {
           this.stop();
           cb?.();
         }
-      } catch (error) {
+      } catch {
         this.stop();
       }
     }, 16); // ~60fps
@@ -517,7 +517,7 @@ export class DemoPlaybackService {
         this.stop();
         onComplete?.();
       }
-      } catch (error) {
+      } catch {
         this.stop();
       }
     }, 16); // ~60fps

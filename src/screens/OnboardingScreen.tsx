@@ -43,6 +43,7 @@ import { CatAvatar } from '../components/Mascot/CatAvatar';
 import { getStarterCats } from '../components/Mascot/catCharacters';
 import type { CatCharacter } from '../components/Mascot/catCharacters';
 import { useSettingsStore } from '../stores/settingsStore';
+import type { LearningPathId } from '../stores/types';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { prefillOnboardingBuffer } from '../services/exerciseBufferManager';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
@@ -67,7 +68,7 @@ interface OnboardingState {
   experienceLevel?: 'beginner' | 'intermediate' | 'returning';
   inputMethod?: 'midi' | 'mic' | 'touch';
   goal?: 'songs' | 'technique' | 'exploration';
-  selectedPath?: string;
+  selectedPath?: LearningPathId;
   selectedCatId?: string;
   username?: string;
   usernameDisplayName?: string;
@@ -418,7 +419,7 @@ function GoalSettingStep({
 // ---------------------------------------------------------------------------
 
 const PATH_OPTIONS: Array<{
-  id: string;
+  id: LearningPathId;
   emoji: string;
   title: string;
   description: string;
@@ -439,8 +440,8 @@ function PathSelectionStep({
   direction,
 }: {
   onNext: () => void;
-  value?: string;
-  onValueChange: (pathId: string) => void;
+  value?: LearningPathId;
+  onValueChange: (pathId: LearningPathId) => void;
   direction: SlideDirection;
 }): React.ReactElement {
   const catInfo = STEP_CATS[5];
@@ -1068,7 +1069,7 @@ export function OnboardingScreen(): React.ReactElement {
       }
       // Persist path selection from step 5
       if (state.selectedPath) {
-        useSettingsStore.getState().setSelectedPath(state.selectedPath as any);
+        useSettingsStore.getState().setSelectedPath(state.selectedPath);
       }
       // Persist cat selection from step 6
       if (state.selectedCatId) {
@@ -1092,7 +1093,7 @@ export function OnboardingScreen(): React.ReactElement {
           updateUserProfile(user.uid, {
             hasCompletedOnboarding: true,
             username: state.username || '',
-          } as any).catch(() => {});
+          }).catch(() => {});
 
           // Atomically claim the username in the `usernames/` collection so other
           // users can find us and duplicate usernames are prevented. This MUST happen
@@ -1107,7 +1108,7 @@ export function OnboardingScreen(): React.ReactElement {
               // to prevent duplicate usernames in the system.
               console.warn('[Onboarding] registerUsername failed:', err.message);
               if (err.message === 'Username already taken') {
-                updateUserProfile(user.uid, { username: '' } as any).catch(() => {});
+                updateUserProfile(user.uid, { username: '' }).catch(() => {});
                 useSettingsStore.getState().setUsername('');
               }
             });

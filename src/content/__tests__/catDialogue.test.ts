@@ -37,6 +37,7 @@ describe('catDialogue', () => {
   });
 
   it('falls back to base trigger if condition not found', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const msg = getRandomCatMessage('luna', 'exercise_start', 'nonexistent_condition' as any);
     expect(typeof msg).toBe('string');
     expect(msg.length).toBeGreaterThan(0);

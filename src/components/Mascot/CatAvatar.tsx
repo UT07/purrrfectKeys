@@ -8,7 +8,7 @@
  * Without a pose, falls back to the default floating idle animation.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import type { ReactElement } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, {
@@ -151,6 +151,13 @@ export function CatAvatar({
 }: CatAvatarProps): ReactElement {
   const cat: CatCharacter = getCatById(catId) ?? getDefaultCat();
   const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    };
+  }, []);
   const floatingStyle = useFloatingIdle();
   const poseStyle = useCatPose(pose ?? 'idle');
   const entryStyle = useBounceEntry(skipEntryAnimation);
@@ -183,7 +190,8 @@ export function CatAvatar({
     }
     if (showTooltipOnTap) {
       setShowTooltip(true);
-      setTimeout(() => setShowTooltip(false), 2500);
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      tooltipTimerRef.current = setTimeout(() => setShowTooltip(false), 2500);
     }
   }, [onPress, showTooltipOnTap]);
 

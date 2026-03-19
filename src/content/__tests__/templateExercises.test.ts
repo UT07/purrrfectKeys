@@ -4,6 +4,7 @@ import { getTemplateExercise, getTemplateForSkill } from '../templateExercises';
 // Mock SkillTree so getTemplateForSkill can use getGenerationHints / getSkillById
 jest.mock('../../core/curriculum/SkillTree', () => ({
   getGenerationHints: jest.fn((skillId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hints: Record<string, any> = {
       'find-middle-c': { targetMidi: [60], hand: 'right', minDifficulty: 1, promptHint: 'Play Middle C' },
       'keyboard-geography': { targetMidi: [60, 62, 64, 65, 67], hand: 'right', keySignature: 'C major', minDifficulty: 1, promptHint: 'Navigate C4-G4' },

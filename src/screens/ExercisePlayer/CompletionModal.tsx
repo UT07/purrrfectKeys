@@ -310,7 +310,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
 
     fetchFeedback();
     return () => { cancelled = true; };
-  }, [exercise.id, exercise.metadata.title, exercise.metadata.difficulty, score]);
+  }, [exercise.id, exercise.metadata.title, exercise.metadata.difficulty, score, sessionMinutes]);
 
   // Auto-play coach feedback via TTS once the coaching phase is visible.
   // Gate on phaseIndex so TTS doesn't fire before the text is on screen.
@@ -574,7 +574,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
                     {/* Result message */}
                     <View style={styles.resultSection}>
                       <MaterialCommunityIcons
-                        name={resultDisplay.icon as any}
+                        name={resultDisplay.icon}
                         size={22}
                         color={resultDisplay.color}
                       />

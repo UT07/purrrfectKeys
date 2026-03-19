@@ -199,7 +199,11 @@ export function XPTransitionOverlay({
       scoreAnim.removeListener(scoreListener);
       for (const t of timers) clearTimeout(t);
     };
-  }, [handleExit]); // handleExit is stable (ref-based guard)
+  // score, scoreAnim, star*Scale, gemsEarned, chestType are all stable across renders
+  // (props/shared values created once). handleExit is ref-guarded. Adding them would
+  // cause the timed animation sequence to restart on every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleExit]);
 
   // Star animated styles
   const star1Style = useAnimatedStyle(() => ({

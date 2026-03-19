@@ -279,9 +279,9 @@ export type EvolutionStage = 'baby' | 'teen' | 'adult' | 'master';
 
 export const EVOLUTION_XP_THRESHOLDS: Record<EvolutionStage, number> = {
   baby: 0,
-  teen: 500,
-  adult: 2000,
-  master: 5000,
+  teen: 2000,
+  adult: 8000,
+  master: 25000,
 };
 
 /** Discriminated union for ability effects */
@@ -325,6 +325,8 @@ export interface CatEvolutionData {
   xpAccumulated: number;
   abilitiesUnlocked: string[];
   evolvedAt: Record<EvolutionStage, number | null>; // epoch ms or null
+  /** Stages for which milestone gems have already been awarded (dedup guard) */
+  claimedEvolutionMilestones?: EvolutionStage[];
 }
 
 export interface GemTransaction {

@@ -79,8 +79,10 @@ export function selectAlgorithmicPausePoints(
 }
 
 function buildPausePoint(detail: NoteScore, beatsPerBar: number): PausePoint {
-  const beat = detail.expected.startBeat;
-  const fromBeat = Math.max(0, snapToBarLine(beat, beatsPerBar) - beatsPerBar);
+  // Pause AFTER the note plays, not before — offset by the note's duration
+  // so the student hears the mistake. Minimum 0.5 beats to avoid beat-0 freeze.
+  const beat = Math.max(0.5, detail.expected.startBeat + detail.expected.durationBeats);
+  const fromBeat = Math.max(0, snapToBarLine(detail.expected.startBeat, beatsPerBar) - beatsPerBar);
   const toBeat = snapToBarLine(beat, beatsPerBar) + beatsPerBar * 2;
 
   if (!detail.isCorrectPitch && !detail.isMissedNote && detail.played) {

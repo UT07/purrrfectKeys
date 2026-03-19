@@ -264,7 +264,7 @@ export function AddFriendScreen(): React.JSX.Element {
     let ExpoCamera: any;
     try {
       ExpoCamera = require('expo-camera');
-    } catch (_err) {
+    } catch {
       logger.warn('[AddFriendScreen] expo-camera not available');
       Alert.alert(
         'Camera Not Available',
@@ -896,7 +896,7 @@ function QRScannerModal({
       } else {
         setCameraLoadError(true);
       }
-    } catch (_err) {
+    } catch {
       logger.warn('[QRScannerModal] expo-camera not available');
       setCameraLoadError(true);
     }

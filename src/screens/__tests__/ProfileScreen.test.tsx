@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ProfileScreen UI Tests
  * Tests rendering of user profile, stats, achievements, settings,
@@ -285,7 +286,7 @@ jest.mock('../../stores/catEvolutionStore', () => ({
 }));
 
 jest.mock('../../stores/types', () => ({
-  EVOLUTION_XP_THRESHOLDS: { baby: 0, teen: 500, adult: 2000, master: 5000 },
+  EVOLUTION_XP_THRESHOLDS: { baby: 0, teen: 2000, adult: 8000, master: 25000 },
 }));
 
 jest.mock('../../core/progression/XpSystem', () => ({

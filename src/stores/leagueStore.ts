@@ -120,6 +120,7 @@ export const useLeagueStore = create<LeagueStoreState>((set, get) => ({
   },
 
   updateWeeklyXp: (xp: number) => {
+    if (!Number.isFinite(xp) || xp <= 0) return;
     // Perform entire read-modify-write inside set() to prevent lost updates
     // when two concurrent calls race (e.g., rapid exercise completions).
     set((state) => {

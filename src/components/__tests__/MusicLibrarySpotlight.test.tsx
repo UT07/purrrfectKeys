@@ -31,6 +31,7 @@ jest.mock('expo-linear-gradient', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     LinearGradient: ({ children, ...props }: any) =>
       React.createElement(View, props, children),
   };

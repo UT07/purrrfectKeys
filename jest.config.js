@@ -28,6 +28,9 @@ module.exports = {
     '^@/utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@/content/(.*)$': '<rootDir>/content/$1',
     '\\.(mp3|wav|ogg|m4a|aac)$': '<rootDir>/__mocks__/audioFileMock.js',
+    '^expo-router(.*)$': '<rootDir>/__mocks__/expo-router.js',
+    '^@testing-library/jest-native(.*)$': '<rootDir>/node_modules/@testing-library/react-native/matchers.js',
+    '^@testing-library/react-native/extend-expect$': '<rootDir>/node_modules/@testing-library/react-native/matchers.js',
   },
   testMatch: [
     '**/__tests__/**/*.[jt]s?(x)',
@@ -38,6 +41,6 @@ module.exports = {
     '^.+\\.tsx?$': ['babel-jest', { configFile: './babel.config.js' }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(expo|expo-av|expo-router|expo-font|expo-screen-orientation|expo-haptics|expo-linear-gradient|expo-speech|expo-constants|@expo/vector-icons|@react-native|react-native|@react-native-community|@react-navigation|@shopify/react-native-skia|react-native-reanimated|react-native-gesture-handler|expo-modules-core)/)',
+    'node_modules/(?!(expo|expo-av|expo-font|expo-screen-orientation|expo-haptics|expo-linear-gradient|expo-speech|expo-constants|@expo/vector-icons|@react-native|react-native|@react-native-community|@react-navigation|@shopify/react-native-skia|react-native-reanimated|react-native-gesture-handler|expo-modules-core)/)',
   ],
 };

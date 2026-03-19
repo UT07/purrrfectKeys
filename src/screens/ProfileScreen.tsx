@@ -403,8 +403,8 @@ export function ProfileScreen(): React.ReactElement {
         setUsername(trimmed);
         setShowUsernameEditor(false);
       }
-    } catch (err: any) {
-      if (err?.message === 'Username already taken') {
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Username already taken') {
         setUsernameError('Username already taken');
         setUsernameAvailable(false);
       } else {
@@ -428,10 +428,12 @@ export function ProfileScreen(): React.ReactElement {
           colors={[glowColor(catColor, 0.13), 'transparent', 'transparent']}
           style={styles.header}
         >
-          {/* Level XP ring with cat avatar inside — tap to open cat gallery */}
+          {/* Level XP ring with cat avatar inside — tap to speak + open cat gallery */}
           <PressableScale
             style={styles.ringContainer}
-            onPress={() => navigation.navigate('CatSwitch')}
+            onPress={() => {
+              navigation.navigate('CatSwitch');
+            }}
             testID="profile-level-ring"
           >
             <Svg width={RING_SIZE} height={RING_SIZE}>

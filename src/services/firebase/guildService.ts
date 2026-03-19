@@ -284,6 +284,7 @@ export async function addGuildMemberXp(
   uid: string,
   xpAmount: number,
 ): Promise<void> {
+  if (!Number.isFinite(xpAmount) || xpAmount <= 0) return;
   const memberRef = doc(db, 'guilds', guildId, 'members', uid);
   const guildRef = doc(db, 'guilds', guildId);
 
@@ -362,6 +363,7 @@ export async function addWarPoints(
   guildId: string,
   points: number,
 ): Promise<void> {
+  if (!Number.isFinite(points) || points <= 0) return;
   const warRef = doc(db, 'guildWars', warId);
 
   await runTransaction(db, async (transaction) => {

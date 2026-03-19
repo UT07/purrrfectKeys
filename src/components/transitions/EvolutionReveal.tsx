@@ -25,6 +25,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 import { PressableScale } from '../common/PressableScale';
 import { CatAvatar } from '../Mascot/CatAvatar';
@@ -174,7 +177,7 @@ export function EvolutionReveal({
         >
           <View style={[styles.abilityIconCircle, { backgroundColor: glowColor(accentColor, 0.15) }]}>
             <MaterialCommunityIcons
-              name={newAbility.icon as any}
+              name={newAbility.icon as IconName}
               size={24}
               color={accentColor}
             />

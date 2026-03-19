@@ -49,7 +49,7 @@ export function RankHeroCard(): React.JSX.Element {
       {/* Tier icon */}
       <View style={[styles.tierCircle, { backgroundColor: glowColor(config.color, 0.15) }]}>
         <MaterialCommunityIcons
-          name={config.icon as any}
+          name={config.icon}
           size={36}
           color={config.color}
         />

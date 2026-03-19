@@ -322,6 +322,7 @@ describe('Bug Hunt: Account deletion re-auth flow', () => {
     mockDeleteUserData.mockResolvedValueOnce(undefined);
     mockDeleteUser.mockResolvedValueOnce(undefined);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await useAuthStore.getState().reauthenticateAndDelete('mock-credential' as any);
 
     const state = useAuthStore.getState();

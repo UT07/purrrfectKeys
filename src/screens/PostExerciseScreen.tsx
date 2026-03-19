@@ -126,7 +126,7 @@ export function PostExerciseScreen(): React.ReactElement {
   // Fun fact
   const completionFunFact = useMemo(
     () => (score?.isPassed && exercise ? getFactForExerciseType(exercise.metadata.skills) : null),
-    [score?.isPassed, exercise?.metadata?.skills]
+    [score?.isPassed, exercise]
   );
 
   // Fetch AI coaching feedback
@@ -156,7 +156,7 @@ export function PostExerciseScreen(): React.ReactElement {
         const result = await Promise.race([
           feedbackPromise,
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Coach feedback timeout')), 10000)
+            setTimeout(() => reject(new Error('Coach feedback timeout')), 6000)
           ),
         ]);
         if (!cancelled) setCoachFeedback(result.feedback);

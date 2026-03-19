@@ -101,11 +101,13 @@ const BP_BASE_XP = 100;
 const BP_XP_PER_TIER = 50;
 
 export function xpForBattlePassTier(tier: number): number {
+  if (tier <= 0) return BP_BASE_XP;
   return BP_BASE_XP + (tier - 1) * BP_XP_PER_TIER;
 }
 
 /** Cumulative XP to reach a given battle pass tier */
 export function cumulativeXpForTier(tier: number): number {
+  if (tier <= 0) return 0;
   // Sum of arithmetic series: n/2 × (2a + (n-1)d) where a=BP_BASE_XP, d=BP_XP_PER_TIER
   return Math.round((tier / 2) * (2 * BP_BASE_XP + (tier - 1) * BP_XP_PER_TIER));
 }

@@ -8,6 +8,7 @@
  */
 
 import { create } from 'zustand';
+import { logger } from '@/utils/logger';
 import type { ExerciseResult, Skills, LearnerProfileState, SkillMasteryRecord } from './types';
 import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
 import { getSkillById, DECAY_HALF_LIFE_DAYS, DECAY_THRESHOLD } from '../core/curriculum/SkillTree';
@@ -66,11 +67,12 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
   ...defaultData,
 
   updateNoteAccuracy: (midiNote: number, accuracy: number) => {
+    const clampedAccuracy = Math.max(0, Math.min(1, accuracy));
     const { noteAccuracy, noteAttempts } = get();
-    const prevAccuracy = noteAccuracy[midiNote] ?? accuracy;
+    const prevAccuracy = noteAccuracy[midiNote] ?? clampedAccuracy;
     const attempts = (noteAttempts[midiNote] ?? 0) + 1;
     const weight = Math.min(attempts, ROLLING_WINDOW);
-    const newAccuracy = prevAccuracy + (accuracy - prevAccuracy) / weight;
+    const newAccuracy = prevAccuracy + (clampedAccuracy - prevAccuracy) / weight;
 
     set({
       noteAccuracy: { ...noteAccuracy, [midiNote]: newAccuracy },
@@ -148,10 +150,24 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
       },
     });
 
-    console.log(`[LearnerProfile] Skill mastered: ${skillId} (total: ${newMastered.length})`);
+    logger.log(`[LearnerProfile] Skill mastered: ${skillId} (total: ${newMastered.length})`);
 
     // Gem reward for mastering a skill
     useGemStore.getState().earnGems(15, 'skill-mastered');
+
+    // Cat evolution XP for skill mastery
+    try {
+      const { useSettingsStore } = require('./settingsStore');
+      const { useCatEvolutionStore } = require('./catEvolutionStore');
+      const catId =
+        useSettingsStore.getState().selectedCatId ||
+        useCatEvolutionStore.getState().selectedCatId;
+      if (catId) {
+        useCatEvolutionStore.getState().addEvolutionXp(catId, 100);
+      }
+    } catch {
+      // silent — non-critical
+    }
 
     // Use immediate save — skill mastery is critical state that must persist
     // before the user navigates away (debounced save could lose it)
@@ -178,7 +194,7 @@ export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => 
     // Auto-master if completionCount meets the node's requiredCompletions
     if (passed) {
       const node = getSkillById(skillId);
-      console.log(`[LearnerProfile] recordSkillPractice: ${skillId} passed=${passed} count=${newCount}/${node?.requiredCompletions ?? '?'}`);
+      logger.log(`[LearnerProfile] recordSkillPractice: ${skillId} passed=${passed} count=${newCount}/${node?.requiredCompletions ?? '?'}`);
       if (node && newCount >= node.requiredCompletions) {
         get().markSkillMastered(skillId);
       }

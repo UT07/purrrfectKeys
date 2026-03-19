@@ -1,7 +1,7 @@
 # Expo SDK 52 → 53 Upgrade Design
 
 **Date:** 2026-03-18
-**Branch:** `feat/expo-sdk-55` (repurposed — name kept for continuity)
+**Branch:** `feat/expo-sdk-53` (new branch from master)
 **Baseline:** 160 test suites, 3,253 tests, 0 TypeScript errors
 
 ## Goal
@@ -11,8 +11,10 @@ Upgrade from Expo SDK 52 (RN 0.76, React 18) to SDK 53 (RN 0.79, React 19) to fi
 ### What This Fixes
 
 - **7 npm audit vulnerabilities** (4 high tar CVEs, 3 moderate ajv ReDoS)
+- **2 Dependabot alerts** for `fast-xml-parser` CVE (via firebase-admin override)
 - **react-native-screens 4.4.0 pin** — the Fabric codegen bug is fixed in RN 0.79; unpin to ~4.11.0
 - **Metro resolutions hack** — remove pinned 0.81.0 resolutions block
+- **Dead dependency cleanup** — remove unused `expo-router`
 - **Hermes Promise.allSettled** — native support (existing workaround still safe)
 - **Xcode 16+ compatibility** — SDK 53 requires Xcode 16+ (current toolchain)
 
@@ -41,15 +43,27 @@ Upgrade from Expo SDK 52 (RN 0.76, React 18) to SDK 53 (RN 0.79, React 19) to fi
 | `jest-expo` | ~52.0.0 | ~53.0.0 |
 | `eslint-config-expo` | ~8.0.0 | SDK 53 compatible |
 | `@types/react` | ~18.3.0 | ~19.0.0 |
+| `@testing-library/jest-native` | ^5.4.3 | **REMOVE** (merged into RNTL 12.x) |
+| `@testing-library/react-native` | ^12.9.0 | ~13.x (React 19 support) |
+| `react-native-web` | ^0.19.13 | ^0.20.x (React 19 support) |
+| `expo-router` | ~4.0.0 | **REMOVE** (unused — app uses @react-navigation directly) |
+| `firebase-admin` (devDep) | ^13.7.0 | ^13.7.0 (keep, add fast-xml-parser override) |
 
 All ~30 `expo-*` sub-packages aligned via `npx expo install --fix`.
 
+### Dependency Cleanup
+
+- **Remove `expo-router`**: Not imported anywhere in source code. Dead weight from initial project scaffold. Remove from package.json and jest.setup.js mocks.
+- **Remove `@testing-library/jest-native`**: Deprecated. Its matchers are now built into `@testing-library/react-native` 12.x+. Update `jest.setup.js` to replace `import '@testing-library/jest-native/extend-expect'` with the RNTL equivalent.
+- **Add `fast-xml-parser` override**: `firebase-admin@13.7.0` → `@google-cloud/storage@7.19.0` → `fast-xml-parser@5.5.5` (CVE-affected). Override to `^5.5.6` to fix the 2 open Dependabot alerts. This is a devDependency-only path — does not ship to users.
+
 ## React 19 Impact Assessment
 
-The codebase is clean for React 19. Assessment:
+The codebase is mostly clean for React 19, with one systematic fix needed.
 
 | Pattern | Files Affected | Action |
 |---------|---------------|--------|
+| **`React.FC` implicit children** | **14 source files (21 occurrences)** | **Audit each: add explicit `children: React.ReactNode` to props, or replace `React.FC` with plain function** |
 | `forwardRef` (source) | 1 (`ScreenShake.tsx`) | No action — still works in React 19, just deprecated |
 | `forwardRef` (tests) | 5 test files | Minor fixes if React 19 strict mode causes issues |
 | `defaultProps` (source) | 0 | Clean |
@@ -58,8 +72,30 @@ The codebase is clean for React 19. Assessment:
 | String refs | 0 | Clean |
 | Legacy Context | 0 | Clean |
 | `createRef` (source) | 0 | Clean |
+| `useRef(null)` typing | ~24 files | Verify: `useRef<T>(null)` returns `RefObject<T>` (read-only) in React 19. Any `ref.current = value` on such refs will TS error. Fix during typecheck phase. |
 
-**Why it's clean:** CLAUDE.md enforces functional-components-only with hooks. No class components, no legacy patterns.
+### React.FC Children Fix (14 files)
+
+In React 19 + `@types/react` 19, `React.FC` no longer includes `children` in the props type. Files that need auditing:
+
+- `src/screens/ExercisePlayer/ExercisePlayer.tsx`
+- `src/screens/ExercisePlayer/CountInAnimation.tsx`
+- `src/screens/ExercisePlayer/ScoreDisplay.tsx`
+- `src/screens/ExercisePlayer/HintDisplay.tsx`
+- `src/screens/ExercisePlayer/ErrorDisplay.tsx`
+- `src/screens/ExercisePlayer/RealTimeFeedback.tsx`
+- `src/screens/ExercisePlayer/ExerciseControls.tsx`
+- `src/screens/ExercisePlayer/CompletionModal.tsx`
+- `src/screens/MidiSetupScreen.tsx`
+- `src/screens/HomeScreen.tsx`
+- `src/components/FriendActivityStrip.tsx`
+- `src/components/Mascot/MascotBubble.tsx`
+- `src/components/MidiDeviceList.tsx`
+- `src/components/Keyboard/SplitKeyboard.tsx`
+
+For each: if the component uses `props.children` or renders `{children}`, add `children: React.ReactNode` to the props interface. If it doesn't use children, the `React.FC` typing change is harmless.
+
+**Why it's otherwise clean:** CLAUDE.md enforces functional-components-only with hooks. No class components, no legacy patterns.
 
 ## New Architecture Decision
 
@@ -102,7 +138,11 @@ No changes needed:
 ### package.json Cleanup
 - **Remove** `resolutions` block (Metro 0.81.0 pins) — SDK 53 ships its own Metro
 - **Verify** `overrides` block (`flatted`, `undici`) — may no longer be needed if SDK 53 includes patched versions
-- **Update** `overrides` if still needed, remove if audit is clean
+- **Add** `fast-xml-parser` override: `"fast-xml-parser": ">=5.5.6"` to fix CVE in firebase-admin's transitive dep
+- **Remove** `expo-router` from dependencies (unused dead code)
+- **Remove** `@testing-library/jest-native` from devDependencies (deprecated, merged into RNTL)
+- **Update** `@testing-library/react-native` to ~13.x for React 19 compat
+- **Update** `react-native-web` to ^0.20.x for React 19 compat
 
 ### EAS Config (`eas.json`)
 No changes needed. SDK 53 defaults to frozen lockfiles (`npm ci`), which requires committed `package-lock.json` — already the case.
@@ -176,7 +216,7 @@ Full feature matrix — any regression is a merge blocker:
 ## Rollback Plan
 
 Branch-based. If the upgrade is blocked:
-1. All work is on `feat/expo-sdk-55` branch
+1. All work is on `feat/expo-sdk-53` branch
 2. `master` remains on SDK 52, untouched
 3. If a third-party package is incompatible, document it and abort the branch
 4. Re-attempt when the blocking package releases a compatible version

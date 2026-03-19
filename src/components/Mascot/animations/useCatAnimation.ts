@@ -93,7 +93,7 @@ function usePartSpring(part: PartName, pose: CatPose, isAnimated: boolean) {
         withSpring(1, springConfig),
       );
     }
-  }, [pose, isAnimated, translateY, scaleX, scaleY, spring]);
+  }, [pose, isAnimated, translateY, scaleX, scaleY, spring, part]);
 
   return useAnimatedProps(() => ({
     transform: isAnimated

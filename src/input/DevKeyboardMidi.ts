@@ -42,12 +42,14 @@ export function useDevKeyboardMidi(onNote: NoteCallback): void {
 
     // Web: use DOM keyboard events
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const keys = activeKeys.current;
+
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.repeat) return;
         const key = e.key.toLowerCase();
         const midiNote = KEY_TO_MIDI[key];
-        if (midiNote != null && !activeKeys.current.has(key)) {
-          activeKeys.current.add(key);
+        if (midiNote != null && !keys.has(key)) {
+          keys.add(key);
           onNote(midiNote, 100, true);
         }
       };
@@ -55,8 +57,8 @@ export function useDevKeyboardMidi(onNote: NoteCallback): void {
       const handleKeyUp = (e: KeyboardEvent) => {
         const key = e.key.toLowerCase();
         const midiNote = KEY_TO_MIDI[key];
-        if (midiNote != null && activeKeys.current.has(key)) {
-          activeKeys.current.delete(key);
+        if (midiNote != null && keys.has(key)) {
+          keys.delete(key);
           onNote(midiNote, 0, false);
         }
       };
@@ -67,7 +69,7 @@ export function useDevKeyboardMidi(onNote: NoteCallback): void {
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
-        activeKeys.current.clear();
+        keys.clear();
       };
     }
 

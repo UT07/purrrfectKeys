@@ -7,6 +7,7 @@
  * passed as the `client` prop to PostHogProvider in AppNavigator.
  */
 
+import type { JsonType } from '@posthog/core';
 import { posthog as posthogClient, isPostHogEnabled } from '../../config/posthog';
 import { logger } from '../../utils/logger';
 
@@ -37,7 +38,7 @@ export class AnalyticsService {
   /**
    * Set user identity
    */
-  static identifyUser(userId: string, properties?: Record<string, any>): void {
+  static identifyUser(userId: string, properties?: Record<string, JsonType>): void {
     if (!this.initialized || !isPostHogEnabled) {
       return;
     }
@@ -55,7 +56,7 @@ export class AnalyticsService {
   /**
    * Set user properties
    */
-  static setUserProperties(properties: Record<string, any>): void {
+  static setUserProperties(properties: Record<string, JsonType>): void {
     if (!this.initialized || !isPostHogEnabled) {
       return;
     }
@@ -70,7 +71,7 @@ export class AnalyticsService {
   /**
    * Track event
    */
-  static trackEvent(eventName: string, properties?: Record<string, any>): void {
+  static trackEvent(eventName: string, properties?: Record<string, JsonType>): void {
     if (!this.initialized || !isPostHogEnabled) {
       return;
     }
@@ -208,7 +209,7 @@ export const analyticsEvents = {
 
   // Settings events
   settings: {
-    changed: (setting: string, oldValue: any, newValue: any) =>
+    changed: (setting: string, oldValue: JsonType, newValue: JsonType) =>
       AnalyticsService.trackEvent('settings_changed', {
         setting,
         oldValue,
@@ -392,7 +393,7 @@ export function updateUserAnalyticsProperties(profile: {
   gemBalance?: number;
   songsCompleted?: number;
 }): void {
-  const props: Record<string, any> = {};
+  const props: Record<string, JsonType> = {};
 
   if (profile.displayName) props.display_name = profile.displayName;
   if (profile.level !== undefined) props.level = profile.level;
@@ -433,7 +434,7 @@ export function updateUserAnalyticsProperties(profile: {
 export function trackTimedEvent(
   eventName: string,
   durationMs: number,
-  properties?: Record<string, any>
+  properties?: Record<string, JsonType>
 ): void {
   AnalyticsService.trackEvent(eventName, {
     ...properties,
@@ -466,7 +467,7 @@ export function trackApiLatency(
 export function trackFunnelStep(
   funnelName: string,
   stepName: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, JsonType>
 ): void {
   AnalyticsService.trackEvent(`funnel_${funnelName}_${stepName}`, metadata);
 }

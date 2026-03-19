@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/Mascot/__tests__/MicroAnimations.test.ts
 
 import { renderHook } from '@testing-library/react-native';
 import type { MascotMood } from '../types';
+import type { MoodTransitionValues } from '../animations/useMoodTransition';
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
@@ -109,23 +111,23 @@ describe('useMoodTransition', () => {
   });
 
   it('tracks previous mood and triggers transition', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<MoodTransitionValues, { mood: MascotMood }>(
       ({ mood }) => useMoodTransition(mood),
-      { initialProps: { mood: 'happy' as MascotMood } },
+      { initialProps: { mood: 'happy' } },
     );
     expect(result.current.faceScaleY.value).toBe(1);
-    rerender({ mood: 'excited' as MascotMood });
+    rerender({ mood: 'excited' });
     // After rerender, the value should still be defined (animation triggered)
     expect(result.current.faceScaleY).toBeDefined();
   });
 
   it('does not animate when mood stays the same', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<MoodTransitionValues, { mood: MascotMood }>(
       ({ mood }) => useMoodTransition(mood),
-      { initialProps: { mood: 'happy' as const } },
+      { initialProps: { mood: 'happy' } },
     );
     expect(result.current.faceScaleY.value).toBe(1);
-    rerender({ mood: 'happy' as const });
+    rerender({ mood: 'happy' });
     // Same mood — no transition, value stays at 1
     expect(result.current.faceScaleY.value).toBe(1);
   });

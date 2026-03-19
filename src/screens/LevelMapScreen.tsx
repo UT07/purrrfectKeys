@@ -25,11 +25,15 @@ import Animated, {
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 import Svg, { Path } from 'react-native-svg';
 import { useProgressStore } from '../stores/progressStore';
 import { useGemStore } from '../stores/gemStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import type { LearningPathId } from '../stores/types';
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import {
   getAllLessons,
@@ -64,7 +68,7 @@ const X_PATTERN = [0.5, 0.28, 0.5, 0.72];
 // ---------------------------------------------------------------------------
 
 interface ExerciseTypeVisual {
-  icon: string;
+  icon: IconName;
   color: string;
   label: string;
 }
@@ -115,7 +119,7 @@ function getSecondaryTypes(exercises: ExerciseIndexEntry[]): ExerciseTypeVisual[
 
 interface SectionConfig {
   label: string;
-  icon: string;
+  icon: IconName;
   color: string;
   emoji: string;
   bgGradient: readonly [string, string];
@@ -188,7 +192,7 @@ interface LearningPath {
   id: string;
   title: string;
   description: string;
-  icon: string;
+  icon: IconName;
   color: string;
   emoji: string;
   lessons: string[];
@@ -500,9 +504,9 @@ function LessonNode({
   const lessonNum = index + 1;
   const nodeTestID = data.state === 'current' ? 'lesson-node-current' : `lesson-node-${data.lessonId}`;
 
-  const iconName = data.state === 'completed' ? 'check-bold'
+  const iconName: IconName = data.state === 'completed' ? 'check-bold'
     : data.state === 'locked' ? 'lock'
-    : (data.dominantType.icon as any);
+    : data.dominantType.icon;
 
   return (
     <Animated.View
@@ -654,9 +658,9 @@ function SectionBanner({
 // Path selector dropdown
 // ---------------------------------------------------------------------------
 
-const PATH_ORDER: string[] = ['piano-basics', 'pop-and-film', 'classical', 'jazz-and-blues', 'kids'];
+const PATH_ORDER: LearningPathId[] = ['piano-basics', 'pop-and-film', 'classical', 'jazz-and-blues', 'kids'];
 
-function PathSelector({ selectedPath, onSelect }: { selectedPath: string; onSelect: (id: string) => void }) {
+function PathSelector({ selectedPath, onSelect }: { selectedPath: LearningPathId; onSelect: (id: LearningPathId) => void }) {
   const [open, setOpen] = React.useState(false);
   const path = LEARNING_PATHS[selectedPath];
   const handleToggle = useCallback(() => setOpen((v) => !v), []);
@@ -824,7 +828,7 @@ export function LevelMapScreen() {
         </View>
 
         {/* Learning path selector */}
-        <PathSelector selectedPath={selectedPath} onSelect={(id) => setSelectedPath(id as any)} />
+        <PathSelector selectedPath={selectedPath} onSelect={(id) => setSelectedPath(id)} />
 
         {/* Exercise type legend */}
         <View style={styles.typeLegend}>

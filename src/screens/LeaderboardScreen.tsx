@@ -405,7 +405,7 @@ export function LeaderboardScreen(): React.JSX.Element {
         <View style={styles.headerCenter}>
           <View style={styles.headerTierRow}>
             <MaterialCommunityIcons
-              name={config.icon as any}
+              name={config.icon}
               size={22}
               color={config.color}
             />

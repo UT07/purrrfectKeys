@@ -350,7 +350,7 @@ export class MidiDeviceManager {
   /**
    * Check if device matches known specs
    */
-  private _deviceMatches(device: IMidiDevice, specs: any): boolean {
+  private _deviceMatches(device: IMidiDevice, specs: typeof KNOWN_MIDI_KEYBOARDS[keyof typeof KNOWN_MIDI_KEYBOARDS]): boolean {
     // Match by name (exact or contains)
     if (device.name && specs.name) {
       return (

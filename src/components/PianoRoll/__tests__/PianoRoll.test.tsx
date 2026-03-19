@@ -3,6 +3,7 @@ import { render } from '@testing-library/react-native';
 import { PianoRoll } from '../PianoRoll';
 import type { NoteEvent } from '@/core/exercises/types';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function flattenStyle(style: any): Record<string, any> {
   if (Array.isArray(style)) {
     return Object.assign({}, ...style.filter(Boolean));

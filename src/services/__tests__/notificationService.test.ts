@@ -13,6 +13,7 @@ jest.mock('expo-notifications', () => ({
   requestPermissionsAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
   cancelAllScheduledNotificationsAsync: jest.fn(),
+  cancelScheduledNotificationAsync: jest.fn(),
   SchedulableTriggerInputTypes: { DAILY: 'daily' },
 }));
 
@@ -67,12 +68,13 @@ describe('notificationService', () => {
   });
 
   describe('scheduleDailyReminder', () => {
-    it('cancels existing notifications and schedules a new daily one', async () => {
+    it('schedules a new daily reminder without cancelling on first call', async () => {
       (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('notif-123');
 
       const id = await scheduleDailyReminder(9, 30);
 
-      expect(Notifications.cancelAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
+      // First call — no previous reminder to cancel
+      expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalled();
       expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
         content: {
           title: 'Time to practice!',
@@ -86,6 +88,23 @@ describe('notificationService', () => {
         },
       });
       expect(id).toBe('notif-123');
+    });
+
+    it('cancels only the previous daily reminder on subsequent calls', async () => {
+      (Notifications.scheduleNotificationAsync as jest.Mock)
+        .mockResolvedValueOnce('notif-first')
+        .mockResolvedValueOnce('notif-second');
+
+      // First call may cancel a leftover ID from a prior test (module-level state)
+      await scheduleDailyReminder(9, 0);
+      (Notifications.cancelScheduledNotificationAsync as jest.Mock).mockClear();
+
+      // Second call should cancel only the 'notif-first' reminder
+      await scheduleDailyReminder(10, 30);
+
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(1);
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('notif-first');
+      expect(Notifications.cancelAllScheduledNotificationsAsync).not.toHaveBeenCalled();
     });
   });
 

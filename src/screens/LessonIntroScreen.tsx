@@ -39,7 +39,10 @@ type LessonIntroRouteProp = RouteProp<RootStackParamList, 'LessonIntro'>;
 // Exercise type labels (shared with TierIntroScreen)
 // ---------------------------------------------------------------------------
 
-const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+import type { ComponentProps } from 'react';
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: IconName; color: string }> = {
   play:         { label: 'Play Along',      icon: 'piano',           color: '#64B5F6' },
   rhythm:       { label: 'Rhythm',          icon: 'metronome',       color: '#FF8A65' },
   earTraining:  { label: 'Ear Training',    icon: 'ear-hearing',     color: '#CE93D8' },
@@ -142,7 +145,7 @@ function ExerciseRow({
           </Text>
           <View style={styles.exerciseMetaRow}>
             <View style={[styles.exerciseTypeBadge, { backgroundColor: typeInfo.color + '20' }]}>
-              <MaterialCommunityIcons name={typeInfo.icon as any} size={10} color={typeInfo.color} />
+              <MaterialCommunityIcons name={typeInfo.icon} size={10} color={typeInfo.color} />
               <Text style={[styles.exerciseTypeText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
             </View>
             {highScore != null && (
@@ -171,8 +174,8 @@ function ExerciseRow({
 export function LessonIntroScreen() {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<LessonIntroRouteProp>();
-  const lessonId = (route.params as any)?.lessonId ?? '';
-  const locked = (route.params as any)?.locked ?? false;
+  const lessonId = route.params?.lessonId ?? '';
+  const locked = route.params?.locked ?? false;
 
   const lessonProgress = useProgressStore((s) => s.lessonProgress) ?? {};
   const selectedCatId = useSettingsStore((s) => s.selectedCatId) ?? 'mini-meowww';

@@ -224,9 +224,12 @@ export function PlayScreen(): React.JSX.Element {
   const isLoadingSong = useSongStore((s) => s.isLoadingSong);
 
   const songMode = !!(currentSong?.sections && selectedSongTitle);
-  const songNotes: NoteEvent[] = songMode
-    ? (currentSong?.sections[selectedSectionIndex]?.layers?.melody ?? [])
-    : [];
+  const songNotes: NoteEvent[] = useMemo(
+    () => songMode
+      ? (currentSong?.sections[selectedSectionIndex]?.layers?.melody ?? [])
+      : [],
+    [songMode, currentSong?.sections, selectedSectionIndex],
+  );
 
   // Scale note highlighting
   const scaleNoteSet = useMemo(() => {
@@ -258,9 +261,15 @@ export function PlayScreen(): React.JSX.Element {
   // ── Audio engine init ────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
+    // Capture ref values at effect creation time for safe cleanup
+    const playbackTimers = playbackTimersRef.current;
+    const playbackHandles = playbackHandlesRef.current;
+    const audioEngine = audioEngineRef.current;
+    const activeHandles = activeHandlesRef.current;
+    const autoReleaseTimers = autoReleaseTimersRef.current;
     const init = async (): Promise<void> => {
       try {
-        await audioEngineRef.current.initialize();
+        await audioEngine.initialize();
         if (mounted) setIsAudioReady(true);
       } catch (err) {
         logger.warn('[PlayScreen] Audio init failed:', err);
@@ -270,16 +279,16 @@ export function PlayScreen(): React.JSX.Element {
     return () => {
       mounted = false;
       playbackCancelRef.current = true;
-      for (const t of playbackTimersRef.current) clearTimeout(t);
-      playbackTimersRef.current.clear();
-      for (const handle of playbackHandlesRef.current.values()) {
-        audioEngineRef.current.releaseNote(handle);
+      for (const t of playbackTimers) clearTimeout(t);
+      playbackTimers.clear();
+      for (const handle of playbackHandles.values()) {
+        audioEngine.releaseNote(handle);
       }
-      playbackHandlesRef.current.clear();
-      audioEngineRef.current.releaseAllNotes();
-      activeHandlesRef.current.clear();
-      for (const t of autoReleaseTimersRef.current.values()) clearTimeout(t);
-      autoReleaseTimersRef.current.clear();
+      playbackHandles.clear();
+      audioEngine.releaseAllNotes();
+      activeHandles.clear();
+      for (const t of autoReleaseTimers.values()) clearTimeout(t);
+      autoReleaseTimers.clear();
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       ttsService.stop();
     };

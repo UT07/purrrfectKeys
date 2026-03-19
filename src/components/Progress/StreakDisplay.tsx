@@ -68,7 +68,7 @@ export const StreakDisplay = React.memo(
       );
       anim.start();
       return () => anim.stop();
-    }, [currentStreak]);
+    }, [currentStreak, fireAnim]);
 
     // Shake animation if at risk (continuous loop)
     useEffect(() => {
@@ -89,7 +89,7 @@ export const StreakDisplay = React.memo(
       );
       anim.start();
       return () => anim.stop();
-    }, [streakAtRisk, currentStreak]);
+    }, [streakAtRisk, currentStreak, shakeAnim]);
 
     return (
       <View style={[

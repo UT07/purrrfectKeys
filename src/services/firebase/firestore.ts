@@ -13,7 +13,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   limit,
   serverTimestamp,
   writeBatch,
@@ -115,10 +114,10 @@ export interface ProgressChange {
 
 export interface ConflictResolution {
   field: string;
-  localValue: any;
-  serverValue: any;
+  localValue: unknown;
+  serverValue: unknown;
   resolution: 'local' | 'server' | 'merged';
-  resolvedValue: any;
+  resolvedValue: unknown;
 }
 
 // ============================================================================
@@ -127,7 +126,7 @@ export interface ConflictResolution {
 
 export async function createUserProfile(
   uid: string,
-  data: Partial<UserProfile>
+  data: Partial<UserProfile> & Record<string, unknown>
 ): Promise<void> {
   const userDoc = doc(db, 'users', uid);
   const defaultProfile: Partial<UserProfile> = {
@@ -168,7 +167,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
 export async function updateUserProfile(
   uid: string,
-  updates: Partial<UserProfile>
+  updates: Partial<UserProfile> & Record<string, unknown>
 ): Promise<void> {
   const userDoc = doc(db, 'users', uid);
   await updateDoc(userDoc, updates);
@@ -194,11 +193,9 @@ export async function getLessonProgress(
 
 export async function getAllLessonProgress(uid: string): Promise<LessonProgress[]> {
   const progressCollection = collection(db, 'users', uid, 'progress');
-  const querySnapshot = await getDocs(
-    query(progressCollection, orderBy('lessonId', 'asc'))
-  );
+  const querySnapshot = await getDocs(progressCollection);
 
-  return querySnapshot.docs.map((doc) => doc.data() as LessonProgress);
+  return querySnapshot.docs.map((d) => d.data() as LessonProgress);
 }
 
 export async function updateLessonProgress(
@@ -566,7 +563,7 @@ export interface LearnerProfileSyncData {
   tempoRange: { min: number; max: number };
   totalExercisesCompleted: number;
   masteredSkills: string[];
-  skillMasteryData: Record<string, any>;
+  skillMasteryData: Record<string, { masteredAt: number; lastPracticedAt: number; completionCount: number; decayScore: number }>;
   recentExerciseIds: string[];
   updatedAt: FieldValue | Timestamp;
 }
@@ -892,6 +889,24 @@ async function deleteUserDataClientSide(uid: string): Promise<void> {
     }
   } catch (err) {
     logger.warn('[deleteUserData] Challenge cleanup failed:', err);
+  }
+
+  // 5.5. Delete guild membership
+  try {
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    const guildId = userDoc.exists() ? (userDoc.data()?.guildId as string | undefined) : undefined;
+    if (guildId) {
+      const memberRef = doc(db, 'guilds', guildId, 'members', uid);
+      const memberSnap = await getDoc(memberRef);
+      if (memberSnap.exists()) {
+        await deleteDoc(memberRef);
+        // Decrement guild member count
+        await updateDoc(doc(db, 'guilds', guildId), { memberCount: increment(-1) });
+        logger.log(`[deleteUserData] Removed from guild ${guildId}`);
+      }
+    }
+  } catch (err) {
+    logger.warn('[deleteUserData] Guild membership cleanup failed:', err);
   }
 
   // 6. Delete all user subcollections

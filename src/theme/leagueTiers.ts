@@ -1,10 +1,14 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { COLORS } from './tokens';
 import type { RankedTier } from '../stores/types';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export interface LeagueTierConfig {
   label: string;
   color: string;
-  icon: string;
+  icon: IconName;
   arenaGlow: string;
 }
 

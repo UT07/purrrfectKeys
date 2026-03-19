@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * CompletionModal Component Tests
  * Tests score display, star ratings, XP, action buttons, and pass/fail styling

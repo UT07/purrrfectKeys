@@ -91,7 +91,7 @@ export function PressableScale({
       // Fallback: manual haptic only when soundOnPress is off
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
-  }, [scale, scaleDown, glowOnPress, glowOpacity, soundOnPress, haptic, customGlowColor]);
+  }, [scale, scaleDown, glowOnPress, glowOpacity, soundOnPress, haptic]);
 
   const handlePressOut = useCallback(() => {
     // Bounce back: lower damping for satisfying overshoot on release

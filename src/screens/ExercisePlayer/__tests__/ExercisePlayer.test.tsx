@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ExercisePlayer Component Tests
  * Tests core playback, scoring, interaction features, demo mode,
@@ -436,6 +437,11 @@ jest.mock('../../../components/Keyboard/SplitKeyboard', () => ({
 // Mock ExerciseLoadingScreen (has heavy deps: SalsaCoach, FunFactCard, funFactSelector)
 jest.mock('../ExerciseLoadingScreen', () => ({
   ExerciseLoadingScreen: () => null,
+}));
+
+// Mock SalsaIntro (imports SalsaCoach which needs catDialogue)
+jest.mock('../SalsaIntro', () => ({
+  SalsaIntro: () => null,
 }));
 
 // Mock CompletionModal (heavy deps: MascotBubble, CatAvatar, CoachingService, TTSService, etc.)

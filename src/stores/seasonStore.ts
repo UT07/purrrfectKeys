@@ -151,6 +151,7 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
   ...defaultSeasonState,
 
   addBattlePassXp: (xp: number) => {
+    if (!Number.isFinite(xp) || xp <= 0) return;
     set((state) => {
       const newXp = state.battlePassXp + xp;
       let newTier = state.battlePassTier;
@@ -229,6 +230,11 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
       }
     } catch (err) {
       logger.warn('[seasonStore] Failed to deliver battle pass reward:', rewardKey, err);
+      // Remove the claim record so the reward can be retried
+      set((s) => ({
+        claimedRewards: s.claimedRewards.filter((k) => k !== rewardKey),
+      }));
+      debouncedSave(get());
       return null;
     }
 
@@ -241,8 +247,9 @@ export const useSeasonStore = create<SeasonStoreState>((set, get) => ({
   },
 
   recordPlacementScore: (score: number) => {
+    const clampedScore = Math.max(0, Math.min(100, score));
     set((state) => {
-      const scores = [...state.placementScores, score];
+      const scores = [...state.placementScores, clampedScore];
       return {
         placementScores: scores,
         placementComplete: scores.length >= 3,

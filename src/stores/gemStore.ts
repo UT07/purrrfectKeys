@@ -50,7 +50,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
   ...defaultData,
 
   earnGems: (amount: number, source: string) => {
-    if (amount <= 0) return;
+    if (!Number.isFinite(amount) || amount <= 0) return;
     set((state) => {
       const newBalance = state.gems + amount;
       const transaction: GemTransaction = {
@@ -71,7 +71,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
   },
 
   spendGems: (amount: number, item: string) => {
-    if (amount <= 0) return false;
+    if (!Number.isFinite(amount) || amount <= 0) return false;
 
     // Atomic check-and-update inside a single set() to prevent TOCTOU race
     // (e.g., double-tap on buy button reading same balance twice)
@@ -109,6 +109,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
   },
 
   claimReward: (key: string, gems: number) => {
+    if (!Number.isFinite(gems) || gems <= 0) return;
     // Atomic check-and-claim inside a single set() to prevent TOCTOU race
     let alreadyClaimed = false;
     set((state) => {

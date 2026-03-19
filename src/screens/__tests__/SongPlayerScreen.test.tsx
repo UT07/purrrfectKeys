@@ -9,7 +9,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { SongPlayerScreen, sectionToExercise } from '../SongPlayerScreen';
 import type { Song, SongSection, SongMastery } from '@/core/songs/songTypes';
-import type { NoteEvent } from '@/core/exercises/types';
+import type { NoteEvent, ExerciseScore } from '@/core/exercises/types';
 
 // ---------------------------------------------------------------------------
 // Navigation mock
@@ -18,11 +18,17 @@ import type { NoteEvent } from '@/core/exercises/types';
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 
+// focusEffectCallback is set when useFocusEffect is called, allowing
+// individual tests to invoke it manually to simulate returning from Exercise.
+let focusEffectCallback: (() => void) | null = null;
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
   useRoute: () => ({ params: { songId: 'test-song-1' } }),
-  useFocusEffect: (_cb: () => void) => {
-    // Don't call the focus callback during tests to avoid exerciseStore side effects
+  useFocusEffect: (cb: () => void) => {
+    // Store the callback so tier-up tests can trigger it manually.
+    // Default render tests rely on no side-effects (score is null by default).
+    focusEffectCallback = cb;
   },
 }));
 
@@ -53,13 +59,22 @@ jest.mock('../../stores/songStore', () => ({
   },
 }));
 
+let mockLastCompletedScore: ExerciseScore | null = null;
+const mockClearLastCompletedScore = jest.fn();
+
 jest.mock('../../stores/exerciseStore', () => ({
   useExerciseStore: Object.assign(
     (selector?: (s: Record<string, unknown>) => unknown) => {
       const state = { setCurrentExercise: mockSetCurrentExercise, score: null };
       return selector ? selector(state) : state;
     },
-    { getState: () => ({ score: null }) },
+    {
+      getState: () => ({
+        score: null,
+        lastCompletedScore: mockLastCompletedScore,
+        clearLastCompletedScore: mockClearLastCompletedScore,
+      }),
+    },
   ),
 }));
 
@@ -78,6 +93,28 @@ jest.mock('../../stores/authStore', () => ({
     const state = { user: { uid: 'test-user' } };
     return selector ? selector(state) : state;
   },
+}));
+
+const mockAddEvolutionXp = jest.fn();
+
+jest.mock('../../stores/catEvolutionStore', () => ({
+  useCatEvolutionStore: Object.assign(
+    (selector?: (s: Record<string, unknown>) => unknown) => {
+      const state = {};
+      return selector ? selector(state) : state;
+    },
+    { getState: () => ({ addEvolutionXp: mockAddEvolutionXp }) },
+  ),
+}));
+
+jest.mock('../../stores/settingsStore', () => ({
+  useSettingsStore: Object.assign(
+    (selector?: (s: Record<string, unknown>) => unknown) => {
+      const state = { selectedCatId: 'mini-meowww' };
+      return selector ? selector(state) : state;
+    },
+    { getState: () => ({ selectedCatId: 'mini-meowww' }) },
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -147,6 +184,8 @@ describe('SongPlayerScreen', () => {
     mockCurrentSong = makeSong();
     mockIsLoadingSong = false;
     mockGetMastery.mockReturnValue(null);
+    mockLastCompletedScore = null;
+    focusEffectCallback = null;
   });
 
   // ── Rendering ───────────────────────────────────────────────
@@ -259,6 +298,156 @@ describe('SongPlayerScreen', () => {
   it('loop toggle renders', () => {
     const { getByTestId } = render(<SongPlayerScreen />);
     expect(getByTestId('loop-toggle')).toBeTruthy();
+  });
+
+  // ── Mastery tier-up: cat XP ──────────────────────────────────
+
+  it('awards cat XP when mastery tier increases to bronze', () => {
+    // Song has no prior mastery (none → bronze tier-up)
+    mockGetMastery.mockReturnValue(null);
+
+    const { getByTestId } = render(<SongPlayerScreen />);
+
+    // Select Full Song mode so all sections are scored at once
+    fireEvent.press(getByTestId('section-full-song'));
+
+    // Step 1: press Play to set playContextRef.current inside the component
+    fireEvent.press(getByTestId('play-button'));
+
+    // Step 2: set last score so the focus callback processes it
+    // Score of 72 → bronze (all sections scored at 72, min score >= 70)
+    mockLastCompletedScore = {
+      overall: 72,
+      stars: 1,
+      details: [],
+      breakdown: { accuracy: 72, timing: 72, completeness: 72, extraNotes: 100, duration: 72 },
+      perfectNotes: 0,
+      goodNotes: 5,
+      okNotes: 0,
+      missedNotes: 0,
+      extraNotes: 0,
+      xpEarned: 10,
+      isNewHighScore: true,
+      isPassed: true,
+    } as ExerciseScore;
+
+    // Step 3: simulate returning from Exercise screen (useFocusEffect fires)
+    expect(focusEffectCallback).not.toBeNull();
+    focusEffectCallback!();
+
+    expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', 50);
+  });
+
+  it('awards correct cat XP amounts per tier', () => {
+    // Gold and Platinum require layer='full'. Silver only requires melody.
+    // previousSectionScores are set to reach the tier below, so a tier-up occurs.
+    const tierXpMap: Array<{
+      tier: string;
+      xp: number;
+      score: number;
+      needFullLayer: boolean;
+      prevSectionScores: Record<string, number>;
+    }> = [
+      { tier: 'silver', xp: 100, score: 82, needFullLayer: false, prevSectionScores: { 'verse-1': 72, chorus: 72 } },
+      { tier: 'gold', xp: 150, score: 91, needFullLayer: true, prevSectionScores: { 'verse-1': 82, chorus: 82 } },
+      { tier: 'platinum', xp: 200, score: 97, needFullLayer: true, prevSectionScores: { 'verse-1': 91, chorus: 91 } },
+    ];
+
+    for (const { tier, xp, score, needFullLayer, prevSectionScores } of tierXpMap) {
+      jest.clearAllMocks();
+      mockLastCompletedScore = null;
+      focusEffectCallback = null;
+      mockCurrentSong = makeSong();
+
+      // Pre-existing mastery at the tier below so a tier-up occurs
+      const previousTierMap: Record<string, string> = {
+        silver: 'bronze',
+        gold: 'silver',
+        platinum: 'gold',
+      };
+      const previousTier = previousTierMap[tier];
+      mockGetMastery.mockReturnValue({
+        songId: 'test-song-1',
+        userId: 'test-user',
+        tier: previousTier,
+        sectionScores: prevSectionScores,
+        lastPlayed: Date.now() - 10000,
+        totalAttempts: 3,
+      } as SongMastery);
+
+      const { getByTestId } = render(<SongPlayerScreen />);
+
+      // Select Full Song mode so all sections are scored simultaneously
+      fireEvent.press(getByTestId('section-full-song'));
+
+      // Gold/Platinum require layer='full' — toggle the layer button
+      if (needFullLayer) {
+        fireEvent.press(getByTestId('layer-full'));
+      }
+
+      // Press Play to set playContextRef
+      fireEvent.press(getByTestId('play-button'));
+
+      mockLastCompletedScore = {
+        overall: score,
+        stars: 3,
+        details: [],
+        breakdown: { accuracy: score, timing: score, completeness: score, extraNotes: 100, duration: score },
+        perfectNotes: 5,
+        goodNotes: 0,
+        okNotes: 0,
+        missedNotes: 0,
+        extraNotes: 0,
+        xpEarned: 30,
+        isNewHighScore: true,
+        isPassed: true,
+      } as ExerciseScore;
+
+      expect(focusEffectCallback).not.toBeNull();
+      focusEffectCallback!();
+
+      expect(mockAddEvolutionXp).toHaveBeenCalledWith('mini-meowww', xp);
+    }
+  });
+
+  it('does NOT award cat XP when tier does not increase', () => {
+    // Already at bronze, score stays at bronze — no tier-up
+    mockGetMastery.mockReturnValue({
+      songId: 'test-song-1',
+      userId: 'test-user',
+      tier: 'bronze',
+      sectionScores: { 'verse-1': 72, chorus: 72 },
+      lastPlayed: Date.now() - 10000,
+      totalAttempts: 2,
+    } as SongMastery);
+
+    const { getByTestId } = render(<SongPlayerScreen />);
+
+    // Full Song mode — both sections will be scored at 72 → still bronze, no upgrade
+    fireEvent.press(getByTestId('section-full-song'));
+
+    // Press Play to set playContextRef
+    fireEvent.press(getByTestId('play-button'));
+
+    mockLastCompletedScore = {
+      overall: 72,
+      stars: 1,
+      details: [],
+      breakdown: { accuracy: 72, timing: 72, completeness: 72, extraNotes: 100, duration: 72 },
+      perfectNotes: 0,
+      goodNotes: 5,
+      okNotes: 0,
+      missedNotes: 0,
+      extraNotes: 0,
+      xpEarned: 10,
+      isNewHighScore: false,
+      isPassed: true,
+    } as ExerciseScore;
+
+    expect(focusEffectCallback).not.toBeNull();
+    focusEffectCallback!();
+
+    expect(mockAddEvolutionXp).not.toHaveBeenCalled();
   });
 });
 

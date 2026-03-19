@@ -114,9 +114,11 @@ service cloud.firestore {
       match /friends/{friendUid} {
         // Owner reads own friends list
         allow read: if isOwner(userId);
-        // Any authenticated non-anonymous user can create friend connections
+        // Sender can create in their OWN friends subcollection (isOwner),
+        // OR create in the TARGET's subcollection where friendUid == themselves
         // (needed for sendFriendRequest batch write — writes to BOTH users' subcollections)
-        allow create: if isAuthenticated() && isNotAnonymous();
+        allow create: if isAuthenticated() && isNotAnonymous() &&
+                         (isOwner(userId) || friendUid == request.auth.uid);
         // Owner OR the referenced friend can update (accept/decline) friend connections
         // (needed for acceptFriendRequest batch write — updates BOTH users' subcollections)
         allow update: if (isOwner(userId) || (isAuthenticated() && friendUid == request.auth.uid))
@@ -323,8 +325,9 @@ service cloud.firestore {
         // Members can create their own entry (join) and update own XP
         allow create: if isOwner(memberUid) && isNotAnonymous();
         allow update: if isOwner(memberUid) &&
-                         // Only allow updating weeklyXp via increment
-                         request.resource.data.uid == resource.data.uid;
+                         request.resource.data.uid == resource.data.uid &&
+                         // weeklyXp can only increase (prevents setting arbitrary values)
+                         request.resource.data.weeklyXp >= resource.data.weeklyXp;
         allow delete: if false;
       }
     }
@@ -419,8 +422,10 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         // Non-anonymous users can join a guild (create their own member doc only)
         allow create: if isAuthenticated() && isNotAnonymous() && isOwner(memberUid);
-        // Own member doc (XP updates) OR guild leader (role changes)
-        allow update: if isOwner(memberUid) ||
+        // Member can update own XP fields but NOT change their own role;
+        // role changes require the guild leader
+        allow update: if (isOwner(memberUid) &&
+                          request.resource.data.role == resource.data.role) ||
                          (isAuthenticated() &&
                           get(/databases/$(database)/documents/guilds/$(guildId)).data.leaderUid == request.auth.uid);
         // Own member doc (leaving) OR guild leader (kicking)
@@ -439,8 +444,10 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       // Non-anonymous users can create guild wars
       allow create: if isAuthenticated() && isNotAnonymous();
-      // Non-anonymous users can update (adding war points)
-      allow update: if isAuthenticated() && isNotAnonymous();
+      // Non-anonymous users can update active wars only (adding war points)
+      // TODO: Restrict to members of participating guilds (requires get() for membership check)
+      allow update: if isAuthenticated() && isNotAnonymous() &&
+                       resource.data.status == 'active';
       // Only admins can delete guild wars
       allow delete: if isAdminUser();
     }

@@ -8,6 +8,9 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PressableScale } from './common/PressableScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 import {
   getWeeklyChallengeForWeek,
   isWeeklyChallengeDay,
@@ -57,7 +60,7 @@ export function WeeklyChallengeCard({ onPress, completed }: WeeklyChallengeCardP
 
         {/* Challenge info */}
         <View style={styles.challengeRow}>
-          <MaterialCommunityIcons name={challenge.icon as any} size={24} color={COLORS.textPrimary} />
+          <MaterialCommunityIcons name={challenge.icon as IconName} size={24} color={COLORS.textPrimary} />
           <View style={styles.challengeInfo}>
             <Text style={styles.challengeLabel}>{challenge.label}</Text>
             <Text style={styles.challengeDesc}>{challenge.description}</Text>

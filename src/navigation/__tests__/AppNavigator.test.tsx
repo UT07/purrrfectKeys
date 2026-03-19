@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * AppNavigator Tests
  *
@@ -176,7 +177,7 @@ jest.mock('@react-navigation/native', () => {
       React.useEffect(() => {
         const cleanup = cb();
         return typeof cleanup === 'function' ? cleanup : undefined;
-      }, []);
+      }, [cb]);
     },
     NavigationContainer: ({ children }: any) => (
       <RN.View testID="navigation-container">{children}</RN.View>

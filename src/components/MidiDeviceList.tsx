@@ -295,7 +295,7 @@ export const MidiDeviceList: React.FC<MidiDeviceListProps> = ({
     return () => {
       unsubscribeConnection();
     };
-  }, []);
+  }, [deviceManager, midiInput]);
 
   const handleSelectDevice = (device: MidiDeviceInfo) => {
     if (selectable) {
