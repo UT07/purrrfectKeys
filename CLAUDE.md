@@ -398,3 +398,5 @@ POSTHOG_API_KEY=xxx
 5. **Run typecheck before committing** - CI will fail otherwise
 6. **Pitch detection is fallback only** - Optimize for MIDI input first
 7. **react-native-screens PINNED to 4.4.0** — versions 4.19+ have Fabric codegen bug with RN 0.76. After version changes, clean iOS build: `rm -rf ios/Pods ios/Podfile.lock ios/build && cd ios && pod install`
+8. **Always push to remote after commits** - User works across devices (Mac + phone). Push after every commit to keep remote in sync. Never let local and remote diverge.
+9. **SDK 53 upgrade blocked** - expo-dev-client 5.2.4 crashes on iOS 26 (Xcode 26.3) due to removed UIApplication.shared.windows API in EXDevLauncherController. Stay on SDK 52 until Expo releases a compatible version.
