@@ -382,8 +382,8 @@ export class SyncManager {
     try {
       // Fetch remote data in parallel
       const [remoteLessons, remoteGamification, remoteCats, remoteGems] = await Promise.all([
-        getAllLessonProgress(uid),
-        getGamificationData(uid),
+        getAllLessonProgress(uid).catch((e) => { logger.warn('[Sync] Failed to fetch lessons:', e); return [] as Awaited<ReturnType<typeof getAllLessonProgress>>; }),
+        getGamificationData(uid).catch((e) => { logger.warn('[Sync] Failed to fetch gamification:', e); return null; }),
         getCatEvolutionData(uid).catch(() => null),
         getGemSyncData(uid).catch(() => null),
       ]);

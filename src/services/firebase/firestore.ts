@@ -13,7 +13,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   limit,
   serverTimestamp,
   writeBatch,
@@ -194,11 +193,9 @@ export async function getLessonProgress(
 
 export async function getAllLessonProgress(uid: string): Promise<LessonProgress[]> {
   const progressCollection = collection(db, 'users', uid, 'progress');
-  const querySnapshot = await getDocs(
-    query(progressCollection, orderBy('lessonId', 'asc'))
-  );
+  const querySnapshot = await getDocs(progressCollection);
 
-  return querySnapshot.docs.map((doc) => doc.data() as LessonProgress);
+  return querySnapshot.docs.map((d) => d.data() as LessonProgress);
 }
 
 export async function updateLessonProgress(

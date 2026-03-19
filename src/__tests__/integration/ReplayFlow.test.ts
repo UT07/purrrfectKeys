@@ -170,9 +170,9 @@ describe('Salsa Coaching Loop — Replay Flow Integration', () => {
       const score = makeScore({ details, overall: 65 });
       const plan = await buildReplayPlan(makeExercise(), score);
 
-      // The missed note at beat 4 should produce a pause point at that beat
+      // The missed note at beat 4 (duration 1) should produce a pause point AFTER the note (beat 5)
       const pauseBeatPositions = plan.pausePoints.map((pp) => pp.beatPosition);
-      expect(pauseBeatPositions).toContain(4);
+      expect(pauseBeatPositions).toContain(5);
     });
 
     it('targets wrong pitch notes with highest priority', async () => {
@@ -202,8 +202,8 @@ describe('Salsa Coaching Loop — Replay Flow Integration', () => {
       const plan = await buildReplayPlan(makeExercise(), score);
 
       const pauseBeatPositions = plan.pausePoints.map((pp) => pp.beatPosition);
-      // Wrong pitch (priority 1) at beat 1 should appear first
-      expect(pauseBeatPositions[0]).toBe(1);
+      // Wrong pitch (priority 1) at beat 1 (duration 1) should pause AFTER the note (beat 2)
+      expect(pauseBeatPositions[0]).toBe(2);
     });
   });
 
