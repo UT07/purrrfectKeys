@@ -403,8 +403,8 @@ export function ProfileScreen(): React.ReactElement {
         setUsername(trimmed);
         setShowUsernameEditor(false);
       }
-    } catch (err: any) {
-      if (err?.message === 'Username already taken') {
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Username already taken') {
         setUsernameError('Username already taken');
         setUsernameAvailable(false);
       } else {

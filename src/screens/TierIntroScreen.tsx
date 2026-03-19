@@ -19,7 +19,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 import { MascotBubble } from '../components/Mascot/MascotBubble';
 import { GradientMeshBackground } from '../components/effects';
@@ -40,7 +43,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 type TierIntroRouteProp = RouteProp<RootStackParamList, 'TierIntro'>;
 
 /** User-friendly labels for exercise types */
-const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: IconName; color: string }> = {
   play: { label: 'Play Along', icon: 'piano', color: '#64B5F6' },
   rhythm: { label: 'Rhythm', icon: 'metronome', color: '#FF8A65' },
   earTraining: { label: 'Ear Training', icon: 'ear-hearing', color: '#CE93D8' },
@@ -57,7 +60,7 @@ const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: string; color:
 };
 
 /** Metadata for each tier */
-const TIER_META: Record<number, { title: string; icon: string; description: string }> = {
+const TIER_META: Record<number, { title: string; icon: IconName; description: string }> = {
   1:  { title: 'Note Finding',         icon: 'music-note',              description: 'Learn to locate notes on the keyboard, starting with Middle C.' },
   2:  { title: 'Right Hand Melodies',  icon: 'hand-pointing-right',     description: 'Build right-hand fluency with simple melodies and five-finger patterns.' },
   3:  { title: 'Left Hand Basics',     icon: 'hand-pointing-left',      description: 'Develop left-hand control with bass patterns and descending scales.' },
@@ -84,7 +87,7 @@ const SKILL_COLORS = [
 ];
 
 /** Educational concept cards — actual music theory explanations per tier */
-const TIER_CONCEPTS: Record<number, { title: string; icon: string; body: string }[]> = {
+const TIER_CONCEPTS: Record<number, { title: string; icon: IconName; body: string }[]> = {
   1: [
     { title: 'The Musical Alphabet', icon: 'alphabetical-variant', body: 'Music uses 7 letters: A B C D E F G, then repeats. These are the white keys on the piano. Middle C is your home base — find the two black keys grouped together, and C is just to the left.' },
     { title: 'Why Finger Numbers?', icon: 'hand-back-right', body: 'Each finger has a number: thumb = 1, pinky = 5. Using the right fingers builds muscle memory so you can play faster and more accurately as music gets harder.' },
@@ -227,12 +230,12 @@ function getTierEstimatedMinutes(skills: SkillNode[]): number {
   return Math.max(5, skills.length * 3);
 }
 
-function ConceptCard({ title, icon, body }: { title: string; icon: string; body: string }) {
+function ConceptCard({ title, icon, body }: { title: string; icon: IconName; body: string }) {
   return (
     <View style={styles.conceptCard}>
       <View style={styles.conceptHeader}>
         <View style={styles.conceptIconBadge}>
-          <MaterialCommunityIcons name={icon as any} size={18} color={COLORS.primary} />
+          <MaterialCommunityIcons name={icon} size={18} color={COLORS.primary} />
         </View>
         <Text style={styles.conceptTitle}>{title}</Text>
       </View>
@@ -301,7 +304,7 @@ function SkillRow({
           </Text>
           <View style={styles.skillMetaRow}>
             <View style={[styles.exerciseTypeBadge, { backgroundColor: typeInfo.color + '20' }]}>
-              <MaterialCommunityIcons name={typeInfo.icon as any} size={10} color={typeInfo.color} />
+              <MaterialCommunityIcons name={typeInfo.icon} size={10} color={typeInfo.color} />
               <Text style={[styles.exerciseTypeText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
             </View>
           </View>
@@ -504,7 +507,7 @@ export function TierIntroScreen() {
             </View>
 
             <View style={styles.tierIconBadge}>
-              <MaterialCommunityIcons name={meta.icon as any} size={24} color={COLORS.primary} />
+              <MaterialCommunityIcons name={meta.icon} size={24} color={COLORS.primary} />
             </View>
           </View>
         </SafeAreaView>

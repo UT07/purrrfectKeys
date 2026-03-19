@@ -279,7 +279,8 @@ export function createPersistMiddleware<T>(
 ) {
   const { debounceMs = 1000, version = 1, migrate } = options;
 
-  return (config: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zustand middleware signature requires any for generic store compatibility
+  return (config: (...args: any[]) => any) => {
     // Initialize state asynchronously
     let initialState = defaultValue;
 
@@ -303,8 +304,9 @@ export function createPersistMiddleware<T>(
 
     const debouncedSave = createDebouncedSave(key, debounceMs);
 
-    return (set: any, get: any, api: any) => {
-      const setWithPersist = (partial: any, replace?: boolean) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zustand set/get/api types are generic and vary per store
+    return (set: (...args: any[]) => void, get: () => any, api: any) => {
+      const setWithPersist = (partial: unknown, replace?: boolean) => {
         set(partial, replace);
         const newState = get();
         debouncedSave(newState);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ProfileScreen UI Tests
  * Tests rendering of user profile, stats, achievements, settings,

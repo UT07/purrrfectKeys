@@ -70,6 +70,7 @@ export class SentryService {
         enableTimeToInitialDisplay: true,
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Sentry Integration type unavailable from lazy require()
       const integrations: any[] = [_navigationIntegration];
 
       // Add mobile session replay (visual debugging with touch events)

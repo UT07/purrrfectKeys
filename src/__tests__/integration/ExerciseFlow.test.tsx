@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Integration Test: Exercise Flow
  * Tests the complete exercise playback experience from start to finish

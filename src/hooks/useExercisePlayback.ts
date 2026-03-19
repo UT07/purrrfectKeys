@@ -16,6 +16,7 @@ import { scoreExerciseByType } from '@/core/exercises/ExerciseValidator';
 import { InputManager, INPUT_LATENCY_COMPENSATION_MS } from '@/input/InputManager';
 import type { ActiveInputMethod } from '@/input/InputManager';
 import { createAudioEngine, ensureAudioModeConfigured } from '@/audio/createAudioEngine';
+import type { NoteHandle } from '@/audio/types';
 import { useExerciseStore } from '@/stores/exerciseStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { logger } from '../utils/logger';
@@ -109,7 +110,7 @@ export function useExercisePlayback({
   const startTimeRef = useRef(0);
   const pauseElapsedRef = useRef(0); // Tracks elapsed ms at time of pause
   const playbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const activeNotesRef = useRef<Map<number, any>>(new Map());
+  const activeNotesRef = useRef<Map<number, NoteHandle>>(new Map());
   const mountedRef = useRef(true);
   const handleCompletionRef = useRef<() => void>(() => {});
   const lastStateUpdateRef = useRef(0); // Throttle state updates to ~20fps for perf
@@ -310,9 +311,9 @@ export function useExercisePlayback({
       }
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- resolvedInputMethod intentionally
-    // excluded: changing input preference mid-exercise must NOT reconfigure the audio session,
-    // which would cause audio routing disruption. Session mode is set once at mount.
+    // resolvedInputMethod intentionally excluded: changing input preference mid-exercise must NOT
+    // reconfigure the audio session, which would cause audio routing disruption. Session mode is set once at mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableAudio, audioEngine]);
 
   /**

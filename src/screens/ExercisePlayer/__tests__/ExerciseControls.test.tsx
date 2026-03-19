@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ExerciseControls Component Tests
  * Tests play/pause/resume, restart, exit buttons, and compact mode

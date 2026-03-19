@@ -149,11 +149,11 @@ function AppRoot(): React.ReactElement {
           useProgressStore.setState({
             ...(totalXp != null ? { totalXp: xp } : {}),
             level: levelFromXp(xp),
-            ...(streakData ? { streakData: streakData as any } : {}),
-            ...(lessonProgress ? { lessonProgress: lessonProgress as any } : {}),
-            ...(dailyGoalData ? { dailyGoalData: pruneDailyGoalData(dailyGoalData as any) } : {}),
-            ...(tierTestResults ? { tierTestResults: tierTestResults as any } : {}),
-            ...(streakMilestonesClaimed ? { streakMilestonesClaimed: streakMilestonesClaimed as any } : {}),
+            ...(streakData ? { streakData: streakData as ReturnType<typeof useProgressStore.getState>['streakData'] } : {}),
+            ...(lessonProgress ? { lessonProgress: lessonProgress as ReturnType<typeof useProgressStore.getState>['lessonProgress'] } : {}),
+            ...(dailyGoalData ? { dailyGoalData: pruneDailyGoalData(dailyGoalData as ReturnType<typeof useProgressStore.getState>['dailyGoalData']) } : {}),
+            ...(tierTestResults ? { tierTestResults: tierTestResults as ReturnType<typeof useProgressStore.getState>['tierTestResults'] } : {}),
+            ...(streakMilestonesClaimed ? { streakMilestonesClaimed: streakMilestonesClaimed as ReturnType<typeof useProgressStore.getState>['streakMilestonesClaimed'] } : {}),
           });
           logger.log('[App] Progress state hydrated from storage (level', levelFromXp(xp), ')');
         }
@@ -169,15 +169,15 @@ function AppRoot(): React.ReactElement {
           useLearnerProfileStore.setState({
             ...(ld.noteAccuracy ? { noteAccuracy: ld.noteAccuracy as Record<number, number> } : {}),
             ...(ld.noteAttempts ? { noteAttempts: ld.noteAttempts as Record<number, number> } : {}),
-            ...(ld.skills ? { skills: ld.skills as any } : {}),
-            ...(ld.tempoRange ? { tempoRange: ld.tempoRange as any } : {}),
+            ...(ld.skills ? { skills: ld.skills as ReturnType<typeof useLearnerProfileStore.getState>['skills'] } : {}),
+            ...(ld.tempoRange ? { tempoRange: ld.tempoRange as { min: number; max: number } } : {}),
             ...(ld.weakNotes ? { weakNotes: ld.weakNotes as number[] } : {}),
             ...(ld.weakSkills ? { weakSkills: ld.weakSkills as string[] } : {}),
             ...(ld.totalExercisesCompleted != null ? { totalExercisesCompleted: ld.totalExercisesCompleted as number } : {}),
             ...(ld.lastAssessmentDate ? { lastAssessmentDate: ld.lastAssessmentDate as string } : {}),
             ...(ld.assessmentScore != null ? { assessmentScore: ld.assessmentScore as number } : {}),
             ...(ld.masteredSkills ? { masteredSkills: ld.masteredSkills as string[] } : {}),
-            ...(ld.skillMasteryData ? { skillMasteryData: ld.skillMasteryData as any } : {}),
+            ...(ld.skillMasteryData ? { skillMasteryData: ld.skillMasteryData as ReturnType<typeof useLearnerProfileStore.getState>['skillMasteryData'] } : {}),
             ...(ld.recentExerciseIds ? { recentExerciseIds: ld.recentExerciseIds as string[] } : {}),
           });
           const masteredCount = (ld.masteredSkills as string[] | undefined)?.length ?? 0;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/Mascot/__tests__/MicroAnimations.test.ts
 
 import { renderHook } from '@testing-library/react-native';

@@ -17,6 +17,9 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import { getDailyChallengeForDate } from '../core/challenges/challengeSystem';
 import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '../theme/tokens';
@@ -100,7 +103,7 @@ export function DailyChallengeCard({ onPress, masteredSkills }: DailyChallengeCa
         {/* Top row: Title + XP multiplier badge */}
         <View style={styles.topRow}>
           <View style={styles.titleRow}>
-            <MaterialCommunityIcons name={todayChallenge.icon as any} size={20} color={COLORS.starGold} />
+            <MaterialCommunityIcons name={todayChallenge.icon as IconName} size={20} color={COLORS.starGold} />
             <Text style={styles.title}>{todayChallenge.label}</Text>
           </View>
           <View style={styles.xpBadge}>

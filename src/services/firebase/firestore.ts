@@ -115,10 +115,10 @@ export interface ProgressChange {
 
 export interface ConflictResolution {
   field: string;
-  localValue: any;
-  serverValue: any;
+  localValue: unknown;
+  serverValue: unknown;
   resolution: 'local' | 'server' | 'merged';
-  resolvedValue: any;
+  resolvedValue: unknown;
 }
 
 // ============================================================================
@@ -127,7 +127,7 @@ export interface ConflictResolution {
 
 export async function createUserProfile(
   uid: string,
-  data: Partial<UserProfile>
+  data: Partial<UserProfile> & Record<string, unknown>
 ): Promise<void> {
   const userDoc = doc(db, 'users', uid);
   const defaultProfile: Partial<UserProfile> = {
@@ -168,7 +168,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
 export async function updateUserProfile(
   uid: string,
-  updates: Partial<UserProfile>
+  updates: Partial<UserProfile> & Record<string, unknown>
 ): Promise<void> {
   const userDoc = doc(db, 'users', uid);
   await updateDoc(userDoc, updates);
@@ -566,7 +566,7 @@ export interface LearnerProfileSyncData {
   tempoRange: { min: number; max: number };
   totalExercisesCompleted: number;
   masteredSkills: string[];
-  skillMasteryData: Record<string, any>;
+  skillMasteryData: Record<string, { masteredAt: number; lastPracticedAt: number; completionCount: number; decayScore: number }>;
   recentExerciseIds: string[];
   updatedAt: FieldValue | Timestamp;
 }

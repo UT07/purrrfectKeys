@@ -86,7 +86,7 @@ function ConfettiParticle({ particle, screenHeight }: ConfettiParticleProps): Re
         easing: Easing.linear,
       })
     );
-  }, [translateY, translateX, opacity, rotate, particle]);
+  }, [translateY, translateX, opacity, rotate, particle, screenHeight]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

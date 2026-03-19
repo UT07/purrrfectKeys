@@ -178,7 +178,7 @@ function LeagueCard(): React.JSX.Element {
       <View style={styles.leagueHeader}>
         <View style={[styles.tierBadge, { backgroundColor: glowColor(config.color, 0.15) }]}>
           <MaterialCommunityIcons
-            name={config.icon as any}
+            name={config.icon}
             size={32}
             color={config.color}
           />

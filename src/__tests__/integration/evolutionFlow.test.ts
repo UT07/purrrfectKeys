@@ -150,10 +150,12 @@ jest.mock('../../components/Mascot/catCharacters', () => ({
   ],
   getCatById: (id: string) => {
     const cats = jest.requireMock('../../components/Mascot/catCharacters').CAT_CHARACTERS;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return cats.find((c: any) => c.id === id);
   },
   getStarterCats: () => {
     const cats = jest.requireMock('../../components/Mascot/catCharacters').CAT_CHARACTERS;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return cats.filter((c: any) => c.starterCat);
   },
 }));

@@ -29,6 +29,7 @@ import {
 import type { User, AuthCredential } from 'firebase/auth';
 import { auth, firebaseAvailable } from '../services/firebase/config';
 import { createUserProfile, getUserProfile, updateUserProfile, deleteUserData } from '../services/firebase/firestore';
+import type { UserProfile } from '../services/firebase/firestore';
 import { PersistenceManager, cancelAllPendingSaves, STORAGE_KEYS } from './persistence';
 import { useProgressStore } from './progressStore';
 import { useSettingsStore } from './settingsStore';
@@ -259,16 +260,17 @@ async function triggerPostSignInSync(): Promise<void> {
       const profile = await getUserProfile(authState.user.uid);
       if (profile) {
         // Restore hasCompletedOnboarding from Firestore
-        if ((profile as any).hasCompletedOnboarding === true) {
+        const profileData = profile as unknown as Record<string, unknown>;
+        if (profileData.hasCompletedOnboarding === true) {
           useSettingsStore.getState().setHasCompletedOnboarding(true);
         }
         // Restore username from Firestore
-        if ((profile as any).username) {
+        if (profileData.username) {
           const localUsername = useSettingsStore.getState().username;
           if (!localUsername) {
             // Use setUsername for persistence + normalization; fall back to direct
             // setState + manual save if the name is somehow shorter than 3 chars.
-            const remoteUsername = (profile as any).username;
+            const remoteUsername = profileData.username as string;
             useSettingsStore.getState().setUsername(remoteUsername);
             // If setUsername rejected (< 3 chars), force it anyway to avoid losing data
             if (!useSettingsStore.getState().username && remoteUsername) {
@@ -337,14 +339,14 @@ async function triggerPostSignInSync(): Promise<void> {
     const authState = useAuthStore.getState();
     if (authState.user && !authState.isAnonymous) {
       const settings = useSettingsStore.getState();
-      const updates: Record<string, any> = {};
-      if (settings.username) updates.username = settings.username;
-      if (settings.hasCompletedOnboarding) updates.hasCompletedOnboarding = true;
+      const profileUpdates: Partial<UserProfile> & Record<string, unknown> = {};
+      if (settings.username) profileUpdates.username = settings.username;
+      if (settings.hasCompletedOnboarding) profileUpdates.hasCompletedOnboarding = true;
       if (settings.displayName && settings.displayName !== 'Piano Student') {
-        updates.displayName = settings.displayName;
+        profileUpdates.displayName = settings.displayName;
       }
-      if (Object.keys(updates).length > 0) {
-        await updateUserProfile(authState.user.uid, updates as any).catch(() => {});
+      if (Object.keys(profileUpdates).length > 0) {
+        await updateUserProfile(authState.user.uid, profileUpdates).catch(() => {});
       }
     }
   } catch (err) {
@@ -500,7 +502,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!firebaseAvailable) {
       logger.warn('[Auth] Firebase not available — using local guest mode');
       const guestUser = createLocalGuestUser();
-      set({ user: guestUser as any, isAuthenticated: true, isAnonymous: true, isLoading: false, error: null });
+      set({ user: guestUser, isAuthenticated: true, isAnonymous: true, isLoading: false, error: null });
       return;
     }
 
@@ -574,10 +576,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await updateProfile(result.user, { displayName });
       // Include username + onboarding flag in initial profile so they survive sign-out/sign-in
       const localSettings = useSettingsStore.getState();
-      const profileData: Record<string, any> = { email, displayName };
-      if (localSettings.username) profileData.username = localSettings.username;
-      if (localSettings.hasCompletedOnboarding) profileData.hasCompletedOnboarding = true;
-      await createUserProfile(result.user.uid, profileData as any);
+      const profileCreateData: Partial<UserProfile> & Record<string, unknown> = { email, displayName };
+      if (localSettings.username) profileCreateData.username = localSettings.username;
+      if (localSettings.hasCompletedOnboarding) profileCreateData.hasCompletedOnboarding = true;
+      await createUserProfile(result.user.uid, profileCreateData);
 
       // Sync display name to settings store so ProfileScreen shows it
       try {
@@ -874,7 +876,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             hasCompletedOnboarding: settings.hasCompletedOnboarding,
             username: settings.username,
             displayName: settings.displayName,
-          } as any).catch(() => {});
+          }).catch(() => {});
         }
         logger.log('[Auth] Pre-signout data push completed');
       } catch (err) {

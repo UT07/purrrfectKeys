@@ -179,7 +179,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   },
 
   setDailyGoalMinutes: (minutes: number) => {
-    const clamped = Math.max(1, minutes);
+    const clamped = Math.max(1, Math.min(480, Math.floor(minutes)));
     set({ dailyGoalMinutes: clamped });
     debouncedSave({ ...get(), dailyGoalMinutes: clamped });
   },
@@ -300,9 +300,9 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     }
   },
 
-  setSelectedPath: (pathId: string) => {
-    set({ selectedPath: pathId as any });
-    debouncedSave({ ...get(), selectedPath: pathId as any });
+  setSelectedPath: (pathId) => {
+    set({ selectedPath: pathId });
+    debouncedSave({ ...get(), selectedPath: pathId });
   },
 
   equipAccessory: (category: string, accessoryId: string) => {

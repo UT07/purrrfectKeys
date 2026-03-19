@@ -22,6 +22,8 @@ import {
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -584,7 +586,7 @@ export function CatSwitchScreen(): React.ReactElement {
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = screenWidth * CARD_WIDTH_RATIO;
   const snapInterval = cardWidth + CARD_SPACING;
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
   const setSelectedCatId = useSettingsStore((s) => s.setSelectedCatId);
   const setAvatarEmoji = useSettingsStore((s) => s.setAvatarEmoji);
@@ -680,7 +682,7 @@ export function CatSwitchScreen(): React.ReactElement {
         cardWidth={cardWidth}
       />
     );
-  }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, currentIndex, cardWidth]);
+  }, [selectedCatId, ownedCats, evolutionData, handleSelect, handleBuy, cardWidth]);
 
   const keyExtractor = useCallback((item: CatCharacter) => item.id, []);
 
@@ -717,7 +719,7 @@ export function CatSwitchScreen(): React.ReactElement {
           {/* Customize button */}
           <PressableScale
             style={styles.customizeButton}
-            onPress={() => (navigation as any).navigate('CatStudio')}
+            onPress={() => navigation.navigate('CatStudio')}
           >
             <MaterialCommunityIcons name="palette" size={16} color={COLORS.primary} />
             <Text style={styles.customizeText}>Studio</Text>

@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, StackActions } from '@react-navigation/native';
 import { PressableScale } from '../../components/common/PressableScale';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
 import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
@@ -71,9 +71,7 @@ import { perfTrace } from '../../utils/perfTrace';
 import { createChallenge, updateChallengeResult, resolveChallengeGemStake } from '../../services/firebase/socialService';
 import { useSocialStore } from '../../stores/socialStore';
 import { useAuthStore } from '../../stores/authStore';
-import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
 import { ExerciseLoadingScreen } from './ExerciseLoadingScreen';
-import { SalsaIntro } from './SalsaIntro';
 import { ReplayOverlay } from './ReplayOverlay';
 import { ReplayTimelineBar } from './ReplayTimelineBar';
 import { ComboMeter } from './ComboMeter';
@@ -89,7 +87,6 @@ import { CallResponsePhase } from './CallResponsePhase';
 import type { CallResponsePhaseType } from './CallResponsePhase';
 import { GlassmorphismCard } from '../../components/effects';
 import { buildReplayPlan, buildReplayPlanSync } from '../../services/replayCoachingService';
-import { getIntroData } from '../../services/replayCoachingService';
 import type { ReplayPlan } from '../../core/exercises/replayTypes';
 import ReAnimated, { FadeIn } from 'react-native-reanimated';
 import { SKILL_TREE, getSkillsForExercise, getSkillById, getAvailableSkills, getGenerationHints } from '../../core/curriculum/SkillTree';
@@ -544,7 +541,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const evolutionAbilities = useCatEvolutionStore(
     (s) => s.evolutionData[s.selectedCatId]?.abilitiesUnlocked,
   );
-  const activeAbilityIds = evolutionAbilities ?? [];
+  const activeAbilityIds = useMemo(() => evolutionAbilities ?? [], [evolutionAbilities]);
   const activeAbilities = useMemo(() => {
     const cat = CAT_CHARACTERS.find((c) => c.id === (selectedCatId ?? ''));
     if (!cat || activeAbilityIds.length === 0) return [];
@@ -672,7 +669,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (aiMode && !exerciseReady) return;
     useExerciseStore.getState().setCurrentExercise(exercise);
     analyticsEvents.exercise.started(exercise.id, exercise.metadata.title);
-  }, [aiMode, exerciseReady, exercise.id]);
+  }, [aiMode, exerciseReady, exercise]);
 
   const cycleSpeed = useCallback(() => {
     const speeds: PlaybackSpeed[] = [0.25, 0.5, 0.75, 1.0];
@@ -712,9 +709,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Track mount lifecycle
   useEffect(() => {
     mountedRef.current = true;
+    const demoService = demoServiceRef.current;
     return () => {
       mountedRef.current = false;
-      demoServiceRef.current.stop();
+      demoService.stop();
     };
   }, []);
 
@@ -1460,7 +1458,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   });
 
   // UI state (separate from playback logic)
-  const [showIntro, setShowIntro] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [highlightedKeys, setHighlightedKeys] = useState<Set<number>>(new Set());
   const [expectedNotes, setExpectedNotes] = useState<Set<number>>(new Set());
@@ -1490,10 +1487,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [replayCardText, setReplayCardText] = useState('');
   const [replaySectionIndex, setReplaySectionIndex] = useState(0);
 
-  // Salsa intro state (pre-exercise coaching)
-  const [salsaIntroTier, setSalsaIntroTier] = useState<1 | 2 | 3 | null>(null);
-  const [salsaIntroText, setSalsaIntroText] = useState('');
-  const [salsaIntroTip, setSalsaIntroTip] = useState('');
 
   // Effective beat: during demo, use demo beat; during replay, use replay beat;
   // otherwise use playback hook's beat.
@@ -1554,45 +1547,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const keyboardStartNote = keyboardRange.startNote;
   const keyboardOctaveCount = keyboardRange.octaveCount;
 
-  // Load Salsa intro data on mount (determines tier and text)
-  useEffect(() => {
-    if (!exercise || showLoadingScreen) return;
-
-    // Determine previous high score for this exercise
-    const progress = useProgressStore.getState();
-    let prevScore: number | null = null;
-    for (const lp of Object.values(progress.lessonProgress)) {
-      const es = lp.exerciseScores[exercise.id];
-      if (es?.highScore) {
-        prevScore = es.highScore;
-        break;
-      }
-    }
-
-    // Determine tier
-    const currentFailCount = useExerciseStore.getState().failCount;
-    let tier: 1 | 2 | 3;
-    if (currentFailCount >= 3) tier = 3;
-    else if (prevScore === null) tier = 2;
-    else if (prevScore >= 70) tier = 1;
-    else tier = 2;
-
-    setSalsaIntroTier(tier);
-
-    // Load AI intro text in background
-    getIntroData(exercise, prevScore, currentFailCount).then((data) => {
-      if (mountedRef.current) {
-        setSalsaIntroText(data.introText);
-        setSalsaIntroTip(data.tip);
-      }
-    }).catch(() => {
-      // Fallback text already set by defaults
-      if (mountedRef.current) {
-        setSalsaIntroText(`Let's practice ${exercise.metadata.title}!`);
-        setSalsaIntroTip('Keep your wrist relaxed and your fingers curved.');
-      }
-    });
-  }, [exercise?.id, showLoadingScreen]);
 
   // Coaching tip for count-in based on learner weaknesses
   const coachingTip = useMemo(() => {
@@ -1605,18 +1559,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (prof.skills.timingAccuracy < 0.6) return 'Count along with the beat';
     return exercise.hints?.beforeStart;
   }, [exercise]);
-
-  // Skill target for the intro overlay
-  const skillTarget = useMemo(() => {
-    const skills = getSkillsForExercise(exercise.id);
-    if (skills.length > 0) return skills[0].name;
-    // AI exercises: use skillId from route params
-    if (skillIdParam) {
-      const paramSkill = getSkillById(skillIdParam);
-      if (paramSkill) return paramSkill.name;
-    }
-    return undefined;
-  }, [exercise.id, skillIdParam]);
 
   // Feedback state
   const [feedback, setFeedback] = useState<FeedbackState>({
@@ -1826,10 +1768,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // effect inside ExerciseLoadingScreen on every ExercisePlayer render.
   const handleLoadingReady = useCallback(() => {
     setShowLoadingScreen(false);
-    // Skip the SalsaIntro — loading screen already showed Salsa's coaching
-    setShowIntro(false);
     handleStart();
   }, [handleStart]);
+
+  // Auto-start exercise when ready (no intro overlay, no loading screen)
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!showLoadingScreen && !isPlaying && !autoStartedRef.current && exercise) {
+      autoStartedRef.current = true;
+      handleStart();
+    }
+  }, [showLoadingScreen, isPlaying, exercise, handleStart]);
 
   /**
    * Pause/resume exercise playback
@@ -1848,7 +1797,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       const message = !isPaused ? 'Paused' : 'Resumed';
       AccessibilityInfo.announceForAccessibility(message);
     }
-  }, [isPaused, resumePlayback, pausePlayback]);
+  }, [isPaused, resumePlayback, pausePlayback, currentBeat, exercise.id]);
 
   /**
    * Restart exercise
@@ -2109,6 +2058,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       exercise.scoring.timingGracePeriodMs,
       comboScale,
       handleManualNoteOn,
+      screenHeight,
+      screenWidth,
     ]
   );
 
@@ -2323,12 +2274,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         const lesson = getLesson(lid);
         if (!lesson) return false;
         const lp = useProgressStore.getState().lessonProgress[lid];
-        const nonTestExercises = lesson.exercises.filter((e: any) => !e.test);
-        const allNonTestComplete = nonTestExercises.every((entry: any) =>
+        const nonTestExercises = lesson.exercises.filter((e) => !e.test);
+        const allNonTestComplete = nonTestExercises.every((entry) =>
           lp?.exerciseScores[entry.id]?.completedAt != null
         );
         if (!allNonTestComplete) return false;
-        const testEx = lesson.exercises.find((e: any) => e.test);
+        const testEx = lesson.exercises.find((e) => e.test);
         return !!testEx && !lp?.exerciseScores[testEx.id]?.completedAt;
       })(),
       hasReplay: !!replayPlan,
@@ -2352,7 +2303,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }, 200);
     } else {
       // Navigate to PostExerciseScreen
-      (navigation as any).replace('PostExercise');
+      navigation.dispatch(StackActions.replace('PostExercise'));
     }
   }, [finalScore, exercise, gemsEarnedForModal, chestTypeForModal, chestGemsForModal,
       sessionStartTime, tempoChangeForModal, challengeTarget, aiMode, nextExerciseId,
@@ -2476,11 +2427,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         exerciseStore.clearSession();
         setTimeout(() => {
           if (mountedRef.current) {
-            (navigation as any).replace('Exercise', {
+            navigation.dispatch(StackActions.replace('Exercise', {
               exerciseId: nextExerciseId,
               ...(skillIdParam ? { skillId: skillIdParam } : {}),
               ...(exerciseTypeParam ? { exerciseType: exerciseTypeParam } : {}),
-            });
+            }));
           }
         }, 100);
       } else {
@@ -2559,11 +2510,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Brief delay so modal unmount and state cleanup settle
     setTimeout(() => {
       if (mountedRef.current) {
-        (navigation as any).replace('Exercise', {
+        navigation.dispatch(StackActions.replace('Exercise', {
           exerciseId: nextExerciseId,
           ...(skillIdParam ? { skillId: skillIdParam } : {}),
           ...(exerciseTypeParam ? { exerciseType: exerciseTypeParam } : {}),
-        });
+        }));
       }
     }, 100);
   }, [nextExerciseId, stopPlayback, exerciseStore, navigation, skillIdParam, exerciseTypeParam]);
@@ -2597,11 +2548,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     setTimeout(() => {
       if (mountedRef.current) {
-        (navigation as any).replace('Exercise', {
+        navigation.dispatch(StackActions.replace('Exercise', {
           exerciseId: 'ai-mode',
           aiMode: true,
           ...(nextSkillId ? { skillId: nextSkillId } : {}),
-        });
+        }));
       }
     }, 100);
   }, [stopPlayback, exerciseStore, navigation, skillIdParam]);
@@ -2665,11 +2616,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // Navigate to new ExercisePlayer with the generated drill
         setTimeout(() => {
           if (mountedRef.current) {
-            (navigation as any).replace('Exercise', {
+            navigation.dispatch(StackActions.replace('Exercise', {
               exerciseId: drillExercise.id,
               aiMode: true,
               bonusDrillExercise: drillExercise,
-            });
+            }));
           }
         }, 100);
         return;
@@ -2685,7 +2636,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (templateEx) {
       setTimeout(() => {
         if (mountedRef.current) {
-          (navigation as any).replace('Exercise', {
+          navigation.dispatch(StackActions.replace('Exercise', {
             exerciseId: `drill-tmpl-${Date.now()}`,
             aiMode: true,
             bonusDrillExercise: {
@@ -2696,7 +2647,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
                 title: `Drill: ${bonusDrillPattern.description}`,
               },
             },
-          });
+          }));
         }
       }, 100);
     }
@@ -2717,12 +2668,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           exerciseStore.clearSession();
           setTimeout(() => {
             if (mountedRef.current) {
-              (navigation as any).replace('Exercise', {
+              navigation.dispatch(StackActions.replace('Exercise', {
                 exerciseId: 'ai-mode',
                 aiMode: true,
                 testMode: true,
                 skillId: testSkillId,
-              });
+              }));
             }
           }, 100);
           return;
@@ -2741,11 +2692,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     exerciseStore.clearSession();
     setTimeout(() => {
       if (mountedRef.current) {
-        (navigation as any).replace('Exercise', {
+        navigation.dispatch(StackActions.replace('Exercise', {
           exerciseId: testEx.id,
           testMode: true,
           ...(skillIdParam ? { skillId: skillIdParam } : {}),
-        });
+        }));
       }
     }, 100);
   }, [exercise.id, aiMode, stopPlayback, exerciseStore, navigation, skillIdParam]);
@@ -2787,7 +2738,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const testEx = getTestExercise(lid);
     if (!testEx) return false;
     return !lp?.exerciseScores[testEx.id]?.completedAt;
-  }, [exercise.id, aiMode, skillIdParam, testMode, finalScore]); // finalScore dep ensures recalc after score persisted
+  // finalScore is intentionally included as a trigger to force recalculation when score
+  // is persisted, even though the body reads from getState().
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercise.id, aiMode, skillIdParam, testMode, finalScore]);
 
   // Show error if initialization failed
   if (hasError && errorMessage && !isMidiReady && !isAudioReady) {
@@ -3183,61 +3137,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
-      {/* Salsa intro — pre-exercise coaching overlay */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && salsaIntroTier && salsaIntroText.length > 0 && (
-        <SalsaIntro
-          tier={salsaIntroTier}
-          introText={salsaIntroText}
-          tip={salsaIntroTip}
-          onDismiss={() => {
-            setShowIntro(false);
-            handleStart();
-          }}
-          onRequestDemo={salsaIntroTier === 3 ? () => {
-            setShowIntro(false);
-            const maxBeat = 16;
-            const miniExercise = {
-              notes: exercise.notes.filter(n => n.startBeat < maxBeat),
-              settings: exercise.settings,
-            };
-
-            setIsDemoPlaying(true);
-            useExerciseStore.getState().setDemoWatched(true);
-            const audioEngine = createAudioEngine();
-            demoServiceRef.current.start(
-              miniExercise,
-              audioEngine,
-              0.8,
-              (beat) => {
-                setDemoBeat(beat);
-                useExerciseStore.getState().setCurrentBeat(beat);
-              },
-              (notes) => setDemoActiveNotes(notes),
-              () => {
-                setIsDemoPlaying(false);
-                setDemoActiveNotes(new Set());
-              },
-            );
-          } : undefined}
-        />
-      )}
-
-      {/* Fallback: original intro overlay when SalsaIntro hasn't loaded yet */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && (!salsaIntroTier || salsaIntroText.length === 0) && (
-        <ExerciseIntroOverlay
-          exercise={exercise}
-          onReady={() => {
-            setShowIntro(false);
-            handleStart();
-          }}
-          onWatchFirst={() => {
-            setShowIntro(false);
-            startDemo();
-          }}
-          skillTarget={skillTarget}
-          testID="exercise-intro"
-        />
-      )}
 
       {/* XP Transition Overlay — gamification celebration before PostExerciseScreen */}
       {showXPTransition && finalScore && (

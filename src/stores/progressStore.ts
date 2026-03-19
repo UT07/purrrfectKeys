@@ -111,7 +111,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   ...defaultData,
 
   addXp: (amount: number) => {
-    if (amount <= 0) return;
+    if (!Number.isFinite(amount) || amount <= 0) return;
     const oldLevel = get().level;
     set((state) => {
       const newTotalXp = state.totalXp + amount;
@@ -149,7 +149,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   setLevel: (level: number) => {
-    set({ level });
+    const clamped = Math.max(1, Math.floor(level));
+    if (!Number.isFinite(clamped)) return;
+    set({ level: clamped });
     debouncedSave(get());
   },
 
@@ -298,6 +300,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   },
 
   recordPracticeSession: (duration: number) => {
+    if (!Number.isFinite(duration) || duration <= 0) return;
     const today = localToday();
     // BUG-011/024 fix: Read user's preferred daily goal from settings
     const userMinutesTarget = useSettingsStore.getState().dailyGoalMinutes ?? 10;

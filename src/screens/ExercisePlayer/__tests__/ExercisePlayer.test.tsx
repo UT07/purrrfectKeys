@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ExercisePlayer Component Tests
  * Tests core playback, scoring, interaction features, demo mode,

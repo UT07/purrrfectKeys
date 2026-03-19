@@ -192,6 +192,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
   },
 
   addEvolutionXp: (catId: string, amount: number) => {
+    if (!Number.isFinite(amount) || amount <= 0) return null;
     // Compute inside set() updater to prevent lost updates from concurrent calls
     let evolved = false;
     let newStage: string | null = null;

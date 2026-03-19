@@ -36,6 +36,7 @@ describe('CatGradientDefs', () => {
       </SvgC>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const gradients = allViews.filter(
       (v: any) =>
         v.props.accessibilityLabel === 'RadialGradient' ||
@@ -53,6 +54,7 @@ describe('CatGradientDefs', () => {
       </SvgC>
     );
     const allViews = UNSAFE_getAllByType(require('react-native').View);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const gradients = allViews.filter(
       (v: any) =>
         v.props.accessibilityLabel === 'RadialGradient' ||

@@ -37,7 +37,7 @@ export class AuthService {
       });
 
       return userCredential;
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }
@@ -48,7 +48,7 @@ export class AuthService {
   static async signInWithEmail(email: string, password: string): Promise<UserCredential> {
     try {
       return await signInWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }
@@ -73,7 +73,7 @@ export class AuthService {
       }
 
       return userCredential;
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }
@@ -84,7 +84,7 @@ export class AuthService {
   static async signOut(): Promise<void> {
     try {
       await signOut(auth);
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }
@@ -109,8 +109,9 @@ export class AuthService {
   /**
    * Handle Firebase auth errors with user-friendly messages
    */
-  private static handleAuthError(error: any): Error {
-    const errorCode = error.code || '';
+  private static handleAuthError(error: unknown): Error {
+    const firebaseError = error as { code?: string };
+    const errorCode = firebaseError.code || '';
     let message = 'An authentication error occurred';
 
     switch (errorCode) {
@@ -150,7 +151,7 @@ export class AuthService {
     const { sendPasswordResetEmail } = require('firebase/auth');
     try {
       await sendPasswordResetEmail(auth, email);
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }
@@ -167,7 +168,7 @@ export class AuthService {
 
     try {
       await updateProfile(user, updates);
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }
@@ -184,7 +185,7 @@ export class AuthService {
 
     try {
       await deleteUser(user);
-    } catch (error: any) {
+    } catch (error) {
       throw this.handleAuthError(error);
     }
   }

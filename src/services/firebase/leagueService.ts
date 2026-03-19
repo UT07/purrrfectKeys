@@ -222,6 +222,7 @@ export async function addLeagueXp(
   uid: string,
   xpAmount: number,
 ): Promise<void> {
+  if (!Number.isFinite(xpAmount) || xpAmount <= 0) return;
   const memberRef = doc(db, 'leagues', leagueId, 'members', uid);
   await updateDoc(memberRef, { weeklyXp: increment(xpAmount) });
 }

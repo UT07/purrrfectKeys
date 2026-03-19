@@ -6,6 +6,7 @@
 
 export const logger = {
   log: (...args: unknown[]): void => {
+    // eslint-disable-next-line no-console
     if (__DEV__) console.log(...args);
   },
   warn: (...args: unknown[]): void => {

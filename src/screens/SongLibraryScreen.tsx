@@ -450,7 +450,7 @@ export function SongLibraryScreen() {
   // Load on mount
   useEffect(() => {
     loadSummaries();
-  }, []);
+  }, [loadSummaries]);
 
   // Debounced search — skip initial mount (already loaded above)
   useEffect(() => {
@@ -463,7 +463,7 @@ export function SongLibraryScreen() {
       loadSummaries();
     }, 400);
     return () => clearTimeout(timer);
-  }, [searchText]);
+  }, [searchText, loadSummaries, setFilter]);
 
   const activeGenre = filter.genre ?? 'all';
   const activeDifficulty = filter.difficulty ?? 'all';

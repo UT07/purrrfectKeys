@@ -66,6 +66,7 @@ export const useGuildStore = create<GuildStoreState>((set, get) => ({
   setLoading: (loading) => set({ isLoading: loading }),
 
   updateMemberXp: (uid, xpAmount) => {
+    if (!Number.isFinite(xpAmount) || xpAmount <= 0) return;
     set((state) => ({
       members: state.members.map((m) =>
         m.uid === uid
@@ -79,7 +80,7 @@ export const useGuildStore = create<GuildStoreState>((set, get) => ({
     set((state) => ({
       members: state.members.filter((m) => m.uid !== uid),
       currentGuild: state.currentGuild
-        ? { ...state.currentGuild, memberCount: state.currentGuild.memberCount - 1 }
+        ? { ...state.currentGuild, memberCount: Math.max(0, state.currentGuild.memberCount - 1) }
         : null,
     }));
     debouncedSave({ currentGuild: get().currentGuild });
@@ -94,6 +95,7 @@ export const useGuildStore = create<GuildStoreState>((set, get) => ({
   },
 
   addWarPoints: (warId, guildId, points) => {
+    if (!Number.isFinite(points) || points <= 0) return;
     set((state) => ({
       activeWars: state.activeWars.map((w) => {
         if (w.id !== warId) return w;

@@ -111,7 +111,7 @@ export const XPBar = React.memo(
         // No XP gain animation — just snap to current progress
         progressAnim.setValue(progress);
       }
-    }, [animatedXPGain, progress]);
+    }, [animatedXPGain, progress, fadeAnim, popAnim, progressAnim]);
 
     return (
       <View style={styles.container}>

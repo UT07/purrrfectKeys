@@ -81,7 +81,7 @@ function DayCell({
         false,
       );
     }
-  }, [isClaimable]);
+  }, [isClaimable, glowOpacity]);
 
   const glowStyle = useAnimatedStyle(() => ({
     borderColor: isToday

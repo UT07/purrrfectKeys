@@ -16,7 +16,10 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, glowColor } from '../theme/tokens';
 import { PressableScale } from '../components/common/PressableScale';
 import { GradientMeshBackground } from '../components/effects';
@@ -164,10 +167,10 @@ export function MicSetupScreen() {
   );
 }
 
-function FeatureItem({ icon, text }: { icon: string; text: string }) {
+function FeatureItem({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.featureItem}>
-      <MaterialCommunityIcons name={icon as any} size={20} color={COLORS.primaryLight} />
+      <MaterialCommunityIcons name={icon} size={20} color={COLORS.primaryLight} />
       <Text style={styles.featureText}>{text}</Text>
     </View>
   );

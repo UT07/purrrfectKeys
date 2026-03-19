@@ -259,7 +259,9 @@ export function scoreExercise(
 ): ExerciseScore {
   // Convert tempo to milliseconds per beat
   // Assuming quarter note = 1 beat
-  const msPerBeat = (60 * 1000) / exercise.settings.tempo;
+  // Guard: treat invalid/zero tempo as 60 BPM to prevent Infinity/NaN
+  const safeTempo = exercise.settings.tempo > 0 ? exercise.settings.tempo : 60;
+  const msPerBeat = (60 * 1000) / safeTempo;
 
   // Score all notes — timing tolerances come from the exercise definition.
   // Input-method-specific adjustments (e.g., wider windows for touch/mic)

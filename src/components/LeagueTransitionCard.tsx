@@ -76,7 +76,7 @@ export function LeagueTransitionCard({
         >
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons
-              name={config.icon as any}
+              name={config.icon}
               size={36}
               color={isPromotion ? config.color : COLORS.textMuted}
             />

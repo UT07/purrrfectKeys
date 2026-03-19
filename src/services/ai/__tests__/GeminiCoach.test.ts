@@ -106,6 +106,7 @@ describe('GeminiCoach', () => {
     // so runtime assignments have no effect. Pre-set the private genAI field
     // to bypass initialize()'s env-var check for tests needing the direct API path.
     const { GoogleGenerativeAI } = require('@google/generative-ai');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (GeminiCoach as any).genAI = new GoogleGenerativeAI('test-key');
   });
 

@@ -390,7 +390,7 @@ export function SongPlayerScreen() {
             const xp = MASTERY_CAT_XP[updated.tier] ?? 0;
             if (xp > 0) useCatEvolutionStore.getState().addEvolutionXp(catId, xp);
           }
-        } catch (err) {
+        } catch {
           // silent — non-critical
         }
       }

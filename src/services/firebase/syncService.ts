@@ -13,7 +13,7 @@ import {
   getLearnerProfileData, saveLearnerProfileData, getAchievementSyncData, saveAchievementSyncData,
   createLessonProgress,
 } from './firestore';
-import type { ProgressChange, LessonProgress as FirestoreLessonProgress } from './firestore';
+import type { ProgressChange, LessonProgress as FirestoreLessonProgress, ExerciseProgress as FirestoreExerciseProgress } from './firestore';
 import { useProgressStore } from '../../stores/progressStore';
 import { logger } from '../../utils/logger';
 import { useCatEvolutionStore } from '../../stores/catEvolutionStore';
@@ -504,8 +504,9 @@ export class SyncManager {
                   ? {
                       completedAt:
                         typeof remoteLesson.completedAt === 'object' &&
+                        remoteLesson.completedAt !== null &&
                         'toMillis' in remoteLesson.completedAt
-                          ? (remoteLesson.completedAt as any).toMillis()
+                          ? (remoteLesson.completedAt as { toMillis: () => number }).toMillis()
                           : undefined,
                     }
                   : {}),
@@ -587,7 +588,7 @@ export class SyncManager {
         const remoteLearner = await getLearnerProfileData(uid);
         if (remoteLearner) {
           const localLearner = useLearnerProfileStore.getState();
-          const updates: Record<string, any> = {};
+          const updates: Record<string, unknown> = {};
 
           if (remoteLearner.totalExercisesCompleted > localLearner.totalExercisesCompleted) {
             updates.totalExercisesCompleted = remoteLearner.totalExercisesCompleted;
@@ -926,7 +927,7 @@ export class SyncManager {
           await createLessonProgress(resolvedUid, lessonId, {
             lessonId,
             status: lesson.status,
-            exerciseScores: lesson.exerciseScores as any,
+            exerciseScores: lesson.exerciseScores as unknown as Record<string, FirestoreExerciseProgress>,
             bestScore: Math.max(
               0,
               ...Object.values(lesson.exerciseScores).map((e) => e.highScore),
@@ -984,7 +985,7 @@ function convertFirestoreExercise(
     attempts: remote.attempts,
     lastAttemptAt:
       remote.lastAttemptAt && typeof remote.lastAttemptAt === 'object' && 'toMillis' in remote.lastAttemptAt
-        ? (remote.lastAttemptAt as any).toMillis()
+        ? (remote.lastAttemptAt as { toMillis: () => number }).toMillis()
         : Date.now(),
     averageScore: remote.averageScore,
     completedAt: remote.highScore > 0 ? Date.now() : undefined,
@@ -1004,7 +1005,7 @@ function convertFirestoreLesson(remote: FirestoreLessonProgress): LessonProgress
     bestScore: remote.bestScore,
     completedAt:
       remote.completedAt && typeof remote.completedAt === 'object' && 'toMillis' in remote.completedAt
-        ? (remote.completedAt as any).toMillis()
+        ? (remote.completedAt as { toMillis: () => number }).toMillis()
         : undefined,
     totalAttempts: remote.totalAttempts,
     totalTimeSpentSeconds: remote.totalTimeSpentSeconds,

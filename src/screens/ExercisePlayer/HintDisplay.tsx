@@ -12,7 +12,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { COLORS } from '../../theme/tokens';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 import type { ExerciseHints, CommonMistake } from '../../core/exercises/types';
 
 export interface HintDisplayProps {
@@ -89,7 +92,7 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
   }, [feedback]);
 
   // Determine which hint to show
-  const currentHint = useMemo(() => {
+  const currentHint = useMemo((): { icon: IconName; text: string; color: string } => {
     if (!isPlaying) {
       return {
         icon: 'lightbulb-on',
@@ -169,7 +172,7 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
     return (
       <View style={styles.compactContainer} testID={testID}>
         <MaterialCommunityIcons
-          name={currentHint.icon as any}
+          name={currentHint.icon}
           size={14}
           color={currentHint.color}
         />
@@ -193,7 +196,7 @@ export const HintDisplay: React.FC<HintDisplayProps> = ({
         ]}
       >
         <MaterialCommunityIcons
-          name={currentHint.icon as any}
+          name={currentHint.icon}
           size={20}
           color={currentHint.color}
         />

@@ -128,6 +128,7 @@ export const useAchievementStore = create<AchievementStoreState>((set, get) => (
   },
 
   incrementNotesPlayed: (count: number): void => {
+    if (!Number.isFinite(count) || count <= 0) return;
     set((state) => {
       const updated = state.totalNotesPlayed + count;
       return { totalNotesPlayed: updated };

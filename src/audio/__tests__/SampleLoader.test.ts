@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Sample Loader Tests
  * Tests for piano sample preloading and management

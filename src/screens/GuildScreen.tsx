@@ -596,7 +596,7 @@ function GuildDetail(): React.JSX.Element {
         ],
       );
     },
-    [currentGuild, removeMember],
+    [currentGuild, removeMember, user?.uid],
   );
 
   const handlePromote = useCallback(

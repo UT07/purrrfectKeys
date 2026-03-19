@@ -19,8 +19,10 @@ import { logger } from '../../utils/logger';
 export type ParticleShape = 'circle' | 'star' | 'note' | 'sparkle' | 'paw';
 
 // Lazy-load Skia — crashes if native module isn't in the binary
-let SkiaCanvas: React.ComponentType<any> | null = null;
-let SkiaCircle: React.ComponentType<any> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Skia component types unavailable without native module
+let SkiaCanvas: React.ComponentType<Record<string, unknown>> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Skia component types unavailable without native module
+let SkiaCircle: React.ComponentType<Record<string, unknown>> | null = null;
 
 try {
   const skia = require('@shopify/react-native-skia');

@@ -20,7 +20,10 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GradientMeshBackground } from '../components/effects';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import Svg, { Circle } from 'react-native-svg';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 import { DailyChallengeCard } from '../components/DailyChallengeCard';
 import { WeeklyChallengeCard } from '../components/WeeklyChallengeCard';
 import { MonthlyChallengeCard } from '../components/MonthlyChallengeCard';
@@ -722,11 +725,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 HomeScreen.displayName = 'HomeScreen';
 
 /** Stat pill component for the quick stats row */
-function StatPill({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
+function StatPill({ icon, label, value, color }: { icon: IconName; label: string; value: number; color: string }) {
   return (
     <View style={[styles.statPill, { borderTopColor: color, borderTopWidth: 3, backgroundColor: glowColor(color, 0.06) }]}>
       <View style={[styles.statPillIconRing, { backgroundColor: glowColor(color, 0.15) }]}>
-        <MaterialCommunityIcons name={icon as any} size={14} color={color} />
+        <MaterialCommunityIcons name={icon} size={14} color={color} />
       </View>
       <Text style={[styles.statPillValue, { color }]}>{value}</Text>
       <Text style={styles.statPillLabel}>{label}</Text>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * OnboardingScreen Tests
  * Comprehensive UI tests for the 6-step onboarding flow:

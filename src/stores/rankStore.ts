@@ -150,16 +150,19 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
     debouncedSave({ rating: get().rating });
 
     // Detect tier change — set pending rank change for overlay + post to feed
-    const tier = newTierValue!;
-    const current = { tier: prevTier! } as { tier: RankedTier; division: number };
-    if (tier !== prevTier) {
+    // prevTier and newTierValue are assigned inside the set() callback above,
+    // so TypeScript doesn't see the mutation. Use type assertions after null guard.
+    if (newTierValue == null || prevTier == null) return;
+    const tier = newTierValue as RankedTier;
+    const prevTierResolved = prevTier as RankedTier;
+    if (tier !== prevTierResolved) {
       const tierIdx = (t: RankedTier) => RANK_CONFIGS.findIndex((r) => r.tier === t);
-      const isPromotion = tierIdx(tier) > tierIdx(current.tier);
+      const isPromotion = tierIdx(tier) > tierIdx(prevTierResolved);
 
       // Set pending rank change so ExercisePlayer shows the overlay
       set({
         pendingRankChange: {
-          fromTier: current.tier,
+          fromTier: prevTierResolved,
           toTier: tier,
           isPromotion,
         },
@@ -182,7 +185,7 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
               rankDivision: newDivisionValue,
             },
             {
-              previousTier: prevTier!,
+              previousTier: prevTierResolved,
               newTier: tier,
               previousDivision: 0,
               newDivision: newDivisionValue,

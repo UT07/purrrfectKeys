@@ -75,7 +75,7 @@ export const CountInAnimation: React.FC<CountInAnimationProps> = ({
         soundManager.play('countdown_tick');
       }
     }
-  }, [elapsedTime, tempo, countIn]);
+  }, [elapsedTime, tempo, countIn, opacityAnim, scaleAnim]);
 
   const scaleStyle = {
     transform: [{ scale: scaleAnim }],

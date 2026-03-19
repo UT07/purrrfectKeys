@@ -11,7 +11,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { COLORS, glowColor } from '../../theme/tokens';
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export interface RealTimeFeedbackProps {
   feedback: {
@@ -35,7 +38,7 @@ export const RealTimeFeedback: React.FC<RealTimeFeedbackProps> = ({
   testID,
 }) => {
   // Determine feedback display
-  const feedbackDisplay = useMemo(() => {
+  const feedbackDisplay = useMemo((): { icon: IconName; label: string; color: string; backgroundColor: string } => {
     if (!feedback.type) {
       return {
         icon: 'music-note',
@@ -114,7 +117,7 @@ export const RealTimeFeedback: React.FC<RealTimeFeedbackProps> = ({
         ]}
       >
         <MaterialCommunityIcons
-          name={feedbackDisplay.icon as any}
+          name={feedbackDisplay.icon}
           size={32}
           color={feedbackDisplay.color}
         />

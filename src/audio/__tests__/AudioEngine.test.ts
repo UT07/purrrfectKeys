@@ -35,6 +35,7 @@ class MockAudioParam {
 }
 
 class MockAudioNode {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   connect(_destination: any): this {
     return this;
   }
@@ -95,7 +96,9 @@ class MockAudioContext {
 
 // Setup: Mock window.AudioContext globally
 if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).AudioContext = MockAudioContext;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).webkitAudioContext = MockAudioContext;
 }
 

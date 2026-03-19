@@ -18,6 +18,7 @@ import type { MidiNoteEvent } from '../../core/exercises/types';
 
 // Track mock MIDI state
 let mockMidiIsReady = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mockMidiDevices: any[] = [];
 const mockMidiNoteCallbacks: Array<(event: MidiNoteEvent) => void> = [];
 

@@ -57,20 +57,20 @@ export interface SyncProgressRequest {
     exerciseId?: string;
     score?: number;
     xpAmount?: number;
-    timestamp: any;
+    timestamp: unknown;
     synced: boolean;
   }>;
 }
 
 export interface SyncProgressResponse {
-  serverChanges: any[];
+  serverChanges: unknown[];
   newSyncTimestamp: number;
   conflicts: Array<{
     field: string;
-    localValue: any;
-    serverValue: any;
+    localValue: unknown;
+    serverValue: unknown;
     resolution: 'local' | 'server' | 'merged';
-    resolvedValue: any;
+    resolvedValue: unknown;
   }>;
   synced: boolean;
 }
@@ -270,23 +270,32 @@ export async function completeExercise(uid: string, exerciseData: {
 export interface FunctionError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
-export function isFunctionError(error: any): error is FunctionError {
-  return error.code && error.message;
+export function isFunctionError(error: unknown): error is FunctionError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error &&
+    typeof (error as FunctionError).code === 'string' &&
+    typeof (error as FunctionError).message === 'string'
+  );
 }
 
-export function handleFunctionError(error: any): FunctionError {
+export function handleFunctionError(error: unknown): FunctionError {
   if (isFunctionError(error)) {
     return error;
   }
 
-  if (error.code) {
+  const errorObj = error as { code?: string; message?: string; details?: unknown } | undefined;
+
+  if (errorObj?.code) {
     return {
-      code: error.code,
-      message: error.message || 'An unknown error occurred',
-      details: error.details,
+      code: errorObj.code,
+      message: errorObj.message || 'An unknown error occurred',
+      details: errorObj.details,
     };
   }
 
