@@ -62,9 +62,11 @@ export const useExerciseStore = create<ExerciseSessionState>((set, get) => ({
   },
 
   addPlayedNote: (note: MidiNoteEvent) => {
-    set((state) => ({
-      playedNotes: [...state.playedNotes, note],
-    }));
+    // PERF: Mutate in place instead of O(N) spread on every note event.
+    // The canonical note list lives in useExercisePlayback's playedNotesRef;
+    // this store copy is only used for persistence and playedNotes.length display.
+    // A full copy is synced at exercise completion via setPlayedNotes batch call.
+    get().playedNotes.push(note);
     debouncedSave(get());
   },
 

@@ -358,5 +358,9 @@ export class PolyphonicDetector {
       this.session = null;
     }
     this.ready = false;
+    // Reset filter state so stale audio doesn't leak into the next session
+    this._lpfState = 0;
+    this.accumLength = 0;
+    this.windowStartTime = 0;
   }
 }

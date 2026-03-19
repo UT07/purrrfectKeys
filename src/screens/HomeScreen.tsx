@@ -467,7 +467,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   />
                 </Svg>
                 {/* Cat avatar in center — 3D model with SVG fallback */}
-                <View style={styles.avatarInRing}>
+                <View style={styles.avatarInRing} testID="home-cat-avatar">
                   <CatAvatar
                     catId={selectedCatId ?? 'mini-meowww'}
                     size="large"
@@ -513,7 +513,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </View>
 
             {/* Goal progress text */}
-            <View style={[styles.goalTextRow, dailyGoalProgress >= 1 && styles.goalTextRowComplete]}>
+            <View style={[styles.goalTextRow, dailyGoalProgress >= 1 && styles.goalTextRowComplete]} testID="daily-goal-section">
               <View style={styles.goalLabelRow}>
                 <MaterialCommunityIcons name="target" size={16} color={dailyGoalProgress >= 1 ? COLORS.starGold : COLORS.textSecondary} />
                 <Text style={[styles.goalLabel, dailyGoalProgress >= 1 && { color: COLORS.starGold }]}>Daily Goal</Text>

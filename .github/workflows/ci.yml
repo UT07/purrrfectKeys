@@ -89,6 +89,93 @@ jobs:
           path: coverage/
           retention-days: 14
 
+  # ── Stage 2b: QA Suites (explicit) ──────────────────────
+  qa:
+    name: QA Suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: QA suites (performance + security + regression + stress)
+        run: npm run test:qa -- --ci --maxWorkers=2
+
+  # ── Stage 2c: Health Check (structural) ────────────────
+  health:
+    name: Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [typecheck, lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Structural health checks
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const STORES_DIR = path.join(process.cwd(), 'src', 'stores');
+            let failed = false;
+
+            function readFile(p) { try { return fs.readFileSync(p, 'utf-8'); } catch { return ''; } }
+
+            function getStoreFiles() {
+              return fs.readdirSync(STORES_DIR)
+                .filter(f => f.endsWith('.ts') && !f.startsWith('__'))
+                .filter(f => !['types.ts','index.ts','hooks.ts','persistence.ts'].includes(f))
+                .map(f => path.join(STORES_DIR, f));
+            }
+
+            // Check: resetAllStores completeness
+            const authContent = readFile(path.join(STORES_DIR, 'authStore.ts'));
+            const resetIdx = authContent.indexOf('function resetAllStores');
+            const forIdx = authContent.indexOf('for (const { name, reset } of stores)', resetIdx);
+            const resetSection = authContent.slice(resetIdx, authContent.indexOf('}', forIdx + 50));
+
+            for (const file of getStoreFiles()) {
+              const basename = path.basename(file, '.ts');
+              if (basename === 'authStore') continue;
+              const content = readFile(file);
+              if (!/reset\s*[:=]\s*\(\)/.test(content)) continue;
+              const hookMatch = content.match(/export const (use\w+Store)/);
+              if (!hookMatch) continue;
+              if (!resetSection.includes(hookMatch[1])) {
+                console.error('FAIL: ' + basename + ' (' + hookMatch[1] + ') missing from resetAllStores()');
+                failed = true;
+              }
+            }
+
+            // Check: gemStore uses immediateSave
+            const gemContent = readFile(path.join(STORES_DIR, 'gemStore.ts'));
+            const earnSection = gemContent.slice(gemContent.indexOf('earnGems:'), gemContent.indexOf('spendGems:'));
+            if (earnSection.includes('debouncedSave')) {
+              console.error('FAIL: gemStore.earnGems uses debouncedSave instead of immediateSave');
+              failed = true;
+            }
+
+            if (!failed) {
+              console.log('All structural health checks passed');
+            } else {
+              process.exit(1);
+            }
+          "
+
   # ── Stage 3: Security Audit ─────────────────────────────
   security:
     name: Security Audit

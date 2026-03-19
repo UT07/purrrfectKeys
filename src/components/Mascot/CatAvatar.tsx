@@ -235,7 +235,7 @@ export function CatAvatar({
               mood={effectiveMood}
               size="medium"
               accentColor={cat.color}
-              pixelSize={Math.round(dimension * 0.75)}
+              pixelSize={Math.round(dimension * 0.62)}
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
               catId={cat.id}
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   glow: {
     position: 'absolute',

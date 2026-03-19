@@ -539,6 +539,7 @@ export class NoteTracker {
           this.lastVoicedTime = now; // Reset release timer for new note
           this.candidateNote = null;
           this.candidateCount = 0;
+          this.candidateGapCount = 0;
           this.emit({
             type: 'noteOn',
             midiNote: this.currentNote,
@@ -568,6 +569,7 @@ export class NoteTracker {
             this.lastVoicedTime = now; // Reset release timer for new note
             this.candidateNote = null;
             this.candidateCount = 0;
+            this.candidateGapCount = 0;
             this.emit({
               type: 'noteOn',
               midiNote: this.currentNote,

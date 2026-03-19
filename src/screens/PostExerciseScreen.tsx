@@ -56,11 +56,12 @@ type PostExerciseNavProp = NativeStackNavigationProp<RootStackParamList, 'PostEx
 export function PostExerciseScreen(): React.ReactElement {
   const navigation = useNavigation<PostExerciseNavProp>();
 
-  // Read completion data from cache (set by ExercisePlayer before navigating)
-  const cachedData = useMemo(() => {
-    const data = getPostExerciseData();
-    clearPostExerciseData();
-    return data;
+  // Read completion data from cache (set by ExercisePlayer before navigating).
+  // Clear on unmount (not in useMemo) to avoid side-effects during render and
+  // to survive React StrictMode double-render without losing data.
+  const cachedData = useMemo(() => getPostExerciseData(), []);
+  useEffect(() => {
+    return () => { clearPostExerciseData(); };
   }, []);
 
   // If no cached data (e.g., deep link or process restart), navigate away safely.

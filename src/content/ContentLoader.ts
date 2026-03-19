@@ -256,13 +256,16 @@ export function getNextExerciseId(
   return nonTestExercises[currentIndex + 1].id;
 }
 
-export function getLessonIdForExercise(exerciseId: string): string | null {
-  for (const [lessonId, lesson] of Object.entries(LESSON_REGISTRY)) {
-    if (lesson.exercises.some((e) => e.id === exerciseId)) {
-      return lessonId;
-    }
+// Pre-built exerciseId→lessonId map for O(1) lookup (built once at module load)
+const _exerciseToLessonCache: Map<string, string> = new Map();
+for (const [lessonId, lesson] of Object.entries(LESSON_REGISTRY)) {
+  for (const ex of lesson.exercises) {
+    _exerciseToLessonCache.set(ex.id, lessonId);
   }
-  return null;
+}
+
+export function getLessonIdForExercise(exerciseId: string): string | null {
+  return _exerciseToLessonCache.get(exerciseId) ?? null;
 }
 
 /**

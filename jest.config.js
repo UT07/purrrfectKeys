@@ -44,4 +44,8 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(expo|expo-av|expo-font|expo-screen-orientation|expo-haptics|expo-linear-gradient|expo-speech|expo-constants|@expo/vector-icons|@react-native|react-native|@react-native-community|@react-navigation|@shopify/react-native-skia|react-native-reanimated|react-native-gesture-handler|expo-modules-core)/)',
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/e2e/',
+  ],
 };

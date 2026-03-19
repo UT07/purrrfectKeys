@@ -147,7 +147,8 @@ function scoreNotes(
       const expectedDurationMs = expected.durationBeats * tempoMs;
       const durationScore = calculateDurationScore(played.durationMs, expectedDurationMs);
 
-      // Velocity score (100 = perfect velocity)
+      // velocityScore is computed per-note for future use but not included in
+      // the current SCORE_WEIGHTS breakdown. Enable by adding a 'velocity' weight.
       const velocityScore = Math.max(0, 100 - Math.abs(played.velocity - 64) / 0.64);
 
       noteScores.push({
