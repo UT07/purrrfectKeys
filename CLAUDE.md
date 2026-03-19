@@ -397,4 +397,4 @@ POSTHOG_API_KEY=xxx
 4. **Firebase rules changes require review** - Security-critical
 5. **Run typecheck before committing** - CI will fail otherwise
 6. **Pitch detection is fallback only** - Optimize for MIDI input first
-7. **react-native-screens PINNED to 4.4.0** — versions 4.19+ have Fabric codegen bug with RN 0.76. After version changes, clean iOS build: `rm -rf ios/Pods ios/Podfile.lock ios/build && cd ios && pod install`
+7. **react-native-screens unpinned** — was pinned to 4.4.0 for RN 0.76 codegen bug, now on ~4.11.1 with RN 0.79. After version changes, clean iOS build: `rm -rf ios/Pods ios/Podfile.lock ios/build && cd ios && pod install`

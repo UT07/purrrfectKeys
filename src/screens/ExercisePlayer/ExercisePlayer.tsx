@@ -1286,6 +1286,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       gemStore.earnGems(chestReward.gems, `chest-${ex.id}`);
       totalGemsForModal += chestReward.gems;
     }
+    // Epic chests grant a cat XP boost (500 bonus XP)
+    if (chestReward.catXpBoost) {
+      try {
+        const catId = useSettingsStore.getState().selectedCatId ||
+          useCatEvolutionStore.getState().selectedCatId;
+        if (catId) {
+          useCatEvolutionStore.getState().addEvolutionXp(catId, 500);
+        }
+      } catch { /* non-critical */ }
+    }
     setChestTypeForModal(chestType);
     setChestGemsForModal(chestReward.gems);
 
