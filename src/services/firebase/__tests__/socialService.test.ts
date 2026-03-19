@@ -67,7 +67,7 @@ import {
   getFriends,
   resolveChallengeGemStake,
 } from '../socialService';
-import { doc, getDoc, getDocs, updateDoc, writeBatch, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, getDocs, writeBatch, runTransaction } from 'firebase/firestore';
 
 // Access the batch mock helpers
 const firestoreMock = jest.requireMock('firebase/firestore');
