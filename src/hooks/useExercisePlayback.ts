@@ -118,6 +118,7 @@ export function useExercisePlayback({
   const playedNotesRef = useRef<MidiNoteEvent[]>([]); // Ref for scoring (avoids stale closure)
   const realtimeBeatRef = useRef(-exercise.settings.countIn); // 60fps beat position for scoring
   const hasCompletedRef = useRef(false); // Guard against double-completion from rapid interval ticks
+  const countInCompleteRef = useRef(false); // True after count-in finishes; prevents count-in notes from being recorded
   const lastMetronomeBeatRef = useRef(-999); // Last integer beat where metronome click was played
   // Tracks noteOn indices so noteOff/release can attach durationMs for scoring.
   const noteOnIndexMapRef = useRef<Map<number, number[]>>(new Map());
@@ -333,6 +334,10 @@ export function useExercisePlayback({
 
       // Only record noteOn events for scoring (noteOff would double-count notes)
       if (midiEvent.type === 'noteOn') {
+        // Ignore notes played during count-in — they shouldn't count toward
+        // scoring or trigger early completion.
+        if (!countInCompleteRef.current) return;
+
         // Normalize timestamp: MIDI hardware may use a different clock, so override.
         // Mic timestamps already use Date.now() with latency compensation applied —
         // overwriting would defeat the compensation. Touch also uses Date.now().
@@ -467,7 +472,10 @@ export function useExercisePlayback({
       // Exception: bypass throttle at count-in → playback transition (beat 0)
       // so the overlay disappears instantly and first notes aren't visually missed.
       const forceUpdate = !hasCrossedZeroRef.current && beat >= 0;
-      if (forceUpdate) hasCrossedZeroRef.current = true;
+      if (forceUpdate) {
+        hasCrossedZeroRef.current = true;
+        countInCompleteRef.current = true; // Count-in finished — start recording notes
+      }
 
       if (forceUpdate || currentTime - lastStateUpdateRef.current >= 50) {
         lastStateUpdateRef.current = currentTime;
@@ -514,6 +522,7 @@ export function useExercisePlayback({
           startTimeRef.current = Date.now();
           pauseElapsedRef.current = 0;
           hasCrossedZeroRef.current = false;
+          countInCompleteRef.current = false; // Reset count-in gate for loop restart
           lastMetronomeBeatRef.current = -999; // Reset metronome for loop restart
           playedNotesRef.current = [];
           noteOnIndexMapRef.current.clear();
@@ -547,6 +556,7 @@ export function useExercisePlayback({
     pauseElapsedRef.current = 0;
     hasCrossedZeroRef.current = false;
     hasCompletedRef.current = false; // Allow completion for this new playback
+    countInCompleteRef.current = false; // Reset count-in gate
     lastMetronomeBeatRef.current = -999; // Reset metronome tracking
     playedNotesRef.current = [];
     noteOnIndexMapRef.current.clear();
@@ -773,10 +783,11 @@ export function useExercisePlayback({
         logger.warn(`[useExercisePlayback] Audio not ready — note ${note} skipped. Engine state: ${audioEngine.getState()}`);
       }
 
-      // Only record notes for scoring when exercise is playing.
+      // Only record notes for scoring when exercise is playing and count-in is done.
       // Use ref (not state) to avoid stale closure — the first few touch notes
       // after startPlayback() could be dropped if React hasn't re-rendered yet.
       if (!isPlayingRef.current) return;
+      if (!countInCompleteRef.current) return; // Ignore notes during count-in
 
       // In explicit mic mode, block touch events — the mic pipeline handles
       // detection with proper latency compensation.

@@ -21,6 +21,7 @@ import { useLearnerProfileStore } from './stores/learnerProfileStore';
 import { levelFromXp } from './core/progression/XpSystem';
 import type { PlaybackSpeed, PreferredInputMethod, MicDetectionMode, LearningPathId } from './stores/types';
 import { syncManager } from './services/firebase/syncService';
+import { ensureAudioModeConfigured } from './audio/createAudioEngine';
 import { migrateLocalToCloud } from './services/firebase/dataMigration';
 import { hydrateGemStore } from './stores/gemStore';
 import { hydrateCatEvolutionStore } from './stores/catEvolutionStore';
@@ -349,6 +350,8 @@ function AppRoot(): React.ReactElement {
         flushAllPendingSaves();
       } else if (nextState === 'active') {
         analyticsEvents.session.foregrounded();
+        // Restore audio session after returning from background
+        ensureAudioModeConfigured(false).catch(() => {});
       }
     });
     return () => subscription.remove();

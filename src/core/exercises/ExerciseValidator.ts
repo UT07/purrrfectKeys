@@ -268,8 +268,17 @@ export function scoreExercise(
   // are applied by the caller (useExercisePlayback) before invoking this function.
   const noteScores = scoreNotes(exercise, exercise.notes, playedNotes, msPerBeat);
 
-  // Calculate breakdown
-  const breakdown = calculateBreakdown(noteScores, exercise.notes.length);
+  // Optional notes should not penalize the player when missed. Exclude them
+  // from the scoring denominator (completeness, timing, accuracy, duration).
+  // They remain in the matching pool and appear in `details` for UI display,
+  // but only required notes affect the final score.
+  const requiredNotes = exercise.notes.filter((n) => !n.optional);
+  const scoringNoteScores = noteScores.filter(
+    (ns) => ns.isExtraNote || !ns.expected.optional,
+  );
+
+  // Calculate breakdown using required notes only for denominator
+  const breakdown = calculateBreakdown(scoringNoteScores, requiredNotes.length);
 
   // Weighted overall score
   const overall =

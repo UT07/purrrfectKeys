@@ -84,7 +84,7 @@ type ProgressData = Pick<
 export function pruneDailyGoalData(data: Record<string, DailyGoalData>): Record<string, DailyGoalData> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`;
   const pruned: Record<string, DailyGoalData> = {};
   for (const [date, goal] of Object.entries(data)) {
     if (date >= cutoffStr) {
@@ -245,9 +245,10 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
             (e: { type: string }) => e.type !== 'test',
           );
           if (nonTestExercises.length > 0) {
-            const allPassed = nonTestExercises.every((ex: { id: string }) => {
+            const allPassed = nonTestExercises.every((ex: { id: string; scoring?: { passingScore?: number } }) => {
               const exScore = updatedScores[ex.id];
-              return exScore && exScore.highScore >= 60;
+              const passingScore = ex.scoring?.passingScore ?? 60;
+              return exScore && exScore.highScore >= passingScore;
             });
             if (allPassed) {
               newStatus = 'completed';

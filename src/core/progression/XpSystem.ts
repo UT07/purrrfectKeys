@@ -204,8 +204,8 @@ export function recordPracticeSession(streak: StreakData): StreakData {
     true,
   ];
 
-  // Award freeze at end of week (every 7 days)
-  if (updated.currentStreak > 0 && updated.currentStreak % 7 === 0) {
+  // Award freeze at end of week (every 7 days), capped at 5
+  if (updated.currentStreak > 0 && updated.currentStreak % 7 === 0 && updated.freezesAvailable < 5) {
     updated.freezesAvailable++;
   }
 

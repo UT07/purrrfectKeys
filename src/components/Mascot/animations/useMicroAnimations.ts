@@ -153,7 +153,7 @@ export function useMicroAnimations(
     return () => {
       if (blinkTimeoutRef.current) clearTimeout(blinkTimeoutRef.current);
     };
-  }, [enabled, eyeScaleY]);
+  }, [enabled, mood, eyeScaleY]);
 
   // ── Ear twitches (random interval, asymmetric) ──
   useEffect(() => {
@@ -189,7 +189,7 @@ export function useMicroAnimations(
     return () => {
       if (earTimeoutRef.current) clearTimeout(earTimeoutRef.current);
     };
-  }, [enabled, leftEarRotate, rightEarRotate]);
+  }, [enabled, mood, leftEarRotate, rightEarRotate]);
 
   return {
     breathScale,

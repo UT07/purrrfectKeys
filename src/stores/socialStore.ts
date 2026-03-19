@@ -60,9 +60,10 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
   },
 
   addFriend: (friend: FriendConnection) => {
-    set((state) => ({
-      friends: [...state.friends, friend],
-    }));
+    set((state) => {
+      if (state.friends.some((f) => f.uid === friend.uid)) return state;
+      return { friends: [...state.friends, friend] };
+    });
     debouncedSave(get());
   },
 
@@ -80,6 +81,7 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
       friends: state.friends.filter((f) => f.uid !== uid),
       activityFeed: state.activityFeed.filter((item) => item.friendUid !== uid),
       richFeed: state.richFeed.filter((item) => item.actorUid !== uid),
+      challenges: state.challenges.filter((c) => c.fromUid !== uid && c.toUid !== uid),
     }));
     debouncedSave(get());
   },

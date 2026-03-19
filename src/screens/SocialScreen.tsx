@@ -297,7 +297,7 @@ function FriendsSection(): React.JSX.Element {
           <View style={styles.friendAvatarStack}>
             {previewFriends.map((f, i) => (
               <View key={f.uid} style={[styles.friendAvatarWrapper, { marginLeft: i > 0 ? -12 : 0, zIndex: previewFriends.length - i }]}>
-                <CatAvatar catId={f.selectedCatId || 'salsa'} size="small" skipEntryAnimation />
+                <CatAvatar catId={f.selectedCatId || 'mini-meowww'} size="small" skipEntryAnimation />
               </View>
             ))}
           </View>

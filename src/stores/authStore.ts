@@ -859,6 +859,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { isAnonymous } = get();
     set({ isLoading: true, error: null });
 
+    // Stop periodic sync immediately to prevent sync firing after sign-out
+    try {
+      const { syncManager } = require('../services/firebase/syncService');
+      syncManager.stopPeriodicSync();
+    } catch (err) {
+      logger.warn('[Auth] Failed to stop periodic sync:', err);
+    }
+
     // CRITICAL: Push ALL local data to Firestore BEFORE signing out.
     // Without this, local-only data is lost when we clear local storage.
     if (!isAnonymous) {

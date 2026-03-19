@@ -254,7 +254,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export function ProfileScreen(): React.ReactElement {
   const navigation = useNavigation<ProfileNavProp>();
-  const { totalXp, level, streakData, lessonProgress } = useProgressStore();
+  const { totalXp, level, streakData, lessonProgress, dailyGoalData } = useProgressStore();
   const {
     dailyGoalMinutes, masterVolume, displayName, username, selectedCatId,
     preferredInputMethod, micDetectionMode,
@@ -318,9 +318,8 @@ export function ProfileScreen(): React.ReactElement {
     return count;
   }, [lessonProgress]);
   const totalPracticeMinutes = useMemo(() => {
-    const { dailyGoalData: goalData } = useProgressStore.getState();
-    return Object.values(goalData).reduce((sum, d) => sum + (d.minutesPracticed ?? 0), 0);
-  }, []);
+    return Object.values(dailyGoalData).reduce((sum, d) => sum + (d?.minutesPracticed ?? 0), 0);
+  }, [dailyGoalData]);
 
   // Goal line height for the chart
   const goalLineHeight = dailyGoalMinutes > 0

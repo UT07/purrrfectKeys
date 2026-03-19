@@ -415,7 +415,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Hero Section with animated gradient mesh */}
         <Animated.View style={staggerStyle(0)}>
           <View style={styles.hero}>
-            <GradientMeshBackground accent="home" />
             {/* Top bar: greeting + gem counter + settings */}
             <View style={styles.topBar}>
               <View style={styles.topBarLeft}>
@@ -540,7 +539,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
 
         {/* Quick Stats Row */}
-        <Animated.View style={[styles.section, staggerStyle(1)]}>
+        <Animated.View style={[styles.section, staggerStyle(2)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
             <StatPill icon="book-open-variant" label="Lessons" value={completedLessonsCount} color={COLORS.info} />
@@ -550,7 +549,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Animated.View>
 
         {/* Today's Practice */}
-        <Animated.View style={[styles.section, staggerStyle(2), { transform: [{ scale: pulseAnim }] }]}>
+        <Animated.View style={[styles.section, staggerStyle(3), { transform: [{ scale: pulseAnim }] }]}>
           <GameCard rarity="rare" testID="practice-game-card">
             <View style={styles.practiceHeader}>
               <Text style={styles.sectionTitle}>Today's Practice</Text>
@@ -578,7 +577,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Animated.View>
 
         {/* Daily Challenge Card */}
-        <Animated.View style={[styles.section, staggerStyle(3), { transform: [{ translateX: shakeAnim }] }]}>
+        <Animated.View style={[styles.section, staggerStyle(4), { transform: [{ translateX: shakeAnim }] }]}>
           <GameCard rarity="epic" testID="challenge-game-card">
             <DailyChallengeCard masteredSkills={masteredSkills} onPress={() => {
               const challenge = getDailyChallengeForDate(today, masteredSkills);
@@ -622,7 +621,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         />
 
         {/* Free Play */}
-        <Animated.View style={[styles.section, staggerStyle(4)]}>
+        <Animated.View style={[styles.section, staggerStyle(5)]}>
           <PressableScale accessibilityRole="button" accessibilityLabel="Free Play mode" haptic onPress={() => navigation.navigate('FreePlay')}>
             <View style={styles.freePlayOuter}>
               <View style={styles.freePlayCard} testID="free-play-card">
@@ -658,7 +657,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Animated.View>
 
         {/* Music Library Spotlight */}
-        <Animated.View style={[styles.section, staggerStyle(5)]}>
+        <Animated.View style={[styles.section, staggerStyle(6)]}>
           <GameCard rarity="common" testID="music-library-game-card">
             <MusicLibrarySpotlight
               totalSongs={totalSongs}
@@ -672,7 +671,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* Weekly Featured Song */}
         {weeklyFeaturedSong && (
-          <Animated.View style={[styles.section, staggerStyle(6)]}>
+          <Animated.View style={[styles.section, staggerStyle(7)]}>
             <GameCard rarity="rare" testID="weekly-song-game-card">
               <WeeklyFeaturedSongCard
                 song={weeklyFeaturedSong}
@@ -683,7 +682,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
 
         {/* Daily Reward Calendar */}
-        <Animated.View style={[styles.section, staggerStyle(7)]}>
+        <Animated.View style={[styles.section, staggerStyle(8)]}>
           <DailyRewardCalendar
             days={dailyRewards.days}
             currentDay={dailyRewards.currentDay}
@@ -694,7 +693,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* Review Challenge (conditional — only when skills are decaying) */}
         {decayedSkillIds.length > 0 && (
-          <Animated.View style={[styles.section, staggerStyle(8)]}>
+          <Animated.View style={[styles.section, staggerStyle(9)]}>
             <GameCard rarity="rare" testID="review-game-card">
               <ReviewChallengeCard
                 decayedSkills={decayedSkillIds}
@@ -714,7 +713,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
 
         {/* Salsa coach greeting */}
-        <Animated.View style={[styles.section, staggerStyle(9)]}>
+        <Animated.View style={[styles.section, staggerStyle(10)]}>
           <SalsaCoach
             mood={mascotMood}
             size="small"
