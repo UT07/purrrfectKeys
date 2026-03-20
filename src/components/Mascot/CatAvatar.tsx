@@ -215,19 +215,23 @@ export function CatAvatar({
               width: dimension,
               height: dimension,
               borderRadius: dimension / 2,
-              backgroundColor: glowColor(cat.color, 0.09),
               borderColor: glowColor(cat.color, 0.38),
             },
             entryStyle,
           ]}
           testID="cat-avatar"
         >
+          {/* Background fill — clips to circle, sits behind the SVG */}
+          <View style={{
+            position: 'absolute', width: dimension - 6, height: dimension - 6,
+            borderRadius: (dimension - 6) / 2, backgroundColor: glowColor(cat.color, 0.09),
+          }} />
           <Animated.View style={innerStyle}>
             <KeysieSvg
               mood={effectiveMood}
               size="medium"
               accentColor={cat.color}
-              pixelSize={Math.round(dimension * 0.62)}
+              pixelSize={Math.round(dimension * 0.75)}
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
               catId={cat.id}
@@ -260,7 +264,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   glow: {
     position: 'absolute',

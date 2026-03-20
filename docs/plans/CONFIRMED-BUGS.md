@@ -104,6 +104,10 @@ Fix one at a time. User verifies on device. Then commit.
 | 64 | P1 | Daily Challenge differs per device — same root cause as #63 (mastered skills drive challenge generation) |
 | 65 | P2 | `[ReplayPromptBuilder] Failed to parse replay response: JSON Parse error` | Salsa replay coaching broken |
 | 74 | P1 | Today's Practice completed exercises show no "done" indicator — completed warm-up still shows play button, no checkmark | User completes exercise, returns to Home, no visual completion feedback in Today's Practice |
+| 75 | P1 | Today's Practice exercises seem random / not linked to curriculum — rhythm tap exercises appearing early when user is still on basic lessons | Confusing exercise selection that doesn't match learning progress |
+| 76 | P2 | Rhythm "TAP to the beat" exercise shows notes (D4, E4, F4) falling but no piano keyboard — unclear interaction for new users | Exercise type mismatch between visual display and input method |
+| 77 | P1 | Ear training exercise has same gameplay as rhythm exercise (tap mode) — should be listening/identifying, not tapping | Wrong exercise type behavior for ear training category |
+| 78 | P1 | Rhythm/tap exercises: tapping on beat registers as "ok" or "miss" even when timed correctly | Timing detection too strict or broken for tap-mode exercises |
 
 ## Sync Gap Analysis (Mar 20 — complete audit)
 
