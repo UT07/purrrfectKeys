@@ -126,9 +126,13 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 
 ## Dependency Vulnerabilities
 
-| # | Severity | Bug |
-|---|----------|-----|
-| 73 | P1 | GitHub Dependabot: 8 high, 3 moderate, 1 low vulnerabilities on default branch |
+| # | Severity | Bug | Package | Fix Version | Via |
+|---|----------|-----|---------|------------|-----|
+| 73a | P1 | Prototype Pollution via parse() in flatted | `flatted` 3.4.1 | 3.4.2 | eslint → file-entry-cache → flat-cache (already has override, needs version bump) |
+| 73b | P1 | Symlink/Hardlink Path Traversal (3 CVEs) | `tar` 6.2.1 | 7.5.11 | expo → @expo/cli → cacache (needs override) |
+| 73c | P1 | Entity Expansion bypass (2 CVEs) | `fast-xml-parser` 5.5.5 | 5.5.7 | firebase-admin → @google-cloud/storage (needs override) |
+| 73d | P2 | ReDoS with `$data` option | `ajv` 6.14.0/8.11.0 | 8.18.0 | eslint, detox, expo-dev-launcher, expo-router (needs override) |
+| 73e | P2 | Incorrect Control Flow Scoping | `@tootallnate/once` 2.0.0 | 3.0.1 | firebase-admin → @google-cloud/storage → teeny-request (needs override) |
 | 80 | P1 | Profile screen ScoreRing is red/dark tint, HomeScreen ring is green — inconsistent ring styling between the two screens |
 | 81 | P1 | Sentry Logger console error: "Failed to receive any fallback timestamp" — shows red error modal on device |
 | 82 | P1 | CatAvatar SVG rendering needs full Figma redesign — tails float above body at all sizes, ears misaligned at small sizes, micro-animations (vbScale math) break alignment. Needs Figma credits to redesign SVG paths properly per cat. BLOCKED on Figma credits. |
