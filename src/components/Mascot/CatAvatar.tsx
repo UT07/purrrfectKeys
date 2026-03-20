@@ -162,13 +162,10 @@ export function CatAvatar({
   // When pose is provided, it drives the mood for facial expression
   const effectiveMood: MascotMood = pose ? POSE_CONFIGS[pose].mood : mood;
 
-  // Micro-animations: breathing, blinks, ear twitches, tail swish
-  // Disabled when a pose is actively driving the cat animation
-  const microAnims = useMicroAnimations({
-    enabled: !pose,
-    mood: effectiveMood,
-  });
-  const moodTransition = useMoodTransition(effectiveMood);
+  // Micro-animations: temporarily disabled — AnimatedG pivot transforms in KeysieSvg
+  // break ear/tail alignment at small sizes. TODO: fix vbScale math in KeysieSvg.
+  useMicroAnimations({ enabled: false, mood: effectiveMood });
+  useMoodTransition(effectiveMood);
 
   // Master stage automatically enables glow aura
   const effectiveShowGlow = showGlow || evolutionStage === 'master';
@@ -231,15 +228,7 @@ export function CatAvatar({
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
               catId={cat.id}
-              microAnimations={pose ? undefined : {
-                breathScale: microAnims.breathScale,
-                breathTranslateY: microAnims.breathTranslateY,
-                eyeScaleY: microAnims.eyeScaleY,
-                leftEarRotate: microAnims.leftEarRotate,
-                rightEarRotate: microAnims.rightEarRotate,
-                tailRotate: microAnims.tailRotate,
-                faceScaleY: moodTransition.faceScaleY,
-              }}
+              microAnimations={undefined}  // Disabled: AnimatedG pivot transforms break at small sizes. Fix in KeysieSvg needed.
               extraAccessoryNames={extraAccessoryNames}
             />
           </Animated.View>

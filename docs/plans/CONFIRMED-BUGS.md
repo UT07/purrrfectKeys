@@ -103,7 +103,7 @@ Fix one at a time. User verifies on device. Then commit.
 | 63 | P1 | Today's Practice differs per device because `learnerProfile` (mastered skills) wasn't syncing — **Firestore rules now fixed**, needs verification |
 | 64 | P1 | Daily Challenge differs per device — same root cause as #63 (mastered skills drive challenge generation) |
 | 65 | P2 | `[ReplayPromptBuilder] Failed to parse replay response: JSON Parse error` | Salsa replay coaching broken |
-| 74 | P1 | Today's Practice completed exercises show no "done" indicator — completed warm-up still shows play button, no checkmark | User completes exercise, returns to Home, no visual completion feedback in Today's Practice |
+| 74 | P1 | Today's Practice regenerates plan after each exercise instead of tracking completion of the FULL plan. Should show checkmarks on completed exercises and only generate new plan after all 3 sections (warm-up + lesson + challenge) are done | Completed exercises disappear, replaced by new ones. No sense of daily progress. Should be like Duolingo where you see your daily plan with done/todo status |
 | 75 | P1 | Today's Practice exercises seem random / not linked to curriculum — rhythm tap exercises appearing early when user is still on basic lessons | Confusing exercise selection that doesn't match learning progress |
 | 76 | P2 | Rhythm "TAP to the beat" exercise shows notes (D4, E4, F4) falling but no piano keyboard — unclear interaction for new users | Exercise type mismatch between visual display and input method |
 | 77 | P1 | Ear training exercise has same gameplay as rhythm exercise (tap mode) — should be listening/identifying, not tapping | Wrong exercise type behavior for ear training category |
@@ -129,6 +129,9 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | # | Severity | Bug |
 |---|----------|-----|
 | 73 | P1 | GitHub Dependabot: 8 high, 3 moderate, 1 low vulnerabilities on default branch |
+| 80 | P1 | Profile screen ScoreRing is red/dark tint, HomeScreen ring is green — inconsistent ring styling between the two screens |
+| 81 | P1 | Sentry Logger console error: "Failed to receive any fallback timestamp" — shows red error modal on device |
+| 82 | P0 | CatAvatar micro-animations (ear twitch, tail swish) break SVG alignment — vbScale math in KeysieSvg applies pixel-space transforms to viewBox-space elements. Ears shift left, tail floats. SalsaCoach avoids this by using `pose` which disables micro-animations. |
 
 ## Fix Order
 
