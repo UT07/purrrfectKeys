@@ -52,6 +52,8 @@ import { GradientMeshBackground } from '../components/effects';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, RARITY, TYPOGRAPHY, glowColor } from '../theme/tokens';
 import type { RarityLevel } from '../theme/tokens';
 import { analyticsEvents } from '../services/analytics/PostHog';
+import { ttsService } from '../services/tts/TTSService';
+import { getRandomCatMessage } from '../content/catDialogue';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.88;
@@ -616,6 +618,11 @@ export function CatSwitchScreen(): React.ReactElement {
       setAvatarEmoji(cat.emoji);
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Speak a greeting in this cat's unique voice
+    const message = getRandomCatMessage(catId, 'idle');
+    if (message) {
+      ttsService.speak(message, { catId });
+    }
   }, [ownedCats, setSelectedCatId, selectCat, setAvatarEmoji]);
 
   const handleBuy = useCallback((cat: CatCharacter) => {

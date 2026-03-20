@@ -49,6 +49,8 @@ import { useAuthStore } from '../stores/authStore';
 import { useRankStore } from '../stores/rankStore';
 import { RankBadge, TIER_DISPLAY_NAMES } from '../components/arena/RankBadge';
 import { checkUsernameAvailable, isValidUsername, registerUsername } from '../services/firebase/socialService';
+import { ttsService } from '../services/tts/TTSService';
+import { getRandomCatMessage } from '../content/catDialogue';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { logger } from '../utils/logger';
 
@@ -428,10 +430,16 @@ export function ProfileScreen(): React.ReactElement {
           colors={[glowColor(catColor, 0.13), 'transparent', 'transparent']}
           style={styles.header}
         >
-          {/* Level XP ring with cat avatar inside — tap to open cat gallery */}
+          {/* Level XP ring with cat avatar inside — tap to speak + open cat gallery */}
           <PressableScale
             style={styles.ringContainer}
-            onPress={() => navigation.navigate('CatSwitch')}
+            onPress={() => {
+              const message = getRandomCatMessage(selectedCatId, 'idle');
+              if (message) {
+                ttsService.speak(message, { catId: selectedCatId });
+              }
+              navigation.navigate('CatSwitch');
+            }}
             testID="profile-level-ring"
           >
             <Svg width={RING_SIZE} height={RING_SIZE}>
