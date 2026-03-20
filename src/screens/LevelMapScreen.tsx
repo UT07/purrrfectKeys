@@ -231,11 +231,13 @@ function useLessonNodes(): LessonNodeData[] {
       const nonTestExercises = exercises.filter((e) => e.type !== 'test');
       const exerciseCount = nonTestExercises.length;
 
-      // Count completed exercises
+      // Count completed exercises — only count non-test exercises to match denominator
+      const nonTestIds = new Set(nonTestExercises.map((e) => e.id));
       const completedExercises = progress
         ? Object.keys(progress.exerciseScores ?? {}).filter((exId) => {
+            if (!nonTestIds.has(exId)) return false; // exclude mastery tests
             const score = progress.exerciseScores[exId];
-            return score && score.highScore >= 60; // passing score
+            return score && score.highScore >= 60;
           }).length
         : 0;
 
@@ -260,7 +262,12 @@ function useLessonNodes(): LessonNodeData[] {
             state = 'available';
           }
         } else {
-          state = foundCurrent ? 'locked' : 'locked';
+          if (!foundCurrent) {
+            state = 'current';
+            foundCurrent = true;
+          } else {
+            state = 'locked';
+          }
         }
       }
 

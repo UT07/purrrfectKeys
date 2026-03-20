@@ -92,7 +92,7 @@ Fix one at a time. User verifies on device. Then commit.
 | 57 | P0 | `initAuth` timeout fires AFTER auth succeeds — nukes auth state 8s after launch | User signed out randomly, all sync stops | Log: `[Auth] timed out` after `[Auth:onAuthStateChanged] user=SG1L...` — **FIXED** |
 | 58 | P0 | App.tsx Phase 3 never pushes local data to Firestore on cold start | Exercise progress only saved locally, never reaches cloud | Log: `Remote data: 0 lessons` despite local completion — **FIXED** |
 | 59 | P1 | Firestore rules block `learnerProfile` and `achievements` subcollection writes | Mastered skills + achievements don't sync → Today's Practice and Daily Challenge differ per device | Log: `[FirebaseError: Missing or insufficient permissions.]` |
-| 60 | P1 | ElevenLabs TTS stopped working | Cat voice coaching is silent | User-reported Mar 20 |
+| 60 | P1 | ElevenLabs TTS intermittent — sometimes silent pre/post exercise, not consistent | Cat voice coaching silent on some flows | User-reported Mar 20 |
 
 ## Bugs Found via Live Testing (Mar 20 — gameplay session)
 
@@ -103,6 +103,7 @@ Fix one at a time. User verifies on device. Then commit.
 | 63 | P1 | Today's Practice differs per device because `learnerProfile` (mastered skills) wasn't syncing — **Firestore rules now fixed**, needs verification |
 | 64 | P1 | Daily Challenge differs per device — same root cause as #63 (mastered skills drive challenge generation) |
 | 65 | P2 | `[ReplayPromptBuilder] Failed to parse replay response: JSON Parse error` | Salsa replay coaching broken |
+| 74 | P1 | Today's Practice completed exercises show no "done" indicator — completed warm-up still shows play button, no checkmark | User completes exercise, returns to Home, no visual completion feedback in Today's Practice |
 
 ## Sync Gap Analysis (Mar 20 — complete audit)
 
@@ -117,6 +118,12 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | 70 | P1 | `progressStore.tierTestResults` — mastery test scores per tier | Mastery test results lost on new device |
 | 71 | P1 | `progressStore.streakMilestonesClaimed` — which streak milestones (7/30/100 day) were claimed | Streak milestone gems double-awarded on new device |
 | 72 | P1 | Firestore gamification doc ID allowlist missing `learnerProfile` + `achievements` | Learner profile + achievements blocked by security rules — **FIXED (rules deployed)** |
+
+## Dependency Vulnerabilities
+
+| # | Severity | Bug |
+|---|----------|-----|
+| 73 | P1 | GitHub Dependabot: 8 high, 3 moderate, 1 low vulnerabilities on default branch |
 
 ## Fix Order
 

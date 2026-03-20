@@ -53,6 +53,8 @@ import { FriendActivityStrip } from '../components/FriendActivityStrip';
 import { WeeklyFeaturedSongCard, getWeeklyFeaturedIndex } from '../components/WeeklyFeaturedSongCard';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
+import { getTodayDateString } from '../utils/time';
+
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const GOAL_ARC_SIZE = 140;
@@ -133,8 +135,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   }, [hasCompletedOnboarding, navigation, isAuthLoading]);
 
-  // Daily goal progress
-  const today = new Date().toISOString().split('T')[0];
+  // Daily goal progress — use local timezone to match progressStore's localToday()
+  const today = getTodayDateString();
   const todayGoal = dailyGoalData[today];
   const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
   const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(1, minutesPracticedToday / dailyGoalMinutes) : 0;
@@ -193,7 +195,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       },
       profile.masteredSkills,
     );
-  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- reads fresh store state on every focus
+  }, [focusCounter, lessonProgress]); // eslint-disable-line react-hooks/exhaustive-deps -- recalculates on focus + exercise completion
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
@@ -236,7 +238,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const evolutionData = useCatEvolutionStore((s) => s.evolutionData);
   const dailyRewards = useCatEvolutionStore((s) => s.dailyRewards);
   const claimDailyReward = useCatEvolutionStore((s) => s.claimDailyReward);
-  const isDailyChallengeCompleted = useCatEvolutionStore((s) => s.isDailyChallengeCompleted);
+  const lastDailyChallengeDate = useCatEvolutionStore((s) => s.lastDailyChallengeDate);
   const advanceDailyRewardDate = useCatEvolutionStore((s) => s.advanceDailyRewardDate);
 
   // Advance daily rewards calendar on mount
@@ -677,7 +679,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             days={dailyRewards.days}
             currentDay={dailyRewards.currentDay}
             onClaim={(day) => claimDailyReward(day)}
-            dailyChallengeCompleted={isDailyChallengeCompleted()}
+            dailyChallengeCompleted={lastDailyChallengeDate === today}
           />
         </Animated.View>
 
