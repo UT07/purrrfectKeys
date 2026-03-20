@@ -1064,6 +1064,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     trace.mark('cloudSync');
     // Sync score + lesson progress to cloud (fire-and-forget, failures retry automatically)
+    logger.log(`[ExercisePlayer:sync] Syncing exercise ${ex.id}, score=${score.overall}, stars=${score.stars}, lessonSync=${lessonSyncData ? lessonSyncData.lessonId + '/' + lessonSyncData.status : 'none'}`);
     syncManager.syncAfterExercise(ex.id, {
       overall: score.overall,
       accuracy: score.breakdown.accuracy,
@@ -1071,7 +1072,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       completeness: score.breakdown.completeness,
       stars: score.stars,
       xpEarned: score.xpEarned,
-    }, lessonSyncData).catch(() => {
+    }, lessonSyncData).catch((err) => {
+      logger.error('[ExercisePlayer:sync] ❌ syncAfterExercise FAILED:', (err as Error)?.message);
       // Silently caught — SyncManager handles retries internally
     });
 

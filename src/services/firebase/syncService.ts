@@ -11,6 +11,7 @@ import {
   syncProgress, getAllLessonProgress, getGamificationData, addXp, createGamificationData,
   getCatEvolutionData, saveCatEvolutionData, getGemSyncData, saveGemSyncData,
   getLearnerProfileData, saveLearnerProfileData, getAchievementSyncData, saveAchievementSyncData,
+  saveRankData, getRankData, saveSeasonData, getSeasonData, saveSettingsSyncData, getSettingsSyncData,
   createLessonProgress,
 } from './firestore';
 import type { ProgressChange, LessonProgress as FirestoreLessonProgress } from './firestore';
@@ -155,15 +156,20 @@ export class SyncManager {
    */
   async flushQueue(): Promise<void> {
     const uid = auth.currentUser?.uid;
-    if (!uid) return;
+    if (!uid) {
+      logger.warn('[Sync:flushQueue] SKIPPED — no auth.currentUser (uid is null). Auth state:', auth.currentUser ? 'exists but no uid' : 'null');
+      return;
+    }
 
     const queue = await this.loadQueue();
     if (queue.length === 0) return;
 
+    logger.log(`[Sync:flushQueue] Processing ${queue.length} queued changes for uid=${uid.slice(0, 8)}...`);
+
     // Filter out items that have already exceeded max retries
     const validItems = queue.filter((item) => item.retryCount < MAX_RETRIES);
     if (validItems.length === 0) {
-      // All items expired -- clear queue
+      logger.warn('[Sync:flushQueue] All items exceeded max retries — clearing queue');
       await AsyncStorage.removeItem(QUEUE_KEY);
       return;
     }
@@ -173,21 +179,24 @@ export class SyncManager {
       const lastSyncTimestamp = lastSyncRaw ? parseInt(lastSyncRaw, 10) : 0;
 
       // Convert SyncChange items to ProgressChange-compatible format for syncProgress
+      // Note: ExercisePlayer passes 'overall' not 'score', so check both keys
       const localChanges: ProgressChange[] = validItems.map((item, index) => ({
         id: `local-${item.timestamp}-${index}`,
         type: item.type as ProgressChange['type'],
-        exerciseId: item.data.exerciseId as string | undefined,
-        score: item.data.score as number | undefined,
-        xpAmount: item.data.xpAmount as number | undefined,
+        exerciseId: (item.data.exerciseId as string) ?? '',
+        score: (item.data.score as number) ?? (item.data.overall as number) ?? 0,
+        xpAmount: (item.data.xpAmount as number) ?? (item.data.xpEarned as number) ?? 0,
         timestamp: { toMillis: () => item.timestamp } as ProgressChange['timestamp'],
         synced: false,
         lessonProgress: item.lessonProgress,
       }));
 
+      logger.log(`[Sync:flushQueue] Calling syncProgress with ${localChanges.length} changes, lastSync=${lastSyncTimestamp}`);
       const response = await syncProgress(uid, {
         lastSyncTimestamp,
         localChanges,
       });
+      logger.log(`[Sync:flushQueue] ✅ syncProgress succeeded — ${response.conflicts.length} conflicts, newTimestamp=${response.newSyncTimestamp}`);
 
       // Success: clear queue and save new timestamp
       await AsyncStorage.removeItem(QUEUE_KEY);
@@ -213,7 +222,7 @@ export class SyncManager {
       // Sync cat evolution + gem data to Firestore
       await this.pushCatAndGemData(uid);
     } catch (err) {
-      logger.warn('[Sync] flushQueue failed:', err);
+      logger.error('[Sync:flushQueue] ❌ FAILED:', (err as Error)?.message, (err as Error)?.stack?.split('\n')[1]);
       // Failure: increment retryCount on valid items
       const updatedQueue = validItems.map((item) => ({
         ...item,
@@ -371,20 +380,25 @@ export class SyncManager {
   }> {
     const uid = auth.currentUser?.uid;
     if (!uid) {
+      logger.warn('[Sync:pull] SKIPPED — no auth user');
       return { pulled: false, merged: false, error: 'No authenticated user' };
     }
+
+    logger.log(`[Sync:pull] Starting pull for uid=${uid.slice(0, 8)}...`);
 
     try {
       // Fetch remote data in parallel
       const [remoteLessons, remoteGamification, remoteCats, remoteGems] = await Promise.all([
-        getAllLessonProgress(uid),
-        getGamificationData(uid),
-        getCatEvolutionData(uid).catch(() => null),
-        getGemSyncData(uid).catch(() => null),
+        getAllLessonProgress(uid).catch((e) => { logger.error('[Sync:pull] ❌ getAllLessonProgress FAILED:', (e as Error)?.message); return [] as Awaited<ReturnType<typeof getAllLessonProgress>>; }),
+        getGamificationData(uid).catch((e) => { logger.error('[Sync:pull] ❌ getGamificationData FAILED:', (e as Error)?.message); return null; }),
+        getCatEvolutionData(uid).catch((e) => { logger.warn('[Sync:pull] getCatEvolutionData failed:', (e as Error)?.message); return null; }),
+        getGemSyncData(uid).catch((e) => { logger.warn('[Sync:pull] getGemSyncData failed:', (e as Error)?.message); return null; }),
       ]);
 
+      logger.log(`[Sync:pull] Remote data: ${remoteLessons.length} lessons, XP=${remoteGamification?.xp ?? 'null'}, cats=${remoteCats ? 'yes' : 'no'}, gems=${remoteGems ? 'yes' : 'no'}`);
+
       if (!remoteLessons.length && !remoteGamification && !remoteCats && !remoteGems) {
-        logger.log('[Sync] No remote data found — nothing to pull');
+        logger.log('[Sync:pull] No remote data found — nothing to pull');
         return { pulled: true, merged: false };
       }
 
@@ -665,6 +679,116 @@ export class SyncManager {
         logger.warn('[Sync] Achievement pull failed:', err);
       }
 
+      // Pull rank data (MMR, tier, division)
+      try {
+        const remoteRank = await getRankData(uid);
+        if (remoteRank?.rating) {
+          const { useRankStore } = require('../../stores/rankStore');
+          const localRank = useRankStore.getState();
+          const remoteMMR = (remoteRank.rating as { mmr: number })?.mmr ?? 0;
+          if (remoteMMR > (localRank.rating?.mmr ?? 0)) {
+            useRankStore.setState({ rating: remoteRank.rating, promotionSeries: remoteRank.promotionSeries ?? null });
+            didMerge = true;
+            logger.log(`[Sync] Rank merged: MMR=${remoteMMR}`);
+          }
+        }
+      } catch (err) {
+        logger.warn('[Sync] Rank pull failed:', err);
+      }
+
+      // Pull season data (battle pass)
+      try {
+        const remoteSeason = await getSeasonData(uid);
+        if (remoteSeason) {
+          const { useSeasonStore } = require('../../stores/seasonStore');
+          const localSeason = useSeasonStore.getState();
+          const remoteBPXp = (remoteSeason.battlePassXp as number) ?? 0;
+          if (remoteBPXp > (localSeason.battlePassXp ?? 0)) {
+            useSeasonStore.setState({
+              battlePassXp: remoteSeason.battlePassXp,
+              battlePassTier: remoteSeason.battlePassTier,
+              claimedRewards: remoteSeason.claimedRewards ?? localSeason.claimedRewards,
+              peakTier: remoteSeason.peakTier ?? localSeason.peakTier,
+              seasonHistory: remoteSeason.seasonHistory ?? localSeason.seasonHistory,
+            });
+            didMerge = true;
+            logger.log(`[Sync] Season merged: BP XP=${remoteBPXp}`);
+          }
+        }
+      } catch (err) {
+        logger.warn('[Sync] Season pull failed:', err);
+      }
+
+      // Pull settings (preferences, username, selected cat)
+      try {
+        const remoteSettings = await getSettingsSyncData(uid);
+        if (remoteSettings) {
+          const { useSettingsStore } = require('../../stores/settingsStore');
+          const local = useSettingsStore.getState();
+          // Only overwrite empty/default local values with remote values
+          const updates: Record<string, unknown> = {};
+          if (remoteSettings.username && !local.username) updates.username = remoteSettings.username;
+          if (remoteSettings.displayName && (!local.displayName || local.displayName === 'Piano Student')) updates.displayName = remoteSettings.displayName;
+          if (remoteSettings.selectedCatId && !local.selectedCatId) updates.selectedCatId = remoteSettings.selectedCatId;
+          if (remoteSettings.selectedPath && !local.selectedPath) updates.selectedPath = remoteSettings.selectedPath;
+          if (remoteSettings.dailyGoalMinutes && local.dailyGoalMinutes === 10) updates.dailyGoalMinutes = remoteSettings.dailyGoalMinutes;
+          if (Object.keys(updates).length > 0) {
+            useSettingsStore.setState(updates);
+            didMerge = true;
+            logger.log('[Sync] Settings merged:', Object.keys(updates).join(', '));
+          }
+        }
+      } catch (err) {
+        logger.warn('[Sync] Settings pull failed:', err);
+      }
+
+      // Pull progress extras (dailyGoalData, tierTestResults, streakMilestones)
+      try {
+        const { doc: firestoreDoc, getDoc: firestoreGetDoc } = require('firebase/firestore');
+        const { db: firestoreDb } = require('./config');
+        const extraDoc = firestoreDoc(firestoreDb, 'users', uid, 'gamification', 'progressExtra');
+        const extraSnap = await firestoreGetDoc(extraDoc);
+        if (extraSnap.exists()) {
+          const extra = extraSnap.data();
+          const local = useProgressStore.getState();
+          // Merge streakMilestonesClaimed (union)
+          if (extra.streakMilestonesClaimed?.length > 0) {
+            const merged = [...new Set([...(local.streakMilestonesClaimed ?? []), ...extra.streakMilestonesClaimed])];
+            if (merged.length > (local.streakMilestonesClaimed ?? []).length) {
+              useProgressStore.setState({ streakMilestonesClaimed: merged });
+              didMerge = true;
+            }
+          }
+          // Merge tierTestResults (higher scores win)
+          if (extra.tierTestResults) {
+            const mergedTier = { ...local.tierTestResults };
+            for (const [key, remote] of Object.entries(extra.tierTestResults as Record<string, { passed: boolean; score: number; attempts: number }>)) {
+              const localT = mergedTier[key];
+              if (!localT || remote.score > localT.score) {
+                mergedTier[key] = remote;
+                didMerge = true;
+              }
+            }
+            useProgressStore.setState({ tierTestResults: mergedTier });
+          }
+          // Merge dailyGoalData (per-day practice time — higher minutes win per day)
+          if (extra.dailyGoalData && typeof extra.dailyGoalData === 'object') {
+            const mergedGoals = { ...local.dailyGoalData };
+            for (const [date, remoteGoal] of Object.entries(extra.dailyGoalData as Record<string, { minutesPracticed: number; exercisesCompleted: number }>)) {
+              const localGoal = mergedGoals[date];
+              if (!localGoal || (remoteGoal.minutesPracticed > (localGoal.minutesPracticed ?? 0))) {
+                mergedGoals[date] = remoteGoal as any;
+                didMerge = true;
+              }
+            }
+            useProgressStore.setState({ dailyGoalData: mergedGoals });
+          }
+          logger.log('[Sync] Progress extras merged');
+        }
+      } catch (err) {
+        logger.warn('[Sync] Progress extras pull failed:', err);
+      }
+
       if (didMerge) {
         logger.log('[Sync] Remote progress merged into local state');
 
@@ -849,6 +973,75 @@ export class SyncManager {
       });
     } catch (err) {
       logger.warn('[Sync] Achievement push failed:', err);
+    }
+
+    // 6. Push rank data (MMR, tier, division, promotion series)
+    try {
+      const { useRankStore } = require('../../stores/rankStore');
+      const rankState = useRankStore.getState();
+      await saveRankData(resolvedUid, {
+        rating: rankState.rating,
+        promotionSeries: rankState.promotionSeries ?? null,
+      });
+      logger.log('[Sync] Pushed rank data');
+    } catch (err) {
+      logger.warn('[Sync] Rank push failed:', err);
+    }
+
+    // 7. Push season data (battle pass, season history)
+    try {
+      const { useSeasonStore } = require('../../stores/seasonStore');
+      const seasonState = useSeasonStore.getState();
+      await saveSeasonData(resolvedUid, {
+        currentSeasonId: seasonState.currentSeasonId,
+        battlePassXp: seasonState.battlePassXp,
+        battlePassTier: seasonState.battlePassTier,
+        claimedRewards: seasonState.claimedRewards,
+        peakTier: seasonState.peakTier,
+        seasonHistory: seasonState.seasonHistory,
+      });
+      logger.log('[Sync] Pushed season data');
+    } catch (err) {
+      logger.warn('[Sync] Season push failed:', err);
+    }
+
+    // 8. Push settings (preferences, username, selected cat, daily goal)
+    try {
+      const { useSettingsStore } = require('../../stores/settingsStore');
+      const settings = useSettingsStore.getState();
+      await saveSettingsSyncData(resolvedUid, {
+        username: settings.username ?? null,
+        displayName: settings.displayName ?? null,
+        selectedCatId: settings.selectedCatId ?? null,
+        dailyGoalMinutes: settings.dailyGoalMinutes,
+        masterVolume: settings.masterVolume,
+        soundEnabled: settings.soundEnabled,
+        hapticEnabled: settings.hapticEnabled,
+        showFingerNumbers: settings.showFingerNumbers,
+        showNoteNames: settings.showNoteNames,
+        preferredInputMethod: settings.preferredInputMethod,
+        selectedPath: settings.selectedPath ?? null,
+        darkMode: settings.darkMode,
+      });
+      logger.log('[Sync] Pushed settings');
+    } catch (err) {
+      logger.warn('[Sync] Settings push failed:', err);
+    }
+
+    // 9. Push extra progress fields (dailyGoalData, tierTestResults, streakMilestones)
+    try {
+      const progressState = useProgressStore.getState();
+      const { doc, setDoc } = require('firebase/firestore');
+      const { db } = require('./config');
+      const extraDoc = doc(db, 'users', resolvedUid, 'gamification', 'progressExtra');
+      await setDoc(extraDoc, {
+        dailyGoalData: progressState.dailyGoalData,
+        tierTestResults: progressState.tierTestResults,
+        streakMilestonesClaimed: progressState.streakMilestonesClaimed,
+      }, { merge: true });
+      logger.log('[Sync] Pushed progress extras (dailyGoal, tierTests, milestones)');
+    } catch (err) {
+      logger.warn('[Sync] Progress extras push failed:', err);
     }
   }
 

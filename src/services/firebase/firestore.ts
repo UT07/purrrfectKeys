@@ -413,12 +413,16 @@ export async function syncProgress(uid: string, request: SyncRequest): Promise<S
     } else {
       // No conflict - apply local change to syncLog
       const changeDoc = doc(db, 'users', uid, 'syncLog', localChange.id);
-      batch.set(changeDoc, {
-        ...localChange,
-        lessonProgress: undefined, // Don't store nested object in syncLog
+      // Strip undefined values — Firestore rejects them
+      const syncLogData: Record<string, unknown> = {
+        id: localChange.id,
+        type: localChange.type,
+        exerciseId: localChange.exerciseId ?? '',
+        score: localChange.score ?? 0,
         synced: true,
         timestamp: serverTimestamp(),
-      });
+      };
+      batch.set(changeDoc, syncLogData);
 
       // Apply lesson progress update to the progress subcollection
       if (localChange.lessonProgress) {
@@ -599,6 +603,46 @@ export async function getAchievementSyncData(uid: string): Promise<AchievementSy
 export async function saveAchievementSyncData(uid: string, data: Omit<AchievementSyncData, 'updatedAt'>): Promise<void> {
   const achieveDoc = doc(db, 'users', uid, 'gamification', 'achievements');
   await setDoc(achieveDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+// ============================================================================
+// Rank / Season / Settings Sync
+// ============================================================================
+
+export async function saveRankData(uid: string, data: Record<string, unknown>): Promise<void> {
+  const rankDoc = doc(db, 'users', uid, 'gamification', 'rank');
+  await setDoc(rankDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+export async function getRankData(uid: string): Promise<Record<string, unknown> | null> {
+  const rankDoc = doc(db, 'users', uid, 'gamification', 'rank');
+  const docSnap = await getDoc(rankDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data();
+}
+
+export async function saveSeasonData(uid: string, data: Record<string, unknown>): Promise<void> {
+  const seasonDoc = doc(db, 'users', uid, 'gamification', 'season');
+  await setDoc(seasonDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+export async function getSeasonData(uid: string): Promise<Record<string, unknown> | null> {
+  const seasonDoc = doc(db, 'users', uid, 'gamification', 'season');
+  const docSnap = await getDoc(seasonDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data();
+}
+
+export async function saveSettingsSyncData(uid: string, data: Record<string, unknown>): Promise<void> {
+  const settingsDoc = doc(db, 'users', uid, 'gamification', 'settings');
+  await setDoc(settingsDoc, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+export async function getSettingsSyncData(uid: string): Promise<Record<string, unknown> | null> {
+  const settingsDoc = doc(db, 'users', uid, 'gamification', 'settings');
+  const docSnap = await getDoc(settingsDoc);
+  if (!docSnap.exists()) return null;
+  return docSnap.data();
 }
 
 // ============================================================================

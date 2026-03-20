@@ -246,6 +246,7 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
  * and auto-sets hasCompletedOnboarding=true to prevent re-onboarding.
  */
 async function triggerPostSignInSync(): Promise<void> {
+  logger.log('[Auth:postSignInSync] START — uid:', auth.currentUser?.uid?.slice(0, 8));
   // Restore settings from Firestore profile (hasCompletedOnboarding, username, displayName)
   try {
     const authState = useAuthStore.getState();
@@ -293,17 +294,29 @@ async function triggerPostSignInSync(): Promise<void> {
   }
 
   try {
+    logger.log('[Auth:postSignInSync] Running migrateLocalToCloud...');
     const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
-    await migrateLocalToCloud();
+    const migResult = await migrateLocalToCloud();
+    logger.log('[Auth:postSignInSync] Migration result:', JSON.stringify(migResult));
   } catch (err) {
-    logger.warn('[Auth] Post-sign-in migration failed:', err);
+    logger.error('[Auth:postSignInSync] ❌ Migration FAILED:', (err as Error)?.message);
   }
   try {
+    logger.log('[Auth:postSignInSync] Running pullRemoteProgress...');
     const { syncManager } = require('../services/firebase/syncService');
-    await syncManager.pullRemoteProgress();
+    const pullResult = await syncManager.pullRemoteProgress();
+    logger.log('[Auth:postSignInSync] Pull result:', JSON.stringify(pullResult));
+
+    // Push local data to Firestore to ensure cloud has latest state.
+    // This covers the case where previous syncs silently failed.
+    logger.log('[Auth:postSignInSync] Pushing local progress to Firestore...');
+    await syncManager.pushAllProgressData().catch((err: Error) => {
+      logger.error('[Auth:postSignInSync] ❌ Push FAILED:', err?.message);
+    });
+    logger.log('[Auth:postSignInSync] Push complete. Starting periodic sync...');
     syncManager.startPeriodicSync();
   } catch (err) {
-    logger.warn('[Auth] Post-sign-in pull failed:', err);
+    logger.error('[Auth:postSignInSync] ❌ Pull FAILED:', (err as Error)?.message);
   }
 
   // Auto-detect existing progress: if user has XP, completed exercises, or cats,
@@ -447,9 +460,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     const AUTH_TIMEOUT_MS = 8000;
+    let timedOut = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const authPromise = new Promise<void>((resolveAuth) => {
       authUnsubscribe = onAuthStateChanged(auth, (user) => {
+        // If timeout already fired, don't overwrite the offline guest state
+        if (timedOut) {
+          logger.warn(`[Auth:onAuthStateChanged] IGNORED — timeout already fired. user=${user ? user.uid.slice(0, 8) : 'NULL'}`);
+          return;
+        }
+        // Cancel timeout — auth succeeded
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        logger.log(`[Auth:onAuthStateChanged] user=${user ? user.uid.slice(0, 8) + '...' : 'NULL'}, isAnonymous=${user?.isAnonymous ?? 'N/A'}, syncPending=${_signInSyncPending}`);
         set({
           user,
           isAuthenticated: user !== null,
@@ -464,7 +490,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
 
     const timeoutPromise = new Promise<void>((resolveTimeout) => {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        timedOut = true;
         logger.warn('[Auth] initAuth timed out after 8s — entering offline guest mode');
         set({
           user: null,

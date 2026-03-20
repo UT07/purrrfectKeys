@@ -274,6 +274,16 @@ function AppRoot(): React.ReactElement {
             logger.warn('[App] Remote progress pull failed:', err);
           }
 
+          // Push local data to Firestore to ensure cloud stays in sync.
+          // This covers exercise completions that were only saved locally.
+          try {
+            logger.log('[App] Pushing local progress to Firestore...');
+            await syncManager.pushAllProgressData();
+            logger.log('[App] ✅ Push complete');
+          } catch (err) {
+            logger.warn('[App] Push failed:', (err as Error)?.message);
+          }
+
           // Ensure social features (league membership + friend code) are set up
           try {
             const user = authState.user;

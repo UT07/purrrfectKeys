@@ -37,7 +37,7 @@ Fix one at a time. User verifies on device. Then commit.
 | 17 | `leagueStore.ts:130` | `debouncedSave` inside `set()` updater | Double-save in StrictMode | Today |
 | 18 | `progressStore.ts:203` | Lesson completion hardcoded `>= 60` | Wrong passing threshold | Today |
 | 19 | `ExercisePlayer.tsx:1971` | Visual "perfect" = `tolerance * 0.5` but scoring uses full | Feedback/score mismatch | Today |
-| 20 | `CatAvatar.tsx:263` | `overflow: 'hidden'` clips master-stage accessories | Accessories clipped on small avatars | Today |
+| 20 | `CatAvatar.tsx:263` | `overflow: 'hidden'` clips cat ears in HomeScreen score ring — left ear is a stub, right ear hidden behind progress arc | Cat ears look broken on BOTH phone and simulator (confirmed Mar 20) | Today — **UPGRADED TO P1** |
 | 21 | `XpSystem.ts:209` | `freezesAvailable++` no cap | Infinite streak freezes | Today |
 | 22 | `socialStore.ts:62` | `addFriend` no dedup | Duplicate friend entries | Today |
 | 23 | `socialStore.ts:78` | `removeFriend` doesn't clean challenges | Stale challenges remain | Today |
@@ -69,6 +69,54 @@ Fix one at a time. User verifies on device. Then commit.
 | 49 | `catEvolution` | No currentStage reconciliation on hydration when thresholds change | Silent stage demotion | PR #143 (42651e1) |
 | 50 | `catEvolution` | Multi-stage XP jump only awards final milestone gems | Missing intermediate gems | PR #143 (42651e1) |
 | 51 | `catEvolution` | Equipped accessories not validated against evolution stage on hydration | Impossible accessories equipped | PR #143 (42651e1) |
+
+## User-Reported Bugs (Mar 20)
+
+| # | File:Line | Bug | User Symptom | Severity |
+|---|-----------|-----|-------------|----------|
+| 52 | `LevelMapScreen.tsx:236` | `completedExercises` counts ALL exerciseScores keys (including mastery test), but `exerciseCount` denominator excludes tests | "Getting Started" shows 4/3 — mastery test counted in numerator but not denominator | P1 |
+| 53 | `ExercisePlayer.tsx:562` | `abilityConfig` applied unconditionally — no `testMode` guard | Cat abilities (note preview, timing window boost) active during mastery tests, making tests easier than intended | P1 |
+
+## User-Reported Bugs (Mar 20 — late session)
+
+| # | Severity | Bug | User Symptom |
+|---|----------|-----|-------------|
+| 54 | P0 | Lesson progress, XP, streaks, level, stars — NOTHING syncs to Firestore cross-device | Phone shows 0/3, 0 exercises, 0 stars despite completing exercises on simulator |
+| 55 | P1 | Auth session keeps expiring — user repeatedly asked to sign in | App kicks to auth screen intermittently |
+| 56 | P1 | PostHog error: `Cannot read property 'color' of undefined` in cat rendering | Cat avatar rendering fails when cat profile lookup returns undefined |
+
+## Bugs Found via Debug Logs (Mar 20 — debug session)
+
+| # | Severity | Bug | User Symptom | Evidence |
+|---|----------|-----|-------------|----------|
+| 57 | P0 | `initAuth` timeout fires AFTER auth succeeds — nukes auth state 8s after launch | User signed out randomly, all sync stops | Log: `[Auth] timed out` after `[Auth:onAuthStateChanged] user=SG1L...` — **FIXED** |
+| 58 | P0 | App.tsx Phase 3 never pushes local data to Firestore on cold start | Exercise progress only saved locally, never reaches cloud | Log: `Remote data: 0 lessons` despite local completion — **FIXED** |
+| 59 | P1 | Firestore rules block `learnerProfile` and `achievements` subcollection writes | Mastered skills + achievements don't sync → Today's Practice and Daily Challenge differ per device | Log: `[FirebaseError: Missing or insufficient permissions.]` |
+| 60 | P1 | ElevenLabs TTS stopped working | Cat voice coaching is silent | User-reported Mar 20 |
+
+## Bugs Found via Live Testing (Mar 20 — gameplay session)
+
+| # | Severity | Bug | User Symptom |
+|---|----------|-----|-------------|
+| 61 | P0 | `syncProgress` writes `undefined` score field to Firestore `syncLog` — `WriteBatch.set()` rejects entire batch | Per-exercise sync silently fails — screenshot confirms `flushQueue` error on device |
+| 62 | P1 | Keyboard highlights wrong key — exercise asks C4 but keyboard shows D4 as correct, pressing C4 registers as D4 | Wrong note highlighted, correct input mismatched |
+| 63 | P1 | Today's Practice differs per device because `learnerProfile` (mastered skills) wasn't syncing — **Firestore rules now fixed**, needs verification |
+| 64 | P1 | Daily Challenge differs per device — same root cause as #63 (mastered skills drive challenge generation) |
+| 65 | P2 | `[ReplayPromptBuilder] Failed to parse replay response: JSON Parse error` | Salsa replay coaching broken |
+
+## Sync Gap Analysis (Mar 20 — complete audit)
+
+These stores have NO sync to Firestore — data exists only locally and is lost on new device sign-in:
+
+| # | Severity | Store / Data | What's Lost |
+|---|----------|-------------|-------------|
+| 66 | P0 | `rankStore` — MMR, tier, division, promotion series, demotion grace | Competitive rank completely different per device |
+| 67 | P0 | `seasonStore` — battle pass XP/tier, claimed rewards, season history, peak tier | Battle pass progress lost on new device |
+| 68 | P1 | `settingsStore` — username, displayName, selectedCatId, dailyGoalMinutes, volume, input method, all preferences | Settings reset to defaults on new device |
+| 69 | P1 | `progressStore.dailyGoalData` — per-day practice minutes, exercises completed | Daily goal progress differs per device |
+| 70 | P1 | `progressStore.tierTestResults` — mastery test scores per tier | Mastery test results lost on new device |
+| 71 | P1 | `progressStore.streakMilestonesClaimed` — which streak milestones (7/30/100 day) were claimed | Streak milestone gems double-awarded on new device |
+| 72 | P1 | Firestore gamification doc ID allowlist missing `learnerProfile` + `achievements` | Learner profile + achievements blocked by security rules — **FIXED (rules deployed)** |
 
 ## Fix Order
 

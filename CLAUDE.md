@@ -389,6 +389,35 @@ EXPO_PUBLIC_GEMINI_API_KEY=xxx
 POSTHOG_API_KEY=xxx
 ```
 
+## Debugging & Monitoring
+
+**ALWAYS use debug logs and monitoring tools when hunting bugs.** Don't guess — observe.
+
+### Debug Log Streams
+The app has tagged debug logging via `logger.log()` (dev-only, silent in production):
+- `[Auth:onAuthStateChanged]` — every auth state change with uid
+- `[Auth:postSignInSync]` — migration + pull results
+- `[Migration]` — local→cloud migration decisions
+- `[Sync:flushQueue]` — queue flush with success/failure
+- `[Sync:pull]` — pull with exact remote data counts
+- `[ExercisePlayer:sync]` — exercise completion sync
+
+**How to read logs:** Start Metro with `npx expo start --clear 2>&1 | tee metro-debug.log`, play the app, then grep the log file for tagged prefixes.
+
+### Monitoring Services
+- **Sentry** (`EXPO_PUBLIC_SENTRY_DSN`) — crash reporting, session replay, performance traces
+  - Org: `purrrfect-keys`, Region: `de.sentry.io`
+  - Use MCP tools: `search_issues`, `analyze_issue_with_seer`, `get_issue_details`
+- **PostHog** (`EXPO_PUBLIC_POSTHOG_API_KEY`) — analytics, feature flags, error tracking
+  - Use MCP tools: `list-errors`, `error-details`, `insight-query`
+
+### Bug Hunting Protocol
+1. **Start with logs** — read Metro console output for `[Auth]`, `[Sync]`, `❌` prefixes
+2. **Check Sentry** — search for unresolved issues and session replays
+3. **Check PostHog** — look at error tracking for JS exceptions
+4. **Reproduce on device** — verify the bug before writing any fix
+5. **Fix one thing** — one fix per commit, verify on device, then next
+
 ## IMPORTANT REMINDERS
 
 1. **Always test audio changes on physical devices** - Simulators have unreliable audio
@@ -398,3 +427,5 @@ POSTHOG_API_KEY=xxx
 5. **Run typecheck before committing** - CI will fail otherwise
 6. **Pitch detection is fallback only** - Optimize for MIDI input first
 7. **react-native-screens PINNED to 4.4.0** — versions 4.19+ have Fabric codegen bug with RN 0.76. After version changes, clean iOS build: `rm -rf ios/Pods ios/Podfile.lock ios/build && cd ios && pod install`
+8. **Always push to remote after commits** - User works across devices. Never let local and remote diverge.
+9. **Never push to master without user device verification** - Tests passing is NOT enough.

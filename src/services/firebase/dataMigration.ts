@@ -29,12 +29,16 @@ export async function hasMigrated(): Promise<boolean> {
 export async function migrateLocalToCloud(): Promise<{ migrated: boolean; error?: string }> {
   const uid = auth.currentUser?.uid;
   if (!uid) {
+    logger.warn('[Migration] No auth user — skipping');
     return { migrated: false, error: 'No authenticated user' };
   }
+
+  logger.log(`[Migration] Checking migration for uid=${uid.slice(0, 8)}...`);
 
   // Skip if already migrated
   const alreadyMigrated = await hasMigrated();
   if (alreadyMigrated) {
+    logger.log('[Migration] Already migrated — skipping');
     return { migrated: false };
   }
 
