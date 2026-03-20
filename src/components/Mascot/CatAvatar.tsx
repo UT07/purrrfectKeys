@@ -231,7 +231,15 @@ export function CatAvatar({
               visuals={cat.visuals}
               evolutionStage={evolutionStage}
               catId={cat.id}
-              microAnimations={pose ? undefined : { ...microAnims, faceScaleY: moodTransition.faceScaleY }}
+              microAnimations={pose ? undefined : {
+                breathScale: microAnims.breathScale,
+                breathTranslateY: microAnims.breathTranslateY,
+                eyeScaleY: microAnims.eyeScaleY,
+                leftEarRotate: microAnims.leftEarRotate,
+                rightEarRotate: microAnims.rightEarRotate,
+                tailRotate: microAnims.tailRotate,
+                faceScaleY: moodTransition.faceScaleY,
+              }}
               extraAccessoryNames={extraAccessoryNames}
             />
           </Animated.View>
@@ -260,7 +268,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    overflow: 'hidden',
   },
   glow: {
     position: 'absolute',
