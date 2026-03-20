@@ -54,7 +54,6 @@ import { WeeklyFeaturedSongCard, getWeeklyFeaturedIndex } from '../components/We
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 import { getTodayDateString } from '../utils/time';
-
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const GOAL_ARC_SIZE = 140;
@@ -135,7 +134,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   }, [hasCompletedOnboarding, navigation, isAuthLoading]);
 
-  // Daily goal progress — use local timezone to match progressStore's localToday()
+  // Daily goal progress
   const today = getTodayDateString();
   const todayGoal = dailyGoalData[today];
   const minutesPracticedToday = todayGoal?.minutesPracticed ?? 0;
@@ -195,7 +194,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       },
       profile.masteredSkills,
     );
-  }, [focusCounter, lessonProgress]); // eslint-disable-line react-hooks/exhaustive-deps -- recalculates on focus + exercise completion
+  }, [focusCounter, lessonProgress]); // eslint-disable-line react-hooks/exhaustive-deps -- reads fresh store state on every focus
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
@@ -394,7 +393,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const profile = useLearnerProfileStore.getState();
     if (!profile.calculateDecayedSkills) return [];
     return profile.calculateDecayedSkills();
-  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- refresh on screen focus
+  }, [focusCounter, lessonProgress]); // eslint-disable-line react-hooks/exhaustive-deps -- refresh on screen focus
 
   return (
     <SafeAreaView style={styles.container} testID="home-screen">

@@ -108,6 +108,7 @@ Fix one at a time. User verifies on device. Then commit.
 | 76 | P2 | Rhythm "TAP to the beat" exercise shows notes (D4, E4, F4) falling but no piano keyboard — unclear interaction for new users | Exercise type mismatch between visual display and input method |
 | 77 | P1 | Ear training exercise has same gameplay as rhythm exercise (tap mode) — should be listening/identifying, not tapping | Wrong exercise type behavior for ear training category |
 | 78 | P1 | Rhythm/tap exercises: tapping on beat registers as "ok" or "miss" even when timed correctly | Timing detection too strict or broken for tap-mode exercises |
+| 79 | P0 | **Phase 13 exercise type variety NOT implemented** — Content Explosion added 599 exercises across 9 types (quiz, identify, arrange, match, build, mix, spot-diff, fill-blank, label) but ExercisePlayer only has 2 gameplay modes: keyboard-play and tap-to-beat. All exercise types fall back to the same 2 interactions. The Duolingo-style variety in gameplay that Phase 13 planned is completely missing. | Every exercise feels the same regardless of type — no quizzes, no drag-match, no identify, no fill-blank |
 
 ## Sync Gap Analysis (Mar 20 — complete audit)
 
