@@ -50,8 +50,17 @@ export async function migrateLocalToCloud(): Promise<{ migrated: boolean; error?
       return { migrated: false };
     }
 
-    // 1. Migrate XP — merge with existing remote data (highest wins)
+    // Check if remote already has data — if so, this is a SECOND DEVICE sign-in.
+    // Do NOT push local data; let pullRemoteProgress() handle it instead.
     const remoteGamification = await getGamificationData(uid).catch(() => null);
+    const remoteLessons = await getAllLessonProgress(uid).catch(() => []);
+    if ((remoteGamification && remoteGamification.xp > 0) || remoteLessons.length > 0) {
+      logger.log('[DataMigration] Remote data already exists — skipping migration (second device)');
+      await AsyncStorage.setItem(MIGRATION_KEY, 'true');
+      return { migrated: false };
+    }
+
+    // 1. Migrate XP — merge with existing remote data (highest wins)
     if (progressState.totalXp > 0) {
       if (!remoteGamification) {
         await createGamificationData(uid);
@@ -65,7 +74,7 @@ export async function migrateLocalToCloud(): Promise<{ migrated: boolean; error?
 
     // 2. Migrate lesson progress — only push lessons that don't exist remotely
     //    or where local scores are higher. pullRemoteProgress() merges the rest.
-    const remoteLessons = await getAllLessonProgress(uid).catch(() => []);
+    // (remoteLessons already fetched above in the second-device guard)
     const remoteLessonMap = new Map(remoteLessons.map((l) => [l.lessonId, l]));
 
     for (const [lessonId, lessonProgress] of Object.entries(progressState.lessonProgress)) {
