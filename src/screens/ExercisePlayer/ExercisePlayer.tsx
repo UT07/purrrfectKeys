@@ -274,6 +274,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const mountedRef = useRef(true);
   const playbackStartTimeRef = useRef(0);
 
+  // Refs for route params — prevent stale closures in handleExerciseCompletion
+  // when navigation.replace changes params without remounting the component
+  const skillIdParamRef = useRef(skillIdParam);
+  skillIdParamRef.current = skillIdParam;
+  const testModeRef = useRef(testMode);
+  testModeRef.current = testMode;
+
   // Store integration
   const exerciseStore = useExerciseStore();
 
@@ -795,7 +802,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // the unique ID has no previous score.
     const progressStateForHighScore = useProgressStore.getState();
     const isAiExercise = ex.id.startsWith('ai-') || ex.id.startsWith('tmpl-');
-    const scoreKey = isAiExercise && skillIdParam ? `ai-skill-${skillIdParam}` : ex.id;
+    const scoreKey = isAiExercise && skillIdParamRef.current ? `ai-skill-${skillIdParamRef.current}` : ex.id;
     let prevHigh = 0;
     for (const lp of Object.values(progressStateForHighScore.lessonProgress)) {
       const exScore = lp.exerciseScores[scoreKey];
@@ -862,15 +869,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
-    // Look up exercise category from SkillTree (fall back to skillIdParam for AI exercises)
+    // Look up exercise category from SkillTree (fall back to skillIdParamRef.current for AI exercises)
     let exerciseCategory: SkillCategory | undefined;
     const skillTreeNode = SKILL_TREE.find(n =>
       n.targetExerciseIds.includes(ex.id) || n.id === ex.id,
     );
     if (skillTreeNode) {
       exerciseCategory = skillTreeNode.category;
-    } else if (skillIdParam) {
-      const paramSkill = getSkillById(skillIdParam);
+    } else if (skillIdParamRef.current) {
+      const paramSkill = getSkillById(skillIdParamRef.current);
       exerciseCategory = paramSkill?.category;
     }
 
@@ -906,8 +913,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // For AI exercises with a skillId, map completion to the skill's target exercise
     // so it counts toward the real lesson progress (not the __ai__ bucket)
-    if (!exLessonId && skillIdParam) {
-      const skillNode = getSkillById(skillIdParam);
+    if (!exLessonId && skillIdParamRef.current) {
+      const skillNode = getSkillById(skillIdParamRef.current);
       if (skillNode && skillNode.targetExerciseIds.length > 0) {
         const progressData = useProgressStore.getState().lessonProgress;
         let targetExId: string | null = null;
@@ -940,7 +947,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Use the resolved exercise ID (real target) when mapped to a lesson,
     // or ai-skill-{skillId} for exercises that couldn't be mapped
-    const stableExId = exLessonId ? resolvedExerciseId : (isAiExercise && skillIdParam ? `ai-skill-${skillIdParam}` : ex.id);
+    const stableExId = exLessonId ? resolvedExerciseId : (isAiExercise && skillIdParamRef.current ? `ai-skill-${skillIdParamRef.current}` : ex.id);
 
     // Capture whether this exercise was previously completed BEFORE we update lesson progress
     // (used for first-completion gem bonus below)
@@ -1089,8 +1096,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Track recent exercise for dedup in CurriculumEngine
     useLearnerProfileStore.getState().addRecentExercise(ex.id);
     // Also track skill-based stable ID so CurriculumEngine filters same skill
-    if (isAiExercise && skillIdParam) {
-      useLearnerProfileStore.getState().addRecentExercise(`ai-skill-${skillIdParam}`);
+    if (isAiExercise && skillIdParamRef.current) {
+      useLearnerProfileStore.getState().addRecentExercise(`ai-skill-${skillIdParamRef.current}`);
     }
 
     useLearnerProfileStore.getState().recordExerciseResult({
@@ -1103,13 +1110,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     let skillNodes = getSkillsForExercise(ex.id);
     // AI exercises have runtime IDs that won't match any skill's targetExerciseIds,
     // so fall back to the skillId route param (passed by CurriculumEngine / LevelMap)
-    if (skillNodes.length === 0 && skillIdParam) {
-      const paramSkill = getSkillById(skillIdParam);
+    if (skillNodes.length === 0 && skillIdParamRef.current) {
+      const paramSkill = getSkillById(skillIdParamRef.current);
       if (paramSkill) skillNodes = [paramSkill];
     }
     logger.log('[ExercisePlayer] Skill mastery check:', {
       exerciseId: ex.id,
-      skillIdParam,
+      skillId: skillIdParamRef.current,
       skillNodesFound: skillNodes.length,
       scoreOverall: score.overall,
       isPassed: score.isPassed,
@@ -1125,9 +1132,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }
 
-    // Record tier mastery test result when in testMode + aiMode
-    if (testMode && skillIdParam) {
-      const testSkillNode = getSkillById(skillIdParam);
+    // Record tier mastery test result when in testModeRef.current + aiMode
+    if (testModeRef.current && skillIdParamRef.current) {
+      const testSkillNode = getSkillById(skillIdParamRef.current);
       if (testSkillNode) {
         useProgressStore.getState().recordTierTestResult(
           testSkillNode.tier,
