@@ -236,18 +236,30 @@ export function createImmediateSave<T>(key: string): (state: T) => Promise<void>
 /**
  * Debounced save helper
  * Prevents excessive writes to storage
+ *
+ * Accepts either a state snapshot or a getState() callback.
+ * When a callback is provided, the LATEST state is read at flush time,
+ * avoiding stale-closure bugs where rapid mutations cause old state
+ * to overwrite newer state.
  */
 export function createDebouncedSave<T>(
   key: string,
   delayMs: number = 1000
-): (state: T) => void {
-  return (state: T) => {
+): (stateOrGetter: T | (() => T)) => void {
+  return (stateOrGetter: T | (() => T)) => {
     const existing = pendingSaves.get(key);
     if (existing) {
       clearTimeout(existing.timerId);
     }
 
-    const execute = () => PersistenceManager.saveState(key, state);
+    // Always read the latest state at flush time to avoid stale closures.
+    // If a plain state object is passed, we still capture it — but the
+    // caller is encouraged to pass a getState callback instead.
+    const getLatest = typeof stateOrGetter === 'function'
+      ? (stateOrGetter as () => T)
+      : () => stateOrGetter;
+
+    const execute = () => PersistenceManager.saveState(key, getLatest());
     const timerId = setTimeout(() => {
       pendingSaves.delete(key);
       execute().catch(err =>

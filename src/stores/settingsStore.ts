@@ -13,7 +13,7 @@
 
 import { create } from 'zustand';
 import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
 import { logger } from '../utils/logger';
 
 /** Data-only shape of settings state (excludes actions) */
@@ -69,8 +69,12 @@ const defaultSettings: SettingsData = {
   ownedAccessories: [] as string[],
 };
 
-// Create debounced save function
+// Create debounced save for non-critical settings (volumes, display prefs)
 const debouncedSave = createDebouncedSave(STORAGE_KEYS.SETTINGS, 500);
+
+// Immediate save for critical settings that must survive quick quit
+// (onboarding, profile identity, selected cat, equipped accessories)
+const immediateSave = createImmediateSave<SettingsData>(STORAGE_KEYS.SETTINGS);
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   ...defaultSettings,
@@ -279,7 +283,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   setSelectedCatId: (id: string) => {
     set({ selectedCatId: id });
-    debouncedSave({ ...get(), selectedCatId: id });
+    immediateSave({ ...get(), selectedCatId: id });
 
     // Fire-and-forget sync to league member document so leaderboard shows updated cat
     try {
@@ -300,20 +304,20 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   setSelectedPath: (pathId: string) => {
     set({ selectedPath: pathId as any });
-    debouncedSave({ ...get(), selectedPath: pathId as any });
+    immediateSave({ ...get(), selectedPath: pathId as any });
   },
 
   equipAccessory: (category: string, accessoryId: string) => {
     const equippedAccessories = { ...get().equippedAccessories, [category]: accessoryId };
     set({ equippedAccessories });
-    debouncedSave({ ...get(), equippedAccessories });
+    immediateSave({ ...get(), equippedAccessories });
   },
 
   unequipAccessory: (category: string) => {
     const equippedAccessories = { ...get().equippedAccessories };
     delete equippedAccessories[category];
     set({ equippedAccessories });
-    debouncedSave({ ...get(), equippedAccessories });
+    immediateSave({ ...get(), equippedAccessories });
   },
 
   addOwnedAccessory: (accessoryId: string) => {
@@ -321,7 +325,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     if (current.includes(accessoryId)) return;
     const ownedAccessories = [...current, accessoryId];
     set({ ownedAccessories });
-    debouncedSave({ ...get(), ownedAccessories });
+    immediateSave({ ...get(), ownedAccessories });
   },
 
   reset: () => {

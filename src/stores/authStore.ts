@@ -910,6 +910,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
 
+    // Stop periodic sync BEFORE signing out to prevent sync attempts with stale auth
+    try {
+      const { syncManager } = require('../services/firebase/syncService');
+      syncManager.stopPeriodicSync();
+      logger.log('[Auth] Periodic sync stopped');
+    } catch (err) {
+      logger.warn('[Auth] Failed to stop periodic sync:', err);
+    }
+
     let signOutSucceeded = false;
     try {
       await firebaseSignOut(auth);

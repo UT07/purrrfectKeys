@@ -1704,7 +1704,8 @@ export function getSkillDepth(skillId: string): number {
  * Return mastered skills where decay score has fallen below the threshold,
  * sorted by decay score ascending (worst first).
  *
- * Decay formula: decayScore = max(0, 1 - daysSince / DECAY_HALF_LIFE_DAYS)
+ * Decay formula: decayScore = 0.5 ^ (daysSince / DECAY_HALF_LIFE_DAYS)
+ * (exponential half-life: mastery halves every 14 days)
  */
 export function getSkillsNeedingReview(
   masteredSkills: string[],
@@ -1719,7 +1720,7 @@ export function getSkillsNeedingReview(
       const record = skillMasteryData[node.id];
       if (!record) return false;
       const daysSince = (now - record.lastPracticedAt) / msPerDay;
-      const decay = Math.max(0, 1 - daysSince / DECAY_HALF_LIFE_DAYS);
+      const decay = Math.pow(0.5, daysSince / DECAY_HALF_LIFE_DAYS);
       return decay < DECAY_THRESHOLD;
     })
     .sort((a, b) => {

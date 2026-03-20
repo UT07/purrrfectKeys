@@ -462,12 +462,16 @@ function generateLesson(
     }
 
     // Pick from 2-3 categories, rotating based on recent exercises to keep it fresh
+    // BUG-033 fix: Use modulo-based rotation instead of brittle slice+concat
     const categories = [...byCategory.keys()].sort();
+    if (categories.length === 0) return refs;
     const recentCount = _recentSet.size;
     const offset = recentCount % categories.length;
-    const selectedCategories = categories.slice(offset, offset + 3)
-      .concat(categories.slice(0, Math.max(0, 3 - (categories.length - offset))));
-    const uniqueCategories = [...new Set(selectedCategories)].slice(0, 3);
+    const pickCount = Math.min(3, categories.length);
+    const uniqueCategories: string[] = [];
+    for (let i = 0; i < pickCount; i++) {
+      uniqueCategories.push(categories[(offset + i) % categories.length]);
+    }
 
     for (const cat of uniqueCategories) {
       const skills = byCategory.get(cat) ?? [];

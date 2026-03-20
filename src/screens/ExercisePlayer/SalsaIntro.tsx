@@ -33,6 +33,8 @@ import {
 
 // ─── Tier-specific max durations ────────────────────────
 const TIER_1_MAX_MS = 8000;
+const TIER_2_MAX_MS = 20000;
+const TIER_3_MAX_MS = 30000;
 
 // ─── Props ──────────────────────────────────────────────
 
@@ -100,6 +102,15 @@ export function SalsaIntro({
     const timer = setTimeout(() => handleDismiss(), TIER_1_MAX_MS);
     return () => clearTimeout(timer);
   }, [tier, ttsDone, handleDismiss]);
+
+  // Tiers 2-3: safety cap so the overlay never blocks indefinitely.
+  // The user can still dismiss early via buttons.
+  useEffect(() => {
+    if (tier === 1) return;
+    const maxMs = tier === 3 ? TIER_3_MAX_MS : TIER_2_MAX_MS;
+    const timer = setTimeout(() => handleDismiss(), maxMs);
+    return () => clearTimeout(timer);
+  }, [tier, handleDismiss]);
 
   // ─── Tier 1: Brief bubble at bottom-left ────────────
 

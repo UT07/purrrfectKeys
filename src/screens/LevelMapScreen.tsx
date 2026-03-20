@@ -34,6 +34,7 @@ import { useCatEvolutionStore } from '../stores/catEvolutionStore';
 import {
   getAllLessons,
   getExercisesForLesson,
+  getExercise,
 } from '../content/ContentLoader';
 import type { ExerciseIndexEntry } from '../content/ContentLoader';
 import { CatAvatar } from '../components/Mascot/CatAvatar';
@@ -237,7 +238,9 @@ function useLessonNodes(): LessonNodeData[] {
         ? Object.keys(progress.exerciseScores ?? {}).filter((exId) => {
             if (!nonTestIds.has(exId)) return false; // exclude mastery tests
             const score = progress.exerciseScores[exId];
-            return score && score.highScore >= 60;
+            const fullEx = getExercise(exId);
+            const passingScore = fullEx?.scoring?.passingScore ?? 70;
+            return score && score.highScore >= passingScore;
           }).length
         : 0;
 

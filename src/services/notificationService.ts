@@ -4,8 +4,15 @@
  *
  * Uses expo-notifications for scheduling local notifications.
  * Remote push (FCM) can be added later via expo-notifications push token.
+ *
+ * Each notification category uses a well-known identifier prefix so we can
+ * cancel/reschedule individual categories without wiping unrelated reminders.
  */
 import * as Notifications from 'expo-notifications';
+
+// ── Notification identifier constants ──────────────────────────────────
+const DAILY_REMINDER_ID = 'purrrfect-daily-reminder';
+const STREAK_REMINDER_ID = 'purrrfect-streak-reminder';
 
 // Configure notification handler (shows when app is foregrounded)
 Notifications.setNotificationHandler({
@@ -24,13 +31,27 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return status === 'granted';
 }
 
-/** Schedule a daily practice reminder */
+/**
+ * Cancel a single scheduled notification by its identifier.
+ * Silently ignores if the identifier doesn't exist.
+ */
+async function cancelNotificationById(identifier: string): Promise<void> {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+  } catch {
+    // Notification may not exist — safe to ignore
+  }
+}
+
+/** Schedule a daily practice reminder (replaces any existing daily reminder) */
 export async function scheduleDailyReminder(
   hour: number,
   minute: number,
 ): Promise<string> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  // Cancel only the previous daily reminder, not streak or other notifications
+  await cancelNotificationById(DAILY_REMINDER_ID);
   const id = await Notifications.scheduleNotificationAsync({
+    identifier: DAILY_REMINDER_ID,
     content: {
       title: 'Time to practice!',
       body: "Your cat misses you. Keep your streak alive!",
@@ -45,9 +66,12 @@ export async function scheduleDailyReminder(
   return id;
 }
 
-/** Schedule a streak-at-risk reminder (fires at 8pm daily) */
+/** Schedule a streak-at-risk reminder (fires at 8pm daily, replaces any existing) */
 export async function scheduleStreakReminder(): Promise<string> {
+  // Cancel only the previous streak reminder
+  await cancelNotificationById(STREAK_REMINDER_ID);
   const id = await Notifications.scheduleNotificationAsync({
+    identifier: STREAK_REMINDER_ID,
     content: {
       title: 'Streak at risk!',
       body: 'Practice now to keep your streak going!',
@@ -73,7 +97,14 @@ export async function sendLocalNotification(
   });
 }
 
-/** Cancel all scheduled notifications */
+/**
+ * Cancel all app-managed scheduled notifications (daily reminder + streak reminder).
+ * Does NOT use cancelAllScheduledNotificationsAsync — only cancels known identifiers
+ * so that any other notification sources (system, push) are preserved.
+ */
 export async function cancelAllNotifications(): Promise<void> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  await Promise.all([
+    cancelNotificationById(DAILY_REMINDER_ID),
+    cancelNotificationById(STREAK_REMINDER_ID),
+  ]);
 }

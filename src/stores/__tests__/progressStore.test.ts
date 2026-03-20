@@ -526,6 +526,7 @@ describe('Progress Store', () => {
       // Mock ContentLoader to return 1 exercise so completion is triggered
       jest.doMock('../../content/ContentLoader', () => ({
         getExercisesForLesson: () => [{ id: 'lesson-01-ex-01', type: 'play' }],
+        getExercise: () => ({ scoring: { passingScore: 70 } }),
       }));
 
       // Update the single exercise with a passing score — this should complete the lesson

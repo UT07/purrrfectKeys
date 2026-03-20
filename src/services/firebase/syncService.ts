@@ -592,98 +592,109 @@ export class SyncManager {
         }
       }
 
+      // Fetch remaining data in parallel — each promise has its own .catch()
+      // so one failing fetch doesn't kill the others
+      const [remoteLearner, remoteAchievements, remoteRank, remoteSeason, remoteSettings, remoteExtras] = await Promise.all([
+        getLearnerProfileData(uid).catch((e) => { logger.warn('[Sync] Learner profile pull failed:', (e as Error)?.message); return null; }),
+        getAchievementSyncData(uid).catch((e) => { logger.warn('[Sync] Achievement pull failed:', (e as Error)?.message); return null; }),
+        getRankData(uid).catch((e) => { logger.warn('[Sync] Rank pull failed:', (e as Error)?.message); return null; }),
+        getSeasonData(uid).catch((e) => { logger.warn('[Sync] Season pull failed:', (e as Error)?.message); return null; }),
+        getSettingsSyncData(uid).catch((e) => { logger.warn('[Sync] Settings pull failed:', (e as Error)?.message); return null; }),
+        (async () => {
+          try {
+            const { doc: firestoreDoc, getDoc: firestoreGetDoc } = require('firebase/firestore');
+            const { db: firestoreDb } = require('./config');
+            const extraDoc = firestoreDoc(firestoreDb, 'users', uid, 'gamification', 'progressExtra');
+            const extraSnap = await firestoreGetDoc(extraDoc);
+            return extraSnap.exists() ? extraSnap.data() : null;
+          } catch (e) {
+            logger.warn('[Sync] Progress extras pull failed:', (e as Error)?.message);
+            return null;
+          }
+        })(),
+      ]);
+
       // Merge learner profile: take higher exercise count, union of mastered skills
-      try {
-        const remoteLearner = await getLearnerProfileData(uid);
-        if (remoteLearner) {
-          const localLearner = useLearnerProfileStore.getState();
-          const updates: Record<string, any> = {};
+      if (remoteLearner) {
+        const localLearner = useLearnerProfileStore.getState();
+        const updates: Record<string, any> = {};
 
-          if (remoteLearner.totalExercisesCompleted > localLearner.totalExercisesCompleted) {
-            updates.totalExercisesCompleted = remoteLearner.totalExercisesCompleted;
-          }
+        if (remoteLearner.totalExercisesCompleted > localLearner.totalExercisesCompleted) {
+          updates.totalExercisesCompleted = remoteLearner.totalExercisesCompleted;
+        }
 
-          // Union of mastered skills
-          const localMastered = new Set(localLearner.masteredSkills);
-          const remoteMastered = remoteLearner.masteredSkills ?? [];
-          let newSkillsAdded = false;
-          for (const skillId of remoteMastered) {
-            if (!localMastered.has(skillId)) {
-              localMastered.add(skillId);
-              newSkillsAdded = true;
-            }
-          }
-          if (newSkillsAdded) {
-            updates.masteredSkills = Array.from(localMastered);
-          }
-
-          // Merge skill mastery data: take later lastPracticedAt, higher completionCount
-          if (remoteLearner.skillMasteryData) {
-            const mergedMasteryData = { ...localLearner.skillMasteryData };
-            for (const [skillId, remoteRecord] of Object.entries(remoteLearner.skillMasteryData)) {
-              const localRecord = mergedMasteryData[skillId];
-              if (!localRecord) {
-                mergedMasteryData[skillId] = remoteRecord;
-              } else if (remoteRecord.completionCount > localRecord.completionCount) {
-                mergedMasteryData[skillId] = {
-                  ...localRecord,
-                  completionCount: remoteRecord.completionCount,
-                  lastPracticedAt: Math.max(localRecord.lastPracticedAt, remoteRecord.lastPracticedAt ?? 0),
-                };
-              }
-            }
-            updates.skillMasteryData = mergedMasteryData;
-          }
-
-          if (Object.keys(updates).length > 0) {
-            useLearnerProfileStore.setState(updates);
-            didMerge = true;
+        // Union of mastered skills
+        const localMastered = new Set(localLearner.masteredSkills);
+        const remoteMastered = remoteLearner.masteredSkills ?? [];
+        let newSkillsAdded = false;
+        for (const skillId of remoteMastered) {
+          if (!localMastered.has(skillId)) {
+            localMastered.add(skillId);
+            newSkillsAdded = true;
           }
         }
-      } catch (err) {
-        logger.warn('[Sync] Learner profile pull failed:', err);
+        if (newSkillsAdded) {
+          updates.masteredSkills = Array.from(localMastered);
+        }
+
+        // Merge skill mastery data: take later lastPracticedAt, higher completionCount
+        if (remoteLearner.skillMasteryData) {
+          const mergedMasteryData = { ...localLearner.skillMasteryData };
+          for (const [skillId, remoteRecord] of Object.entries(remoteLearner.skillMasteryData)) {
+            const localRecord = mergedMasteryData[skillId];
+            if (!localRecord) {
+              mergedMasteryData[skillId] = remoteRecord;
+            } else if (remoteRecord.completionCount > localRecord.completionCount) {
+              mergedMasteryData[skillId] = {
+                ...localRecord,
+                completionCount: remoteRecord.completionCount,
+                lastPracticedAt: Math.max(localRecord.lastPracticedAt, remoteRecord.lastPracticedAt ?? 0),
+              };
+            }
+          }
+          updates.skillMasteryData = mergedMasteryData;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          useLearnerProfileStore.setState(updates);
+          didMerge = true;
+        }
       }
 
       // Merge achievements: union of unlocked IDs
-      try {
-        const remoteAchievements = await getAchievementSyncData(uid);
-        if (remoteAchievements) {
-          const localAch = useAchievementStore.getState();
-          const mergedIds = { ...localAch.unlockedIds };
-          let newUnlocks = false;
-          for (const [id, timestamp] of Object.entries(remoteAchievements.unlockedIds ?? {})) {
-            if (!mergedIds[id]) {
-              mergedIds[id] = timestamp;
-              newUnlocks = true;
-            }
-          }
-          if (newUnlocks) {
-            useAchievementStore.setState({ unlockedIds: mergedIds });
-            didMerge = true;
-          }
-
-          // Take higher counters
-          if (remoteAchievements.totalNotesPlayed > localAch.totalNotesPlayed) {
-            useAchievementStore.setState({ totalNotesPlayed: remoteAchievements.totalNotesPlayed });
-            didMerge = true;
-          }
-          if (remoteAchievements.perfectScoreCount > localAch.perfectScoreCount) {
-            useAchievementStore.setState({ perfectScoreCount: remoteAchievements.perfectScoreCount });
-            didMerge = true;
-          }
-          if (remoteAchievements.highScoreCount > localAch.highScoreCount) {
-            useAchievementStore.setState({ highScoreCount: remoteAchievements.highScoreCount });
-            didMerge = true;
+      if (remoteAchievements) {
+        const localAch = useAchievementStore.getState();
+        const mergedIds = { ...localAch.unlockedIds };
+        let newUnlocks = false;
+        for (const [id, timestamp] of Object.entries(remoteAchievements.unlockedIds ?? {})) {
+          if (!mergedIds[id]) {
+            mergedIds[id] = timestamp;
+            newUnlocks = true;
           }
         }
-      } catch (err) {
-        logger.warn('[Sync] Achievement pull failed:', err);
+        if (newUnlocks) {
+          useAchievementStore.setState({ unlockedIds: mergedIds });
+          didMerge = true;
+        }
+
+        // Take higher counters
+        if (remoteAchievements.totalNotesPlayed > localAch.totalNotesPlayed) {
+          useAchievementStore.setState({ totalNotesPlayed: remoteAchievements.totalNotesPlayed });
+          didMerge = true;
+        }
+        if (remoteAchievements.perfectScoreCount > localAch.perfectScoreCount) {
+          useAchievementStore.setState({ perfectScoreCount: remoteAchievements.perfectScoreCount });
+          didMerge = true;
+        }
+        if (remoteAchievements.highScoreCount > localAch.highScoreCount) {
+          useAchievementStore.setState({ highScoreCount: remoteAchievements.highScoreCount });
+          didMerge = true;
+        }
       }
 
       // Pull rank data (MMR, tier, division)
-      try {
-        const remoteRank = await getRankData(uid);
-        if (remoteRank?.rating) {
+      if (remoteRank?.rating) {
+        try {
           const { useRankStore } = require('../../stores/rankStore');
           const localRank = useRankStore.getState();
           const remoteMMR = (remoteRank.rating as { mmr: number })?.mmr ?? 0;
@@ -692,15 +703,14 @@ export class SyncManager {
             didMerge = true;
             logger.log(`[Sync] Rank merged: MMR=${remoteMMR}`);
           }
+        } catch (err) {
+          logger.warn('[Sync] Rank merge failed:', err);
         }
-      } catch (err) {
-        logger.warn('[Sync] Rank pull failed:', err);
       }
 
       // Pull season data (battle pass)
-      try {
-        const remoteSeason = await getSeasonData(uid);
-        if (remoteSeason) {
+      if (remoteSeason) {
+        try {
           const { useSeasonStore } = require('../../stores/seasonStore');
           const localSeason = useSeasonStore.getState();
           const remoteBPXp = (remoteSeason.battlePassXp as number) ?? 0;
@@ -715,15 +725,14 @@ export class SyncManager {
             didMerge = true;
             logger.log(`[Sync] Season merged: BP XP=${remoteBPXp}`);
           }
+        } catch (err) {
+          logger.warn('[Sync] Season merge failed:', err);
         }
-      } catch (err) {
-        logger.warn('[Sync] Season pull failed:', err);
       }
 
       // Pull settings (preferences, username, selected cat)
-      try {
-        const remoteSettings = await getSettingsSyncData(uid);
-        if (remoteSettings) {
+      if (remoteSettings) {
+        try {
           const { useSettingsStore } = require('../../stores/settingsStore');
           const local = useSettingsStore.getState();
           // Only overwrite empty/default local values with remote values
@@ -738,56 +747,47 @@ export class SyncManager {
             didMerge = true;
             logger.log('[Sync] Settings merged:', Object.keys(updates).join(', '));
           }
+        } catch (err) {
+          logger.warn('[Sync] Settings merge failed:', err);
         }
-      } catch (err) {
-        logger.warn('[Sync] Settings pull failed:', err);
       }
 
       // Pull progress extras (dailyGoalData, tierTestResults, streakMilestones)
-      try {
-        const { doc: firestoreDoc, getDoc: firestoreGetDoc } = require('firebase/firestore');
-        const { db: firestoreDb } = require('./config');
-        const extraDoc = firestoreDoc(firestoreDb, 'users', uid, 'gamification', 'progressExtra');
-        const extraSnap = await firestoreGetDoc(extraDoc);
-        if (extraSnap.exists()) {
-          const extra = extraSnap.data();
-          const local = useProgressStore.getState();
-          // Merge streakMilestonesClaimed (union)
-          if (extra.streakMilestonesClaimed?.length > 0) {
-            const merged = [...new Set([...(local.streakMilestonesClaimed ?? []), ...extra.streakMilestonesClaimed])];
-            if (merged.length > (local.streakMilestonesClaimed ?? []).length) {
-              useProgressStore.setState({ streakMilestonesClaimed: merged });
+      if (remoteExtras) {
+        const local = useProgressStore.getState();
+        // Merge streakMilestonesClaimed (union)
+        if (remoteExtras.streakMilestonesClaimed?.length > 0) {
+          const merged = [...new Set([...(local.streakMilestonesClaimed ?? []), ...remoteExtras.streakMilestonesClaimed])];
+          if (merged.length > (local.streakMilestonesClaimed ?? []).length) {
+            useProgressStore.setState({ streakMilestonesClaimed: merged });
+            didMerge = true;
+          }
+        }
+        // Merge tierTestResults (higher scores win)
+        if (remoteExtras.tierTestResults) {
+          const mergedTier = { ...local.tierTestResults };
+          for (const [key, remote] of Object.entries(remoteExtras.tierTestResults as Record<string, { passed: boolean; score: number; attempts: number }>)) {
+            const localT = mergedTier[key];
+            if (!localT || remote.score > localT.score) {
+              mergedTier[key] = remote;
               didMerge = true;
             }
           }
-          // Merge tierTestResults (higher scores win)
-          if (extra.tierTestResults) {
-            const mergedTier = { ...local.tierTestResults };
-            for (const [key, remote] of Object.entries(extra.tierTestResults as Record<string, { passed: boolean; score: number; attempts: number }>)) {
-              const localT = mergedTier[key];
-              if (!localT || remote.score > localT.score) {
-                mergedTier[key] = remote;
-                didMerge = true;
-              }
-            }
-            useProgressStore.setState({ tierTestResults: mergedTier });
-          }
-          // Merge dailyGoalData (per-day practice time — higher minutes win per day)
-          if (extra.dailyGoalData && typeof extra.dailyGoalData === 'object') {
-            const mergedGoals = { ...local.dailyGoalData };
-            for (const [date, remoteGoal] of Object.entries(extra.dailyGoalData as Record<string, { minutesPracticed: number; exercisesCompleted: number }>)) {
-              const localGoal = mergedGoals[date];
-              if (!localGoal || (remoteGoal.minutesPracticed > (localGoal.minutesPracticed ?? 0))) {
-                mergedGoals[date] = remoteGoal as any;
-                didMerge = true;
-              }
-            }
-            useProgressStore.setState({ dailyGoalData: mergedGoals });
-          }
-          logger.log('[Sync] Progress extras merged');
+          useProgressStore.setState({ tierTestResults: mergedTier });
         }
-      } catch (err) {
-        logger.warn('[Sync] Progress extras pull failed:', err);
+        // Merge dailyGoalData (per-day practice time — higher minutes win per day)
+        if (remoteExtras.dailyGoalData && typeof remoteExtras.dailyGoalData === 'object') {
+          const mergedGoals = { ...local.dailyGoalData };
+          for (const [date, remoteGoal] of Object.entries(remoteExtras.dailyGoalData as Record<string, { minutesPracticed: number; exercisesCompleted: number }>)) {
+            const localGoal = mergedGoals[date];
+            if (!localGoal || (remoteGoal.minutesPracticed > (localGoal.minutesPracticed ?? 0))) {
+              mergedGoals[date] = remoteGoal as any;
+              didMerge = true;
+            }
+          }
+          useProgressStore.setState({ dailyGoalData: mergedGoals });
+        }
+        logger.log('[Sync] Progress extras merged');
       }
 
       if (didMerge) {

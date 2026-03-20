@@ -12,6 +12,7 @@ jest.mock('expo-notifications', () => ({
   getPermissionsAsync: jest.fn(),
   requestPermissionsAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
+  cancelScheduledNotificationAsync: jest.fn(),
   cancelAllScheduledNotificationsAsync: jest.fn(),
   SchedulableTriggerInputTypes: { DAILY: 'daily' },
 }));
@@ -67,13 +68,16 @@ describe('notificationService', () => {
   });
 
   describe('scheduleDailyReminder', () => {
-    it('cancels existing notifications and schedules a new daily one', async () => {
-      (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('notif-123');
+    it('cancels only existing daily reminder and schedules a new one', async () => {
+      (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('purrrfect-daily-reminder');
 
       const id = await scheduleDailyReminder(9, 30);
 
-      expect(Notifications.cancelAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
+      // Should cancel only the daily reminder by ID, NOT cancelAll
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('purrrfect-daily-reminder');
+      expect(Notifications.cancelAllScheduledNotificationsAsync).not.toHaveBeenCalled();
       expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
+        identifier: 'purrrfect-daily-reminder',
         content: {
           title: 'Time to practice!',
           body: "Your cat misses you. Keep your streak alive!",
@@ -85,18 +89,22 @@ describe('notificationService', () => {
           minute: 30,
         },
       });
-      expect(id).toBe('notif-123');
+      expect(id).toBe('purrrfect-daily-reminder');
     });
   });
 
   describe('scheduleStreakReminder', () => {
-    it('schedules a streak reminder at 8pm', async () => {
-      (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('streak-456');
+    it('cancels only existing streak reminder and schedules a new one at 8pm', async () => {
+      (Notifications.scheduleNotificationAsync as jest.Mock).mockResolvedValue('purrrfect-streak-reminder');
 
       const id = await scheduleStreakReminder();
 
+      // Should cancel only the streak reminder by ID
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('purrrfect-streak-reminder');
+      expect(Notifications.cancelAllScheduledNotificationsAsync).not.toHaveBeenCalled();
       expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
         expect.objectContaining({
+          identifier: 'purrrfect-streak-reminder',
           content: expect.objectContaining({
             title: 'Streak at risk!',
           }),
@@ -106,7 +114,7 @@ describe('notificationService', () => {
           }),
         }),
       );
-      expect(id).toBe('streak-456');
+      expect(id).toBe('purrrfect-streak-reminder');
     });
   });
 
@@ -122,9 +130,15 @@ describe('notificationService', () => {
   });
 
   describe('cancelAllNotifications', () => {
-    it('cancels all scheduled notifications', async () => {
+    it('cancels only app-managed notifications by identifier', async () => {
       await cancelAllNotifications();
-      expect(Notifications.cancelAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
+
+      // Should cancel each known identifier individually
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('purrrfect-daily-reminder');
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('purrrfect-streak-reminder');
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(2);
+      // Should NOT wipe all notifications
+      expect(Notifications.cancelAllScheduledNotificationsAsync).not.toHaveBeenCalled();
     });
   });
 });

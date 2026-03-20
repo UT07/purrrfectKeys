@@ -546,7 +546,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Animated.View style={[styles.section, staggerStyle(1)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
-            <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
+            <StatPill icon="book-open-variant" label="Lessons" value={Object.entries(lessonProgress).filter(([key, l]) => key !== '__ai__' && l.status === 'completed').length} color={COLORS.info} />
             <StatPill icon="fire" label="Streak" value={streak} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
             <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>

@@ -190,6 +190,7 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     // Compute inside set() updater to prevent lost updates from concurrent calls
     let evolved = false;
     let newStage: string | null = null;
+    let oldStage: EvolutionStage = 'baby';
 
     set((prev) => {
       let data = prev.evolutionData[catId];
@@ -198,19 +199,32 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
         data = createDefaultEvolutionData(catId);
       }
 
-      const oldStage = data.currentStage;
+      oldStage = data.currentStage;
       const newXp = data.xpAccumulated + amount;
       const computedStage = stageFromXp(newXp);
       evolved = computedStage !== oldStage;
       newStage = evolved ? computedStage : null;
 
+      // For multi-stage jumps, fill in evolvedAt for all intermediate stages
+      let evolvedAtUpdate = data.evolvedAt;
+      if (evolved) {
+        const stagesList: EvolutionStage[] = ['baby', 'teen', 'adult', 'master'];
+        const oldIdx = stagesList.indexOf(oldStage);
+        const newIdx = stagesList.indexOf(computedStage);
+        const now = Date.now();
+        evolvedAtUpdate = { ...data.evolvedAt };
+        for (let si = oldIdx + 1; si <= newIdx; si++) {
+          if (!evolvedAtUpdate[stagesList[si]]) {
+            evolvedAtUpdate[stagesList[si]] = now;
+          }
+        }
+      }
+
       const updatedData: CatEvolutionData = {
         ...data,
         xpAccumulated: newXp,
         currentStage: computedStage,
-        evolvedAt: evolved
-          ? { ...data.evolvedAt, [computedStage]: Date.now() }
-          : data.evolvedAt,
+        evolvedAt: evolvedAtUpdate,
         abilitiesUnlocked: evolved
           ? unlockAbilitiesForStage(catId, computedStage, data.abilitiesUnlocked)
           : data.abilitiesUnlocked,
@@ -230,20 +244,27 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
       analyticsEvents.cat.evolved(catId, newStage);
     }
 
-    // Award milestone gems on evolution
+    // Award milestone gems on evolution — iterate through ALL intermediate stages
+    // so a multi-stage XP jump (e.g. baby→adult) awards both teen AND adult gems
     if (evolved && newStage) {
       const MILESTONE_GEMS: Record<string, number> = {
         teen: 200,
         adult: 500,
         master: 1000,
       };
-      const milestoneGems = MILESTONE_GEMS[newStage];
-      if (milestoneGems) {
-        try {
-          const { useGemStore } = require('./gemStore');
-          useGemStore.getState().earnGems(milestoneGems, `evolution-milestone-${newStage}`);
-        } catch (err) {
-          logger.warn('[catEvolution] Milestone gem award failed:', (err as Error)?.message);
+      const stages: EvolutionStage[] = ['baby', 'teen', 'adult', 'master'];
+      const oldStageIdx = stages.indexOf(oldStage);
+      const newStageIdx = stages.indexOf(newStage as EvolutionStage);
+      for (let i = oldStageIdx + 1; i <= newStageIdx; i++) {
+        const stage = stages[i];
+        const milestoneGems = MILESTONE_GEMS[stage];
+        if (milestoneGems) {
+          try {
+            const { useGemStore } = require('./gemStore');
+            useGemStore.getState().earnGems(milestoneGems, `evolution-milestone-${stage}`);
+          } catch (err) {
+            logger.warn(`[catEvolution] Milestone gem award failed for ${stage}:`, (err as Error)?.message);
+          }
         }
       }
     }
@@ -512,6 +533,78 @@ function validateOwnedCats(data: EvolutionData): EvolutionData {
   };
 }
 
+/** Reconcile evolution stages from XP — ensures currentStage matches
+ *  current thresholds even if they changed between app versions */
+function reconcileEvolutionStages(data: EvolutionData): EvolutionData {
+  let changed = false;
+  const reconciledEvolution = { ...data.evolutionData };
+
+  for (const [catId, catData] of Object.entries(reconciledEvolution)) {
+    const correctStage = stageFromXp(catData.xpAccumulated);
+    if (correctStage !== catData.currentStage) {
+      reconciledEvolution[catId] = {
+        ...catData,
+        currentStage: correctStage,
+        abilitiesUnlocked: unlockAbilitiesForStage(catId, correctStage, catData.abilitiesUnlocked),
+        evolvedAt: {
+          ...catData.evolvedAt,
+          // Backfill evolvedAt for stages the cat should have reached
+          ...(correctStage !== 'baby' && !catData.evolvedAt[correctStage]
+            ? { [correctStage]: Date.now() }
+            : {}),
+        },
+      };
+      changed = true;
+      logger.log(
+        `[catEvolution] Reconciled ${catId}: ${catData.currentStage} → ${correctStage} (XP=${catData.xpAccumulated})`,
+      );
+    }
+  }
+
+  return changed ? { ...data, evolutionData: reconciledEvolution } : data;
+}
+
+/** Validate equipped accessories against current evolution stage.
+ *  Removes accessories whose minStage exceeds the cat's current stage. */
+function validateEquippedAccessories(data: EvolutionData): void {
+  try {
+    const { useSettingsStore } = require('./settingsStore');
+    const settings = useSettingsStore.getState();
+    const equipped = settings.equippedAccessories;
+    if (!equipped || Object.keys(equipped).length === 0) return;
+
+    const { ACCESSORIES, canEquipAccessory } = require('@/data/accessories');
+
+    // Determine current stage: use selected cat if available, else check all cats
+    const selectedCatData = data.evolutionData[data.selectedCatId];
+    if (!selectedCatData) return;
+    const currentStage = selectedCatData.currentStage;
+
+    let needsUpdate = false;
+    const validEquipped = { ...equipped };
+
+    for (const [category, accessoryId] of Object.entries(equipped)) {
+      const accessory = (ACCESSORIES as Array<{ id: string; minStage: string }>).find(
+        (a: { id: string }) => a.id === accessoryId,
+      );
+      if (accessory && !canEquipAccessory(accessory, currentStage)) {
+        delete validEquipped[category];
+        needsUpdate = true;
+        logger.log(
+          `[catEvolution] Removed inaccessible accessory ${accessoryId} (requires ${accessory.minStage}, cat is ${currentStage})`,
+        );
+      }
+    }
+
+    if (needsUpdate) {
+      useSettingsStore.setState({ equippedAccessories: validEquipped });
+    }
+  } catch (err) {
+    // Non-critical: accessories validation failure shouldn't block hydration
+    logger.warn('[catEvolution] Accessory validation skipped:', (err as Error)?.message);
+  }
+}
+
 /** Hydrate evolution store from AsyncStorage on app launch */
 export async function hydrateCatEvolutionStore(): Promise<void> {
   const data = await PersistenceManager.loadState<EvolutionData>(
@@ -519,5 +612,9 @@ export async function hydrateCatEvolutionStore(): Promise<void> {
     defaultData,
   );
   const validated = validateOwnedCats(data);
-  useCatEvolutionStore.setState(validated);
+  // Bug #49: Reconcile stages from XP in case thresholds changed between versions
+  const reconciled = reconcileEvolutionStages(validated);
+  useCatEvolutionStore.setState(reconciled);
+  // Bug #51: Remove equipped accessories that exceed the cat's current evolution stage
+  validateEquippedAccessories(reconciled);
 }

@@ -130,12 +130,12 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }).catch((err) => logger.warn('[progressStore] postActivity (addXp) failed:', (err as Error)?.message));
     }
 
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   setLevel: (level: number) => {
     set({ level });
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   updateStreakData: (data: Partial<StreakData>) => {
@@ -154,7 +154,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }
     }
 
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   updateLessonProgress: (lessonId: string, progress: LessonProgress) => {
@@ -164,7 +164,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         [lessonId]: progress,
       },
     }));
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   updateExerciseProgress: (lessonId: string, exerciseId: string, progress: ExerciseProgress) => {
@@ -192,7 +192,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       let newStatus = lesson.status;
       if (lesson.status !== 'completed') {
         try {
-          const { getExercisesForLesson } = require('../content/ContentLoader');
+          const { getExercisesForLesson, getExercise } = require('../content/ContentLoader');
           const lessonExercises = getExercisesForLesson(lessonId);
           const nonTestExercises = lessonExercises.filter(
             (e: { type: string }) => e.type !== 'test',
@@ -200,7 +200,9 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
           if (nonTestExercises.length > 0) {
             const allPassed = nonTestExercises.every((ex: { id: string }) => {
               const exScore = updatedScores[ex.id];
-              return exScore && exScore.highScore >= 60;
+              const fullExercise = getExercise(ex.id);
+              const passingScore = fullExercise?.scoring?.passingScore ?? 70;
+              return exScore && exScore.highScore >= passingScore;
             });
             if (allPassed) {
               newStatus = 'completed';
@@ -239,7 +241,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }
     }
 
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   getLessonProgress: (lessonId: string) => {
@@ -283,7 +285,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         },
       };
     });
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   recordExerciseCompletion: (_exerciseId: string, _score: number, xpEarned: number, challengeContext?: ExerciseChallengeContext) => {
@@ -437,7 +439,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
       }
     }
 
-    debouncedSave(get());
+    debouncedSave(get);
 
     // ── League XP update (fire-and-forget) ──
     const leagueMembership = useLeagueStore.getState().membership;
@@ -507,7 +509,7 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         },
       },
     }));
-    debouncedSave(get());
+    debouncedSave(get);
   },
 
   recordTierTestResult: (tier: number, passed: boolean, score: number) => {
@@ -525,7 +527,44 @@ export const useProgressStore = create<ProgressStoreState>((set, get) => ({
         },
       };
     });
-    debouncedSave(get());
+    debouncedSave(get);
+  },
+
+  pruneDailyGoalData: () => {
+    const MAX_AGE_DAYS = 90;
+    const data = get().dailyGoalData;
+    const keys = Object.keys(data);
+    if (keys.length === 0) return;
+
+    const now = new Date();
+    const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - MAX_AGE_DAYS);
+    const pruned: Record<string, DailyGoalData> = {};
+    let removedCount = 0;
+
+    for (const dateKey of keys) {
+      // Parse YYYY-MM-DD — use parts to avoid timezone issues with Date.parse
+      const parts = dateKey.split('-');
+      if (parts.length !== 3) {
+        pruned[dateKey] = data[dateKey];
+        continue;
+      }
+      const entryDate = new Date(
+        parseInt(parts[0], 10),
+        parseInt(parts[1], 10) - 1,
+        parseInt(parts[2], 10),
+      );
+      if (entryDate >= cutoff) {
+        pruned[dateKey] = data[dateKey];
+      } else {
+        removedCount++;
+      }
+    }
+
+    if (removedCount > 0) {
+      set({ dailyGoalData: pruned });
+      debouncedSave(get);
+      logger.log(`[progressStore] Pruned ${removedCount} dailyGoalData entries older than ${MAX_AGE_DAYS} days`);
+    }
   },
 
   reset: () => {

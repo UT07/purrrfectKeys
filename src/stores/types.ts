@@ -94,6 +94,7 @@ export interface ProgressStoreState {
   recordExerciseCompletion: (exerciseId: string, score: number, xpEarned: number, challengeContext?: ExerciseChallengeContext) => void;
   recordTierTestResult: (tier: number, passed: boolean, score: number) => void;
   updateDailyGoal: (date: string, data: Partial<DailyGoalData>) => void;
+  pruneDailyGoalData: () => void;
   reset: () => void;
 }
 

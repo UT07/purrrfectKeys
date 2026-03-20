@@ -435,6 +435,12 @@ export class DemoPlaybackService {
       for (let i = 0; i < plan.pausePoints.length; i++) {
         if (this.firedPauseIndices.has(i)) continue;
         const pp = plan.pausePoints[i];
+        // Skip pause points at or near beat 0 — pausing before any audio has
+        // played freezes the replay with no way to recover visually
+        if (pp.beatPosition < 0.5) {
+          this.firedPauseIndices.add(i);
+          continue;
+        }
         if (currentBeat >= pp.beatPosition) {
           this.firedPauseIndices.add(i);
 

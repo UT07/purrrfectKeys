@@ -897,6 +897,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const freshGoalData = useProgressStore.getState().dailyGoalData[todayISO];
     const minutesSoFar = freshGoalData?.minutesPracticed ?? elapsedMinutes;
 
+    // BUG-032 fix: Update streak BEFORE recordExerciseCompletion so that
+    // streak milestone checks inside recordExerciseCompletion see the current streak value
+    trace.mark('streakUpdate');
+    const preCompletionProgressStore = useProgressStore.getState();
+    const updatedStreak = calculateStreakUpdate(preCompletionProgressStore.streakData);
+    preCompletionProgressStore.updateStreakData(updatedStreak);
+
     trace.mark('recordExerciseCompletion');
     progressStore.recordExerciseCompletion(ex.id, score.overall, score.xpEarned, {
       score: score.overall,
@@ -1186,11 +1193,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     trace.mark('streakAndAchievements');
-    // Update streak using XpSystem's proper streak logic (handles freezes, weekly tracking)
-    // Re-read from fresh state since recordExerciseCompletion may have mutated streakData
-    const freshProgressStore = useProgressStore.getState();
-    const updatedStreak = calculateStreakUpdate(freshProgressStore.streakData);
-    freshProgressStore.updateStreakData(updatedStreak);
+    // Streak already updated above (before recordExerciseCompletion) — BUG-032 fix
 
     // Track achievement stats: perfect scores, high scores, notes played
     const achievementState = useAchievementStore.getState();
@@ -1208,9 +1211,49 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Check for newly unlocked achievements
     const currentProgressState = useProgressStore.getState();
-    const ownedCatIds = useCatEvolutionStore.getState().ownedCats;
+    const catEvoState = useCatEvolutionStore.getState();
+    const ownedCatIds = catEvoState.ownedCats;
     const catsUnlocked = getOwnedCats(ownedCatIds).length;
-    const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked);
+
+    // BUG-030 fix: Populate extras so evolution, gem, time, and session achievements can unlock
+    const evoData = catEvoState.evolutionData;
+    const evoEntries = Object.values(evoData);
+    const gemState = useGemStore.getState();
+    const dailyRewardsClaimed = catEvoState.dailyRewards.days.filter((d) => d.claimed).length;
+
+    const exerciseElapsedSeconds = playbackStartTimeRef.current > 0
+      ? Math.max(1, Math.round((Date.now() - playbackStartTimeRef.current) / 1000))
+      : 0;
+    const sessionMins = Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000));
+
+    // Count total abilities unlocked across all cats
+    let totalAbilities = 0;
+    for (const entry of evoEntries) {
+      totalAbilities += entry.abilitiesUnlocked?.length ?? 0;
+    }
+
+    const achievementExtras = {
+      // Evolution context
+      hasCatSelected: !!catEvoState.selectedCatId,
+      anyCatEvolvedTeen: evoEntries.some((e) => e.currentStage === 'teen' || e.currentStage === 'adult' || e.currentStage === 'master'),
+      anyCatEvolvedAdult: evoEntries.some((e) => e.currentStage === 'adult' || e.currentStage === 'master'),
+      anyCatEvolvedMaster: evoEntries.some((e) => e.currentStage === 'master'),
+      abilitiesUnlocked: totalAbilities,
+      catsOwned: ownedCatIds.length,
+      hasChonky: ownedCatIds.includes('chonky-monke'),
+      isChonkyMaster: evoData['chonky-monke']?.currentStage === 'master',
+      // Gem context
+      totalGemsEarned: gemState.totalGemsEarned,
+      totalGemsSpent: gemState.totalGemsSpent,
+      // Daily reward context
+      dailyRewardStreak: catEvoState.dailyRewards.currentDay,
+      dailyRewardsTotal: dailyRewardsClaimed,
+      // Time context
+      fastestExerciseSeconds: exerciseElapsedSeconds,
+      sessionMinutes: sessionMins,
+    };
+
+    const achievementContext = buildAchievementContext(currentProgressState, catsUnlocked, achievementExtras);
     const newAchievements = achievementState.checkAndUnlock(achievementContext);
 
     // BUG-028 fix: Queue ALL toast notifications (achievements + level-up + XP)
@@ -1315,9 +1358,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     // --- Friend challenge creation ---
+    // Guard: skip if challenge target is the current user (self-challenge prevention)
     if (challengeTarget) {
       const authUser = useAuthStore.getState().user;
-      if (authUser) {
+      if (authUser && challengeTarget.uid !== authUser.uid) {
         const challengeDoc = {
           id: `challenge-${authUser.uid}-${challengeTarget.uid}-${Date.now()}`,
           fromUid: authUser.uid,
@@ -2178,9 +2222,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         consumedNoteIndicesRef.current.add(bestMatch.index);
         const beatDiffMs = Math.abs(bestMatch.beatDiffSigned) * msPerBeat;
         let feedbackType: FeedbackState['type'];
-        if (beatDiffMs <= toleranceMs * 0.5) feedbackType = 'perfect';
-        else if (beatDiffMs <= toleranceMs) feedbackType = 'good';
-        else if (beatDiffMs <= graceMs) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
+        if (beatDiffMs <= toleranceMs) feedbackType = 'perfect';
+        else if (beatDiffMs <= graceMs) feedbackType = 'good';
+        else if (beatDiffMs <= graceMs * 2) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
         else feedbackType = 'ok';
 
         setComboCount((prev) => prev + 1);

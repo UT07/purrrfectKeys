@@ -264,7 +264,13 @@ export const generateCoachFeedback = onCall(
       const aiStart = Date.now();
       let result;
       try {
-        result = await model.generateContent(prompt);
+        // Use 8s timeout so the Cloud Function (15s budget) has time to
+        // fall back to offline templates if Gemini is slow
+        const geminiPromise = model.generateContent(prompt);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Gemini timeout after 8s')), 8000),
+        );
+        result = await Promise.race([geminiPromise, timeoutPromise]);
       } catch (geminiError) {
         captureAIGeneration({
           distinctId: uid,

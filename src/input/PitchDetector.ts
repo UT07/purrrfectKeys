@@ -509,12 +509,12 @@ export class NoteTracker {
     const now = result.timestamp;
 
     if (result.voiced && result.midiNote !== null) {
-      this.lastVoicedTime = now;
       this.candidateGapCount = 0; // Reset gap counter on any voiced frame
       this.lastRms = result.rms;
 
       if (result.midiNote === this.currentNote) {
-        // Same note sustained — reset candidate
+        // Same note sustained — update lastVoicedTime only for confirmed notes
+        this.lastVoicedTime = now;
         this.candidateNote = null;
         this.candidateCount = 0;
         this.lastRawMidi = result.midiNote;
@@ -530,6 +530,7 @@ export class NoteTracker {
             this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
           }
           this.currentNote = result.midiNote;
+          this.lastVoicedTime = now; // Only update once note is confirmed
           this.candidateNote = null;
           this.candidateCount = 0;
           this.emit({
@@ -558,6 +559,7 @@ export class NoteTracker {
               this.emit({ type: 'noteOff', midiNote: this.currentNote, confidence: 0, timestamp: now });
             }
             this.currentNote = result.midiNote;
+            this.lastVoicedTime = now; // Only update once note is confirmed
             this.candidateNote = null;
             this.candidateCount = 0;
             this.emit({

@@ -162,6 +162,9 @@ function AppRoot(): React.ReactElement {
             ...(streakMilestonesClaimed ? { streakMilestonesClaimed: streakMilestonesClaimed as any } : {}),
           });
           logger.log('[App] Progress state hydrated from storage (level', levelFromXp(xp), ')');
+
+          // Prune old dailyGoalData entries (>90 days) to prevent unbounded storage growth
+          useProgressStore.getState().pruneDailyGoalData();
         }
 
         // Hydrate achievement state
@@ -199,8 +202,11 @@ function AppRoot(): React.ReactElement {
           hydrateSongStore().then(() => logger.log('[App] Song store hydrated')).catch((e) => logger.warn('[App] Song store hydration failed:', e)),
           hydrateSocialStore().then(() => logger.log('[App] Social store hydrated')).catch((e) => logger.warn('[App] Social store hydration failed:', e)),
           hydrateLeagueStore().then(() => logger.log('[App] League store hydrated')).catch((e) => logger.warn('[App] League store hydration failed:', e)),
-          hydrateRankStore().then(() => logger.log('[App] Rank store hydrated')).catch((e) => logger.warn('[App] Rank store hydration failed:', e)),
-          hydrateSeasonStore().then(() => logger.log('[App] Season store hydrated')).catch((e) => logger.warn('[App] Season store hydration failed:', e)),
+          hydrateRankStore().then(() => {
+            logger.log('[App] Rank store hydrated');
+            // Season store reads MMR from rank store, so hydrate AFTER rank completes
+            return hydrateSeasonStore().then(() => logger.log('[App] Season store hydrated')).catch((e) => logger.warn('[App] Season store hydration failed:', e));
+          }).catch((e) => logger.warn('[App] Rank store hydration failed:', e)),
           hydrateGuildStore().then(() => logger.log('[App] Guild store hydrated')).catch((e) => logger.warn('[App] Guild store hydration failed:', e)),
         ]);
 

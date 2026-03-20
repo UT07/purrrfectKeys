@@ -158,18 +158,18 @@ export function XPTransitionOverlay({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       }
       if (score.stars >= 2) {
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           star2Scale.value = withSpring(1, { damping: 8, stiffness: 200 });
           soundManager.play('star_earn');
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        }, 250);
+        }, 250));
       }
       if (score.stars >= 3) {
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           star3Scale.value = withSpring(1, { damping: 8, stiffness: 200 });
           soundManager.play('star_earn');
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
-        }, 500);
+        }, 500));
       }
     }, PHASE.starsReveal));
 

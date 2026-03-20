@@ -91,6 +91,11 @@ export function SalsaCoach({
   );
   const hasSpokenRef = useRef(false);
 
+  // Reset hasSpokenRef when phrase changes so new catchphrases are spoken
+  useEffect(() => {
+    hasSpokenRef.current = false;
+  }, [phrase]);
+
   // Speak catchphrase via TTS
   const shouldSpeak = speakCatchphrase ?? showCatchphrase;
   useEffect(() => {

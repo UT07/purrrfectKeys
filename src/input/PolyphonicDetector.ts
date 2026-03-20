@@ -186,13 +186,17 @@ export class PolyphonicDetector {
   async detect(audioBuffer: Float32Array): Promise<PolyphonicFrame[]> {
     if (!this.session || !this.ready) return [];
 
+    // Capture timestamp BEFORE any processing — reflects when audio was received,
+    // not when ONNX inference finishes (~50ms later)
+    const receiveTime = Date.now();
+
     // Anti-alias low-pass filter + resample to 22050Hz
     const resampled = this.resample(audioBuffer);
     if (resampled.length === 0) return [];
 
     // Record window start time when first samples arrive
     if (this.accumLength === 0) {
-      this.windowStartTime = Date.now();
+      this.windowStartTime = receiveTime;
     }
 
     // Accumulate resampled audio
@@ -208,7 +212,7 @@ export class PolyphonicDetector {
     const rms = this.computeRMS(this.accumBuffer, MODEL_INPUT_SAMPLES);
     if (rms < SILENCE_RMS_THRESHOLD) {
       // Shift buffer by hop size for sliding window, preserving overlap
-      this.shiftAccumBuffer();
+      this.shiftAccumBuffer(receiveTime);
       return [];
     }
 
@@ -216,8 +220,10 @@ export class PolyphonicDetector {
     this.modelInputBuffer.set(this.accumBuffer.subarray(0, MODEL_INPUT_SAMPLES));
 
     // Shift buffer by hop size (50% overlap) instead of resetting to 0
+    // Use receiveTime (pre-inference) so the next window's timestamps aren't
+    // delayed by ONNX inference latency (~50ms)
     const inferenceStartTime = this.windowStartTime;
-    this.shiftAccumBuffer();
+    this.shiftAccumBuffer(receiveTime);
 
     // Create input tensor: model expects shape [batch, 43844, 1]
     const inputTensor = new OnnxRuntime.Tensor(
@@ -240,12 +246,15 @@ export class PolyphonicDetector {
    * Shift accumulation buffer by HOP_SAMPLES for 50% overlap sliding window.
    * Keeps the second half of the window as the start of the next window.
    */
-  private shiftAccumBuffer(): void {
+  private shiftAccumBuffer(now?: number): void {
     // Copy second half to beginning (overlap region)
     this.accumBuffer.copyWithin(0, HOP_SAMPLES, MODEL_INPUT_SAMPLES);
     this.accumLength = MODEL_INPUT_SAMPLES - HOP_SAMPLES;
-    // Update window start time: estimate based on how much audio remains in buffer
-    this.windowStartTime = Date.now() - ((this.accumLength / MODEL_SAMPLE_RATE) * 1000);
+    // Update window start time: estimate based on how much audio remains in buffer.
+    // Use the provided timestamp (captured before inference) to avoid the next
+    // window's timestamps being delayed by ONNX inference latency.
+    const refTime = now ?? Date.now();
+    this.windowStartTime = refTime - ((this.accumLength / MODEL_SAMPLE_RATE) * 1000);
   }
 
   /**

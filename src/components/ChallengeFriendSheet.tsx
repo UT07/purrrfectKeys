@@ -49,7 +49,9 @@ export function ChallengeFriendSheet({
   score,
 }: ChallengeFriendSheetProps): React.ReactElement {
   const friends = useSocialStore((s) => s.friends);
-  const acceptedFriends = friends.filter((f) => f.status === 'accepted');
+  const currentUid = useAuthStore((s) => s.user?.uid);
+  // Filter out the current user to prevent self-challenges
+  const acceptedFriends = friends.filter((f) => f.status === 'accepted' && f.uid !== currentUid);
   const gems = useGemStore((s) => s.gems);
 
   const [sendingTo, setSendingTo] = useState<string | null>(null);
