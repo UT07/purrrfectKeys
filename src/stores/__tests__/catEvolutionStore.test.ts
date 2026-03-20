@@ -53,56 +53,56 @@ describe('catEvolutionStore', () => {
       expect(stageFromXp(0)).toBe('baby');
     });
 
-    it('returns baby for XP below 500', () => {
-      expect(stageFromXp(499)).toBe('baby');
+    it('returns baby for XP below 2000', () => {
+      expect(stageFromXp(1999)).toBe('baby');
     });
 
-    it('returns teen at exactly 500 XP', () => {
-      expect(stageFromXp(500)).toBe('teen');
+    it('returns teen at exactly 2000 XP', () => {
+      expect(stageFromXp(2000)).toBe('teen');
     });
 
-    it('returns teen for XP between 500 and 1999', () => {
-      expect(stageFromXp(1000)).toBe('teen');
-      expect(stageFromXp(1999)).toBe('teen');
+    it('returns teen for XP between 2000 and 7999', () => {
+      expect(stageFromXp(4000)).toBe('teen');
+      expect(stageFromXp(7999)).toBe('teen');
     });
 
-    it('returns adult at exactly 2000 XP', () => {
-      expect(stageFromXp(2000)).toBe('adult');
+    it('returns adult at exactly 8000 XP', () => {
+      expect(stageFromXp(8000)).toBe('adult');
     });
 
-    it('returns adult for XP between 2000 and 4999', () => {
-      expect(stageFromXp(3500)).toBe('adult');
-      expect(stageFromXp(4999)).toBe('adult');
+    it('returns adult for XP between 8000 and 24999', () => {
+      expect(stageFromXp(15000)).toBe('adult');
+      expect(stageFromXp(24999)).toBe('adult');
     });
 
-    it('returns master at exactly 5000 XP', () => {
-      expect(stageFromXp(5000)).toBe('master');
+    it('returns master at exactly 25000 XP', () => {
+      expect(stageFromXp(25000)).toBe('master');
     });
 
-    it('returns master for XP above 5000', () => {
+    it('returns master for XP above 25000', () => {
       expect(stageFromXp(99999)).toBe('master');
     });
   });
 
   describe('xpToNextStage (pure function)', () => {
     it('returns teen stage info for baby', () => {
-      const result = xpToNextStage(200);
-      expect(result).toEqual({ nextStage: 'teen', xpNeeded: 300 });
+      const result = xpToNextStage(500);
+      expect(result).toEqual({ nextStage: 'teen', xpNeeded: 1500 });
     });
 
     it('returns adult stage info for teen', () => {
-      const result = xpToNextStage(800);
-      expect(result).toEqual({ nextStage: 'adult', xpNeeded: 1200 });
+      const result = xpToNextStage(3000);
+      expect(result).toEqual({ nextStage: 'adult', xpNeeded: 5000 });
     });
 
     it('returns master stage info for adult', () => {
-      const result = xpToNextStage(3000);
-      expect(result).toEqual({ nextStage: 'master', xpNeeded: 2000 });
+      const result = xpToNextStage(10000);
+      expect(result).toEqual({ nextStage: 'master', xpNeeded: 15000 });
     });
 
     it('returns null for master (max stage)', () => {
-      expect(xpToNextStage(5000)).toBeNull();
-      expect(xpToNextStage(10000)).toBeNull();
+      expect(xpToNextStage(25000)).toBeNull();
+      expect(xpToNextStage(50000)).toBeNull();
     });
   });
 
@@ -182,32 +182,32 @@ describe('catEvolutionStore', () => {
       expect(result).toBeNull();
     });
 
-    it('triggers teen evolution at 500 XP and returns new stage', () => {
-      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500);
+    it('triggers teen evolution at 2000 XP and returns new stage', () => {
+      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
       expect(result).toBe('teen');
       expect(useCatEvolutionStore.getState().evolutionData['mini-meowww'].currentStage).toBe('teen');
     });
 
-    it('triggers adult evolution at 2000 XP', () => {
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500); // teen
-      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 1500); // adult
+    it('triggers adult evolution at 8000 XP', () => {
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000); // teen
+      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 6000); // adult
       expect(result).toBe('adult');
     });
 
-    it('triggers master evolution at 5000 XP', () => {
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
-      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 3000);
+    it('triggers master evolution at 25000 XP', () => {
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 8000);
+      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 17000);
       expect(result).toBe('master');
     });
 
     it('can skip stages if enough XP given at once', () => {
-      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 5000);
+      const result = useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 25000);
       expect(result).toBe('master');
       expect(useCatEvolutionStore.getState().evolutionData['mini-meowww'].currentStage).toBe('master');
     });
 
     it('unlocks abilities on evolution', () => {
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500); // teen
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000); // teen
       const abilities = useCatEvolutionStore.getState().evolutionData['mini-meowww'].abilitiesUnlocked;
       // Mini Meowww has baby ability (mm-note-preview) and teen ability (mm-timing-window)
       expect(abilities).toContain('mm-note-preview');
@@ -215,7 +215,7 @@ describe('catEvolutionStore', () => {
     });
 
     it('unlocks all abilities at master', () => {
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 5000);
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 25000);
       const abilities = useCatEvolutionStore.getState().evolutionData['mini-meowww'].abilitiesUnlocked;
       expect(abilities).toContain('mm-note-preview');
       expect(abilities).toContain('mm-timing-window');
@@ -226,7 +226,7 @@ describe('catEvolutionStore', () => {
 
     it('records evolvedAt timestamp on evolution', () => {
       const before = Date.now();
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500);
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
       const data = useCatEvolutionStore.getState().evolutionData['mini-meowww'];
 
       expect(data.evolvedAt.baby).toBeDefined();
@@ -274,7 +274,7 @@ describe('catEvolutionStore', () => {
 
     it('returns unlocked abilities for selected cat', () => {
       useCatEvolutionStore.getState().initializeStarterCat('mini-meowww');
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500);
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
 
       const abilities = useCatEvolutionStore.getState().getActiveAbilities();
       expect(abilities).toContain('mm-note-preview');
@@ -284,8 +284,8 @@ describe('catEvolutionStore', () => {
     it('only returns abilities for the selected cat', () => {
       useCatEvolutionStore.getState().initializeStarterCat('mini-meowww');
       useCatEvolutionStore.getState().unlockCat('jazzy');
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 5000);
-      useCatEvolutionStore.getState().addEvolutionXp('jazzy', 5000);
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 25000);
+      useCatEvolutionStore.getState().addEvolutionXp('jazzy', 25000);
       useCatEvolutionStore.getState().selectCat('jazzy');
 
       const abilities = useCatEvolutionStore.getState().getActiveAbilities();
@@ -606,8 +606,8 @@ describe('catEvolutionStore', () => {
       useCatEvolutionStore.getState().initializeStarterCat('mini-meowww');
       useCatEvolutionStore.getState().unlockCat('jazzy');
 
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500); // teen
-      useCatEvolutionStore.getState().addEvolutionXp('jazzy', 2000); // adult
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000); // teen
+      useCatEvolutionStore.getState().addEvolutionXp('jazzy', 8000); // adult
 
       const mmData = useCatEvolutionStore.getState().evolutionData['mini-meowww'];
       const jzData = useCatEvolutionStore.getState().evolutionData['jazzy'];
@@ -620,8 +620,8 @@ describe('catEvolutionStore', () => {
       useCatEvolutionStore.getState().initializeStarterCat('mini-meowww');
       useCatEvolutionStore.getState().unlockCat('luna');
 
-      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 500);
-      useCatEvolutionStore.getState().addEvolutionXp('luna', 500);
+      useCatEvolutionStore.getState().addEvolutionXp('mini-meowww', 2000);
+      useCatEvolutionStore.getState().addEvolutionXp('luna', 2000);
 
       const mmAbilities = useCatEvolutionStore.getState().evolutionData['mini-meowww'].abilitiesUnlocked;
       const lnAbilities = useCatEvolutionStore.getState().evolutionData['luna'].abilitiesUnlocked;

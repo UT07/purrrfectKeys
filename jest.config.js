@@ -17,6 +17,7 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
+    '^expo/virtual/env$': '<rootDir>/__mocks__/expo-virtual-env.js',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/screens/(.*)$': '<rootDir>/src/screens/$1',
