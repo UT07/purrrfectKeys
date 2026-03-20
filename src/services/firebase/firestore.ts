@@ -68,6 +68,7 @@ export interface ExerciseProgress {
   attempts: number;
   lastAttemptAt: Timestamp;
   averageScore: number;
+  completedAt?: Timestamp;
 }
 
 export interface GamificationData {
@@ -109,6 +110,7 @@ export interface ProgressChange {
       stars: number;
       attempts: number;
       averageScore: number;
+      completedAt?: number;
     };
   };
 }
@@ -441,6 +443,7 @@ export async function syncProgress(uid: string, request: SyncRequest): Promise<S
               attempts: lp.exerciseScore.attempts,
               averageScore: lp.exerciseScore.averageScore,
               lastAttemptAt: serverTimestamp(),
+              ...(lp.exerciseScore.completedAt ? { completedAt: Timestamp.fromMillis(lp.exerciseScore.completedAt) } : {}),
             },
           },
           { merge: true }

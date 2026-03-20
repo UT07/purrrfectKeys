@@ -41,6 +41,9 @@ import { useAchievementStore } from './achievementStore';
 import { useLearnerProfileStore } from './learnerProfileStore';
 import { useSocialStore } from './socialStore';
 import { useLeagueStore } from './leagueStore';
+import { useRankStore } from './rankStore';
+import { useSeasonStore } from './seasonStore';
+import { useGuildStore } from './guildStore';
 import { logger } from '../utils/logger';
 import { AnalyticsService, analyticsEvents } from '../services/analytics/PostHog';
 
@@ -95,6 +98,9 @@ function resetAllStores(): void {
     { name: 'songs', reset: () => useSongStore.getState().reset() },
     { name: 'social', reset: () => useSocialStore.getState().reset() },
     { name: 'league', reset: () => useLeagueStore.getState().reset() },
+    { name: 'rank', reset: () => useRankStore.getState().reset() },
+    { name: 'season', reset: () => useSeasonStore.getState().reset() },
+    { name: 'guild', reset: () => useGuildStore.getState().reset() },
   ];
 
   for (const { name, reset } of stores) {
@@ -247,23 +253,26 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
  */
 async function triggerPostSignInSync(): Promise<void> {
   logger.log('[Auth:postSignInSync] START — uid:', auth.currentUser?.uid?.slice(0, 8));
-  // Restore settings from Firestore profile (hasCompletedOnboarding, username, displayName)
+  // Restore settings from Firestore profile (hasCompletedOnboarding, username)
+  // NOTE: Display name restoration is deferred until AFTER pullRemoteProgress()
+  // so that synced settings are considered before falling back to profile/auth names.
+  let firestoreProfile: any = null;
   try {
     const authState = useAuthStore.getState();
     if (authState.user) {
-      const profile = await getUserProfile(authState.user.uid);
-      if (profile) {
+      firestoreProfile = await getUserProfile(authState.user.uid);
+      if (firestoreProfile) {
         // Restore hasCompletedOnboarding from Firestore
-        if ((profile as any).hasCompletedOnboarding === true) {
+        if ((firestoreProfile as any).hasCompletedOnboarding === true) {
           useSettingsStore.getState().setHasCompletedOnboarding(true);
         }
         // Restore username from Firestore
-        if ((profile as any).username) {
+        if ((firestoreProfile as any).username) {
           const localUsername = useSettingsStore.getState().username;
           if (!localUsername) {
             // Use setUsername for persistence + normalization; fall back to direct
             // setState + manual save if the name is somehow shorter than 3 chars.
-            const remoteUsername = (profile as any).username;
+            const remoteUsername = (firestoreProfile as any).username;
             useSettingsStore.getState().setUsername(remoteUsername);
             // If setUsername rejected (< 3 chars), force it anyway to avoid losing data
             if (!useSettingsStore.getState().username && remoteUsername) {
@@ -271,21 +280,6 @@ async function triggerPostSignInSync(): Promise<void> {
               PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, useSettingsStore.getState());
             }
           }
-        }
-        // Restore display name: prefer Firestore profile > Firebase Auth
-        const localName = useSettingsStore.getState().displayName;
-        const isDefaultName = !localName || localName === 'Piano Student';
-        if (isDefaultName && profile.displayName) {
-          useSettingsStore.getState().setDisplayName(profile.displayName);
-        } else if (isDefaultName && authState.user.displayName) {
-          useSettingsStore.getState().setDisplayName(authState.user.displayName);
-        }
-      } else {
-        // No Firestore profile — fall back to Firebase Auth name for display name
-        const localName = useSettingsStore.getState().displayName;
-        const isDefaultName = !localName || localName === 'Piano Student';
-        if (isDefaultName && authState.user.displayName) {
-          useSettingsStore.getState().setDisplayName(authState.user.displayName);
         }
       }
     }
@@ -317,6 +311,25 @@ async function triggerPostSignInSync(): Promise<void> {
     syncManager.startPeriodicSync();
   } catch (err) {
     logger.error('[Auth:postSignInSync] ❌ Pull FAILED:', (err as Error)?.message);
+  }
+
+  // Restore display name AFTER pull so synced settings take priority.
+  // Only fall back to Firestore profile or Firebase Auth name if local name is still default.
+  try {
+    const authState = useAuthStore.getState();
+    if (authState.user) {
+      const localName = useSettingsStore.getState().displayName;
+      const isDefaultName = !localName || localName === 'Piano Student';
+      if (isDefaultName) {
+        if (firestoreProfile?.displayName) {
+          useSettingsStore.getState().setDisplayName(firestoreProfile.displayName);
+        } else if (authState.user.displayName) {
+          useSettingsStore.getState().setDisplayName(authState.user.displayName);
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn('[Auth] Display name restoration failed:', err);
   }
 
   // Auto-detect existing progress: if user has XP, completed exercises, or cats,

@@ -12,7 +12,7 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -379,9 +379,8 @@ export function getSkillsToSeedForLesson(startLesson: string): string[] {
 // Screen Component
 // ---------------------------------------------------------------------------
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export function SkillAssessmentScreen(): React.ReactElement {
+  const { width: screenWidth } = useWindowDimensions();
   const navigation = useNavigation<NavigationProp>();
   const catId = useSettingsStore((s) => s.selectedCatId) || 'mini-meowww';
   const playbackSpeed = useSettingsStore((s) => s.playbackSpeed);
@@ -868,8 +867,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
   const renderPlaying = () => {
     // Compute keyboard props: use non-scrollable when keys fit on screen
     const whiteKeyCount = Math.round(keyboardRange.octaveCount * 7);
-    const screenW = SCREEN_WIDTH;
-    const fitsOnScreen = whiteKeyCount * 56 <= screenW; // 56px min white key width
+    const fitsOnScreen = whiteKeyCount * 56 <= screenWidth; // 56px min white key width
 
     return (
       <View style={styles.playingContainer} testID="assessment-playing">
@@ -894,7 +892,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
             notes={currentRound.notes}
             currentBeat={skillCheckBeat}
             tempo={effectiveTempo}
-            containerWidth={screenW - SPACING.sm * 2}
+            containerWidth={screenWidth - SPACING.sm * 2}
             containerHeight={250}
             midiMin={pianoRollRange.min}
             midiMax={pianoRollRange.max}
@@ -987,7 +985,7 @@ export function SkillAssessmentScreen(): React.ReactElement {
       <View style={styles.centeredContent} testID="assessment-complete">
         <Text style={styles.completeTitle}>Assessment Complete!</Text>
 
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, { width: screenWidth - SPACING.lg * 2 }]}>
           <Text style={styles.summaryLabel}>Overall Score</Text>
           <Text style={styles.summaryScore}>{percentage}%</Text>
 
@@ -1233,7 +1231,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    width: SCREEN_WIDTH - SPACING.lg * 2,
     alignItems: 'center',
     marginBottom: SPACING.lg,
     borderWidth: 1,

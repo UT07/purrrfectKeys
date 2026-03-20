@@ -24,7 +24,7 @@ import {
   ScrollView,
   Alert,
   Modal,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -858,8 +858,7 @@ export function AddFriendScreen(): React.JSX.Element {
 // QR Scanner Modal — lazy-loads expo-camera at render time
 // ---------------------------------------------------------------------------
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SCAN_AREA_SIZE = SCREEN_WIDTH * 0.7;
+const SCAN_AREA_RATIO = 0.7;
 
 interface QRScannerModalProps {
   onBarCodeScanned: (result: { type: string; data: string }) => void;
@@ -876,6 +875,9 @@ function QRScannerModal({
   error,
   onClearError,
 }: QRScannerModalProps): React.JSX.Element {
+  const { width: screenWidth } = useWindowDimensions();
+  const scanAreaSize = screenWidth * SCAN_AREA_RATIO;
+
   // Lazy-load CameraView from expo-camera
   const [CameraComponent, setCameraComponent] = useState<React.ComponentType<{
     style?: object;
@@ -960,9 +962,9 @@ function QRScannerModal({
         {/* Scan area overlay */}
         <View style={scannerStyles.overlay}>
           <View style={scannerStyles.overlayTop} />
-          <View style={scannerStyles.overlayMiddle}>
+          <View style={[scannerStyles.overlayMiddle, { height: scanAreaSize }]}>
             <View style={scannerStyles.overlaySide} />
-            <View style={scannerStyles.scanArea}>
+            <View style={[scannerStyles.scanArea, { width: scanAreaSize, height: scanAreaSize }]}>
               {/* Corner markers */}
               <View style={[scannerStyles.corner, scannerStyles.cornerTL]} />
               <View style={[scannerStyles.corner, scannerStyles.cornerTR]} />
@@ -1420,15 +1422,12 @@ const scannerStyles = StyleSheet.create({
   },
   overlayMiddle: {
     flexDirection: 'row',
-    height: SCAN_AREA_SIZE,
   },
   overlaySide: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   scanArea: {
-    width: SCAN_AREA_SIZE,
-    height: SCAN_AREA_SIZE,
   },
   overlayBottom: {
     flex: 1,

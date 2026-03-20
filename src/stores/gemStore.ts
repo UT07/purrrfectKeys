@@ -10,7 +10,7 @@
 
 import { create } from 'zustand';
 import type { GemTransaction } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { analyticsEvents } from '../services/analytics/PostHog';
 
 const MAX_TRANSACTIONS = 50;
@@ -42,8 +42,7 @@ const defaultData: GemData = {
   claimedRewards: [],
 };
 
-const debouncedSave = createDebouncedSave<GemData>(STORAGE_KEYS.GEMS, 500);
-/** Immediate save for critical operations (reward claims) — prevents double-claiming on crash */
+/** Immediate save for all gem balance changes — prevents gem loss on force-quit */
 const immediateSave = createImmediateSave<GemData>(STORAGE_KEYS.GEMS);
 
 export const useGemStore = create<GemStoreState>((set, get) => ({
@@ -66,7 +65,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
         transactions,
       };
     });
-    debouncedSave(get());
+    immediateSave(get());
     analyticsEvents.gems.earned(amount, source);
   },
 
@@ -94,7 +93,7 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
       };
     });
     if (success) {
-      debouncedSave(get());
+      immediateSave(get());
       analyticsEvents.gems.spent(amount, item);
     }
     return success;

@@ -20,10 +20,10 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Dimensions,
   Pressable,
   TextInput,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -55,9 +55,7 @@ import { logger } from '../utils/logger';
 // Constants
 // ---------------------------------------------------------------------------
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const PROGRESS_BAR_HORIZONTAL_PADDING = SPACING.lg;
-const PROGRESS_BAR_WIDTH = SCREEN_WIDTH - PROGRESS_BAR_HORIZONTAL_PADDING * 2;
 const PROGRESS_BAR_HEIGHT = 6;
 const CAT_SIZE = 28;
 const SLIDE_DURATION = 300;
@@ -494,13 +492,16 @@ function CatSelectionStep({
   onNext,
   selectedCatId,
   direction,
+  screenWidth,
 }: {
   onSelect: (catId: string) => void;
   onNext: () => void;
   selectedCatId?: string;
   direction: SlideDirection;
+  screenWidth: number;
 }): React.ReactElement {
   const starterCats = getStarterCats();
+  const catCardWidth = screenWidth * 0.65;
 
   return (
     <AnimatedStepWrapper direction={direction} testID="onboarding-step-6">
@@ -520,6 +521,7 @@ function CatSelectionStep({
             cat={cat}
             selected={selectedCatId === cat.id}
             onSelect={() => onSelect(cat.id)}
+            cardWidth={catCardWidth}
           />
         ))}
       </ScrollView>
@@ -734,10 +736,12 @@ function CatSelectionCard({
   cat,
   selected,
   onSelect,
+  cardWidth,
 }: {
   cat: CatCharacter;
   selected: boolean;
   onSelect: () => void;
+  cardWidth: number;
 }): React.ReactElement {
   const traits = CAT_TRAIT_TAGS[cat.id] ?? [];
 
@@ -745,7 +749,7 @@ function CatSelectionCard({
     <View
       style={[
         styles.catCard,
-        { borderColor: selected ? cat.color : COLORS.cardBorder },
+        { width: cardWidth, borderColor: selected ? cat.color : COLORS.cardBorder },
         selected && {
           backgroundColor: glowColor(cat.color, 0.08),
           ...shadowGlow(cat.color, 10),
@@ -947,7 +951,8 @@ function StepDots({ currentStep }: { currentStep: number }): React.ReactElement 
   );
 }
 
-function ProgressBar({ step }: { step: number }): React.ReactElement {
+function ProgressBar({ step, screenWidth }: { step: number; screenWidth: number }): React.ReactElement {
+  const progressBarWidth = screenWidth - PROGRESS_BAR_HORIZONTAL_PADDING * 2;
   const fillFraction = useSharedValue(step / TOTAL_STEPS);
   const catInfo = STEP_CATS[step] ?? STEP_CATS[1];
 
@@ -964,8 +969,8 @@ function ProgressBar({ step }: { step: number }): React.ReactElement {
 
   const catStyle = useAnimatedStyle(() => {
     // Keep the cat within bounds: offset by half cat size so it sits at the leading edge
-    const maxTranslate = PROGRESS_BAR_WIDTH - CAT_SIZE;
-    const rawTranslate = fillFraction.value * PROGRESS_BAR_WIDTH - CAT_SIZE / 2;
+    const maxTranslate = progressBarWidth - CAT_SIZE;
+    const rawTranslate = fillFraction.value * progressBarWidth - CAT_SIZE / 2;
     const clampedTranslate = Math.max(0, Math.min(rawTranslate, maxTranslate));
     return {
       transform: [{ translateX: clampedTranslate }],
@@ -1003,6 +1008,7 @@ function ProgressBar({ step }: { step: number }): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 export function OnboardingScreen(): React.ReactElement {
+  const { width: screenWidth } = useWindowDimensions();
   const [step, setStep] = useState(1);
   const [state, setState] = useState<OnboardingState>({});
   const [direction, setDirection] = useState<SlideDirection>('forward');
@@ -1206,6 +1212,7 @@ export function OnboardingScreen(): React.ReactElement {
             }}
             onNext={handleNext}
             direction={direction}
+            screenWidth={screenWidth}
           />
         );
       case 7:
@@ -1237,7 +1244,7 @@ export function OnboardingScreen(): React.ReactElement {
         showsVerticalScrollIndicator={false}
       >
         {/* Progress bar with walking cat */}
-        <ProgressBar step={step} />
+        <ProgressBar step={step} screenWidth={screenWidth} />
 
         {/* Step content */}
         {renderStep()}
@@ -1484,7 +1491,6 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   catCard: {
-    width: SCREEN_WIDTH * 0.65,
     backgroundColor: COLORS.cardSurface,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 2,

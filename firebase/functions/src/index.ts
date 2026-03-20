@@ -85,8 +85,15 @@ export const syncProgress = onCall(
       const batch = admin.firestore().batch();
       for (const change of localChanges) {
         const docRef = changesRef.doc(change.id);
+        // Strip undefined values — Firestore rejects them silently
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(change)) {
+          if (value !== undefined) {
+            sanitized[key] = value;
+          }
+        }
         batch.set(docRef, {
-          ...change,
+          ...sanitized,
           synced: true,
           syncedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

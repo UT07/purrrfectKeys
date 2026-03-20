@@ -567,6 +567,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Compute ability-modified config from active abilities
   const abilityConfig = useMemo((): ExerciseAbilityConfig | null => {
+    // Bug #53: Cat abilities must not boost mastery test performance
+    if (testModeRef.current) return null;
     if (activeAbilityIds.length === 0) return null;
     const defaultCfg = createDefaultConfig(
       rawExercise.scoring.timingToleranceMs,
@@ -771,7 +773,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Apply ability boosts BEFORE setting finalScore so CompletionModal shows
     // the correct (boosted) values. Previously setFinalScore ran before the boost,
     // causing the modal to display the raw score.
-    const currentAbilityConfig = abilityConfig;
+    // Bug #10: Read from ref to avoid stale closure when exercise changes (AI mode)
+    const currentAbilityConfig = abilityConfigRef.current;
     if (currentAbilityConfig) {
       // Score boost (cap at 100)
       if (currentAbilityConfig.scoreBoostPercent > 0) {
@@ -885,7 +888,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Record practice time BEFORE challenge validation so minutesPracticedToday is accurate
     let elapsedMinutes = 0;
     if (playbackStartTimeRef.current > 0) {
-      elapsedMinutes = Math.max(1, Math.round((Date.now() - playbackStartTimeRef.current) / 60000));
+      elapsedMinutes = Math.max(0, Math.round((Date.now() - playbackStartTimeRef.current) / 60000));
       progressStore.recordPracticeSession(elapsedMinutes);
     }
 
@@ -1000,13 +1003,28 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}),
       });
 
+      // Also save a completion marker in __ai__ bucket so HomeScreen's
+      // Today's Practice can detect completion via ai-skill-{skillId} key
+      if (exLessonId && isAiExercise && skillIdParamRef.current) {
+        const aiKey = `ai-skill-${skillIdParamRef.current}`;
+        progressStore.updateExerciseProgress('__ai__', aiKey, {
+          exerciseId: aiKey,
+          highScore: newHighScore,
+          stars: newStars,
+          attempts: newAttempts,
+          lastAttemptAt: Date.now(),
+          averageScore: newAvgScore,
+          ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}),
+        });
+      }
+
       // Build lesson sync data (only for real lessons, not __ai__ bucket)
       if (exLessonId) {
         lessonSyncData = {
           lessonId: exLessonId,
           status: 'in_progress',
           exerciseId: ex.id,
-          exerciseScore: { highScore: newHighScore, stars: newStars, attempts: newAttempts, averageScore: newAvgScore },
+          exerciseScore: { highScore: newHighScore, stars: newStars, attempts: newAttempts, averageScore: newAvgScore, ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}) },
         };
       }
 
@@ -1252,8 +1270,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     let totalGemsForModal = gemsEarned;
     if (score.isPassed && !wasPreviouslyCompleted) totalGemsForModal += 25;
 
-    // --- Chest rewards ---
-    const chestType = getChestType(score.stars, !wasPreviouslyCompleted);
+    // --- Chest rewards (only on passed exercises) ---
+    const chestType = score.isPassed ? getChestType(score.stars, !wasPreviouslyCompleted) : 'none' as const;
     const chestReward = getChestReward(chestType);
     if (chestReward.gems > 0) {
       gemStore.earnGems(chestReward.gems, `chest-${ex.id}`);
@@ -1385,7 +1403,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     trace.end();
-  }, [onExerciseComplete, abilityConfig, challengeTarget, friendChallengeId]);
+  }, [onExerciseComplete, challengeTarget, friendChallengeId]);
 
   // Metronome toggle — defaults to exercise setting, user can toggle during play
   const [metronomeOn, setMetronomeOn] = useState(exercise.settings.metronomeEnabled ?? true);
@@ -1415,6 +1433,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     enableMidi: true,
     enableAudio: true,
     metronomeEnabled: metronomeOn,
+    skillId: skillIdParam,
   });
 
   // UI state (separate from playback logic)
@@ -2026,7 +2045,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           shakeRef.current?.shake('medium');
           setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: COLORS.feedbackMiss, trigger: Date.now() });
           setShowMissFlash(true);
-          setTimeout(() => setShowMissFlash(false), 150);
+          setTimeout(() => { if (mountedRef.current) setShowMissFlash(false); }, 150);
         }
         setFeedback({
           type: 'miss',

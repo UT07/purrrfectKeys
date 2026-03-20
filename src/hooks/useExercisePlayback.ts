@@ -39,6 +39,8 @@ export interface UseExercisePlaybackOptions {
   inputMethod?: 'auto' | 'midi' | 'mic' | 'touch';
   /** Override metronome enabled state (defaults to exercise.settings.metronomeEnabled) */
   metronomeEnabled?: boolean;
+  /** Skill ID for AI exercises — used to look up previous high score under __ai__ bucket */
+  skillId?: string | null;
 }
 
 export interface UseExercisePlaybackReturn {
@@ -88,9 +90,12 @@ export function useExercisePlayback({
   enableAudio = true,
   inputMethod,
   metronomeEnabled,
+  skillId,
 }: UseExercisePlaybackOptions): UseExercisePlaybackReturn {
   const audioEngineRef = useRef(createAudioEngine());
   const audioEngine = audioEngineRef.current;
+  const skillIdRef = useRef(skillId);
+  skillIdRef.current = skillId;
   const preferredInput = useSettingsStore((s) => s.preferredInputMethod);
   const resolvedInputMethod = inputMethod ?? preferredInput ?? 'auto';
   const inputManagerRef = useRef<InputManager | null>(null);
@@ -710,12 +715,24 @@ export function useExercisePlayback({
     if (directLessonId) {
       previousHighScore = progressState.lessonProgress[directLessonId]?.exerciseScores[exercise.id]?.highScore ?? 0;
     } else {
-      // Scan all lessons for a matching exercise score (covers AI exercises, songs, etc.)
-      for (const lp of Object.values(progressState.lessonProgress)) {
-        const exScore = lp.exerciseScores[exercise.id];
-        if (exScore?.highScore) {
-          previousHighScore = exScore.highScore;
-          break;
+      // For AI exercises, check the __ai__ bucket using the stable ai-skill-{skillId} key
+      // (AI exercise IDs are unique per generation, so exercise.id won't match previous attempts)
+      const currentSkillId = skillIdRef.current;
+      if (currentSkillId) {
+        const aiKey = `ai-skill-${currentSkillId}`;
+        const aiScore = progressState.lessonProgress['__ai__']?.exerciseScores[aiKey];
+        if (aiScore?.highScore) {
+          previousHighScore = aiScore.highScore;
+        }
+      }
+      // Also scan all lessons for a matching exercise score (covers songs, etc.)
+      if (previousHighScore === 0) {
+        for (const lp of Object.values(progressState.lessonProgress)) {
+          const exScore = lp.exerciseScores[exercise.id];
+          if (exScore?.highScore) {
+            previousHighScore = exScore.highScore;
+            break;
+          }
         }
       }
     }

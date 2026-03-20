@@ -60,6 +60,8 @@ export const useSocialStore = create<SocialStoreState>((set, get) => ({
   },
 
   addFriend: (friend: FriendConnection) => {
+    const existing = get().friends.some((f) => f.uid === friend.uid);
+    if (existing) return;
     set((state) => ({
       friends: [...state.friends, friend],
     }));

@@ -53,6 +53,7 @@ export interface SyncChange {
       stars: number;
       attempts: number;
       averageScore: number;
+      completedAt?: number;
     };
   };
 }
@@ -993,7 +994,7 @@ export class SyncManager {
       const { useSeasonStore } = require('../../stores/seasonStore');
       const seasonState = useSeasonStore.getState();
       await saveSeasonData(resolvedUid, {
-        currentSeasonId: seasonState.currentSeasonId,
+        currentSeason: seasonState.currentSeason,
         battlePassXp: seasonState.battlePassXp,
         battlePassTier: seasonState.battlePassTier,
         claimedRewards: seasonState.claimedRewards,
@@ -1175,7 +1176,12 @@ function convertFirestoreExercise(
         ? (remote.lastAttemptAt as any).toMillis()
         : Date.now(),
     averageScore: remote.averageScore,
-    completedAt: remote.highScore > 0 ? Date.now() : undefined,
+    completedAt:
+      remote.completedAt && typeof remote.completedAt === 'object' && 'toMillis' in remote.completedAt
+        ? (remote.completedAt as any).toMillis()
+        : typeof remote.completedAt === 'number'
+          ? remote.completedAt
+          : undefined,
   };
 }
 

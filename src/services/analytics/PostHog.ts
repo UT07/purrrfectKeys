@@ -110,12 +110,20 @@ export class AnalyticsService {
     }
 
     try {
-      posthogClient.flush();
+      const result = posthogClient.flush();
+      // flush() returns a Promise — catch async network errors silently
+      if (result && typeof result.catch === 'function') {
+        result.catch(() => {
+          // Network errors during flush are expected (offline, poor connection)
+          // Silently ignore — PostHog will retry on next flush interval
+        });
+      }
       if (__DEV__) {
         logger.log('[PostHog] flush requested');
       }
     } catch (error) {
-      logger.error('[PostHog] Failed to flush:', error);
+      // Synchronous errors (e.g., client not initialized)
+      logger.warn('[PostHog] Failed to flush:', error);
     }
   }
 }

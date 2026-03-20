@@ -4,7 +4,13 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, LogBox } from 'react-native';
+
+// Suppress PostHog network errors from showing red error modal in dev
+LogBox.ignoreLogs([
+  'PostHogFetchNetworkError',
+  'Error while flushing PostHog',
+]);
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as ScreenOrientation from 'expo-screen-orientation';

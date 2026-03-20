@@ -174,10 +174,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return totalDone;
   }, [lessonProgress]);
 
-  // Today's Practice session plan (mini version of DailySessionScreen)
+  // Today's Practice session plan — persisted for the day so completing an
+  // exercise shows a checkmark instead of regenerating the whole plan.
+  // Only regenerates on: new day, tab focus (if day changed), or all exercises done.
+  const dailyPlanRef = useRef<{ date: string; plan: ReturnType<typeof generateSessionPlan> } | null>(null);
   const sessionPlan = useMemo(() => {
+    const todayKey = getTodayDateString();
+
+    // Reuse existing plan if same day
+    if (dailyPlanRef.current?.date === todayKey) {
+      return dailyPlanRef.current.plan;
+    }
+
+    // Generate fresh plan for the new day
     const profile = useLearnerProfileStore.getState();
-    return generateSessionPlan(
+    const plan = generateSessionPlan(
       {
         noteAccuracy: profile.noteAccuracy,
         noteAttempts: profile.noteAttempts,
@@ -194,7 +205,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       },
       profile.masteredSkills,
     );
-  }, [focusCounter, lessonProgress]); // eslint-disable-line react-hooks/exhaustive-deps -- reads fresh store state on every focus
+    dailyPlanRef.current = { date: todayKey, plan };
+    return plan;
+  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- regenerates on tab focus only, checks date internally
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {

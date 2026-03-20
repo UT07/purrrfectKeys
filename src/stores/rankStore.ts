@@ -198,7 +198,7 @@ export const useRankStore = create<RankStoreState>((set, get) => ({
   },
 
   reset: () => {
-    set({ rating: { ...defaultRating } });
+    set({ rating: { ...defaultRating }, pendingRankChange: null });
     PersistenceManager.deleteState(STORAGE_KEYS.RANK);
   },
 }));

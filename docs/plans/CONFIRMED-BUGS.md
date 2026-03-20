@@ -131,7 +131,10 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | 73 | P1 | GitHub Dependabot: 8 high, 3 moderate, 1 low vulnerabilities on default branch |
 | 80 | P1 | Profile screen ScoreRing is red/dark tint, HomeScreen ring is green — inconsistent ring styling between the two screens |
 | 81 | P1 | Sentry Logger console error: "Failed to receive any fallback timestamp" — shows red error modal on device |
-| 82 | P0 | CatAvatar micro-animations (ear twitch, tail swish) break SVG alignment — vbScale math in KeysieSvg applies pixel-space transforms to viewBox-space elements. Ears shift left, tail floats. SalsaCoach avoids this by using `pose` which disables micro-animations. |
+| 82 | P1 | CatAvatar SVG rendering needs full Figma redesign — tails float above body at all sizes, ears misaligned at small sizes, micro-animations (vbScale math) break alignment. Needs Figma credits to redesign SVG paths properly per cat. BLOCKED on Figma credits. |
+| 83 | P2 | PostHog `PostHogFetchNetworkError: Network error while flushing PostHog` — red Console Error modal on device. PostHog flush failures should be silenced, not surfaced as user-visible errors. |
+| 84 | P1 | `exercise-index.json` has wrong exercise types for lessons 1-6 (earTraining, rhythm, callResponse, chordId) — all are note-based play-along but labeled as other types. ExercisePlayer only supports play/tap modes (bug #79). |
+| 85 | P1 | Today's Practice / DailySession generate plans independently — exercises differ between HomeScreen mini-view and "See All" DailySessionScreen. Should share same plan. |
 
 ## Fix Order
 

@@ -425,7 +425,8 @@ function SessionExerciseCard({
   const exercise = exerciseRef.source === 'static' ? getExercise(exerciseRef.exerciseId) : null;
   const isAI = exerciseRef.source === 'ai' || exerciseRef.source === 'ai-with-fallback';
   const skillNode = isAI ? getSkillById(exerciseRef.skillNodeId) : null;
-  const title = exercise?.metadata.title ?? skillNode?.name ?? (isAI ? 'AI-Generated Exercise' : exerciseRef.exerciseId);
+  const isSong = exerciseRef.source === 'song';
+  const title = exercise?.metadata.title ?? skillNode?.name ?? (isSong ? exerciseRef.reason : (isAI ? 'AI-Generated Exercise' : exerciseRef.exerciseId));
   const difficulty = exercise?.metadata.difficulty ?? 1;
 
   return (
