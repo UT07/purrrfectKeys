@@ -754,7 +754,7 @@ function StatPill({ icon, label, value, color }: { icon: string; label: string; 
 /** Action card with gradient background */
 /** Section colors matching DailySessionScreen */
 const PRACTICE_SECTION_COLORS = {
-  warmUp: { accent: COLORS.warning, bg: glowColor(COLORS.warning, 0.08), border: glowColor(COLORS.warning, 0.2), icon: 'fire' as const, label: 'Warm Up' },
+  warmUp: { accent: COLORS.starGold, bg: glowColor(COLORS.starGold, 0.08), border: glowColor(COLORS.starGold, 0.2), icon: 'fire' as const, label: 'Warm Up' },
   lesson: { accent: COLORS.info, bg: glowColor(COLORS.info, 0.08), border: glowColor(COLORS.info, 0.2), icon: 'book-open-variant' as const, label: 'Lesson' },
   challenge: { accent: COLORS.primaryLight, bg: glowColor(COLORS.primaryLight, 0.08), border: glowColor(COLORS.primaryLight, 0.2), icon: 'lightning-bolt' as const, label: 'Challenge' },
 } as const;

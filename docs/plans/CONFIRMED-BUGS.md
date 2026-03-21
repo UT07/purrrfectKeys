@@ -165,6 +165,8 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | F5 | P2 | No UI to see streak freeze count (#21) |
 | F6 | P2 | Use ElevenLabs for sound effects — current procedural/sample sounds are low quality. Generate premium UI sounds (combo, stars, chest open, level up) via ElevenLabs sound generation API. |
 | F7 | P3 | Use ElevenLabs or AI-generated background music for the app — ambient practice music, menu themes, celebration tracks |
+| F8 | P1 | Cat abilities need redesign — "Practice Reminder" is a useless ability. All abilities should have meaningful gameplay impact (timing boost, XP multiplier, combo shield, note preview, etc.) |
+| 96 | P1 | Cat ability shows locked at Baby stage even though cat IS at Baby — `abilitiesUnlocked` array not populated on cat purchase/initial ownership. Ability unlock logic broken for baby-stage abilities. |
 
 ## Fix Order
 

@@ -41,7 +41,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 type SectionKey = 'warmUp' | 'lesson' | 'challenge' | 'songs';
 
 const SECTION_COLORS: Record<SectionKey, { accent: string; bg: string; border: string }> = {
-  warmUp: { accent: COLORS.warning, bg: glowColor(COLORS.warning, 0.08), border: glowColor(COLORS.warning, 0.2) },
+  warmUp: { accent: COLORS.starGold, bg: glowColor(COLORS.starGold, 0.08), border: glowColor(COLORS.starGold, 0.2) },
   lesson: { accent: COLORS.info, bg: glowColor(COLORS.info, 0.08), border: glowColor(COLORS.info, 0.2) },
   challenge: { accent: COLORS.primaryLight, bg: glowColor(COLORS.primaryLight, 0.08), border: glowColor(COLORS.primaryLight, 0.2) },
   songs: { accent: COLORS.success, bg: glowColor(COLORS.success, 0.08), border: glowColor(COLORS.success, 0.2) },
@@ -313,6 +313,7 @@ export function DailySessionScreen() {
           exercises={plan.warmUp}
           completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
+          lessonProgress={lessonProgress}
         />
 
         {/* Lesson Section */}
@@ -321,6 +322,7 @@ export function DailySessionScreen() {
           exercises={plan.lesson}
           completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
+          lessonProgress={lessonProgress}
         />
 
         {/* Challenge Section */}
@@ -329,6 +331,7 @@ export function DailySessionScreen() {
           exercises={plan.challenge}
           completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
+          lessonProgress={lessonProgress}
         />
 
         {/* Songs Section */}
@@ -338,6 +341,7 @@ export function DailySessionScreen() {
             exercises={plan.songs}
             completedKeys={mergedCompletedKeys}
             onExercisePress={handleExercisePress}
+            lessonProgress={lessonProgress}
           />
         )}
 
@@ -403,11 +407,13 @@ function SessionSection({
   exercises,
   completedKeys,
   onExercisePress,
+  lessonProgress,
 }: {
   sectionKey: SectionKey;
   exercises: ExerciseRef[];
   completedKeys: Set<string>;
   onExercisePress: (ref: ExerciseRef) => void;
+  lessonProgress: Record<string, { exerciseScores: Record<string, { completedAt?: number; highScore?: number }> }>;
 }) {
   const colors = SECTION_COLORS[sectionKey];
   const icon = SECTION_ICONS[sectionKey];
@@ -434,20 +440,34 @@ function SessionSection({
         <Text style={[styles.sectionLabel, { color: allDone ? COLORS.success : colors.accent }]}>{label}</Text>
       </Animated.View>
 
-      {exercises.map((ref, i) => (
-        <Animated.View
-          key={`${ref.exerciseId}-${i}`}
-          entering={FadeInUp.delay((i + 1) * 100).duration(400)}
-        >
-          <SessionExerciseCard
-            exerciseRef={ref}
-            rarity={rarity}
-            colors={colors}
-            isCompleted={completedKeys.has(ref.skillNodeId || ref.exerciseId)}
-            onPress={() => onExercisePress(ref)}
-          />
-        </Animated.View>
-      ))}
+      {exercises.map((ref, i) => {
+        const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
+        const highScore = isAI
+          ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore ?? null
+          : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore ?? null;
+        const isAttempted = completedKeys.has(ref.skillNodeId || ref.exerciseId);
+        const exercise = ref.source === 'static' ? getExercise(ref.exerciseId) : null;
+        const passingScore = exercise?.scoring?.passingScore ?? 70;
+        const isPassed = isAttempted && (highScore ?? 0) >= passingScore;
+        const isBelowThreshold = isAttempted && !isPassed;
+
+        return (
+          <Animated.View
+            key={`${ref.exerciseId}-${i}`}
+            entering={FadeInUp.delay((i + 1) * 100).duration(400)}
+          >
+            <SessionExerciseCard
+              exerciseRef={ref}
+              rarity={rarity}
+              colors={colors}
+              isPassed={isPassed}
+              isBelowThreshold={isBelowThreshold}
+              highScore={highScore}
+              onPress={() => onExercisePress(ref)}
+            />
+          </Animated.View>
+        );
+      })}
     </View>
   );
 }
@@ -456,17 +476,31 @@ function SessionSection({
 // Exercise Card Component (renamed to avoid conflict with transitions/ExerciseCard)
 // ============================================================================
 
+const EXERCISE_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  play:         { label: 'Play Along',      icon: 'piano',           color: '#64B5F6' },
+  rhythm:       { label: 'Rhythm',          icon: 'metronome',       color: '#FF8A65' },
+  earTraining:  { label: 'Ear Training',    icon: 'ear-hearing',     color: '#CE93D8' },
+  chordId:      { label: 'Chord ID',        icon: 'cards',           color: '#81C784' },
+  sightReading: { label: 'Sight Read',      icon: 'eye',             color: '#FFD54F' },
+  callResponse: { label: 'Call & Response', icon: 'swap-horizontal', color: '#4FC3F7' },
+  test:         { label: 'Mastery Test',    icon: 'trophy',          color: '#FF5252' },
+};
+
 function SessionExerciseCard({
   exerciseRef,
   rarity,
   colors,
-  isCompleted,
+  isPassed,
+  isBelowThreshold,
+  highScore,
   onPress,
 }: {
   exerciseRef: ExerciseRef;
   rarity: RarityLevel;
   colors: { accent: string; bg: string; border: string };
-  isCompleted: boolean;
+  isPassed: boolean;
+  isBelowThreshold: boolean;
+  highScore: number | null;
   onPress: () => void;
 }) {
   const exercise = exerciseRef.source === 'static' ? getExercise(exerciseRef.exerciseId) : null;
@@ -476,29 +510,55 @@ function SessionExerciseCard({
   const title = exercise?.metadata.title ?? skillNode?.name ?? (isSong ? exerciseRef.reason : (isAI ? 'AI-Generated Exercise' : exerciseRef.exerciseId));
   const difficulty = exercise?.metadata.difficulty ?? 1;
 
+  // Determine exercise type for the label
+  const exerciseType = exercise?.metadata?.skills?.includes('rhythm') ? 'rhythm'
+    : exercise?.metadata?.skills?.includes('ear-training') ? 'earTraining'
+    : isSong ? 'play' : 'play';
+  // Use exercise-index type if available via skill node category mapping
+  const typeFromIndex = (() => {
+    if (exerciseRef.skillNodeId) {
+      const skill = getSkillById(exerciseRef.skillNodeId);
+      if (skill?.category === 'rhythm') return 'rhythm';
+      if (skill?.category === 'chords') return 'chordId';
+      if (skill?.category === 'sight-reading') return 'sightReading';
+      if (skill?.category === 'expression') return 'earTraining';
+    }
+    return exerciseType;
+  })();
+  const typeInfo = EXERCISE_TYPE_LABELS[typeFromIndex] ?? EXERCISE_TYPE_LABELS.play;
+
+  const isAttempted = isPassed || isBelowThreshold;
+  const statusColor = isPassed ? COLORS.success : isBelowThreshold ? COLORS.warning : null;
+
   return (
     <GameCard
       rarity={rarity}
       onPress={onPress}
-      style={[styles.exerciseGameCard, isCompleted && styles.exerciseGameCardDone]}
+      style={[styles.exerciseGameCard, isPassed && styles.exerciseGameCardDone]}
     >
       <View style={styles.exerciseCardContent}>
         <View style={styles.exerciseInfo}>
-          <Text style={[styles.exerciseTitle, isCompleted && styles.exerciseTitleDone]}>{title}</Text>
-          <Text style={styles.exerciseReason}>{humanizeReasoning(exerciseRef.reason)}</Text>
+          <Text style={[styles.exerciseTitle, statusColor && { color: statusColor }]}>{title}</Text>
+          <Text style={styles.exerciseReason}>
+            {isAttempted && highScore != null ? `Score: ${highScore}%` : humanizeReasoning(exerciseRef.reason)}
+          </Text>
           <View style={styles.exerciseMeta}>
-            {isCompleted && (
+            {isPassed && (
               <View style={styles.doneTag}>
                 <MaterialCommunityIcons name="check-circle" size={12} color={COLORS.success} />
                 <Text style={styles.doneTagText}>Done</Text>
               </View>
             )}
-            {isAI && (
-              <View style={styles.aiTag}>
-                <MaterialCommunityIcons name="robot" size={12} color={COLORS.info} />
-                <Text style={styles.aiTagText}>AI</Text>
+            {isBelowThreshold && (
+              <View style={[styles.doneTag, { backgroundColor: COLORS.warning + '20' }]}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={12} color={COLORS.warning} />
+                <Text style={[styles.doneTagText, { color: COLORS.warning }]}>Retry</Text>
               </View>
             )}
+            <View style={[styles.aiTag, { backgroundColor: typeInfo.color + '20' }]}>
+              <MaterialCommunityIcons name={typeInfo.icon as any} size={12} color={typeInfo.color} />
+              <Text style={[styles.aiTagText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
+            </View>
             <View style={styles.difficultyDots}>
               {Array.from({ length: 5 }, (_, i) => (
                 <View
@@ -510,7 +570,7 @@ function SessionExerciseCard({
                 />
               ))}
             </View>
-            {!isCompleted && (
+            {!isAttempted && (
               <View style={styles.gemRewardHint}>
                 <MaterialCommunityIcons name="diamond-stone" size={10} color={COLORS.gemGold} />
                 <Text style={styles.gemRewardHintText}>5 for 90%+, 15 for perfect</Text>
@@ -518,9 +578,9 @@ function SessionExerciseCard({
             )}
           </View>
         </View>
-        <View style={[styles.playIconBg, { backgroundColor: isCompleted ? COLORS.success : colors.accent }]}>
+        <View style={[styles.playIconBg, { backgroundColor: statusColor ?? colors.accent }]}>
           <MaterialCommunityIcons
-            name={isCompleted ? 'check' : 'play'}
+            name={isPassed ? 'check' : isBelowThreshold ? 'refresh' : 'play'}
             size={20}
             color={COLORS.textPrimary}
           />
