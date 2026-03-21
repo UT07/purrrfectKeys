@@ -6,10 +6,11 @@
 import React, { useEffect, useState } from 'react';
 import { AppState, LogBox } from 'react-native';
 
-// Suppress PostHog network errors from showing red error modal in dev
+// Suppress known third-party errors from showing red error modal in dev
 LogBox.ignoreLogs([
   'PostHogFetchNetworkError',
   'Error while flushing PostHog',
+  'Failed to receive any fallback timestamp',
 ]);
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';

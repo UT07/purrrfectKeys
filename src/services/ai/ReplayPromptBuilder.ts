@@ -134,38 +134,61 @@ export { REPLAY_SYSTEM_PROMPT, INTRO_SYSTEM_PROMPT };
 
 export function parseReplayResponse(text: string): ReplayAIResponse | null {
   try {
-    // Strip potential markdown code fences
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Strip potential markdown code fences and any leading/trailing non-JSON text
+    let cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // If the response has text before the JSON object, extract the JSON
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace > 0 && lastBrace > firstBrace) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+    }
+
     const parsed = JSON.parse(cleaned);
 
-    // Validate structure
-    if (!Array.isArray(parsed.pausePoints) || !Array.isArray(parsed.continuousComments) || typeof parsed.summary !== 'string') {
+    // Validate structure — accept partial responses gracefully
+    if (typeof parsed !== 'object' || parsed === null) {
       return null;
     }
 
-    // Cap at 3 pause points and 5 comments
-    parsed.pausePoints = parsed.pausePoints.slice(0, 3);
-    parsed.continuousComments = parsed.continuousComments.slice(0, 5);
+    // Normalize missing fields to safe defaults
+    const pausePoints = Array.isArray(parsed.pausePoints) ? parsed.pausePoints.slice(0, 3) : [];
+    const continuousComments = Array.isArray(parsed.continuousComments) ? parsed.continuousComments.slice(0, 5) : [];
+    const summary = typeof parsed.summary === 'string' ? parsed.summary : 'Good effort! Keep practicing.';
 
-    return parsed as ReplayAIResponse;
+    return { pausePoints, continuousComments, summary } as ReplayAIResponse;
   } catch (err) {
-    logger.warn('[ReplayPromptBuilder] Failed to parse replay response:', err);
+    logger.warn('[ReplayPromptBuilder] Failed to parse replay response:', (err as Error)?.message, '— raw text:', text?.slice(0, 200));
     return null;
   }
 }
 
 export function parseIntroResponse(text: string): IntroAIResponse | null {
   try {
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // Extract JSON object if there's surrounding text
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace > 0 && lastBrace > firstBrace) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+    }
+
     const parsed = JSON.parse(cleaned);
 
-    if (typeof parsed.introText !== 'string' || typeof parsed.tip !== 'string') {
+    if (typeof parsed !== 'object' || parsed === null) {
       return null;
     }
 
-    return parsed as IntroAIResponse;
+    // Normalize with safe defaults for missing fields
+    return {
+      introText: typeof parsed.introText === 'string' ? parsed.introText : "Let's practice this one!",
+      tip: typeof parsed.tip === 'string' ? parsed.tip : 'Keep your wrist relaxed and your fingers curved.',
+      highlightBeats: Array.isArray(parsed.highlightBeats) ? parsed.highlightBeats : [],
+      demoBars: parsed.demoBars ?? { from: 0, to: 8 },
+    } as IntroAIResponse;
   } catch (err) {
-    logger.warn('[ReplayPromptBuilder] Failed to parse intro response:', err);
+    logger.warn('[ReplayPromptBuilder] Failed to parse intro response:', (err as Error)?.message, '— raw text:', text?.slice(0, 200));
     return null;
   }
 }

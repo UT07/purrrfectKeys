@@ -888,7 +888,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Record practice time BEFORE challenge validation so minutesPracticedToday is accurate
     let elapsedMinutes = 0;
     if (playbackStartTimeRef.current > 0) {
-      elapsedMinutes = Math.max(0, Math.round((Date.now() - playbackStartTimeRef.current) / 60000));
+      // Use ceiling so even short exercises (< 60s) count as 1 minute of practice
+      elapsedMinutes = Math.max(1, Math.ceil((Date.now() - playbackStartTimeRef.current) / 60000));
       progressStore.recordPracticeSession(elapsedMinutes);
     }
 
@@ -2454,13 +2455,23 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [replayPlan, exercise.id, finalScore, startReplayFromBeat]);
 
   // Auto-start replay when navigated with replayMode=true (from PostExerciseScreen)
+  // Step 1: Load the cached replay plan into state
+  const replayAutoStarted = useRef(false);
   useEffect(() => {
-    if (!replayModeParam) return undefined;
+    if (!replayModeParam) return;
     const cached = getReplayPlanCache();
-    if (!cached) return undefined;
+    if (!cached) return;
+    replayAutoStarted.current = false;
     setReplayPlan(cached);
     clearReplayPlanCache();
-    // Delay slightly to let exercise load settle
+  }, [replayModeParam]);
+
+  // Step 2: Once replayPlan state is set, start playback
+  // (separated from step 1 because setReplayPlan is async — the plan
+  //  isn't available in the same render tick it was set)
+  useEffect(() => {
+    if (!replayModeParam || !replayPlan || replayAutoStarted.current) return;
+    replayAutoStarted.current = true;
     const timer = setTimeout(() => {
       if (mountedRef.current) {
         setPlayerMode('replay');
@@ -2469,7 +2480,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [replayModeParam]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [replayModeParam, replayPlan]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Stop replay. If replay finished naturally, navigate away.
@@ -3106,7 +3117,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               expectedNotes={playerMode === 'replay' ? new Set<number>() : expectedNotes}
               enabled={playerMode !== 'replay' && !isMicExclusive && !(exerciseType === 'callResponse' && callResponsePhase === 'call')}
               hapticEnabled={playerMode !== 'replay'}
-              showLabels={!isSightReading}
+              showLabels={!isSightReading && !testModeRef.current}
               keyHeight={singleKeyHeight}
               focusNoteLeft={focusNoteLeft}
               focusNoteRight={focusNoteRight}
@@ -3122,7 +3133,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               expectedNotes={playerMode === 'replay' ? new Set<number>() : expectedNotes}
               enabled={playerMode !== 'replay' && !isMicExclusive && !(exerciseType === 'callResponse' && callResponsePhase === 'call')}
               hapticEnabled={playerMode !== 'replay'}
-              showLabels={!isSightReading}
+              showLabels={!isSightReading && !testModeRef.current}
               scrollable={true}
               scrollEnabled={false}
               focusNote={nextExpectedNote}

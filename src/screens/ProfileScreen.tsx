@@ -443,21 +443,21 @@ export function ProfileScreen(): React.ReactElement {
             testID="profile-level-ring"
           >
             <Svg width={RING_SIZE} height={RING_SIZE}>
-              {/* Background track */}
+              {/* Background track — dimmed green to match progress arc */}
               <Circle
                 cx={RING_SIZE / 2}
                 cy={RING_SIZE / 2}
                 r={RING_RADIUS}
-                stroke={glowColor(COLORS.primary, 0.15)}
+                stroke={glowColor(COLORS.success, 0.15)}
                 strokeWidth={RING_STROKE}
                 fill="transparent"
               />
-              {/* Progress arc */}
+              {/* Progress arc — green to match HomeScreen goal arc */}
               <Circle
                 cx={RING_SIZE / 2}
                 cy={RING_SIZE / 2}
                 r={RING_RADIUS}
-                stroke={COLORS.primaryLight}
+                stroke={COLORS.success}
                 strokeWidth={RING_STROKE}
                 fill="transparent"
                 strokeDasharray={`${RING_CIRCUMFERENCE}`}

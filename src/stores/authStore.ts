@@ -489,6 +489,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           timeoutId = null;
         }
         logger.log(`[Auth:onAuthStateChanged] user=${user ? user.uid.slice(0, 8) + '...' : 'NULL'}, isAnonymous=${user?.isAnonymous ?? 'N/A'}, syncPending=${_signInSyncPending}`);
+
+        // Guard against transient null during token refresh.
+        // Firebase may briefly fire onAuthStateChanged with null when refreshing
+        // an ID token. If we already have an authenticated user and no explicit
+        // sign-out is in progress, ignore the null to avoid kicking the user
+        // to the auth screen.
+        const currentState = get();
+        if (user === null && currentState.isAuthenticated && currentState.user !== null) {
+          // Only treat as real sign-out if the store is NOT loading (i.e. no
+          // sign-in/sign-out/delete operation is in progress).
+          if (!currentState.isLoading) {
+            logger.warn('[Auth:onAuthStateChanged] Ignoring transient null during token refresh — user is still authenticated');
+            resolveAuth();
+            return;
+          }
+        }
+
         set({
           user,
           isAuthenticated: user !== null,

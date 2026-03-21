@@ -81,10 +81,14 @@ class TTSServiceImpl {
     this._isSpeaking = true;
 
     // Try ElevenLabs first (unless forced local)
-    if (!options.forceLocal && isElevenLabsAvailable() && catVoice.elevenLabsVoiceId) {
+    const elevenLabsReady = !options.forceLocal && isElevenLabsAvailable() && !!catVoice.elevenLabsVoiceId;
+    if (__DEV__) {
+      logger.log(`[TTSService] speak() catId=${options.catId ?? 'default'} elevenLabs=${elevenLabsReady ? 'YES' : 'NO'} voiceId=${catVoice.elevenLabsVoiceId ?? 'none'}`);
+    }
+    if (elevenLabsReady) {
       const success = await speakWithElevenLabs(
         text,
-        catVoice.elevenLabsVoiceId,
+        catVoice.elevenLabsVoiceId!,
         {
           voiceSettings: catVoice.elevenLabsSettings,
           onDone: () => {
@@ -102,10 +106,11 @@ class TTSServiceImpl {
 
       if (success) {
         this._usingElevenLabs = true;
+        if (__DEV__) logger.log('[TTSService] ElevenLabs playback started');
         return;
       }
       // ElevenLabs failed — fall through to expo-speech
-      logger.log('[TTSService] ElevenLabs unavailable, falling back to expo-speech');
+      logger.log('[TTSService] ElevenLabs FAILED, falling back to expo-speech');
     }
 
     // Fallback: expo-speech

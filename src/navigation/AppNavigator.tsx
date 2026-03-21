@@ -86,7 +86,7 @@ export type RootStackParamList = {
   TierIntro: { tier: number; locked?: boolean };
   LessonIntro: { lessonId: string; locked?: boolean };
   SkillAssessment: undefined;
-  DailySession: undefined;
+  DailySession: { sharedPlan?: string } | undefined;
   LevelMap: undefined;
   FreePlay: undefined;
   MidiSetup: undefined;

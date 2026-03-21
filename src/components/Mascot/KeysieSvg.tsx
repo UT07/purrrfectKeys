@@ -30,7 +30,7 @@ import {
 } from './svg/CatParts';
 import { getCatProfile } from './svg/catProfiles';
 import { EvolutionAura, renderAccessories } from './svg/CatAccessories';
-import { getCatById } from './catCharacters';
+import { getCatById, getDefaultCat } from './catCharacters';
 import { CatGradientDefs, gradId } from './svg/CatGradients';
 import { CatShadows, CatRimLight, CatFurSheen } from './svg/CatShadows';
 import { renderFigmaCat } from './svg/FigmaCatArt';
@@ -190,9 +190,9 @@ function renderComposable(
   extraAccessoryNames?: string[],
 ): ReactElement {
   const profile = getCatProfile(catId);
-  const cat = getCatById(catId);
+  const cat = getCatById(catId) ?? getDefaultCat();
   const whiskerColor = lightenColor(bodyColor, 0.4);
-  const accessories = cat?.evolutionVisuals[evolutionStage]?.accessories ?? [];
+  const accessories = cat.evolutionVisuals[evolutionStage]?.accessories ?? [];
 
   return (
     <G>

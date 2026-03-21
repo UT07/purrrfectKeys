@@ -315,9 +315,13 @@ describe('Salsa Coaching Loop — Replay Flow Integration', () => {
       expect(parseReplayResponse('not json at all')).toBeNull();
     });
 
-    it('returns null for JSON missing required fields', () => {
+    it('gracefully handles JSON with missing fields by filling defaults', () => {
       const incomplete = JSON.stringify({ pausePoints: [] });
-      expect(parseReplayResponse(incomplete)).toBeNull();
+      const result = parseReplayResponse(incomplete);
+      expect(result).not.toBeNull();
+      expect(result!.pausePoints).toEqual([]);
+      expect(result!.continuousComments).toEqual([]);
+      expect(result!.summary).toBe('Good effort! Keep practicing.');
     });
   });
 

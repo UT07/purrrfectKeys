@@ -15,6 +15,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { PressableScale } from '../components/common/PressableScale';
+import { getTodayDateString } from '../utils/time';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { GameCard } from '../components/common/GameCard';
 import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
@@ -78,6 +79,9 @@ function humanizeReasoning(text: string): string {
 
 export function DailySessionScreen() {
   const navigation = useNavigation<NavProp>();
+  const { useRoute } = require('@react-navigation/native') as { useRoute: () => { params?: { sharedPlan?: string } } };
+  const route = useRoute();
+  const sharedPlanJson = route.params?.sharedPlan;
 
   // Subscribe only to fields needed for rendering (avoids re-renders on every note accuracy update)
   const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
@@ -85,6 +89,9 @@ export function DailySessionScreen() {
 
   // Gem balance
   const gems = useGemStore((s) => s.gems);
+
+  // Read lesson progress for checking exercise completion from other screens (HomeScreen)
+  const lessonProgress = require('../stores/progressStore').useProgressStore((s: any) => s.lessonProgress) as Record<string, { exerciseScores: Record<string, { completedAt?: number }> }>;
 
   // Track which exercises the user completed this session (by key: skillNodeId or exerciseId)
   const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
@@ -106,10 +113,27 @@ export function DailySessionScreen() {
     }, [])
   );
 
+  // Cache the plan for the day — prevent regeneration on every focus event
+  const dailyPlanRef = React.useRef<{ date: string; plan: SessionPlan } | null>(null);
   const plan: SessionPlan = useMemo(() => {
-    // Read full profile snapshot inside useMemo — only triggered by focusCounter
+    const todayKey = getTodayDateString();
+
+    // Reuse cached plan if same day
+    if (dailyPlanRef.current?.date === todayKey) {
+      return dailyPlanRef.current.plan;
+    }
+
+    // Use shared plan from HomeScreen if available (ensures consistency)
+    if (sharedPlanJson) {
+      try {
+        const parsed = JSON.parse(sharedPlanJson) as SessionPlan;
+        dailyPlanRef.current = { date: todayKey, plan: parsed };
+        return parsed;
+      } catch { /* fall through to generate */ }
+    }
+    // Fallback: generate fresh plan (direct navigation without HomeScreen)
     const profile = useLearnerProfileStore.getState();
-    return generateSessionPlan(
+    const generated = generateSessionPlan(
       {
         noteAccuracy: profile.noteAccuracy,
         noteAttempts: profile.noteAttempts,
@@ -126,8 +150,31 @@ export function DailySessionScreen() {
       },
       profile.masteredSkills
     );
+    dailyPlanRef.current = { date: todayKey, plan: generated };
+    return generated;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusCounter]);
+  }, [sharedPlanJson, focusCounter]);
+
+  // Merge completion keys: local session tracking + completions from lessonProgress (cross-screen)
+  const mergedCompletedKeys = useMemo(() => {
+    const merged = new Set(completedKeys);
+    const allExercises = [...plan.warmUp, ...plan.lesson, ...plan.challenge, ...(plan.songs ?? [])];
+    for (const ref of allExercises) {
+      const key = ref.skillNodeId || ref.exerciseId;
+      if (merged.has(key)) continue;
+      const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
+      if (isAI && ref.skillNodeId) {
+        const aiCompleted = lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null;
+        if (aiCompleted) merged.add(key);
+      } else if (ref.source === 'static') {
+        const staticCompleted = Object.values(lessonProgress).some(
+          (lp) => lp.exerciseScores[ref.exerciseId]?.completedAt != null
+        );
+        if (staticCompleted) merged.add(key);
+      }
+    }
+    return merged;
+  }, [completedKeys, plan, lessonProgress]);
 
   const totalExercises = plan.warmUp.length + plan.lesson.length + plan.challenge.length + (plan.songs?.length ?? 0);
   const masteredCount = masteredSkills.length;
@@ -264,7 +311,7 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="warmUp"
           exercises={plan.warmUp}
-          completedKeys={completedKeys}
+          completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
         />
 
@@ -272,7 +319,7 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="lesson"
           exercises={plan.lesson}
-          completedKeys={completedKeys}
+          completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
         />
 
@@ -280,7 +327,7 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="challenge"
           exercises={plan.challenge}
-          completedKeys={completedKeys}
+          completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
         />
 
@@ -289,7 +336,7 @@ export function DailySessionScreen() {
           <SessionSection
             sectionKey="songs"
             exercises={plan.songs}
-            completedKeys={completedKeys}
+            completedKeys={mergedCompletedKeys}
             onExercisePress={handleExercisePress}
           />
         )}

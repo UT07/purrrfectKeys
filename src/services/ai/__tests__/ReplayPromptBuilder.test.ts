@@ -106,7 +106,15 @@ describe('parseReplayResponse', () => {
 
   it('returns null for invalid JSON', () => {
     expect(parseReplayResponse('not json')).toBeNull();
-    expect(parseReplayResponse('{"pausePoints": "wrong"}')).toBeNull();
+  });
+
+  it('gracefully handles partial or malformed fields', () => {
+    // pausePoints is a string instead of array — normalizes to empty array
+    const result = parseReplayResponse('{"pausePoints": "wrong"}');
+    expect(result).not.toBeNull();
+    expect(result!.pausePoints).toEqual([]);
+    expect(result!.continuousComments).toEqual([]);
+    expect(result!.summary).toBe('Good effort! Keep practicing.');
   });
 });
 
@@ -123,7 +131,16 @@ describe('parseIntroResponse', () => {
     expect(result!.introText).toBe('Learn C scale');
   });
 
-  it('returns null for missing fields', () => {
-    expect(parseIntroResponse('{"introText": "hi"}')).toBeNull();
+  it('gracefully fills missing fields with defaults', () => {
+    // Missing 'tip' — should fill with default instead of returning null
+    const result = parseIntroResponse('{"introText": "hi"}');
+    expect(result).not.toBeNull();
+    expect(result!.introText).toBe('hi');
+    expect(result!.tip).toBe('Keep your wrist relaxed and your fingers curved.');
+    expect(result!.highlightBeats).toEqual([]);
+  });
+
+  it('returns null for completely invalid JSON', () => {
+    expect(parseIntroResponse('this is not json at all')).toBeNull();
   });
 });

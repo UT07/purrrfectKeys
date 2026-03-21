@@ -496,10 +496,18 @@ function getSalsaAsCat(): CatCharacter {
   return _salsaAsCat;
 }
 
-/** Get a cat character by its ID (also checks Salsa NPC) */
+/** Get a cat character by its ID (also checks Salsa NPC).
+ * Returns undefined for unknown IDs — callers should use `?? getDefaultCat()` or `?.` */
 export function getCatById(id: string): CatCharacter | undefined {
+  if (!id) return undefined;
   if (id === SALSA_COACH.id) return getSalsaAsCat();
   return CAT_CHARACTERS.find((cat) => cat.id === id);
+}
+
+/** Safe getter that always returns a valid CatCharacter (falls back to default).
+ * Use this in rendering paths where undefined would crash (e.g. accessing .color). */
+export function getCatByIdSafe(id: string): CatCharacter {
+  return getCatById(id) ?? getDefaultCat();
 }
 
 /** Get the default cat (first starter) */

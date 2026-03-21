@@ -110,6 +110,20 @@ Fix one at a time. User verifies on device. Then commit.
 | 78 | P1 | Rhythm/tap exercises: tapping on beat registers as "ok" or "miss" even when timed correctly | Timing detection too strict or broken for tap-mode exercises |
 | 79 | P0 | **Phase 13 exercise type variety NOT implemented** — Content Explosion added 599 exercises across 9 types (quiz, identify, arrange, match, build, mix, spot-diff, fill-blank, label) but ExercisePlayer only has 2 gameplay modes: keyboard-play and tap-to-beat. All exercise types fall back to the same 2 interactions. The Duolingo-style variety in gameplay that Phase 13 planned is completely missing. | Every exercise feels the same regardless of type — no quizzes, no drag-match, no identify, no fill-blank |
 
+## Bugs Found via Device Verification (Mar 20 — current session)
+
+| # | Severity | Bug | User Symptom |
+|---|----------|-----|-------------|
+| 86 | P1 | "Review with Salsa" replay doesn't play — stuck on visual with "TAP to the beat" but no audio, no progression through pause points | Salsa review is completely non-functional |
+| 87 | P1 | Pre-exercise and post-exercise cat voice uses expo-speech (robotic) instead of ElevenLabs neural voices | Cat coaching voice quality is low — ElevenLabs not activating |
+| 88 | P1 | Chord exercises ("Play this chord: C") have no chord-specific gameplay — scored as sequential play-along with duration scoring, not simultaneous chord validation | Chord exercises feel identical to play-along, duration score 6% because tapping not holding |
+| 89 | P2 | All piano notes sound the same pitch in some exercises — pitch-shifting may not be working correctly for certain note ranges | No audible difference between C4 and E4 on keyboard |
+| 90 | P1 | Salsa's Review shows "TAP to the beat" for play-along exercises — wrong interaction mode in replay | Review mode uses tap interface instead of keyboard for non-rhythm exercises |
+| 93 | P1 | Tap exercise timing completely broken — tapping exactly on beat registers as "miss". Tap mode note matching/timing validation is wrong. | Tap exercises are unplayable — user taps on beat but gets miss every time |
+| 94 | P1 | LessonIntroScreen doesn't pass `testMode: true` when navigating to mastery test exercises — abilities + key labels active during tests | Mastery tests show note hints making them too easy — **FIXED** |
+| 95 | P1 | LevelMap shows 7/8 for Lesson 2 despite all exercises completed + Lesson Complete screen showing 9/9 | One exercise score may be below passingScore threshold or saved under wrong bucket |
+| 91 | P1 | Today's Practice resets to "Find Middle C" x3 after sign-out/sign-in — daily plan cache not invalidated when mastered skills restored by sync. Fixed: cache now keys on skillCount. | All 3 sections show the same beginner exercise after re-auth |
+
 ## Sync Gap Analysis (Mar 20 — complete audit)
 
 These stores have NO sync to Firestore — data exists only locally and is lost on new device sign-in:
@@ -139,6 +153,18 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | 83 | P2 | PostHog `PostHogFetchNetworkError: Network error while flushing PostHog` — red Console Error modal on device. PostHog flush failures should be silenced, not surfaced as user-visible errors. |
 | 84 | P1 | `exercise-index.json` has wrong exercise types for lessons 1-6 (earTraining, rhythm, callResponse, chordId) — all are note-based play-along but labeled as other types. ExercisePlayer only supports play/tap modes (bug #79). |
 | 85 | P1 | Today's Practice / DailySession generate plans independently — exercises differ between HomeScreen mini-view and "See All" DailySessionScreen. Should share same plan. |
+
+## Feature / Infrastructure Items
+
+| # | Priority | Item |
+|---|----------|------|
+| F1 | P2 | ElevenLabs quota — UPGRADED by user. Implement server-side caching via Cloud Function proxy to reduce char usage long-term. |
+| F2 | P1 | Exercise type variety (#79) — ExercisePlayer needs chord, ear-training, rhythm, quiz, identify gameplay modes beyond play-along and tap-to-beat |
+| F3 | P2 | Achievement definitions outdated — need updating for expanded curriculum (120 skills, 50 lessons, 18 tiers) |
+| F4 | P2 | No UI to view/manage notification reminders (#42 can't be verified) |
+| F5 | P2 | No UI to see streak freeze count (#21) |
+| F6 | P2 | Use ElevenLabs for sound effects — current procedural/sample sounds are low quality. Generate premium UI sounds (combo, stars, chest open, level up) via ElevenLabs sound generation API. |
+| F7 | P3 | Use ElevenLabs or AI-generated background music for the app — ambient practice music, menu themes, celebration tracks |
 
 ## Fix Order
 

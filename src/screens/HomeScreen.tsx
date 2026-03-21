@@ -176,17 +176,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // Today's Practice session plan — persisted for the day so completing an
   // exercise shows a checkmark instead of regenerating the whole plan.
-  // Only regenerates on: new day, tab focus (if day changed), or all exercises done.
+  // Regenerates ONLY on: new day, or profile was clearly reset (0 skills → non-zero after sync).
+  // Does NOT regenerate when skills increment by 1 from exercise completion.
   const dailyPlanRef = useRef<{ date: string; plan: ReturnType<typeof generateSessionPlan> } | null>(null);
   const sessionPlan = useMemo(() => {
     const todayKey = getTodayDateString();
 
-    // Reuse existing plan if same day
-    if (dailyPlanRef.current?.date === todayKey) {
-      return dailyPlanRef.current.plan;
+    // Reuse existing plan if same day — UNLESS the cached plan was generated
+    // with 0 skills (pre-sync default state) and we now have real skills
+    const cached = dailyPlanRef.current;
+    if (cached?.date === todayKey) {
+      return cached.plan;
     }
 
-    // Generate fresh plan for the new day
+    // Generate fresh plan for the new day or after profile sync
     const profile = useLearnerProfileStore.getState();
     const plan = generateSessionPlan(
       {
@@ -207,7 +210,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     );
     dailyPlanRef.current = { date: todayKey, plan };
     return plan;
-  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- regenerates on tab focus only, checks date internally
+  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- regenerates on tab focus only, date check prevents unnecessary regen
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
@@ -546,7 +549,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Animated.View style={[styles.section, staggerStyle(1)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
-            <StatPill icon="book-open-variant" label="Lessons" value={Object.entries(lessonProgress).filter(([key, l]) => key !== '__ai__' && l.status === 'completed').length} color={COLORS.info} />
+            <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
             <StatPill icon="fire" label="Streak" value={streak} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
             <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>
@@ -560,7 +563,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel="See all daily practice exercises"
-                onPress={() => navigation.navigate('DailySession')}
+                onPress={() => navigation.navigate('DailySession', { sharedPlan: JSON.stringify(sessionPlan) })}
                 style={styles.seeAllBtn}
               >
                 <Text style={styles.seeAllText}>See All</Text>
@@ -783,26 +786,34 @@ function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
               const title = exercise?.metadata.title ?? skillNode?.name ?? 'AI Exercise';
 
               // Check completion: AI exercises stored under __ai__ bucket with stable key
-              const isCompleted = isAI
+              const isAttempted = isAI
                 ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null
                 : Object.values(lessonProgress).some((lp) => lp.exerciseScores[ref.exerciseId]?.completedAt != null);
               const highScore = isAI
                 ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore
                 : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore;
 
+              // Determine pass/fail: use exercise's passingScore (default 70)
+              const passingScore = exercise?.scoring?.passingScore ?? 70;
+              const isPassed = isAttempted && (highScore ?? 0) >= passingScore;
+              const isBelowThreshold = isAttempted && !isPassed;
+
+              // Colors: green = passed, orange = attempted but below threshold, default = not attempted
+              const statusColor = isPassed ? COLORS.success : isBelowThreshold ? COLORS.warning : null;
+
               return (
-                <PressableScale key={`${ref.exerciseId}-${i}`} accessibilityRole="button" accessibilityLabel={`${title}${isCompleted ? ', completed' : ''}`} haptic onPress={() => onExercisePress(ref)}>
-                  <View style={[styles.practiceExerciseCard, { borderColor: isCompleted ? glowColor(COLORS.success, 0.3) : sec.border, backgroundColor: isCompleted ? glowColor(COLORS.success, 0.06) : sec.bg }]}>
+                <PressableScale key={`${ref.exerciseId}-${i}`} accessibilityRole="button" accessibilityLabel={`${title}${isPassed ? ', completed' : isBelowThreshold ? ', needs improvement' : ''}`} haptic onPress={() => onExercisePress(ref)}>
+                  <View style={[styles.practiceExerciseCard, { borderColor: statusColor ? glowColor(statusColor, 0.3) : sec.border, backgroundColor: statusColor ? glowColor(statusColor, 0.06) : sec.bg }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.practiceExerciseTitle, isCompleted && { color: COLORS.success }]} numberOfLines={1}>
-                        {isCompleted ? '\u2713 ' : ''}{title}
+                      <Text style={[styles.practiceExerciseTitle, statusColor && { color: statusColor }]} numberOfLines={1}>
+                        {isPassed ? '\u2713 ' : isBelowThreshold ? '\u26A0 ' : ''}{title}
                       </Text>
                       <Text style={styles.practiceExerciseReason} numberOfLines={1}>
-                        {isCompleted && highScore ? `Score: ${highScore}%` : ref.reason}
+                        {isAttempted && highScore ? `Score: ${highScore}%` : ref.reason}
                       </Text>
                     </View>
-                    <View style={[styles.practicePlayIcon, { backgroundColor: isCompleted ? COLORS.success : sec.accent }]}>
-                      <MaterialCommunityIcons name={isCompleted ? 'replay' : 'play'} size={16} color={COLORS.textPrimary} />
+                    <View style={[styles.practicePlayIcon, { backgroundColor: isPassed ? COLORS.success : isBelowThreshold ? COLORS.warning : sec.accent }]}>
+                      <MaterialCommunityIcons name={isPassed ? 'replay' : isBelowThreshold ? 'refresh' : 'play'} size={16} color={COLORS.textPrimary} />
                     </View>
                   </View>
                 </PressableScale>

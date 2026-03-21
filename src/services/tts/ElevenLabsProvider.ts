@@ -106,11 +106,33 @@ function getCachePath(text: string, voiceId: string): string {
 /** Currently playing sound — kept for stop() */
 let _currentSound: any = null;
 
+// Cache the key so we only log once
+let _cachedApiKey: string | null | undefined;
+
 function getApiKey(): string | null {
+  if (_cachedApiKey !== undefined) return _cachedApiKey;
   try {
-    return process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? null;
+    // EXPO_PUBLIC_* vars are inlined by Metro at bundle time
+    let key = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? null;
+    // Also try Constants.expoConfig.extra as fallback
+    if (!key) {
+      try {
+        const Constants = require('expo-constants').default;
+        key = Constants.expoConfig?.extra?.elevenLabsApiKey ?? null;
+      } catch { /* ignore */ }
+    }
+    _cachedApiKey = key;
+    if (__DEV__) {
+      if (key) {
+        console.log(`✅ [ElevenLabs] API key found (${key.slice(0, 8)}...)`);
+      } else {
+        console.warn('❌ [ElevenLabs] NO API key — will use expo-speech fallback');
+      }
+    }
+    return key;
   } catch (err) {
-    logger.warn('[ElevenLabs] Failed to read API key from env:', err);
+    _cachedApiKey = null;
+    logger.warn('[ElevenLabs] Failed to read API key:', err);
     return null;
   }
 }

@@ -24,6 +24,7 @@ import { MascotBubble } from '../components/Mascot/MascotBubble';
 import { GradientMeshBackground } from '../components/effects';
 import {
   getLesson,
+  getExercise,
   getExercisesForLesson,
 } from '../content/ContentLoader';
 import type { ExerciseIndexEntry } from '../content/ContentLoader';
@@ -111,33 +112,37 @@ function DifficultyBars({ difficulty }: { difficulty: number }) {
 function ExerciseRow({
   entry,
   index,
-  isCompleted,
+  isPassed,
+  isAttempted,
   highScore,
   onPress,
 }: {
   entry: ExerciseIndexEntry;
   index: number;
-  isCompleted: boolean;
+  isPassed: boolean;
+  isAttempted: boolean;
   highScore: number | null;
   onPress: () => void;
 }) {
   const typeInfo = EXERCISE_TYPE_LABELS[entry.type] ?? EXERCISE_TYPE_LABELS.play;
 
   return (
-    <PressableScale onPress={onPress} style={styles.exerciseRow} accessibilityRole="button" accessibilityLabel={`${entry.title}, ${typeInfo.label}${isCompleted ? `, completed, ${highScore}%` : ''}`}>
+    <PressableScale onPress={onPress} style={styles.exerciseRow} accessibilityRole="button" accessibilityLabel={`${entry.title}, ${typeInfo.label}${isPassed ? `, completed, ${highScore}%` : isAttempted ? `, attempted, ${highScore}%` : ''}`}>
       <View style={styles.exerciseRowLeft}>
         <View style={[
           styles.exerciseIndicator,
-          isCompleted ? styles.exerciseIndicatorDone : styles.exerciseIndicatorPending,
+          isPassed ? styles.exerciseIndicatorDone : isAttempted ? styles.exerciseIndicatorAttempted : styles.exerciseIndicatorPending,
         ]}>
-          {isCompleted ? (
+          {isPassed ? (
             <MaterialCommunityIcons name="check" size={14} color={COLORS.textPrimary} />
+          ) : isAttempted ? (
+            <MaterialCommunityIcons name="minus" size={14} color={COLORS.textPrimary} />
           ) : (
             <Text style={styles.exerciseIndicatorText}>{index + 1}</Text>
           )}
         </View>
         <View style={styles.exerciseInfo}>
-          <Text style={[styles.exerciseName, isCompleted && styles.exerciseNameDone]} numberOfLines={1}>
+          <Text style={[styles.exerciseName, isPassed && styles.exerciseNameDone]} numberOfLines={1}>
             {entry.title}
           </Text>
           <View style={styles.exerciseMetaRow}>
@@ -146,7 +151,7 @@ function ExerciseRow({
               <Text style={[styles.exerciseTypeText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
             </View>
             {highScore != null && (
-              <Text style={[styles.exerciseScore, isCompleted && styles.exerciseScoreGood]}>
+              <Text style={[styles.exerciseScore, isPassed && styles.exerciseScoreGood, isAttempted && !isPassed && { color: COLORS.warning }]}>
                 {highScore}%
               </Text>
             )}
@@ -154,8 +159,10 @@ function ExerciseRow({
         </View>
       </View>
       <View style={styles.exerciseRowRight}>
-        {isCompleted ? (
+        {isPassed ? (
           <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.success} />
+        ) : isAttempted ? (
+          <MaterialCommunityIcons name="alert-circle-outline" size={20} color={COLORS.warning} />
         ) : (
           <MaterialCommunityIcons name="play-circle-outline" size={20} color={COLORS.textMuted} />
         )}
@@ -196,7 +203,9 @@ export function LessonIntroScreen() {
     let completed = 0;
     for (const ex of nonTestExercises) {
       const score = progress?.exerciseScores?.[ex.id];
-      if (score && (score.highScore ?? 0) >= 60) completed++;
+      const fullEx = getExercise(ex.id);
+      const passingScore = fullEx?.scoring?.passingScore ?? 70;
+      if (score && (score.highScore ?? 0) >= passingScore) completed++;
     }
     return { completedCount: completed, totalCount: nonTestExercises.length };
   }, [nonTestExercises, progress]);
@@ -209,7 +218,9 @@ export function LessonIntroScreen() {
     const sorted = [...nonTestExercises].sort((a, b) => a.order - b.order);
     for (const ex of sorted) {
       const score = progress?.exerciseScores?.[ex.id];
-      if (!score || (score.highScore ?? 0) < 60) return ex.id;
+      const fullEx = getExercise(ex.id);
+      const passingScore = fullEx?.scoring?.passingScore ?? 70;
+      if (!score || (score.highScore ?? 0) < passingScore) return ex.id;
     }
     return sorted[0]?.id ?? null;
   }, [nonTestExercises, progress]);
@@ -227,13 +238,17 @@ export function LessonIntroScreen() {
 
   const handleStart = useCallback(() => {
     if (locked || !firstIncompleteId) return;
-    navigation.navigate('Exercise', { exerciseId: firstIncompleteId });
+    const { isTestExercise } = require('../content/ContentLoader');
+    const isTest = isTestExercise(firstIncompleteId);
+    navigation.navigate('Exercise', { exerciseId: firstIncompleteId, ...(isTest ? { testMode: true } : {}) });
   }, [navigation, locked, firstIncompleteId]);
 
   const handleExercisePress = useCallback(
     (exerciseId: string) => {
       if (locked) return;
-      navigation.navigate('Exercise', { exerciseId });
+      const { isTestExercise } = require('../content/ContentLoader');
+      const isTest = isTestExercise(exerciseId);
+      navigation.navigate('Exercise', { exerciseId, ...(isTest ? { testMode: true } : {}) });
     },
     [navigation, locked],
   );
@@ -333,30 +348,41 @@ export function LessonIntroScreen() {
               .map((entry, index) => {
                 const score = progress?.exerciseScores?.[entry.id];
                 const highScore = score?.highScore ?? null;
-                const isCompleted = highScore != null && highScore >= 60;
+                const fullEx = getExercise(entry.id);
+                const passingScore = fullEx?.scoring?.passingScore ?? 70;
+                const isPassed = highScore != null && highScore >= passingScore;
+                const isAttempted = highScore != null && !isPassed;
                 return (
                   <ExerciseRow
                     key={entry.id}
                     entry={entry}
                     index={index}
-                    isCompleted={isCompleted}
+                    isPassed={isPassed}
+                    isAttempted={isAttempted}
                     highScore={highScore}
                     onPress={() => handleExercisePress(entry.id)}
                   />
                 );
               })}
             {/* Mastery test row */}
-            {testExercise && (
-              <ExerciseRow
-                entry={testExercise}
-                index={nonTestExercises.length}
-                isCompleted={
-                  (progress?.exerciseScores?.[testExercise.id]?.highScore ?? 0) >= 60
-                }
-                highScore={progress?.exerciseScores?.[testExercise.id]?.highScore ?? null}
-                onPress={() => handleExercisePress(testExercise.id)}
-              />
-            )}
+            {testExercise && (() => {
+              const testScore = progress?.exerciseScores?.[testExercise.id];
+              const testHigh = testScore?.highScore ?? null;
+              const testFullEx = getExercise(testExercise.id);
+              const testPassing = testFullEx?.scoring?.passingScore ?? 70;
+              const testPassed = testHigh != null && testHigh >= testPassing;
+              const testAttempted = testHigh != null && !testPassed;
+              return (
+                <ExerciseRow
+                  entry={testExercise}
+                  index={nonTestExercises.length}
+                  isPassed={testPassed}
+                  isAttempted={testAttempted}
+                  highScore={testHigh}
+                  onPress={() => handleExercisePress(testExercise.id)}
+                />
+              );
+            })()}
           </View>
         </View>
 
@@ -490,6 +516,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   exerciseIndicatorDone: { backgroundColor: COLORS.success },
+  exerciseIndicatorAttempted: { backgroundColor: COLORS.warning },
   exerciseIndicatorPending: { backgroundColor: COLORS.cardBorder },
   exerciseIndicatorText: {
     ...TYPOGRAPHY.caption.lg, fontWeight: '700', color: COLORS.textSecondary,
