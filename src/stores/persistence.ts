@@ -216,8 +216,8 @@ export async function flushAllPendingSaves(): Promise<void> {
  * Bypasses debouncing for critical state that must persist immediately
  * (e.g., daily challenge completion, gem transactions)
  */
-export function createImmediateSave<T>(key: string): (state: T) => Promise<void> {
-  return async (state: T) => {
+export function createImmediateSave<T>(key: string): (stateOrGetter: T | (() => T)) => Promise<void> {
+  return async (stateOrGetter: T | (() => T)) => {
     // Cancel any pending debounced save for this key to prevent it from
     // overwriting the immediate save with stale state
     const pending = pendingSaves.get(key);
@@ -226,6 +226,10 @@ export function createImmediateSave<T>(key: string): (state: T) => Promise<void>
       pendingSaves.delete(key);
     }
     try {
+      // Accept both state objects and getter functions (Zustand's get)
+      const state = typeof stateOrGetter === 'function'
+        ? (stateOrGetter as () => T)()
+        : stateOrGetter;
       await PersistenceManager.saveState(key, state);
     } catch (err) {
       console.error('[PERSIST] Immediate save failed:', err);

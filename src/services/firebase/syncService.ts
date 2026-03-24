@@ -445,12 +445,19 @@ export class SyncManager {
 
       // Merge lesson progress: per-exercise, take higher scores
       if (remoteLessons.length > 0) {
+        const remoteLessonIds = remoteLessons.map(l => l.lessonId);
+        logger.log(`[Sync:pull] Merging ${remoteLessons.length} lessons: ${remoteLessonIds.includes('__ai__') ? '__ai__ present (' + Object.keys(remoteLessons.find(l => l.lessonId === '__ai__')?.exerciseScores ?? {}).length + ' scores)' : '__ai__ MISSING'}`);
+
         for (const remoteLesson of remoteLessons) {
           const localLesson = localState.lessonProgress[remoteLesson.lessonId];
 
           if (!localLesson) {
             // Lesson doesn't exist locally — adopt the remote version entirely
             const convertedLesson = convertFirestoreLesson(remoteLesson);
+            if (remoteLesson.lessonId === '__ai__') {
+              const completedCount = Object.values(convertedLesson.exerciseScores).filter(e => e.completedAt != null).length;
+              logger.log(`[Sync:pull] Adopting __ai__ bucket: ${Object.keys(convertedLesson.exerciseScores).length} exercises, ${completedCount} completed`);
+            }
             useProgressStore
               .getState()
               .updateLessonProgress(remoteLesson.lessonId, convertedLesson);
@@ -1122,13 +1129,13 @@ export class SyncManager {
       const progressState = useProgressStore.getState();
       const lessonIds = Object.keys(progressState.lessonProgress);
 
+      let pushedCount = 0;
       for (const lessonId of lessonIds) {
         const lesson = progressState.lessonProgress[lessonId];
         if (!lesson || Object.keys(lesson.exerciseScores).length === 0) continue;
 
         try {
           // Sanitize exerciseScores: Firestore rejects undefined values.
-          // Convert undefined fields to null so the document writes succeed.
           const sanitizedScores: Record<string, Record<string, unknown>> = {};
           for (const [exId, score] of Object.entries(lesson.exerciseScores)) {
             const clean: Record<string, unknown> = {};
@@ -1136,6 +1143,13 @@ export class SyncManager {
               clean[k] = v === undefined ? null : v;
             }
             sanitizedScores[exId] = clean;
+          }
+
+          // Log __ai__ bucket details for debugging completion persistence
+          if (lessonId === '__ai__') {
+            const scoreKeys = Object.keys(sanitizedScores);
+            const withCompletedAt = scoreKeys.filter(k => sanitizedScores[k].completedAt != null);
+            logger.log(`[Sync] Pushing __ai__ bucket: ${scoreKeys.length} exercises, ${withCompletedAt.length} with completedAt`);
           }
 
           await createLessonProgress(resolvedUid, lessonId, {
@@ -1151,11 +1165,12 @@ export class SyncManager {
               0,
             ),
           });
+          pushedCount++;
         } catch (err) {
-          logger.warn(`[Sync] Lesson ${lessonId} push failed:`, (err as Error)?.message);
+          logger.error(`[Sync] ❌ Lesson ${lessonId} push FAILED:`, (err as Error)?.message);
         }
       }
-      logger.log(`[Sync] Pushed ${lessonIds.length} lesson progress records`);
+      logger.log(`[Sync] Pushed ${pushedCount}/${lessonIds.length} lesson progress records`);
     } catch (err) {
       logger.warn('[Sync] Lesson progress push failed:', err);
     }
