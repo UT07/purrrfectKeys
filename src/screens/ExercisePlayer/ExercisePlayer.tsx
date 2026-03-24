@@ -72,7 +72,7 @@ import { useSocialStore } from '../../stores/socialStore';
 import { useAuthStore } from '../../stores/authStore';
 import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
 import { ExerciseLoadingScreen } from './ExerciseLoadingScreen';
-import { SalsaIntro } from './SalsaIntro';
+// SalsaIntro removed — ExerciseLoadingScreen handles pre-exercise coaching
 import { ReplayOverlay } from './ReplayOverlay';
 import { ReplayTimelineBar } from './ReplayTimelineBar';
 import { ComboMeter } from './ComboMeter';
@@ -88,7 +88,7 @@ import { CallResponsePhase } from './CallResponsePhase';
 import type { CallResponsePhaseType } from './CallResponsePhase';
 import { GlassmorphismCard } from '../../components/effects';
 import { buildReplayPlan, buildReplayPlanSync } from '../../services/replayCoachingService';
-import { getIntroData } from '../../services/replayCoachingService';
+// getIntroData import removed — SalsaIntro no longer used
 import type { ReplayPlan } from '../../core/exercises/replayTypes';
 import ReAnimated, { FadeIn } from 'react-native-reanimated';
 import { SKILL_TREE, getSkillsForExercise, getSkillById, getAvailableSkills, getGenerationHints } from '../../core/curriculum/SkillTree';
@@ -807,14 +807,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const isAiExercise = ex.id.startsWith('ai-') || ex.id.startsWith('tmpl-');
     const scoreKey = isAiExercise && skillIdParamRef.current ? `ai-skill-${skillIdParamRef.current}` : ex.id;
     let prevHigh = 0;
+    let foundPrevScore = false;
     for (const lp of Object.values(progressStateForHighScore.lessonProgress)) {
       const exScore = lp.exerciseScores[scoreKey];
-      if (exScore?.highScore) {
+      if (exScore != null && exScore.highScore != null) {
         prevHigh = exScore.highScore;
+        foundPrevScore = true;
         break;
       }
     }
-    score = { ...score, isNewHighScore: score.overall > prevHigh };
+    // Only show "NEW RECORD" if there's a previous score to beat AND the current score exceeds it.
+    // First-ever attempt is not a "new record" — it's just the initial score.
+    score = { ...score, isNewHighScore: foundPrevScore && score.overall > prevHigh };
 
     // Set finalScore AFTER ability boosts so CompletionModal shows the correct values
     setFinalScore(score);
@@ -1001,7 +1005,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         ? (existingExScore.averageScore * existingExScore.attempts + score.overall) / newAttempts
         : score.overall;
 
-      // Save exercise progress using stable key (skillId for AI, exerciseId for static)
+      // Save exercise progress using stable key (skillId for AI, exerciseId for static).
+      // ALWAYS preserve completedAt from previous attempts — a failed retry must NOT
+      // erase the completion status of a previously passed exercise.
+      logger.log(`[ExercisePlayer:save] key=${stableExId} lesson=${effectiveLessonId} score=${score.overall} prevHigh=${existingExScore?.highScore ?? 'none'} isNewHigh=${isNewHighScore} isPassed=${score.isPassed} prevCompleted=${existingExScore?.completedAt != null}`);
+      const preservedCompletedAt = existingExScore?.completedAt;
+      const newCompletedAt = score.isPassed
+        ? (preservedCompletedAt ?? Date.now())  // Keep original completion time
+        : preservedCompletedAt;                  // Preserve even on failed retry
+
       progressStore.updateExerciseProgress(effectiveLessonId, stableExId, {
         exerciseId: stableExId,
         highScore: newHighScore,
@@ -1009,13 +1021,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         attempts: newAttempts,
         lastAttemptAt: Date.now(),
         averageScore: newAvgScore,
-        ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}),
+        ...(newCompletedAt != null ? { completedAt: newCompletedAt } : {}),
       });
 
-      // Also save a completion marker in __ai__ bucket so HomeScreen's
+      // Also save a completion marker in _ai_exercises bucket so HomeScreen's
       // Today's Practice can detect completion via ai-skill-{skillId} key
       if (exLessonId && isAiExercise && skillIdParamRef.current) {
         const aiKey = `ai-skill-${skillIdParamRef.current}`;
+        const existingAiScore = useProgressStore.getState().lessonProgress['_ai_exercises']?.exerciseScores[aiKey];
+        const aiCompletedAt = score.isPassed
+          ? (existingAiScore?.completedAt ?? Date.now())
+          : existingAiScore?.completedAt;
+
         progressStore.updateExerciseProgress('_ai_exercises', aiKey, {
           exerciseId: aiKey,
           highScore: newHighScore,
@@ -1023,7 +1040,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           attempts: newAttempts,
           lastAttemptAt: Date.now(),
           averageScore: newAvgScore,
-          ...(score.isPassed ? { completedAt: existingExScore?.completedAt ?? Date.now() } : {}),
+          ...(aiCompletedAt != null ? { completedAt: aiCompletedAt } : {}),
         });
       }
 
@@ -1513,10 +1530,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const [replayCardText, setReplayCardText] = useState('');
   const [replaySectionIndex, setReplaySectionIndex] = useState(0);
 
-  // Salsa intro state (pre-exercise coaching)
-  const [salsaIntroTier, setSalsaIntroTier] = useState<1 | 2 | 3 | null>(null);
-  const [salsaIntroText, setSalsaIntroText] = useState('');
-  const [salsaIntroTip, setSalsaIntroTip] = useState('');
+  // SalsaIntro state removed — ExerciseLoadingScreen handles pre-exercise coaching
 
   // Effective beat: during demo, use demo beat; during replay, use replay beat;
   // otherwise use playback hook's beat.
@@ -1577,45 +1591,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const keyboardStartNote = keyboardRange.startNote;
   const keyboardOctaveCount = keyboardRange.octaveCount;
 
-  // Load Salsa intro data on mount (determines tier and text)
-  useEffect(() => {
-    if (!exercise || showLoadingScreen) return;
-
-    // Determine previous high score for this exercise
-    const progress = useProgressStore.getState();
-    let prevScore: number | null = null;
-    for (const lp of Object.values(progress.lessonProgress)) {
-      const es = lp.exerciseScores[exercise.id];
-      if (es?.highScore) {
-        prevScore = es.highScore;
-        break;
-      }
-    }
-
-    // Determine tier
-    const currentFailCount = useExerciseStore.getState().failCount;
-    let tier: 1 | 2 | 3;
-    if (currentFailCount >= 3) tier = 3;
-    else if (prevScore === null) tier = 2;
-    else if (prevScore >= 70) tier = 1;
-    else tier = 2;
-
-    setSalsaIntroTier(tier);
-
-    // Load AI intro text in background
-    getIntroData(exercise, prevScore, currentFailCount).then((data) => {
-      if (mountedRef.current) {
-        setSalsaIntroText(data.introText);
-        setSalsaIntroTip(data.tip);
-      }
-    }).catch(() => {
-      // Fallback text already set by defaults
-      if (mountedRef.current) {
-        setSalsaIntroText(`Let's practice ${exercise.metadata.title}!`);
-        setSalsaIntroTip('Keep your wrist relaxed and your fingers curved.');
-      }
-    });
-  }, [exercise?.id, showLoadingScreen]);
+  // SalsaIntro useEffect removed — ExerciseLoadingScreen handles pre-exercise coaching
 
   // Coaching tip for count-in based on learner weaknesses
   const coachingTip = useMemo(() => {
@@ -3218,47 +3194,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
-      {/* Salsa intro — pre-exercise coaching overlay */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && salsaIntroTier && salsaIntroText.length > 0 && (
-        <SalsaIntro
-          tier={salsaIntroTier}
-          introText={salsaIntroText}
-          tip={salsaIntroTip}
-          onDismiss={() => {
-            setShowIntro(false);
-            handleStart();
-          }}
-          onRequestDemo={salsaIntroTier === 3 ? () => {
-            setShowIntro(false);
-            const maxBeat = 16;
-            const miniExercise = {
-              notes: exercise.notes.filter(n => n.startBeat < maxBeat),
-              settings: exercise.settings,
-            };
+      {/* SalsaIntro removed — ExerciseLoadingScreen already provides the Salsa tip + loading flow */}
 
-            setIsDemoPlaying(true);
-            useExerciseStore.getState().setDemoWatched(true);
-            const audioEngine = createAudioEngine();
-            demoServiceRef.current.start(
-              miniExercise,
-              audioEngine,
-              0.8,
-              (beat) => {
-                setDemoBeat(beat);
-                useExerciseStore.getState().setCurrentBeat(beat);
-              },
-              (notes) => setDemoActiveNotes(notes),
-              () => {
-                setIsDemoPlaying(false);
-                setDemoActiveNotes(new Set());
-              },
-            );
-          } : undefined}
-        />
-      )}
-
-      {/* Fallback: original intro overlay when SalsaIntro hasn't loaded yet */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && (!salsaIntroTier || salsaIntroText.length === 0) && (
+      {/* Intro overlay — shown when no loading screen (e.g. static exercises) */}
+      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && (
         <ExerciseIntroOverlay
           exercise={exercise}
           onReady={() => {
