@@ -104,7 +104,7 @@ Fix one at a time. User verifies on device. Then commit.
 | 64 | P1 | Daily Challenge differs per device — same root cause as #63 (mastered skills drive challenge generation) | **FIXED (same root cause as #63)** |
 | 65 | P2 | `[ReplayPromptBuilder] Failed to parse replay response: JSON Parse error` | Salsa replay coaching broken |
 | 74 | P1 | Today's Practice regenerates plan after each exercise instead of tracking completion of the FULL plan. Should show checkmarks on completed exercises and only generate new plan after all 3 sections (warm-up + lesson + challenge) are done | Completed exercises disappear, replaced by new ones. No sense of daily progress. Should be like Duolingo where you see your daily plan with done/todo status | **FIXED (dailyPlanCache.ts — AsyncStorage-backed)** |
-| 75 | P1 | Today's Practice exercises seem random / not linked to curriculum — rhythm tap exercises appearing early when user is still on basic lessons | Confusing exercise selection that doesn't match learning progress |
+| 75 | P0 | **Today's Practice disconnected from lesson tree.** User has 2 failing exercises in Lesson 3 (69%, 68%) that block lesson completion, but Today's Practice generates unrelated exercises from advanced skills instead of prioritizing the failed ones. The CurriculumEngine picks "next available skill" from the SkillTree DAG, which is independent of lesson progress. Daily plan should: (1) prioritize retrying failed exercises from the current lesson, (2) include exercises that help the user progress through the lesson tree, (3) only add advanced/new skills after current lesson is completed. | Exercises feel random and don't help the user progress |
 | 76 | P2 | Rhythm "TAP to the beat" exercise shows notes (D4, E4, F4) falling but no piano keyboard — unclear interaction for new users | Exercise type mismatch between visual display and input method |
 | 77 | P1 | Ear training exercise has same gameplay as rhythm exercise (tap mode) — should be listening/identifying, not tapping | Wrong exercise type behavior for ear training category |
 | 78 | P1 | Rhythm/tap exercises: tapping on beat registers as "ok" or "miss" even when timed correctly | Timing detection too strict or broken for tap-mode exercises | **FIXED (same root cause as #93 — pitch filter bypass)** |
@@ -166,8 +166,14 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | 104 | P2 | +41 XP awarded for 16% failing score — XP calculation doesn't gate on isPassed, awards XP even for very poor performance | Economy inflation from failed exercises | **FIXED (failed = 2 XP participation, passed = full XP)** |
 | 100 | P1 | Pre-exercise loading needs unification — currently two separate components (ExerciseLoadingScreen for AI + ExerciseIntroOverlay for static). User wants ONE unified two-part screen: Part 1 = fun fact/tip while loading, Part 2 = lesson intro/overview with "Let's go!" button. Same screen, two phases. Remove ExerciseIntroOverlay as separate component. | Two separate loading flows feel inconsistent |
 | 99 | P1 | Split keyboard (two-handed exercises) is extremely choppy and unplayable — both R and L keyboards render full 2-octave ranges causing heavy re-renders, count-in overlay overlaps awkwardly, PianoRoll barely visible above dual keyboards | Two-keyboard layout is unusable on device — lag, visual clutter, no room for falling notes |
-| 97 | P1 | PURRRFECT-KEYS-MOBILE-A | `ReferenceError: Property 'getTodayDateString' doesn't exist` in DailySessionScreen useMemo — likely stale dev build or Metro cache issue since the export exists in `src/utils/time.ts` | Today's Practice crashes on launch |
-| 98 | P1 | PURRRFECT-KEYS-MOBILE-9 | `ReferenceError: Property 'getExercise' doesn't exist` in LessonIntroScreen useMemo — same class of issue, export exists in `src/content/ContentLoader.ts` | Lesson intro screen crashes when tapping a lesson |
+| 97 | P1 | PURRRFECT-KEYS-MOBILE-A | `ReferenceError: Property 'getTodayDateString' doesn't exist` — stale dev build | **FIXED (resolves with `npx expo start --clear`)** |
+| 98 | P1 | PURRRFECT-KEYS-MOBILE-9 | `ReferenceError: Property 'getExercise' doesn't exist` — stale dev build | **FIXED (resolves with `npx expo start --clear`)** |
+
+## Sentry Errors (Mar 24)
+
+| # | Severity | Sentry ID | Bug | Notes |
+|---|----------|-----------|-----|-------|
+| 107 | P2 | PURRRFECT-KEYS-MOBILE-C | `EXC_BAD_ACCESS` native crash — no JS stack, low actionability. Likely simulator memory issue or Hermes GC edge case. | Monitor — may not repro on physical device |
 
 ## Feature / Infrastructure Items
 

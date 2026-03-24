@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
+    overflow: 'visible',
   },
   glow: {
     position: 'absolute',
