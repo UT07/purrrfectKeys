@@ -11,7 +11,7 @@
 
 import { create } from 'zustand';
 import type { PlayerRating, RankedTier } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { calculateMMR } from '../core/ranking/mmrCalculator';
 import { tierFromMMR, divisionFromMMR } from '../core/ranking/rankThresholds';
 import { calculateRP } from '../core/ranking/rpCalculator';
@@ -60,7 +60,7 @@ const defaultRating: PlayerRating = {
 
 type RankData = { rating: PlayerRating };
 
-const debouncedSave = createDebouncedSave<RankData>(STORAGE_KEYS.RANK, 500);
+const debouncedSave = createImmediateSave<RankData>(STORAGE_KEYS.RANK);
 
 export const useRankStore = create<RankStoreState>((set, get) => ({
   rating: { ...defaultRating },

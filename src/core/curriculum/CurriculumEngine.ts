@@ -151,6 +151,17 @@ export function generateSessionPlan(
   const songs: ExerciseRef[] = [];
   let endgameTheme: EndgameTheme | undefined;
 
+  // Helper: collect skill IDs from exercise refs to avoid duplicates across sections
+  const collectSkillIds = (...sections: ExerciseRef[][]): Set<string> => {
+    const ids = new Set<string>();
+    for (const section of sections) {
+      for (const ref of section) {
+        if (ref.skillNodeId) ids.add(ref.skillNodeId);
+      }
+    }
+    return ids;
+  };
+
   switch (sessionType) {
     case 'endgame': {
       endgameTheme = getEndgameThemeForDay();
@@ -171,16 +182,16 @@ export function generateSessionPlan(
         lesson.push(newMaterial[0]);
         reasoning.push(`Plus new material: ${newMaterial[0].reason}`);
       }
-      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet);
+      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet, collectSkillIds(warmUp, lesson));
       break;
     }
     case 'challenge': {
       reasoning.push('Challenge day!');
       warmUp = generateWarmUp(profile, masteredSkills, reasoning, recentSet);
       lesson = generateLesson(profile, masteredSkills, reasoning, recentSet);
-      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet);
+      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet, collectSkillIds(warmUp, lesson));
       // Add extra challenge exercise
-      const extraChallenge = generateChallenge(profile, masteredSkills, [], recentSet);
+      const extraChallenge = generateChallenge(profile, masteredSkills, [], recentSet, collectSkillIds(warmUp, lesson, challenge));
       if (extraChallenge.length > 0 && !challenge.some((c) => c.exerciseId === extraChallenge[0].exerciseId)) {
         challenge.push(extraChallenge[0]);
       }
@@ -196,14 +207,14 @@ export function generateSessionPlan(
       lesson = [];
       if (reviewExercises.length > 0) lesson.push(reviewExercises[0]);
       if (newExercises.length > 0) lesson.push(newExercises[0]);
-      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet);
+      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet, collectSkillIds(warmUp, lesson));
       break;
     }
     default: {
       // new-material
       warmUp = generateWarmUp(profile, masteredSkills, reasoning, recentSet);
       lesson = generateLesson(profile, masteredSkills, reasoning, recentSet);
-      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet);
+      challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet, collectSkillIds(warmUp, lesson));
       break;
     }
   }
@@ -536,42 +547,54 @@ function generateChallenge(
   profile: LearnerProfileData,
   masteredSkills: string[],
   reasoning: string[],
-  _recentSet: Set<string> = new Set()
+  _recentSet: Set<string> = new Set(),
+  excludeSkillIds: Set<string> = new Set()
 ): ExerciseRef[] {
   const refs: ExerciseRef[] = [];
+  const tempoBoost = 10; // Challenge exercises are faster
 
-  // Find the deepest available skill for a challenge
-  const available = getAvailableSkills(masteredSkills);
+  // Strategy 1: Pick from available (unmastered) skills, excluding what lesson already uses
+  const available = getAvailableSkills(masteredSkills)
+    .filter((s) => !excludeSkillIds.has(s.id));
   const deeper = available
     .sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
 
   if (deeper.length > 0) {
     const challengeSkill = deeper[0];
-    refs.push(makeAIRef(challengeSkill, `Challenge: ${challengeSkill.name}`, _recentSet));
-    reasoning.push(`Challenge targets advanced skill: ${challengeSkill.name}`);
+    const ref = makeAIRef(challengeSkill, `Challenge: ${challengeSkill.name}`, _recentSet);
+    ref.suggestedTempo = profile.tempoRange.max + tempoBoost;
+    refs.push(ref);
+    reasoning.push(`Challenge targets advanced skill: ${challengeSkill.name} (+${tempoBoost} BPM)`);
   }
 
-  // Post-curriculum or no available skills: AI-generated challenge at higher tempo
+  // Strategy 2: If no available skills left (or all excluded), challenge with a
+  // mastered skill at elevated tempo — this makes the challenge genuinely harder
   if (refs.length === 0) {
-    const tempoStr = `${profile.tempoRange.max + 10} BPM`;
+    const tempoStr = `${profile.tempoRange.max + tempoBoost} BPM`;
     const allMastered = [...masteredSkills]
       .map((id) => getSkillById(id))
       .filter(Boolean) as SkillNode[];
-    const sorted = allMastered.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
+    // Exclude skills already in the lesson to avoid duplicates
+    const eligible = allMastered.filter((s) => !excludeSkillIds.has(s.id));
+    const sorted = (eligible.length > 0 ? eligible : allMastered)
+      .sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
 
-    // Pick a random deep skill for challenge variety (post-curriculum)
+    // Pick a random deep skill for challenge variety
     const topSkills = sorted.slice(0, Math.min(10, sorted.length));
     const recentCount = _recentSet.size;
     const pick = topSkills[recentCount % topSkills.length] ?? sorted[0];
 
     if (pick) {
-      refs.push(makeAIRef(pick, `Post-curriculum challenge: ${pick.name} at ${tempoStr}`, _recentSet));
+      const ref = makeAIRef(pick, `Tempo challenge: ${pick.name} at ${tempoStr}`, _recentSet);
+      ref.suggestedTempo = profile.tempoRange.max + tempoBoost;
+      refs.push(ref);
     } else {
       refs.push({
         exerciseId: 'ai-generated',
         source: 'ai',
         skillNodeId: 'tempo-challenge',
         reason: `Tempo challenge at ${tempoStr}`,
+        suggestedTempo: profile.tempoRange.max + tempoBoost,
       });
     }
     reasoning.push(`Challenge: AI exercise at elevated tempo (${tempoStr})`);

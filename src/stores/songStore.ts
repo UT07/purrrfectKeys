@@ -14,7 +14,7 @@
 
 import { create } from 'zustand';
 import type { Song, SongSummary, SongFilter, SongMastery, SongRequestParams } from '@/core/songs/songTypes';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { getSong, getSongSummaries } from '@/services/songService';
 import { generateAndSaveSong } from '@/services/songGenerationService';
 import { logger } from '../utils/logger';
@@ -81,7 +81,7 @@ const defaultTransient = {
 // Persistence
 // ---------------------------------------------------------------------------
 
-const debouncedSave = createDebouncedSave<SongData>(STORAGE_KEYS.SONGS, 500);
+const debouncedSave = createImmediateSave<SongData>(STORAGE_KEYS.SONGS);
 
 function persistableData(state: SongStoreState): SongData {
   return {

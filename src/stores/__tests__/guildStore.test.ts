@@ -23,6 +23,7 @@ jest.mock('../persistence', () => ({
     GUILD: 'purrrfect_guild_state',
   },
   createDebouncedSave: jest.fn(() => jest.fn()),
+  createImmediateSave: jest.fn(() => jest.fn()),
 }));
 
 // ---------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import type { ExerciseResult, Skills, LearnerProfileState, SkillMasteryRecord } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { getSkillById, DECAY_HALF_LIFE_DAYS, DECAY_THRESHOLD } from '../core/curriculum/SkillTree';
 import { useGemStore } from './gemStore';
 
@@ -57,10 +57,8 @@ const defaultData: LearnerProfileData = {
   recentExerciseIds: [],
 };
 
-// Create debounced save function for frequent updates (note accuracy, skills, etc.)
-const debouncedSave = createDebouncedSave(STORAGE_KEYS.LEARNER_PROFILE, 1000);
-// Immediate save for critical state changes that must survive app backgrounding
-const immediateSave = createImmediateSave(STORAGE_KEYS.LEARNER_PROFILE);
+const debouncedSave = createImmediateSave(STORAGE_KEYS.LEARNER_PROFILE);
+const immediateSave = debouncedSave;
 
 export const useLearnerProfileStore = create<LearnerProfileState>((set, get) => ({
   ...defaultData,

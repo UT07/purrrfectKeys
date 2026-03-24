@@ -13,7 +13,7 @@
 
 import { create } from 'zustand';
 import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { logger } from '../utils/logger';
 
 /** Data-only shape of settings state (excludes actions) */
@@ -70,11 +70,8 @@ const defaultSettings: SettingsData = {
 };
 
 // Create debounced save for non-critical settings (volumes, display prefs)
-const debouncedSave = createDebouncedSave(STORAGE_KEYS.SETTINGS, 500);
-
-// Immediate save for critical settings that must survive quick quit
-// (onboarding, profile identity, selected cat, equipped accessories)
-const immediateSave = createImmediateSave<SettingsData>(STORAGE_KEYS.SETTINGS);
+const debouncedSave = createImmediateSave<SettingsData>(STORAGE_KEYS.SETTINGS);
+const immediateSave = debouncedSave;
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   ...defaultSettings,

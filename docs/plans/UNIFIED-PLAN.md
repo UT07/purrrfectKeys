@@ -28,14 +28,18 @@ Phases 1–10.5 were the original build-out. QA is a continuous parallel track, 
 ╠══════════════════════════════════════════════════════════════╣
 ║  PHASE 11: Foundation Cleanup                    ✅ DONE     ║
 ║  PHASE 12: Exercise Types + UI                   ✅ DONE     ║
-║  PHASE 13: Content Explosion                     ✅ DONE     ║
-║  PHASE 14: Social Revamp — Competitive League    ← NEXT     ║
+║  PHASE 13: Content Explosion                     ⚠️ PARTIAL  ║
+║     (599 exercises generated but ALL same play-along type.    ║
+║      Exercise type variety is a separate deep feature — F2)   ║
+║  PHASE 14: Social Revamp — Competitive League    ✅ DONE     ║
 ║  PHASE 15: Cat Progression + Cat Studio                      ║
 ║  PHASE 16: "Play First" Onboarding                           ║
-║  PHASE 17: UI/UX Revamp                                      ║
-║  PHASE 18: Retention Engine                                  ║
-║  PHASE 19: Analytics + Crash Reporting                       ║
-║  PHASE 20: System Design Hardening                           ║
+║  PHASE 17: System Design Hardening (was 20)      ← MOVED UP ║
+║     (MMKV, TanStack Query, Cloud Function caching,           ║
+║      Gemini via CF, sync compaction, offline indicator)       ║
+║  PHASE 18: UI/UX Revamp (was 17)                             ║
+║  PHASE 19: Retention Engine (was 18)                         ║
+║  PHASE 20: Analytics + Crash Reporting           ✅ DONE     ║
 ║  PHASE 21: Web Version                                       ║
 ║  PHASE 22: Monetization + Production Path (parallel)         ║
 ║  PHASE 23: App Store Launch (v1 live, production continues)  ║
@@ -537,17 +541,28 @@ STEP 5 (90-110s): Quick setup (experience + input + goal)
 
 ## Phase 20: System Design Hardening
 
-**Goal:** Production-grade security and performance.
+**Goal:** Production-grade security, performance, and multi-layer caching.
+
+### Core Hardening
 
 | # | Fix |
 |---|-----|
 | 20.1 | Move ALL Gemini calls through Cloud Functions |
-| 20.2 | AsyncStorage → MMKV migration |
+| 20.2 | AsyncStorage → MMKV migration (10-100x faster hydration, sync reads) |
 | 20.3 | Sync queue deduplication + compaction |
 | 20.4 | Song search at scale (Algolia or Firestore text search) |
 | 20.5 | Cloud Functions rate limiting |
 | 20.6 | Offline indicator banner |
 | 20.7 | Node.js 20 → 22 upgrade (before 2026-04-30 deprecation) |
+
+### Caching & Performance Layer
+
+| # | Layer | Current | Target |
+|---|-------|---------|--------|
+| 20.8 | Local storage | AsyncStorage (async JSON.parse, ~50-100ms/store) | MMKV (sync, ~1ms/store) — eliminates flash of stale data on startup |
+| 20.9 | Network cache | Direct Firestore reads (no dedup) | TanStack Query / React Query — stale-while-revalidate, request dedup, background refresh |
+| 20.10 | Server-side | Direct Firestore reads on every call | Cloud Function proxy + Firestore caching for hot paths (leaderboards, song library, weekly challenges) |
+| 20.11 | Content cache | Lazy require() for 599 exercises | Pre-warm content index on startup, bundle split for lesson groups |
 
 ---
 
@@ -738,19 +753,20 @@ npm run lint             # Must be 0 errors (warnings OK)
 ```
 1. Social-first competitive experience
    ✅ Phase 13 (Content Explosion) — DONE
-   └── Phase 14 (Social Revamp — Competitive League + Guilds) — NEXT
+   ✅ Phase 14 (Social Revamp — Competitive League + Guilds) — DONE
    └── Phase 15 (Cat Progression + Cat Studio)
 
    QA runs in parallel at ALL TIMES (CI gates + device verification)
 
-2. Polish and retain
+2. Onboard then harden
    └── Phase 16 (Play First Onboarding) — hook users instantly
-   └── Phase 17 (UI/UX Revamp) — flagship visual quality
-   └── Phase 18 (Retention Engine) — daily engagement loops
+   └── Phase 17 (System Design Hardening) — MMKV, caching, sync, performance
+       (Moved up: eliminates stale data flash, laggy hydration, loading screens)
 
-3. Harden and observe
-   └── Phase 19 (Analytics + Crash Reporting) — visibility
-   └── Phase 20 (System Design Hardening) — production-grade
+3. Polish and retain
+   └── Phase 18 (UI/UX Revamp) — flagship visual quality (benefits from MMKV speed)
+   └── Phase 19 (Retention Engine) — daily engagement loops
+   ✅ Phase 20 (Analytics + Crash Reporting) — DONE
 
 4. Go web
    └── Phase 21 (Web Version) — Next.js + Stripe (no 30% cut)

@@ -42,7 +42,7 @@ import { useGemStore } from '../stores/gemStore';
 import { useCatEvolutionStore, xpToNextStage } from '../stores/catEvolutionStore';
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import { getLessons } from '../content/ContentLoader';
-import { generateSessionPlan } from '../core/curriculum/CurriculumEngine';
+import { getDailyPlan } from '../core/curriculum/dailyPlanCache';
 import type { ExerciseRef } from '../core/curriculum/CurriculumEngine';
 import { SKILL_TREE, getSkillById } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
@@ -174,43 +174,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return totalDone;
   }, [lessonProgress]);
 
-  // Today's Practice session plan — persisted for the day so completing an
-  // exercise shows a checkmark instead of regenerating the whole plan.
-  // Regenerates ONLY on: new day, or profile was clearly reset (0 skills → non-zero after sync).
-  // Does NOT regenerate when skills increment by 1 from exercise completion.
-  const dailyPlanRef = useRef<{ date: string; plan: ReturnType<typeof generateSessionPlan> } | null>(null);
-  const sessionPlan = useMemo(() => {
-    const todayKey = getTodayDateString();
-
-    // Reuse existing plan if same day — UNLESS the cached plan was generated
-    // with 0 skills (pre-sync default state) and we now have real skills
-    const cached = dailyPlanRef.current;
-    if (cached?.date === todayKey) {
-      return cached.plan;
-    }
-
-    // Generate fresh plan for the new day or after profile sync
-    const profile = useLearnerProfileStore.getState();
-    const plan = generateSessionPlan(
-      {
-        noteAccuracy: profile.noteAccuracy,
-        noteAttempts: profile.noteAttempts,
-        skills: profile.skills,
-        tempoRange: profile.tempoRange,
-        weakNotes: profile.weakNotes,
-        weakSkills: profile.weakSkills,
-        totalExercisesCompleted: profile.totalExercisesCompleted,
-        lastAssessmentDate: profile.lastAssessmentDate,
-        assessmentScore: profile.assessmentScore,
-        masteredSkills: profile.masteredSkills,
-        skillMasteryData: profile.skillMasteryData,
-        recentExerciseIds: profile.recentExerciseIds,
-      },
-      profile.masteredSkills,
-    );
-    dailyPlanRef.current = { date: todayKey, plan };
-    return plan;
-  }, [focusCounter]); // eslint-disable-line react-hooks/exhaustive-deps -- regenerates on tab focus only, date check prevents unnecessary regen
+  // Daily plan — cached by date in AsyncStorage. Never regenerates mid-day.
+  // Depends on: focusCounter (tab focus), isAuthLoading (triggers after sync completes
+  // so we generate the real plan with restored skills instead of the placeholder).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const sessionPlan = useMemo(() => getDailyPlan(), [focusCounter, isAuthLoading]);
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
@@ -545,17 +513,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </Animated.View>
         )}
 
-        {/* Quick Stats Row */}
+        {/* Quick Stats Row — hidden while auth sync is restoring data to prevent stale flash */}
+        {!isAuthLoading && (
         <Animated.View style={[styles.section, staggerStyle(1)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
-            <StatPill icon="book-open-variant" label="Lessons" value={Object.values(lessonProgress).filter(l => l.status === 'completed').length} color={COLORS.info} />
+            <StatPill icon="book-open-variant" label="Lessons" value={Object.entries(lessonProgress).filter(([k, l]) => k !== '__ai__' && l.status === 'completed').length} color={COLORS.info} />
             <StatPill icon="fire" label="Streak" value={streak} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
-            <StatPill icon="star" label="Stars" value={Object.values(lessonProgress).reduce((sum, l) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
+            <StatPill icon="star" label="Stars" value={Object.entries(lessonProgress).filter(([k]) => k !== '__ai__').reduce((sum, [, l]) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>
         </Animated.View>
+        )}
 
-        {/* Today's Practice */}
+        {/* Today's Practice — hidden while auth sync is restoring data */}
+        {!isAuthLoading && (
         <Animated.View style={[styles.section, staggerStyle(2), { transform: [{ scale: pulseAnim }] }]}>
           <GameCard rarity="rare" testID="practice-game-card">
             <View style={styles.practiceHeader}>
@@ -563,7 +534,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel="See all daily practice exercises"
-                onPress={() => navigation.navigate('DailySession', { sharedPlan: JSON.stringify(sessionPlan) })}
+                onPress={() => navigation.navigate('DailySession')}
                 style={styles.seeAllBtn}
               >
                 <Text style={styles.seeAllText}>See All</Text>
@@ -582,6 +553,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <HomePracticeSections plan={sessionPlan} onExercisePress={handleExercisePress} lessonProgress={lessonProgress} />
           </GameCard>
         </Animated.View>
+        )}
 
         {/* Daily Challenge Card */}
         <Animated.View style={[styles.section, staggerStyle(3), { transform: [{ translateX: shakeAnim }] }]}>

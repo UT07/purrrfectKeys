@@ -10,7 +10,7 @@
 
 import { create } from 'zustand';
 import type { SeasonState, SeasonRecord, RankedTier } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import {
   seasonNumberFromDate,
   getCurrentSeasonDates,
@@ -141,7 +141,7 @@ function tierIndex(tier: RankedTier): number {
 // Persistence
 // ─────────────────────────────────────────────────
 
-const debouncedSave = createDebouncedSave<SeasonState>(STORAGE_KEYS.SEASON);
+const debouncedSave = createImmediateSave<SeasonState>(STORAGE_KEYS.SEASON);
 
 // ─────────────────────────────────────────────────
 // Store

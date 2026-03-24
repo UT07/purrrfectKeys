@@ -52,4 +52,4 @@ export type { AchievementStoreState, UnlockedAchievement } from './achievementSt
 export { computeAchievementXpReward } from './achievementStore';
 
 // Persistence utilities (for advanced usage)
-export { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+export { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';

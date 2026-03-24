@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import type { LeagueMembership, RankedTier } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 
 /**
  * Get the Monday of the current week as ISO date (YYYY-MM-DD).
@@ -93,7 +93,7 @@ const defaultState: Omit<LeagueStoreState, 'setMembership' | 'setStandings' | 's
   isLoadingStandings: false,
 };
 
-const debouncedSave = createDebouncedSave<LeagueData>(STORAGE_KEYS.LEAGUE, 500);
+const debouncedSave = createImmediateSave<LeagueData>(STORAGE_KEYS.LEAGUE);
 
 export const useLeagueStore = create<LeagueStoreState>((set, get) => ({
   ...defaultState,

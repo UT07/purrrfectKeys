@@ -15,20 +15,20 @@ import {
   ScrollView,
 } from 'react-native';
 import { PressableScale } from '../components/common/PressableScale';
-import { getTodayDateString } from '../utils/time';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { GameCard } from '../components/common/GameCard';
 import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { generateSessionPlan, getNextSkillToLearn, type SessionPlan, type SessionType, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
+import { getNextSkillToLearn, type SessionPlan, type SessionType, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
+import { getDailyPlan } from '../core/curriculum/dailyPlanCache';
 import { getSkillsNeedingReview, getSkillById } from '../core/curriculum/SkillTree';
 import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
 import { midiToNoteName } from '../core/music/MusicTheory';
 import { useLearnerProfileStore } from '../stores/learnerProfileStore';
-import { useGemStore } from '../stores/gemStore';
+
 import { SalsaCoach } from '../components/Mascot/SalsaCoach';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, glowColor, type RarityLevel } from '../theme/tokens';
 import { GradientMeshBackground } from '../components/effects';
@@ -79,16 +79,11 @@ function humanizeReasoning(text: string): string {
 
 export function DailySessionScreen() {
   const navigation = useNavigation<NavProp>();
-  const { useRoute } = require('@react-navigation/native') as { useRoute: () => { params?: { sharedPlan?: string } } };
-  const route = useRoute();
-  const sharedPlanJson = route.params?.sharedPlan;
 
   // Subscribe only to fields needed for rendering (avoids re-renders on every note accuracy update)
   const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);
   const totalExercisesCompleted = useLearnerProfileStore((s) => s.totalExercisesCompleted);
-
-  // Gem balance
-  const gems = useGemStore((s) => s.gems);
+  const isAuthLoading = require('../stores/authStore').useAuthStore((s: { isLoading: boolean }) => s.isLoading) as boolean;
 
   // Read lesson progress for checking exercise completion from other screens (HomeScreen)
   const lessonProgress = require('../stores/progressStore').useProgressStore((s: any) => s.lessonProgress) as Record<string, { exerciseScores: Record<string, { completedAt?: number }> }>;
@@ -113,47 +108,10 @@ export function DailySessionScreen() {
     }, [])
   );
 
-  // Cache the plan for the day — prevent regeneration on every focus event
-  const dailyPlanRef = React.useRef<{ date: string; plan: SessionPlan } | null>(null);
-  const plan: SessionPlan = useMemo(() => {
-    const todayKey = getTodayDateString();
-
-    // Reuse cached plan if same day
-    if (dailyPlanRef.current?.date === todayKey) {
-      return dailyPlanRef.current.plan;
-    }
-
-    // Use shared plan from HomeScreen if available (ensures consistency)
-    if (sharedPlanJson) {
-      try {
-        const parsed = JSON.parse(sharedPlanJson) as SessionPlan;
-        dailyPlanRef.current = { date: todayKey, plan: parsed };
-        return parsed;
-      } catch { /* fall through to generate */ }
-    }
-    // Fallback: generate fresh plan (direct navigation without HomeScreen)
-    const profile = useLearnerProfileStore.getState();
-    const generated = generateSessionPlan(
-      {
-        noteAccuracy: profile.noteAccuracy,
-        noteAttempts: profile.noteAttempts,
-        skills: profile.skills,
-        tempoRange: profile.tempoRange,
-        weakNotes: profile.weakNotes,
-        weakSkills: profile.weakSkills,
-        totalExercisesCompleted: profile.totalExercisesCompleted,
-        lastAssessmentDate: profile.lastAssessmentDate,
-        assessmentScore: profile.assessmentScore,
-        masteredSkills: profile.masteredSkills,
-        skillMasteryData: profile.skillMasteryData,
-        recentExerciseIds: profile.recentExerciseIds,
-      },
-      profile.masteredSkills
-    );
-    dailyPlanRef.current = { date: todayKey, plan: generated };
-    return generated;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sharedPlanJson, focusCounter]);
+  // Daily plan — cached by date in AsyncStorage. Never regenerates mid-day.
+  // isAuthLoading triggers re-generation after sync completes (avoids caching beginner plan).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const plan: SessionPlan = useMemo(() => getDailyPlan(), [focusCounter, isAuthLoading]);
 
   // Merge completion keys: local session tracking + completions from lessonProgress (cross-screen)
   const mergedCompletedKeys = useMemo(() => {
@@ -253,11 +211,6 @@ export function DailySessionScreen() {
             <View style={styles.headerTitleRow}>
               <Text style={styles.headerTitle}>Today's Practice</Text>
               <SessionTypeBadge type={plan.sessionType} />
-              <View style={{ flex: 1 }} />
-              <View style={styles.gemCounter}>
-                <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.gemGold} />
-                <Text style={styles.gemCounterText}>{gems}</Text>
-              </View>
             </View>
             <Text style={styles.headerSubtitle}>
               {totalExercises} exercise{totalExercises !== 1 ? 's' : ''} picked for you
@@ -510,22 +463,9 @@ function SessionExerciseCard({
   const title = exercise?.metadata.title ?? skillNode?.name ?? (isSong ? exerciseRef.reason : (isAI ? 'AI-Generated Exercise' : exerciseRef.exerciseId));
   const difficulty = exercise?.metadata.difficulty ?? 1;
 
-  // Determine exercise type for the label
-  const exerciseType = exercise?.metadata?.skills?.includes('rhythm') ? 'rhythm'
-    : exercise?.metadata?.skills?.includes('ear-training') ? 'earTraining'
-    : isSong ? 'play' : 'play';
-  // Use exercise-index type if available via skill node category mapping
-  const typeFromIndex = (() => {
-    if (exerciseRef.skillNodeId) {
-      const skill = getSkillById(exerciseRef.skillNodeId);
-      if (skill?.category === 'rhythm') return 'rhythm';
-      if (skill?.category === 'chords') return 'chordId';
-      if (skill?.category === 'sight-reading') return 'sightReading';
-      if (skill?.category === 'expression') return 'earTraining';
-    }
-    return exerciseType;
-  })();
-  const typeInfo = EXERCISE_TYPE_LABELS[typeFromIndex] ?? EXERCISE_TYPE_LABELS.play;
+  // Until exercise type variety (F2) is implemented, all exercises are play-along.
+  // Don't label them as "Chord ID" or "Ear Training" when the gameplay is identical.
+  const typeInfo = EXERCISE_TYPE_LABELS.play;
 
   const isAttempted = isPassed || isBelowThreshold;
   const statusColor = isPassed ? COLORS.success : isBelowThreshold ? COLORS.warning : null;
@@ -645,8 +585,9 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     ...TYPOGRAPHY.body.md,
-    color: COLORS.textSecondary,
     marginTop: 2,
+    color: COLORS.textSecondary,
+    flex: 1,
   },
   // Skill Progress
   skillProgressCard: {
@@ -856,20 +797,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   // Gem counter
-  gemCounter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: glowColor(COLORS.starGold, 0.1),
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  gemCounterText: {
-    ...TYPOGRAPHY.body.sm,
-    fontWeight: '700' as const,
-    color: COLORS.gemGold,
-  },
   // Gem reward hint on exercise cards
   gemRewardHint: {
     flexDirection: 'row',

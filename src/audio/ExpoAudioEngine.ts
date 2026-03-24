@@ -629,13 +629,8 @@ export class ExpoAudioEngine implements IAudioEngine {
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
-    // Propagate to all pre-loaded voice pools so future replayAsync() calls
-    // use the new volume without waiting for the next playNote() call.
-    for (const [, pool] of this.voicePools) {
-      for (const sound of pool.sounds) {
-        sound.setVolumeAsync(this.volume).catch(() => {});
-      }
-    }
+    // Bug #26 fix: Do NOT propagate to currently playing sounds — that overrides
+    // per-note velocity scaling. The new volume is applied on the next playNote() call.
   }
 
   getLatency(): number {

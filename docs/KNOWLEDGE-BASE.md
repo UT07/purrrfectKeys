@@ -635,7 +635,42 @@ This pattern is used consistently across progressStore, catEvolutionStore, and g
 
 ### Decision: Why AsyncStorage Over MMKV?
 
-AsyncStorage works with Expo managed workflow without native rebuilds. MMKV is faster but requires `expo-dev-client`. Since persistence is debounced (500ms), the async nature isn't a bottleneck.
+AsyncStorage works with Expo managed workflow without native rebuilds. MMKV is faster but requires `expo-dev-client`. Since persistence is debounced (500ms), the async nature isn't a bottleneck. **Note (Mar 23):** MMKV migration is planned for Phase 20 — app feels laggy during hydration with 15+ async JSON.parse calls. MMKV would make hydration near-instant (~1ms vs ~50-100ms per store).
+
+### Daily Plan Cache (Added Mar 23)
+
+The daily session plan ("Today's Practice") is persisted to AsyncStorage via `src/core/curriculum/dailyPlanCache.ts`:
+
+- **Keyed by date ONLY** — generates once per day, never regenerates mid-day
+- Both HomeScreen and DailySessionScreen call the same `getDailyPlan()` function
+- Sign-out calls `clearDailyPlanCache()` so next sign-in gets fresh plan
+- Hydrated on app startup in `App.tsx` alongside other stores
+- **Critical rule:** NEVER add `masteredSkills` or per-exercise state as useMemo dependency for plan generation
+
+Visual completion indicators:
+- Green checkmark + border = passed (score >= passingScore)
+- Orange warning + border = attempted but below threshold
+- Play button changes: play → refresh (retry) → replay (passed)
+
+### Cross-Device Sync (Updated Mar 23)
+
+Full bidirectional sync via `src/services/firebase/syncService.ts`:
+
+**Sign-in order (critical):**
+1. `pullRemoteProgress()` — get authoritative cloud state FIRST
+2. `migrateLocalToCloud()` — push any local-only data
+3. `pushAllProgressData()` — ensure cloud has latest
+4. `startPeriodicSync()` — 5-minute flush cycle
+
+**12 data types synced:** XP/level/streak, lesson progress, cats + daily rewards, gems, learner profile, achievements, rank (MMR), season/battle pass, settings, daily goal data, tier test results, streak milestones.
+
+**Merge strategy:** "highest wins" for scores/XP/MMR. Union for mastered skills, owned cats, achievements. Remote fills empty local for settings.
+
+### Bug Tracker (Mar 23)
+
+Full bug list with fix status: `docs/plans/CONFIRMED-BUGS.md`
+- **71 fixed** / **~22 open** (of which ~5 are deep feature gaps, not code bugs)
+- Key fixes: sync order, daily plan persistence, tap timing, cat abilities, scoring feedback alignment
 
 ---
 

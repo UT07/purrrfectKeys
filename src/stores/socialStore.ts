@@ -11,7 +11,7 @@
 
 import { create } from 'zustand';
 import type { FriendConnection, ActivityFeedItem, FriendChallenge, RichFeedItem, ReactionType } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 
 const MAX_ACTIVITY_FEED = 50;
 
@@ -49,7 +49,7 @@ const defaultData: SocialData = {
   challenges: [],
 };
 
-const debouncedSave = createDebouncedSave<SocialData>(STORAGE_KEYS.SOCIAL, 500);
+const debouncedSave = createImmediateSave<SocialData>(STORAGE_KEYS.SOCIAL);
 
 export const useSocialStore = create<SocialStoreState>((set, get) => ({
   ...defaultData,

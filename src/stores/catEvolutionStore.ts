@@ -16,7 +16,7 @@
 import { create } from 'zustand';
 import type { EvolutionStage, CatEvolutionData, DailyRewardDay } from './types';
 import { EVOLUTION_XP_THRESHOLDS } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave, createImmediateSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { CAT_CHARACTERS } from '@/components/Mascot/catCharacters';
 import { postActivity } from '@/services/firebase/socialService';
 import { auth } from '@/services/firebase/config';
@@ -123,8 +123,8 @@ const defaultData: EvolutionData = {
   },
 };
 
-const debouncedSave = createDebouncedSave<EvolutionData>(STORAGE_KEYS.CAT_EVOLUTION, 500);
-const immediateSave = createImmediateSave<EvolutionData>(STORAGE_KEYS.CAT_EVOLUTION);
+const debouncedSave = createImmediateSave<EvolutionData>(STORAGE_KEYS.CAT_EVOLUTION);
+const immediateSave = debouncedSave;
 
 /** Get today's local date string (YYYY-MM-DD in user's timezone) */
 function todayISO(): string {
@@ -177,9 +177,12 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     set((state) => {
       if (state.ownedCats.includes(catId)) return state;
       const newOwned = [...state.ownedCats, catId];
+      const defaultData = createDefaultEvolutionData(catId);
+      // Bug #96 fix: unlock baby-stage abilities immediately on purchase
+      defaultData.abilitiesUnlocked = unlockAbilitiesForStage(catId, 'baby', []);
       const newEvolution = {
         ...state.evolutionData,
-        [catId]: createDefaultEvolutionData(catId),
+        [catId]: defaultData,
       };
       return { ownedCats: newOwned, evolutionData: newEvolution };
     });
@@ -436,11 +439,14 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     const state = get();
     if (state.ownedCats.includes('chonky-monke')) return;
 
+    const defaultData = createDefaultEvolutionData('chonky-monke');
+    defaultData.abilitiesUnlocked = unlockAbilitiesForStage('chonky-monke', 'baby', []);
+
     set((prev) => ({
       ownedCats: [...prev.ownedCats, 'chonky-monke'],
       evolutionData: {
         ...prev.evolutionData,
-        'chonky-monke': createDefaultEvolutionData('chonky-monke'),
+        'chonky-monke': defaultData,
       },
     }));
     debouncedSave(get());
@@ -450,11 +456,15 @@ export const useCatEvolutionStore = create<CatEvolutionStoreState>((set, get) =>
     const state = get();
     if (state.ownedCats.length > 0) return; // Already initialized
 
+    const defaultData = createDefaultEvolutionData(catId);
+    // Bug #96 fix: unlock baby-stage abilities on starter cat selection
+    defaultData.abilitiesUnlocked = unlockAbilitiesForStage(catId, 'baby', []);
+
     set({
       selectedCatId: catId,
       ownedCats: [catId],
       evolutionData: {
-        [catId]: createDefaultEvolutionData(catId),
+        [catId]: defaultData,
       },
     });
     debouncedSave(get());
@@ -541,11 +551,19 @@ function reconcileEvolutionStages(data: EvolutionData): EvolutionData {
 
   for (const [catId, catData] of Object.entries(reconciledEvolution)) {
     const correctStage = stageFromXp(catData.xpAccumulated);
+
+    // Bug #96 fix: reconcile abilities for cats with empty abilities (pre-fix data)
+    const expectedAbilities = unlockAbilitiesForStage(catId, correctStage, catData.abilitiesUnlocked);
+    if (expectedAbilities.length > catData.abilitiesUnlocked.length) {
+      reconciledEvolution[catId] = { ...catData, abilitiesUnlocked: expectedAbilities };
+      changed = true;
+    }
+
     if (correctStage !== catData.currentStage) {
       reconciledEvolution[catId] = {
-        ...catData,
+        ...(reconciledEvolution[catId] ?? catData),
         currentStage: correctStage,
-        abilitiesUnlocked: unlockAbilitiesForStage(catId, correctStage, catData.abilitiesUnlocked),
+        abilitiesUnlocked: unlockAbilitiesForStage(catId, correctStage, reconciledEvolution[catId]?.abilitiesUnlocked ?? catData.abilitiesUnlocked),
         evolvedAt: {
           ...catData.evolvedAt,
           // Backfill evolvedAt for stages the cat should have reached

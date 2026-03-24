@@ -13,7 +13,7 @@ import {
   getAchievementById,
   ACHIEVEMENTS,
 } from '@/core/achievements/achievements';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { analyticsEvents } from '../services/analytics/PostHog';
 
 /**
@@ -60,7 +60,7 @@ const defaultData: AchievementData = {
 };
 
 // Create debounced save function
-const debouncedSave = createDebouncedSave<AchievementData>(STORAGE_KEYS.ACHIEVEMENTS, 500);
+const debouncedSave = createImmediateSave<AchievementData>(STORAGE_KEYS.ACHIEVEMENTS);
 
 export const useAchievementStore = create<AchievementStoreState>((set, get) => ({
   ...defaultData,

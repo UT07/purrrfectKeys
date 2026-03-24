@@ -396,7 +396,8 @@ export class SyncManager {
         getGemSyncData(uid).catch((e) => { logger.warn('[Sync:pull] getGemSyncData failed:', (e as Error)?.message); return null; }),
       ]);
 
-      logger.log(`[Sync:pull] Remote data: ${remoteLessons.length} lessons, XP=${remoteGamification?.xp ?? 'null'}, cats=${remoteCats ? 'yes' : 'no'}, gems=${remoteGems ? 'yes' : 'no'}`);
+      const aiLesson = remoteLessons.find((l) => l.lessonId === '__ai__');
+      logger.log(`[Sync:pull] Remote data: ${remoteLessons.length} lessons (${aiLesson ? `__ai__ has ${Object.keys(aiLesson.exerciseScores ?? {}).length} scores` : 'no __ai__'}), XP=${remoteGamification?.xp ?? 'null'}, cats=${remoteCats ? 'yes' : 'no'}, gems=${remoteGems ? 'yes' : 'no'}`);
 
       if (!remoteLessons.length && !remoteGamification && !remoteCats && !remoteGems) {
         logger.log('[Sync:pull] No remote data found — nothing to pull');
@@ -557,6 +558,16 @@ export class SyncManager {
         if (remoteCats.selectedCatId && !localCats.selectedCatId) {
           useCatEvolutionStore.getState().selectCat(remoteCats.selectedCatId);
           didMerge = true;
+        }
+
+        // Restore daily rewards from remote if local is default (lost on sign-out)
+        if ((remoteCats as any).dailyRewards && localCats.dailyRewards.days.every(d => !d.claimed)) {
+          useCatEvolutionStore.setState({
+            dailyRewards: (remoteCats as any).dailyRewards,
+            lastDailyChallengeDate: (remoteCats as any).lastDailyChallengeDate ?? '',
+          });
+          didMerge = true;
+          logger.log('[Sync] Restored daily rewards from remote');
         }
 
         logger.log(`[Sync] Cat evolution merged: ${mergedOwned.size} total cats`);
@@ -901,12 +912,16 @@ export class SyncManager {
             selectedCatId: catState.selectedCatId,
             ownedCats: Array.from(mergedOwned),
             evolutionData: mergedEvolution,
+            dailyRewards: catState.dailyRewards,
+            lastDailyChallengeDate: catState.lastDailyChallengeDate,
           });
         } else {
           await saveCatEvolutionData(resolvedUid, {
             selectedCatId: catState.selectedCatId,
             ownedCats: catState.ownedCats,
             evolutionData,
+            dailyRewards: catState.dailyRewards,
+            lastDailyChallengeDate: catState.lastDailyChallengeDate,
           });
         }
       }
@@ -1112,10 +1127,21 @@ export class SyncManager {
         if (!lesson || Object.keys(lesson.exerciseScores).length === 0) continue;
 
         try {
+          // Sanitize exerciseScores: Firestore rejects undefined values.
+          // Convert undefined fields to null so the document writes succeed.
+          const sanitizedScores: Record<string, Record<string, unknown>> = {};
+          for (const [exId, score] of Object.entries(lesson.exerciseScores)) {
+            const clean: Record<string, unknown> = {};
+            for (const [k, v] of Object.entries(score)) {
+              clean[k] = v === undefined ? null : v;
+            }
+            sanitizedScores[exId] = clean;
+          }
+
           await createLessonProgress(resolvedUid, lessonId, {
             lessonId,
             status: lesson.status,
-            exerciseScores: lesson.exerciseScores as any,
+            exerciseScores: sanitizedScores as any,
             bestScore: Math.max(
               0,
               ...Object.values(lesson.exerciseScores).map((e) => e.highScore),
@@ -1126,8 +1152,7 @@ export class SyncManager {
             ),
           });
         } catch (err) {
-          // createLessonProgress uses merge: true, so partial failures are OK
-          logger.warn('[Sync] Partial lesson progress push failed:', err);
+          logger.warn(`[Sync] Lesson ${lessonId} push failed:`, (err as Error)?.message);
         }
       }
       logger.log(`[Sync] Pushed ${lessonIds.length} lesson progress records`);
@@ -1174,7 +1199,9 @@ function convertFirestoreExercise(
     lastAttemptAt:
       remote.lastAttemptAt && typeof remote.lastAttemptAt === 'object' && 'toMillis' in remote.lastAttemptAt
         ? (remote.lastAttemptAt as any).toMillis()
-        : Date.now(),
+        : typeof remote.lastAttemptAt === 'number'
+          ? remote.lastAttemptAt
+          : undefined,
     averageScore: remote.averageScore,
     completedAt:
       remote.completedAt && typeof remote.completedAt === 'object' && 'toMillis' in remote.completedAt

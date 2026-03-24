@@ -888,8 +888,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Record practice time BEFORE challenge validation so minutesPracticedToday is accurate
     let elapsedMinutes = 0;
     if (playbackStartTimeRef.current > 0) {
-      // Use ceiling so even short exercises (< 60s) count as 1 minute of practice
-      elapsedMinutes = Math.max(1, Math.ceil((Date.now() - playbackStartTimeRef.current) / 60000));
+      // Every completed exercise counts as at least 1 minute of practice
+      // (same approach as Duolingo — any practice attempt moves the daily goal)
+      elapsedMinutes = Math.ceil((Date.now() - playbackStartTimeRef.current) / 60000);
       progressStore.recordPracticeSession(elapsedMinutes);
     }
 
@@ -2005,10 +2006,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           }
         | null = null;
 
+      // Bug #93 fix: rhythm/tap exercises should match ANY tap to the nearest note
+      // regardless of pitch (tap zone sends note 60, but exercise notes are various pitches).
+      const isRhythmTap = exerciseType === 'rhythm';
+
       for (let i = 0; i < exercise.notes.length; i++) {
         const note = exercise.notes[i];
         if (consumedNoteIndicesRef.current.has(i)) continue; // Already matched
-        if (note.note !== midiNote.note) continue; // Wrong pitch
+        if (!isRhythmTap && note.note !== midiNote.note) continue; // Wrong pitch (skip for rhythm)
 
         // Negative = early, positive = late.
         const beatDiffSigned = realtimeBeat - note.startBeat;
@@ -2040,10 +2045,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // Calculate timing offset in milliseconds
         const beatDiffMs = Math.abs(bestMatch.beatDiffSigned) * msPerBeat;
 
+        // Bug #19 fix: align visual feedback thresholds with ExerciseValidator scoring.
+        // Scoring gives 100% for anything within timingToleranceMs, so visual should match.
         let feedbackType: FeedbackState['type'];
-        if (beatDiffMs <= exercise.scoring.timingToleranceMs * 0.5) {
+        if (beatDiffMs <= exercise.scoring.timingToleranceMs) {
           feedbackType = 'perfect';
-        } else if (beatDiffMs <= exercise.scoring.timingToleranceMs) {
+        } else if (beatDiffMs <= exercise.scoring.timingGracePeriodMs * 0.5) {
           feedbackType = 'good';
         } else if (beatDiffMs <= exercise.scoring.timingGracePeriodMs) {
           feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';

@@ -10,7 +10,7 @@
 
 import { create } from 'zustand';
 import type { Guild, GuildMember, GuildWar } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,7 +42,7 @@ type GuildData = {
   currentGuild: Guild | null;
 };
 
-const debouncedSave = createDebouncedSave<GuildData>(STORAGE_KEYS.GUILD, 500);
+const debouncedSave = createImmediateSave<GuildData>(STORAGE_KEYS.GUILD);
 
 // ---------------------------------------------------------------------------
 // Store

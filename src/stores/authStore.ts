@@ -110,6 +110,11 @@ function resetAllStores(): void {
       logger.warn(`[Auth] Failed to reset ${name} store:`, err);
     }
   }
+
+  // NOTE: Do NOT clear dailyPlanCache here. The plan is date-keyed and will
+  // naturally regenerate tomorrow. Clearing it causes the plan to regenerate
+  // on sign-in with slightly different inputs → different exercises → completion
+  // state lost. The plan itself contains no PII (just skill references).
 }
 
 function handleAuthError(error: unknown): string {
@@ -287,19 +292,20 @@ async function triggerPostSignInSync(): Promise<void> {
     logger.warn('[Auth] Profile restore failed:', err);
   }
 
-  try {
-    logger.log('[Auth:postSignInSync] Running migrateLocalToCloud...');
-    const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
-    const migResult = await migrateLocalToCloud();
-    logger.log('[Auth:postSignInSync] Migration result:', JSON.stringify(migResult));
-  } catch (err) {
-    logger.error('[Auth:postSignInSync] ❌ Migration FAILED:', (err as Error)?.message);
-  }
+  // IMPORTANT: Pull remote data FIRST, then migrate local data.
+  // Bug #1 fix: Previously migrateLocalToCloud() ran before pullRemoteProgress(),
+  // causing stale local data to overwrite authoritative cloud data on second-device sign-in.
   try {
     logger.log('[Auth:postSignInSync] Running pullRemoteProgress...');
     const { syncManager } = require('../services/firebase/syncService');
     const pullResult = await syncManager.pullRemoteProgress();
     logger.log('[Auth:postSignInSync] Pull result:', JSON.stringify(pullResult));
+
+    // Now migrate any local-only data that the cloud doesn't have yet
+    logger.log('[Auth:postSignInSync] Running migrateLocalToCloud...');
+    const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
+    const migResult = await migrateLocalToCloud();
+    logger.log('[Auth:postSignInSync] Migration result:', JSON.stringify(migResult));
 
     // Push local data to Firestore to ensure cloud has latest state.
     // This covers the case where previous syncs silently failed.
@@ -310,7 +316,7 @@ async function triggerPostSignInSync(): Promise<void> {
     logger.log('[Auth:postSignInSync] Push complete. Starting periodic sync...');
     syncManager.startPeriodicSync();
   } catch (err) {
-    logger.error('[Auth:postSignInSync] ❌ Pull FAILED:', (err as Error)?.message);
+    logger.error('[Auth:postSignInSync] ❌ Sync FAILED:', (err as Error)?.message);
   }
 
   // Restore display name AFTER pull so synced settings take priority.

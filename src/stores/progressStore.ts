@@ -13,7 +13,7 @@
 import { create } from 'zustand';
 import type { LessonProgress, ExerciseProgress } from '@/core/exercises/types';
 import type { ProgressStoreState, StreakData, DailyGoalData } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { levelFromXp } from '@/core/progression/XpSystem';
 import { useGemStore } from './gemStore';
 import { useCatEvolutionStore } from './catEvolutionStore';
@@ -91,7 +91,7 @@ const defaultData: ProgressData = {
 };
 
 // Create debounced save function
-const debouncedSave = createDebouncedSave(STORAGE_KEYS.PROGRESS, 1000);
+const debouncedSave = createImmediateSave(STORAGE_KEYS.PROGRESS);
 
 export const useProgressStore = create<ProgressStoreState>((set, get) => ({
   ...defaultData,

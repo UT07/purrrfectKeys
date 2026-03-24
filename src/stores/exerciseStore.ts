@@ -13,7 +13,7 @@
 import { create } from 'zustand';
 import type { Exercise, ExerciseScore, MidiNoteEvent } from '@/core/exercises/types';
 import type { ExerciseSessionState } from './types';
-import { PersistenceManager, STORAGE_KEYS, createDebouncedSave } from './persistence';
+import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 
 /** Data-only shape of exercise session (excludes actions) */
 type ExerciseSessionData = Pick<
@@ -42,7 +42,7 @@ const defaultData: ExerciseSessionData = {
 };
 
 // Create debounced save function
-const debouncedSave = createDebouncedSave(STORAGE_KEYS.EXERCISE, 500);
+const debouncedSave = createImmediateSave(STORAGE_KEYS.EXERCISE);
 
 export const useExerciseStore = create<ExerciseSessionState>((set, get) => ({
   ...defaultData,

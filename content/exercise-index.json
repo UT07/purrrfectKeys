@@ -107,7 +107,7 @@
         "c-major",
         "quarter-notes"
       ],
-      "type": "earTraining",
+      "type": "play",
       "order": 8
     },
     {
@@ -135,7 +135,7 @@
         "c-major",
         "mixed-rhythms"
       ],
-      "type": "earTraining",
+      "type": "play",
       "order": 10
     },
     {
@@ -149,7 +149,7 @@
         "rhythm-precision",
         "finger-dexterity"
       ],
-      "type": "rhythm",
+      "type": "play",
       "order": 11
     },
     {
@@ -247,7 +247,7 @@
         "rhythm-consistency",
         "bass-pattern"
       ],
-      "type": "rhythm",
+      "type": "play",
       "order": 18
     },
     {
@@ -289,7 +289,7 @@
         "accompaniment",
         "song-arrangement"
       ],
-      "type": "callResponse",
+      "type": "play",
       "order": 21
     },
     {
@@ -332,7 +332,7 @@
         "harmony",
         "simultaneous-notes"
       ],
-      "type": "chordId",
+      "type": "play",
       "order": 24
     },
     {
@@ -347,7 +347,7 @@
         "independence",
         "technique"
       ],
-      "type": "earTraining",
+      "type": "play",
       "order": 25
     },
     {
@@ -403,7 +403,7 @@
         "right-hand",
         "sixteen-notes"
       ],
-      "type": "rhythm",
+      "type": "play",
       "order": 29
     },
     {
@@ -417,7 +417,7 @@
         "both-hands",
         "musical-expression"
       ],
-      "type": "callResponse",
+      "type": "play",
       "order": 30
     },
     {
@@ -461,7 +461,7 @@
         "coordination",
         "classic-tune"
       ],
-      "type": "earTraining",
+      "type": "play",
       "order": 33
     },
     {
@@ -491,7 +491,7 @@
         "coordination",
         "mixed-rhythms"
       ],
-      "type": "callResponse",
+      "type": "play",
       "order": 35
     },
     {

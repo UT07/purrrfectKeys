@@ -10,6 +10,7 @@ jest.mock('../persistence', () => ({
   },
   STORAGE_KEYS: { SEASON: 'purrrfect_season_state' },
   createDebouncedSave: () => jest.fn(),
+  createImmediateSave: () => jest.fn(),
 }));
 
 const mockedPM = PersistenceManager as jest.Mocked<typeof PersistenceManager>;

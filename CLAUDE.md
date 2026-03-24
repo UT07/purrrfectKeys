@@ -6,11 +6,11 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current State (Mar 18, 2026)
+## Current State (Mar 23, 2026)
 
-**Codebase Health:** 160 test suites, 3,253 tests passing, 0 TypeScript errors
+**Codebase Health:** 160 test suites, 3,270 tests passing, 0 TypeScript errors
 
-**Phases 1-14 COMPLETE:**
+**Phases 1-14 COMPLETE. QA stabilization in progress (71 bugs fixed, ~22 open).**
 - Core Loop, Gamification, Auth, Adaptive Learning, Curriculum, Avatar Evolution, UI Revamp
 - Audio Input (YIN + ONNX polyphonic), Music Library (582 songs), Arcade Concert Hall, Social v1
 - Foundation Cleanup, Exercise Types + UI, Content Explosion (599 exercises, 50 lessons, 120 skill nodes, 5 learning paths)
@@ -18,12 +18,16 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **QA runs in parallel** — CI gates (typecheck + lint + test) on every push. Device verification tracked in UNIFIED-PLAN.md.
 
+**Current focus:** Bug stabilization → manual device verification → merge to master → fresh development.
+
 **Infrastructure:**
-- 14 Cloud Functions deployed (nodejs22, us-central1)
-- Firestore rules + indexes deployed (guilds, guildWars, referrals, seasonRewards added)
+- 11 Cloud Functions deployed (nodejs22, us-central1)
+- Firestore rules + indexes deployed
 - EAS Build configured (preview + production channels)
+- Sentry (de.sentry.io) + PostHog integrated for crash reporting + analytics
 
 See `docs/plans/UNIFIED-PLAN.md` for the **single source of truth** on all phases.
+See `docs/plans/CONFIRMED-BUGS.md` for the **bug tracker** (71 fixed, ~22 open).
 See `docs/PRD.md` for product requirements.
 See `docs/design-system.md` for design system.
 
@@ -333,7 +337,7 @@ onAudioBuffer((buffer: Float32Array) => {
 | E2E | Maestro (planned) | `.maestro/` |
 | Audio latency | Custom harness | `scripts/measure-latency.ts` |
 
-**3,253 tests, 160 suites**. Run tests before committing:
+**3,270 tests, 160 suites**. Run tests before committing:
 ```bash
 npm run typecheck && npm run test
 ```
@@ -349,6 +353,8 @@ Unified monitoring via `MonitoringService` (`src/services/monitoring/index.ts`):
 
 For detailed guidance on specific topics, read these files:
 
+- **docs/KNOWLEDGE-BASE.md** - **READ THIS FIRST** — Comprehensive reference for the entire codebase: product vision, architecture, all 24 subsystems, key decisions. Ground truth.
+- @agent_docs/knowledgebase.md - Quick-reference cheat sheet: daily plan, sync, scoring, auth, audio, cats. Cross-cutting behavior patterns and bug fix rules.
 - @agent_docs/architecture.md - System design and data flow
 - @agent_docs/audio-pipeline.md - Audio latency budgets and patterns
 - @agent_docs/exercise-format.md - Exercise JSON schema and examples
@@ -360,6 +366,7 @@ For detailed guidance on specific topics, read these files:
 - docs/PRD.md - Product requirements document
 - docs/design-system.md - Design system, visual tokens, and known visual debt
 - docs/plans/UNIFIED-PLAN.md - Unified plan with all phase statuses and upcoming phase designs
+- docs/plans/CONFIRMED-BUGS.md - Bug tracker with fix status (71 fixed, ~22 open)
 
 ## Common Tasks
 
