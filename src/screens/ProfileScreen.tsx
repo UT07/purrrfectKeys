@@ -452,12 +452,12 @@ export function ProfileScreen(): React.ReactElement {
                 strokeWidth={RING_STROKE}
                 fill="transparent"
               />
-              {/* XP Progress arc — matches HomeScreen ring style */}
+              {/* Cat evolution progress arc — green (matches cat evolution XP) */}
               <Circle
                 cx={RING_SIZE / 2}
                 cy={RING_SIZE / 2}
                 r={RING_RADIUS}
-                stroke={levelProgress.percentToNextLevel >= 100 ? COLORS.success : COLORS.primary}
+                stroke={COLORS.success}
                 strokeWidth={RING_STROKE}
                 fill="transparent"
                 strokeDasharray={`${RING_CIRCUMFERENCE}`}
