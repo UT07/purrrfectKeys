@@ -38,6 +38,9 @@ Phases 1–10.5 were the original build-out. QA is a continuous parallel track, 
 ║     (MMKV, TanStack Query, Cloud Function caching,           ║
 ║      Gemini via CF, sync compaction, offline indicator)       ║
 ║  PHASE 18: UI/UX Revamp (was 17)                             ║
+║     (Unified cat avatar with 3 concentric rings:              ║
+║      XP ring + cat evolution ring + MMR rank ring.            ║
+║      Tap to see progress details. Merge profile/dashboard.)   ║
 ║  PHASE 19: Retention Engine (was 18)                         ║
 ║  PHASE 20: Analytics + Crash Reporting           ✅ DONE     ║
 ║  PHASE 21: Web Version                                       ║
