@@ -248,8 +248,8 @@ function AchievementsSection(): React.ReactElement {
   );
 }
 
-/** Ring constants — matches HomeScreen GOAL_ARC pattern */
-const RING_SIZE = 160;
+/** Ring constants — matches HomeScreen GOAL_ARC exactly (140px, 8px stroke) */
+const RING_SIZE = 140;
 const RING_STROKE = 8;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
