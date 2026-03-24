@@ -518,9 +518,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Animated.View style={[styles.section, staggerStyle(1)]}>
           <View style={styles.statsPillRow}>
             <StatPill icon="music-note" label="Exercises" value={totalCompleted} color={COLORS.primary} />
-            <StatPill icon="book-open-variant" label="Lessons" value={Object.entries(lessonProgress).filter(([k, l]) => k !== '__ai__' && l.status === 'completed').length} color={COLORS.info} />
+            <StatPill icon="book-open-variant" label="Lessons" value={Object.entries(lessonProgress).filter(([k, l]) => k !== '_ai_exercises' && l.status === 'completed').length} color={COLORS.info} />
             <StatPill icon="fire" label="Streak" value={streak} color={practicedToday ? COLORS.starGold : COLORS.textMuted} />
-            <StatPill icon="star" label="Stars" value={Object.entries(lessonProgress).filter(([k]) => k !== '__ai__').reduce((sum, [, l]) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
+            <StatPill icon="star" label="Stars" value={Object.entries(lessonProgress).filter(([k]) => k !== '_ai_exercises').reduce((sum, [, l]) => sum + Object.values(l.exerciseScores).reduce((s, e) => s + (e.stars ?? 0), 0), 0)} color={COLORS.starGold} />
           </View>
         </Animated.View>
         )}
@@ -759,10 +759,10 @@ function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
 
               // Check completion: AI exercises stored under __ai__ bucket with stable key
               const isAttempted = isAI
-                ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null
+                ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null
                 : Object.values(lessonProgress).some((lp) => lp.exerciseScores[ref.exerciseId]?.completedAt != null);
               const highScore = isAI
-                ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore
+                ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore
                 : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore;
 
               // Determine pass/fail: use exercise's passingScore (default 70)

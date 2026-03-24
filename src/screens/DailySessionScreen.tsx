@@ -122,7 +122,7 @@ export function DailySessionScreen() {
       if (merged.has(key)) continue;
       const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
       if (isAI && ref.skillNodeId) {
-        const aiCompleted = lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null;
+        const aiCompleted = lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null;
         if (aiCompleted) merged.add(key);
       } else if (ref.source === 'static') {
         const staticCompleted = Object.values(lessonProgress).some(
@@ -396,7 +396,7 @@ function SessionSection({
       {exercises.map((ref, i) => {
         const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
         const highScore = isAI
-          ? lessonProgress['__ai__']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore ?? null
+          ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore ?? null
           : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore ?? null;
         const isAttempted = completedKeys.has(ref.skillNodeId || ref.exerciseId);
         const exercise = ref.source === 'static' ? getExercise(ref.exerciseId) : null;

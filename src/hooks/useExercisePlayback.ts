@@ -720,7 +720,7 @@ export function useExercisePlayback({
       const currentSkillId = skillIdRef.current;
       if (currentSkillId) {
         const aiKey = `ai-skill-${currentSkillId}`;
-        const aiScore = progressState.lessonProgress['__ai__']?.exerciseScores[aiKey];
+        const aiScore = progressState.lessonProgress['_ai_exercises']?.exerciseScores[aiKey];
         if (aiScore?.highScore) {
           previousHighScore = aiScore.highScore;
         }

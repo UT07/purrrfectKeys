@@ -396,7 +396,7 @@ export class SyncManager {
         getGemSyncData(uid).catch((e) => { logger.warn('[Sync:pull] getGemSyncData failed:', (e as Error)?.message); return null; }),
       ]);
 
-      const aiLesson = remoteLessons.find((l) => l.lessonId === '__ai__');
+      const aiLesson = remoteLessons.find((l) => l.lessonId === '_ai_exercises');
       logger.log(`[Sync:pull] Remote data: ${remoteLessons.length} lessons (${aiLesson ? `__ai__ has ${Object.keys(aiLesson.exerciseScores ?? {}).length} scores` : 'no __ai__'}), XP=${remoteGamification?.xp ?? 'null'}, cats=${remoteCats ? 'yes' : 'no'}, gems=${remoteGems ? 'yes' : 'no'}`);
 
       if (!remoteLessons.length && !remoteGamification && !remoteCats && !remoteGems) {
@@ -446,7 +446,7 @@ export class SyncManager {
       // Merge lesson progress: per-exercise, take higher scores
       if (remoteLessons.length > 0) {
         const remoteLessonIds = remoteLessons.map(l => l.lessonId);
-        logger.log(`[Sync:pull] Merging ${remoteLessons.length} lessons: ${remoteLessonIds.includes('__ai__') ? '__ai__ present (' + Object.keys(remoteLessons.find(l => l.lessonId === '__ai__')?.exerciseScores ?? {}).length + ' scores)' : '__ai__ MISSING'}`);
+        logger.log(`[Sync:pull] Merging ${remoteLessons.length} lessons: ${remoteLessonIds.includes('_ai_exercises') ? '__ai__ present (' + Object.keys(remoteLessons.find(l => l.lessonId === '_ai_exercises')?.exerciseScores ?? {}).length + ' scores)' : '__ai__ MISSING'}`);
 
         for (const remoteLesson of remoteLessons) {
           const localLesson = localState.lessonProgress[remoteLesson.lessonId];
@@ -454,7 +454,7 @@ export class SyncManager {
           if (!localLesson) {
             // Lesson doesn't exist locally — adopt the remote version entirely
             const convertedLesson = convertFirestoreLesson(remoteLesson);
-            if (remoteLesson.lessonId === '__ai__') {
+            if (remoteLesson.lessonId === '_ai_exercises') {
               const completedCount = Object.values(convertedLesson.exerciseScores).filter(e => e.completedAt != null).length;
               logger.log(`[Sync:pull] Adopting __ai__ bucket: ${Object.keys(convertedLesson.exerciseScores).length} exercises, ${completedCount} completed`);
             }
@@ -1146,7 +1146,7 @@ export class SyncManager {
           }
 
           // Log __ai__ bucket details for debugging completion persistence
-          if (lessonId === '__ai__') {
+          if (lessonId === '_ai_exercises') {
             const scoreKeys = Object.keys(sanitizedScores);
             const withCompletedAt = scoreKeys.filter(k => sanitizedScores[k].completedAt != null);
             logger.log(`[Sync] Pushing __ai__ bucket: ${scoreKeys.length} exercises, ${withCompletedAt.length} with completedAt`);

@@ -167,6 +167,13 @@ function AppRoot(): React.ReactElement {
 
           // Prune old dailyGoalData entries (>90 days) to prevent unbounded storage growth
           useProgressStore.getState().pruneDailyGoalData();
+
+          // Migrate __ai__ → _ai_exercises (Firestore rejects __ prefixed doc IDs)
+          const lp = useProgressStore.getState().lessonProgress;
+          if (lp['__ai__'] && !lp['_ai_exercises']) {
+            useProgressStore.getState().updateLessonProgress('_ai_exercises', lp['__ai__']);
+            logger.log('[App] Migrated __ai__ → _ai_exercises');
+          }
         }
 
         // Hydrate achievement state

@@ -955,7 +955,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     // Use real lesson ID or synthetic "__ai__" bucket for non-lesson exercises
-    const effectiveLessonId = exLessonId ?? '__ai__';
+    const effectiveLessonId = exLessonId ?? '_ai_exercises';
 
     // Use the resolved exercise ID (real target) when mapped to a lesson,
     // or ai-skill-{skillId} for exercises that couldn't be mapped
@@ -1016,7 +1016,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       // Today's Practice can detect completion via ai-skill-{skillId} key
       if (exLessonId && isAiExercise && skillIdParamRef.current) {
         const aiKey = `ai-skill-${skillIdParamRef.current}`;
-        progressStore.updateExerciseProgress('__ai__', aiKey, {
+        progressStore.updateExerciseProgress('_ai_exercises', aiKey, {
           exerciseId: aiKey,
           highScore: newHighScore,
           stars: newStars,
