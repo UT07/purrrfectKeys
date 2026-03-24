@@ -814,7 +814,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     marginHorizontal: SPACING.sm,
     marginTop: SPACING.sm,
-    overflow: 'hidden',
   },
   topBar: {
     flexDirection: 'row',
