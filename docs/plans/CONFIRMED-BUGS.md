@@ -142,11 +142,11 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 
 | # | Severity | Bug | Package | Fix Version | Via |
 |---|----------|-----|---------|------------|-----|
-| 73a | P1 | Prototype Pollution via parse() in flatted | `flatted` 3.4.1 | 3.4.2 | eslint → file-entry-cache → flat-cache (already has override, needs version bump) |
-| 73b | P1 | Symlink/Hardlink Path Traversal (3 CVEs) | `tar` 6.2.1 | 7.5.11 | expo → @expo/cli → cacache (needs override) |
-| 73c | P1 | Entity Expansion bypass (2 CVEs) | `fast-xml-parser` 5.5.5 | 5.5.7 | firebase-admin → @google-cloud/storage (needs override) |
-| 73d | P2 | ReDoS with `$data` option | `ajv` 6.14.0/8.11.0 | 8.18.0 | eslint, detox, expo-dev-launcher, expo-router (needs override) |
-| 73e | P2 | Incorrect Control Flow Scoping | `@tootallnate/once` 2.0.0 | 3.0.1 | firebase-admin → @google-cloud/storage → teeny-request (needs override) |
+| 73a | P1 | Prototype Pollution via parse() in flatted | `flatted` 3.4.1 | 3.4.2 | **FIXED (override → 3.4.2)** |
+| 73b | P1 | Symlink/Hardlink Path Traversal (3 CVEs) | `tar` 6.2.1 | 7.5.11 | **FIXED (override → 7.5.12)** |
+| 73c | P1 | Entity Expansion bypass (2 CVEs) | `fast-xml-parser` 5.5.5 | 5.5.7 | **FIXED (override → 5.5.8)** |
+| 73d | P2 | ReDoS with `$data` option | `ajv` 6.14.0/8.11.0 | 8.18.0 | **FIXED (override → 8.18.0)** |
+| 73e | P2 | Incorrect Control Flow Scoping | `@tootallnate/once` 2.0.0 | 3.0.1 | **FIXED (override → 3.0.1)** |
 | 80 | P1 | Profile screen ScoreRing is red/dark tint, HomeScreen ring is green — inconsistent ring styling between the two screens | **FIXED (matched to HomeScreen primary color + cardBorder track)** |
 | 81 | P1 | Sentry Logger console error: "Failed to receive any fallback timestamp" — shows red error modal on device | **FIXED (LogBox.ignoreLogs)** |
 | 82 | P1 | CatAvatar SVG rendering needs full Figma redesign — tails float above body at all sizes, ears misaligned at small sizes, micro-animations (vbScale math) break alignment. Needs Figma credits to redesign SVG paths properly per cat. BLOCKED on Figma credits. |
@@ -163,7 +163,7 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 | 103 | P1 | AI exercise scoring integrity — 0% timing + 0% duration on play-along exercises suggests note matching/timing is fundamentally broken for AI-generated content. May be wrong tempo, wrong note set, or timing offset miscalculation | Scores feel random/unfair — user plays correctly but gets low % |
 | 105 | P1 | Daily plan completion markers (green ✓) lost after sign-out/sign-in | Completed exercises lose their green checkmark after sign-out/sign-in | **FIXED (3 root causes: immediateSave didn't handle getter functions, `__ai__` doc ID rejected by Firestore, orderBy silently failing)** |
 | 106 | P2 | Post-exercise Salsa coaching message appears slowly — noticeable delay before the cat speech bubble renders after exercise completion | Feels sluggish after finishing an exercise |
-| 104 | P2 | +41 XP awarded for 16% failing score — XP calculation doesn't gate on isPassed, awards XP even for very poor performance | Economy inflation from failed exercises |
+| 104 | P2 | +41 XP awarded for 16% failing score — XP calculation doesn't gate on isPassed, awards XP even for very poor performance | Economy inflation from failed exercises | **FIXED (failed = 2 XP participation, passed = full XP)** |
 | 100 | P1 | Pre-exercise loading is inconsistent — sometimes shows ExerciseLoadingScreen (Salsa + random tips), sometimes shows SalsaIntro modal (screenshot), sometimes BOTH appear sequentially. Should be ONE unified pre-exercise screen: Salsa + exercise title + tip + "Let's go!" button. Remove the separate SalsaIntro modal. | Two loading screens before exercise is confusing and feels broken |
 | 99 | P1 | Split keyboard (two-handed exercises) is extremely choppy and unplayable — both R and L keyboards render full 2-octave ranges causing heavy re-renders, count-in overlay overlaps awkwardly, PianoRoll barely visible above dual keyboards | Two-keyboard layout is unusable on device — lag, visual clutter, no room for falling notes |
 | 97 | P1 | PURRRFECT-KEYS-MOBILE-A | `ReferenceError: Property 'getTodayDateString' doesn't exist` in DailySessionScreen useMemo — likely stale dev build or Metro cache issue since the export exists in `src/utils/time.ts` | Today's Practice crashes on launch |

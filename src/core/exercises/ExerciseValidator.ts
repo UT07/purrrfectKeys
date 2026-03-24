@@ -292,16 +292,17 @@ export function scoreExercise(
   if (overall >= starThresholds[1]) stars = 2;
   if (overall >= starThresholds[2]) stars = 3;
 
-  // Calculate XP earned
-  const baseXp = 10;
-  const accuracyBonus = (breakdown.accuracy / 100) * 10;
-  const timingBonus = (breakdown.timing / 100) * 10;
-  const firstTimeBonus = previousHighScore === 0 ? 25 : 0;
+  const isPassed = overall >= exercise.scoring.passingScore;
+
+  // Bug #104 fix: only award meaningful XP for passing scores.
+  // Failed exercises get minimal participation XP to avoid economy inflation.
+  const baseXp = isPassed ? 10 : 2;
+  const accuracyBonus = isPassed ? (breakdown.accuracy / 100) * 10 : 0;
+  const timingBonus = isPassed ? (breakdown.timing / 100) * 10 : 0;
+  const firstTimeBonus = isPassed && previousHighScore === 0 ? 25 : 0;
   const perfectBonus = stars === 3 ? 50 : 0;
 
   const xpEarned = Math.floor(baseXp + accuracyBonus + timingBonus + firstTimeBonus + perfectBonus);
-
-  const isPassed = overall >= exercise.scoring.passingScore;
   const isNewHighScore = overall > previousHighScore;
 
   return {
