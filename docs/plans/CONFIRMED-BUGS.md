@@ -173,6 +173,9 @@ These stores have NO sync to Firestore — data exists only locally and is lost 
 
 | # | Severity | Sentry ID | Bug | Notes |
 |---|----------|-----------|-----|-------|
+| 108 | P1 | Lesson Complete screen needs UI polish — stars overflow horizontally, no celebration animation, plain layout. Needs redesign for Phase 18 UI/UX work. | Lesson completion feels anticlimactic |
+| 109 | P1 | Today's Practice AI exercises leak into future lessons — CurriculumEngine picks skills from Lesson 4+ when user just completed Lesson 3. These get scored against Lesson 4's exercises, showing 5/6 progress on a lesson user hasn't started. AI picks in LESSON section must be capped to current lesson tier. Challenge section can go ahead. | Lesson tree shows false progress on future lessons |
+| 110 | P1 | Tap exercise scoring disconnected from visual feedback — user sees "ok" and "late" visual feedback on taps but final score is very low (16%). Scoring engine may use different timing/matching than visual feedback for tap mode. | Visual says decent performance but score says terrible |
 | 107 | P2 | PURRRFECT-KEYS-MOBILE-C | `EXC_BAD_ACCESS` native crash — no JS stack, low actionability. Likely simulator memory issue or Hermes GC edge case. | Monitor — may not repro on physical device |
 
 ## Feature / Infrastructure Items

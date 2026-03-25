@@ -628,6 +628,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     return ex;
   }, [rawExercise, playbackSpeed, abilityConfig]);
 
+  // ─── Display title: prefer skill node name for AI exercises (F10 fix) ──
+  // Gemini generates its own title ("C Rhythm Practice") which doesn't match
+  // the skill node the CurriculumEngine selected ("Hand Independence Drill").
+  const displayTitle = useMemo(() => {
+    if (aiMode && skillIdParamRef.current) {
+      const skill = getSkillById(skillIdParamRef.current);
+      if (skill?.name) return `Practice: ${skill.name}`;
+    }
+    return exercise.metadata.title;
+  }, [aiMode, exercise.metadata.title]);
+
   // ─── Exercise type branching ────────────────────────────────────────
   const exerciseType: ExerciseType = getExerciseType(exercise);
   const isSightReading = exerciseType === 'sightReading';
@@ -1716,13 +1727,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   });
 
   useEffect(() => {
+    // Bug #62 fix: use realtimeBeatRef (60fps) for the beat position so the
+    // highlighted "expected" note matches what handleKeyDown's scoring uses.
+    // effectiveBeat (20fps) triggers the effect; realtimeBeatRef gives accuracy.
+    const beat = realtimeBeatRef?.current ?? effectiveBeat;
+
     // Find the next unconsumed note(s) at the nearest upcoming beat
     const upcoming = exercise.notes
       .map((note, index) => ({ ...note, index }))
       .filter(
         (note) =>
           !consumedNoteIndicesRef.current.has(note.index) &&
-          note.startBeat >= effectiveBeat - 0.5
+          note.startBeat >= beat - 0.3
       );
 
     if (upcoming.length === 0) {
@@ -2288,10 +2304,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (!finalScore || !mountedRef.current) return;
     setShowXPTransition(false);
 
-    // Store completion data in cache for PostExerciseScreen to read
+    // Store completion data in cache for PostExerciseScreen to read.
+    // F10 fix: override exercise title with displayTitle so PostExercise
+    // shows the skill node name, not Gemini's generated title.
+    const exerciseForCache = displayTitle !== exercise.metadata.title
+      ? { ...exercise, metadata: { ...exercise.metadata, title: displayTitle } }
+      : exercise;
     setPostExerciseData({
       score: finalScore,
-      exercise,
+      exercise: exerciseForCache,
       gemsEarned: gemsEarnedForModal,
       chestType: chestTypeForModal,
       chestGems: chestGemsForModal,

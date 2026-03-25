@@ -271,7 +271,7 @@ describe('SessionTypes', () => {
         .map((node) => node.id);
 
       const referencesTier7Plus = allExercises.some(
-        (ref) => tier7PlusSkillIds.includes(ref.skillNodeId)
+        (ref) => tier7PlusSkillIds.includes(ref.skillNodeId!)
       );
 
       // When all tier 1-6 are mastered, the next skill to learn should be tier 7+

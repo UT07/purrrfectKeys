@@ -754,7 +754,7 @@ function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
             {exercises.map((ref, i) => {
               const exercise = ref.source === 'static' ? getExercise(ref.exerciseId) : null;
               const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
-              const skillNode = isAI ? getSkillById(ref.skillNodeId) : null;
+              const skillNode = isAI && ref.skillNodeId ? getSkillById(ref.skillNodeId) : null;
               const title = exercise?.metadata.title ?? skillNode?.name ?? 'AI Exercise';
 
               // Check completion: AI exercises stored under __ai__ bucket with stable key

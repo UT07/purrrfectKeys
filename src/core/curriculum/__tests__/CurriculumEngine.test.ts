@@ -96,7 +96,7 @@ describe('CurriculumEngine', () => {
       const lessonSkills = plan.lesson.map((r) => r.skillNodeId);
       // Should be targeting rh-cde or lh-c-position (both have white-keys as prereq)
       const validNextSkills = ['rh-cde', 'lh-c-position'];
-      expect(lessonSkills.some((s) => validNextSkills.includes(s))).toBe(true);
+      expect(lessonSkills.some((s) => validNextSkills.includes(s!))).toBe(true);
     });
 
     it('should include AI exercises when all skills are mastered', () => {

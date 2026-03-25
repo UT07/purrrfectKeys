@@ -44,7 +44,7 @@ export type EndgameTheme =
 export interface ExerciseRef {
   exerciseId: string;
   source: 'static' | 'ai' | 'ai-with-fallback' | 'song';
-  skillNodeId: string;
+  skillNodeId?: string;
   reason: string;
   fallbackExerciseId?: string;  // Static exercise ID for offline fallback
   songId?: string;  // Song ID if source is 'song' — UI loads via songToExercise()
@@ -126,9 +126,17 @@ export function selectSessionType(
  * - challenge: warm-up + challenge exercises from deepest skills + tempo push
  * - mixed: 1 review exercise + 1 new skill exercise + 1 challenge
  */
+/** Minimal lesson progress info needed by the engine (avoids importing store types) */
+export interface LessonProgressInfo {
+  lessonId: string;
+  status: string;
+  exerciseScores: Record<string, { highScore: number; completedAt?: number | null }>;
+}
+
 export function generateSessionPlan(
   profile: LearnerProfileData,
-  masteredSkills: string[]
+  masteredSkills: string[],
+  lessonProgress?: Record<string, LessonProgressInfo>
 ): SessionPlan {
   const reasoning: string[] = [];
   const recentSet = new Set(profile.recentExerciseIds ?? []);
@@ -177,7 +185,7 @@ export function generateSessionPlan(
       warmUp = generateWarmUp(profile, masteredSkills, reasoning, recentSet);
       lesson = generateReviewLesson(profile, masteredSkills, reasoning, recentSet);
       // Add 1 new-material exercise at end
-      const newMaterial = generateLesson(profile, masteredSkills, [], recentSet);
+      const newMaterial = generateLesson(profile, masteredSkills, [], recentSet, lessonProgress);
       if (newMaterial.length > 0) {
         lesson.push(newMaterial[0]);
         reasoning.push(`Plus new material: ${newMaterial[0].reason}`);
@@ -188,7 +196,7 @@ export function generateSessionPlan(
     case 'challenge': {
       reasoning.push('Challenge day!');
       warmUp = generateWarmUp(profile, masteredSkills, reasoning, recentSet);
-      lesson = generateLesson(profile, masteredSkills, reasoning, recentSet);
+      lesson = generateLesson(profile, masteredSkills, reasoning, recentSet, lessonProgress);
       challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet, collectSkillIds(warmUp, lesson));
       // Add extra challenge exercise
       const extraChallenge = generateChallenge(profile, masteredSkills, [], recentSet, collectSkillIds(warmUp, lesson, challenge));
@@ -203,7 +211,7 @@ export function generateSessionPlan(
       // 1 review exercise
       const reviewExercises = generateReviewLesson(profile, masteredSkills, reasoning, recentSet);
       // 1 new skill exercise
-      const newExercises = generateLesson(profile, masteredSkills, reasoning, recentSet);
+      const newExercises = generateLesson(profile, masteredSkills, reasoning, recentSet, lessonProgress);
       lesson = [];
       if (reviewExercises.length > 0) lesson.push(reviewExercises[0]);
       if (newExercises.length > 0) lesson.push(newExercises[0]);
@@ -213,7 +221,7 @@ export function generateSessionPlan(
     default: {
       // new-material
       warmUp = generateWarmUp(profile, masteredSkills, reasoning, recentSet);
-      lesson = generateLesson(profile, masteredSkills, reasoning, recentSet);
+      lesson = generateLesson(profile, masteredSkills, reasoning, recentSet, lessonProgress);
       challenge = generateChallenge(profile, masteredSkills, reasoning, recentSet, collectSkillIds(warmUp, lesson));
       break;
     }
@@ -412,7 +420,7 @@ function generateWarmUp(
 
   // Strategy 3: Review a recently mastered skill from a different category
   if (refs.length < 2 && masteredSkills.length > 0) {
-    const usedCategories = new Set(refs.map((r) => getSkillById(r.skillNodeId)?.category));
+    const usedCategories = new Set(refs.map((r) => getSkillById(r.skillNodeId ?? '')?.category));
     let recentSkill: SkillNode | null = null;
     for (let j = masteredSkills.length - 1; j >= 0; j--) {
       const sid = masteredSkills[j];
@@ -452,19 +460,28 @@ function generateLesson(
   _profile: LearnerProfileData,
   masteredSkills: string[],
   reasoning: string[],
-  _recentSet: Set<string> = new Set()
+  _recentSet: Set<string> = new Set(),
+  lessonProgress?: Record<string, LessonProgressInfo>
 ): ExerciseRef[] {
   const refs: ExerciseRef[] = [];
+
+  // ── Slot 1: Lesson-tree exercise (failed retry or next uncompleted) ──
+  // Bug #75 fix: read lessonProgress to find exercises the user NEEDS to do
+  const lessonTreeRef = findLessonTreeExercise(lessonProgress, reasoning);
+  if (lessonTreeRef) {
+    refs.push(lessonTreeRef);
+  }
+
+  // ── Slot 2: AI-personalized pick from SkillTree ──
   const nextSkill = getNextSkillToLearn(masteredSkills, _profile.skillMasteryData);
 
   if (!nextSkill) {
-    reasoning.push('Post-curriculum: AI-generated exercises across skill categories');
-    // Pick skills from varied categories for a diverse session
+    // Post-curriculum: AI-generated exercises across skill categories
+    if (refs.length === 0) reasoning.push('Post-curriculum: AI-generated exercises across skill categories');
     const allMasteredSkills = [...masteredSkills]
       .map((id) => getSkillById(id))
       .filter(Boolean) as SkillNode[];
 
-    // Group by category and pick one skill per category, prioritizing deep skills
     const byCategory = new Map<string, SkillNode[]>();
     for (const skill of allMasteredSkills) {
       const list = byCategory.get(skill.category) ?? [];
@@ -472,54 +489,107 @@ function generateLesson(
       byCategory.set(skill.category, list);
     }
 
-    // Pick from 2-3 categories, rotating based on recent exercises to keep it fresh
-    // BUG-033 fix: Use modulo-based rotation instead of brittle slice+concat
     const categories = [...byCategory.keys()].sort();
-    if (categories.length === 0) return refs;
-    const recentCount = _recentSet.size;
-    const offset = recentCount % categories.length;
-    const pickCount = Math.min(3, categories.length);
-    const uniqueCategories: string[] = [];
-    for (let i = 0; i < pickCount; i++) {
-      uniqueCategories.push(categories[(offset + i) % categories.length]);
-    }
-
-    for (const cat of uniqueCategories) {
-      const skills = byCategory.get(cat) ?? [];
-      // Pick deepest skill in category that wasn't recently done
-      const sorted = skills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
-      const skill = sorted.find((s) => !_recentSet.has(`ai-skill-${s.id}`)) ?? sorted[0];
-      if (skill) {
-        refs.push(makeAIRef(skill, `Post-curriculum ${cat}: ${skill.name}`, _recentSet));
+    if (categories.length > 0) {
+      const recentCount = _recentSet.size;
+      const offset = recentCount % categories.length;
+      const pickCount = Math.min(2, categories.length);
+      for (let i = 0; i < pickCount; i++) {
+        const cat = categories[(offset + i) % categories.length];
+        const skills = byCategory.get(cat) ?? [];
+        const sorted = skills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id));
+        const skill = sorted.find((s) => !_recentSet.has(`ai-skill-${s.id}`)) ?? sorted[0];
+        if (skill) {
+          refs.push(makeAIRef(skill, `Also working on: ${skill.name}`, _recentSet));
+        }
       }
     }
 
     if (refs.length === 0) {
-      // Ultimate fallback
       const deepest = allMasteredSkills.sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id))[0];
-      if (deepest) {
-        refs.push(makeAIRef(deepest, 'Post-curriculum review exercise', _recentSet));
-      }
+      if (deepest) refs.push(makeAIRef(deepest, 'Post-curriculum review exercise', _recentSet));
     }
     return refs;
   }
 
-  reasoning.push(`Lesson focuses on: ${nextSkill.name} (${nextSkill.category})`);
-
-  // AI-first: generate exercise for this skill, with static fallback
+  // Normal curriculum: add AI pick for the next skill to learn
+  reasoning.push(`AI pick: ${nextSkill.name} (${nextSkill.category})`);
   refs.push(makeAIRef(nextSkill, `Learn: ${nextSkill.name}`, _recentSet));
 
-  // Add a parallel skill's AI exercise if available
+  // If only 1 exercise so far, add a parallel skill
   if (refs.length < 2) {
     const available = getAvailableSkills(masteredSkills);
     const parallel = available.find((s) => s.id !== nextSkill.id);
     if (parallel) {
       refs.push(makeAIRef(parallel, `Also working on: ${parallel.name}`, _recentSet));
-      reasoning.push(`Parallel skill added: ${parallel.name}`);
+      reasoning.push(`Parallel skill: ${parallel.name}`);
     }
   }
 
   return refs;
+}
+
+/**
+ * Find the most urgent exercise from the current lesson tree.
+ * Priority: (1) failed exercise needing retry, (2) next uncompleted exercise.
+ */
+function findLessonTreeExercise(
+  lessonProgress: Record<string, LessonProgressInfo> | undefined,
+  reasoning: string[]
+): ExerciseRef | null {
+  if (!lessonProgress) return null;
+
+  try {
+    const { getLessons, getExercisesForLesson, getExercise } = require('../../content/ContentLoader');
+    const lessons = getLessons() as Array<{ id: string; title: string }>;
+
+    for (const lesson of lessons) {
+      const lp = lessonProgress[lesson.id];
+      if (lp?.status === 'completed') continue; // Skip completed lessons
+
+      const exercises = (getExercisesForLesson(lesson.id) as Array<{ id: string; type: string; order: number }>)
+        .filter((e) => e.type !== 'test')
+        .sort((a, b) => a.order - b.order);
+
+      // Priority 1: Find a failed exercise (attempted but below passingScore)
+      for (const ex of exercises) {
+        const score = lp?.exerciseScores[ex.id];
+        if (score && score.highScore > 0) {
+          const fullEx = getExercise(ex.id);
+          const passingScore = fullEx?.scoring?.passingScore ?? 70;
+          if (score.highScore < passingScore) {
+            reasoning.push(`Retry needed: ${fullEx?.metadata?.title ?? ex.id} (${score.highScore}% < ${passingScore}%)`);
+            return {
+              exerciseId: ex.id,
+              source: 'static' as const,
+              reason: `Retry: ${fullEx?.metadata?.title ?? ex.id} — score ${score.highScore}% needs ${passingScore}%`,
+            };
+          }
+        }
+      }
+
+      // Priority 2: Find next uncompleted exercise
+      for (const ex of exercises) {
+        const score = lp?.exerciseScores[ex.id];
+        const fullEx = getExercise(ex.id);
+        const passingScore = fullEx?.scoring?.passingScore ?? 70;
+        if (!score || score.highScore < passingScore) {
+          reasoning.push(`Next in ${lesson.title}: ${fullEx?.metadata?.title ?? ex.id}`);
+          return {
+            exerciseId: ex.id,
+            source: 'static' as const,
+            reason: `Learn: ${fullEx?.metadata?.title ?? ex.id}`,
+          };
+        }
+      }
+
+      // This lesson has all exercises passed but status isn't 'completed' — skip to next
+    }
+  } catch {
+    // ContentLoader not available — fall through to AI-only
+  }
+
+  return null;
 }
 
 function generateReviewLesson(

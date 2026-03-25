@@ -314,7 +314,7 @@ describe('Year-Long Progression Simulation', () => {
     // Verify the AI exercise targets a tier 7+ skill
     for (const ref of lessonAiRefs) {
       if (ref.skillNodeId !== 'review') {
-        const skill = getSkillById(ref.skillNodeId);
+        const skill = getSkillById(ref.skillNodeId!);
         if (skill) {
           expect(skill.tier).toBeGreaterThanOrEqual(7);
         }

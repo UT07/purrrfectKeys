@@ -29,19 +29,22 @@ Phases 1–10.5 were the original build-out. QA is a continuous parallel track, 
 ║  PHASE 11: Foundation Cleanup                    ✅ DONE     ║
 ║  PHASE 12: Exercise Types + UI                   ✅ DONE     ║
 ║  PHASE 13: Content Explosion                     ⚠️ PARTIAL  ║
-║     (599 exercises generated but ALL same play-along type.    ║
-║      Exercise type variety is a separate deep feature — F2)   ║
+║     (599 exercises, 50 lessons, 120 skills — DONE.            ║
+║      Exercise type variety — NOT DONE. Reopens after           ║
+║      bug stabilization branch merges to master.)              ║
 ║  PHASE 14: Social Revamp — Competitive League    ✅ DONE     ║
-║  PHASE 15: Cat Progression + Cat Studio                      ║
-║  PHASE 16: "Play First" Onboarding                           ║
-║  PHASE 17: System Design Hardening (was 20)      ← MOVED UP ║
+║  ─── BUG STABILIZATION (this branch) ────────────────────    ║
+║  ─── PHASE 13 COMPLETION: Exercise Type Variety ─────────    ║
+║  PHASE 15: System Design Hardening (was 20)      ← MOVED UP ║
 ║     (MMKV, TanStack Query, Cloud Function caching,           ║
 ║      Gemini via CF, sync compaction, offline indicator)       ║
-║  PHASE 18: UI/UX Revamp (was 17)                             ║
+║  PHASE 16: Cat Progression + Cat Studio                      ║
+║  PHASE 17: "Play First" Onboarding                           ║
+║  PHASE 18: UI/UX Revamp                                      ║
 ║     (Unified cat avatar with 3 concentric rings:              ║
 ║      XP ring + cat evolution ring + MMR rank ring.            ║
 ║      Tap to see progress details. Merge profile/dashboard.)   ║
-║  PHASE 19: Retention Engine (was 18)                         ║
+║  PHASE 19: Retention Engine                                  ║
 ║  PHASE 20: Analytics + Crash Reporting           ✅ DONE     ║
 ║  PHASE 21: Web Version                                       ║
 ║  PHASE 22: Monetization + Production Path (parallel)         ║

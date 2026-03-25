@@ -52,6 +52,14 @@ export function getDailyPlan(): SessionPlan {
       return { sessionType: 'new-material', warmUp: [], lesson: [], challenge: [], songs: [], reasoning: ['Waiting for sync...'] };
     }
   } catch { /* authStore not available — proceed normally */ }
+  // Bug #75: pass lessonProgress so CurriculumEngine can prioritize
+  // failed/uncompleted exercises from the current lesson
+  let lessonProgressData: Record<string, any> | undefined;
+  try {
+    const { useProgressStore } = require('../../stores/progressStore');
+    lessonProgressData = useProgressStore.getState().lessonProgress;
+  } catch { /* progressStore not available */ }
+
   const plan = generateSessionPlan(
     {
       noteAccuracy: profile.noteAccuracy,
@@ -68,6 +76,7 @@ export function getDailyPlan(): SessionPlan {
       recentExerciseIds: profile.recentExerciseIds,
     },
     profile.masteredSkills,
+    lessonProgressData,
   );
 
   memoryCache = { date: today, plan };
