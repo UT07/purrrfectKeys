@@ -373,6 +373,25 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // If generation failed, fall through to buffer/fallback below
       }
 
+      // F10 fix: try static exercise from skill's targetExerciseIds FIRST.
+      // Only fall back to Gemini AI generation if no static exercise exists.
+      let useStaticFallback = false;
+      if (skillIdParam) {
+        const skillNode = getSkillById(skillIdParam);
+        if (skillNode?.targetExerciseIds?.length) {
+          const staticEx = skillNode.targetExerciseIds
+            .map((id) => getExercise(id))
+            .find((ex) => ex != null);
+          if (staticEx && !cancelled) {
+            logger.log(`[ExercisePlayer] Using static exercise for skill ${skillIdParam}: ${staticEx.id}`);
+            setAiExercise(staticEx);
+            useStaticFallback = true;
+          }
+        }
+      }
+
+      if (useStaticFallback) return;
+
       const buffered = skillIdParam
         ? await getNextExerciseForSkill(skillIdParam)
         : await getNextAIExercise();
@@ -383,13 +402,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // Resolve exercise type: explicit param > AI response > skill category > default 'play'
         const resolvedType = buffered.type ?? resolveExerciseType(exerciseTypeParam, skillIdParam);
 
-        // Convert AIExercise to Exercise
+        // Convert AIExercise to Exercise — use skill name as title (F10 fix)
+        const skillName = skillIdParam ? getSkillById(skillIdParam)?.name : null;
         const converted: Exercise = {
           id: `ai-${Date.now()}`,
           version: 1,
           ...(resolvedType ? { type: resolvedType } : {}),
           metadata: {
-            title: buffered.metadata?.title ?? 'AI Practice',
+            title: skillName ? `Practice: ${skillName}` : (buffered.metadata?.title ?? 'AI Practice'),
             description: 'Generated exercise targeting your weak areas',
             difficulty: (buffered.metadata?.difficulty ?? 3) as 1 | 2 | 3 | 4 | 5,
             estimatedMinutes: 2,
@@ -524,14 +544,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Exercise is ready when we have a real exercise (not the fallback)
   const exerciseReady = rawExercise !== FALLBACK_EXERCISE || !aiMode;
 
-  // Speed selector — adjusts exercise tempo for more comfortable playback
-  // MIDI keyboard users get 1.0x (real piano, 10 fingers), touch keyboard gets 0.75x
-  // When requiredPlaybackSpeed is set (e.g. speed-run challenge), it overrides the stored setting
-  const storedPlaybackSpeed = useSettingsStore((s) => s.playbackSpeed);
-  const playbackSpeed = (requiredPlaybackSpeed ?? storedPlaybackSpeed) as PlaybackSpeed;
-  const setPlaybackSpeed = useSettingsStore((s) => s.setPlaybackSpeed);
+  // Input-aware automatic tempo scaling — no manual speed selector.
+  // MIDI = 1.0x (full speed, real piano), Mic = 0.85x (detection latency),
+  // Touch = 0.75x (on-screen keyboard is harder). requiredPlaybackSpeed overrides all.
+  const preferredInput = useSettingsStore((s) => s.preferredInputMethod);
   const lastMidiDeviceId = useSettingsStore((s) => s.lastMidiDeviceId);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
+
+  const playbackSpeed: PlaybackSpeed = useMemo(() => {
+    if (requiredPlaybackSpeed) return requiredPlaybackSpeed as PlaybackSpeed;
+    if (lastMidiDeviceId) return 1.0;
+    if (preferredInput === 'mic') return 0.75;
+    return 0.75; // Touch keyboard default
+  }, [requiredPlaybackSpeed, lastMidiDeviceId, preferredInput]);
 
   // Active cat abilities — read raw data from store (NOT getActiveAbilities() which
   // returns a new array each call, causing infinite re-renders with Zustand's Object.is check)
@@ -554,16 +579,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const isPortrait = screenHeight > screenWidth;
   const singleKeyHeight = isPortrait ? 120 : 70;
   const topBarHeight = isPortrait ? 76 : 40;
-
-  const hasAutoSetSpeed = useRef(false);
-
-  useEffect(() => {
-    if (hasAutoSetSpeed.current) return;
-    hasAutoSetSpeed.current = true;
-    if (lastMidiDeviceId && playbackSpeed !== 1.0) {
-      setPlaybackSpeed(1.0);
-    }
-  }, [lastMidiDeviceId, playbackSpeed, setPlaybackSpeed]);
 
   // Compute ability-modified config from active abilities
   const abilityConfig = useMemo((): ExerciseAbilityConfig | null => {
@@ -681,12 +696,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     analyticsEvents.exercise.started(exercise.id, exercise.metadata.title);
   }, [aiMode, exerciseReady, exercise.id]);
 
-  const cycleSpeed = useCallback(() => {
-    const speeds: PlaybackSpeed[] = [0.25, 0.5, 0.75, 1.0];
-    const currentIdx = speeds.indexOf(playbackSpeed);
-    const nextIdx = (currentIdx + 1) % speeds.length;
-    setPlaybackSpeed(speeds[nextIdx]);
-  }, [playbackSpeed, setPlaybackSpeed]);
+  // Speed is now automatic (input-aware) — no manual cycling
 
   // Dynamic zoomed range — recomputes as playback advances
   const [keyboardRange, setKeyboardRange] = useState<KeyboardRange>(() => {
@@ -1954,7 +1964,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    */
   // Only disable keyboard in explicit mic mode — in auto mode, touch keyboard
   // should work alongside mic detection (touch has priority, echoes are deduped).
-  const preferredInput = useSettingsStore((s) => s.preferredInputMethod);
   const isMicExclusive = preferredInput === 'mic' && activeInputMethod === 'mic';
 
   const handleKeyDown = useCallback(
@@ -2949,11 +2958,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             </View>
           )}
 
-          {/* Speed pill — always visible, active styling when slowed */}
-          {/* Disabled when requiredPlaybackSpeed is set (e.g. speed-run challenge) */}
+          {/* Speed pill — shows auto-calculated speed based on input method */}
           <PressableScale
-            onPress={requiredPlaybackSpeed ? undefined : cycleSpeed}
-            style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive, requiredPlaybackSpeed != null && { opacity: 0.5 }]}
+            style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
             testID="speed-selector"
             soundOnPress={false}
             disabled={requiredPlaybackSpeed != null}
@@ -2978,14 +2985,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
             <View style={{ flex: 1 }} />
 
-            {/* Speed selector */}
+            {/* Speed display — auto-calculated based on input method */}
             <PressableScale
-              onPress={requiredPlaybackSpeed ? undefined : cycleSpeed}
-              style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive, requiredPlaybackSpeed != null && { opacity: 0.5 }]}
+              style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
               testID="speed-selector-full"
-              accessibilityLabel={`Playback speed ${playbackSpeed}x.${requiredPlaybackSpeed ? ' Locked for this challenge.' : ' Tap to change.'}`}
+              accessibilityLabel={`Playback speed ${playbackSpeed}x, auto-adjusted for your input method`}
               soundOnPress={false}
-              disabled={requiredPlaybackSpeed != null}
             >
               <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
                 {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
