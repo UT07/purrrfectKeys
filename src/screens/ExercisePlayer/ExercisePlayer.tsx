@@ -540,8 +540,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const exerciseReady = rawExercise !== FALLBACK_EXERCISE || !aiMode;
 
   // Input-aware automatic tempo scaling — no manual speed selector.
-  // MIDI = 1.0x (full speed, real piano), Mic = 0.85x (detection latency),
-  // Touch = 0.75x (on-screen keyboard is harder). requiredPlaybackSpeed overrides all.
+  // MIDI = 1.0x (full speed, real piano), Mic = 0.75x (detection latency),
+  // Touch = 0.6x (on-screen keyboard needs more time, especially two-handed).
   const preferredInput = useSettingsStore((s) => s.preferredInputMethod);
   const lastMidiDeviceId = useSettingsStore((s) => s.lastMidiDeviceId);
   const selectedCatId = useSettingsStore((s) => s.selectedCatId);
@@ -550,7 +550,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (requiredPlaybackSpeed) return requiredPlaybackSpeed as PlaybackSpeed;
     if (lastMidiDeviceId) return 1.0;
     if (preferredInput === 'mic') return 0.75;
-    return 0.75; // Touch keyboard default
+    return 0.6; // Touch keyboard — 60% of original tempo
   }, [requiredPlaybackSpeed, lastMidiDeviceId, preferredInput]);
 
   // Active cat abilities — read raw data from store (NOT getActiveAbilities() which

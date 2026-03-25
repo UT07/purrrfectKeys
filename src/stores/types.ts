@@ -113,7 +113,7 @@ export interface DailyGoalData {
  * ============================================================================
  */
 
-export type PlaybackSpeed = 0.25 | 0.5 | 0.75 | 1.0;
+export type PlaybackSpeed = 0.25 | 0.5 | 0.6 | 0.75 | 1.0;
 
 export interface AudioSettings {
   masterVolume: number; // 0-1

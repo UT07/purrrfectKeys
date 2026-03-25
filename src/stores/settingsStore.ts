@@ -12,7 +12,7 @@
  */
 
 import { create } from 'zustand';
-import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings } from './types';
+import type { SettingsStoreState, AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings, PlaybackSpeed } from './types';
 import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
 import { logger } from '../utils/logger';
 
@@ -129,7 +129,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     debouncedSave(get());
   },
 
-  setPlaybackSpeed: (speed: 0.25 | 0.5 | 0.75 | 1.0) => {
+  setPlaybackSpeed: (speed: PlaybackSpeed) => {
     set({ playbackSpeed: speed });
     debouncedSave({ ...get(), playbackSpeed: speed });
   },
