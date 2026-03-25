@@ -373,25 +373,20 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // If generation failed, fall through to buffer/fallback below
       }
 
-      // F10 fix: try static exercise from skill's targetExerciseIds FIRST.
-      // Only fall back to Gemini AI generation if no static exercise exists.
-      let useStaticFallback = false;
-      if (skillIdParam) {
-        const skillNode = getSkillById(skillIdParam);
-        if (skillNode?.targetExerciseIds?.length) {
-          const staticEx = skillNode.targetExerciseIds
-            .map((id) => getExercise(id))
-            .find((ex) => ex != null);
-          if (staticEx && !cancelled) {
-            logger.log(`[ExercisePlayer] Using static exercise for skill ${skillIdParam}: ${staticEx.id}`);
-            setAiExercise(staticEx);
-            useStaticFallback = true;
-          }
+      // F10 fix: if route has a real exerciseId (not 'ai-mode'), try loading
+      // the static exercise directly. This handles lesson-tree exercises that
+      // come through as AI mode with a fallbackExerciseId.
+      const routeExId = route.params?.exerciseId;
+      if (routeExId && routeExId !== 'ai-mode' && !routeExId.startsWith('ai-')) {
+        const staticEx = getExercise(routeExId);
+        if (staticEx && !cancelled) {
+          logger.log(`[ExercisePlayer] Using static exercise: ${staticEx.id}`);
+          setAiExercise(staticEx);
+          return;
         }
       }
 
-      if (useStaticFallback) return;
-
+      // Gemini AI generation — personalized exercises for warm-up/challenge
       const buffered = skillIdParam
         ? await getNextExerciseForSkill(skillIdParam)
         : await getNextAIExercise();
