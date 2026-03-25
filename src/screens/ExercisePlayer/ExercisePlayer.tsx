@@ -944,7 +944,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     let resolvedExerciseId = ex.id;
 
     // For AI exercises with a skillId, map completion to the skill's target exercise
-    // so it counts toward the real lesson progress (not the __ai__ bucket)
+    // so it counts toward the real lesson progress — BUT only for lessons the user
+    // has already started (not future lessons). Bug #109: AI exercises were writing
+    // scores to Lesson 4 when user just completed Lesson 3.
     if (!exLessonId && skillIdParamRef.current) {
       const skillNode = getSkillById(skillIdParamRef.current);
       if (skillNode && skillNode.targetExerciseIds.length > 0) {
@@ -952,11 +954,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         let targetExId: string | null = null;
 
         // Find first uncompleted target exercise for this skill
+        // ONLY in lessons that already have progress (user started them)
         for (const tid of skillNode.targetExerciseIds) {
           const tLessonId = getLessonIdForExercise(tid);
           if (tLessonId) {
             const lp = progressData[tLessonId];
-            if (!lp?.exerciseScores[tid]?.completedAt) {
+            // Skip lessons with no progress at all (future/unstarted lessons)
+            if (!lp) continue;
+            if (!lp.exerciseScores[tid]?.completedAt) {
               targetExId = tid;
               break;
             }
