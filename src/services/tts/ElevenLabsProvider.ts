@@ -269,6 +269,12 @@ async function playFromFile(
   if (!AudioMod) return false;
 
   try {
+    // Ensure audio session allows playback (may be in measurement/recording mode after mic use)
+    await AudioMod.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+    }).catch(() => {});
+
     const { sound } = await AudioMod.Sound.createAsync(
       { uri: filePath },
       { shouldPlay: true },
