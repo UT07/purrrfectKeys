@@ -167,21 +167,26 @@ export function PostExerciseScreen(): React.ReactElement {
     return () => { cancelled = true; };
   }, [exercise, score, sessionMinutes]);
 
-  // Auto-play cat dialogue immediately (don't wait for AI coaching)
-  // Bug #106 fix: was waiting for coachFeedback (up to 10s) before speaking
+  // Phase 1: Cat dialogue (1.5s after screen renders — after XP transition sounds settle)
   useEffect(() => {
     if (hasAutoPlayed.current || !catDialogue) return;
     hasAutoPlayed.current = true;
     const timer = setTimeout(() => {
-      // Speak cat dialogue after a comfortable pause (1.5s after screen renders)
-      // to avoid overlapping with XP transition sounds and give user time to read
       ttsService.speak(catDialogue, { catId: selectedCatId });
     }, 1500);
-    return () => {
-      clearTimeout(timer);
-      ttsService.stop();
-    };
+    return () => { clearTimeout(timer); ttsService.stop(); };
   }, [catDialogue, selectedCatId]);
+
+  // Phase 2: Salsa coaching auto-speaks when loaded (5s gap for cat to finish)
+  const hasPlayedCoaching = useRef(false);
+  useEffect(() => {
+    if (!coachFeedback || coachLoading || hasPlayedCoaching.current) return;
+    hasPlayedCoaching.current = true;
+    const timer = setTimeout(() => {
+      ttsService.speak(coachFeedback, { catId: 'salsa' });
+    }, 5000);
+    return () => { clearTimeout(timer); };
+  }, [coachFeedback, coachLoading]);
 
   // Navigation handlers
   const handleRetry = useCallback(() => {
