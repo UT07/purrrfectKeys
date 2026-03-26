@@ -21,8 +21,9 @@ import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getNextSkillToLearn, type SessionPlan, type SessionType, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
-import { getDailyPlan } from '../core/curriculum/dailyPlanCache';
+import { getNextSkillToLearn, type SessionType, type ExerciseRef } from '../core/curriculum/CurriculumEngine';
+import { getDailyPlan } from '../core/curriculum/DailyPlanManager';
+import type { PlanExercise, DailyPlan } from '../core/curriculum/DailyPlanManager';
 import { getSkillsNeedingReview, getSkillById } from '../core/curriculum/SkillTree';
 import { SKILL_TREE } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
@@ -85,55 +86,18 @@ export function DailySessionScreen() {
   const totalExercisesCompleted = useLearnerProfileStore((s) => s.totalExercisesCompleted);
   const isAuthLoading = require('../stores/authStore').useAuthStore((s: { isLoading: boolean }) => s.isLoading) as boolean;
 
-  // Read lesson progress for checking exercise completion from other screens (HomeScreen)
-  const lessonProgress = require('../stores/progressStore').useProgressStore((s: any) => s.lessonProgress) as Record<string, { exerciseScores: Record<string, { completedAt?: number; highScore?: number }> }>;
-
-  // Track which exercises the user completed this session (by key: skillNodeId or exerciseId)
-  const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
-  const lastNavigatedKeyRef = React.useRef<string | null>(null);
-  const prevCompletedCountRef = React.useRef(totalExercisesCompleted);
-
   // Recompute session plan on focus (picks up newly mastered skills after exercises)
   const [focusCounter, setFocusCounter] = useState(0);
   useFocusEffect(
     useCallback(() => {
-      // If totalExercisesCompleted increased since we left, mark the last navigated exercise as done
-      const currentCount = useLearnerProfileStore.getState().totalExercisesCompleted;
-      if (lastNavigatedKeyRef.current && currentCount > prevCompletedCountRef.current) {
-        setCompletedKeys((prev) => new Set([...prev, lastNavigatedKeyRef.current!]));
-        lastNavigatedKeyRef.current = null;
-      }
-      prevCompletedCountRef.current = currentCount;
       setFocusCounter((c) => c + 1);
     }, [])
   );
 
-  // Daily plan — cached by date in AsyncStorage. Never regenerates mid-day.
+  // Daily plan — cached by date, with completion state embedded in each PlanExercise.
   // isAuthLoading triggers re-generation after sync completes (avoids caching beginner plan).
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const plan: SessionPlan = useMemo(() => getDailyPlan(), [focusCounter, isAuthLoading]);
-
-  // Merge completion keys: local session tracking + completions from lessonProgress (cross-screen)
-  const mergedCompletedKeys = useMemo(() => {
-    const merged = new Set(completedKeys);
-    const allExercises = [...plan.warmUp, ...plan.lesson, ...plan.challenge, ...(plan.songs ?? [])];
-    for (const ref of allExercises) {
-      const key = ref.skillNodeId || ref.exerciseId;
-      if (merged.has(key)) continue;
-      const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
-      if (isAI && ref.skillNodeId) {
-        const aiScore = lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`];
-        if (aiScore && (aiScore.completedAt != null || (aiScore.highScore ?? 0) > 0)) merged.add(key);
-      } else if (ref.source === 'static') {
-        const staticAttempted = Object.values(lessonProgress).some((lp) => {
-          const s = lp.exerciseScores[ref.exerciseId];
-          return s && (s.completedAt != null || (s.highScore ?? 0) > 0);
-        });
-        if (staticAttempted) merged.add(key);
-      }
-    }
-    return merged;
-  }, [completedKeys, plan, lessonProgress]);
+  const plan: DailyPlan = useMemo(() => getDailyPlan(), [focusCounter, isAuthLoading]);
 
   const totalExercises = plan.warmUp.length + plan.lesson.length + plan.challenge.length + (plan.songs?.length ?? 0);
   const masteredCount = masteredSkills.length;
@@ -153,8 +117,6 @@ export function DailySessionScreen() {
 
   const handleExercisePress = useCallback(
     (ref: ExerciseRef) => {
-      // Track which exercise we're navigating to, so we can mark it done on return
-      lastNavigatedKeyRef.current = ref.skillNodeId || ref.exerciseId;
       if (ref.source === 'song') {
         // Navigate to song player for song exercises
         if (ref.songId) {
@@ -265,27 +227,21 @@ export function DailySessionScreen() {
         <SessionSection
           sectionKey="warmUp"
           exercises={plan.warmUp}
-          completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
-          lessonProgress={lessonProgress}
         />
 
         {/* Lesson Section */}
         <SessionSection
           sectionKey="lesson"
           exercises={plan.lesson}
-          completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
-          lessonProgress={lessonProgress}
         />
 
         {/* Challenge Section */}
         <SessionSection
           sectionKey="challenge"
           exercises={plan.challenge}
-          completedKeys={mergedCompletedKeys}
           onExercisePress={handleExercisePress}
-          lessonProgress={lessonProgress}
         />
 
         {/* Songs Section */}
@@ -293,9 +249,7 @@ export function DailySessionScreen() {
           <SessionSection
             sectionKey="songs"
             exercises={plan.songs}
-            completedKeys={mergedCompletedKeys}
             onExercisePress={handleExercisePress}
-            lessonProgress={lessonProgress}
           />
         )}
 
@@ -359,15 +313,11 @@ function SessionTypeBadge({ type }: { type: SessionType }) {
 function SessionSection({
   sectionKey,
   exercises,
-  completedKeys,
   onExercisePress,
-  lessonProgress,
 }: {
   sectionKey: SectionKey;
   exercises: ExerciseRef[];
-  completedKeys: Set<string>;
   onExercisePress: (ref: ExerciseRef) => void;
-  lessonProgress: Record<string, { exerciseScores: Record<string, { completedAt?: number; highScore?: number }> }>;
 }) {
   const colors = SECTION_COLORS[sectionKey];
   const icon = SECTION_ICONS[sectionKey];
@@ -376,7 +326,7 @@ function SessionSection({
 
   if (exercises.length === 0) return null;
 
-  const allDone = exercises.every((ref) => completedKeys.has(ref.skillNodeId || ref.exerciseId));
+  const allDone = exercises.every((ref) => (ref as PlanExercise).status !== 'pending');
 
   return (
     <View style={styles.section}>
@@ -395,15 +345,11 @@ function SessionSection({
       </Animated.View>
 
       {exercises.map((ref, i) => {
-        const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
-        const highScore = isAI
-          ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore ?? null
-          : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore ?? null;
-        const isAttempted = completedKeys.has(ref.skillNodeId || ref.exerciseId);
-        const exercise = ref.source === 'static' ? getExercise(ref.exerciseId) : null;
-        const passingScore = exercise?.scoring?.passingScore ?? 70;
-        const isPassed = isAttempted && (highScore ?? 0) >= passingScore;
-        const isBelowThreshold = isAttempted && !isPassed;
+        // Read completion directly from the plan
+        const planEx = ref as PlanExercise;
+        const isPassed = planEx.status === 'passed';
+        const isBelowThreshold = planEx.status === 'failed';
+        const highScore = planEx.score;
 
         return (
           <Animated.View

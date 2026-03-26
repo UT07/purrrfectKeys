@@ -76,7 +76,7 @@ function convertSessionToPlan(
     warmUp: warmUp.map(exerciseRefToPlanExercise),
     lesson: lesson.map(exerciseRefToPlanExercise),
     challenge: challenge.map(exerciseRefToPlanExercise),
-    songs: songs.map(exerciseRefToPlanExercise),
+    songs: (songs ?? []).map(exerciseRefToPlanExercise),
     reasoning,
   };
 }

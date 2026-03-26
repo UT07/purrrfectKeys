@@ -1045,6 +1045,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         ...(newCompletedAt != null ? { completedAt: newCompletedAt } : {}),
       });
 
+      // Update daily plan completion (plan IS the source of truth for dashboard)
+      try {
+        const { updatePlanCompletion } = require('../../core/curriculum/DailyPlanManager');
+        updatePlanCompletion(
+          ex.id,
+          skillIdParamRef.current ?? null,
+          score.overall,
+          score.isPassed,
+        );
+      } catch (err) {
+        logger.warn('[ExercisePlayer] Plan completion update failed:', err);
+      }
+
       // Also save a completion marker in _ai_exercises bucket so HomeScreen's
       // Today's Practice can detect completion via ai-skill-{skillId} key
       if (exLessonId && isAiExercise && skillIdParamRef.current) {

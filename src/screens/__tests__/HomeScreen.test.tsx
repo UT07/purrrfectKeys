@@ -245,6 +245,7 @@ jest.mock('../../core/curriculum/CurriculumEngine', () => ({
     warmUp: [{ exerciseId: 'lesson-01-ex-01', source: 'static', skillNodeId: 'find-middle-c', reason: 'Warm up' }],
     lesson: [{ exerciseId: 'lesson-01-ex-02', source: 'static', skillNodeId: 'find-middle-c', reason: 'New skill' }],
     challenge: [],
+    songs: [],
     reasoning: ['New material session'],
   })),
 }));

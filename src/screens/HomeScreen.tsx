@@ -42,7 +42,8 @@ import { useGemStore } from '../stores/gemStore';
 import { useCatEvolutionStore, xpToNextStage } from '../stores/catEvolutionStore';
 import { EVOLUTION_XP_THRESHOLDS } from '../stores/types';
 import { getLessons } from '../content/ContentLoader';
-import { getDailyPlan } from '../core/curriculum/dailyPlanCache';
+import { getDailyPlan } from '../core/curriculum/DailyPlanManager';
+import type { PlanExercise } from '../core/curriculum/DailyPlanManager';
 import type { ExerciseRef } from '../core/curriculum/CurriculumEngine';
 import { SKILL_TREE, getSkillById } from '../core/curriculum/SkillTree';
 import { getExercise } from '../content/ContentLoader';
@@ -550,7 +551,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
               <Text style={styles.practiceProgressText}>{masteredSkills.length}/{totalSkills} skills</Text>
             </View>
-            <HomePracticeSections plan={sessionPlan} onExercisePress={handleExercisePress} lessonProgress={lessonProgress} />
+            <HomePracticeSections plan={sessionPlan} onExercisePress={handleExercisePress} />
           </GameCard>
         </Animated.View>
         )}
@@ -732,10 +733,9 @@ const PRACTICE_SECTION_COLORS = {
 } as const;
 
 /** Compact practice sections for the HomeScreen dashboard */
-function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
+function HomePracticeSections({ plan, onExercisePress }: {
   plan: { warmUp: ExerciseRef[]; lesson: ExerciseRef[]; challenge: ExerciseRef[] };
   onExercisePress: (ref: ExerciseRef) => void;
-  lessonProgress: Record<string, { exerciseScores: Record<string, { completedAt?: number; highScore?: number; stars?: number }> }>;
 }) {
   return (
     <View style={styles.practiceContainer}>
@@ -757,18 +757,12 @@ function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
               const skillNode = isAI && ref.skillNodeId ? getSkillById(ref.skillNodeId) : null;
               const title = exercise?.metadata.title ?? skillNode?.name ?? 'AI Exercise';
 
-              // Check if exercise was attempted (any score recorded, not just completedAt)
-              const isAttempted = isAI
-                ? (lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore ?? 0) > 0
-                : Object.values(lessonProgress).some((lp) => (lp.exerciseScores[ref.exerciseId]?.highScore ?? 0) > 0);
-              const highScore = isAI
-                ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore
-                : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore;
-
-              // Determine pass/fail: use exercise's passingScore (default 70)
-              const passingScore = exercise?.scoring?.passingScore ?? 70;
-              const isPassed = isAttempted && (highScore ?? 0) >= passingScore;
-              const isBelowThreshold = isAttempted && !isPassed;
+              // Read completion directly from the plan
+              const planEx = ref as PlanExercise;
+              const isPassed = planEx.status === 'passed';
+              const isBelowThreshold = planEx.status === 'failed';
+              const isAttempted = isPassed || isBelowThreshold;
+              const highScore = planEx.score;
 
               // Colors: green = passed, orange = attempted but below threshold, default = not attempted
               const statusColor = isPassed ? COLORS.success : isBelowThreshold ? COLORS.warning : null;
