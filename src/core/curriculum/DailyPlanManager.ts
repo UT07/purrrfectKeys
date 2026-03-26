@@ -39,7 +39,7 @@ export interface DailyPlan {
 // Constants
 // ============================================================================
 
-const STORAGE_KEY = 'purrrfect_keys_daily_plan_v3'; // Bumped to invalidate old cached plans with dedup bugs
+const STORAGE_KEY = 'purrrfect_keys_daily_plan_v4'; // v4: pre-populate existing scores on plan generation
 const TAG = '[DailyPlanManager]';
 
 // ============================================================================
@@ -61,6 +61,49 @@ function exerciseRefToPlanExercise(ref: ExerciseRef): PlanExercise {
   };
 }
 
+/**
+ * Pre-populate plan exercises with existing scores from lessonProgress.
+ * This way exercises the user already attempted show orange/green from the start.
+ */
+function prePopulateScores(exercises: PlanExercise[]): void {
+  try {
+    const { useProgressStore } = require('../../stores/progressStore');
+    const lessonProgress = useProgressStore.getState().lessonProgress;
+    if (!lessonProgress) return;
+
+    for (const ex of exercises) {
+      // Check static exercise scores across all lessons
+      if (ex.source === 'static') {
+        for (const lp of Object.values(lessonProgress)) {
+          const score = (lp as any).exerciseScores?.[ex.exerciseId];
+          if (score?.highScore > 0) {
+            const { getExercise } = require('../../content/ContentLoader');
+            const fullEx = getExercise(ex.exerciseId);
+            const passingScore = fullEx?.scoring?.passingScore ?? 70;
+            ex.score = score.highScore;
+            ex.status = score.highScore >= passingScore ? 'passed' : 'failed';
+            ex.completedAt = score.completedAt ?? null;
+            break;
+          }
+        }
+      }
+      // Check AI exercise scores in _ai_exercises bucket
+      if ((ex.source === 'ai' || ex.source === 'ai-with-fallback') && ex.skillNodeId) {
+        const aiScores = (lessonProgress as any)['_ai_exercises']?.exerciseScores;
+        const aiKey = `ai-skill-${ex.skillNodeId}`;
+        const score = aiScores?.[aiKey];
+        if (score?.highScore > 0) {
+          ex.score = score.highScore;
+          ex.status = score.completedAt != null ? 'passed' : 'failed';
+          ex.completedAt = score.completedAt ?? null;
+        }
+      }
+    }
+  } catch {
+    // progressStore not available — leave as pending
+  }
+}
+
 function convertSessionToPlan(
   date: string,
   sessionType: SessionType,
@@ -70,7 +113,7 @@ function convertSessionToPlan(
   songs: ExerciseRef[],
   reasoning: string[],
 ): DailyPlan {
-  return {
+  const plan: DailyPlan = {
     date,
     sessionType,
     warmUp: warmUp.map(exerciseRefToPlanExercise),
@@ -79,6 +122,11 @@ function convertSessionToPlan(
     songs: (songs ?? []).map(exerciseRefToPlanExercise),
     reasoning,
   };
+
+  // Pre-populate with existing scores so previously attempted exercises show orange/green
+  prePopulateScores([...plan.warmUp, ...plan.lesson, ...plan.challenge, ...plan.songs]);
+
+  return plan;
 }
 
 /** All non-song sections. Songs are optional and don't count toward "plan complete". */
