@@ -167,18 +167,20 @@ export function PostExerciseScreen(): React.ReactElement {
     return () => { cancelled = true; };
   }, [exercise, score, sessionMinutes]);
 
-  // Auto-play coaching via TTS
+  // Auto-play cat dialogue immediately (don't wait for AI coaching)
+  // Bug #106 fix: was waiting for coachFeedback (up to 10s) before speaking
   useEffect(() => {
-    if (!coachFeedback || coachLoading || hasAutoPlayed.current) return;
+    if (hasAutoPlayed.current || !catDialogue) return;
     hasAutoPlayed.current = true;
     const timer = setTimeout(() => {
-      ttsService.speak(coachFeedback, { catId: 'salsa' });
+      // Speak cat dialogue immediately — don't wait for AI coaching
+      ttsService.speak(catDialogue, { catId: selectedCatId });
     }, 400);
     return () => {
       clearTimeout(timer);
       ttsService.stop();
     };
-  }, [coachFeedback, coachLoading]);
+  }, [catDialogue, selectedCatId]);
 
   // Navigation handlers
   const handleRetry = useCallback(() => {

@@ -94,17 +94,66 @@ const originalLog = logger.log.bind(logger);
 const originalWarn = logger.warn.bind(logger);
 const originalError = logger.error.bind(logger);
 
+// ---------------------------------------------------------------------------
+// PII filter for Sentry breadcrumbs — strip UIDs, emails, names
+// ---------------------------------------------------------------------------
+const PII_PATTERNS = [
+  /uid=\w{8,}/gi,           // Firebase UIDs
+  /user=\w{8,}/gi,          // User ID references
+  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/gi, // Email addresses
+];
+
+function sanitizeForSentry(message: string): string {
+  let clean = message;
+  for (const pattern of PII_PATTERNS) {
+    clean = clean.replace(pattern, (match) => match.split('=')[0] + '=[REDACTED]');
+  }
+  return clean;
+}
+
+// Tags worth sending to Sentry as breadcrumbs (operational, not verbose)
+const SENTRY_BREADCRUMB_TAGS = new Set([
+  'Auth', 'Auth:onAuthStateChanged', 'Auth:postSignInSync',
+  'Sync', 'Sync:flushQueue', 'Sync:pull',
+  'ExercisePlayer:save', 'useExercisePlayback',
+  'DailyPlanCache', 'TTSService',
+  'ExpoAudioEngine', 'App',
+]);
+
+function maybeSendToSentry(level: LogEntry['level'], message: string, tag?: string): void {
+  // Only send tagged logs that are operationally useful
+  if (!tag || !SENTRY_BREADCRUMB_TAGS.has(tag)) return;
+  // Only send warn/error always, log only for key tags
+  if (level === 'log' && !['Sync:flushQueue', 'Sync:pull', 'Auth:postSignInSync', 'ExercisePlayer:save', 'useExercisePlayback'].includes(tag)) return;
+
+  try {
+    const { MonitoringService } = require('../services/monitoring');
+    MonitoringService.addBreadcrumb(
+      tag,
+      sanitizeForSentry(message),
+    );
+  } catch {
+    // MonitoringService not available yet during early init
+  }
+}
+
 logger.log = (...args: unknown[]): void => {
   originalLog(...args);
   addEntry('log', args);
+  const entry = buffer[buffer.length - 1];
+  if (entry) maybeSendToSentry('log', entry.message, entry.tag);
 };
 
 logger.warn = (...args: unknown[]): void => {
   originalWarn(...args);
   addEntry('warn', args);
+  const entry = buffer[buffer.length - 1];
+  if (entry) maybeSendToSentry('warn', entry.message, entry.tag);
 };
 
 logger.error = (...args: unknown[]): void => {
   originalError(...args);
   addEntry('error', args);
+  const entry = buffer[buffer.length - 1];
+  if (entry) maybeSendToSentry('error', entry.message, entry.tag);
 };

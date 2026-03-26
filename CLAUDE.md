@@ -400,16 +400,33 @@ POSTHOG_API_KEY=xxx
 
 **ALWAYS use debug logs and monitoring tools when hunting bugs.** Don't guess — observe.
 
-### Debug Log Streams
-The app has tagged debug logging via `logger.log()` (dev-only, silent in production):
-- `[Auth:onAuthStateChanged]` — every auth state change with uid
-- `[Auth:postSignInSync]` — migration + pull results
-- `[Migration]` — local→cloud migration decisions
-- `[Sync:flushQueue]` — queue flush with success/failure
-- `[Sync:pull]` — pull with exact remote data counts
-- `[ExercisePlayer:sync]` — exercise completion sync
+### Debug Log Streams — ALWAYS USE THESE
+The app has two logging systems. **Use both when investigating ANY bug:**
 
-**How to read logs:** Start Metro with `npx expo start --clear 2>&1 | tee metro-debug.log`, play the app, then grep the log file for tagged prefixes.
+**1. DeviceLog (in-memory circular buffer, 500 entries):**
+- `src/utils/DeviceLog.ts` — intercepts ALL `logger.log/warn/error` calls
+- Access programmatically: `DeviceLog.getLogs()`, `DeviceLog.getLogsByTag('Sync')`
+- View in app: DebugLogScreen (accessible from Profile → developer options)
+- Captures ALL subsystem events automatically — no need to add new logging
+
+**2. Metro console (terminal output):**
+- Start with: `npx expo start --clear 2>&1 | tee metro-debug.log`
+- Grep for tagged prefixes in the log file
+
+**Key log tags (always present — no need to add them):**
+- `[Auth:onAuthStateChanged]` — every auth state change with uid
+- `[Auth:postSignInSync]` — pull → migrate → push sequence with results
+- `[Sync:flushQueue]` — queue flush success/failure, __ai__ bucket details
+- `[Sync:pull]` — remote data counts, _ai_exercises presence
+- `[ExercisePlayer:save]` — score key, lesson ID, high score, isPassed, completedAt
+- `[useExercisePlayback] Scoring:` — played/expected note counts, tempo, timing tolerance
+- `[useExercisePlayback] Score:` — per-dimension breakdown (acc/tim/comp/dur/extra)
+- `[DailyPlanCache]` — plan generation, cache hits, restore from storage
+- `[TTSService]` — ElevenLabs vs expo-speech decision, playback status
+
+**MANDATORY: When investigating a bug, ALWAYS read the relevant log stream FIRST.
+Don't guess at root causes — observe the actual data flow in the logs.
+When fixing a bug, verify the fix by checking the log output changed correctly.**
 
 ### Monitoring Services
 - **Sentry** (`EXPO_PUBLIC_SENTRY_DSN`) — crash reporting, session replay, performance traces
@@ -419,7 +436,7 @@ The app has tagged debug logging via `logger.log()` (dev-only, silent in product
   - Use MCP tools: `list-errors`, `error-details`, `insight-query`
 
 ### Bug Hunting Protocol
-1. **Start with logs** — read Metro console output for `[Auth]`, `[Sync]`, `❌` prefixes
+1. **Start with logs** — read DeviceLog or Metro console for relevant tag prefixes
 2. **Check Sentry** — search for unresolved issues and session replays
 3. **Check PostHog** — look at error tracking for JS exceptions
 4. **Reproduce on device** — verify the bug before writing any fix
