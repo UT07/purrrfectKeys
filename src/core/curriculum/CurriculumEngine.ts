@@ -16,6 +16,7 @@ import {
   getSkillById,
   getSkillDepth,
   getSkillsNeedingReview,
+  getSkillsForExercise,
   isTierGatePassed,
   needsGentleReentry,
   GENTLE_REENTRY_FACTOR,
@@ -159,12 +160,21 @@ export function generateSessionPlan(
   const songs: ExerciseRef[] = [];
   let endgameTheme: EndgameTheme | undefined;
 
-  // Helper: collect skill IDs from exercise refs to avoid duplicates across sections
+  // Helper: collect skill IDs from exercise refs to avoid duplicates across sections.
+  // For static exercises (no skillNodeId), look up which skills target that exerciseId.
   const collectSkillIds = (...sections: ExerciseRef[][]): Set<string> => {
     const ids = new Set<string>();
     for (const section of sections) {
       for (const ref of section) {
-        if (ref.skillNodeId) ids.add(ref.skillNodeId);
+        if (ref.skillNodeId) {
+          ids.add(ref.skillNodeId);
+        } else if (ref.source === 'static') {
+          // Find skills whose targetExerciseIds include this exercise
+          const matchingSkills = getSkillsForExercise(ref.exerciseId);
+          for (const skill of matchingSkills) {
+            ids.add(skill.id);
+          }
+        }
       }
     }
     return ids;

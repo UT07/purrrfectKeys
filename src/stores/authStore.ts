@@ -311,12 +311,12 @@ async function triggerPostSignInSync(): Promise<void> {
     // This covers the case where previous syncs silently failed.
     logger.log('[Auth:postSignInSync] Pushing local progress to Firestore...');
     await syncManager.pushAllProgressData().catch((err: Error) => {
-      logger.error('[Auth:postSignInSync] ❌ Push FAILED:', err?.message);
+      logger.warn('[Auth:postSignInSync] Push failed (offline?):', err?.message);
     });
     logger.log('[Auth:postSignInSync] Push complete. Starting periodic sync...');
     syncManager.startPeriodicSync();
   } catch (err) {
-    logger.error('[Auth:postSignInSync] ❌ Sync FAILED:', (err as Error)?.message);
+    logger.warn('[Auth:postSignInSync] Sync failed (offline?):', (err as Error)?.message);
   }
 
   // Restore display name AFTER pull so synced settings take priority.
