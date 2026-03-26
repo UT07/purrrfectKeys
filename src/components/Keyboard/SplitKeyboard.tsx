@@ -4,13 +4,14 @@
  * Top = right hand (higher notes), Bottom = left hand (lower notes).
  * Each half auto-scrolls independently via focusNote.
  *
- * The split point is derived from exercise notes' hand annotations,
- * or defaults to middle C (MIDI 60) when annotations are absent.
+ * Uses the SAME scrollable mechanism as single keyboard — keys are
+ * full-sized and scroll to show the active note region.
  */
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Keyboard } from './Keyboard';
+import { computeZoomedRange } from './computeZoomedRange';
 import { COLORS } from '@/theme/tokens';
 import type { NoteEvent, MidiNoteEvent } from '@/core/exercises/types';
 
@@ -44,23 +45,16 @@ export function deriveSplitPoint(notes: NoteEvent[]): number {
   return 60; // Default: middle C
 }
 
-/** Compute keyboard range (startNote, octaveCount) for a set of MIDI notes */
+/** @deprecated Use computeZoomedRange from Keyboard module instead */
 export function computeKeyboardRange(notes: number[]): {
   startNote: number;
   octaveCount: number;
 } {
   if (notes.length === 0) return { startNote: 48, octaveCount: 2 };
-
   const minNote = Math.min(...notes);
   const maxNote = Math.max(...notes);
-
-  // Round down to nearest C with 2-note margin
   const startNote = Math.max(21, Math.floor((minNote - 2) / 12) * 12);
-  const octaveCount = Math.max(
-    2,
-    Math.min(4, Math.ceil((maxNote - startNote + 3) / 12))
-  );
-
+  const octaveCount = Math.max(2, Math.min(4, Math.ceil((maxNote - startNote + 3) / 12)));
   return { startNote, octaveCount };
 }
 
@@ -74,7 +68,7 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
   enabled = true,
   hapticEnabled = false,
   showLabels = true,
-  keyHeight = 55,
+  keyHeight = 90,
   focusNoteLeft,
   focusNoteRight,
   testID,
@@ -82,29 +76,30 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
   const splitPoint = splitPointProp ?? deriveSplitPoint(notes);
 
   // Partition exercise notes into left/right hands
-  const { leftMidiNotes, rightMidiNotes } = useMemo(() => {
-    const left: number[] = [];
-    const right: number[] = [];
+  const { leftNoteEvents, rightNoteEvents } = useMemo(() => {
+    const left: NoteEvent[] = [];
+    const right: NoteEvent[] = [];
 
     for (const note of notes) {
       if (note.hand === 'left' || (!note.hand && note.note < splitPoint)) {
-        left.push(note.note);
+        left.push(note);
       } else {
-        right.push(note.note);
+        right.push(note);
       }
     }
 
-    return { leftMidiNotes: left, rightMidiNotes: right };
+    return { leftNoteEvents: left, rightNoteEvents: right };
   }, [notes, splitPoint]);
 
-  // Compute keyboard ranges
-  const leftRange = useMemo(
-    () => computeKeyboardRange(leftMidiNotes),
-    [leftMidiNotes]
-  );
+  // Use same zoomed range computation as single keyboard — shows 1-2 octaves
+  // focused on the exercise notes, scrollable for anything outside
   const rightRange = useMemo(
-    () => computeKeyboardRange(rightMidiNotes),
-    [rightMidiNotes]
+    () => computeZoomedRange(rightNoteEvents.map(n => n.note)),
+    [rightNoteEvents]
+  );
+  const leftRange = useMemo(
+    () => computeZoomedRange(leftNoteEvents.map(n => n.note)),
+    [leftNoteEvents]
   );
 
   // Partition highlighted and expected notes by splitPoint
@@ -125,13 +120,11 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
         else re.add(note);
       }
 
-      return {
-        leftHighlighted: lh,
-        rightHighlighted: rh,
-        leftExpected: le,
-        rightExpected: re,
-      };
+      return { leftHighlighted: lh, rightHighlighted: rh, leftExpected: le, rightExpected: re };
     }, [highlightedNotes, expectedNotes, splitPoint]);
+
+  // Split keyboard keys are shorter to fit two rows + PianoRoll
+  const splitKeyHeight = Math.round(keyHeight * 0.75);
 
   return (
     <View style={styles.container} testID={testID}>
@@ -151,9 +144,9 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
             enabled={enabled}
             hapticEnabled={hapticEnabled}
             showLabels={showLabels}
-            scrollable={false}
+            scrollable
             focusNote={focusNoteRight}
-            keyHeight={keyHeight}
+            keyHeight={splitKeyHeight}
             testID={testID ? `${testID}-right` : undefined}
           />
         </View>
@@ -178,9 +171,9 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
             enabled={enabled}
             hapticEnabled={hapticEnabled}
             showLabels={showLabels}
-            scrollable={false}
+            scrollable
             focusNote={focusNoteLeft}
-            keyHeight={keyHeight}
+            keyHeight={splitKeyHeight}
             testID={testID ? `${testID}-left` : undefined}
           />
         </View>

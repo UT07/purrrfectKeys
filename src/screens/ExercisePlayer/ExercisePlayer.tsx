@@ -3114,7 +3114,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           />
         ) : (
         <View
-          style={[styles.keyboardContainer, { height: keyboardMode === 'split' ? singleKeyHeight * 2 + 4 : singleKeyHeight }]}
+          style={[styles.keyboardContainer, { height: keyboardMode === 'split' ? Math.round(singleKeyHeight * 0.75) * 2 + 4 : singleKeyHeight }]}
         >
           {keyboardMode === 'split' ? (
             <SplitKeyboard

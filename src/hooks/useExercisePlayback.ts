@@ -737,12 +737,13 @@ export function useExercisePlayback({
       }
     }
 
+    logger.log(`[useExercisePlayback] Scoring: ${adjustedNotes.length} played notes, ${scoringExercise.notes.length} expected, tempo=${scoringExercise.settings.tempo}, prevHigh=${previousHighScore}, timingTolerance=${scoringExercise.scoring.timingToleranceMs}ms`);
+
     const score = scoreExerciseByType(scoringExercise, adjustedNotes, previousHighScore);
     useExerciseStore.getState().setScore(score);
-    // Sync playedNotes state for post-exercise display
     setPlayedNotes([...playedNotesRef.current]);
 
-    logger.log('[useExercisePlayback] Exercise completed:', score);
+    logger.log(`[useExercisePlayback] Score: ${score.overall}% (acc=${score.breakdown.accuracy} tim=${score.breakdown.timing} comp=${score.breakdown.completeness} dur=${score.breakdown.duration} extra=${score.breakdown.extraNotes}) missed=${score.missedNotes} extra=${score.extraNotes}`);
     onComplete?.(score);
   }, [exercise, onComplete, closeAllOpenNoteDurations, enableAudio, audioEngine]);
 
