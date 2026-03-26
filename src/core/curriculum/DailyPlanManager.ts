@@ -39,7 +39,7 @@ export interface DailyPlan {
 // Constants
 // ============================================================================
 
-const STORAGE_KEY = 'purrrfect_keys_daily_plan_v2';
+const STORAGE_KEY = 'purrrfect_keys_daily_plan_v3'; // Bumped to invalidate old cached plans with dedup bugs
 const TAG = '[DailyPlanManager]';
 
 // ============================================================================
