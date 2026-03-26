@@ -111,7 +111,7 @@ function resetAllStores(): void {
     }
   }
 
-  // NOTE: Do NOT clear dailyPlanCache here. The plan is date-keyed and will
+  // NOTE: Do NOT clear the daily plan here. The plan is date-keyed and will
   // naturally regenerate tomorrow. Clearing it causes the plan to regenerate
   // on sign-in with slightly different inputs → different exercises → completion
   // state lost. The plan itself contains no PII (just skill references).

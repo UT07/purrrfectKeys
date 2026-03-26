@@ -31,7 +31,7 @@ import { syncManager } from './services/firebase/syncService';
 import { migrateLocalToCloud } from './services/firebase/dataMigration';
 import { hydrateGemStore } from './stores/gemStore';
 import { hydrateCatEvolutionStore } from './stores/catEvolutionStore';
-import { hydrateDailyPlanCache } from './core/curriculum/dailyPlanCache';
+import { hydrateDailyPlan } from './core/curriculum/DailyPlanManager';
 import { hydrateSongStore } from './stores/songStore';
 import { hydrateSocialStore, useSocialStore } from './stores/socialStore';
 import { hydrateLeagueStore, useLeagueStore } from './stores/leagueStore';
@@ -168,12 +168,6 @@ function AppRoot(): React.ReactElement {
           // Prune old dailyGoalData entries (>90 days) to prevent unbounded storage growth
           useProgressStore.getState().pruneDailyGoalData();
 
-          // Migrate __ai__ → _ai_exercises (Firestore rejects __ prefixed doc IDs)
-          const lp = useProgressStore.getState().lessonProgress;
-          if (lp['__ai__'] && !lp['_ai_exercises']) {
-            useProgressStore.getState().updateLessonProgress('_ai_exercises', lp['__ai__']);
-            logger.log('[App] Migrated __ai__ → _ai_exercises');
-          }
         }
 
         // Hydrate achievement state
@@ -217,7 +211,7 @@ function AppRoot(): React.ReactElement {
             return hydrateSeasonStore().then(() => logger.log('[App] Season store hydrated')).catch((e) => logger.warn('[App] Season store hydration failed:', e));
           }).catch((e) => logger.warn('[App] Rank store hydration failed:', e)),
           hydrateGuildStore().then(() => logger.log('[App] Guild store hydrated')).catch((e) => logger.warn('[App] Guild store hydration failed:', e)),
-          hydrateDailyPlanCache().catch((e) => logger.warn('[App] Daily plan cache hydration failed:', e)),
+          hydrateDailyPlan().catch((e) => logger.warn('[App] Daily plan hydration failed:', e)),
         ]);
 
         // ── Phase 2: Firebase Auth (network, may be slow) ──────────────

@@ -808,6 +808,14 @@ export class SyncManager {
         logger.log('[Sync] Progress extras merged');
       }
 
+      // Pull daily plan from Firestore
+      try {
+        const { pullPlanFromFirestore } = require('../../core/curriculum/DailyPlanManager');
+        await pullPlanFromFirestore();
+      } catch (err) {
+        logger.warn('[Sync:pull] Daily plan pull failed:', (err as Error)?.message);
+      }
+
       if (didMerge) {
         logger.log('[Sync] Remote progress merged into local state');
 
