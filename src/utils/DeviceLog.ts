@@ -120,6 +120,16 @@ const SENTRY_BREADCRUMB_TAGS = new Set([
   'ExpoAudioEngine', 'App',
 ]);
 
+// Tags to stream to PostHog as queryable events (not just breadcrumbs)
+const POSTHOG_STREAM_TAGS = new Set([
+  'useExercisePlayback',    // Scoring data — critical for #103 investigation
+  'ExercisePlayer:save',    // Score persistence
+  'Sync:flushQueue',        // Sync success/failure
+  'Sync:pull',              // Pull results
+  'Auth:postSignInSync',    // Sign-in flow
+  'DailyPlanCache',         // Plan generation
+]);
+
 function maybeSendToSentry(level: LogEntry['level'], message: string, tag?: string): void {
   // Only send tagged logs that are operationally useful
   if (!tag || !SENTRY_BREADCRUMB_TAGS.has(tag)) return;
@@ -137,23 +147,49 @@ function maybeSendToSentry(level: LogEntry['level'], message: string, tag?: stri
   }
 }
 
+/** Stream key logs to PostHog as custom events for remote debugging.
+ * Queryable via PostHog MCP: search for event 'debug_log' with tag/level filters. */
+function maybeSendToPostHog(level: LogEntry['level'], message: string, tag?: string): void {
+  if (!tag || !POSTHOG_STREAM_TAGS.has(tag)) return;
+
+  try {
+    const { AnalyticsService } = require('../services/analytics/PostHog');
+    AnalyticsService.trackEvent('debug_log', {
+      tag,
+      level,
+      message: sanitizeForSentry(message).slice(0, 500),
+    });
+  } catch {
+    // PostHog not available yet during early init
+  }
+}
+
 logger.log = (...args: unknown[]): void => {
   originalLog(...args);
   addEntry('log', args);
   const entry = buffer[buffer.length - 1];
-  if (entry) maybeSendToSentry('log', entry.message, entry.tag);
+  if (entry) {
+    maybeSendToSentry('log', entry.message, entry.tag);
+    maybeSendToPostHog('log', entry.message, entry.tag);
+  }
 };
 
 logger.warn = (...args: unknown[]): void => {
   originalWarn(...args);
   addEntry('warn', args);
   const entry = buffer[buffer.length - 1];
-  if (entry) maybeSendToSentry('warn', entry.message, entry.tag);
+  if (entry) {
+    maybeSendToSentry('warn', entry.message, entry.tag);
+    maybeSendToPostHog('warn', entry.message, entry.tag);
+  }
 };
 
 logger.error = (...args: unknown[]): void => {
   originalError(...args);
   addEntry('error', args);
   const entry = buffer[buffer.length - 1];
-  if (entry) maybeSendToSentry('error', entry.message, entry.tag);
+  if (entry) {
+    maybeSendToSentry('error', entry.message, entry.tag);
+    maybeSendToPostHog('error', entry.message, entry.tag);
+  }
 };
