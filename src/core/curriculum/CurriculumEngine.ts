@@ -512,13 +512,29 @@ function generateLesson(
     return refs;
   }
 
-  // Normal curriculum: add AI pick for the next skill to learn
-  reasoning.push(`AI pick: ${nextSkill.name} (${nextSkill.category})`);
-  refs.push(makeAIRef(nextSkill, `Learn: ${nextSkill.name}`, _recentSet));
+  // Normal curriculum: add AI pick, capped to current lesson tier + 1
+  const currentTier = getCurrentLessonTier(lessonProgress);
+  const maxTier = Math.min(currentTier + 1, 18);
 
-  // If only 1 exercise so far, add a parallel skill
+  if (nextSkill.tier <= maxTier) {
+    reasoning.push(`AI pick: ${nextSkill.name} (tier ${nextSkill.tier}, cap ${maxTier})`);
+    refs.push(makeAIRef(nextSkill, `Learn: ${nextSkill.name}`, _recentSet));
+  } else {
+    // Next skill too far ahead — review a mastered skill instead
+    const reviewSkill = [...masteredSkills]
+      .map((id) => getSkillById(id))
+      .filter((s): s is SkillNode => s != null && !_recentSet.has(`ai-skill-${s.id}`))
+      .sort((a, b) => getSkillDepth(b.id) - getSkillDepth(a.id))[0];
+    if (reviewSkill) {
+      refs.push(makeAIRef(reviewSkill, `Review: ${reviewSkill.name}`, _recentSet));
+      reasoning.push(`Review (next skill tier ${nextSkill.tier} > cap ${maxTier}): ${reviewSkill.name}`);
+    }
+  }
+
+  // If only 1 exercise so far, add a parallel skill (also capped to maxTier)
   if (refs.length < 2) {
-    const available = getAvailableSkills(masteredSkills);
+    const available = getAvailableSkills(masteredSkills)
+      .filter((s) => s.tier <= maxTier);
     const parallel = available.find((s) => s.id !== nextSkill.id);
     if (parallel) {
       refs.push(makeAIRef(parallel, `Also working on: ${parallel.name}`, _recentSet));
@@ -856,6 +872,27 @@ const CATEGORY_TO_GENRE: Record<string, string> = {
 // ============================================================================
 // Helpers
 // ============================================================================
+
+/**
+ * Determine the user's current lesson tier by scanning lessons in order.
+ * Returns a tier number (1-18) based on the first non-completed lesson.
+ */
+function getCurrentLessonTier(lessonProgress?: Record<string, { status: string }>): number {
+  if (!lessonProgress) return 1;
+  try {
+    const lessons = getLessons() as Array<{ id: string }>;
+    for (let i = 0; i < lessons.length; i++) {
+      const lp = lessonProgress[lessons[i].id];
+      if (!lp || lp.status !== 'completed') {
+        // Current lesson = first non-completed. Tier ≈ lesson index / 3 + 1
+        return Math.max(1, Math.ceil((i + 1) / 3));
+      }
+    }
+    return 18; // All completed
+  } catch {
+    return 5; // Safe default
+  }
+}
 
 /**
  * Build an AI-first exercise reference for a skill node.

@@ -304,7 +304,15 @@ describe('Year-Long Progression Simulation', () => {
       totalExercisesCompleted: tier1to6.length * 3,
     });
 
-    const plan = generateSessionPlan(profile, [...tier1to6]);
+    // Build lessonProgress showing all 6 static lessons completed so the
+    // tier cap (currentTier + 1) doesn't block tier 7 skills.
+    const lessonProgress: Record<string, { lessonId: string; status: string; exerciseScores: Record<string, { highScore: number }> }> = {};
+    for (let i = 1; i <= 6; i++) {
+      const lid = `lesson-0${i}`;
+      lessonProgress[lid] = { lessonId: lid, status: 'completed', exerciseScores: {} };
+    }
+
+    const plan = generateSessionPlan(profile, [...tier1to6], lessonProgress);
 
     // The lesson section should target a tier 7+ skill via AI exercises.
     // All tiers now use ai-with-fallback source.
