@@ -67,7 +67,7 @@ service cloud.firestore {
       match /gamification/{docId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) &&
-                                 docId in ['data', 'catEvolution', 'gems', 'learnerProfile', 'achievements', 'rank', 'season', 'settings', 'progressExtra'];
+                                 docId in ['data', 'catEvolution', 'gems', 'learnerProfile', 'achievements', 'rank', 'season', 'settings', 'progressExtra', 'dailyPlan'];
         // Allow owner to delete own gamification data (GDPR account deletion)
         allow delete: if isOwner(userId);
       }

@@ -993,3 +993,19 @@ export async function deleteUserData(uid: string): Promise<void> {
   // Fallback: client-side deletion
   await deleteUserDataClientSide(uid);
 }
+
+// ============================================================================
+// Daily Plan Operations
+// ============================================================================
+
+export async function saveDailyPlan(uid: string, plan: any): Promise<void> {
+  const planDoc = doc(db, 'users', uid, 'gamification', 'dailyPlan');
+  await setDoc(planDoc, plan, { merge: false });
+}
+
+export async function getDailyPlanFromFirestore(uid: string): Promise<any | null> {
+  const planDoc = doc(db, 'users', uid, 'gamification', 'dailyPlan');
+  const snap = await getDoc(planDoc);
+  if (!snap.exists()) return null;
+  return snap.data();
+}
