@@ -86,7 +86,7 @@ export function DailySessionScreen() {
   const isAuthLoading = require('../stores/authStore').useAuthStore((s: { isLoading: boolean }) => s.isLoading) as boolean;
 
   // Read lesson progress for checking exercise completion from other screens (HomeScreen)
-  const lessonProgress = require('../stores/progressStore').useProgressStore((s: any) => s.lessonProgress) as Record<string, { exerciseScores: Record<string, { completedAt?: number }> }>;
+  const lessonProgress = require('../stores/progressStore').useProgressStore((s: any) => s.lessonProgress) as Record<string, { exerciseScores: Record<string, { completedAt?: number; highScore?: number }> }>;
 
   // Track which exercises the user completed this session (by key: skillNodeId or exerciseId)
   const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
@@ -122,13 +122,14 @@ export function DailySessionScreen() {
       if (merged.has(key)) continue;
       const isAI = ref.source === 'ai' || ref.source === 'ai-with-fallback';
       if (isAI && ref.skillNodeId) {
-        const aiCompleted = lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null;
-        if (aiCompleted) merged.add(key);
+        const aiScore = lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`];
+        if (aiScore && (aiScore.completedAt != null || (aiScore.highScore ?? 0) > 0)) merged.add(key);
       } else if (ref.source === 'static') {
-        const staticCompleted = Object.values(lessonProgress).some(
-          (lp) => lp.exerciseScores[ref.exerciseId]?.completedAt != null
-        );
-        if (staticCompleted) merged.add(key);
+        const staticAttempted = Object.values(lessonProgress).some((lp) => {
+          const s = lp.exerciseScores[ref.exerciseId];
+          return s && (s.completedAt != null || (s.highScore ?? 0) > 0);
+        });
+        if (staticAttempted) merged.add(key);
       }
     }
     return merged;

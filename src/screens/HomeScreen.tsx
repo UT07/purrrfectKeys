@@ -757,10 +757,10 @@ function HomePracticeSections({ plan, onExercisePress, lessonProgress }: {
               const skillNode = isAI && ref.skillNodeId ? getSkillById(ref.skillNodeId) : null;
               const title = exercise?.metadata.title ?? skillNode?.name ?? 'AI Exercise';
 
-              // Check completion: AI exercises stored under __ai__ bucket with stable key
+              // Check if exercise was attempted (any score recorded, not just completedAt)
               const isAttempted = isAI
-                ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.completedAt != null
-                : Object.values(lessonProgress).some((lp) => lp.exerciseScores[ref.exerciseId]?.completedAt != null);
+                ? (lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore ?? 0) > 0
+                : Object.values(lessonProgress).some((lp) => (lp.exerciseScores[ref.exerciseId]?.highScore ?? 0) > 0);
               const highScore = isAI
                 ? lessonProgress['_ai_exercises']?.exerciseScores[`ai-skill-${ref.skillNodeId}`]?.highScore
                 : Object.values(lessonProgress).find((lp) => lp.exerciseScores[ref.exerciseId])?.exerciseScores[ref.exerciseId]?.highScore;

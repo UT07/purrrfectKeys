@@ -173,9 +173,10 @@ export function PostExerciseScreen(): React.ReactElement {
     if (hasAutoPlayed.current || !catDialogue) return;
     hasAutoPlayed.current = true;
     const timer = setTimeout(() => {
-      // Speak cat dialogue immediately — don't wait for AI coaching
+      // Speak cat dialogue after a comfortable pause (1.5s after screen renders)
+      // to avoid overlapping with XP transition sounds and give user time to read
       ttsService.speak(catDialogue, { catId: selectedCatId });
-    }, 400);
+    }, 1500);
     return () => {
       clearTimeout(timer);
       ttsService.stop();

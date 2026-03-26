@@ -223,7 +223,7 @@ export class SyncManager {
       // Sync cat evolution + gem data to Firestore
       await this.pushCatAndGemData(uid);
     } catch (err) {
-      logger.error('[Sync:flushQueue] ❌ FAILED:', (err as Error)?.message, (err as Error)?.stack?.split('\n')[1]);
+      logger.warn('[Sync:flushQueue] FAILED (offline?):', (err as Error)?.message);
       // Failure: increment retryCount on valid items
       const updatedQueue = validItems.map((item) => ({
         ...item,
@@ -390,8 +390,8 @@ export class SyncManager {
     try {
       // Fetch remote data in parallel
       const [remoteLessons, remoteGamification, remoteCats, remoteGems] = await Promise.all([
-        getAllLessonProgress(uid).catch((e) => { logger.error('[Sync:pull] ❌ getAllLessonProgress FAILED:', (e as Error)?.message); return [] as Awaited<ReturnType<typeof getAllLessonProgress>>; }),
-        getGamificationData(uid).catch((e) => { logger.error('[Sync:pull] ❌ getGamificationData FAILED:', (e as Error)?.message); return null; }),
+        getAllLessonProgress(uid).catch((e) => { logger.warn('[Sync:pull] getAllLessonProgress failed (offline?):', (e as Error)?.message); return [] as Awaited<ReturnType<typeof getAllLessonProgress>>; }),
+        getGamificationData(uid).catch((e) => { logger.warn('[Sync:pull] getGamificationData failed (offline?):', (e as Error)?.message); return null; }),
         getCatEvolutionData(uid).catch((e) => { logger.warn('[Sync:pull] getCatEvolutionData failed:', (e as Error)?.message); return null; }),
         getGemSyncData(uid).catch((e) => { logger.warn('[Sync:pull] getGemSyncData failed:', (e as Error)?.message); return null; }),
       ]);
@@ -1167,7 +1167,7 @@ export class SyncManager {
           });
           pushedCount++;
         } catch (err) {
-          logger.error(`[Sync] ❌ Lesson ${lessonId} push FAILED:`, (err as Error)?.message);
+          logger.warn(`[Sync] Lesson ${lessonId} push failed:`, (err as Error)?.message);
         }
       }
       logger.log(`[Sync] Pushed ${pushedCount}/${lessonIds.length} lesson progress records`);
