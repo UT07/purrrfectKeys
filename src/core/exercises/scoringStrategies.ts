@@ -5,7 +5,7 @@
  * Pure TypeScript — no React imports.
  */
 
-import { scoreExercise, calculateTimingScore, calculateDurationScore } from './ExerciseValidator';
+import { scoreExercise, calculateTimingScore } from './ExerciseValidator';
 import type {
   Exercise,
   ExerciseScore,
@@ -27,14 +27,15 @@ const SCORE_WEIGHTS = {
 
 /**
  * Rhythm exercises ignore pitch, so accuracy === completeness.
- * Redistribute accuracy weight to timing (the core rhythm skill).
+ * Duration is always 100% (taps have no meaningful hold duration).
+ * Redistribute accuracy + duration weight to timing (the core rhythm skill).
  */
 const RHYTHM_WEIGHTS = {
   accuracy: 0,
-  timing: 0.65,
+  timing: 0.70,
   completeness: 0.10,
   extraNotes: 0.10,
-  duration: 0.15,
+  duration: 0.10,
 };
 
 type ScoreWeights = typeof SCORE_WEIGHTS;
@@ -160,7 +161,7 @@ function calculateBreakdownFromNotes(
       completeness: 0,
       extraNotes: noteScores.length === 0
         ? 0
-        : Math.max(0, 100 - noteScores.filter((n) => n.isExtraNote).length * 10),
+        : Math.round(100 * Math.pow(0.85, noteScores.filter((n) => n.isExtraNote).length)),
       duration: 0,
     };
   }
@@ -178,7 +179,10 @@ function calculateBreakdownFromNotes(
   const completeness = (playedCount / totalExpected) * 100;
 
   const extraCount = noteScores.filter((n) => n.isExtraNote).length;
-  const extraNotes = Math.max(0, 100 - extraCount * 10);
+  // Bug #110 fix: use same exponential formula as ExerciseValidator.calculateBreakdown.
+  // The old linear formula (100 - count*10) was harsher: 10 extras → 0 instantly.
+  // The exponential curve (0.85^count) degrades gradually and consistently.
+  const extraNotes = 100 * Math.pow(0.85, extraCount);
 
   const duration =
     expectedNoteScores.length > 0
@@ -236,8 +240,12 @@ export function scoreRhythmExercise(
         timingGracePeriodMs
       );
 
-      const expectedDurationMs = expected.durationBeats * msPerBeat;
-      const durationScore = calculateDurationScore(played.durationMs, expectedDurationMs);
+      // Bug #110 fix: rhythm/tap exercises don't have explicit note-off events,
+      // so durationMs is either undefined or the time from tap to exercise completion
+      // (set by closeAllOpenNoteDurations). Neither is meaningful for scoring.
+      // Give full duration credit — rhythm exercises are about WHEN you tap, not how
+      // long you hold.
+      const durationScore = 100;
 
       noteScores.push({
         expected,

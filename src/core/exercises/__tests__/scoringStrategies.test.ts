@@ -357,4 +357,187 @@ describe('scoringStrategies', () => {
       expect(result.overall).toBe(stdResult.overall);
     });
   });
+
+  describe('AI exercise scoring (Bug #103)', () => {
+    it('scores correctly at very low tempo (39 BPM)', () => {
+      // Simulates AI exercise at 39 BPM (common for difficulty 1 with default tempo range)
+      // 39 BPM → 1538ms per beat
+      const exercise = makeExercise({
+        settings: {
+          tempo: 39,
+          timeSignature: [4, 4],
+          keySignature: 'C',
+          countIn: 4,
+          metronomeEnabled: true,
+        },
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 1, hand: 'right' as const },
+          { note: 62, startBeat: 1, durationBeats: 0.5, hand: 'right' as const },
+          { note: 64, startBeat: 1.5, durationBeats: 1.5, hand: 'right' as const },
+          { note: 60, startBeat: 3, durationBeats: 1, hand: 'right' as const },
+        ],
+        scoring: {
+          timingToleranceMs: 75,
+          timingGracePeriodMs: 200,
+          passingScore: 60,
+          starThresholds: [70, 85, 95],
+        },
+      });
+
+      const msPerBeat = 60000 / 39; // ~1538ms
+      // Played notes with timestamps relative to beat 0 (already adjusted)
+      const played: MidiNoteEvent[] = [
+        note(60, 10),                      // beat 0, 10ms late
+        note(62, msPerBeat + 20),          // beat 1, 20ms late
+        note(64, msPerBeat * 1.5 - 10),   // beat 1.5, 10ms early
+        note(60, msPerBeat * 3 + 5),      // beat 3, 5ms late
+      ];
+
+      const score = scoreExerciseByType(exercise, played);
+      expect(score.breakdown.timing).toBeGreaterThan(90);
+      expect(score.breakdown.accuracy).toBe(100);
+      expect(score.breakdown.completeness).toBe(100);
+      expect(score.overall).toBeGreaterThan(80);
+    });
+
+    it('scores correctly with touch playback speed (0.6x) applied to AI tempo', () => {
+      // AI tempo 39 * 0.6 = 23.4 → rounded to 23 BPM
+      // Timing windows scaled by 1/0.6 ≈ 1.667x
+      const exercise = makeExercise({
+        settings: {
+          tempo: 23, // 39 * 0.6 rounded
+          timeSignature: [4, 4],
+          keySignature: 'C',
+          countIn: 4,
+          metronomeEnabled: true,
+        },
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 1, hand: 'right' as const },
+          { note: 62, startBeat: 1, durationBeats: 1, hand: 'right' as const },
+          { note: 64, startBeat: 2, durationBeats: 1, hand: 'right' as const },
+          { note: 60, startBeat: 3, durationBeats: 1, hand: 'right' as const },
+        ],
+        scoring: {
+          timingToleranceMs: 133, // 80 * (1/0.6) rounded
+          timingGracePeriodMs: 333, // 200 * (1/0.6) rounded
+          passingScore: 60,
+          starThresholds: [70, 85, 95],
+        },
+      });
+
+      const msPerBeat = 60000 / 23; // ~2609ms
+      const played: MidiNoteEvent[] = [
+        note(60, 50),                   // beat 0, 50ms late
+        note(62, msPerBeat + 30),       // beat 1, 30ms late
+        note(64, msPerBeat * 2 - 20),   // beat 2, 20ms early
+        note(60, msPerBeat * 3 + 10),   // beat 3, 10ms late
+      ];
+
+      const score = scoreExerciseByType(exercise, played);
+      expect(score.breakdown.timing).toBeGreaterThan(90);
+      expect(score.breakdown.accuracy).toBe(100);
+      expect(score.overall).toBeGreaterThan(80);
+    });
+
+    it('simulates full handleCompletion timestamp conversion for AI exercise', () => {
+      // This test simulates the exact conversion that useExercisePlayback.handleCompletion does:
+      // adjustedTimestamp = n.timestamp - beat0EpochMs - compensation
+      // where beat0EpochMs = startTimeRef + countInMs
+      const aiTempo = 39;
+      const playbackSpeed = 0.6;
+      const effectiveTempo = Math.round(aiTempo * playbackSpeed); // 23
+      const windowScale = 1 / playbackSpeed; // 1.667
+
+      const exercise = makeExercise({
+        settings: {
+          tempo: effectiveTempo,
+          timeSignature: [4, 4],
+          keySignature: 'C',
+          countIn: 4,
+          metronomeEnabled: true,
+        },
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 1, hand: 'right' as const },
+          { note: 62, startBeat: 1, durationBeats: 1, hand: 'right' as const },
+          { note: 64, startBeat: 2, durationBeats: 1, hand: 'right' as const },
+          { note: 65, startBeat: 3, durationBeats: 1, hand: 'right' as const },
+        ],
+        scoring: {
+          timingToleranceMs: Math.round(80 * windowScale),
+          timingGracePeriodMs: Math.round(200 * windowScale),
+          passingScore: 60,
+          starThresholds: [70, 85, 95],
+        },
+      });
+
+      const msPerBeat = 60000 / effectiveTempo;
+      const countInMs = 4 * msPerBeat;
+      const TOUCH_COMPENSATION = 20;
+
+      // Simulate: startTimeRef = 1000000 (arbitrary epoch time)
+      const startTime = 1000000;
+      const beat0Epoch = startTime + countInMs;
+
+      // User plays at correct times (epoch timestamps)
+      const epochNotes: MidiNoteEvent[] = [
+        note(60, beat0Epoch + 15),               // beat 0, 15ms late
+        note(62, beat0Epoch + msPerBeat + 25),    // beat 1, 25ms late
+        note(64, beat0Epoch + msPerBeat * 2 - 10), // beat 2, 10ms early
+        note(65, beat0Epoch + msPerBeat * 3 + 5),  // beat 3, 5ms late
+      ];
+
+      // Apply handleCompletion conversion: timestamp - beat0Epoch - compensation
+      const adjustedNotes = epochNotes.map((n) => ({
+        ...n,
+        timestamp: n.timestamp - beat0Epoch - TOUCH_COMPENSATION,
+      }));
+
+      const score = scoreExerciseByType(exercise, adjustedNotes);
+      // All notes should be within tolerance after proper conversion
+      expect(score.breakdown.accuracy).toBe(100);
+      expect(score.breakdown.timing).toBeGreaterThan(80);
+      expect(score.breakdown.completeness).toBe(100);
+      expect(score.missedNotes).toBe(0);
+      expect(score.overall).toBeGreaterThan(70);
+    });
+
+    it('validates AI exercise durationBeats close-to-valid values are usable', () => {
+      // Gemini might return 0.49 instead of 0.5 — validator passes it but doesn't snap
+      const exercise = makeExercise({
+        settings: {
+          tempo: 60,
+          timeSignature: [4, 4],
+          keySignature: 'C',
+          countIn: 4,
+          metronomeEnabled: true,
+        },
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 0.99 },  // close to 1
+          { note: 62, startBeat: 1, durationBeats: 0.49 },  // close to 0.5
+          { note: 64, startBeat: 1.5, durationBeats: 1.51 }, // close to 1.5
+          { note: 60, startBeat: 3, durationBeats: 2.01 },  // close to 2
+        ],
+        scoring: {
+          timingToleranceMs: 80,
+          timingGracePeriodMs: 200,
+          passingScore: 60,
+          starThresholds: [70, 85, 95],
+        },
+      });
+
+      // 60 BPM → 1000ms per beat
+      const played: MidiNoteEvent[] = [
+        note(60, 0),
+        note(62, 1000),
+        note(64, 1500),
+        note(60, 3000),
+      ];
+
+      const score = scoreExerciseByType(exercise, played);
+      // Even with slightly off durationBeats, timing and accuracy should work
+      expect(score.breakdown.accuracy).toBe(100);
+      expect(score.breakdown.timing).toBe(100);
+      expect(score.missedNotes).toBe(0);
+    });
+  });
 });

@@ -437,7 +437,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           },
         };
         // Log AI exercise details for debugging scoring issues (#103/F10)
-        logger.log(`[ExercisePlayer:AI] Generated: ${converted.notes.length} notes, tempo=${converted.settings.tempo}, tolerance=${converted.scoring.timingToleranceMs}ms, beats=${converted.notes.map(n => n.startBeat).join(',')}`);
+        logger.log(`[ExercisePlayer:AI] Generated: ${converted.notes.length} notes, tempo=${converted.settings.tempo}, tolerance=${converted.scoring.timingToleranceMs}ms, grace=${converted.scoring.timingGracePeriodMs}ms`);
+        logger.log(`[ExercisePlayer:AI] Notes: ${converted.notes.slice(0, 6).map(n => `MIDI${n.note}@${n.startBeat}(${n.durationBeats}b)`).join(', ')}${converted.notes.length > 6 ? '...' : ''}`);
         setAiExercise(converted);
       } else {
         // Buffer empty — use offline template fallback chain
@@ -2078,6 +2079,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
         // Bug #19 fix: align visual feedback thresholds with ExerciseValidator scoring.
         // Scoring gives 100% for anything within timingToleranceMs, so visual should match.
+        // Bug #110 fix: the scoring engine (calculateTimingScore) returns 0 for offsets
+        // beyond 2× gracePeriodMs. Previously the visual showed "ok" for that range which
+        // gave users a false sense of success while the score tanked. Now offsets beyond
+        // 2× grace show as a miss (combo-breaking) to match the actual scoring.
         let feedbackType: FeedbackState['type'];
         if (beatDiffMs <= exercise.scoring.timingToleranceMs) {
           feedbackType = 'perfect';
@@ -2085,11 +2090,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           feedbackType = 'good';
         } else if (beatDiffMs <= exercise.scoring.timingGracePeriodMs) {
           feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
-        } else {
+        } else if (beatDiffMs <= exercise.scoring.timingGracePeriodMs * 2) {
           feedbackType = 'ok';
+        } else {
+          // Beyond 2× grace period — scoring engine gives 0 timing points.
+          // Treat as a miss so visual feedback is honest about the impact on score.
+          feedbackType = 'miss';
         }
 
-        setComboCount((prev) => prev + 1);
         setFeedback({
           type: feedbackType,
           noteIndex: bestMatch.index,
@@ -2097,24 +2105,35 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat,
         });
 
-        // Animate combo
-        Animated.sequence([
-          Animated.spring(comboScale, {
-            toValue: 1.1,
-            useNativeDriver: true,
-          }),
-          Animated.spring(comboScale, {
-            toValue: 1,
-            useNativeDriver: true,
-          }),
-        ]).start();
+        if (feedbackType !== 'miss') {
+          // Earned timing points — increment combo, positive feedback
+          setComboCount((prev) => prev + 1);
 
-        // Stronger haptic for correct note
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          // Animate combo
+          Animated.sequence([
+            Animated.spring(comboScale, {
+              toValue: 1.1,
+              useNativeDriver: true,
+            }),
+            Animated.spring(comboScale, {
+              toValue: 1,
+              useNativeDriver: true,
+            }),
+          ]).start();
 
-        // Hit particles — gold for perfect, feedback color for others
-        const particleColor = feedbackType === 'perfect' ? COLORS.starGold : getFeedbackColor(feedbackType);
-        setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: particleColor, trigger: Date.now() });
+          // Stronger haptic for correct note
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+
+          // Hit particles — gold for perfect, feedback color for others
+          const particleColor = feedbackType === 'perfect' ? COLORS.starGold : getFeedbackColor(feedbackType);
+          setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: particleColor, trigger: Date.now() });
+        } else {
+          // Beyond 2× grace — scoring gives 0 timing, treat like a miss for combo/effects
+          setComboCount(0);
+          shakeRef.current?.shake('medium');
+          setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: COLORS.feedbackMiss, trigger: Date.now() });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+        }
       } else {
         // Combo shield: forgive the miss if the cat's ability allows it
         const shieldMax = abilityConfigRef.current?.comboShieldMisses ?? 0;

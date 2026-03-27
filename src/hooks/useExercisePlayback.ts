@@ -12,6 +12,7 @@
 
 import { useEffect, useCallback, useRef, useState } from 'react';
 import type { Exercise, MidiNoteEvent, ExerciseScore } from '@/core/exercises/types';
+import { getExerciseType } from '@/core/exercises/types';
 import { scoreExerciseByType } from '@/core/exercises/ExerciseValidator';
 import { InputManager, INPUT_LATENCY_COMPENSATION_MS } from '@/input/InputManager';
 import type { ActiveInputMethod } from '@/input/InputManager';
@@ -441,6 +442,9 @@ export function useExercisePlayback({
     // Set of expected MIDI pitches — used to filter wrong-pitch notes from the
     // early-completion count so random key mashing doesn't end the exercise early.
     const expectedPitchSet = new Set(requiredNotes.map((n) => n.note));
+    // Bug #110 fix: rhythm exercises send note 60 for every tap regardless of
+    // expected pitches, so pitch-based filtering would prevent early completion.
+    const isRhythmExercise = getExerciseType(exercise) === 'rhythm';
     const loopEnabled = exercise.settings.loopEnabled ?? false;
 
     playbackIntervalRef.current = setInterval(() => {
@@ -500,9 +504,13 @@ export function useExercisePlayback({
       // beat, complete immediately instead of waiting for the duration timeout.
       // Only count notes whose MIDI pitch matches an expected note — wrong-pitch
       // notes should NOT inflate the count and trigger premature completion.
-      const playedMatchCount = playedNotesRef.current.filter(
-        (n) => expectedPitchSet.has(n.note),
-      ).length;
+      // Bug #110 fix: rhythm exercises send note 60 for every tap regardless of
+      // expected pitches — count ALL played notes for rhythm early-completion.
+      const playedMatchCount = isRhythmExercise
+        ? playedNotesRef.current.length
+        : playedNotesRef.current.filter(
+            (n) => expectedPitchSet.has(n.note),
+          ).length;
       const earlyComplete =
         playedMatchCount >= totalExpectedNotes && beat >= lastNoteBeat;
 
@@ -670,11 +678,23 @@ export function useExercisePlayback({
       activeNotesRef.current.clear();
     }
 
+    // Bug #103 guard: Validate exercise data before scoring to prevent NaN/0% results.
+    // AI exercises (or exercises from stale closures) might have invalid tempo/timing values.
+    const tempo = exercise.settings.tempo;
+    if (!tempo || !Number.isFinite(tempo) || tempo <= 0) {
+      logger.warn(`[useExercisePlayback] Invalid tempo=${tempo} for exercise ${exercise.id} — scoring skipped`);
+      onComplete?.({
+        overall: 0, stars: 0, breakdown: { accuracy: 0, timing: 0, completeness: 0, extraNotes: 0, duration: 0 },
+        details: [], missedNotes: exercise.notes.length, extraNotes: 0, xpEarned: 0, isPassed: false, isNewHighScore: false,
+      });
+      return;
+    }
+
     // Convert played note timestamps from epoch (Date.now()) to relative
     // (ms since beat 0). The scoring engine expects timestamps in the same
     // frame as expectedTimeMs = startBeat * msPerBeat.
     // Use playedNotesRef (not state) to avoid stale closure from React batching.
-    const msPerBeat = 60000 / exercise.settings.tempo;
+    const msPerBeat = 60000 / tempo;
     const countInMs = exercise.settings.countIn * msPerBeat;
     const beat0EpochMs = startTimeRef.current + countInMs;
 
@@ -737,7 +757,16 @@ export function useExercisePlayback({
       }
     }
 
-    logger.log(`[useExercisePlayback] Scoring: ${adjustedNotes.length} played notes, ${scoringExercise.notes.length} expected, tempo=${scoringExercise.settings.tempo}, prevHigh=${previousHighScore}, timingTolerance=${scoringExercise.scoring.timingToleranceMs}ms`);
+    // Log diagnostic data for Bug #103 (AI exercise scoring integrity)
+    logger.log(`[useExercisePlayback] Scoring: ${adjustedNotes.length} played notes, ${scoringExercise.notes.length} expected, tempo=${scoringExercise.settings.tempo}, prevHigh=${previousHighScore}, timingTolerance=${scoringExercise.scoring.timingToleranceMs}ms, gracePeriod=${scoringExercise.scoring.timingGracePeriodMs}ms`);
+    if (adjustedNotes.length > 0 && scoringExercise.notes.length > 0) {
+      // Log first few played vs expected to diagnose matching failures
+      const firstExpected = scoringExercise.notes[0];
+      const firstPlayed = adjustedNotes[0];
+      const expectedTimeMs = firstExpected.startBeat * (60000 / scoringExercise.settings.tempo);
+      logger.log(`[useExercisePlayback] First note: expected MIDI=${firstExpected.note} at ${expectedTimeMs.toFixed(0)}ms (beat ${firstExpected.startBeat}), played MIDI=${firstPlayed.note} at ${firstPlayed.timestamp.toFixed(0)}ms, distance=${Math.abs(firstPlayed.timestamp - expectedTimeMs).toFixed(0)}ms`);
+      logger.log(`[useExercisePlayback] Conversion: startTime=${startTimeRef.current}, countInMs=${countInMs.toFixed(0)}, beat0Epoch=${beat0EpochMs.toFixed(0)}, exerciseId=${exercise.id}`);
+    }
 
     const score = scoreExerciseByType(scoringExercise, adjustedNotes, previousHighScore);
     useExerciseStore.getState().setScore(score);
