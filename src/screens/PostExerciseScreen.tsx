@@ -180,9 +180,9 @@ export function PostExerciseScreen(): React.ReactElement {
       ttsService.speak(catDialogue, {
         catId: selectedCatId,
         onDone: () => { catFinishedRef.current = true; },
+        onStopped: () => { catFinishedRef.current = true; },
+        onError: () => { catFinishedRef.current = true; },
       });
-      // Safety: if TTS completes instantly (offline/no voice), mark as done
-      setTimeout(() => { catFinishedRef.current = true; }, 500);
     }, 1500);
     return () => { clearTimeout(timer); ttsService.stop(); };
   }, [catDialogue, selectedCatId]);
