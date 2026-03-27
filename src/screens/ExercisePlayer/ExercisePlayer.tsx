@@ -3150,8 +3150,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               hapticEnabled={playerMode !== 'replay'}
               showLabels={!isSightReading && !testModeRef.current}
               keyHeight={singleKeyHeight}
-              focusNoteLeft={focusNoteLeft}
-              focusNoteRight={focusNoteRight}
+              focusNoteLeft={isPlaying ? undefined : focusNoteLeft}
+              focusNoteRight={isPlaying ? undefined : focusNoteRight}
               testID="exercise-keyboard"
             />
           ) : (
@@ -3167,7 +3167,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               showLabels={!isSightReading && !testModeRef.current}
               scrollable={true}
               scrollEnabled={false}
-              focusNote={nextExpectedNote}
+              focusNote={isPlaying ? undefined : nextExpectedNote}
               keyHeight={singleKeyHeight}
               testID="exercise-keyboard"
             />
