@@ -561,10 +561,11 @@ export class SyncManager {
           }
         }
 
-        // If remote has a selected cat and local doesn't, adopt it
-        if (remoteCats.selectedCatId && !localCats.selectedCatId) {
+        // Adopt remote selected cat if it differs from local default
+        if (remoteCats.selectedCatId && remoteCats.selectedCatId !== localCats.selectedCatId) {
           useCatEvolutionStore.getState().selectCat(remoteCats.selectedCatId);
           didMerge = true;
+          logger.log('[Sync] Adopted remote selectedCatId:', remoteCats.selectedCatId);
         }
 
         // Restore daily rewards from remote if local is default (lost on sign-out)
@@ -757,7 +758,7 @@ export class SyncManager {
           const updates: Record<string, unknown> = {};
           if (remoteSettings.username && !local.username) updates.username = remoteSettings.username;
           if (remoteSettings.displayName && (!local.displayName || local.displayName === 'Piano Student')) updates.displayName = remoteSettings.displayName;
-          if (remoteSettings.selectedCatId && !local.selectedCatId) updates.selectedCatId = remoteSettings.selectedCatId;
+          if (remoteSettings.selectedCatId && remoteSettings.selectedCatId !== local.selectedCatId) updates.selectedCatId = remoteSettings.selectedCatId;
           if (remoteSettings.selectedPath && !local.selectedPath) updates.selectedPath = remoteSettings.selectedPath;
           if (remoteSettings.dailyGoalMinutes && local.dailyGoalMinutes === 10) updates.dailyGoalMinutes = remoteSettings.dailyGoalMinutes;
           if (Object.keys(updates).length > 0) {
