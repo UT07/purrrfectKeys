@@ -761,6 +761,8 @@ export class SyncManager {
           if (remoteSettings.selectedCatId && remoteSettings.selectedCatId !== local.selectedCatId) updates.selectedCatId = remoteSettings.selectedCatId;
           if (remoteSettings.selectedPath && !local.selectedPath) updates.selectedPath = remoteSettings.selectedPath;
           if (remoteSettings.dailyGoalMinutes && local.dailyGoalMinutes === 10) updates.dailyGoalMinutes = remoteSettings.dailyGoalMinutes;
+          if (remoteSettings.twoHandSpeedUnlocked && !local.twoHandSpeedUnlocked) updates.twoHandSpeedUnlocked = true;
+          if (remoteSettings.twoHandSpeed && local.twoHandSpeed === 0.5) updates.twoHandSpeed = remoteSettings.twoHandSpeed;
           if (Object.keys(updates).length > 0) {
             useSettingsStore.setState(updates);
             didMerge = true;
@@ -1054,6 +1056,8 @@ export class SyncManager {
         preferredInputMethod: settings.preferredInputMethod,
         selectedPath: settings.selectedPath ?? null,
         darkMode: settings.darkMode,
+        twoHandSpeedUnlocked: settings.twoHandSpeedUnlocked ?? false,
+        twoHandSpeed: settings.twoHandSpeed ?? 0.5,
       });
       logger.log('[Sync] Pushed settings');
     } catch (err) {

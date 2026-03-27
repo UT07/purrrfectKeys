@@ -174,6 +174,8 @@ export interface ProfileSettings {
   selectedPath: LearningPathId; // Active learning path
   equippedAccessories: Record<string, string>; // category → accessory ID
   ownedAccessories: string[]; // purchased accessory IDs
+  twoHandSpeedUnlocked: boolean; // whether the user has unlocked two-hand speed control
+  twoHandSpeed: number; // two-hand exercise playback speed (0-1)
 }
 
 export interface SettingsStoreState extends AudioSettings, DisplaySettings, NotificationSettings, MidiSettings, OnboardingSettings, ProfileSettings {
@@ -210,6 +212,8 @@ export interface SettingsStoreState extends AudioSettings, DisplaySettings, Noti
   equipAccessory: (category: string, accessoryId: string) => void;
   unequipAccessory: (category: string) => void;
   addOwnedAccessory: (accessoryId: string) => void;
+  unlockTwoHandSpeed: () => void;
+  setTwoHandSpeed: (speed: number) => void;
   reset: () => void;
 }
 

@@ -67,6 +67,10 @@ const defaultSettings: SettingsData = {
   selectedPath: 'piano-basics' as const, // default learning path
   equippedAccessories: {} as Record<string, string>,
   ownedAccessories: [] as string[],
+
+  // Two-hand exercise speed control
+  twoHandSpeedUnlocked: false,
+  twoHandSpeed: 0.5,
 };
 
 // Create debounced save for non-critical settings (volumes, display prefs)
@@ -323,6 +327,16 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     const ownedAccessories = [...current, accessoryId];
     set({ ownedAccessories });
     immediateSave({ ...get(), ownedAccessories });
+  },
+
+  unlockTwoHandSpeed: () => {
+    set({ twoHandSpeedUnlocked: true });
+    immediateSave({ ...get(), twoHandSpeedUnlocked: true });
+  },
+
+  setTwoHandSpeed: (speed: number) => {
+    set({ twoHandSpeed: speed });
+    immediateSave({ ...get(), twoHandSpeed: speed });
   },
 
   reset: () => {
