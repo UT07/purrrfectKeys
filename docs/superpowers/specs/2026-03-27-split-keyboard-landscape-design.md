@@ -1,7 +1,7 @@
 # Split Keyboard Redesign: Landscape Two-Hand Mode
 
 **Date:** 2026-03-27
-**Status:** Approved (v2 — reviewed)
+**Status:** Approved (v3 — final review)
 **Branch:** test/stable-baseline
 
 ## Problem
@@ -98,9 +98,16 @@ No prompt or animation — the rotation itself signals the mode change (Simply P
 
 ### Post-Exercise Flow
 
-- When a two-hand exercise completes, **rotate back to portrait first**, then show PostExerciseScreen.
-- PostExerciseScreen is designed for portrait — no landscape adaptation needed.
-- The orientation unlock happens in the exercise completion handler, before navigating to PostExerciseScreen.
+ExercisePlayer has a multi-step completion flow:
+1. Exercise ends → `CompletionModal` shows inline (quick score, stars, XP)
+2. `XPTransitionOverlay` animates
+3. Navigate to `PostExerciseScreen` (detailed results, Salsa coaching, replay option)
+
+For two-hand exercises:
+- **CompletionModal shows in landscape** — it's a simple centered overlay, works fine.
+- **Rotate to portrait BEFORE navigating to PostExerciseScreen.** `handleExit` (line 1974) and the XP-transition-complete handler must `await ScreenOrientation.lockAsync(PORTRAIT_UP)` before calling `navigation.goBack()` or `navigation.replace()`.
+- Same for the **close button (X)** — `handleExit` must await portrait rotation before navigating home.
+- `ScreenOrientation.lockAsync()` is async — must be awaited, not fire-and-forget.
 
 ### Demo Mode & Replay with Salsa
 
@@ -113,7 +120,7 @@ No prompt or animation — the rotation itself signals the mode change (Simply P
 
 - `SplitKeyboard.tsx` is **retired**. All two-hand rendering uses a single `Keyboard` component in landscape.
 - The keyboard range is computed from ALL exercise notes (both hands) via `computeZoomedRange`.
-- Target: fit all notes without scrolling. Landscape width (~812px iPhone) comfortably fits 3 octaves of full-sized keys. Use `computeZoomedRange(allNotes, 3)` as default; auto-expand if exercise spans more.
+- Let `computeZoomedRange` decide the octave count from actual notes (typically 2 for Ode to Joy's C3-G4 range). Landscape width (~812px minus ~80px safe areas = ~732px) gives ~52px per white key at 2 octaves (14 white keys) — comfortably playable. Auto-expands to 3 if the exercise spans more.
 - `scrollable={false}` — no scrolling in landscape two-hand mode.
 - Hand-zone tinting is a new feature on `Keyboard.tsx`:
   - New prop: `handZones?: { splitPoint: number; leftColor: string; rightColor: string }`.
@@ -127,6 +134,20 @@ Some exercise notes may not have a `hand` field. In these cases:
 - This applies to keyboard tinting, feedback badge, and expected-note glow.
 - `deriveSplitPoint()` from `SplitKeyboard.tsx` is reused (moved to a shared utility if needed).
 
+### ExerciseCard (Between Exercises)
+
+When navigating between exercises in a lesson (e.g., lesson-04 has 7 exercises), the `ExerciseCard` quick transition shows inline. For two-hand → two-hand transitions, it stays in landscape. For two-hand → single-hand transitions, rotate to portrait before the next exercise loads.
+
+`keyboardMode` is recomputed per exercise (line 718), so the orientation lock/unlock logic in `useEffect` naturally handles transitions.
+
+### Speed Selector in Landscape
+
+When `twoHandSpeedUnlocked` is false, the speed button in the compact top bar should show "0.5x" with a lock icon and be **non-interactive**. After unlocking, it becomes the normal speed picker.
+
+### Cross-Device Sync
+
+New `twoHandSpeedUnlocked` and `twoHandSpeed` fields in `settingsStore` must be included in the settings push/pull in `syncService.ts` (line ~1046). The existing settings sync pattern handles this — just add the fields to the push payload and pull merge logic.
+
 ### What Stays the Same
 
 - Piano roll hand coloring (teal/purple) — already implemented in `VerticalPianoRoll.tsx` (lines 47-65, 367-384).
@@ -134,6 +155,7 @@ Some exercise notes may not have a `hand` field. In these cases:
 - Exercise data format — `hand` property on notes, `deriveSplitPoint()` logic.
 - Portrait single-keyboard exercises — completely unchanged.
 - Count-in overlay — works as a centered overlay, adapts to landscape automatically.
+- Pause overlay — centered, works in landscape.
 
 ## Files to Create/Modify
 
@@ -144,6 +166,7 @@ Some exercise notes may not have a `hand` field. In these cases:
 | `src/components/Keyboard/PianoKey.tsx` | Render tint overlay and hand-colored glow |
 | `src/screens/ExercisePlayer/FeedbackText.tsx` | Add optional `hand` prop for L/R colored badge |
 | `src/stores/settingsStore.ts` | Add `twoHandSpeedUnlocked: boolean` and `twoHandSpeed: number` with `immediateSave` |
+| `src/services/firebase/syncService.ts` | Include `twoHandSpeedUnlocked` and `twoHandSpeed` in settings push/pull |
 | `src/services/demoPlayback.ts` | Ensure demo highlights work with single keyboard + handZones |
 | `src/components/Keyboard/SplitKeyboard.tsx` | Mark as deprecated, no longer imported in ExercisePlayer |
 
@@ -159,7 +182,11 @@ Every flow that can trigger a two-hand exercise must respect the new landscape m
 | AI-generated two-hand exercises | Same — `keyboardMode` detection is note-based |
 | "Review with Salsa" replay on two-hand exercise | Landscape stays active during replay |
 | Demo mode on two-hand exercise | Landscape stays active during demo |
-| PostExerciseScreen after two-hand exercise | Portrait — rotation happens before navigation |
+| PostExerciseScreen after two-hand exercise | Portrait — rotation awaited before navigation |
+| ExerciseCard between two-hand → single-hand | Rotation handled by keyboardMode recompute |
+| Close button (X) during two-hand exercise | Await portrait rotation before goBack() |
+| Pause/resume in landscape | Centered overlay — works automatically |
+| CompletionModal in landscape | Centered overlay — shows in landscape, fine |
 
 ## Testing
 
@@ -177,6 +204,12 @@ Every flow that can trigger a two-hand exercise must respect the new landscape m
 - Verify Salsa replay works in landscape.
 - Verify PostExerciseScreen shows in portrait after two-hand exercise.
 - Verify notes without `hand` property fall back to split-point inference.
+- Verify ExerciseCard transitions between two-hand ↔ single-hand exercises.
+- Verify close button (X) rotates to portrait before navigating home.
+- Verify speed button locked at 0.5x with lock icon before first pass.
+- Verify twoHandSpeedUnlocked syncs cross-device.
+- Verify pause overlay works in landscape.
+- Verify CompletionModal displays correctly in landscape.
 - Regression: all existing keyboard/scoring tests still pass.
 
 ## Dependencies
