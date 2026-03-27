@@ -10,6 +10,24 @@ jest.mock('expo-linear-gradient', () => {
   return { LinearGradient: View };
 });
 
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }) => children,
+  SafeAreaView: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  useSafeAreaFrame: () => ({ x: 0, y: 0, width: 375, height: 812 }),
+}));
+
+jest.mock('expo-screen-orientation', () => ({
+  lockAsync: jest.fn(() => Promise.resolve()),
+  OrientationLock: {
+    LANDSCAPE: 6,
+    LANDSCAPE_LEFT: 4,
+    LANDSCAPE_RIGHT: 3,
+    PORTRAIT_UP: 1,
+    DEFAULT: 0,
+  },
+}));
+
 jest.mock('react-native-qrcode-svg', () => {
   const React = require('react');
   return {
