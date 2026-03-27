@@ -28,8 +28,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { PressableScale } from '../../components/common/PressableScale';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
-// @ts-ignore TS6133: SplitKeyboard removed in Task 8 — keeping import for now to avoid merge conflicts
-import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
+import { deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
 import { VerticalPianoRoll } from '../../components/PianoRoll/VerticalPianoRoll';
 import { computeZoomedRange, computeStickyRange, type KeyboardRange } from '../../components/Keyboard/computeZoomedRange';
 import { useExerciseStore } from '../../stores/exerciseStore';
@@ -1798,33 +1797,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const sorted = [...exercise.notes].sort((a, b) => a.startBeat - b.startBeat);
     return sorted[0].note;
   });
-  // Split-mode: per-hand focus notes for independent auto-scroll.
-  // Center on the midpoint of all unique notes per hand (not the first note)
-  // so the keyboard starts well-centered on the playing region.
-  // focusNoteLeft/Right removed from SplitKeyboard render in Task 6 — clean up in Task 8
-  // @ts-ignore TS6133: used in Task 8 cleanup (setters still called)
-  const [focusNoteLeft, setFocusNoteLeft] = useState<number | undefined>(() => {
-    if (keyboardMode !== 'split') return undefined;
-    const leftMidi = [...new Set(
-      exercise.notes
-        .filter(n => n.hand === 'left' || (!n.hand && n.note < splitPoint))
-        .map(n => n.note)
-    )].sort((a, b) => a - b);
-    if (leftMidi.length === 0) return undefined;
-    return leftMidi[Math.floor(leftMidi.length / 2)];
-  });
-  // @ts-ignore TS6133: used in Task 8 cleanup (setters still called)
-  const [focusNoteRight, setFocusNoteRight] = useState<number | undefined>(() => {
-    if (keyboardMode !== 'split') return undefined;
-    const rightMidi = [...new Set(
-      exercise.notes
-        .filter(n => n.hand === 'right' || (!n.hand && n.note >= splitPoint))
-        .map(n => n.note)
-    )].sort((a, b) => a - b);
-    if (rightMidi.length === 0) return undefined;
-    return rightMidi[Math.floor(rightMidi.length / 2)];
-  });
-
   useEffect(() => {
     // Bug #62 fix: use realtimeBeatRef (60fps) for the beat position so the
     // highlighted "expected" note matches what handleKeyDown's scoring uses.
@@ -1843,8 +1815,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (upcoming.length === 0) {
       setExpectedNotes(new Set());
       setNextExpectedNote(undefined);
-      setFocusNoteLeft(undefined);
-      setFocusNoteRight(undefined);
       return;
     }
 
@@ -1857,31 +1827,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // In testMode, suppress green highlighting but still track for auto-scroll
     setExpectedNotes(testMode ? new Set() : new Set(notesAtMinBeat.map((n) => n.note)));
     setNextExpectedNote(notesAtMinBeat[0].note);
-
-    // Split-mode: compute per-hand focus notes
-    if (keyboardMode === 'split') {
-      const leftUpcoming = upcoming.filter(
-        (n) => n.hand === 'left' || (!n.hand && n.note < splitPoint)
-      );
-      const rightUpcoming = upcoming.filter(
-        (n) => n.hand === 'right' || (!n.hand && n.note >= splitPoint)
-      );
-
-      if (leftUpcoming.length > 0) {
-        const minBeatL = Math.min(...leftUpcoming.map((n) => n.startBeat));
-        setFocusNoteLeft(leftUpcoming.find((n) => n.startBeat === minBeatL)?.note);
-      } else {
-        setFocusNoteLeft(undefined);
-      }
-
-      if (rightUpcoming.length > 0) {
-        const minBeatR = Math.min(...rightUpcoming.map((n) => n.startBeat));
-        setFocusNoteRight(rightUpcoming.find((n) => n.startBeat === minBeatR)?.note);
-      } else {
-        setFocusNoteRight(undefined);
-      }
-    }
-  }, [effectiveBeat, exercise.notes, testMode, keyboardMode, splitPoint]);
+  }, [effectiveBeat, exercise.notes, testMode]);
 
   // Force keyboard range update when the next expected note is outside the current range
   useEffect(() => {

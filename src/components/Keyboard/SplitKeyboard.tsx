@@ -1,4 +1,10 @@
 /**
+ * @deprecated Replaced by landscape single-keyboard layout (March 2026).
+ * Two-hand exercises now use Keyboard.tsx with handZones prop in landscape.
+ * Only deriveSplitPoint() is still imported — the component itself is not rendered.
+ */
+
+/**
  * Split Keyboard Component
  * Two stacked Keyboard instances for two-handed play.
  * Top = right hand (higher notes), Bottom = left hand (lower notes).
