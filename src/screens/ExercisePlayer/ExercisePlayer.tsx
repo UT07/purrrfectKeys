@@ -22,6 +22,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { PressableScale } from '../../components/common/PressableScale';
@@ -730,6 +731,27 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
     return { keyboardMode: 'normal' as const, splitPoint: 60 };
   }, [exercise]);
+
+  // Lock to landscape for two-hand exercises, restore portrait on exit
+  // isLandscape is consumed by landscape layout (Tasks 6-7)
+  // @ts-ignore TS6133: used in upcoming landscape layout tasks
+  const [isLandscape, setIsLandscape] = useState(false);
+  useEffect(() => {
+    // Only lock when split keyboard AND loading screen is done
+    if (keyboardMode !== 'split' || showLoadingScreen) return;
+
+    let cancelled = false;
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE)
+      .then(() => { if (!cancelled) setIsLandscape(true); })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+      // Best-effort restore — cleanup can't be async
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      setIsLandscape(false);
+    };
+  }, [keyboardMode, showLoadingScreen]);
 
   // Track mount lifecycle
   useEffect(() => {
@@ -1971,10 +1993,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    * Exit exercise without completing
    * Uses setTimeout to defer navigation, letting state updates settle
    */
-  const handleExit = useCallback(() => {
+  const handleExit = useCallback(async () => {
     stopPlayback();
     exerciseStore.clearSession();
-    // Small delay to let state updates settle before unmount
+    // Rotate to portrait before navigating away from landscape
+    if (keyboardMode === 'split') {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+    }
     setTimeout(() => {
       if (!mountedRef.current) return;
       if (onClose) {
@@ -1983,7 +2008,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         navigation.goBack();
       }
     }, 50);
-  }, [stopPlayback, exerciseStore, onClose, navigation]);
+  }, [stopPlayback, exerciseStore, onClose, navigation, keyboardMode]);
 
   /**
    * Handle keyboard note press
@@ -2358,7 +2383,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   /**
    * Handle XP transition overlay completion — navigate to PostExerciseScreen
    */
-  const handleXPTransitionComplete = useCallback(() => {
+  const handleXPTransitionComplete = useCallback(async () => {
     if (!finalScore || !mountedRef.current) return;
     setShowXPTransition(false);
 
@@ -2426,13 +2451,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         if (mountedRef.current) setShowLessonComplete(true);
       }, 200);
     } else {
+      // Rotate to portrait before navigating away from landscape
+      if (keyboardMode === 'split') {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      }
       // Navigate to PostExerciseScreen
       (navigation as any).replace('PostExercise');
     }
   }, [finalScore, exercise, gemsEarnedForModal, chestTypeForModal, chestGemsForModal,
       sessionStartTime, tempoChangeForModal, challengeTarget, aiMode, nextExerciseId,
       testMode, replayPlan, bonusDrillPattern, skillIdParam, exerciseTypeParam,
-      lessonCompleteData, navigation]);
+      lessonCompleteData, navigation, keyboardMode]);
 
   /**
    * Retry the current exercise after failing
