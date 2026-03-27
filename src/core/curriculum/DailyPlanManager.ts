@@ -39,7 +39,7 @@ export interface DailyPlan {
 // Constants
 // ============================================================================
 
-const STORAGE_KEY = 'purrrfect_keys_daily_plan_v5'; // v5: fix skillNodeId matching + React re-render
+const STORAGE_KEY = 'purrrfect_keys_daily_plan_v5'; // stable — don't bump unless data format changes
 const TAG = '[DailyPlanManager]';
 
 // ============================================================================
@@ -93,8 +93,9 @@ function prePopulateScores(exercises: PlanExercise[]): void {
         const aiKey = `ai-skill-${ex.skillNodeId}`;
         const score = aiScores?.[aiKey];
         if (score?.highScore > 0) {
+          const passingScore = 70; // Default passing score for AI exercises
           ex.score = score.highScore;
-          ex.status = score.completedAt != null ? 'passed' : 'failed';
+          ex.status = score.highScore >= passingScore ? 'passed' : 'failed';
           ex.completedAt = score.completedAt ?? null;
         }
       }
