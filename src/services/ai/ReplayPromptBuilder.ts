@@ -17,8 +17,8 @@ const REPLAY_SYSTEM_PROMPT = `You are Salsa, a friendly grey cat piano teacher r
 
 RULES:
 1. Return ONLY valid JSON matching the schema below. No markdown, no code fences.
-2. Max 3 pause points — pick the 3 most impactful mistakes.
-3. Max 5 continuous comments (2-5 words each, encouraging).
+2. Max 5 pause points — pick the most impactful mistakes. If there are more than 8 mistakes, include up to 7.
+3. Max 8 continuous comments (2-5 words each, encouraging).
 4. Pause explanations: 1-2 sentences, specific, actionable. Mention note names.
 5. showCorrectFromBeat/showCorrectToBeat: ±2 beats around the mistake, snapped to bar lines.
 6. Summary: 1-2 sentences, warm tone.
@@ -152,8 +152,8 @@ export function parseReplayResponse(text: string): ReplayAIResponse | null {
     }
 
     // Normalize missing fields to safe defaults
-    const pausePoints = Array.isArray(parsed.pausePoints) ? parsed.pausePoints.slice(0, 3) : [];
-    const continuousComments = Array.isArray(parsed.continuousComments) ? parsed.continuousComments.slice(0, 5) : [];
+    const pausePoints = Array.isArray(parsed.pausePoints) ? parsed.pausePoints.slice(0, 7) : [];
+    const continuousComments = Array.isArray(parsed.continuousComments) ? parsed.continuousComments.slice(0, 8) : [];
     const summary = typeof parsed.summary === 'string' ? parsed.summary : 'Good effort! Keep practicing.';
 
     return { pausePoints, continuousComments, summary } as ReplayAIResponse;

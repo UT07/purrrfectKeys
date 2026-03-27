@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,8 +13,6 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const CONFETTI_COLORS = ['#DC143C', '#FFD700', '#FFFFFF', '#4CAF50'];
 const PARTICLE_COUNT = 25;
@@ -30,10 +28,10 @@ interface Particle {
   isSquare: boolean;
 }
 
-function generateParticles(): Particle[] {
+function generateParticles(screenWidth: number): Particle[] {
   const particles: Particle[] = [];
   for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const startX = Math.random() * SCREEN_WIDTH;
+    const startX = Math.random() * screenWidth;
     const drift = (Math.random() - 0.5) * 120;
     particles.push({
       id: i,
@@ -50,9 +48,10 @@ function generateParticles(): Particle[] {
 
 interface ConfettiParticleProps {
   particle: Particle;
+  screenHeight: number;
 }
 
-function ConfettiParticle({ particle }: ConfettiParticleProps): React.JSX.Element {
+function ConfettiParticle({ particle, screenHeight }: ConfettiParticleProps): React.JSX.Element {
   const translateY = useSharedValue(-particle.size);
   const translateX = useSharedValue(particle.startX);
   const opacity = useSharedValue(1);
@@ -61,7 +60,7 @@ function ConfettiParticle({ particle }: ConfettiParticleProps): React.JSX.Elemen
   useEffect(() => {
     translateY.value = withDelay(
       particle.delay,
-      withTiming(SCREEN_HEIGHT + particle.size, {
+      withTiming(screenHeight + particle.size, {
         duration: ANIMATION_DURATION,
         easing: Easing.in(Easing.quad),
       })
@@ -123,7 +122,8 @@ export interface ConfettiEffectProps {
  * Place as an absolute-positioned overlay above other content
  */
 export function ConfettiEffect({ testID }: ConfettiEffectProps): React.JSX.Element {
-  const particles = useMemo(() => generateParticles(), []);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const particles = useMemo(() => generateParticles(screenWidth), [screenWidth]);
 
   return (
     <Animated.View
@@ -132,7 +132,7 @@ export function ConfettiEffect({ testID }: ConfettiEffectProps): React.JSX.Eleme
       testID={testID}
     >
       {particles.map((particle) => (
-        <ConfettiParticle key={particle.id} particle={particle} />
+        <ConfettiParticle key={particle.id} particle={particle} screenHeight={screenHeight} />
       ))}
     </Animated.View>
   );

@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,9 +18,6 @@ import { ScoreRing } from '../common/ScoreRing';
 import { FunFactCard } from '../FunFact/FunFactCard';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, glowColor } from '../../theme/tokens';
 import type { FunFact } from '../../content/funFacts';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.4;
 
 export interface ExerciseCardProps {
   score: number;
@@ -66,7 +63,9 @@ export function ExerciseCard({
   onRetry,
   autoDismissMs = 5000,
 }: ExerciseCardProps): React.JSX.Element {
-  const translateY = useSharedValue(CARD_HEIGHT + 40);
+  const { height: screenHeight } = useWindowDimensions();
+  const cardHeight = screenHeight * 0.4;
+  const translateY = useSharedValue(cardHeight + 40);
   const progressWidth = useSharedValue(100);
   const autoDismissTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -123,7 +122,7 @@ export function ExerciseCard({
 
   return (
     <View style={styles.overlay} testID="exercise-card">
-      <Animated.View style={[styles.card, cardAnimatedStyle]}>
+      <Animated.View style={[styles.card, { height: cardHeight }, cardAnimatedStyle]}>
         {/* Auto-dismiss countdown bar */}
         {isPassed && (
           <View style={styles.countdownTrack}>
@@ -217,7 +216,6 @@ const styles = StyleSheet.create({
     zIndex: 900,
   },
   card: {
-    height: CARD_HEIGHT,
     backgroundColor: COLORS.cardSurface,
     borderTopLeftRadius: BORDER_RADIUS.xl,
     borderTopRightRadius: BORDER_RADIUS.xl,

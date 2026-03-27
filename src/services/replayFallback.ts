@@ -60,15 +60,18 @@ export function selectAlgorithmicPausePoints(
     return a.detail.timingScore - b.detail.timingScore;
   });
 
-  // Take up to 3, ensuring they're at least 4 beats apart
+  // Density-aware cap: scale up to 7 for exercises with many mistakes
+  const maxPausePoints = Math.min(7, Math.max(3, Math.ceil(candidates.length * 0.6)));
+
+  // Take up to maxPausePoints, ensuring they're at least 2 beats apart
   const selected: PausePoint[] = [];
   const usedBeats = new Set<number>();
 
   for (const candidate of candidates) {
-    if (selected.length >= 3) break;
+    if (selected.length >= maxPausePoints) break;
 
     const beat = candidate.detail.expected.startBeat;
-    const tooClose = [...usedBeats].some((b) => Math.abs(b - beat) < 4);
+    const tooClose = [...usedBeats].some((b) => Math.abs(b - beat) < 2);
     if (tooClose) continue;
 
     usedBeats.add(beat);

@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { ReactElement } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -32,8 +32,6 @@ import { CatAvatar } from '../Mascot/CatAvatar';
 import { getCatById } from '../Mascot/catCharacters';
 import type { EvolutionStage, CatAbility } from '../../stores/types';
 import { COLORS, SPACING, BORDER_RADIUS, glowColor } from '../../theme/tokens';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const STAGE_LABELS: Record<EvolutionStage, string> = {
   baby: 'Baby',
@@ -55,6 +53,7 @@ export function EvolutionReveal({
   newAbility,
   onDismiss,
 }: EvolutionRevealProps): ReactElement {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const cat = getCatById(catId);
   const accentColor = cat?.color ?? COLORS.primary;
 
@@ -160,7 +159,7 @@ export function EvolutionReveal({
 
       {/* Stage label */}
       {(phase === 'reveal' || phase === 'ability') && (
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.stageBadge}>
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={[styles.stageBadge, { top: screenHeight * 0.2 }]}>
           <Text style={[styles.stageLabel, { color: accentColor }]}>
             {STAGE_LABELS[newStage]}
           </Text>
@@ -172,7 +171,7 @@ export function EvolutionReveal({
       {phase === 'ability' && newAbility && (
         <Animated.View
           entering={FadeInDown.delay(100).springify().damping(12)}
-          style={[styles.abilityCard, { borderColor: glowColor(accentColor, 0.38) }]}
+          style={[styles.abilityCard, { borderColor: glowColor(accentColor, 0.38), bottom: screenHeight * 0.22, width: screenWidth * 0.75 }]}
         >
           <View style={[styles.abilityIconCircle, { backgroundColor: glowColor(accentColor, 0.15) }]}>
             <MaterialCommunityIcons
@@ -189,7 +188,7 @@ export function EvolutionReveal({
 
       {/* Continue button */}
       {phase === 'ability' && (
-        <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.continueContainer}>
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={[styles.continueContainer, { bottom: screenHeight * 0.08 }]}>
           <PressableScale
             style={[styles.continueButton, { backgroundColor: accentColor }]}
             onPress={() => {
@@ -295,7 +294,6 @@ const styles = StyleSheet.create({
   },
   stageBadge: {
     position: 'absolute',
-    top: SCREEN_HEIGHT * 0.2,
     alignItems: 'center',
   },
   stageLabel: {
@@ -310,14 +308,12 @@ const styles = StyleSheet.create({
   },
   abilityCard: {
     position: 'absolute',
-    bottom: SCREEN_HEIGHT * 0.22,
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
     borderWidth: 1,
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.xl,
-    width: SCREEN_WIDTH * 0.75,
   },
   abilityIconCircle: {
     width: 48,
@@ -349,7 +345,6 @@ const styles = StyleSheet.create({
   },
   continueContainer: {
     position: 'absolute',
-    bottom: SCREEN_HEIGHT * 0.08,
   },
   continueButton: {
     paddingVertical: 14,

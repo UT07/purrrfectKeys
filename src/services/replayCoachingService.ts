@@ -172,7 +172,7 @@ async function callGeminiReplay(
     model: 'gemini-2.5-flash',
     systemInstruction: REPLAY_SYSTEM_PROMPT,
     generationConfig: {
-      maxOutputTokens: 1000,
+      maxOutputTokens: 1500,
       temperature: 0.7,
     },
   });
