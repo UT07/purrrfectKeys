@@ -39,7 +39,7 @@ export interface DailyPlan {
 // Constants
 // ============================================================================
 
-const STORAGE_KEY = 'purrrfect_keys_daily_plan_v4'; // v4: pre-populate existing scores on plan generation
+const STORAGE_KEY = 'purrrfect_keys_daily_plan_v5'; // v5: fix skillNodeId matching + React re-render
 const TAG = '[DailyPlanManager]';
 
 // ============================================================================
@@ -182,9 +182,7 @@ function findExerciseInPlan(
   // Second pass: match by skillNodeId (AI exercises may have different IDs)
   if (skillId) {
     for (const section of allSections) {
-      const match = section.find(
-        (ex) => ex.skillNodeId === skillId && ex.status === 'pending',
-      );
+      const match = section.find((ex) => ex.skillNodeId === skillId);
       if (match) return match;
     }
   }
@@ -313,6 +311,9 @@ export function updatePlanCompletion(
     `${TAG} Updated: ${exerciseId} → ${match.status} (score=${match.score}, ` +
     `best=${Math.max(score, previousScore)})`,
   );
+
+  // Create new plan reference so React detects the change on re-render
+  _plan = { ..._plan };
 
   // Save immediately — completion data is critical
   savePlanToStorage(_plan);
