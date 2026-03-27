@@ -417,7 +417,11 @@ async function attemptGeneration(
   prompt: string,
   allowedMidi?: number[],
 ): Promise<AIExercise | null> {
-  const result = await model.generateContent(prompt);
+  // 8s per attempt — Cloud Function has a 15s budget; two attempts must fit within it
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Gemini timeout after 8s')), 8000),
+  );
+  const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
   const text = result.response.text();
   const parsed: unknown = JSON.parse(text);
 

@@ -388,9 +388,9 @@ export async function generateExercise(params: GenerationParams): Promise<AIExer
     return null;
   }
 
-  // Try Cloud Function first (15s timeout — allows for cold starts; undeployed functions hang for 70s by default)
+  // Try Cloud Function first (8s timeout — client gives up and uses offline fallback after 8s)
   try {
-    const fn = httpsCallable<GenerationParams, AIExercise>(functions, 'generateExercise', { timeout: 15000 });
+    const fn = httpsCallable<GenerationParams, AIExercise>(functions, 'generateExercise', { timeout: 8000 });
     const result = await fn(params);
     const exercise = result.data;
 
@@ -472,7 +472,7 @@ async function attemptGeneration(
 ): Promise<AIExercise | null> {
   const result = await withTimeout(
     model.generateContent(prompt),
-    30000,
+    8000,
     'GeminiExercise.generateContent',
   );
   const text = result.response.text();
