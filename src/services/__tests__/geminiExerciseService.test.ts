@@ -23,6 +23,7 @@ jest.mock('@google/generative-ai', () => ({
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
   validateAIExercise,
+  normalizeAIExercise,
   buildPrompt,
   generateExercise,
 } from '../geminiExerciseService';
@@ -372,6 +373,75 @@ describe('geminiExerciseService', () => {
 
       expect(result).toBeNull();
       expect(mockGenerateContent).not.toHaveBeenCalled();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // normalizeAIExercise (Bug #103)
+  // --------------------------------------------------------------------------
+
+  describe('normalizeAIExercise', () => {
+    it('snaps close-to-valid durationBeats to exact values', () => {
+      const exercise = createValidExercise({
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 0.49, hand: 'right' },
+          { note: 62, startBeat: 1, durationBeats: 1.01, hand: 'right' },
+          { note: 64, startBeat: 2, durationBeats: 0.26, hand: 'right' },
+          { note: 65, startBeat: 3, durationBeats: 1.99, hand: 'right' },
+        ],
+      });
+
+      normalizeAIExercise(exercise);
+
+      expect(exercise.notes[0].durationBeats).toBe(0.5);
+      expect(exercise.notes[1].durationBeats).toBe(1);
+      expect(exercise.notes[2].durationBeats).toBe(0.25);
+      expect(exercise.notes[3].durationBeats).toBe(2);
+    });
+
+    it('preserves exact valid durationBeats', () => {
+      const exercise = createValidExercise({
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 0.5, hand: 'right' },
+          { note: 62, startBeat: 0.5, durationBeats: 1, hand: 'right' },
+          { note: 64, startBeat: 1.5, durationBeats: 1.5, hand: 'right' },
+          { note: 65, startBeat: 3, durationBeats: 4, hand: 'right' },
+        ],
+      });
+
+      normalizeAIExercise(exercise);
+
+      expect(exercise.notes[0].durationBeats).toBe(0.5);
+      expect(exercise.notes[1].durationBeats).toBe(1);
+      expect(exercise.notes[2].durationBeats).toBe(1.5);
+      expect(exercise.notes[3].durationBeats).toBe(4);
+    });
+
+    it('rounds startBeat to 3 decimal places', () => {
+      const exercise = createValidExercise({
+        notes: [
+          { note: 60, startBeat: 0.0001, durationBeats: 1, hand: 'right' },
+          { note: 62, startBeat: 1.4999999, durationBeats: 1, hand: 'right' },
+          { note: 64, startBeat: 2.123456, durationBeats: 1, hand: 'right' },
+          { note: 65, startBeat: 3, durationBeats: 1, hand: 'right' },
+        ],
+      });
+
+      normalizeAIExercise(exercise);
+
+      expect(exercise.notes[0].startBeat).toBe(0);
+      expect(exercise.notes[1].startBeat).toBe(1.5);
+      expect(exercise.notes[2].startBeat).toBe(2.123);
+      expect(exercise.notes[3].startBeat).toBe(3);
+    });
+
+    it('rounds tempo to integer', () => {
+      const exercise = createValidExercise();
+      exercise.settings.tempo = 84.6;
+
+      normalizeAIExercise(exercise);
+
+      expect(exercise.settings.tempo).toBe(85);
     });
   });
 });
