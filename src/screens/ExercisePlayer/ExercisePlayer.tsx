@@ -764,9 +764,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (keyboardMode !== 'split' || showLoadingScreen) return;
 
     let cancelled = false;
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE)
-      .then(() => { if (!cancelled) setIsLandscape(true); })
-      .catch(() => {});
+    // Use LANDSCAPE_RIGHT to force rotation (LANDSCAPE only allows but doesn't force on iOS)
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
+      .then(() => {
+        if (!cancelled) setIsLandscape(true);
+        logger.log('[ExercisePlayer] Locked to landscape for two-hand exercise');
+      })
+      .catch((err) => {
+        logger.warn('[ExercisePlayer] Landscape lock failed:', err);
+      });
 
     return () => {
       cancelled = true;
@@ -1722,6 +1728,96 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const comboCountRef = useRef(0); // mirror for use in callbacks without stale closures
   const comboShieldUsedRef = useRef(0); // how many shield misses consumed this exercise
 
+  // Two-hand beat-group feedback: collect per-note results at the same beat,
+  // show ONE averaged feedback when all notes at that beat are resolved.
+  // Map: startBeat → { expectedCount, results: Array<{ type, timingMs }> }
+  const beatGroupRef = useRef<Map<number, {
+    expectedCount: number;
+    results: Array<{ type: FeedbackState['type']; timingMs: number }>;
+  }>>(new Map());
+
+  /** Resolve a note into its beat group. Shows feedback when group is complete. */
+  const resolveBeatGroupNote = useCallback((
+    startBeat: number,
+    feedbackType: FeedbackState['type'],
+    timingMs: number,
+  ) => {
+    if (keyboardMode !== 'split') {
+      // Single-hand mode: immediate feedback (no grouping)
+      setFeedback({ type: feedbackType, noteIndex: -1, timestamp: Date.now(), timingOffsetMs: timingMs });
+      if (feedbackType === 'miss') {
+        const shieldMax = abilityConfigRef.current?.comboShieldMisses ?? 0;
+        if (shieldMax > 0 && comboShieldUsedRef.current < shieldMax && comboCountRef.current > 0) {
+          comboShieldUsedRef.current++;
+        } else {
+          setComboCount(0);
+        }
+      } else {
+        setComboCount((prev) => prev + 1);
+      }
+      return;
+    }
+
+    // Two-hand mode: group by beat
+    const group = beatGroupRef.current.get(startBeat);
+    if (!group) {
+      // First note at this beat — count how many notes exist at this beat
+      const expectedCount = exercise.notes.filter(n => n.startBeat === startBeat).length;
+      beatGroupRef.current.set(startBeat, {
+        expectedCount,
+        results: [{ type: feedbackType, timingMs }],
+      });
+      // If only one note at this beat, resolve immediately
+      if (expectedCount <= 1) {
+        beatGroupRef.current.delete(startBeat);
+        setFeedback({ type: feedbackType, noteIndex: -1, timestamp: Date.now(), timingOffsetMs: timingMs });
+        if (feedbackType === 'miss') {
+          setComboCount(0);
+        } else {
+          setComboCount((prev) => prev + 1);
+        }
+      }
+      return;
+    }
+
+    // Add result to existing group
+    group.results.push({ type: feedbackType, timingMs });
+
+    // Check if group is complete
+    if (group.results.length >= group.expectedCount) {
+      beatGroupRef.current.delete(startBeat);
+
+      // If ANY note missed → whole beat is MISS
+      const hasMiss = group.results.some(r => r.type === 'miss');
+      if (hasMiss) {
+        setFeedback({ type: 'miss', noteIndex: -1, timestamp: Date.now(), timingOffsetMs: 0 });
+        setComboCount(0);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+        return;
+      }
+
+      // Average the timing and derive feedback type
+      const avgTimingMs = group.results.reduce((sum, r) => sum + Math.abs(r.timingMs), 0) / group.results.length;
+      const toleranceMs = exercise.scoring.timingToleranceMs;
+      const graceMs = exercise.scoring.timingGracePeriodMs;
+      let avgType: FeedbackState['type'];
+      if (avgTimingMs <= toleranceMs) avgType = 'perfect';
+      else if (avgTimingMs <= graceMs * 0.5) avgType = 'good';
+      else if (avgTimingMs <= graceMs) avgType = 'early'; // simplified — no sign info for average
+      else if (avgTimingMs <= graceMs * 2) avgType = 'ok';
+      else avgType = 'miss';
+
+      setFeedback({ type: avgType, noteIndex: -1, timestamp: Date.now(), timingOffsetMs: avgTimingMs });
+      if (avgType === 'miss') {
+        setComboCount(0);
+      } else {
+        setComboCount((prev) => prev + 1);
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    }
+    // Else: waiting for other hand(s) — no feedback yet
+  }, [keyboardMode, exercise.notes, exercise.scoring.timingToleranceMs, exercise.scoring.timingGracePeriodMs]);
+
   // Buddy reaction — derived from feedback type + combo
   const buddyReaction: BuddyReaction = useMemo(() => {
     if (!feedback.type) return 'idle';
@@ -1779,6 +1875,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (currentBeat < prevBeatRef.current - 1 && isPlaying) {
       // Beat jumped backward significantly — loop restarted
       consumedNoteIndicesRef.current.clear();
+      passiveMissedRef.current.clear();
       setComboCount(0);
       comboShieldUsedRef.current = 0;
       setHighlightedKeys(new Set());
@@ -1828,6 +1925,35 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setExpectedNotes(testMode ? new Set() : new Set(notesAtMinBeat.map((n) => n.note)));
     setNextExpectedNote(notesAtMinBeat[0].note);
   }, [effectiveBeat, exercise.notes, testMode]);
+
+  // Passive miss detection: fire miss feedback for notes that pass the play line unplayed.
+  // This ensures two-hand mode shows "MISS L" when left hand notes are ignored.
+  const passiveMissedRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!isPlaying || !countInComplete || playerMode === 'replay') return;
+    const beat = realtimeBeatRef?.current ?? effectiveBeat;
+    // Notes more than 1.5 beats behind current position are missed
+    const missThreshold = 1.5;
+
+    for (let i = 0; i < exercise.notes.length; i++) {
+      if (consumedNoteIndicesRef.current.has(i)) continue;
+      if (passiveMissedRef.current.has(i)) continue;
+      const note = exercise.notes[i];
+      if (beat - note.startBeat > missThreshold) {
+        passiveMissedRef.current.add(i);
+        // Route through beat-group resolution so two-hand beats
+        // wait for both hands before showing feedback
+        resolveBeatGroupNote(note.startBeat, 'miss', 0);
+        // Only one passive miss per tick to avoid spamming
+        break;
+      }
+    }
+  }, [effectiveBeat, isPlaying, countInComplete, exercise.notes, keyboardMode, splitPoint, playerMode]);
+
+  // Reset passive miss tracking on exercise change or loop restart
+  useEffect(() => {
+    passiveMissedRef.current.clear();
+  }, [exercise.id]);
 
   // Force keyboard range update when the next expected note is outside the current range
   useEffect(() => {
@@ -2111,44 +2237,24 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           feedbackType = 'miss';
         }
 
-        const matchedHand: 'left' | 'right' | undefined = keyboardMode === 'split'
-          ? (exercise.notes[bestMatch.index]?.hand as 'left' | 'right'
-             ?? (midiNote.note < splitPoint ? 'left' : 'right'))
-          : undefined;
+        // Two-hand mode: defer feedback to beat-group resolution.
+        // Single-hand mode: immediate feedback via resolveBeatGroupNote pass-through.
+        resolveBeatGroupNote(
+          bestMatch.startBeat,
+          feedbackType,
+          bestMatch.beatDiffSigned * msPerBeat,
+        );
 
-        setFeedback({
-          type: feedbackType,
-          noteIndex: bestMatch.index,
-          timestamp: Date.now(),
-          timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat,
-          hand: matchedHand,
-        });
-
+        // Visual effects always fire immediately (per-note, not per-beat-group)
         if (feedbackType !== 'miss') {
-          // Earned timing points — increment combo, positive feedback
-          setComboCount((prev) => prev + 1);
-
-          // Animate combo
           Animated.sequence([
-            Animated.spring(comboScale, {
-              toValue: 1.1,
-              useNativeDriver: true,
-            }),
-            Animated.spring(comboScale, {
-              toValue: 1,
-              useNativeDriver: true,
-            }),
+            Animated.spring(comboScale, { toValue: 1.1, useNativeDriver: true }),
+            Animated.spring(comboScale, { toValue: 1, useNativeDriver: true }),
           ]).start();
-
-          // Stronger haptic for correct note
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-
-          // Hit particles — gold for perfect, feedback color for others
           const particleColor = feedbackType === 'perfect' ? COLORS.starGold : getFeedbackColor(feedbackType);
           setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: particleColor, trigger: Date.now() });
         } else {
-          // Beyond 2× grace — scoring gives 0 timing, treat like a miss for combo/effects
-          setComboCount(0);
           shakeRef.current?.shake('medium');
           setHitParticle({ x: screenWidth / 2, y: screenHeight * 0.82, color: COLORS.feedbackMiss, trigger: Date.now() });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
@@ -2307,15 +2413,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         else if (beatDiffMs <= graceMs * 2) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
         else feedbackType = 'ok';
 
-        const curKeyboardMode = keyboardModeRef.current;
-        const curSplitPoint = splitPointRef.current;
-        const extMatchedHand: 'left' | 'right' | undefined = curKeyboardMode === 'split'
-          ? (curExercise.notes[bestMatch.index]?.hand as 'left' | 'right'
-             ?? (externalNote.note < curSplitPoint ? 'left' : 'right'))
-          : undefined;
-
-        setComboCount((prev) => prev + 1);
-        setFeedback({ type: feedbackType, noteIndex: bestMatch.index, timestamp: Date.now(), timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat, hand: extMatchedHand });
+        // Use beat-group resolution for two-hand; immediate for single-hand
+        resolveBeatGroupNote(bestMatch.startBeat, feedbackType, bestMatch.beatDiffSigned * msPerBeat);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       } else {
         // Wrong note detected — show miss feedback for all input methods.
@@ -3053,7 +3152,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
                 disabled={requiredPlaybackSpeed != null || isSpeedLocked}
               >
                 <Text style={[styles.speedPillText, effectivePlaybackSpeed < 1.0 && styles.speedPillTextActive]}>
-                  {isSpeedLocked ? `🔒 0.5x` : (effectivePlaybackSpeed === 1.0 ? '1x' : `${effectivePlaybackSpeed}x`)}
+                  {isSpeedLocked ? `🔒 ${exercise.settings.tempo}` : `${exercise.settings.tempo} BPM`}
                 </Text>
               </PressableScale>
             );
@@ -3081,12 +3180,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
                 <PressableScale
                   style={[styles.speedPill, effectivePlaybackSpeed < 1.0 && styles.speedPillActive, isSpeedLocked && { opacity: 0.6 }]}
                   testID="speed-selector-full"
-                  accessibilityLabel={isSpeedLocked ? 'Speed locked at 0.5x for two-hand exercises. Pass once to unlock.' : `Playback speed ${effectivePlaybackSpeed}x, auto-adjusted for your input method`}
+                  accessibilityLabel={isSpeedLocked ? `Tempo locked at ${exercise.settings.tempo} BPM for two-hand exercises. Pass once to unlock.` : `Tempo ${exercise.settings.tempo} BPM`}
                   soundOnPress={false}
                   disabled={isSpeedLocked}
                 >
                   <Text style={[styles.speedPillText, effectivePlaybackSpeed < 1.0 && styles.speedPillTextActive]}>
-                    {isSpeedLocked ? `🔒 0.5x` : (effectivePlaybackSpeed === 1.0 ? '1x' : `${effectivePlaybackSpeed}x`)}
+                    {isSpeedLocked ? `🔒 ${exercise.settings.tempo}` : `${exercise.settings.tempo} BPM`}
                   </Text>
                 </PressableScale>
               );
@@ -3186,7 +3285,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               type={feedback.type}
               trigger={feedback.timestamp}
               timingOffsetMs={feedback.timingOffsetMs}
-              hand={feedback.hand}
             />
             <ComboMeter combo={comboCount} />
           </View>
