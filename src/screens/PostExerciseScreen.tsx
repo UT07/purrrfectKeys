@@ -167,25 +167,47 @@ export function PostExerciseScreen(): React.ReactElement {
     return () => { cancelled = true; };
   }, [exercise, score, sessionMinutes]);
 
-  // Phase 1: Cat dialogue (1.5s after screen renders — after XP transition sounds settle)
+  // TTS: Cat dialogue first, then Salsa coaching after cat finishes.
+  // Uses onDone callback instead of hardcoded delay — handles long messages correctly.
+  const catFinishedRef = useRef(false);
+  const hasPlayedCoaching = useRef(false);
+
+  // Phase 1: Cat dialogue (1.5s after screen renders)
   useEffect(() => {
     if (hasAutoPlayed.current || !catDialogue) return;
     hasAutoPlayed.current = true;
     const timer = setTimeout(() => {
-      ttsService.speak(catDialogue, { catId: selectedCatId });
+      ttsService.speak(catDialogue, {
+        catId: selectedCatId,
+        onDone: () => { catFinishedRef.current = true; },
+      });
+      // Safety: if TTS completes instantly (offline/no voice), mark as done
+      setTimeout(() => { catFinishedRef.current = true; }, 500);
     }, 1500);
     return () => { clearTimeout(timer); ttsService.stop(); };
   }, [catDialogue, selectedCatId]);
 
-  // Phase 2: Salsa coaching auto-speaks when loaded (5s gap for cat to finish)
-  const hasPlayedCoaching = useRef(false);
+  // Phase 2: Salsa coaching — waits for cat to finish, then plays after 1s gap
   useEffect(() => {
     if (!coachFeedback || coachLoading || hasPlayedCoaching.current) return;
-    hasPlayedCoaching.current = true;
-    const timer = setTimeout(() => {
-      ttsService.speak(coachFeedback, { catId: 'salsa' });
-    }, 5000);
-    return () => { clearTimeout(timer); };
+
+    // Poll for cat completion (check every 500ms, max 15s)
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed += 500;
+      if (catFinishedRef.current || elapsed >= 15000) {
+        clearInterval(interval);
+        if (!hasPlayedCoaching.current) {
+          hasPlayedCoaching.current = true;
+          // 1s gap after cat finishes before Salsa speaks
+          setTimeout(() => {
+            ttsService.speak(coachFeedback, { catId: 'salsa' });
+          }, 1000);
+        }
+      }
+    }, 500);
+
+    return () => { clearInterval(interval); };
   }, [coachFeedback, coachLoading]);
 
   // Navigation handlers

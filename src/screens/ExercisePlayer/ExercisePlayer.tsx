@@ -702,8 +702,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Reset zoom range when exercise changes so each level starts on the
   // correct octave window instead of inheriting previous-session state.
+  // Also resets the next expected note so the keyboard scrolls to the first note.
   useEffect(() => {
-    setKeyboardRange(computeInitialKeyboardRange(exercise.notes));
+    const newRange = computeInitialKeyboardRange(exercise.notes);
+    setKeyboardRange(newRange);
+    // Reset focus note to the first exercise note so keyboard scrolls correctly
+    if (exercise.notes.length > 0) {
+      const firstNote = exercise.notes.sort((a, b) => a.startBeat - b.startBeat)[0];
+      setNextExpectedNote(firstNote.note);
+    }
   }, [exercise.id, exercise.notes]);
 
   // Auto-detect split keyboard mode for two-handed exercises
