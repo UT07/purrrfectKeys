@@ -135,12 +135,6 @@ function getNonSongExercises(plan: DailyPlan): PlanExercise[] {
   return [...plan.warmUp, ...plan.lesson, ...plan.challenge];
 }
 
-function isPlanComplete(plan: DailyPlan): boolean {
-  const exercises = getNonSongExercises(plan);
-  if (exercises.length === 0) return false;
-  return exercises.every((ex) => ex.status !== 'pending');
-}
-
 function countCompletions(plan: DailyPlan): number {
   const allExercises = [...plan.warmUp, ...plan.lesson, ...plan.challenge, ...plan.songs];
   return allExercises.filter((ex) => ex.status !== 'pending').length;
@@ -206,14 +200,15 @@ function findExerciseInPlan(
 export function getDailyPlan(): DailyPlan {
   const today = getTodayDateString();
 
-  // Cache hit: same day and plan still has pending exercises
-  if (_plan && _plan.date === today && !isPlanComplete(_plan)) {
-    return _plan;
-  }
-
-  // If plan is complete but same day, generate a fresh one (user finished everything)
-  if (_plan && _plan.date === today && isPlanComplete(_plan)) {
-    logger.log(`${TAG} Plan complete — generating fresh plan for continued practice`);
+  // Cache hit: same day — return unless ALL exercises are passed.
+  // Failed/pending exercises keep the plan; only regenerate when fully passed.
+  if (_plan && _plan.date === today) {
+    const allPassed = getNonSongExercises(_plan).length > 0 &&
+      getNonSongExercises(_plan).every((ex) => ex.status === 'passed');
+    if (!allPassed) {
+      return _plan;
+    }
+    logger.log(`${TAG} All exercises passed — generating fresh plan for continued practice`);
   }
 
   // Lazy require to avoid circular dependencies
