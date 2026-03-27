@@ -128,35 +128,7 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
 
   return (
     <View style={styles.container} testID={testID}>
-      {/* Right hand (top) */}
-      <View style={styles.handRow}>
-        <View style={styles.handLabel}>
-          <Text style={styles.handLabelText}>R</Text>
-        </View>
-        <View style={styles.keyboardWrapper}>
-          <Keyboard
-            startNote={rightRange.startNote}
-            octaveCount={rightRange.octaveCount}
-            onNoteOn={onNoteOn}
-            onNoteOff={onNoteOff}
-            highlightedNotes={rightHighlighted}
-            expectedNotes={rightExpected}
-            enabled={enabled}
-            hapticEnabled={hapticEnabled}
-            showLabels={showLabels}
-            scrollable
-            scrollEnabled={false}
-            focusNote={focusNoteRight}
-            keyHeight={splitKeyHeight}
-            testID={testID ? `${testID}-right` : undefined}
-          />
-        </View>
-      </View>
-
-      {/* Divider */}
-      <View style={styles.divider} />
-
-      {/* Left hand (bottom) */}
+      {/* Left hand (top — lower notes, closer to piano roll) */}
       <View style={styles.handRow}>
         <View style={styles.handLabel}>
           <Text style={styles.handLabelText}>L</Text>
@@ -177,6 +149,34 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
             focusNote={focusNoteLeft}
             keyHeight={splitKeyHeight}
             testID={testID ? `${testID}-left` : undefined}
+          />
+        </View>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* Right hand (bottom — higher notes, closest to thumbs) */}
+      <View style={styles.handRow}>
+        <View style={styles.handLabel}>
+          <Text style={styles.handLabelText}>R</Text>
+        </View>
+        <View style={styles.keyboardWrapper}>
+          <Keyboard
+            startNote={rightRange.startNote}
+            octaveCount={rightRange.octaveCount}
+            onNoteOn={onNoteOn}
+            onNoteOff={onNoteOff}
+            highlightedNotes={rightHighlighted}
+            expectedNotes={rightExpected}
+            enabled={enabled}
+            hapticEnabled={hapticEnabled}
+            showLabels={showLabels}
+            scrollable
+            scrollEnabled={false}
+            focusNote={focusNoteRight}
+            keyHeight={splitKeyHeight}
+            testID={testID ? `${testID}-right` : undefined}
           />
         </View>
       </View>
