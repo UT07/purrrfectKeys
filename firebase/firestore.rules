@@ -374,14 +374,20 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         // Non-anonymous users can join a guild (create their own member doc)
         allow create: if isAuthenticated() && isNotAnonymous();
-        // Own member doc (XP updates) OR guild leader (role changes)
-        allow update: if isOwner(memberUid) ||
-                         (isAuthenticated() &&
-                          get(/databases/$(database)/documents/guilds/$(guildId)).data.leaderUid == request.auth.uid);
-        // Own member doc (leaving) OR guild leader (kicking)
+        // Role changes require the requester to be leader or co_leader.
+        // Members may update their own doc only when the role field is unchanged.
+        allow update: if isAuthenticated() && (
+          // Guild leader or co_leader may update any member (including role changes)
+          (get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role in ['leader', 'co_leader'])
+          ||
+          // Members may update their own doc as long as they are NOT changing their role
+          (isOwner(memberUid) &&
+           request.resource.data.role == resource.data.role)
+        );
+        // Own member doc (leaving) OR guild leader/co_leader (kicking)
         allow delete: if isOwner(memberUid) ||
                          (isAuthenticated() &&
-                          get(/databases/$(database)/documents/guilds/$(guildId)).data.leaderUid == request.auth.uid);
+                          get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role in ['leader', 'co_leader']);
       }
     }
 
