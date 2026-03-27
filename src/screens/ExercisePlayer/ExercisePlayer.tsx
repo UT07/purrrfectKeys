@@ -21,12 +21,14 @@ import {
   AccessibilityInfo,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { PressableScale } from '../../components/common/PressableScale';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
+// @ts-ignore TS6133: SplitKeyboard removed in Task 8 — keeping import for now to avoid merge conflicts
 import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
 import { VerticalPianoRoll } from '../../components/PianoRoll/VerticalPianoRoll';
 import { computeZoomedRange, computeStickyRange, type KeyboardRange } from '../../components/Keyboard/computeZoomedRange';
@@ -575,6 +577,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Responsive layout — supports both portrait and landscape
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isPortrait = screenHeight > screenWidth;
   const singleKeyHeight = isPortrait ? 120 : 70;
   const topBarHeight = isPortrait ? 76 : 40;
@@ -733,8 +736,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [exercise]);
 
   // Lock to landscape for two-hand exercises, restore portrait on exit
-  // isLandscape is consumed by landscape layout (Tasks 6-7)
-  // @ts-ignore TS6133: used in upcoming landscape layout tasks
   const [isLandscape, setIsLandscape] = useState(false);
   useEffect(() => {
     // Only lock when split keyboard AND loading screen is done
@@ -1768,6 +1769,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Split-mode: per-hand focus notes for independent auto-scroll.
   // Center on the midpoint of all unique notes per hand (not the first note)
   // so the keyboard starts well-centered on the playing region.
+  // focusNoteLeft/Right removed from SplitKeyboard render in Task 6 — clean up in Task 8
+  // @ts-ignore TS6133: used in Task 8 cleanup (setters still called)
   const [focusNoteLeft, setFocusNoteLeft] = useState<number | undefined>(() => {
     if (keyboardMode !== 'split') return undefined;
     const leftMidi = [...new Set(
@@ -1778,6 +1781,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (leftMidi.length === 0) return undefined;
     return leftMidi[Math.floor(leftMidi.length / 2)];
   });
+  // @ts-ignore TS6133: used in Task 8 cleanup (setters still called)
   const [focusNoteRight, setFocusNoteRight] = useState<number | undefined>(() => {
     if (keyboardMode !== 'split') return undefined;
     const rightMidi = [...new Set(
@@ -1872,6 +1876,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       return next;
     });
   }, [nextExpectedNote, effectiveBeat, exercise.notes]);
+
+  // Keyboard range for landscape single-keyboard mode (covers all exercise notes)
+  const { startNote: landscapeStartNote, octaveCount: landscapeOctaveCount } = useMemo(() => {
+    if (keyboardMode !== 'split') return { startNote: 48, octaveCount: 2 };
+    return computeZoomedRange(exercise.notes.map(n => n.note));
+  }, [keyboardMode, exercise.notes]);
 
   // Playback loop is now handled by useExercisePlayback hook
 
@@ -2967,7 +2977,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           tint={glowColor(COLORS.background, 0.75)}
           borderColor={glowColor(COLORS.textPrimary, 0.06)}
           borderRadius={16}
-          style={styles.topBar}
+          style={StyleSheet.flatten([styles.topBar, isLandscape && styles.topBarCompact])}
         >
           <ExerciseControls
             isPlaying={isPlaying}
@@ -3132,8 +3142,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               testID="exercise-piano-roll"
             />
           )}
-          {/* Buddy cat companion — floating in corner */}
-          {isPlaying && (
+          {/* Buddy cat companion — floating in corner (hidden in landscape to save space) */}
+          {isPlaying && !isLandscape && (
             <View style={styles.buddyOverlay}>
               <ExerciseBuddy
                 catId={selectedCatId ?? 'mini-meowww'}
@@ -3192,12 +3202,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           />
         ) : (
         <View
-          style={[styles.keyboardContainer, { height: keyboardMode === 'split' ? Math.round(singleKeyHeight * 0.75) * 2 + 4 : singleKeyHeight }]}
+          style={[
+            styles.keyboardContainer,
+            { height: keyboardMode === 'split' ? Math.round(singleKeyHeight * 0.75) * 2 + 4 : singleKeyHeight },
+            isLandscape && { paddingLeft: insets.left, paddingRight: insets.right },
+          ]}
         >
           {keyboardMode === 'split' ? (
-            <SplitKeyboard
-              notes={exercise.notes}
-              splitPoint={splitPoint}
+            <Keyboard
+              startNote={landscapeStartNote}
+              octaveCount={landscapeOctaveCount}
               onNoteOn={handleKeyDown}
               onNoteOff={handleKeyUp}
               highlightedNotes={replayHighlightedKeys ?? (isDemoPlaying ? demoActiveNotes : highlightedKeys)}
@@ -3205,9 +3219,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               enabled={playerMode !== 'replay' && !isMicExclusive && !(exerciseType === 'callResponse' && callResponsePhase === 'call')}
               hapticEnabled={playerMode !== 'replay'}
               showLabels={!isSightReading && !testModeRef.current}
+              scrollable={false}
+              focusNote={isPlaying ? undefined : nextExpectedNote}
               keyHeight={singleKeyHeight}
-              focusNoteLeft={isPlaying ? undefined : focusNoteLeft}
-              focusNoteRight={isPlaying ? undefined : focusNoteRight}
+              handZones={{
+                splitPoint,
+                leftColor: '#26C6DA',
+                rightColor: '#7C4DFF',
+              }}
               testID="exercise-keyboard"
             />
           ) : (
@@ -3530,6 +3549,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     marginTop: 4,
     gap: 8,
+  },
+  topBarCompact: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    minHeight: 40,
   },
   secondaryBar: {
     flexDirection: 'row',
