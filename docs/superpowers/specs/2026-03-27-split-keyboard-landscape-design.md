@@ -1,7 +1,7 @@
 # Split Keyboard Redesign: Landscape Two-Hand Mode
 
 **Date:** 2026-03-27
-**Status:** Approved (v3 — final review)
+**Status:** Approved (v4 — final)
 **Branch:** test/stable-baseline
 
 ## Problem
@@ -91,10 +91,11 @@ No prompt or animation — the rotation itself signals the mode change (Simply P
 
 ### Orientation Management
 
-- `ExercisePlayer` checks `keyboardMode` on mount.
+- `ExercisePlayer` has a `useEffect` keyed on `keyboardMode`.
 - If `'split'`, call `ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE)`.
 - On unmount (or navigation away), call `ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)`.
-- Use a `useEffect` cleanup function to ensure portrait is restored even on unexpected unmount.
+- **Cleanup function**: `useEffect` cleanup can't be async, so the cleanup fires `lockAsync(PORTRAIT_UP)` as fire-and-forget (best effort). The *intentional* exit paths (`handleExit`, XP-transition-complete, close button) must `await` the rotation before navigating.
+- **Timing**: Lock to landscape AFTER `ExerciseLoadingScreen` dismisses (not on mount). The loading screen (Salsa tip) is simple enough to display in either orientation, but locking mid-loading-screen feels jarring. Gate the orientation lock on `!showLoadingScreen`.
 
 ### Post-Exercise Flow
 
@@ -133,6 +134,10 @@ Some exercise notes may not have a `hand` field. In these cases:
 - Infer hand from split point: `note.note < splitPoint ? 'left' : 'right'`.
 - This applies to keyboard tinting, feedback badge, and expected-note glow.
 - `deriveSplitPoint()` from `SplitKeyboard.tsx` is reused (moved to a shared utility if needed).
+
+### AI Two-Hand Exercise Detection
+
+`keyboardMode` detection (line 718) checks if notes have `hand` properties OR if notes span both sides of middle C. For AI exercises to trigger landscape mode, the Gemini prompt for `both-hands` skill must include `hand` on every note. If AI generates notes without `hand`, the exercise falls back to portrait single-keyboard — acceptable as a graceful degradation. No changes needed to the Gemini prompt for this spec; the existing `both-hands` hint already requests hand annotations.
 
 ### ExerciseCard (Between Exercises)
 
