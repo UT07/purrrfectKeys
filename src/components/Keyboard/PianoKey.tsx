@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -74,6 +74,8 @@ export interface PianoKeyProps {
   showLabels?: boolean;
   /** Replay mode highlight color (hex string, overrides default highlight color) */
   replayColor?: string;
+  /** Hand-zone tint color (hex) for two-hand mode */
+  handTintColor?: string;
 }
 
 /**
@@ -107,6 +109,7 @@ export const PianoKey = React.memo(
     isScaleNote = false,
     showLabels = false,
     replayColor,
+    handTintColor,
   }: PianoKeyProps) => {
     const isBlackKey = useMemo(
       () => isBlackKeyProp || isBlackKeyNote(midiNote),
@@ -137,6 +140,7 @@ export const PianoKey = React.memo(
     }));
 
     const noteLabel = getNoteLabel(midiNote, showLabels);
+    const expectedGlowColor = handTintColor ?? COLORS.feedbackEarly;
 
     if (isBlackKey) {
       return (
@@ -150,12 +154,21 @@ export const PianoKey = React.memo(
             style={[
               styles.blackKey,
               isScaleNote && styles.scaleNoteBlackKey,
-              isExpected && styles.expectedBlackKey,
+              isExpected && [styles.expectedBlackKey, { borderColor: expectedGlowColor, shadowColor: expectedGlowColor }],
               isHighlighted && styles.highlightedBlackKey,
               isPressed && styles.pressedBlackKey,
               replayColor != null && { backgroundColor: replayColor },
             ]}
           >
+            {handTintColor && (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: handTintColor, opacity: 0.12, borderRadius: 4 },
+                ]}
+                pointerEvents="none"
+              />
+            )}
             {showLabels && (
               <Animated.Text style={styles.blackKeyLabel}>
                 {noteLabel}
@@ -177,12 +190,21 @@ export const PianoKey = React.memo(
           style={[
             styles.whiteKey,
             isScaleNote && styles.scaleNoteWhiteKey,
-            isExpected && styles.expectedWhiteKey,
+            isExpected && [styles.expectedWhiteKey, { borderColor: expectedGlowColor, shadowColor: expectedGlowColor }],
             isHighlighted && styles.highlightedWhiteKey,
             isPressed && styles.pressedWhiteKey,
             replayColor != null && { backgroundColor: replayColor },
           ]}
         >
+          {handTintColor && (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: handTintColor, opacity: 0.12, borderRadius: 2 },
+              ]}
+              pointerEvents="none"
+            />
+          )}
           {showLabels && (
             <Animated.Text style={styles.whiteKeyLabel}>
               {noteLabel}
