@@ -191,6 +191,36 @@ export function validateAIExercise(exercise: unknown, allowedMidi?: number[]): e
   return true;
 }
 
+/**
+ * Normalize an AI exercise after validation: snap durationBeats to nearest
+ * valid musical value and ensure all numeric fields are finite.
+ * Mutates the exercise in-place for efficiency (called right after parse).
+ */
+export function normalizeAIExercise(exercise: AIExercise): void {
+  for (const n of exercise.notes) {
+    // Snap durationBeats to the closest valid value if it's slightly off
+    if (!VALID_DURATIONS.has(n.durationBeats)) {
+      let closest = 1;
+      let minDist = Infinity;
+      for (const d of VALID_DURATIONS) {
+        const dist = Math.abs(d - n.durationBeats);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = d;
+        }
+      }
+      n.durationBeats = closest;
+    }
+    // Ensure startBeat is a clean number (guards against floating point dust)
+    n.startBeat = Math.round(n.startBeat * 1000) / 1000;
+  }
+
+  // Ensure tempo is a safe integer
+  if (exercise.settings.tempo) {
+    exercise.settings.tempo = Math.round(exercise.settings.tempo);
+  }
+}
+
 // ============================================================================
 // Prompt Builder
 // ============================================================================
@@ -365,6 +395,7 @@ export async function generateExercise(params: GenerationParams): Promise<AIExer
     const exercise = result.data;
 
     if (exercise && validateAIExercise(exercise, params.generationHints?.targetMidi)) {
+      normalizeAIExercise(exercise);
       return exercise;
     }
   } catch (cfError) {
@@ -448,6 +479,7 @@ async function attemptGeneration(
   const parsed: unknown = JSON.parse(text);
 
   if (validateAIExercise(parsed, allowedMidi)) {
+    normalizeAIExercise(parsed);
     return parsed;
   }
 

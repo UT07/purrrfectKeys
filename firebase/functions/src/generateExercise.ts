@@ -94,7 +94,7 @@ function validateAIExercise(exercise: unknown, allowedMidi?: number[]): exercise
 
   const ex = exercise as Record<string, unknown>;
 
-  if (!Array.isArray(ex.notes) || ex.notes.length === 0) {
+  if (!Array.isArray(ex.notes) || ex.notes.length < 4) {
     return false;
   }
 
@@ -422,8 +422,34 @@ async function attemptGeneration(
   const parsed: unknown = JSON.parse(text);
 
   if (validateAIExercise(parsed, allowedMidi)) {
+    normalizeAIExercise(parsed as AIExercise);
     return parsed;
   }
 
   return null;
+}
+
+/**
+ * Normalize an AI exercise: snap durationBeats to nearest valid value and
+ * round tempo to integer. Mutates in-place (called right after parse).
+ */
+function normalizeAIExercise(exercise: AIExercise): void {
+  for (const n of exercise.notes) {
+    if (!VALID_DURATIONS.has(n.durationBeats)) {
+      let closest = 1;
+      let minDist = Infinity;
+      for (const d of VALID_DURATIONS) {
+        const dist = Math.abs(d - n.durationBeats);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = d;
+        }
+      }
+      n.durationBeats = closest;
+    }
+    n.startBeat = Math.round(n.startBeat * 1000) / 1000;
+  }
+  if (exercise.settings.tempo) {
+    exercise.settings.tempo = Math.round(exercise.settings.tempo);
+  }
 }
