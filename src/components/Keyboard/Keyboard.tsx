@@ -23,8 +23,8 @@ import {
 import * as Haptics from 'expo-haptics';
 import { PianoKey } from './PianoKey';
 import { hitTestPianoKey, getWhiteKeysInRange } from './keyboardHitTest';
-import type { MidiNoteEvent } from '@/core/exercises/types';
 import { logger } from '../../utils/logger';
+import type { MidiNoteEvent } from '@/core/exercises/types';
 
 export interface KeyboardProps {
   startNote?: number; // Default: C3 (48)
@@ -114,7 +114,12 @@ export const Keyboard = React.memo(
     const hasInitiallyScrolledRef = useRef(false);
     useEffect(() => {
       if (!scrollable || !focusNote || !scrollViewRef.current) return undefined;
-      if (focusNote < startNote || focusNote > endNote) return undefined;
+      // If focusNote is outside the keyboard range, skip scroll (can't scroll to a key that doesn't exist).
+      // The parent should expand the range — log it for debugging.
+      if (focusNote < startNote || focusNote > endNote) {
+        if (__DEV__) logger.log(`[Keyboard] focusNote ${focusNote} outside range [${startNote}-${endNote}]`);
+        return undefined;
+      }
 
       // Find the white key index for this note (or the nearest white key)
       const targetNote = [1, 3, 6, 8, 10].includes(focusNote % 12)

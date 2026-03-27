@@ -436,6 +436,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             successMessage: 'Great practice!',
           },
         };
+        // Log AI exercise details for debugging scoring issues (#103/F10)
+        logger.log(`[ExercisePlayer:AI] Generated: ${converted.notes.length} notes, tempo=${converted.settings.tempo}, tolerance=${converted.scoring.timingToleranceMs}ms, beats=${converted.notes.map(n => n.startBeat).join(',')}`);
         setAiExercise(converted);
       } else {
         // Buffer empty — use offline template fallback chain

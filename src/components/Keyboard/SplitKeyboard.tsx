@@ -91,14 +91,15 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
     return { leftNoteEvents: left, rightNoteEvents: right };
   }, [notes, splitPoint]);
 
-  // Use same zoomed range computation as single keyboard — shows 1-2 octaves
-  // focused on the exercise notes, scrollable for anything outside
+  // Compute range that covers ALL notes for each hand (not just a zoomed window).
+  // Use 3 octaves minimum so the keyboard has enough keys to scroll through.
+  // The focusNote auto-scroll centers the view on the active note.
   const rightRange = useMemo(
-    () => computeZoomedRange(rightNoteEvents.map(n => n.note)),
+    () => computeZoomedRange(rightNoteEvents.map(n => n.note), 3),
     [rightNoteEvents]
   );
   const leftRange = useMemo(
-    () => computeZoomedRange(leftNoteEvents.map(n => n.note)),
+    () => computeZoomedRange(leftNoteEvents.map(n => n.note), 3),
     [leftNoteEvents]
   );
 
