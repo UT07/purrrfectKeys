@@ -44,6 +44,8 @@ export interface KeyboardProps {
   scaleNotes?: Set<number>;
   /** Per-note color overrides for replay mode (MIDI note → hex color string) */
   replayHighlights?: Map<number, string>;
+  /** Two-hand mode: tint keys by hand zone */
+  handZones?: { splitPoint: number; leftColor: string; rightColor: string };
   testID?: string;
 }
 
@@ -68,6 +70,7 @@ export const Keyboard = React.memo(
     focusNote,
     scaleNotes,
     replayHighlights,
+    handZones,
     testID,
   }: KeyboardProps) => {
     // Validate octave count
@@ -391,29 +394,35 @@ export const Keyboard = React.memo(
         testID={testID && `${testID}-keyboard`}
       >
         {/* White keys as base layout */}
-        {whiteKeys.map((note) => (
-          <View
-            key={`white-${note}`}
-            style={[
-              styles.whiteKeyContainer,
-              {
-                height: keyHeight,
-              },
-            ]}
-            testID={`key-${note}`}
-          >
-            <PianoKey
-              midiNote={note}
-              isBlackKey={false}
-              isHighlighted={mergedPressedNotes.has(note)}
-              isExpected={expectedNotes.has(note)}
-              isScaleNote={scaleNotes?.has(note)}
-              isPressed={pressedNotes.has(note)}
-              showLabels={showLabels}
-              replayColor={replayHighlights?.get(note)}
-            />
-          </View>
-        ))}
+        {whiteKeys.map((note) => {
+          const handTintColor = handZones
+            ? (note < handZones.splitPoint ? handZones.leftColor : handZones.rightColor)
+            : undefined;
+          return (
+            <View
+              key={`white-${note}`}
+              style={[
+                styles.whiteKeyContainer,
+                {
+                  height: keyHeight,
+                },
+              ]}
+              testID={`key-${note}`}
+            >
+              <PianoKey
+                midiNote={note}
+                isBlackKey={false}
+                isHighlighted={mergedPressedNotes.has(note)}
+                isExpected={expectedNotes.has(note)}
+                isScaleNote={scaleNotes?.has(note)}
+                isPressed={pressedNotes.has(note)}
+                showLabels={showLabels}
+                replayColor={replayHighlights?.get(note)}
+                handTintColor={handTintColor}
+              />
+            </View>
+          );
+        })}
 
         {/* Black keys overlaid — overlay width = one white key, so PianoKey's
              inner 60% width + right:-30% centers the visible key on the boundary
@@ -429,6 +438,10 @@ export const Keyboard = React.memo(
           if (whiteKeyIndex < 0) return null;
 
           const oneKeyPercent = 100 / whiteKeys.length;
+
+          const handTintColor = handZones
+            ? (note < handZones.splitPoint ? handZones.leftColor : handZones.rightColor)
+            : undefined;
 
           return (
             <View
@@ -451,6 +464,7 @@ export const Keyboard = React.memo(
                 isPressed={pressedNotes.has(note)}
                 showLabels={showLabels}
                 replayColor={replayHighlights?.get(note)}
+                handTintColor={handTintColor}
               />
             </View>
           );
