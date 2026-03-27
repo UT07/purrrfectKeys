@@ -78,8 +78,7 @@ service cloud.firestore {
 
       match /xpLog/{logId} {
         allow read: if isOwner(userId);
-        // Client cannot write — only Cloud Functions
-        allow create, update: if false;
+        allow create: if isOwner(userId);
         // Allow owner to delete own xp logs (GDPR account deletion)
         allow delete: if isOwner(userId);
       }
