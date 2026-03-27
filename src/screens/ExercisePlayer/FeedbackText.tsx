@@ -8,7 +8,7 @@
  * - MISS: Shake-wobble with red flash
  */
 import React from 'react';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, View, Text } from 'react-native';
 import Animated, {
   ZoomIn,
   ZoomInEasyDown,
@@ -24,6 +24,8 @@ interface FeedbackTextProps {
   trigger: number;
   /** Timing offset in ms (negative=early, positive=late) */
   timingOffsetMs?: number;
+  /** Which hand triggered this feedback (two-hand mode) */
+  hand?: 'left' | 'right';
 }
 
 const LABEL: Record<string, string> = {
@@ -42,6 +44,16 @@ const COLOR: Record<string, string> = {
   early: COLORS.feedbackEarly,
   late: COLORS.feedbackLate,
   miss: COLORS.feedbackMiss,
+};
+
+const HAND_BADGE_COLOR: Record<string, string> = {
+  left: '#26C6DA',   // teal — matches piano roll left hand
+  right: '#7C4DFF',  // purple — matches piano roll right hand
+};
+
+const HAND_BADGE_LABEL: Record<string, string> = {
+  left: 'L',
+  right: 'R',
 };
 
 // Per-type entering animations — all springified for overshoot bounce
@@ -86,7 +98,7 @@ function getGlowRadius(type: string): number {
   }
 }
 
-export function FeedbackText({ type, trigger, timingOffsetMs }: FeedbackTextProps) {
+export function FeedbackText({ type, trigger, timingOffsetMs, hand }: FeedbackTextProps) {
   const color = COLOR[type] ?? COLORS.feedbackDefault;
   const label = LABEL[type] ?? '';
   const fontSize = getFontSize(type);
@@ -99,24 +111,33 @@ export function FeedbackText({ type, trigger, timingOffsetMs }: FeedbackTextProp
       : '';
 
   return (
-    <Animated.Text
+    <Animated.View
       key={trigger}
       entering={getEntering(type)}
-      style={[
-        styles.text,
-        {
-          color,
-          fontSize,
-          textShadowColor: color,
-          textShadowOffset: { width: 0, height: 0 },
-          textShadowRadius: glowRadius,
-        },
-        type === 'perfect' && styles.perfectExtra,
-        type === 'miss' && styles.missExtra,
-      ]}
+      style={styles.badgeRow}
     >
-      {label}{offsetLabel}
-    </Animated.Text>
+      <Text
+        style={[
+          styles.text,
+          {
+            color,
+            fontSize,
+            textShadowColor: color,
+            textShadowOffset: { width: 0, height: 0 },
+            textShadowRadius: glowRadius,
+          },
+          type === 'perfect' && styles.perfectExtra,
+          type === 'miss' && styles.missExtra,
+        ]}
+      >
+        {label}{offsetLabel}
+      </Text>
+      {hand && (
+        <View style={[styles.handBadge, { backgroundColor: HAND_BADGE_COLOR[hand] }]}>
+          <Text style={styles.handBadgeText}>{HAND_BADGE_LABEL[hand]}</Text>
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -148,5 +169,23 @@ const styles = StyleSheet.create({
   missExtra: {
     letterSpacing: 2,
     opacity: 0.9,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  handBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
