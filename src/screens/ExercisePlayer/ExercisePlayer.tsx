@@ -1742,20 +1742,28 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     const sorted = [...exercise.notes].sort((a, b) => a.startBeat - b.startBeat);
     return sorted[0].note;
   });
-  // Split-mode: per-hand focus notes for independent auto-scroll
+  // Split-mode: per-hand focus notes for independent auto-scroll.
+  // Center on the midpoint of all unique notes per hand (not the first note)
+  // so the keyboard starts well-centered on the playing region.
   const [focusNoteLeft, setFocusNoteLeft] = useState<number | undefined>(() => {
     if (keyboardMode !== 'split') return undefined;
-    const leftNotes = exercise.notes
-      .filter(n => n.hand === 'left' || (!n.hand && n.note < splitPoint))
-      .sort((a, b) => a.startBeat - b.startBeat);
-    return leftNotes[0]?.note;
+    const leftMidi = [...new Set(
+      exercise.notes
+        .filter(n => n.hand === 'left' || (!n.hand && n.note < splitPoint))
+        .map(n => n.note)
+    )].sort((a, b) => a - b);
+    if (leftMidi.length === 0) return undefined;
+    return leftMidi[Math.floor(leftMidi.length / 2)];
   });
   const [focusNoteRight, setFocusNoteRight] = useState<number | undefined>(() => {
     if (keyboardMode !== 'split') return undefined;
-    const rightNotes = exercise.notes
-      .filter(n => n.hand === 'right' || (!n.hand && n.note >= splitPoint))
-      .sort((a, b) => a.startBeat - b.startBeat);
-    return rightNotes[0]?.note;
+    const rightMidi = [...new Set(
+      exercise.notes
+        .filter(n => n.hand === 'right' || (!n.hand && n.note >= splitPoint))
+        .map(n => n.note)
+    )].sort((a, b) => a - b);
+    if (rightMidi.length === 0) return undefined;
+    return rightMidi[Math.floor(rightMidi.length / 2)];
   });
 
   useEffect(() => {

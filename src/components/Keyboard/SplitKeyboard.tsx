@@ -69,10 +69,8 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
   hapticEnabled = false,
   showLabels = true,
   keyHeight = 90,
-  // focusNote props kept in interface for API compat but not used —
-  // split keyboards use tight 2-octave ranges with no scrolling.
-  focusNoteLeft: _focusNoteLeft,
-  focusNoteRight: _focusNoteRight,
+  focusNoteLeft,
+  focusNoteRight,
   testID,
 }) => {
   const splitPoint = splitPointProp ?? deriveSplitPoint(notes);
@@ -93,14 +91,14 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
     return { leftNoteEvents: left, rightNoteEvents: right };
   }, [notes, splitPoint]);
 
-  // Compute tight range that covers ALL notes per hand with minimal padding.
-  // 2 octaves fits most hand spans; computeZoomedRange auto-expands if needed.
+  // Compute range covering ALL notes per hand with room to scroll.
+  // 3 octaves gives playable key sizes while covering typical hand spans.
   const rightRange = useMemo(
-    () => computeZoomedRange(rightNoteEvents.map(n => n.note), 2),
+    () => computeZoomedRange(rightNoteEvents.map(n => n.note), 3),
     [rightNoteEvents]
   );
   const leftRange = useMemo(
-    () => computeZoomedRange(leftNoteEvents.map(n => n.note), 2),
+    () => computeZoomedRange(leftNoteEvents.map(n => n.note), 3),
     [leftNoteEvents]
   );
 
@@ -146,7 +144,9 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
             enabled={enabled}
             hapticEnabled={hapticEnabled}
             showLabels={showLabels}
-            scrollable={false}
+            scrollable
+            scrollEnabled={false}
+            focusNote={focusNoteRight}
             keyHeight={splitKeyHeight}
             testID={testID ? `${testID}-right` : undefined}
           />
@@ -172,7 +172,9 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
             enabled={enabled}
             hapticEnabled={hapticEnabled}
             showLabels={showLabels}
-            scrollable={false}
+            scrollable
+            scrollEnabled={false}
+            focusNote={focusNoteLeft}
             keyHeight={splitKeyHeight}
             testID={testID ? `${testID}-left` : undefined}
           />
