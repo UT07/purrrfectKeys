@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -97,6 +97,13 @@ export function ReplayTimelineBar({
     [totalBeats],
   );
 
+  // ---- refs to avoid stale closures in PanResponder ----
+
+  const onSeekRef = useRef(onSeek);
+  const xToBeatRef = useRef(xToBeat);
+  useEffect(() => { onSeekRef.current = onSeek; }, [onSeek]);
+  useEffect(() => { xToBeatRef.current = xToBeat; }, [xToBeat]);
+
   // ---- layout ----
 
   const handleTrackLayout = useCallback((e: LayoutChangeEvent) => {
@@ -113,11 +120,11 @@ export function ReplayTimelineBar({
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt) => {
         const x = evt.nativeEvent.locationX;
-        onSeek(xToBeat(x, trackWidthRef.current));
+        onSeekRef.current(xToBeatRef.current(x, trackWidthRef.current));
       },
       onPanResponderMove: (evt) => {
         const x = evt.nativeEvent.locationX;
-        onSeek(xToBeat(x, trackWidthRef.current));
+        onSeekRef.current(xToBeatRef.current(x, trackWidthRef.current));
       },
     }),
   ).current;

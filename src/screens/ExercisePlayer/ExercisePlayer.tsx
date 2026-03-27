@@ -2763,7 +2763,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       resumeReplay();
     } else {
       setReplayPaused(true);
-      demoServiceRef.current.stop();
+      demoServiceRef.current.pauseReplay();
     }
   }, [replayPaused, resumeReplay]);
 
