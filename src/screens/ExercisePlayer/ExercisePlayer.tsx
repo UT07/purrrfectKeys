@@ -166,6 +166,7 @@ interface FeedbackState {
   noteIndex: number;
   timestamp: number;
   timingOffsetMs: number;
+  hand?: 'left' | 'right';
 }
 
 function getFeedbackColor(type: string | null): string {
@@ -559,6 +560,27 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     return 0.6; // Touch keyboard — 60% of original tempo
   }, [requiredPlaybackSpeed, lastMidiDeviceId, preferredInput]);
 
+  // Two-hand speed lock: cap at 0.5x until user passes a split exercise once
+  const twoHandSpeedUnlocked = useSettingsStore((s: any) => s.twoHandSpeedUnlocked);
+
+  // Determine if rawExercise is a split (two-hand) exercise to apply the speed lock.
+  // Mirrors the keyboardMode logic below, but runs on rawExercise before the `exercise`
+  // useMemo so there is no circular dependency.
+  const rawExerciseIsSplit = useMemo(() => {
+    const hasLeft = rawExercise.notes.some(n => n.hand === 'left');
+    const hasRight = rawExercise.notes.some(n => n.hand === 'right');
+    if (hasLeft && hasRight) return true;
+    const midiNotes = rawExercise.notes.map(n => n.note);
+    const noteRange = Math.max(...midiNotes) - Math.min(...midiNotes);
+    return noteRange > 36;
+  }, [rawExercise]);
+
+  // effectivePlaybackSpeed: in split mode, cap at 0.5x until unlocked
+  const effectivePlaybackSpeed: PlaybackSpeed = useMemo(() => {
+    if (rawExerciseIsSplit && !twoHandSpeedUnlocked) return 0.5;
+    return playbackSpeed;
+  }, [rawExerciseIsSplit, twoHandSpeedUnlocked, playbackSpeed]);
+
   // Active cat abilities — read raw data from store (NOT getActiveAbilities() which
   // returns a new array each call, causing infinite re-renders with Zustand's Object.is check)
   const evolutionAbilities = useCatEvolutionStore(
@@ -626,13 +648,14 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Without scaling the windows, slow practice is paradoxically harder:
     // at 0.5x speed, msPerBeat doubles, so the same absolute ms tolerance
     // represents half the beat-fraction → 2x tighter scoring.
-    if (playbackSpeed !== 1.0) {
-      const windowScale = 1 / playbackSpeed; // e.g. 0.5x → 2x wider windows
+    // effectivePlaybackSpeed is used here so that the two-hand 0.5x lock is respected.
+    if (effectivePlaybackSpeed !== 1.0) {
+      const windowScale = 1 / effectivePlaybackSpeed; // e.g. 0.5x → 2x wider windows
       ex = {
         ...ex,
         settings: {
           ...ex.settings,
-          tempo: Math.round(ex.settings.tempo * playbackSpeed),
+          tempo: Math.round(ex.settings.tempo * effectivePlaybackSpeed),
         },
         scoring: {
           ...ex.scoring,
@@ -643,7 +666,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     }
 
     return ex;
-  }, [rawExercise, playbackSpeed, abilityConfig]);
+  }, [rawExercise, effectivePlaybackSpeed, abilityConfig]);
 
   // ─── Display title: prefer skill node name for AI exercises (F10 fix) ──
   // Gemini generates its own title ("C Rhythm Practice") which doesn't match
@@ -871,6 +894,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     // Set finalScore AFTER ability boosts so CompletionModal shows the correct values
     setFinalScore(score);
+
+    // Unlock full-speed two-hand play once the user passes a split exercise
+    if (score.isPassed && keyboardMode === 'split' && !useSettingsStore.getState().twoHandSpeedUnlocked) {
+      useSettingsStore.getState().unlockTwoHandSpeed();
+    }
 
     // Analytics: track exercise completion
     const failCount = useExerciseStore.getState().failCount;
@@ -1723,6 +1751,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   activeInputMethodRef.current = activeInputMethod;
   const abilityConfigRef = useRef(abilityConfig);
   abilityConfigRef.current = abilityConfig;
+  const keyboardModeRef = useRef(keyboardMode);
+  keyboardModeRef.current = keyboardMode;
+  const splitPointRef = useRef(splitPoint);
+  splitPointRef.current = splitPoint;
 
   // Hit particle state
   const [hitParticle, setHitParticle] = useState<{ x: number; y: number; color: string; trigger: number }>({ x: 0, y: 0, color: COLORS.textPrimary, trigger: 0 });
@@ -2133,11 +2165,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           feedbackType = 'miss';
         }
 
+        const matchedHand: 'left' | 'right' | undefined = keyboardMode === 'split'
+          ? (exercise.notes[bestMatch.index]?.hand as 'left' | 'right'
+             ?? (midiNote.note < splitPoint ? 'left' : 'right'))
+          : undefined;
+
         setFeedback({
           type: feedbackType,
           noteIndex: bestMatch.index,
           timestamp: Date.now(),
           timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat,
+          hand: matchedHand,
         });
 
         if (feedbackType !== 'miss') {
@@ -2189,6 +2227,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           noteIndex: -1,
           timestamp: Date.now(),
           timingOffsetMs: 0,
+          hand: keyboardMode === 'split' ? (midiNote.note < splitPoint ? 'left' : 'right') : undefined,
         });
 
         // Warning haptic for incorrect
@@ -2214,6 +2253,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       exercise.scoring.timingGracePeriodMs,
       comboScale,
       handleManualNoteOn,
+      keyboardMode,
+      splitPoint,
     ]
   );
 
@@ -2320,8 +2361,15 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         else if (beatDiffMs <= graceMs * 2) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
         else feedbackType = 'ok';
 
+        const curKeyboardMode = keyboardModeRef.current;
+        const curSplitPoint = splitPointRef.current;
+        const extMatchedHand: 'left' | 'right' | undefined = curKeyboardMode === 'split'
+          ? (curExercise.notes[bestMatch.index]?.hand as 'left' | 'right'
+             ?? (externalNote.note < curSplitPoint ? 'left' : 'right'))
+          : undefined;
+
         setComboCount((prev) => prev + 1);
-        setFeedback({ type: feedbackType, noteIndex: bestMatch.index, timestamp: Date.now(), timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat });
+        setFeedback({ type: feedbackType, noteIndex: bestMatch.index, timestamp: Date.now(), timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat, hand: extMatchedHand });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       } else {
         // Wrong note detected — show miss feedback for all input methods.
@@ -2332,7 +2380,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         } else {
           setComboCount(0);
         }
-        setFeedback({ type: 'miss', noteIndex: -1, timestamp: Date.now(), timingOffsetMs: 0 });
+        const curKeyboardMode = keyboardModeRef.current;
+        const curSplitPoint = splitPointRef.current;
+        setFeedback({ type: 'miss', noteIndex: -1, timestamp: Date.now(), timingOffsetMs: 0, hand: curKeyboardMode === 'split' ? (externalNote.note < curSplitPoint ? 'left' : 'right') : undefined });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
       }
 
@@ -3047,16 +3097,21 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           )}
 
           {/* Speed pill — shows auto-calculated speed based on input method */}
-          <PressableScale
-            style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
-            testID="speed-selector"
-            soundOnPress={false}
-            disabled={requiredPlaybackSpeed != null}
-          >
-            <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
-              {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
-            </Text>
-          </PressableScale>
+          {(() => {
+            const isSpeedLocked = keyboardMode === 'split' && !twoHandSpeedUnlocked;
+            return (
+              <PressableScale
+                style={[styles.speedPill, effectivePlaybackSpeed < 1.0 && styles.speedPillActive, isSpeedLocked && { opacity: 0.6 }]}
+                testID="speed-selector"
+                soundOnPress={false}
+                disabled={requiredPlaybackSpeed != null || isSpeedLocked}
+              >
+                <Text style={[styles.speedPillText, effectivePlaybackSpeed < 1.0 && styles.speedPillTextActive]}>
+                  {isSpeedLocked ? `🔒 0.5x` : (effectivePlaybackSpeed === 1.0 ? '1x' : `${effectivePlaybackSpeed}x`)}
+                </Text>
+              </PressableScale>
+            );
+          })()}
         </GlassmorphismCard>}
 
         {/* Secondary controls — visible when not playing or paused, hidden during replay */}
@@ -3074,16 +3129,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             <View style={{ flex: 1 }} />
 
             {/* Speed display — auto-calculated based on input method */}
-            <PressableScale
-              style={[styles.speedPill, playbackSpeed < 1.0 && styles.speedPillActive]}
-              testID="speed-selector-full"
-              accessibilityLabel={`Playback speed ${playbackSpeed}x, auto-adjusted for your input method`}
-              soundOnPress={false}
-            >
-              <Text style={[styles.speedPillText, playbackSpeed < 1.0 && styles.speedPillTextActive]}>
-                {playbackSpeed === 1.0 ? '1x' : `${playbackSpeed}x`}
-              </Text>
-            </PressableScale>
+            {(() => {
+              const isSpeedLocked = keyboardMode === 'split' && !twoHandSpeedUnlocked;
+              return (
+                <PressableScale
+                  style={[styles.speedPill, effectivePlaybackSpeed < 1.0 && styles.speedPillActive, isSpeedLocked && { opacity: 0.6 }]}
+                  testID="speed-selector-full"
+                  accessibilityLabel={isSpeedLocked ? 'Speed locked at 0.5x for two-hand exercises. Pass once to unlock.' : `Playback speed ${effectivePlaybackSpeed}x, auto-adjusted for your input method`}
+                  soundOnPress={false}
+                  disabled={isSpeedLocked}
+                >
+                  <Text style={[styles.speedPillText, effectivePlaybackSpeed < 1.0 && styles.speedPillTextActive]}>
+                    {isSpeedLocked ? `🔒 0.5x` : (effectivePlaybackSpeed === 1.0 ? '1x' : `${effectivePlaybackSpeed}x`)}
+                  </Text>
+                </PressableScale>
+              );
+            })()}
 
             {/* Demo button */}
             <PressableScale
@@ -3179,6 +3240,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               type={feedback.type}
               trigger={feedback.timestamp}
               timingOffsetMs={feedback.timingOffsetMs}
+              hand={feedback.hand}
             />
             <ComboMeter combo={comboCount} />
           </View>
