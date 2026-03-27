@@ -405,6 +405,9 @@ export async function updateChallengeResult(
  * updates the challenge doc with winnerUid/winnerGems/resolvedAt,
  * and returns the result so the caller can award gems locally.
  *
+ * Uses a Firestore transaction to atomically read-check-write, preventing
+ * duplicate resolution if two clients call this concurrently (race condition).
+ *
  * Returns null if the challenge has no stake or was already resolved.
  */
 export async function resolveChallengeGemStake(
@@ -415,25 +418,32 @@ export async function resolveChallengeGemStake(
   toUid: string,
 ): Promise<{ winnerUid: string; winnerGems: number } | null> {
   const challengeRef = doc(db, 'challenges', challengeId);
-  const snap = await getDoc(challengeRef);
 
-  if (!snap.exists()) return null;
+  let result: { winnerUid: string; winnerGems: number } | null = null;
 
-  const challenge = snap.data() as FriendChallenge;
-  if (!challenge.gemStake || challenge.gemStake <= 0) return null;
-  if (challenge.resolvedAt) return null; // Already resolved
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(challengeRef);
 
-  // Higher score wins; tie goes to challenger (fromUid)
-  const winnerUid = toScore > fromScore ? toUid : fromUid;
-  const winnerGems = challenge.gemStake * 2;
+    if (!snap.exists()) return;
 
-  await updateDoc(challengeRef, {
-    winnerUid,
-    winnerGems,
-    resolvedAt: Date.now(),
+    const challenge = snap.data() as FriendChallenge;
+    if (!challenge.gemStake || challenge.gemStake <= 0) return;
+    if (challenge.resolvedAt) return; // Already resolved — idempotent guard
+
+    // Higher score wins; tie goes to challenger (fromUid)
+    const winnerUid = toScore > fromScore ? toUid : fromUid;
+    const winnerGems = challenge.gemStake * 2;
+
+    transaction.update(challengeRef, {
+      winnerUid,
+      winnerGems,
+      resolvedAt: Date.now(),
+    });
+
+    result = { winnerUid, winnerGems };
   });
 
-  return { winnerUid, winnerGems };
+  return result;
 }
 
 /**
