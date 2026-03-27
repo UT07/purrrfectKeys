@@ -708,7 +708,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     setKeyboardRange(newRange);
     // Reset focus note to the first exercise note so keyboard scrolls correctly
     if (exercise.notes.length > 0) {
-      const firstNote = exercise.notes.sort((a, b) => a.startBeat - b.startBeat)[0];
+      const firstNote = [...exercise.notes].sort((a, b) => a.startBeat - b.startBeat)[0];
       setNextExpectedNote(firstNote.note);
     }
   }, [exercise.id, exercise.notes]);

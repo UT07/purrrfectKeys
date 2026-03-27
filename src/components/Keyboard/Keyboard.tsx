@@ -112,10 +112,14 @@ export const Keyboard = React.memo(
     // First mount uses requestAnimationFrame + no animation to ensure
     // the ScrollView content is laid out before scrolling.
     const hasInitiallyScrolledRef = useRef(false);
+    // Reset initial scroll flag when keyboard range changes (e.g. AI exercise loaded)
+    useEffect(() => {
+      hasInitiallyScrolledRef.current = false;
+    }, [startNote, endNote]);
+
     useEffect(() => {
       if (!scrollable || !focusNote || !scrollViewRef.current) return undefined;
       // If focusNote is outside the keyboard range, skip scroll (can't scroll to a key that doesn't exist).
-      // The parent should expand the range — log it for debugging.
       if (focusNote < startNote || focusNote > endNote) {
         if (__DEV__) logger.log(`[Keyboard] focusNote ${focusNote} outside range [${startNote}-${endNote}]`);
         return undefined;
