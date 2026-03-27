@@ -255,7 +255,7 @@ describe('DemoPlaybackService', () => {
     service.stop();
   });
 
-  it('uses velocity 0.7 for demo notes', () => {
+  it('uses velocity 0.5 for demo notes', () => {
     const notes: NoteEvent[] = Array.from({ length: 10 }, (_, i) => ({
       note: 60 + i,
       startBeat: i * 0.5,
@@ -267,9 +267,9 @@ describe('DemoPlaybackService', () => {
 
     jest.advanceTimersByTime(5000);
 
-    // All playNote calls should use velocity 0.7
+    // All playNote calls should use velocity 0.5 (reduced for headroom — R3 fix)
     for (const call of mockAudioEngine.playNote.mock.calls) {
-      expect(call[1]).toBe(0.7);
+      expect(call[1]).toBe(0.5);
     }
 
     service.stop();

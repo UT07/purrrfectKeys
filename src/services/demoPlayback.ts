@@ -8,7 +8,7 @@
  * Design decisions:
  * - All notes are played (no skipping — demo must be pedagogically accurate)
  * - No timing jitter (demo shows exact rhythm)
- * - Velocity is 0.7 (not full force — gentle demo feel)
+ * - Velocity is 0.5 (reduced headroom — prevents clipping with concurrent notes)
  * - Stateless enough to create fresh instances per exercise attempt
  * - No React imports — pure TypeScript service
  */
@@ -176,7 +176,7 @@ export class DemoPlaybackService {
           // Trigger note-on when currentBeat reaches the note's start
           if (!this.scheduledNoteIndices.has(i) && currentBeat >= noteOnBeat) {
             this.scheduledNoteIndices.add(i);
-            const handle = audioEngine.playNote(entry.note.note, 0.7);
+            const handle = audioEngine.playNote(entry.note.note, 0.5);
             this.activeHandles.set(i, handle);
           }
 
@@ -221,6 +221,7 @@ export class DemoPlaybackService {
    */
   stop(): void {
     this.isPlaying = false;
+    this.isPaused = false;
 
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
@@ -243,6 +244,34 @@ export class DemoPlaybackService {
     this.onCompleteCallback = undefined;
   }
 
+  /** Whether replay is paused (interval stopped but state preserved for resume) */
+  isPaused = false;
+
+  /**
+   * Pause replay playback without destroying state.
+   * Stops the interval and releases active sounds, but preserves
+   * scheduledNoteIndices, replayBeatOffset, audioEngineRef, replayPlan, etc.
+   * so that resumeReplay() can pick up where it left off.
+   */
+  pauseReplay(): void {
+    // Clear the playback interval but preserve state for resume
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+
+    // Release active note handles (stop sound) but keep tracking state
+    if (this.audioEngineRef) {
+      for (const handle of this.activeHandles.values()) {
+        try { this.audioEngineRef.releaseNote(handle); } catch { /* ignore */ }
+      }
+    }
+    this.activeHandles.clear();
+
+    this.isPlaying = false;
+    this.isPaused = true;
+  }
+
   // ==========================================================================
   // Replay Mode
   // ==========================================================================
@@ -251,7 +280,7 @@ export class DemoPlaybackService {
    * Start replay playback driven by a ReplayPlan.
    *
    * Replay mode supports:
-   * - Speed zones: 'fast' zones play at 2x tempo, 'normal' at 1x
+   * - Speed zones: 'fast' zones play at 1.3x tempo, 'normal' at 1x
    * - Pause points: playback auto-pauses and fires onPausePoint callback
    * - Comments: fires onComment when beat crosses a comment position
    * - Skipped notes: entries with play=false advance visually but produce no audio
@@ -298,13 +327,14 @@ export class DemoPlaybackService {
   }
 
   /**
-   * Resume replay after a pause point has been dismissed.
+   * Resume replay after a pause point or user-initiated pause.
    * Restarts the interval from the current beat position.
    */
   resumeReplay(): void {
     if (!this.replayPlan) return;
 
     this.isPlaying = true;
+    this.isPaused = false;
     this.replaySegmentStart = Date.now();
     this.replaySegmentBeatStart = this.replayBeatOffset;
 
@@ -381,12 +411,14 @@ export class DemoPlaybackService {
 
   /**
    * Determine the speed multiplier for a given beat based on speed zones.
-   * Returns 2.0 for 'fast' zones, 1.0 for 'normal'.
+   * Returns 1.3 for 'fast' zones, 1.0 for 'normal'.
+   * Capped at 1.3x (down from 2.0x) to prevent audio distortion from
+   * polyphony spikes and rapid re-triggers at high tempo.
    */
   private _getSpeedMultiplier(beat: number, speedZones: SpeedZoneEntry[]): number {
     for (const zone of speedZones) {
       if (beat >= zone.fromBeat && beat < zone.toBeat) {
-        return zone.zone === 'fast' ? 2.0 : 1.0;
+        return zone.zone === 'fast' ? 1.3 : 1.0;
       }
     }
     return 1.0;
@@ -478,8 +510,16 @@ export class DemoPlaybackService {
       for (let i = 0; i < plan.entries.length; i++) {
         const entry = plan.entries[i];
 
+        // In fast zones, don't reproduce timing mistakes — jitter at 2x+ speed
+        // causes polyphony spikes and distortion. Use exact timing instead.
+        const currentSpeedMultiplier = this._getSpeedMultiplier(
+          entry.note.startBeat,
+          plan.speedZones,
+        );
+        const jitter = currentSpeedMultiplier > 1.0 ? 0 : (entry.jitterMs ?? 0);
+
         // Convert jitter from ms to beats for beat-based comparison
-        const jitterBeats = entry.jitterMs / baseMsPerBeat;
+        const jitterBeats = jitter / baseMsPerBeat;
         const noteOnBeat = entry.note.startBeat + jitterBeats;
         const noteOffBeat =
           entry.note.startBeat + entry.note.durationBeats + jitterBeats;
@@ -489,7 +529,7 @@ export class DemoPlaybackService {
           this.scheduledNoteIndices.add(i);
           // Only produce audio for entries marked play: true
           if (entry.play) {
-            const handle = audioEngine.playNote(entry.note.note, 0.7);
+            const handle = audioEngine.playNote(entry.note.note, 0.5);
             this.activeHandles.set(i, handle);
           }
         }

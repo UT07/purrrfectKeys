@@ -492,7 +492,8 @@ export class ExpoAudioEngine implements IAudioEngine {
     // Scale volume down when many notes are active to prevent digital clipping.
     // Using 1/sqrt(n) keeps perceived loudness roughly constant as polyphony increases.
     const activeCount = this.activeNotes.size + 1; // +1 for the note about to play
-    const polyphonyScale = Math.min(1.0, 1.0 / Math.sqrt(activeCount));
+    // Floor of 0.4 prevents over-attenuation from becoming inaudible with many notes.
+    const polyphonyScale = Math.max(0.4, 1.0 / Math.sqrt(activeCount));
     const vol = clampedVelocity * this.volume * polyphonyScale;
 
     const pool = this.voicePools.get(note);
@@ -550,7 +551,7 @@ export class ExpoAudioEngine implements IAudioEngine {
     try {
       // Apply polyphony scaling to match pooled path behavior
       const activeCount = this.activeNotes.size;
-      const polyphonyScale = activeCount > 0 ? Math.min(1.0, 1.0 / Math.sqrt(activeCount)) : 1.0;
+      const polyphonyScale = activeCount > 0 ? Math.max(0.4, 1.0 / Math.sqrt(activeCount)) : 1.0;
       const vol = velocity * this.volume * polyphonyScale;
 
       const { sound } = await Audio.Sound.createAsync(

@@ -526,7 +526,7 @@ export class WebAudioEngine implements IAudioEngine {
    * This ensures all concurrent notes are attenuated equally (unlike per-note
    * scaling which only affected newly-created notes, leaving old ones at full volume).
    *
-   * Uses a 10ms ramp to prevent clicks from abrupt gain changes.
+   * Uses a 30ms ramp to prevent clicks and gain pumping from abrupt gain changes.
    */
   private updateLimiterGain(): void {
     if (!this.limiterGain || !this.context) return;
@@ -543,7 +543,8 @@ export class WebAudioEngine implements IAudioEngine {
         Math.max(0.001, this.limiterGain.gain.value),
         now
       );
-      this.limiterGain.gain.linearRampToValueAtTime(targetGain, now + 0.01);
+      // 30ms ramp (up from 10ms) reduces gain pumping artifacts during polyphony changes.
+      this.limiterGain.gain.linearRampToValueAtTime(targetGain, now + 0.03);
     } catch (err) {
       // Fallback: set immediately if ramp fails
       logger.warn('[WebAudioEngine] Limiter gain ramp failed, setting immediately:', err);
