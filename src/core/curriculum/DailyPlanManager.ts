@@ -228,6 +228,27 @@ export function getDailyPlan(): DailyPlan {
 
   const lessonProgress = useProgressStore.getState().lessonProgress;
 
+  // Carry over skill IDs from yesterday's failed/pending exercises so today's
+  // plan includes similar exercises for skills the user didn't complete.
+  const carryOverSkills: string[] = [];
+  if (_plan && _plan.date !== today) {
+    const allExercises = [..._plan.warmUp, ..._plan.lesson, ..._plan.challenge];
+    for (const ex of allExercises) {
+      if (ex.status !== 'passed' && ex.skillNodeId) {
+        carryOverSkills.push(ex.skillNodeId);
+      }
+    }
+    if (carryOverSkills.length > 0) {
+      logger.log(`${TAG} Carrying over ${carryOverSkills.length} failed/pending skills from yesterday`);
+    }
+  }
+
+  // Merge carry-over skills into weakSkills for prioritization
+  const mergedWeakSkills = [...(profile.weakSkills ?? [])];
+  for (const s of carryOverSkills) {
+    if (!mergedWeakSkills.includes(s)) mergedWeakSkills.push(s);
+  }
+
   const session = generateSessionPlan(
     {
       noteAccuracy: profile.noteAccuracy,
@@ -235,7 +256,7 @@ export function getDailyPlan(): DailyPlan {
       skills: profile.skills,
       tempoRange: profile.tempoRange,
       weakNotes: profile.weakNotes,
-      weakSkills: profile.weakSkills,
+      weakSkills: mergedWeakSkills,
       totalExercisesCompleted: profile.totalExercisesCompleted,
       lastAssessmentDate: profile.lastAssessmentDate,
       assessmentScore: profile.assessmentScore,

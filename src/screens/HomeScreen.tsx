@@ -12,6 +12,7 @@ import {
   SafeAreaView,
   ScrollView,
   Animated,
+  AppState,
 } from 'react-native';
 import { PressableScale } from '../components/common/PressableScale';
 import { AnimatedProgressBar } from '../components/common/AnimatedProgressBar';
@@ -144,7 +145,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // Song summaries loader (must be declared before useFocusEffect that uses it)
   const loadSongSummaries = useSongStore((s) => s.loadSummaries);
 
-  // Recompute session plan when returning from exercises
+  // Recompute session plan when returning from exercises or app foreground
   const [focusCounter, setFocusCounter] = useState(0);
   useFocusEffect(
     useCallback(() => {
@@ -156,6 +157,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       }
     }, [loadSongSummaries]),
   );
+
+  // Also refresh plan when app returns from background (e.g., overnight)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        setFocusCounter((c) => c + 1);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   // Curriculum-driven progress
   const masteredSkills = useLearnerProfileStore((s) => s.masteredSkills);

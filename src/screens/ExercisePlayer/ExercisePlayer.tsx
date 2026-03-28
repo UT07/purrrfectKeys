@@ -760,23 +760,18 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // Lock to landscape for two-hand exercises, restore portrait on exit
   const [isLandscape, setIsLandscape] = useState(false);
   useEffect(() => {
-    // Only lock when split keyboard AND loading screen is done
     if (keyboardMode !== 'split' || showLoadingScreen) return;
 
     let cancelled = false;
-    // Use LANDSCAPE_RIGHT to force rotation (LANDSCAPE only allows but doesn't force on iOS)
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
       .then(() => {
         if (!cancelled) setIsLandscape(true);
-        logger.log('[ExercisePlayer] Locked to landscape for two-hand exercise');
+        logger.log('[ExercisePlayer] Locked to landscape');
       })
-      .catch((err) => {
-        logger.warn('[ExercisePlayer] Landscape lock failed:', err);
-      });
+      .catch((err) => logger.warn('[ExercisePlayer] Landscape lock failed:', err));
 
     return () => {
       cancelled = true;
-      // Best-effort restore — cleanup can't be async
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
       setIsLandscape(false);
     };
@@ -1728,95 +1723,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const comboCountRef = useRef(0); // mirror for use in callbacks without stale closures
   const comboShieldUsedRef = useRef(0); // how many shield misses consumed this exercise
 
-  // Two-hand beat-group feedback: collect per-note results at the same beat,
-  // show ONE averaged feedback when all notes at that beat are resolved.
-  // Map: startBeat → { expectedCount, results: Array<{ type, timingMs }> }
-  const beatGroupRef = useRef<Map<number, {
-    expectedCount: number;
-    results: Array<{ type: FeedbackState['type']; timingMs: number }>;
-  }>>(new Map());
-
-  /** Resolve a note into its beat group. Shows feedback when group is complete. */
-  const resolveBeatGroupNote = useCallback((
-    startBeat: number,
-    feedbackType: FeedbackState['type'],
-    timingMs: number,
-  ) => {
-    if (keyboardMode !== 'split') {
-      // Single-hand mode: immediate feedback (no grouping)
-      setFeedback({ type: feedbackType, noteIndex: -1, timestamp: Date.now(), timingOffsetMs: timingMs });
-      if (feedbackType === 'miss') {
-        const shieldMax = abilityConfigRef.current?.comboShieldMisses ?? 0;
-        if (shieldMax > 0 && comboShieldUsedRef.current < shieldMax && comboCountRef.current > 0) {
-          comboShieldUsedRef.current++;
-        } else {
-          setComboCount(0);
-        }
-      } else {
-        setComboCount((prev) => prev + 1);
-      }
-      return;
-    }
-
-    // Two-hand mode: group by beat
-    const group = beatGroupRef.current.get(startBeat);
-    if (!group) {
-      // First note at this beat — count how many notes exist at this beat
-      const expectedCount = exercise.notes.filter(n => n.startBeat === startBeat).length;
-      beatGroupRef.current.set(startBeat, {
-        expectedCount,
-        results: [{ type: feedbackType, timingMs }],
-      });
-      // If only one note at this beat, resolve immediately
-      if (expectedCount <= 1) {
-        beatGroupRef.current.delete(startBeat);
-        setFeedback({ type: feedbackType, noteIndex: -1, timestamp: Date.now(), timingOffsetMs: timingMs });
-        if (feedbackType === 'miss') {
-          setComboCount(0);
-        } else {
-          setComboCount((prev) => prev + 1);
-        }
-      }
-      return;
-    }
-
-    // Add result to existing group
-    group.results.push({ type: feedbackType, timingMs });
-
-    // Check if group is complete
-    if (group.results.length >= group.expectedCount) {
-      beatGroupRef.current.delete(startBeat);
-
-      // If ANY note missed → whole beat is MISS
-      const hasMiss = group.results.some(r => r.type === 'miss');
-      if (hasMiss) {
-        setFeedback({ type: 'miss', noteIndex: -1, timestamp: Date.now(), timingOffsetMs: 0 });
-        setComboCount(0);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-        return;
-      }
-
-      // Average the timing and derive feedback type
-      const avgTimingMs = group.results.reduce((sum, r) => sum + Math.abs(r.timingMs), 0) / group.results.length;
-      const toleranceMs = exercise.scoring.timingToleranceMs;
-      const graceMs = exercise.scoring.timingGracePeriodMs;
-      let avgType: FeedbackState['type'];
-      if (avgTimingMs <= toleranceMs) avgType = 'perfect';
-      else if (avgTimingMs <= graceMs * 0.5) avgType = 'good';
-      else if (avgTimingMs <= graceMs) avgType = 'early'; // simplified — no sign info for average
-      else if (avgTimingMs <= graceMs * 2) avgType = 'ok';
-      else avgType = 'miss';
-
-      setFeedback({ type: avgType, noteIndex: -1, timestamp: Date.now(), timingOffsetMs: avgTimingMs });
-      if (avgType === 'miss') {
-        setComboCount(0);
-      } else {
-        setComboCount((prev) => prev + 1);
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    }
-    // Else: waiting for other hand(s) — no feedback yet
-  }, [keyboardMode, exercise.notes, exercise.scoring.timingToleranceMs, exercise.scoring.timingGracePeriodMs]);
 
   // Buddy reaction — derived from feedback type + combo
   const buddyReaction: BuddyReaction = useMemo(() => {
@@ -1941,9 +1847,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       const note = exercise.notes[i];
       if (beat - note.startBeat > missThreshold) {
         passiveMissedRef.current.add(i);
-        // Route through beat-group resolution so two-hand beats
-        // wait for both hands before showing feedback
-        resolveBeatGroupNote(note.startBeat, 'miss', 0);
+        setComboCount(0);
+        setFeedback({ type: 'miss', noteIndex: i, timestamp: Date.now(), timingOffsetMs: 0 });
         // Only one passive miss per tick to avoid spamming
         break;
       }
@@ -2103,6 +2008,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     resetPlayback();
   }, [resetPlayback]);
 
+  /** Navigate to another exercise. Orientation is handled by the useEffect
+   *  cleanup (fires portrait) + the new exercise's useEffect (fires landscape
+   *  if needed). No explicit orientation change here to avoid flicker. */
+  const replaceExercise = useCallback((params: Record<string, unknown>) => {
+    (navigation as any).replace('Exercise', params);
+  }, [navigation]);
+
   /**
    * Exit exercise without completing
    * Uses setTimeout to defer navigation, letting state updates settle
@@ -2110,7 +2022,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const handleExit = useCallback(async () => {
     stopPlayback();
     exerciseStore.clearSession();
-    // Rotate to portrait before navigating away from landscape
     if (keyboardMode === 'split') {
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
     }
@@ -2237,13 +2148,19 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           feedbackType = 'miss';
         }
 
-        // Two-hand mode: defer feedback to beat-group resolution.
-        // Single-hand mode: immediate feedback via resolveBeatGroupNote pass-through.
-        resolveBeatGroupNote(
-          bestMatch.startBeat,
-          feedbackType,
-          bestMatch.beatDiffSigned * msPerBeat,
-        );
+        // Immediate per-note feedback for all modes
+        setFeedback({
+          type: feedbackType,
+          noteIndex: bestMatch.index,
+          timestamp: Date.now(),
+          timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat,
+        });
+
+        if (feedbackType !== 'miss') {
+          setComboCount((prev) => prev + 1);
+        } else {
+          setComboCount(0);
+        }
 
         // Visual effects always fire immediately (per-note, not per-beat-group)
         if (feedbackType !== 'miss') {
@@ -2413,8 +2330,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         else if (beatDiffMs <= graceMs * 2) feedbackType = bestMatch.beatDiffSigned < 0 ? 'early' : 'late';
         else feedbackType = 'ok';
 
-        // Use beat-group resolution for two-hand; immediate for single-hand
-        resolveBeatGroupNote(bestMatch.startBeat, feedbackType, bestMatch.beatDiffSigned * msPerBeat);
+        setFeedback({ type: feedbackType, noteIndex: bestMatch.index, timestamp: Date.now(), timingOffsetMs: bestMatch.beatDiffSigned * msPerBeat });
+        setComboCount((prev) => prev + 1);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       } else {
         // Wrong note detected — show miss feedback for all input methods.
@@ -2695,7 +2612,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         exerciseStore.clearSession();
         setTimeout(() => {
           if (mountedRef.current) {
-            (navigation as any).replace('Exercise', {
+            replaceExercise({
               exerciseId: nextExerciseId,
               ...(skillIdParam ? { skillId: skillIdParam } : {}),
               ...(exerciseTypeParam ? { exerciseType: exerciseTypeParam } : {}),
@@ -2778,7 +2695,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     // Brief delay so modal unmount and state cleanup settle
     setTimeout(() => {
       if (mountedRef.current) {
-        (navigation as any).replace('Exercise', {
+        replaceExercise({
           exerciseId: nextExerciseId,
           ...(skillIdParam ? { skillId: skillIdParam } : {}),
           ...(exerciseTypeParam ? { exerciseType: exerciseTypeParam } : {}),
@@ -2816,7 +2733,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
     setTimeout(() => {
       if (mountedRef.current) {
-        (navigation as any).replace('Exercise', {
+        replaceExercise({
           exerciseId: 'ai-mode',
           aiMode: true,
           ...(nextSkillId ? { skillId: nextSkillId } : {}),
@@ -2884,7 +2801,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         // Navigate to new ExercisePlayer with the generated drill
         setTimeout(() => {
           if (mountedRef.current) {
-            (navigation as any).replace('Exercise', {
+            replaceExercise({
               exerciseId: drillExercise.id,
               aiMode: true,
               bonusDrillExercise: drillExercise,
@@ -2904,7 +2821,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (templateEx) {
       setTimeout(() => {
         if (mountedRef.current) {
-          (navigation as any).replace('Exercise', {
+          replaceExercise({
             exerciseId: `drill-tmpl-${Date.now()}`,
             aiMode: true,
             bonusDrillExercise: {
@@ -2936,7 +2853,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           exerciseStore.clearSession();
           setTimeout(() => {
             if (mountedRef.current) {
-              (navigation as any).replace('Exercise', {
+              replaceExercise({
                 exerciseId: 'ai-mode',
                 aiMode: true,
                 testMode: true,
@@ -2960,7 +2877,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     exerciseStore.clearSession();
     setTimeout(() => {
       if (mountedRef.current) {
-        (navigation as any).replace('Exercise', {
+        replaceExercise({
           exerciseId: testEx.id,
           testMode: true,
           ...(skillIdParam ? { skillId: skillIdParam } : {}),
@@ -3310,7 +3227,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         <View
           style={[
             styles.keyboardContainer,
-            { height: keyboardMode === 'split' ? Math.round(singleKeyHeight * 0.75) * 2 + 4 : singleKeyHeight },
+            { height: keyboardMode === 'split'
+              ? (isLandscape ? Math.round(screenHeight * 0.45) : Math.round(singleKeyHeight * 0.75) * 2 + 4)
+              : singleKeyHeight },
             isLandscape && { paddingLeft: insets.left, paddingRight: insets.right },
           ]}
         >
@@ -3327,7 +3246,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               showLabels={!isSightReading && !testModeRef.current}
               scrollable={false}
               focusNote={isPlaying ? undefined : nextExpectedNote}
-              keyHeight={singleKeyHeight}
+              keyHeight={isLandscape ? Math.round(screenHeight * 0.45) : singleKeyHeight}
               handZones={{
                 splitPoint,
                 leftColor: '#26C6DA',
