@@ -216,13 +216,15 @@ export function getDailyPlan(): DailyPlan {
   const { useLearnerProfileStore } = require('../../stores/learnerProfileStore');
   const { useProgressStore } = require('../../stores/progressStore');
 
-  // Guard: don't cache a beginner plan while auth sync is in progress
+  // Guard: don't generate a plan while auth sync is in progress.
+  // The sync will pull the cloud plan (from another device) — generating
+  // locally before that creates a duplicate plan with different exercises.
   const isLoading = useAuthStore.getState().isLoading;
-  const profile = useLearnerProfileStore.getState();
-  if (isLoading && profile.masteredSkills.length === 0) {
-    logger.log(`${TAG} Auth still loading with 0 skills — deferring plan generation`);
+  if (isLoading) {
+    logger.log(`${TAG} Auth still loading — deferring plan generation until sync completes`);
     return createEmptyPlan();
   }
+  const profile = useLearnerProfileStore.getState();
 
   const lessonProgress = useProgressStore.getState().lessonProgress;
 
@@ -365,15 +367,22 @@ export async function pullPlanFromFirestore(): Promise<void> {
     const remoteCompletions = countCompletions(remotePlan);
     const localCompletions = _plan ? countCompletions(_plan) : 0;
 
-    if (remoteCompletions > localCompletions) {
+    // Adopt remote plan if it has more completions, OR if local has none
+    // (local was freshly generated and remote is the "real" plan from another device)
+    if (remoteCompletions > localCompletions || (remoteCompletions > 0 && localCompletions === 0)) {
       _plan = remotePlan;
       savePlanToStorage(remotePlan);
       logger.log(
-        `${TAG} Adopted cloud plan (${remoteCompletions} completions > local ${localCompletions})`,
+        `${TAG} Adopted cloud plan (remote=${remoteCompletions}, local=${localCompletions})`,
       );
+    } else if (!_plan && remotePlan) {
+      // No local plan at all — adopt whatever the cloud has
+      _plan = remotePlan;
+      savePlanToStorage(remotePlan);
+      logger.log(`${TAG} No local plan — adopted cloud plan`);
     } else {
       logger.log(
-        `${TAG} Keeping local plan (${localCompletions} completions >= cloud ${remoteCompletions})`,
+        `${TAG} Keeping local plan (local=${localCompletions}, remote=${remoteCompletions})`,
       );
     }
   } catch (err) {
