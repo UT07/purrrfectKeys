@@ -36,15 +36,19 @@ Phases 1–10.5 were the original build-out. QA is a continuous parallel track, 
 ║  ─── BUG STABILIZATION (this branch) ────────────────────    ║
 ║  ─── PHASE 13 COMPLETION: Exercise Type Variety ─────────    ║
 ║  PHASE 15: System Design Hardening (was 20)      ← MOVED UP ║
-║     (MMKV, TanStack Query, Cloud Function caching,           ║
-║      Gemini via CF, sync compaction, offline indicator)       ║
-║  PHASE 16: Cat Progression + Cat Studio                      ║
+║     (MMKV + F9, TanStack Query, Cloud Function caching,      ║
+║      Gemini via CF, sync compaction, offline indicator,       ║
+║      ElevenLabs CF proxy + F1)                               ║
+║  PHASE 16: Cat Progression + Cat Studio + F8                 ║
+║     (Cat abilities redesign for meaningful gameplay impact)   ║
 ║  PHASE 17: "Play First" Onboarding                           ║
-║  PHASE 18: UI/UX Revamp                                      ║
+║  PHASE 18: UI/UX Revamp + F3 + F6 + F7                      ║
+║     (Achievement defs update, ElevenLabs SFX, AI music)      ║
 ║     (Unified cat avatar with 3 concentric rings:              ║
 ║      XP ring + cat evolution ring + MMR rank ring.            ║
 ║      Tap to see progress details. Merge profile/dashboard.)   ║
-║  PHASE 19: Retention Engine                                  ║
+║  PHASE 19: Retention Engine + F4 + F5                        ║
+║     (Notification UI, streak freeze badge)                   ║
 ║  PHASE 20: Analytics + Crash Reporting           ✅ DONE     ║
 ║  PHASE 21: Web Version                                       ║
 ║  PHASE 22: Monetization + Production Path (parallel)         ║
@@ -160,10 +164,17 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 **Manual Device Verification (tracked per feature):**
 
 - [x] Mic polyphonic chord detection (verified Mar 8)
+- [x] Two-hand exercises — landscape mode with hand-zone tinting (verified Mar 27)
+- [x] Dashboard score persistence (verified Mar 27)
+- [x] Pre-exercise dialogue timing (verified Mar 27)
+- [x] Cat speech cutoff fix (verified Mar 27)
+- [x] Tap exercise scoring (#110 — fixed Mar 27)
+- [x] AI exercise scoring (#103 — fixed Mar 27)
+- [x] Selected cat cross-device sync (fixed Mar 27)
+- [x] Plan regeneration only on all-passed (fixed Mar 27)
 - [ ] Core loop (onboarding → exercise → scoring → XP)
 - [ ] Piano sound (FluidR3 GM samples on device)
 - [ ] PianoRoll cascade + hit line
-- [ ] SplitKeyboard
 - [ ] Pause/resume
 - [ ] AI coaching in CompletionModal
 - [ ] Songs tab
@@ -172,7 +183,32 @@ This is NOT a numbered phase. It runs continuously alongside all feature work.
 - [ ] 10-minute stability
 - [ ] 50 lessons navigable end-to-end
 - [ ] Learning path switching
-- [ ] Review with Salsa replay coaching
+- [ ] Review with Salsa replay coaching — BLOCKED (R1/R2/R3 bugs)
+
+**Bug Stabilization Status (Mar 27):**
+
+| Category | Fixed | Open |
+|----------|-------|------|
+| P0 Data Loss | 3/3 | 0 |
+| P1 Broken Features | 25/28 | 3 (replay R1/R2/R3) |
+| P2 Polish/Edge | 30/33 | 3 (#9 Dimensions, #40 guild rules, #41 gem stake) |
+| Sentry Errors | 10/12 | 2 (#100 loading unification, #108 lesson complete UI) |
+| Feature Items | 0/10 | 10 (assigned to phases below) |
+
+**Feature Items → Phase Assignments:**
+
+| F# | Item | Phase |
+|----|------|-------|
+| F2 | Exercise type variety (chord, ear, sight, quiz) | Phase 13 Completion |
+| F10 | AI exercise pipeline integrity | Phase 13 Completion |
+| F8 | Cat abilities redesign | Phase 16 (Cat Progression) |
+| F9 | AsyncStorage → MMKV migration | Phase 15 (System Hardening, task 20.2) |
+| F1 | ElevenLabs server-side caching | Phase 15 (System Hardening, caching layer) |
+| F3 | Achievement definitions update | Phase 18 (UI/UX Revamp) |
+| F6 | ElevenLabs sound effects | Phase 18 (UI/UX Revamp, task 17.8) |
+| F7 | AI background music | Phase 18 (UI/UX Revamp, task 17.8) |
+| F4 | Notification reminders UI | Phase 19 (Retention Engine) |
+| F5 | Streak freeze UI badge | Phase 19 (Retention Engine, task 18.2) |
 
 ---
 

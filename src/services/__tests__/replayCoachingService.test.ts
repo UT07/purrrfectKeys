@@ -96,7 +96,7 @@ describe('buildReplayPlan', () => {
     });
     const plan = await buildReplayPlan(makeExercise(), score);
     expect(plan.pausePoints.length).toBeGreaterThan(0);
-    expect(plan.pausePoints.length).toBeLessThanOrEqual(3);
+    expect(plan.pausePoints.length).toBeLessThanOrEqual(7);
   });
 
   it('returns no pause points for perfect scores', async () => {

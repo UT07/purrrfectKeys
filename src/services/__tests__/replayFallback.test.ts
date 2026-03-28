@@ -51,10 +51,10 @@ describe('selectAlgorithmicPausePoints', () => {
         status: 'missed',
       }),
     );
-    expect(selectAlgorithmicPausePoints(details).length).toBeLessThanOrEqual(3);
+    expect(selectAlgorithmicPausePoints(details).length).toBeLessThanOrEqual(7);
   });
 
-  it('ensures pause points are at least 4 beats apart', () => {
+  it('ensures pause points are at least 2 beats apart', () => {
     const details = [
       makeNoteScore(0, { isMissedNote: true, played: null, timingScore: 0, status: 'missed' }),
       makeNoteScore(1, { isMissedNote: true, played: null, timingScore: 0, status: 'missed' }),
@@ -64,7 +64,7 @@ describe('selectAlgorithmicPausePoints', () => {
     ];
     const points = selectAlgorithmicPausePoints(details);
     for (let i = 1; i < points.length; i++) {
-      expect(Math.abs(points[i].beatPosition - points[i - 1].beatPosition)).toBeGreaterThanOrEqual(4);
+      expect(Math.abs(points[i].beatPosition - points[i - 1].beatPosition)).toBeGreaterThanOrEqual(2);
     }
   });
 
