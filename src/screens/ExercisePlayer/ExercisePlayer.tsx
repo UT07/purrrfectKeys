@@ -1892,6 +1892,16 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     return computeZoomedRange(exercise.notes.map(n => n.note));
   }, [keyboardMode, exercise.notes]);
 
+  // Landscape key height: fit all white keys across screen width with proper proportions.
+  // White key width = keyHeight * 0.7, so keyHeight = availableWidth / (whiteKeys * 0.7)
+  // Cap at 50% of screen height so piano roll has space.
+  const landscapeKeyHeight = useMemo(() => {
+    const whiteKeyCount = landscapeOctaveCount * 7;
+    const availableWidth = screenWidth - insets.left - insets.right;
+    const fitHeight = Math.floor(availableWidth / (whiteKeyCount * 0.7));
+    return Math.min(fitHeight, Math.round(screenHeight * 0.5));
+  }, [landscapeOctaveCount, screenWidth, screenHeight, insets.left, insets.right]);
+
   // Playback loop is now handled by useExercisePlayback hook
 
   /**
@@ -3228,7 +3238,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           style={[
             styles.keyboardContainer,
             { height: keyboardMode === 'split'
-              ? (isLandscape ? Math.round(screenHeight * 0.45) : Math.round(singleKeyHeight * 0.75) * 2 + 4)
+              ? (isLandscape ? landscapeKeyHeight : Math.round(singleKeyHeight * 0.75) * 2 + 4)
               : singleKeyHeight },
             isLandscape && { paddingLeft: insets.left, paddingRight: insets.right },
           ]}
@@ -3246,7 +3256,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               showLabels={!isSightReading && !testModeRef.current}
               scrollable={false}
               focusNote={isPlaying ? undefined : nextExpectedNote}
-              keyHeight={isLandscape ? Math.round(screenHeight * 0.45) : singleKeyHeight}
+              keyHeight={isLandscape ? landscapeKeyHeight : singleKeyHeight}
               handZones={{
                 splitPoint,
                 leftColor: '#26C6DA',
