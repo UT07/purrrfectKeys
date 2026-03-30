@@ -78,6 +78,11 @@ jest.mock('../../stores/persistence', () => ({
     getMigrationVersion: jest.fn().mockResolvedValue(1),
     setMigrationVersion: jest.fn().mockResolvedValue(undefined),
   },
+  storage: {
+    delete: jest.fn().mockResolvedValue(undefined),
+    setString: jest.fn().mockResolvedValue(undefined),
+    getString: jest.fn().mockResolvedValue(undefined),
+  },
   STORAGE_KEYS: {
     EXERCISE: 'keysense_exercise_state',
     PROGRESS: 'keysense_progress_state',

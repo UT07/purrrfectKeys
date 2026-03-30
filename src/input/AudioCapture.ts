@@ -67,7 +67,7 @@ export class AudioCapture {
         `[AudioCapture] AudioRecorder created (sampleRate=${this.config.sampleRate}, bufferSize=${this.config.bufferSize})`
       );
     } catch (error) {
-      console.error('[AudioCapture] Failed to create AudioRecorder:', error);
+      logger.error('[AudioCapture] Failed to create AudioRecorder:', error);
       throw new Error(
         `AudioRecorder creation failed: ${(error as Error).message}. ` +
         'The native module may not be available. Try rebuilding the dev build.'
@@ -162,7 +162,7 @@ export class AudioCapture {
       }, 3000);
     } catch (error) {
       this.isCapturing = false;
-      console.error('[AudioCapture] Failed to start recording:', error);
+      logger.error('[AudioCapture] Failed to start recording:', error);
       throw error;
     }
   }
@@ -183,7 +183,7 @@ export class AudioCapture {
       this.recorder.stop();
       logger.log(`[AudioCapture] Recording stopped after ${this.bufferCount} buffers`);
     } catch (error) {
-      console.error('[AudioCapture] Failed to stop recording:', error);
+      logger.error('[AudioCapture] Failed to stop recording:', error);
     }
   }
 
@@ -357,7 +357,7 @@ export async function requestMicrophonePermission(): Promise<boolean> {
       }
       return granted;
     } catch (fallbackError) {
-      console.error('[AudioCapture] All mic permission request methods failed:', fallbackError);
+      logger.error('[AudioCapture] All mic permission request methods failed:', fallbackError);
       return false;
     }
   }
@@ -396,7 +396,7 @@ export async function checkMicrophonePermission(): Promise<boolean> {
       logger.log(`[AudioCapture] Mic permission check (expo-av): ${status}`);
       return status === 'granted';
     } catch (fallbackError) {
-      console.error('[AudioCapture] All mic permission check methods failed:', fallbackError);
+      logger.error('[AudioCapture] All mic permission check methods failed:', fallbackError);
       return false;
     }
   }

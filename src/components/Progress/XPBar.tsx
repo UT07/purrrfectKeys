@@ -9,7 +9,7 @@ import {
   View,
   StyleSheet,
   Text,
-  Dimensions,
+  useWindowDimensions,
   Animated,
 } from 'react-native';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, glowColor, shadowGlow } from '../../theme/tokens';
@@ -56,7 +56,8 @@ function getLevelProgress(totalXP: number, level: number): number {
  */
 export const XPBar = React.memo(
   ({ currentXP, currentLevel, animatedXPGain = 0 }: XPBarProps) => {
-    const screenWidth = Dimensions.get('window').width;
+    // Bug #9 fix: use reactive hook instead of Dimensions.get() for rotation support
+    const { width: screenWidth } = useWindowDimensions();
 
     // Calculate progress
     const progress = useMemo(

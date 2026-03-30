@@ -375,10 +375,17 @@ service cloud.firestore {
         // Non-anonymous users can join a guild (create their own member doc)
         allow create: if isAuthenticated() && isNotAnonymous();
         // Role changes require the requester to be leader or co_leader.
+        // Bug #40 fix: Only the guild leader can assign/remove the 'leader' role.
+        // Co-leaders can promote/demote members to co_leader/elder/member only.
         // Members may update their own doc only when the role field is unchanged.
         allow update: if isAuthenticated() && (
-          // Guild leader or co_leader may update any member (including role changes)
-          (get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role in ['leader', 'co_leader'])
+          // Guild leader may update any member (including leader role transfers)
+          (get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role == 'leader')
+          ||
+          // Co-leader may update members BUT cannot assign/remove 'leader' role
+          (get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role == 'co_leader'
+           && request.resource.data.role != 'leader'
+           && resource.data.role != 'leader')
           ||
           // Members may update their own doc as long as they are NOT changing their role
           (isOwner(memberUid) &&

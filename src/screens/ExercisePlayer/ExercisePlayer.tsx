@@ -21,14 +21,13 @@ import {
   AccessibilityInfo,
   useWindowDimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { PressableScale } from '../../components/common/PressableScale';
 import { Keyboard } from '../../components/Keyboard/Keyboard';
-import { deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
+import { SplitKeyboard, deriveSplitPoint } from '../../components/Keyboard/SplitKeyboard';
 import { VerticalPianoRoll } from '../../components/PianoRoll/VerticalPianoRoll';
 import { computeZoomedRange, computeStickyRange, type KeyboardRange } from '../../components/Keyboard/computeZoomedRange';
 import { useExerciseStore } from '../../stores/exerciseStore';
@@ -72,7 +71,6 @@ import { perfTrace } from '../../utils/perfTrace';
 import { createChallenge, updateChallengeResult, resolveChallengeGemStake } from '../../services/firebase/socialService';
 import { useSocialStore } from '../../stores/socialStore';
 import { useAuthStore } from '../../stores/authStore';
-import { ExerciseIntroOverlay } from './ExerciseIntroOverlay';
 import { ExerciseLoadingScreen } from './ExerciseLoadingScreen';
 // SalsaIntro removed — ExerciseLoadingScreen handles pre-exercise coaching
 import { ReplayOverlay } from './ReplayOverlay';
@@ -291,8 +289,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   // (critical for AI mode where exercise loads asynchronously)
   const exerciseRef = useRef<Exercise>(FALLBACK_EXERCISE);
 
-  // Loading screen state — only shown for AI-generated exercises
-  const [showLoadingScreen, setShowLoadingScreen] = useState(aiMode);
+  // Bug #100 fix: unified loading screen for both AI and static exercises.
+  // Phase 1 = tip/fact while loading, Phase 2 = exercise intro with "Let's Go!"
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
 
   // AI mode: exercise loaded asynchronously from buffer
   const [aiExercise, setAiExercise] = useState<Exercise | null>(null);
@@ -396,19 +395,29 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
       if (cancelled) return;
 
+      // F10 fix: derive a STABLE exercise ID from the skill so retries accumulate
+      // against the same key. The `ai-skill-{skillId}` key is used elsewhere for
+      // high-score lookup, but the exercise.id itself also needs to be stable for
+      // per-ID progress tracking. Include a session timestamp so each navigation
+      // to this screen starts fresh, but retries within the same session match.
+      const stableId = skillIdParam
+        ? `ai-skill-${skillIdParam}`
+        : `ai-${Date.now()}`;
+      const skillName = skillIdParam ? getSkillById(skillIdParam)?.name : null;
+
       if (buffered) {
         // Resolve exercise type: explicit param > AI response > skill category > default 'play'
         const resolvedType = buffered.type ?? resolveExerciseType(exerciseTypeParam, skillIdParam);
 
-        // Convert AIExercise to Exercise — use skill name as title (F10 fix)
-        const skillName = skillIdParam ? getSkillById(skillIdParam)?.name : null;
         const converted: Exercise = {
-          id: `ai-${Date.now()}`,
+          id: stableId,
           version: 1,
           ...(resolvedType ? { type: resolvedType } : {}),
           metadata: {
             title: skillName ? `Practice: ${skillName}` : (buffered.metadata?.title ?? 'AI Practice'),
-            description: 'Generated exercise targeting your weak areas',
+            description: buffered.metadata?.skills?.[0]
+              ? `Targeting: ${buffered.metadata.skills.join(', ')}`
+              : 'Generated exercise targeting your weak areas',
             difficulty: (buffered.metadata?.difficulty ?? 3) as 1 | 2 | 3 | 4 | 5,
             estimatedMinutes: 2,
             skills: buffered.metadata?.skills ?? ['adaptive'],
@@ -434,12 +443,11 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             starThresholds: (buffered.scoring?.starThresholds ?? [70, 85, 95]) as [number, number, number],
           },
           hints: {
-            beforeStart: 'AI-generated exercise -- play along with the metronome!',
+            beforeStart: 'AI-generated exercise — play along with the metronome!',
             commonMistakes: [],
             successMessage: 'Great practice!',
           },
         };
-        // Log AI exercise details for debugging scoring issues (#103/F10)
         logger.log(`[ExercisePlayer:AI] Generated: ${converted.notes.length} notes, tempo=${converted.settings.tempo}, tolerance=${converted.scoring.timingToleranceMs}ms, grace=${converted.scoring.timingGracePeriodMs}ms`);
         logger.log(`[ExercisePlayer:AI] Notes: ${converted.notes.slice(0, 6).map(n => `MIDI${n.note}@${n.startBeat}(${n.durationBeats}b)`).join(', ')}${converted.notes.length > 6 ? '...' : ''}`);
         setAiExercise(converted);
@@ -448,32 +456,38 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         const profile = useLearnerProfileStore.getState();
         const resolvedType = resolveExerciseType(exerciseTypeParam, skillIdParam);
 
-        // 1. Skill-targeted template (best match)
+        let template: Exercise;
         if (skillIdParam) {
-          const template = getTemplateForSkill(skillIdParam, profile.weakNotes);
-          setAiExercise({ ...template, id: `tmpl-${skillIdParam}-${Date.now()}` });
-        }
-        // 2. Type-specific template (when exercise type is known but no skill)
-        else if (resolvedType && resolvedType !== 'play') {
-          const template = getTemplateForType(resolvedType, profile.weakNotes);
-          setAiExercise({ ...template, id: `tmpl-type-${resolvedType}-${Date.now()}` });
-        }
-        // 3. Static exercise fallback (original JSON)
-        else if (route.params?.exerciseId && route.params.exerciseId !== 'ai-mode') {
+          // 1. Skill-targeted template (best match)
+          template = getTemplateForSkill(skillIdParam, profile.weakNotes);
+        } else if (resolvedType && resolvedType !== 'play') {
+          // 2. Type-specific template
+          template = getTemplateForType(resolvedType, profile.weakNotes);
+        } else if (route.params?.exerciseId && route.params.exerciseId !== 'ai-mode') {
+          // 3. Static exercise fallback
           const staticEx = getExercise(route.params.exerciseId);
           if (staticEx) {
             setAiExercise(staticEx);
-          } else {
-            // 4. Generic difficulty-based template
-            const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
-            setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-generic-${Date.now()}` });
+            // Skip template path — static exercise is ready
+            return;
           }
-        }
-        // 5. Generic difficulty-based template (no exerciseId param)
-        else {
           const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
-          setAiExercise({ ...getTemplateExercise(difficulty, profile.weakNotes), id: `tmpl-generic-${Date.now()}` });
+          template = getTemplateExercise(difficulty, profile.weakNotes);
+        } else {
+          const difficulty = (profile.totalExercisesCompleted > 20 ? 3 : profile.totalExercisesCompleted > 10 ? 2 : 1) as 1 | 2 | 3;
+          template = getTemplateExercise(difficulty, profile.weakNotes);
         }
+
+        // F10 fix: Use stable ID and skill name for template fallbacks too
+        setAiExercise({
+          ...template,
+          id: stableId,
+          metadata: {
+            ...template.metadata,
+            title: skillName ? `Practice: ${skillName}` : template.metadata.title,
+          },
+        });
+        logger.log(`[ExercisePlayer:AI] Template fallback: ${template.notes.length} notes, tempo=${template.settings.tempo}, skill=${skillIdParam ?? 'none'}`);
       }
 
       // Top up buffer in background if running low
@@ -598,7 +612,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Responsive layout — supports both portrait and landscape
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const isPortrait = screenHeight > screenWidth;
   const singleKeyHeight = isPortrait ? 120 : 70;
   const topBarHeight = isPortrait ? 76 : 40;
@@ -733,10 +746,13 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   useEffect(() => {
     const newRange = computeInitialKeyboardRange(exercise.notes);
     setKeyboardRange(newRange);
-    // Reset focus note to the first exercise note so keyboard scrolls correctly
+    // Reset focus note so keyboard scrolls to the right position.
+    // For two-hand: center on the median note (between both hands).
+    // For single-hand: center on the first chronological note.
     if (exercise.notes.length > 0) {
-      const firstNote = [...exercise.notes].sort((a, b) => a.startBeat - b.startBeat)[0];
-      setNextExpectedNote(firstNote.note);
+      const uniqueNotes = [...new Set(exercise.notes.map(n => n.note))].sort((a, b) => a - b);
+      const medianNote = uniqueNotes[Math.floor(uniqueNotes.length / 2)];
+      setNextExpectedNote(medianNote);
     }
   }, [exercise.id, exercise.notes]);
 
@@ -757,25 +773,29 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     return { keyboardMode: 'normal' as const, splitPoint: 60 };
   }, [exercise]);
 
-  // Lock to landscape for two-hand exercises, restore portrait on exit
-  const [isLandscape, setIsLandscape] = useState(false);
-  useEffect(() => {
-    if (keyboardMode !== 'split' || showLoadingScreen) return;
+  // Landscape disabled — needs proper implementation based on competitor research.
+  // Two-hand exercises use portrait split keyboard for now.
+  const isLandscape = false;
 
-    let cancelled = false;
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
-      .then(() => {
-        if (!cancelled) setIsLandscape(true);
-        logger.log('[ExercisePlayer] Locked to landscape');
-      })
-      .catch((err) => logger.warn('[ExercisePlayer] Landscape lock failed:', err));
-
-    return () => {
-      cancelled = true;
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-      setIsLandscape(false);
+  // Per-hand focus notes for split keyboard auto-scroll.
+  // Center each hand's keyboard on the median of its notes.
+  const { focusNoteLeft, focusNoteRight } = useMemo(() => {
+    if (keyboardMode !== 'split') return { focusNoteLeft: undefined, focusNoteRight: undefined };
+    const leftMidi = [...new Set(
+      exercise.notes
+        .filter(n => n.hand === 'left' || (!n.hand && n.note < splitPoint))
+        .map(n => n.note)
+    )].sort((a, b) => a - b);
+    const rightMidi = [...new Set(
+      exercise.notes
+        .filter(n => n.hand === 'right' || (!n.hand && n.note >= splitPoint))
+        .map(n => n.note)
+    )].sort((a, b) => a - b);
+    return {
+      focusNoteLeft: leftMidi.length > 0 ? leftMidi[Math.floor(leftMidi.length / 2)] : undefined,
+      focusNoteRight: rightMidi.length > 0 ? rightMidi[Math.floor(rightMidi.length / 2)] : undefined,
     };
-  }, [keyboardMode, showLoadingScreen]);
+  }, [exercise.notes, keyboardMode, splitPoint]);
 
   // Track mount lifecycle
   useEffect(() => {
@@ -971,7 +991,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
     if (playbackStartTimeRef.current > 0) {
       // Every completed exercise counts as at least 1 minute of practice
       // (same approach as Duolingo — any practice attempt moves the daily goal)
-      elapsedMinutes = Math.ceil((Date.now() - playbackStartTimeRef.current) / 60000);
+      elapsedMinutes = Math.max(1, Math.ceil((Date.now() - playbackStartTimeRef.current) / 60000));
       progressStore.recordPracticeSession(elapsedMinutes);
     }
 
@@ -1179,10 +1199,17 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               ...nonTestIds.map((eid) => updatedLP?.exerciseScores[eid]?.highScore ?? 0)
             );
             const lessonIndex = getLessons().findIndex(l => l.id === exLessonId);
+            // Bug #95 fix: count actually-passed exercises, not just total
+            const passedCount = nonTestIds.filter((eid) => {
+              const exScore = updatedLP?.exerciseScores[eid];
+              const fullEx = getExercise(eid);
+              const passing = fullEx?.scoring?.passingScore ?? 70;
+              return exScore && exScore.highScore >= passing;
+            }).length + 1; // +1 for the mastery test we just passed
             setLessonCompleteData({
               lessonTitle: lesson.metadata.title,
               lessonNumber: lessonIndex + 1,
-              exercisesCompleted: nonTestIds.length + 1,
+              exercisesCompleted: passedCount,
               totalExercises: nonTestIds.length + 1,
               bestScore: bestScoreInLesson,
               xpEarned: lesson.xpReward,
@@ -1595,7 +1622,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   });
 
   // UI state (separate from playback logic)
-  const [showIntro, setShowIntro] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [highlightedKeys, setHighlightedKeys] = useState<Set<number>>(new Set());
   const [expectedNotes, setExpectedNotes] = useState<Set<number>>(new Set());
@@ -1887,21 +1913,6 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   }, [nextExpectedNote, effectiveBeat, exercise.notes]);
 
   // Keyboard range for landscape single-keyboard mode (covers all exercise notes)
-  const { startNote: landscapeStartNote, octaveCount: landscapeOctaveCount } = useMemo(() => {
-    if (keyboardMode !== 'split') return { startNote: 48, octaveCount: 2 };
-    return computeZoomedRange(exercise.notes.map(n => n.note));
-  }, [keyboardMode, exercise.notes]);
-
-  // Landscape key height: fit all white keys across screen width with proper proportions.
-  // White key width = keyHeight * 0.7, so keyHeight = availableWidth / (whiteKeys * 0.7)
-  // Cap at 50% of screen height so piano roll has space.
-  const landscapeKeyHeight = useMemo(() => {
-    const whiteKeyCount = landscapeOctaveCount * 7;
-    const availableWidth = screenWidth - insets.left - insets.right;
-    const fitHeight = Math.floor(availableWidth / (whiteKeyCount * 0.7));
-    return Math.min(fitHeight, Math.round(screenHeight * 0.5));
-  }, [landscapeOctaveCount, screenWidth, screenHeight, insets.left, insets.right]);
-
   // Playback loop is now handled by useExercisePlayback hook
 
   /**
@@ -3152,7 +3163,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         )}
 
         {/* Center: Vertical piano roll fills remaining vertical space */}
-        <View style={styles.pianoRollContainer} onLayout={(e) => {
+        <View style={[styles.pianoRollContainer, keyboardMode === 'split' && { minHeight: 120 }]} onLayout={(e) => {
           setPianoRollDims({
             width: e.nativeEvent.layout.width,
             height: e.nativeEvent.layout.height,
@@ -3228,25 +3239,26 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
         {/* Bottom: Full-width keyboard (split or normal), or RhythmTapZone for rhythm exercises */}
         {exerciseType === 'rhythm' ? (
-          <RhythmTapZone
-            onTap={() => handleKeyDown({ type: 'noteOn', note: 60, velocity: 100, timestamp: Date.now(), channel: 0 })}
-            enabled={isPlaying && !isPaused && playerMode !== 'replay'}
-            testID="rhythm-tap-zone"
-          />
+          <View style={{ height: singleKeyHeight, minHeight: 120 }}>
+            <RhythmTapZone
+              onTap={() => handleKeyDown({ type: 'noteOn', note: 60, velocity: 100, timestamp: Date.now(), channel: 0 })}
+              enabled={isPlaying && !isPaused && playerMode !== 'replay'}
+              testID="rhythm-tap-zone"
+            />
+          </View>
         ) : (
         <View
           style={[
             styles.keyboardContainer,
             { height: keyboardMode === 'split'
-              ? (isLandscape ? landscapeKeyHeight : Math.round(singleKeyHeight * 0.75) * 2 + 4)
+              ? Math.round(singleKeyHeight * 0.75) * 2 + 4
               : singleKeyHeight },
-            isLandscape && { paddingLeft: insets.left, paddingRight: insets.right },
           ]}
         >
           {keyboardMode === 'split' ? (
-            <Keyboard
-              startNote={landscapeStartNote}
-              octaveCount={landscapeOctaveCount}
+            <SplitKeyboard
+              notes={exercise.notes}
+              splitPoint={splitPoint}
               onNoteOn={handleKeyDown}
               onNoteOff={handleKeyUp}
               highlightedNotes={replayHighlightedKeys ?? (isDemoPlaying ? demoActiveNotes : highlightedKeys)}
@@ -3254,14 +3266,9 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
               enabled={playerMode !== 'replay' && !isMicExclusive && !(exerciseType === 'callResponse' && callResponsePhase === 'call')}
               hapticEnabled={playerMode !== 'replay'}
               showLabels={!isSightReading && !testModeRef.current}
-              scrollable={false}
-              focusNote={isPlaying ? undefined : nextExpectedNote}
-              keyHeight={isLandscape ? landscapeKeyHeight : singleKeyHeight}
-              handZones={{
-                splitPoint,
-                leftColor: '#26C6DA',
-                rightColor: '#7C4DFF',
-              }}
+              keyHeight={singleKeyHeight}
+              focusNoteLeft={focusNoteLeft}
+              focusNoteRight={focusNoteRight}
               testID="exercise-keyboard"
             />
           ) : (
@@ -3338,36 +3345,22 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
         />
       )}
 
-      {/* Exercise loading screen — shows while AI exercise loads */}
+      {/* Bug #100 fix: Unified pre-exercise screen for both AI and static exercises.
+          Phase 1 = Salsa tip while loading → Phase 2 = exercise intro with "Let's Go!" */}
       {showLoadingScreen && (
         <ExerciseLoadingScreen
           visible={showLoadingScreen}
           exerciseReady={exerciseReady}
+          exercise={exerciseReady ? exercise : null}
           onReady={() => {
             setShowLoadingScreen(false);
-            // Skip the SalsaIntro — loading screen already showed Salsa's coaching
-            setShowIntro(false);
-            handleStart();
-          }}
-        />
-      )}
-
-      {/* SalsaIntro removed — ExerciseLoadingScreen already provides the Salsa tip + loading flow */}
-
-      {/* Intro overlay — shown when no loading screen (e.g. static exercises) */}
-      {showIntro && !isPlaying && !showCompletion && !isDemoPlaying && !showLoadingScreen && playerMode === 'exercise' && (
-        <ExerciseIntroOverlay
-          exercise={exercise}
-          onReady={() => {
-            setShowIntro(false);
             handleStart();
           }}
           onWatchFirst={() => {
-            setShowIntro(false);
+            setShowLoadingScreen(false);
             startDemo();
           }}
           skillTarget={skillTarget}
-          testID="exercise-intro"
         />
       )}
 

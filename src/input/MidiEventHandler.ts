@@ -93,7 +93,7 @@ export class MidiEventHandler {
         this._handleNoteOff(event);
       }
     } catch (error) {
-      console.error('[MIDI Event] Error processing note:', error);
+      logger.error('[MIDI Event] Error processing note:', error);
     }
 
     this._markEnd('processMidiNote');
@@ -111,7 +111,7 @@ export class MidiEventHandler {
         this._handleSustainChange(value >= 64, Date.now());
       }
     } catch (error) {
-      console.error('[MIDI Event] Error processing control change:', error);
+      logger.error('[MIDI Event] Error processing control change:', error);
     }
 
     this._markEnd('processControlChange');

@@ -124,9 +124,9 @@ function getApiKey(): string | null {
     _cachedApiKey = key;
     if (__DEV__) {
       if (key) {
-        console.log(`✅ [ElevenLabs] API key found (${key.slice(0, 8)}...)`);
+        logger.log(`[ElevenLabs] API key found (${key.slice(0, 8)}...)`);
       } else {
-        console.warn('❌ [ElevenLabs] NO API key — will use expo-speech fallback');
+        logger.warn('[ElevenLabs] NO API key — will use expo-speech fallback');
       }
     }
     return key;

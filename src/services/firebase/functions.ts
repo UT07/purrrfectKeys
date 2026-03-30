@@ -5,6 +5,7 @@
 
 import { httpsCallable, HttpsCallableOptions } from 'firebase/functions';
 import { functions } from './config';
+import { logger } from '../../utils/logger';
 
 // ============================================================================
 // Type Definitions
@@ -102,7 +103,7 @@ export async function getCoachFeedback(
     const result = await generateCoachFeedback(request);
     return result.data;
   } catch (error) {
-    console.error('Error calling generateCoachFeedback:', error);
+    logger.error('Error calling generateCoachFeedback:', error);
     // Return fallback feedback
     return getFallbackCoachFeedback(request);
   }
@@ -155,7 +156,7 @@ export async function syncProgress(
     const result = await syncProgressFunction(request);
     return result.data;
   } catch (error) {
-    console.error('Error calling syncProgress:', error);
+    logger.error('Error calling syncProgress:', error);
     // Return empty response - data will sync next time
     return {
       serverChanges: [],
@@ -185,7 +186,7 @@ export async function getExerciseRecommendations(
     const result = await getRecommendations({ uid });
     return result.data;
   } catch (error) {
-    console.error('Error getting recommendations:', error);
+    logger.error('Error getting recommendations:', error);
     return [];
   }
 }
@@ -215,7 +216,7 @@ export async function getWeeklySummary(uid: string): Promise<{
     const result = await getWeeklySummary({ uid });
     return result.data;
   } catch (error) {
-    console.error('Error getting weekly summary:', error);
+    logger.error('Error getting weekly summary:', error);
     return {
       exercisesCompleted: 0,
       minutesPracticed: 0,
@@ -255,7 +256,7 @@ export async function completeExercise(uid: string, exerciseData: {
     const result = await completeExerciseFunction({ uid, exerciseData });
     return result.data;
   } catch (error) {
-    console.error('Error completing exercise:', error);
+    logger.error('Error completing exercise:', error);
     return {
       xpEarned: 0,
       achievementsUnlocked: [],

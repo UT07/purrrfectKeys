@@ -22,6 +22,7 @@ import { saveSongToFirestore, getUserSongRequestCount, incrementSongRequestCount
 import { checkRateLimit } from './firebase/functions';
 import { withTimeout } from '../utils/withTimeout';
 import { logger } from '../utils/logger';
+import { getTodayDateString } from '../utils/time';
 
 // Re-export pure functions for backward compatibility
 export { buildSongPrompt, validateGeneratedSong, assembleSong, type GeneratedSongABC };
@@ -60,7 +61,7 @@ export async function generateAndSaveSong(
       if (song) {
         // Save to Firestore and increment counter
         await saveSongToFirestore(song);
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDateString();
         await incrementSongRequestCount(uid, today);
         return song;
       }
@@ -74,7 +75,7 @@ export async function generateAndSaveSong(
     return null;
   }
   // Rate limit check
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDateString();
   const count = await getUserSongRequestCount(uid, today);
   if (count >= MAX_REQUESTS_PER_DAY) {
     logger.warn('[SongGen] Daily request limit reached');

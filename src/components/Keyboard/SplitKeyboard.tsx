@@ -1,17 +1,12 @@
 /**
- * @deprecated Replaced by landscape single-keyboard layout (March 2026).
- * Two-hand exercises now use Keyboard.tsx with handZones prop in landscape.
- * Only deriveSplitPoint() is still imported — the component itself is not rendered.
- */
-
-/**
  * Split Keyboard Component
  * Two stacked Keyboard instances for two-handed play.
- * Top = right hand (higher notes), Bottom = left hand (lower notes).
+ * Left hand = top (lower notes, closer to piano roll).
+ * Right hand = bottom (higher notes, closest to thumbs).
  * Each half auto-scrolls independently via focusNote.
  *
- * Uses the SAME scrollable mechanism as single keyboard — keys are
- * full-sized and scroll to show the active note region.
+ * Performance: ranges are computed per-hand with minimal octaves
+ * (2 octaves default, 3 only when hand spans >12 semitones).
  */
 
 import React, { useMemo } from 'react';
@@ -51,26 +46,14 @@ export function deriveSplitPoint(notes: NoteEvent[]): number {
   return 60; // Default: middle C
 }
 
-/** @deprecated Use computeZoomedRange from Keyboard module instead */
-export function computeKeyboardRange(notes: number[]): {
-  startNote: number;
-  octaveCount: number;
-} {
-  if (notes.length === 0) return { startNote: 48, octaveCount: 2 };
-  const minNote = Math.min(...notes);
-  const maxNote = Math.max(...notes);
-  const startNote = Math.max(21, Math.floor((minNote - 2) / 12) * 12);
-  const octaveCount = Math.max(2, Math.min(4, Math.ceil((maxNote - startNote + 3) / 12)));
-  return { startNote, octaveCount };
-}
 
-export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
+export const SplitKeyboard: React.FC<SplitKeyboardProps> = React.memo(({
   notes,
   splitPoint: splitPointProp,
   onNoteOn,
   onNoteOff,
-  highlightedNotes = new Set(),
-  expectedNotes = new Set(),
+  highlightedNotes = new Set<number>(),
+  expectedNotes = new Set<number>(),
   enabled = true,
   hapticEnabled = false,
   showLabels = true,
@@ -97,16 +80,18 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
     return { leftNoteEvents: left, rightNoteEvents: right };
   }, [notes, splitPoint]);
 
-  // Compute range covering ALL notes per hand with room to scroll.
-  // 3 octaves gives playable key sizes while covering typical hand spans.
-  const rightRange = useMemo(
-    () => computeZoomedRange(rightNoteEvents.map(n => n.note), 3),
-    [rightNoteEvents]
-  );
-  const leftRange = useMemo(
-    () => computeZoomedRange(leftNoteEvents.map(n => n.note), 3),
-    [leftNoteEvents]
-  );
+  // Compute range per hand — use just enough octaves to cover the notes.
+  // 2 octaves is the minimum; only expand to 3 if the hand actually spans >12 semitones.
+  const rightRange = useMemo(() => {
+    const midi = rightNoteEvents.map(n => n.note);
+    const span = midi.length > 0 ? Math.max(...midi) - Math.min(...midi) : 0;
+    return computeZoomedRange(midi, span > 12 ? 3 : 2);
+  }, [rightNoteEvents]);
+  const leftRange = useMemo(() => {
+    const midi = leftNoteEvents.map(n => n.note);
+    const span = midi.length > 0 ? Math.max(...midi) - Math.min(...midi) : 0;
+    return computeZoomedRange(midi, span > 12 ? 3 : 2);
+  }, [leftNoteEvents]);
 
   // Partition highlighted and expected notes by splitPoint
   const { leftHighlighted, rightHighlighted, leftExpected, rightExpected } =
@@ -129,8 +114,9 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
       return { leftHighlighted: lh, rightHighlighted: rh, leftExpected: le, rightExpected: re };
     }, [highlightedNotes, expectedNotes, splitPoint]);
 
-  // Split keyboard keys are shorter to fit two rows + PianoRoll
-  const splitKeyHeight = Math.round(keyHeight * 0.75);
+  // Split keyboard keys are shorter to fit two rows + PianoRoll.
+  // 0.6x gives ~72px per hand in portrait (vs 90px at 0.75x), saving 36px for PianoRoll.
+  const splitKeyHeight = Math.round(keyHeight * 0.6);
 
   return (
     <View style={styles.container} testID={testID}>
@@ -188,7 +174,7 @@ export const SplitKeyboard: React.FC<SplitKeyboardProps> = ({
       </View>
     </View>
   );
-};
+});
 
 SplitKeyboard.displayName = 'SplitKeyboard';
 

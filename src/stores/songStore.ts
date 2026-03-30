@@ -15,6 +15,7 @@
 import { create } from 'zustand';
 import type { Song, SongSummary, SongFilter, SongMastery, SongRequestParams } from '@/core/songs/songTypes';
 import { PersistenceManager, STORAGE_KEYS, createImmediateSave } from './persistence';
+import { getTodayDateString } from '../utils/time';
 import { getSong, getSongSummaries } from '@/services/songService';
 import { generateAndSaveSong } from '@/services/songGenerationService';
 import { logger } from '../utils/logger';
@@ -192,7 +193,7 @@ export const useSongStore = create<SongStoreState>((set, get) => ({
     try {
       const song = await generateAndSaveSong(params, uid);
       if (song) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDateString();
         set((s) => ({
           isGeneratingSong: false,
           currentSong: song,
@@ -212,7 +213,7 @@ export const useSongStore = create<SongStoreState>((set, get) => ({
 
   canRequestSong: () => {
     const { songRequestsToday } = get();
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDateString();
     if (songRequestsToday.date !== today) return true;
     return songRequestsToday.count < MAX_REQUESTS_PER_DAY;
   },

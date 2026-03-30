@@ -227,7 +227,7 @@ export function useExercisePlayback({
           manager.dispose();
         }
       } catch (error) {
-        console.error('[useExercisePlayback] Input init failed:', error);
+        logger.error('[useExercisePlayback] Input init failed:', error);
         if (mounted) {
           setHasError(true);
           setErrorMessage('Input initialization failed. Touch keyboard will still work.');
@@ -297,7 +297,7 @@ export function useExercisePlayback({
           logger.log('[useExercisePlayback] Audio engine initialized');
         }
       } catch (error) {
-        console.error('[useExercisePlayback] Audio init failed:', error);
+        logger.error('[useExercisePlayback] Audio init failed:', error);
         if (mounted) {
           setHasError(true);
           setErrorMessage('Audio initialization failed. No sound will be played.');
@@ -382,7 +382,7 @@ export function useExercisePlayback({
           const handle = audioEngine.playNote(midiEvent.note, velocity);
           activeNotesRef.current.set(midiEvent.note, handle);
         } catch (error) {
-          console.error('[useExercisePlayback] Audio playback error:', error);
+          logger.error('[useExercisePlayback] Audio playback error:', error);
         }
       }
 
@@ -793,7 +793,7 @@ export function useExercisePlayback({
           const handle = audioEngine.playNote(note, velocity);
           activeNotesRef.current.set(note, handle);
         } catch (error) {
-          console.error('[useExercisePlayback] Manual playback error:', error);
+          logger.error('[useExercisePlayback] Manual playback error:', error);
         }
       } else if (enableAudio && !isAudioReady) {
         logger.warn(`[useExercisePlayback] Audio not ready — note ${note} skipped. Engine state: ${audioEngine.getState()}`);

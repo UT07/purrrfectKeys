@@ -285,7 +285,7 @@ export class ExpoAudioEngine implements IAudioEngine {
 
       await this.warmUpAudio();
     } catch (error) {
-      console.error('[ExpoAudioEngine] Initialization failed:', error);
+      logger.error('[ExpoAudioEngine] Initialization failed:', error);
       throw error;
     }
   }
@@ -431,7 +431,7 @@ export class ExpoAudioEngine implements IAudioEngine {
     const expectedCount = PRELOAD_NOTES.length;
     if (loadedCount < expectedCount) {
       const missingNotes = PRELOAD_NOTES.filter(n => !this.voicePools.has(n));
-      console.error(
+      logger.error(
         `[ExpoAudioEngine] WARNING: Only ${loadedCount}/${expectedCount} note pools loaded. ` +
         `Missing notes: [${missingNotes.join(', ')}]. Audio may be unreliable on these notes.`
       );
@@ -575,7 +575,7 @@ export class ExpoAudioEngine implements IAudioEngine {
       this.activeNotes.add(note);
       this.activeVoices.set(note, sound);
     } catch (error) {
-      console.error(`[ExpoAudioEngine] Failed to play note ${note}:`, error);
+      logger.error(`[ExpoAudioEngine] Failed to play note ${note}:`, error);
     }
   }
 

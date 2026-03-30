@@ -63,7 +63,7 @@ export class AnalyticsService {
     try {
       posthogClient.setPersonProperties(properties);
     } catch (error) {
-      console.error('Failed to set user properties:', error);
+      logger.error('Failed to set user properties:', error);
     }
   }
 
@@ -97,7 +97,7 @@ export class AnalyticsService {
     try {
       posthogClient.reset();
     } catch (error) {
-      console.error('Failed to reset analytics:', error);
+      logger.error('Failed to reset analytics:', error);
     }
   }
 

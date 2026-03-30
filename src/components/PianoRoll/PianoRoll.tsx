@@ -5,7 +5,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { midiToNoteName } from '@/core/music/MusicTheory';
 import type { NoteEvent } from '@/core/exercises/types';
 
@@ -106,7 +106,8 @@ export const PianoRoll = React.memo(
     onNoteHighlight: _onNoteHighlight,
     testID,
   }: PianoRollProps) => {
-    const screenWidth = Dimensions.get('window').width;
+    // Bug #9 fix: use reactive hook instead of Dimensions.get() for rotation support
+    const { width: screenWidth } = useWindowDimensions();
     const containerHeight = 200;
 
     // Derive MIDI range from the actual notes in this exercise

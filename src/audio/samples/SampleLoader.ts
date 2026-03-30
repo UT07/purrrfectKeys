@@ -7,6 +7,7 @@
  */
 
 import type { SampleInfo } from '../types';
+import { logger } from '../../utils/logger';
 
 // Base piano sample notes (MIDI note numbers)
 export const BASE_NOTES = {
@@ -90,7 +91,7 @@ export class SampleLoader {
 
         return this.samples;
       } catch (error) {
-        console.error('Failed to preload samples:', error);
+        logger.error('Failed to preload samples:', error);
         throw new Error(`Sample preloading failed: ${error}`);
       } finally {
         this.isLoading = false;
@@ -133,7 +134,7 @@ export class SampleLoader {
 
       this.samples.set(note, audioBuffer);
     } catch (error) {
-      console.error(`Failed to load sample for note ${note}:`, error);
+      logger.error(`Failed to load sample for note ${note}:`, error);
       throw error;
     }
   }

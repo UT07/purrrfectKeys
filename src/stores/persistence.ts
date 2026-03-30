@@ -62,6 +62,9 @@ export const STORAGE_KEYS = {
   RANK: 'purrrfect_rank_state',
   SEASON: 'purrrfect_season_state',
   GUILD: 'purrrfect_guild_state',
+  SYNC_QUEUE: 'keysense_sync_queue',
+  LAST_SYNC: 'keysense_last_sync',
+  DAILY_PLAN: 'purrrfect_keys_daily_plan_v5',
 } as const;
 
 /**

@@ -29,7 +29,7 @@ import {
 import type { User, AuthCredential } from 'firebase/auth';
 import { auth, firebaseAvailable } from '../services/firebase/config';
 import { createUserProfile, getUserProfile, updateUserProfile, deleteUserData } from '../services/firebase/firestore';
-import { PersistenceManager, cancelAllPendingSaves, STORAGE_KEYS } from './persistence';
+import { PersistenceManager, cancelAllPendingSaves, STORAGE_KEYS, storage } from './persistence';
 import { useProgressStore } from './progressStore';
 import { useSettingsStore } from './settingsStore';
 import { MonitoringService } from '../services/monitoring';
@@ -111,10 +111,26 @@ function resetAllStores(): void {
     }
   }
 
-  // NOTE: Do NOT clear the daily plan here. The plan is date-keyed and will
-  // naturally regenerate tomorrow. Clearing it causes the plan to regenerate
-  // on sign-in with slightly different inputs → different exercises → completion
-  // state lost. The plan itself contains no PII (just skill references).
+  // Clear the daily plan — it contains exercise completions from the previous
+  // account. Without this, Account B would see Account A's completion state.
+  try {
+    const { clearDailyPlan } = require('../core/curriculum/DailyPlanManager');
+    clearDailyPlan();
+  } catch (err) {
+    logger.warn('[Auth] Failed to clear daily plan:', err);
+  }
+
+  // Clear orphan AsyncStorage keys that are NOT in STORAGE_KEYS and therefore
+  // survive PersistenceManager.clearAll(). Without this, the sync queue and
+  // last-sync timestamp from Account A persist and can push stale data into
+  // Account B's Firestore on the next sync cycle.
+  const orphanKeys = [
+    'keysense_sync_queue',
+    'keysense_last_sync',
+  ];
+  for (const key of orphanKeys) {
+    storage.delete(key).catch(() => {});
+  }
 }
 
 function handleAuthError(error: unknown): string {
@@ -257,29 +273,60 @@ async function ensureSocialSetup(uid: string, displayName: string): Promise<void
  * and auto-sets hasCompletedOnboarding=true to prevent re-onboarding.
  */
 async function triggerPostSignInSync(): Promise<void> {
-  logger.log('[Auth:postSignInSync] START — uid:', auth.currentUser?.uid?.slice(0, 8));
+  const currentUid = auth.currentUser?.uid;
+  logger.log('[Auth:postSignInSync] START — uid:', currentUid?.slice(0, 8));
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ACCOUNT SWITCH DETECTION: If the UID changed, this is a DIFFERENT user.
+  // We must FULLY wipe local state and do a CLEAN pull from Firestore.
+  // Without this, Account A's data contaminates Account B via the
+  // "highest wins" merge strategy in pullRemoteProgress().
+  // ═══════════════════════════════════════════════════════════════════════
+  const AsyncStorageModule = require('@react-native-async-storage/async-storage').default;
+  const LAST_UID_KEY = 'purrrfect_keys_last_uid';
+  const previousUid = await AsyncStorageModule.getItem(LAST_UID_KEY).catch(() => null);
+  const isAccountSwitch = previousUid !== null && previousUid !== currentUid;
+
+  if (isAccountSwitch) {
+    logger.log(`[Auth:postSignInSync] ACCOUNT SWITCH detected: ${previousUid?.slice(0, 8)} → ${currentUid?.slice(0, 8)}`);
+    // Full wipe: clear ALL AsyncStorage keys (not just STORAGE_KEYS)
+    try {
+      const allKeys = await AsyncStorageModule.getAllKeys();
+      // Keep only the UID tracking key — wipe everything else
+      const keysToRemove = allKeys.filter((k: string) => k !== LAST_UID_KEY);
+      if (keysToRemove.length > 0) {
+        await AsyncStorageModule.multiRemove(keysToRemove);
+      }
+      logger.log(`[Auth:postSignInSync] Wiped ${keysToRemove.length} AsyncStorage keys`);
+    } catch (err) {
+      logger.warn('[Auth:postSignInSync] AsyncStorage wipe failed:', err);
+    }
+    // Reset all Zustand stores to defaults
+    resetAllStores();
+    cancelAllPendingSaves();
+    logger.log('[Auth:postSignInSync] All stores reset for clean account switch');
+  }
+
+  // Save the current UID so we can detect switches next time
+  if (currentUid) {
+    await AsyncStorageModule.setItem(LAST_UID_KEY, currentUid).catch(() => {});
+  }
+
   // Restore settings from Firestore profile (hasCompletedOnboarding, username)
-  // NOTE: Display name restoration is deferred until AFTER pullRemoteProgress()
-  // so that synced settings are considered before falling back to profile/auth names.
   let firestoreProfile: any = null;
   try {
     const authState = useAuthStore.getState();
     if (authState.user) {
       firestoreProfile = await getUserProfile(authState.user.uid);
       if (firestoreProfile) {
-        // Restore hasCompletedOnboarding from Firestore
         if ((firestoreProfile as any).hasCompletedOnboarding === true) {
           useSettingsStore.getState().setHasCompletedOnboarding(true);
         }
-        // Restore username from Firestore
         if ((firestoreProfile as any).username) {
           const localUsername = useSettingsStore.getState().username;
           if (!localUsername) {
-            // Use setUsername for persistence + normalization; fall back to direct
-            // setState + manual save if the name is somehow shorter than 3 chars.
             const remoteUsername = (firestoreProfile as any).username;
             useSettingsStore.getState().setUsername(remoteUsername);
-            // If setUsername rejected (< 3 chars), force it anyway to avoid losing data
             if (!useSettingsStore.getState().username && remoteUsername) {
               useSettingsStore.setState({ username: remoteUsername });
               PersistenceManager.saveState(STORAGE_KEYS.SETTINGS, useSettingsStore.getState());
@@ -292,28 +339,32 @@ async function triggerPostSignInSync(): Promise<void> {
     logger.warn('[Auth] Profile restore failed:', err);
   }
 
-  // IMPORTANT: Pull remote data FIRST, then migrate local data.
-  // Bug #1 fix: Previously migrateLocalToCloud() ran before pullRemoteProgress(),
-  // causing stale local data to overwrite authoritative cloud data on second-device sign-in.
   try {
-    logger.log('[Auth:postSignInSync] Running pullRemoteProgress...');
     const { syncManager } = require('../services/firebase/syncService');
+
+    // PULL remote data. After an account switch, stores are clean defaults
+    // so the merge's "highest wins" will correctly adopt all remote data
+    // (remote > 0 always wins against default 0).
+    logger.log('[Auth:postSignInSync] Running pullRemoteProgress...');
     const pullResult = await syncManager.pullRemoteProgress();
     logger.log('[Auth:postSignInSync] Pull result:', JSON.stringify(pullResult));
 
-    // Now migrate any local-only data that the cloud doesn't have yet
-    logger.log('[Auth:postSignInSync] Running migrateLocalToCloud...');
-    const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
-    const migResult = await migrateLocalToCloud();
-    logger.log('[Auth:postSignInSync] Migration result:', JSON.stringify(migResult));
+    // Only run migration + push for SAME-account sign-in (re-auth, new device).
+    // For account SWITCHES, local state is wiped — there's nothing to migrate or push.
+    if (!isAccountSwitch) {
+      logger.log('[Auth:postSignInSync] Same account — running migration + push...');
+      const { migrateLocalToCloud } = require('../services/firebase/dataMigration');
+      const migResult = await migrateLocalToCloud();
+      logger.log('[Auth:postSignInSync] Migration result:', JSON.stringify(migResult));
 
-    // Push local data to Firestore to ensure cloud has latest state.
-    // This covers the case where previous syncs silently failed.
-    logger.log('[Auth:postSignInSync] Pushing local progress to Firestore...');
-    await syncManager.pushAllProgressData().catch((err: Error) => {
-      logger.warn('[Auth:postSignInSync] Push failed (offline?):', err?.message);
-    });
-    logger.log('[Auth:postSignInSync] Push complete. Starting periodic sync...');
+      await syncManager.pushAllProgressData().catch((err: Error) => {
+        logger.warn('[Auth:postSignInSync] Push failed (offline?):', err?.message);
+      });
+    } else {
+      logger.log('[Auth:postSignInSync] Account switch — skipping migration + push (clean pull only)');
+    }
+
+    logger.log('[Auth:postSignInSync] Starting periodic sync...');
     syncManager.startPeriodicSync();
   } catch (err) {
     logger.warn('[Auth:postSignInSync] Sync failed (offline?):', (err as Error)?.message);
@@ -581,7 +632,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
-      console.error('[Auth] signInAnonymously failed:', error);
+      logger.error('[Auth] signInAnonymously failed:', error);
       set({
         isLoading: false,
         error: handleAuthError(error),

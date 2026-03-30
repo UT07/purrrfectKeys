@@ -17,7 +17,7 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   GestureResponderEvent,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -73,6 +73,9 @@ export const Keyboard = React.memo(
     handZones,
     testID,
   }: KeyboardProps) => {
+    // Bug #9 fix: use reactive hook instead of Dimensions.get() for rotation support
+    const { width: windowWidth } = useWindowDimensions();
+
     // Validate octave count
     const validOctaveCount = Math.max(1, Math.min(4, octaveCount));
     const endNote = startNote + validOctaveCount * 12 - 1;
@@ -136,7 +139,7 @@ export const Keyboard = React.memo(
       if (whiteKeyIndex < 0) return undefined;
 
       // Calculate the scroll offset to center this key
-      const { width: screenWidth } = Dimensions.get('window');
+      const screenWidth = windowWidth;
       const targetX = whiteKeyIndex * whiteKeyWidth - screenWidth / 2 + whiteKeyWidth / 2;
       const clampedX = Math.max(0, Math.min(targetX, keyboardWidth - screenWidth));
 

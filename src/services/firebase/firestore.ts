@@ -23,6 +23,7 @@ import {
 import { db, functions } from './config';
 import { httpsCallable } from 'firebase/functions';
 import { logger } from '../../utils/logger';
+import { getTodayDateString } from '../../utils/time';
 
 // ============================================================================
 // Type Definitions (matching PRD section 5.3)
@@ -258,14 +259,14 @@ export async function createGamificationData(uid: string): Promise<void> {
     streak: {
       currentStreak: 0,
       longestStreak: 0,
-      lastPracticeDate: new Date().toISOString().split('T')[0],
+      lastPracticeDate: getTodayDateString(),
       freezesAvailable: 1,
       freezesUsed: 0,
       weeklyPractice: [false, false, false, false, false, false, false],
     },
     achievements: [],
     dailyProgress: {
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDateString(),
       exercisesCompleted: 0,
       minutesPracticed: 0,
       xpEarned: 0,

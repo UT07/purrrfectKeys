@@ -540,4 +540,146 @@ describe('scoringStrategies', () => {
       expect(score.missedNotes).toBe(0);
     });
   });
+
+  describe('Tap exercise visual vs scoring mismatch (Bug #110)', () => {
+    it('tap exercise at 0.6x playback speed scores correctly', () => {
+      // Simulates: rhythm exercise, base tempo 120, playback speed 0.6x
+      // Effective tempo = 72 BPM → 833ms per beat
+      // Timing windows scaled: tolerance 60ms * (1/0.6) = 100ms, grace 160ms * (1/0.6) = 267ms
+      const exercise = makeExercise({
+        type: 'rhythm',
+        settings: {
+          tempo: 72, // 120 * 0.6
+          timeSignature: [4, 4],
+          keySignature: 'C',
+          countIn: 4,
+          metronomeEnabled: true,
+        },
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 1 },
+          { note: 62, startBeat: 1, durationBeats: 1 },
+          { note: 64, startBeat: 2, durationBeats: 1 },
+          { note: 60, startBeat: 3, durationBeats: 1 },
+        ],
+        scoring: {
+          timingToleranceMs: 100,  // 60 * (1/0.6) rounded
+          timingGracePeriodMs: 267, // 160 * (1/0.6) rounded
+          passingScore: 60,
+          starThresholds: [70, 85, 95],
+        },
+      });
+
+      const msPerBeat = 60000 / 72; // ~833ms
+
+      // Simulate handleCompletion timestamp conversion
+      const startTime = 1000000;
+      const countInMs = 4 * msPerBeat;
+      const beat0Epoch = startTime + countInMs;
+
+      // Taps at roughly correct times (all note 60 — tap zone)
+      const epochNotes: MidiNoteEvent[] = [
+        note(60, beat0Epoch + 50),               // beat 0, 50ms late
+        note(60, beat0Epoch + msPerBeat + 80),    // beat 1, 80ms late
+        note(60, beat0Epoch + msPerBeat * 2 + 30), // beat 2, 30ms late
+        note(60, beat0Epoch + msPerBeat * 3 + 60), // beat 3, 60ms late
+      ];
+
+      // Apply handleCompletion conversion
+      const TOUCH_COMPENSATION = 20;
+      const adjustedNotes = epochNotes.map((n) => ({
+        ...n,
+        timestamp: n.timestamp - beat0Epoch - TOUCH_COMPENSATION,
+      }));
+
+      const score = scoreExerciseByType(exercise, adjustedNotes);
+      // All notes should match and score well
+      expect(score.missedNotes).toBe(0);
+      expect(score.breakdown.timing).toBeGreaterThan(80);
+      expect(score.overall).toBeGreaterThan(60);
+      expect(score.isPassed).toBe(true);
+    });
+
+    it('tap notes with all-same MIDI note 60 match expected notes by time only', () => {
+      // Rhythm exercise: expected notes are different pitches but tap zone sends note 60
+      const exercise = makeExercise({
+        type: 'rhythm',
+        notes: [
+          { note: 67, startBeat: 0, durationBeats: 1 },  // G4
+          { note: 69, startBeat: 1, durationBeats: 1 },  // A4
+          { note: 71, startBeat: 2, durationBeats: 0.5 }, // B4
+          { note: 72, startBeat: 2.5, durationBeats: 0.5 }, // C5
+        ],
+      });
+
+      const msPerBeat = 500; // 120 BPM
+
+      // All taps send note 60 (tap zone behavior)
+      const played: MidiNoteEvent[] = [
+        note(60, 10),             // beat 0
+        note(60, msPerBeat + 15), // beat 1
+        note(60, msPerBeat * 2 + 20), // beat 2
+        note(60, msPerBeat * 2.5 + 10), // beat 2.5
+      ];
+
+      const score = scoreRhythmExercise(exercise, played);
+      expect(score.missedNotes).toBe(0);
+      expect(score.breakdown.timing).toBeGreaterThan(90);
+      expect(score.overall).toBeGreaterThan(70);
+    });
+
+    it('early completion guard does not drop late notes for rhythm', () => {
+      // Bug: if earlyComplete triggers before the last note, that note is still
+      // in playedNotesRef and should be scored
+      const exercise = makeExercise({
+        type: 'rhythm',
+        notes: [
+          { note: 60, startBeat: 0, durationBeats: 1 },
+          { note: 62, startBeat: 1, durationBeats: 1 },
+          { note: 64, startBeat: 2, durationBeats: 1 },
+        ],
+      });
+
+      const msPerBeat = 500; // 120 BPM
+      // User taps all 3 but the last one is 200ms late
+      const played: MidiNoteEvent[] = [
+        note(60, 10),
+        note(60, msPerBeat + 15),
+        note(60, msPerBeat * 2 + 200), // 200ms late — "late" visual
+      ];
+
+      const score = scoreRhythmExercise(exercise, played);
+      expect(score.missedNotes).toBe(0); // All 3 should match
+      expect(score.breakdown.completeness).toBe(100);
+    });
+
+    it('visual feedback thresholds align with scoring for rhythm', () => {
+      // This test verifies that a note shown as "ok" in visual
+      // feedback actually gets a non-zero timing score from the
+      // scoring engine.
+      const exercise = makeExercise({
+        type: 'rhythm',
+        scoring: {
+          timingToleranceMs: 60,
+          timingGracePeriodMs: 160,
+          passingScore: 60,
+          starThresholds: [70, 85, 95],
+        },
+      });
+
+      const msPerBeat = 500; // 120 BPM
+
+      // Tap 120ms late — visual shows "ok" (> gracePeriod but < 2x gracePeriod)
+      const played: MidiNoteEvent[] = [
+        note(60, 120),               // "ok" zone: 60 < 120 < 160
+        note(60, msPerBeat + 120),
+        note(60, msPerBeat * 2 + 120),
+      ];
+
+      const score = scoreRhythmExercise(exercise, played);
+      // These notes ARE matched (not missed)
+      expect(score.missedNotes).toBe(0);
+      // Timing should be non-zero (visual says "ok" not "miss")
+      expect(score.breakdown.timing).toBeGreaterThan(0);
+    });
+  });
 });

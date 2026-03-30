@@ -90,7 +90,7 @@ export class NativeAudioEngine implements IAudioEngine {
 
       logger.log('AudioEngine initialized successfully');
     } catch (error) {
-      console.error('AudioEngine initialization failed:', error);
+      logger.error('AudioEngine initialization failed:', error);
       throw new Error(
         `Failed to initialize AudioEngine: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -106,7 +106,7 @@ export class NativeAudioEngine implements IAudioEngine {
       try {
         await this.context.suspend();
       } catch (error) {
-        console.error('Failed to suspend AudioContext:', error);
+        logger.error('Failed to suspend AudioContext:', error);
       }
     }
   }
@@ -120,7 +120,7 @@ export class NativeAudioEngine implements IAudioEngine {
       try {
         await this.context.resume();
       } catch (error) {
-        console.error('Failed to resume AudioContext:', error);
+        logger.error('Failed to resume AudioContext:', error);
       }
     }
   }
@@ -142,7 +142,7 @@ export class NativeAudioEngine implements IAudioEngine {
     // Close audio context if open
     if (this.context) {
       this.context.close().catch((e) =>
-        console.error('Error closing AudioContext:', e)
+        logger.error('Error closing AudioContext:', e)
       );
       this.context = null;
     }
@@ -250,7 +250,7 @@ export class NativeAudioEngine implements IAudioEngine {
 
       return handle;
     } catch (error) {
-      console.error(`Failed to play note ${note}:`, error);
+      logger.error(`Failed to play note ${note}:`, error);
       throw error;
     }
   }
@@ -293,7 +293,7 @@ export class NativeAudioEngine implements IAudioEngine {
       // Add 10ms buffer to ensure fade completes
       source.stop(releaseEnd + 0.01);
     } catch (error) {
-      console.error('Error during note release:', error);
+      logger.error('Error during note release:', error);
       // Ensure source stops even if envelope fails
       try {
         source.stop();

@@ -135,15 +135,21 @@ function todayISO(): string {
   return `${year}-${month}-${day}`;
 }
 
-/** Get the Monday of the current week as ISO date string.
- *  This ensures day labels (Mon-Sun) always match real weekdays. */
+/** Get the Monday of the current week as YYYY-MM-DD in LOCAL time.
+ *  Must use local date (not UTC) so the week boundary aligns with the user's
+ *  midnight, not UTC midnight. Using toISOString() was a bug — in GMT+N timezones
+ *  after midnight but before the UTC date rolls over, toISOString() returned the
+ *  previous day's date, causing getMondayOfWeek() to return last week's Monday. */
 function getMondayOfWeek(): string {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
-  return monday.toISOString().split('T')[0];
+  const year = monday.getFullYear();
+  const month = String(monday.getMonth() + 1).padStart(2, '0');
+  const day = String(monday.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /** Calculate which day of the reward week it is (1=Mon ... 7=Sun), or 0 if week has expired */

@@ -123,7 +123,7 @@ export class WebAudioEngine implements IAudioEngine {
 
       logger.log('[WebAudioEngine] Initialized successfully (react-native-audio-api, 3-harmonic oscillator synthesis)');
     } catch (error) {
-      console.error('[WebAudioEngine] Initialization failed:', error);
+      logger.error('[WebAudioEngine] Initialization failed:', error);
       this.context = null;
       this.masterGain = null;
       throw new Error(
@@ -177,7 +177,7 @@ export class WebAudioEngine implements IAudioEngine {
       try {
         await this.context.suspend();
       } catch (error) {
-        console.error('[WebAudioEngine] Suspend failed:', error);
+        logger.error('[WebAudioEngine] Suspend failed:', error);
       }
     }
   }
@@ -190,7 +190,7 @@ export class WebAudioEngine implements IAudioEngine {
       try {
         await this.context.resume();
       } catch (error) {
-        console.error('[WebAudioEngine] Resume failed:', error);
+        logger.error('[WebAudioEngine] Resume failed:', error);
       }
     }
   }
@@ -206,7 +206,7 @@ export class WebAudioEngine implements IAudioEngine {
       try {
         this.context.close();
       } catch (error) {
-        console.error('[WebAudioEngine] Error closing AudioContext:', error);
+        logger.error('[WebAudioEngine] Error closing AudioContext:', error);
       }
       this.context = null;
     }
@@ -424,7 +424,7 @@ export class WebAudioEngine implements IAudioEngine {
         }
       }
     } catch (error) {
-      console.error('[WebAudioEngine] Error during note release:', error);
+      logger.error('[WebAudioEngine] Error during note release:', error);
       // Force stop oscillators on error
       for (const osc of oscillators) {
         try {
