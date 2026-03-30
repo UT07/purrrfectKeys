@@ -640,19 +640,17 @@ export async function hydrateCatEvolutionStore(): Promise<void> {
   const reconciled = reconcileEvolutionStages(validated);
 
   // Bug #115 fix: reset daily rewards week if stale BEFORE setting state.
-  // Without this, HomeScreen's advanceDailyRewardDate() might not run yet
-  // (navigation hasn't mounted) and the old weekStartDate persists.
   const monday = getMondayOfWeek();
-  if (reconciled.dailyRewards.weekStartDate !== monday) {
+  const oldStart = reconciled.dailyRewards?.weekStartDate;
+  if (oldStart !== monday) {
     const actualDay = calcCurrentDay(monday);
     reconciled.dailyRewards = {
       weekStartDate: monday,
       days: DEFAULT_DAILY_REWARDS.map(d => ({ ...d })),
       currentDay: actualDay || 1,
     };
-    logger.log(`[catEvolution] Week reset during hydration: ${reconciled.dailyRewards.weekStartDate} → ${monday}, day=${actualDay}`);
+    logger.log(`[catEvolution] Week reset during hydration: ${oldStart} → ${monday}, day=${actualDay}`);
   } else {
-    // Same week — just update currentDay in case it advanced
     const actualDay = calcCurrentDay(monday);
     if (actualDay > 0 && actualDay !== reconciled.dailyRewards.currentDay) {
       reconciled.dailyRewards = {
@@ -663,6 +661,10 @@ export async function hydrateCatEvolutionStore(): Promise<void> {
   }
 
   useCatEvolutionStore.setState(reconciled);
+
+  // Persist the corrected state so next launch doesn't re-load stale data
+  debouncedSave(reconciled);
+
   // Bug #51: Remove equipped accessories that exceed the cat's current evolution stage
   validateEquippedAccessories(reconciled);
 }
