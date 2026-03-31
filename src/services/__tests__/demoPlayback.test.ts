@@ -12,6 +12,7 @@ import type { NoteEvent } from '@/core/exercises/types';
 const createMockAudioEngine = () => ({
   playNote: jest.fn().mockReturnValue({ note: 0, startTime: 0, release: jest.fn() }),
   releaseNote: jest.fn(),
+  releaseAllNotes: jest.fn(),
 });
 
 // ============================================================================

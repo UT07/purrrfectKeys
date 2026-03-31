@@ -291,7 +291,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
   // Bug #100 fix: unified loading screen for both AI and static exercises.
   // Phase 1 = tip/fact while loading, Phase 2 = exercise intro with "Let's Go!"
-  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+  // Skip loading screen entirely when entering replay mode.
+  const [showLoadingScreen, setShowLoadingScreen] = useState(!replayModeParam);
 
   // AI mode: exercise loaded asynchronously from buffer
   const [aiExercise, setAiExercise] = useState<Exercise | null>(null);
@@ -855,6 +856,10 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
    */
   const handleExerciseCompletion = useCallback((initialScore: ExerciseScore) => {
     if (!mountedRef.current) return;
+    if (playerModeRef.current === 'replay') {
+      logger.log('[ExercisePlayer] Ignoring completion during replay mode');
+      return;
+    }
     const trace = perfTrace('ExerciseCompletion');
     let score = { ...initialScore };
 
@@ -1642,7 +1647,12 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   const failCount = useExerciseStore(s => s.failCount);
 
   // Replay coaching mode state
-  const [playerMode, setPlayerMode] = useState<'exercise' | 'replay'>('exercise');
+  const [playerMode, _setPlayerMode] = useState<'exercise' | 'replay'>('exercise');
+  const playerModeRef = useRef<'exercise' | 'replay'>('exercise');
+  const setPlayerMode = useCallback((mode: 'exercise' | 'replay') => {
+    playerModeRef.current = mode;
+    _setPlayerMode(mode);
+  }, []);
   const [replayPlan, setReplayPlan] = useState<ReplayPlan | null>(null);
   const [replayBeat, setReplayBeat] = useState(0);
   const [replayPaused, setReplayPaused] = useState(false);
@@ -2605,6 +2615,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
   //  isn't available in the same render tick it was set)
   useEffect(() => {
     if (!replayModeParam || !replayPlan || replayAutoStarted.current) return;
+    if (showLoadingScreen) return;
     replayAutoStarted.current = true;
     const timer = setTimeout(() => {
       if (mountedRef.current) {

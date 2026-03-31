@@ -33,6 +33,7 @@ import type {
 interface DemoAudioEngine {
   playNote(note: number, velocity: number): NoteHandle;
   releaseNote(handle: NoteHandle): void;
+  releaseAllNotes(): void;
 }
 
 export interface DemoScheduleEntry {
@@ -260,11 +261,13 @@ export class DemoPlaybackService {
       this.intervalId = null;
     }
 
-    // Release active note handles (stop sound) but keep tracking state
+    // Release each tracked handle individually first
     if (this.audioEngineRef) {
       for (const handle of this.activeHandles.values()) {
         try { this.audioEngineRef.releaseNote(handle); } catch { /* ignore */ }
       }
+      // Belt-and-suspenders: releaseAllNotes catches any untracked handles
+      try { this.audioEngineRef.releaseAllNotes(); } catch { /* ignore */ }
     }
     this.activeHandles.clear();
 
