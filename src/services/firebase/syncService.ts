@@ -568,14 +568,19 @@ export class SyncManager {
           logger.log('[Sync] Adopted remote selectedCatId:', remoteCats.selectedCatId);
         }
 
-        // Restore daily rewards from remote if local is default (lost on sign-out)
+        // Restore daily rewards from remote if local is default (lost on sign-out).
+        // After restoring, run advanceDailyRewardDate() to reset the week if the
+        // remote data is stale (e.g. weekStartDate from last week due to old UTC bug).
         if ((remoteCats as any).dailyRewards && localCats.dailyRewards.days.every(d => !d.claimed)) {
           useCatEvolutionStore.setState({
             dailyRewards: (remoteCats as any).dailyRewards,
             lastDailyChallengeDate: (remoteCats as any).lastDailyChallengeDate ?? '',
           });
+          // Fix stale weekStartDate from cloud — advanceDailyRewardDate checks
+          // if stored Monday matches this week's Monday and resets if not.
+          useCatEvolutionStore.getState().advanceDailyRewardDate();
           didMerge = true;
-          logger.log('[Sync] Restored daily rewards from remote');
+          logger.log('[Sync] Restored daily rewards from remote (+ week advance check)');
         }
 
         logger.log(`[Sync] Cat evolution merged: ${mergedOwned.size} total cats`);
