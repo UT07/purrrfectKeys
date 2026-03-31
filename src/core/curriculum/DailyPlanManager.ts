@@ -200,6 +200,13 @@ function findExerciseInPlan(
 export function getDailyPlan(): DailyPlan {
   const today = getTodayDateString();
 
+  // Debug: log plan state on every call so we can diagnose stale-plan issues
+  if (_plan) {
+    logger.log(`${TAG} getDailyPlan called: today=${today}, plan.date=${_plan.date}, match=${_plan.date === today}`);
+  } else {
+    logger.log(`${TAG} getDailyPlan called: today=${today}, _plan=null — will generate`);
+  }
+
   // Cache hit: same day — return unless ALL exercises are passed.
   // Failed/pending exercises keep the plan; only regenerate when fully passed.
   if (_plan && _plan.date === today) {
