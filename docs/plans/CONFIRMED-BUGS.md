@@ -46,12 +46,12 @@ Code exists for these but hasn't been verified on a physical device.
 
 | # | Priority | Bug | Status |
 |---|----------|-----|--------|
-| 86 | P1 | "Review with Salsa" replay doesn't play — stuck on visual, no audio/progression | Replay system refactored with DemoPlaybackService — needs device test |
-| 90 | P1 | Salsa Review shows "TAP to the beat" for play-along exercises — wrong mode in replay | Keyboard enabled in non-replay mode — needs device test |
-| 87 | P1 | Pre/post-exercise cat voice uses expo-speech (robotic) instead of ElevenLabs | ElevenLabsProvider exists with 13 voices — needs device test (API key?) |
-| 89 | P2 | All piano notes sound the same pitch in some exercises | Pitch shift code exists (±6 semitones) — needs device test |
+| 86 | ~~P1~~ | "Review with Salsa" replay doesn't play — stuck on visual, no audio/progression | **VERIFIED WORKING (Mar 31)** + 4 follow-up bugs fixed: (1) no loading screen for replay, (2) pause stops all audio via releaseAllNotes, (3) replay never triggers scoring, (4) auto-start guards against loading screen |
+| 90 | ~~P1~~ | Salsa Review shows "TAP to the beat" for play-along exercises — wrong mode in replay | **VERIFIED WORKING (Mar 31)** |
+| 87 | ~~P1~~ | Pre/post-exercise cat voice uses expo-speech (robotic) instead of ElevenLabs | **VERIFIED WORKING (Mar 31)** |
+| 89 | ~~P2~~ | All piano notes sound the same pitch in some exercises | **VERIFIED WORKING (Mar 31)** |
 | 45 | P2 | Pause point at beat 0 freezes replay | Replay refactored — needs device test |
-| 47 | P2 | SalsaIntro overlay blocks auto-start | SalsaIntro exists but may not block — needs device test |
+| 47 | P2 | SalsaIntro overlay blocks auto-start | SalsaIntro removed — likely resolved, needs device test |
 
 ## OPEN — Feature Work
 
