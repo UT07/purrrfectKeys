@@ -2,7 +2,7 @@
   "expo": {
     "name": "Purrrfect Keys",
     "slug": "purrrfect-keys",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -28,7 +28,9 @@
             ]
           }
         ],
-        "NSMicrophoneUsageDescription": "Purrrfect Keys uses your microphone to detect the notes you play on piano, keyboard, or by singing."
+        "NSMicrophoneUsageDescription": "Purrrfect Keys uses your microphone to detect the notes you play on piano, keyboard, or by singing.",
+        "NSContactsUsageDescription": "Purrrfect Keys can look through your contacts to help you find friends who already play. Your contacts are never uploaded or stored.",
+        "NSCameraUsageDescription": "Purrrfect Keys uses the camera to scan a friend's QR code so you can add them."
       }
     },
     "android": {
