@@ -199,6 +199,70 @@ export class WebAudioEngine implements IAudioEngine {
    * Dispose of all audio resources
    * Stops all notes, disconnects nodes, and closes the AudioContext
    */
+  /**
+   * Guarantee a usable AudioContext before scheduling audio.
+   *
+   * - 'running'   → nothing to do
+   * - 'suspended' → resume in place (iOS gesture unlock)
+   * - 'closed'    → TERMINAL. resume() cannot revive it; rebuild from scratch.
+   *
+   * Returns false only when no usable context could be established.
+   */
+  private ensureContextAlive(): boolean {
+    if (!this.context) return false;
+
+    const state = this.context.state as string;
+    if (state === 'running') return true;
+
+    if (state === 'suspended') {
+      logger.warn('[WebAudioEngine] Context suspended — resuming');
+      try {
+        this.context.resume();
+      } catch (error) {
+        logger.warn('[WebAudioEngine] resume() failed:', error);
+      }
+      return true;
+    }
+
+    // 'closed' (or any unexpected non-running state) — rebuild.
+    logger.warn(`[WebAudioEngine] Context state '${state}' is not recoverable — rebuilding`);
+    return this.rebuildContext();
+  }
+
+  /**
+   * Tear down the dead context and construct a fresh one with its gain graph.
+   * Stale note bookkeeping is dropped: those nodes belonged to the old context,
+   * so keeping them would leave the limiter attenuating voices that cannot sound.
+   */
+  private rebuildContext(): boolean {
+    try {
+      this.context = null;
+      this.masterGain = null;
+      this.limiterGain = null;
+      this.activeNotes.clear();
+      this.oldestNoteKey = -1;
+
+      this.context = new RNAudioContext({ sampleRate: 44100 });
+
+      this.limiterGain = this.context.createGain();
+      this.limiterGain.gain.value = 1.0;
+      this.limiterGain.connect(this.context.destination);
+
+      this.masterGain = this.context.createGain();
+      this.masterGain.gain.value = this.volume;
+      this.masterGain.connect(this.limiterGain);
+
+      logger.log('[WebAudioEngine] Context rebuilt — audio restored');
+      return true;
+    } catch (error) {
+      logger.error('[WebAudioEngine] Context rebuild failed:', error);
+      this.context = null;
+      this.masterGain = null;
+      this.limiterGain = null;
+      return false;
+    }
+  }
+
   dispose(): void {
     this.releaseAllNotes();
 
@@ -241,10 +305,12 @@ export class WebAudioEngine implements IAudioEngine {
       };
     }
 
-    // iOS requires a user gesture to unlock the AudioContext from suspended state.
-    // Resume synchronously on first user-initiated playNote call.
-    if (this.context.state === 'suspended') {
-      this.context.resume();
+    // Make sure the context is actually alive before scheduling anything.
+    // 'suspended' is recoverable with resume(); 'closed' is terminal and needs
+    // a full rebuild. Without this, a closed context swallowed every note
+    // silently and only an app relaunch brought audio back.
+    if (!this.ensureContextAlive()) {
+      return { note, startTime: 0, release: () => {} };
     }
 
     const normalizedVelocity = Math.max(0.0, Math.min(1.0, velocity));
