@@ -411,3 +411,56 @@ describe('Assessment round data', () => {
     }
   });
 });
+
+/**
+ * Regression: assessment feedback must reflect the actual result.
+ *
+ * Observed during device QA:
+ *  - An 8% assessment showed "I knew it I KNEW IT!! You're growing sooo fast"
+ *    because the complete screen hardcoded the 'level_up' trigger and the
+ *    'celebrating' mood regardless of score.
+ *  - The round dots rendered green (COLORS.success) purely by position, so
+ *    five 0% rounds looked like five passes.
+ */
+describe('assessment feedback reflects the score', () => {
+  const PASS_THRESHOLD = 0.6;
+
+  // Mirrors the trigger/mood selection in the complete screen.
+  const triggerFor = (avg: number): string =>
+    avg >= PASS_THRESHOLD ? 'level_up' : 'exercise_complete_fail';
+  const moodFor = (avg: number): string =>
+    avg >= 0.8 ? 'celebrating' : avg >= PASS_THRESHOLD ? 'happy' : 'encouraging';
+  // Mirrors the dot styling for a COMPLETED round.
+  const dotFor = (score: number): string =>
+    score >= PASS_THRESHOLD ? 'completed' : 'missed';
+
+  it('does not celebrate a failing assessment', () => {
+    expect(triggerFor(0.08)).toBe('exercise_complete_fail');
+    expect(moodFor(0.08)).toBe('encouraging');
+  });
+
+  it('celebrates only a strong result', () => {
+    expect(triggerFor(0.85)).toBe('level_up');
+    expect(moodFor(0.85)).toBe('celebrating');
+  });
+
+  it('is happy but not euphoric at a bare pass', () => {
+    expect(triggerFor(0.6)).toBe('level_up');
+    expect(moodFor(0.6)).toBe('happy');
+  });
+
+  it('marks a completed 0% round as missed, not passed', () => {
+    expect(dotFor(0)).toBe('missed');
+  });
+
+  it('marks a completed passing round as passed', () => {
+    expect(dotFor(0.75)).toBe('completed');
+  });
+
+  it('does not mark every completed round green regardless of score', () => {
+    const rounds = [0, 0, 0.4, 0, 0];
+    expect(rounds.map(dotFor)).toEqual([
+      'missed', 'missed', 'missed', 'missed', 'missed',
+    ]);
+  });
+});

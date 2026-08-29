@@ -1016,8 +1016,11 @@ export function SkillAssessmentScreen(): React.ReactElement {
         </View>
 
         <MascotBubble
-          mood="celebrating"
-          message={getRandomCatMessage(catId, 'level_up')}
+          mood={avgScore >= 0.8 ? 'celebrating' : avgScore >= 0.6 ? 'happy' : 'encouraging'}
+          message={getRandomCatMessage(
+            catId,
+            avgScore >= 0.6 ? 'level_up' : 'exercise_complete_fail'
+          )}
           size="medium"
         />
 
@@ -1045,7 +1048,9 @@ export function SkillAssessmentScreen(): React.ReactElement {
                 style={[
                   styles.progressDot,
                   i < currentRoundIndex
-                    ? styles.dotCompleted
+                    ? (roundScores[i] ?? 0) >= 0.6
+                      ? styles.dotCompleted
+                      : styles.dotMissed
                     : i === currentRoundIndex
                       ? styles.dotCurrent
                       : styles.dotPending,
@@ -1095,6 +1100,11 @@ const styles = StyleSheet.create({
   },
   dotCompleted: {
     backgroundColor: COLORS.success,
+  },
+  // A finished round that did NOT reach the pass threshold. Previously these
+  // rendered green like passes, so a run of 0% rounds looked like five wins.
+  dotMissed: {
+    backgroundColor: COLORS.warning,
   },
   dotCurrent: {
     backgroundColor: COLORS.primary,
