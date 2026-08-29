@@ -209,8 +209,8 @@ hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--me
 </header>
 
 <div class="stats">
-  <div class="stat"><div class="stat-n ok">3,263</div><div class="stat-l">Tests passing</div></div>
-  <div class="stat"><div class="stat-n ok">159</div><div class="stat-l">Suites</div></div>
+  <div class="stat"><div class="stat-n ok">3,303</div><div class="stat-l">Tests passing</div></div>
+  <div class="stat"><div class="stat-n ok">162</div><div class="stat-l">Suites</div></div>
   <div class="stat"><div class="stat-n ok">0</div><div class="stat-l">TS errors</div></div>
   <div class="stat"><div class="stat-n">143k</div><div class="stat-l">Lines in src</div></div>
   <div class="stat"><div class="stat-n">599</div><div class="stat-l">Exercises</div></div>
@@ -229,15 +229,15 @@ hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--me
 <thead><tr><th>Check</th><th>Command</th><th>Result</th></tr></thead>
 <tbody>
 <tr><td>Type safety</td><td><code>npm run typecheck</code></td><td><span class="pill ok">0 errors</span></td></tr>
-<tr><td>Unit + integration</td><td><code>npm run test</code></td><td><span class="pill ok">3,263 / 3,263</span></td></tr>
-<tr><td>Suites</td><td>—</td><td><span class="pill ok">159 / 159</span></td></tr>
+<tr><td>Unit + integration</td><td><code>npm run test</code></td><td><span class="pill ok">3,303 / 3,303</span></td></tr>
+<tr><td>Suites</td><td>—</td><td><span class="pill ok">162 / 162</span></td></tr>
 <tr><td>Exit code</td><td>—</td><td><span class="pill ok">0</span></td></tr>
 <tr><td>Working tree</td><td><code>git status</code></td><td><span class="pill ok">clean</span></td></tr>
 <tr><td>Open P0 bugs</td><td>bug tracker</td><td><span class="pill ok">none</span></td></tr>
 </tbody>
 </table></div>
 
-<p>Full run takes about 42 seconds. Jest prints a worker-teardown warning at the end — a timer leak in test cleanup, not a product defect, and it does not affect the exit code.</p>
+<p>Full run takes about 19 seconds. Jest prints a worker-teardown warning at the end — a timer leak in test cleanup, not a product defect, and it does not affect the exit code.</p>
 
 <div class="note good"><span class="tag">Demo safety</span><p>The commit at <code>HEAD~1</code> is tagged <code>debug:</code> and adds diagnostic logging to <code>getDailyPlan()</code>. It routes through <code>logger.log</code>, which is wrapped in <code>__DEV__</code> — so it compiles out of release builds entirely. Safe to demo as-is. In a dev build it will chatter in the Metro console on every plan read.</p></div>
 </section>
@@ -697,27 +697,33 @@ hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--me
 <section id="hard">
 <h2>Hard problems solved</h2><div class="h2rule"></div>
 
-<p class="lede">Interviewers ask for a hard technical problem. These are the strongest four, each with a real root cause and a real fix.</p>
+<p class="lede">Interviewers ask for a hard technical problem. These are the strongest five, each with a real root cause and a real fix. The first was found and fixed during a device QA pass on 29 August.</p>
 
-<h3>1 · The audio session that silenced the app</h3>
+<h3>1 · Audio that died forever, and only a restart fixed it</h3>
+<p><strong>Symptom:</strong> audio stopped mid-session with no interruption, and never came back until the app was killed and relaunched.<br>
+<strong>Root cause:</strong> <code>playNote()</code> recovered only from <code>state === 'suspended'</code>. An iOS <code>AudioContext</code> that reaches <code>'closed'</code> is <em>terminal</em> — <code>resume()</code> can never revive it — yet the engine kept scheduling oscillators against the dead context. Silent notes, no thrown error, no recovery path.<br>
+<strong>Fix:</strong> <code>ensureContextAlive()</code> classifies the state: <code>running</code> passes through, <code>suspended</code> resumes in place, anything else rebuilds the context and gain graph. Stale <code>activeNotes</code> are cleared during the rebuild so the polyphony limiter is not left attenuating voices that can never sound.<br>
+<strong>Lesson:</strong> <code>'suspended'</code> and <code>'closed'</code> look like siblings in one enum, so a guard handling the first reads as handling the family — but one is recoverable and one is terminal. And the symptom was itself diagnostic: <strong>"only a restart fixes it" means something needs recreating, not resuming.</strong></p>
+
+<h3>2 · The audio session that silenced the app</h3>
 <p><strong>Symptom:</strong> enabling the microphone made piano audio nearly inaudible.<br>
 <strong>Root cause:</strong> two libraries sharing one <code>AVAudioSession</code> with independent internal state. Mic access forces <code>PlayAndRecord</code>, which routes output to the earpiece.<br>
 <strong>Fix:</strong> a single synchronous configuration path through <code>AudioManager</code>, expo-av demoted to fallback, and <code>measurement</code> mode so iOS stops applying speech-tuned processing to piano.<br>
 <strong>Lesson:</strong> shared global native resources need one owner. Two abstractions over one resource will fight.</p>
 
-<h3>2 · Stale closures in the gameplay loop</h3>
+<h3>3 · Stale closures in the gameplay loop</h3>
 <p><strong>Symptom:</strong> scores computed from partial note data; abilities leaking into test mode.<br>
 <strong>Root cause:</strong> long-lived callbacks capturing state at creation time. Notes appended to a state variable were invisible to the completion handler.<br>
 <strong>Fix:</strong> refs for anything read inside a callback, and <code>getState()</code> for store reads. <code>useExercisePlayback</code> now holds roughly twenty refs — that is the pattern, not an accident.<br>
 <strong>Lesson:</strong> React's render model and real-time event streams have different lifetimes. Refs are the bridge.</p>
 
-<h3>3 · The mid-day plan reshuffle</h3>
+<h3>4 · The mid-day plan reshuffle</h3>
 <p><strong>Symptom:</strong> the daily practice list changed while the user was working through it.<br>
 <strong>Root cause:</strong> <code>masteredSkills</code> was a dependency of plan generation. Completing an exercise updated mastery, which regenerated the plan.<br>
 <strong>Fix:</strong> cache keyed on date alone, persisted to AsyncStorage, regenerated only on date change or full completion.<br>
 <strong>Lesson:</strong> derived state that a user is actively consuming must be pinned. Reactivity is not always desirable.</p>
 
-<h3>4 · Timing that was fair to the microphone</h3>
+<h3>5 · Timing that was fair to the microphone</h3>
 <p><strong>Symptom:</strong> mic users scored far worse than MIDI users at identical skill.<br>
 <strong>Root cause:</strong> ~120 ms inherent detection latency graded on the MIDI curve.<br>
 <strong>Fix:</strong> fixed latency compensation plus a 1.5× tolerance multiplier for mic input.<br>
@@ -736,11 +742,14 @@ hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--me
 <tr><td>Exercise type variety</td><td><span class="pill gap">Partial</span></td><td>6 of 17 declared types fully implemented; the rest fall back to play-along</td></tr>
 <tr><td>Accessibility</td><td><span class="pill no">Weakest area</span></td><td>8 P0 issues — missing labels on interactive elements across most screens. Blocks App Store confidence.</td></tr>
 <tr><td>E2E coverage</td><td><span class="pill gap">Scaffolded</span></td><td>Maestro and Detox exist; selectors not customised. All real coverage is unit/integration.</td></tr>
-<tr><td>Device verification</td><td><span class="pill gap">Partial</span></td><td>Mic polyphony verified on iPhone. Core loop, songs, social still need a full hands-on pass.</td></tr>
+<tr><td>Device verification</td><td><span class="pill ok">Core loop done</span></td><td>29 Aug QA pass drove onboarding → skill check → level map → songs → a two-handed song exercise end-to-end. Split keyboard, scoring, gating, Firestore song loading all confirmed. <strong>Audio latency and mic pitch detection remain unverified</strong> — both need real hardware.</td></tr>
+<tr><td>Audio session robustness</td><td><span class="pill ok">Fixed 29 Aug</span></td><td>Two defects found live: a terminal <code>'closed'</code> AudioContext was never rebuilt, and there was no interruption / route-change / backgrounding recovery at all. Both fixed with 18 regression tests.</td></tr>
+<tr><td>Daily plan duplication</td><td><span class="pill gap">Open</span></td><td>"Today's Practice" can list one exercise as both warm-up and lesson for a new learner. A dedup at plan assembly empties the lesson section instead — the fix belongs in curriculum selection.</td></tr>
 <tr><td>MIDI hardware</td><td><span class="pill gap">Untested</span></td><td>Code path complete, native module installed, never exercised against real hardware</td></tr>
-<tr><td>Lint warnings</td><td><span class="pill gap">~562</span></td><td>Mostly <code>no-explicit-any</code> at library boundaries. Warns, doesn't error.</td></tr>
+<tr><td>Lint warnings</td><td><span class="pill gap">548</span></td><td>Mostly <code>no-explicit-any</code> at library boundaries. 0 errors, so CI passes.</td></tr>
 <tr><td>ExercisePlayer size</td><td><span class="pill gap">3,811 lines</span></td><td>Honest answer: it grew with each exercise type and wants decomposition into per-type controllers</td></tr>
-<tr><td>Stale docs</td><td><span class="pill gap">Known</span></td><td><code>CLAUDE.md</code> still describes a purple palette (it's black + crimson) and claims 2 exercise types (there are 6)</td></tr>
+<tr><td>Dependency vulnerabilities</td><td><span class="pill no">4 critical</span></td><td><code>npm audit --omit=dev</code>: 46 total (4 critical, 34 high). Critical are protobufjs, shell-quote, tar, websocket-driver — mostly transitive build toolchain, not shipped runtime.</td></tr>
+<tr><td>Stale docs</td><td><span class="pill ok">Fixed today</span></td><td><code>agent_docs/stabilization-report.md</code> described a purple palette (superseded by Concert Hall black + crimson) and <code>knowledgebase.md</code> claimed 2 exercise types (there are 6). Both corrected; <code>CLAUDE.md</code> now carries a ranked struggle table.</td></tr>
 </tbody>
 </table></div>
 
@@ -773,6 +782,10 @@ hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--me
 <p>Offline-first by design: the device is authoritative for the session, Firestore is the durable merge point. Everything writes to AsyncStorage immediately, with a queue flushed every five minutes when there's a connection. Merges never lose progress — highest-wins for numbers, union for sets. The ordering on sign-in is load-bearing: pull, then migrate, then push. Reversing pull and migrate would push stale local state over good cloud state. And every fetch in the parallel pull has its own catch, so one flaky request degrades one data type instead of wiping the sign-in.</p>
 </div></details>
 
+<details class="qa"><summary>Tell me about a bug you found by testing, not by reading code.</summary><div class="qa-body">
+<p>I was driving the app end-to-end on device and the audio died mid-session — no interruption, nothing external. It only came back after killing the app. That last detail was the clue: <strong>"only a restart fixes it" means something needs recreating, not resuming.</strong> The engine only recovered from a <code>suspended</code> AudioContext, but on iOS <code>closed</code> is terminal — <code>resume()</code> can't revive it — so it kept scheduling oscillators into a dead context and every note was silently dropped. I added a state classifier that rebuilds the context and its gain graph, and cleared the stale note bookkeeping so the polyphony limiter wasn't left attenuating voices that could never sound. The general lesson is that two values in the same enum can have completely different recovery semantics, and a guard that handles one reads as handling both.</p>
+</div></details>
+
 <details class="qa"><summary>What's the hardest bug you've fixed here?</summary><div class="qa-body">
 <p>Enabling the microphone made the app nearly silent. It looked like an audio bug, but the root cause was two libraries — expo-av and react-native-audio-api — sharing one iOS <code>AVAudioSession</code> while keeping independent internal state. Requesting mic access forces <code>PlayAndRecord</code> mode, which routes output to the earpiece. Whichever library configured last won, so the behaviour was inconsistent. The fix was making one library the single owner of session configuration, synchronously, and using <code>measurement</code> mode so iOS stops applying speech-tuned voice processing that audibly mangles piano. The general lesson: a shared global native resource needs exactly one owner.</p>
 </div></details>
@@ -796,7 +809,7 @@ hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--me
 
 <div class="foot">
 <p><strong>Purrrfect Keys</strong> · branch <code>test/stable-baseline</code> · tag <code>stable-interview-baseline</code><br>
-Verified 159 suites / 3,263 tests passing, 0 TypeScript errors. Figures read directly from the source tree, not from project docs — several of which are stale.</p>
+Verified 162 suites / 3,303 tests passing, 0 TypeScript errors (29 Aug). Figures read directly from the source tree, not from project docs — several of which are stale.</p>
 </div>
 
 </main>

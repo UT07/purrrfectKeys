@@ -125,6 +125,28 @@ ReactCodegen output. The codegen script phase is dependency-analysis-gated and w
 regenerate it, so the next build fails with a dozen `Build input file cannot be found:
 .../generated/ios/...` errors. Recover with `cd ios && pod install` (~11s).
 
+**Seventh gotcha — `app.json` changes do NOT reach the binary.** `expo run:ios` skips
+prebuild when `ios/` already exists, so edits to `expo.version`, `ios.buildNumber`, or
+`ios.infoPlist` are silently ignored. Verified 29 Aug: `app.json` said `1.0.0` with
+`NSContactsUsageDescription`, while the built app reported `0.1.0` with no such key.
+
+Check what actually shipped:
+
+```bash
+/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" ios/PurrrfectKeys/Info.plist
+```
+
+To sync, regenerate the native project — then **re-apply the dependency patches**, since
+prebuild reinstalls Pods:
+
+```bash
+npx expo prebuild --platform ios && ./scripts/patch-ios-build-deps.sh
+```
+
+This matters for App Store / TestFlight: Apple rejects a binary that links a
+permission-gated framework without the matching usage string, and it reads the
+**Info.plist**, not `app.json`.
+
 ## Quick Commands
 
 ```bash
