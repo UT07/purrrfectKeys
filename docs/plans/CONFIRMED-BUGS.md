@@ -224,3 +224,39 @@ All bugs below have been code-fixed and verified via tests. Kept for historical 
 - One fix per commit
 - `npm run typecheck && npm run test` must pass
 - User verifies on device before merging to master
+
+
+## Device QA session — Aug 29, 2026
+
+Found by driving the Release build end-to-end (onboarding → skill check →
+level map → songs → two-handed song exercise) on the iPhone 17 Pro simulator.
+
+### Fixed
+
+| ID | Severity | Bug | Fix |
+|----|----------|-----|-----|
+| Q1 | **P0** | Audio died mid-session and stayed dead until the app was killed. `playNote` recovered only from `state === 'suspended'`; an iOS AudioContext that reaches `'closed'` is terminal and `resume()` cannot revive it, so notes were scheduled into a dead context — silent, no error, no recovery. | `ensureContextAlive()` rebuilds a closed context and its gain graph; stale `activeNotes` cleared so the limiter is not left attenuating dead voices. 7 tests. |
+| Q2 | **P1** | No handling at all for audio-session interruption (call, Siri, alarm), route change (headphones unplugged), or backgrounding. `ensureAudioModeConfigured` cached the mode and early-returned, so nothing ever reconfigured after iOS deactivated the session. | `invalidateAudioMode()` + `installAudioSessionRecovery()` wired to interruption / routeChange / AppState-foreground. 11 tests. |
+| Q3 | P1 | Top bar showed **100% in crimson while MISS was on screen** — after 4 taps on a 43-note exercise. The number is `currentBeat / exerciseDuration` (progress), but styled in the accent colour, unlabelled, and the only numeric readout in the bar. | Recoloured to `textSecondary`; `accessibilityLabel` "Exercise progress: N percent complete"; bar gets `progressbar` role + value. 5 tests. |
+| Q4 | P1 | Assessment complete screen hardcoded `getRandomCatMessage(catId, 'level_up')` and `mood="celebrating"` regardless of score — an 8% result was met with "You're growing sooo fast". | Trigger and mood derived from `avgScore` against the existing 0.6 threshold. |
+| Q5 | P2 | Skill-check round dots coloured by **position** (`i < currentRoundIndex → COLORS.success`), so five 0% rounds rendered as five green passes. | Dots colour by the round's real score; new `dotMissed` (warning) for completed-but-failed. 6 tests for Q4+Q5. |
+| Q6 | P2 | Music library rendered **`NaN:NaN`** for songs missing `durationSeconds` (seen on "A Bar Song"). Songs come from three ingestion pipelines and the field is not uniform. | `core/songs/formatDuration.ts` returns `--:--` for non-finite input. 11 tests. |
+
+### Found, not fixed
+
+| ID | Severity | Bug | Why not fixed |
+|----|----------|-----|---------------|
+| Q7 | P2 | "Today's Practice" lists the same exercise as both WARM UP and LESSON ("Find Middle C" for a new learner). `generateChallenge` receives the ids used by warmUp+lesson, but `generateLesson` has no exclusion parameter. | A dedup at plan assembly **empties the lesson section** for a beginner, because warm-up and lesson legitimately resolve to the same exercise when only one is available. The real fix is in curriculum *selection*, not assembly — too invasive to land safely without device re-verification. Attempt reverted; 3 pre-existing tests caught it. |
+| Q8 | P2 | Onboarding "Next" and "Back" buttons overlap when the option list is tall (input-method and path screens). Content-height dependent — not present on shorter screens. | Layout change; needs visual verification across device sizes. |
+| Q9 | P3 | Cat `exercise_complete_fail` lines assert specifics that are false at 0% — "I saw like FIVE really good parts in there", "you were SO close". The trigger selection is correct; the wording is the issue. | Authored personality/voice. Left to the author rather than rewritten. |
+| Q10 | P3 | Same dialogue string repeats verbatim across consecutive rounds. | Selection is random without a recently-shown filter; low impact. |
+
+### Verified working
+
+- **Two-handed exercises** — split keyboard renders `L`/`R` rows with an auto-derived split point, notes colour-coded and hand-labelled, both rows accept input, score accumulates across hands.
+- Core loop end-to-end: load → count-in → falling notes → input → scoring → results.
+- `computeZoomedRange` picks a sensible 1-octave window per exercise (B3–F4 for a C4–E4 exercise; C4–G4 with F#4 for a sharps exercise).
+- Music library loads from Firestore; song sections + layer toggle (Melody Only / Full) work.
+- Lesson gating: locked lessons preview content but block entry.
+- Level map legend confirms **6 implemented exercise types** (Play, Rhythm, Ear, Chords, Sight, Call).
+
