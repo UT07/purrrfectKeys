@@ -27,6 +27,7 @@ import { useAchievementStore } from './stores/achievementStore';
 import { useLearnerProfileStore } from './stores/learnerProfileStore';
 import { levelFromXp } from './core/progression/XpSystem';
 import type { PlaybackSpeed, PreferredInputMethod, MicDetectionMode } from './stores/types';
+import { installAudioSessionRecovery } from './audio/createAudioEngine';
 import { syncManager } from './services/firebase/syncService';
 import { migrateLocalToCloud } from './services/firebase/dataMigration';
 import { hydrateGemStore } from './stores/gemStore';
@@ -82,6 +83,12 @@ function AppRoot(): React.ReactElement {
       try {
         // ── Phase 0: Monitoring init (Sentry + PostHog, synchronous) ─────
         MonitoringService.initialize();
+
+        // Audio-session recovery. iOS silently deactivates the AVAudioSession on
+        // interruption (call, Siri, alarm), route change (headphones unplugged),
+        // and backgrounding. Without this the cached session mode short-circuits
+        // every later reconfigure and audio stays dead until the app is killed.
+        installAudioSessionRecovery();
 
         // ── Phase 1: Local hydration (fast, AsyncStorage only) ──────────
         // Runs BEFORE auth to ensure hasCompletedOnboarding, progress, and

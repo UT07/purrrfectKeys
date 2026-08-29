@@ -28,6 +28,13 @@ import { logger } from '../utils/logger';
  */
 let factoryInstance: IAudioEngine | null = null;
 let lastAudioMode: 'playback' | 'playAndRecord' | null = null;
+/** Last requested recording flag — replayed when recovering the session. */
+let lastAllowRecording = false;
+/** Active while iOS reports an interruption in progress. */
+let interruptionActive = false;
+/** Subscriptions held so recovery can be installed exactly once. */
+let recoverySubscriptions: Array<{ remove: () => void }> = [];
+let recoveryInstalled = false;
 
 /**
  * Try to create a WebAudioEngine. Returns null if react-native-audio-api
@@ -72,6 +79,7 @@ function tryCreateWebAudioEngine(): IAudioEngine | null {
 export async function ensureAudioModeConfigured(allowRecording = false): Promise<void> {
   // Skip if already configured in the requested mode
   const requestedMode = allowRecording ? 'playAndRecord' : 'playback';
+  lastAllowRecording = allowRecording;
   if (lastAudioMode === requestedMode) return;
 
   lastAudioMode = requestedMode;
@@ -119,6 +127,114 @@ export async function ensureAudioModeConfigured(allowRecording = false): Promise
   } catch (error) {
     logger.warn('[createAudioEngine] Audio mode configuration failed:', error);
   }
+}
+
+/**
+ * Clear the cached audio-session mode so the next `ensureAudioModeConfigured`
+ * actually reconfigures instead of short-circuiting.
+ *
+ * Needed because iOS deactivates the AVAudioSession on interruption without
+ * telling our cache. Without this the cache still reads 'playback', every
+ * later call early-returns, and audio stays dead until the app is killed.
+ */
+export function invalidateAudioMode(): void {
+  lastAudioMode = null;
+}
+
+/**
+ * Reconfigure and reactivate the audio session in whichever mode was last
+ * requested. Safe to call repeatedly; never throws.
+ */
+async function recoverAudioSession(reason: string): Promise<void> {
+  if (interruptionActive) {
+    logger.log(`[audioRecovery] ${reason} — interruption still active, deferring`);
+    return;
+  }
+  try {
+    invalidateAudioMode();
+    await ensureAudioModeConfigured(lastAllowRecording);
+    try {
+       
+      const { AudioManager } = require('react-native-audio-api');
+      await AudioManager.setAudioSessionActivity(true);
+    } catch {
+      // expo-av fallback path has no explicit activation step.
+    }
+    logger.log(`[audioRecovery] session recovered after ${reason}`);
+  } catch (error) {
+    logger.warn(`[audioRecovery] recovery failed after ${reason}:`, error);
+  }
+}
+
+/**
+ * Wire audio-session recovery to the events that silently kill playback:
+ * interruptions (call, Siri, alarm), route changes (headphones unplugged),
+ * and returning from the background.
+ *
+ * Idempotent — calling twice does not stack listeners.
+ */
+export function installAudioSessionRecovery(): void {
+  if (recoveryInstalled) return;
+  recoveryInstalled = true;
+
+  try {
+     
+    const { AudioManager } = require('react-native-audio-api');
+    AudioManager.observeAudioInterruptions(true);
+
+    recoverySubscriptions.push(
+      AudioManager.addSystemEventListener(
+        'interruption',
+        (e: { type: 'began' | 'ended'; shouldResume: boolean }) => {
+          if (e.type === 'began') {
+            interruptionActive = true;
+            invalidateAudioMode();
+            logger.log('[audioRecovery] interruption began');
+            return;
+          }
+          interruptionActive = false;
+          if (e.shouldResume) void recoverAudioSession('interruption ended');
+        }
+      )
+    );
+
+    recoverySubscriptions.push(
+      AudioManager.addSystemEventListener('routeChange', (e: { reason: string }) => {
+        void recoverAudioSession(`route change (${e.reason})`);
+      })
+    );
+  } catch (error) {
+    logger.warn('[audioRecovery] AudioManager events unavailable:', error);
+  }
+
+  try {
+     
+    const { AppState } = require('react-native');
+    let previous: string = AppState.currentState;
+    const sub = AppState.addEventListener('change', (next: string) => {
+      if (previous !== 'active' && next === 'active') {
+        void recoverAudioSession('app foregrounded');
+      }
+      previous = next;
+    });
+    if (sub && typeof sub.remove === 'function') recoverySubscriptions.push(sub);
+  } catch (error) {
+    logger.warn('[audioRecovery] AppState unavailable:', error);
+  }
+}
+
+/** Tear down recovery listeners (tests, teardown). */
+export function uninstallAudioSessionRecovery(): void {
+  recoverySubscriptions.forEach((s) => {
+    try {
+      s.remove();
+    } catch {
+      /* already removed */
+    }
+  });
+  recoverySubscriptions = [];
+  recoveryInstalled = false;
+  interruptionActive = false;
 }
 
 /**
