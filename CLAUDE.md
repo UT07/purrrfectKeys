@@ -88,6 +88,27 @@ xcodebuild -workspace ios/PurrrfectKeys.xcworkspace -scheme PurrrfectKeys -confi
 rebuild and can fail compiling `fmt`. Use the default DerivedData location so the warm
 pod cache is reused.
 
+**Fourth gotcha — `fmt` will not compile under Xcode 26.x.** RN 0.76 pins fmt 11.0.2;
+Xcode 26's clang enforces C++20 `consteval` strictly and rejects `FMT_STRING(...)` inside
+fmt's own `format_to()` calls:
+
+```
+error: call to consteval function 'fmt::basic_format_string<char, int>::
+basic_format_string<FMT_COMPILE_STRING, 0>' is not a constant expression
+```
+
+Five call sites in `ios/Pods/fmt/include/fmt/format-inl.h` (lines 59, 60, 1387, 1391, 1394).
+Upstream fixed it in fmt 11.1+; bumping fmt out from under RN is riskier than patching.
+`ios/` is gitignored, so the patch does **not** survive `pod install` / `expo prebuild`:
+
+```bash
+./scripts/patch-fmt-consteval.sh   # idempotent; run after any pod install or prebuild
+```
+
+This blocks **every** iOS build under Xcode 26.x — simulator and device alike — so it is
+not specific to release builds. A build that last succeeded on an older Xcode will start
+failing here purely from toolchain drift, with no code change.
+
 ## Quick Commands
 
 ```bash
