@@ -102,12 +102,28 @@ Upstream fixed it in fmt 11.1+; bumping fmt out from under RN is riskier than pa
 `ios/` is gitignored, so the patch does **not** survive `pod install` / `expo prebuild`:
 
 ```bash
-./scripts/patch-fmt-consteval.sh   # idempotent; run after any pod install or prebuild
+./scripts/patch-ios-build-deps.sh   # idempotent; run after pod install / prebuild / npm install
 ```
 
 This blocks **every** iOS build under Xcode 26.x — simulator and device alike — so it is
 not specific to release builds. A build that last succeeded on an older Xcode will start
 failing here purely from toolchain drift, with no code change.
+
+**Fifth gotcha — `react-native-audio-api` missing `<cstddef>`.** `Constants.h` uses
+unqualified `size_t` but includes only `<cmath>` and `<limits>`. Xcode 26's stricter header
+modularization stopped pulling `<cstddef>` in transitively:
+
+```
+error: unknown type name 'size_t'   (Constants.h lines 11, 21, 22, 23)
+```
+
+Same script fixes it. Note this one lives in `node_modules/`, so `npm install` reverts it
+too — not just `pod install`.
+
+**Sixth gotcha — never `rm -rf ios/build`.** That directory holds `generated/`, the
+ReactCodegen output. The codegen script phase is dependency-analysis-gated and will not
+regenerate it, so the next build fails with a dozen `Build input file cannot be found:
+.../generated/ios/...` errors. Recover with `cd ios && pod install` (~11s).
 
 ## Quick Commands
 
