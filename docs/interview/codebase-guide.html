@@ -1,0 +1,803 @@
+<title>Purrrfect Keys Codebase Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ink:#14100F;
+  --ground:#FAF8F7;
+  --surface:#FFFFFF;
+  --surface-2:#F2EEEC;
+  --line:#E0D8D5;
+  --line-strong:#C9BDB9;
+  --text:#14100F;
+  --text-2:#5C5250;
+  --text-3:#8A7D7A;
+  --crimson:#B01034;
+  --crimson-soft:#F7E4E8;
+  --brass:#8A6410;
+  --brass-soft:#F7EEDA;
+  --good:#2C6E3F;
+  --good-soft:#E3F0E7;
+  --warn:#8A5A0B;
+  --warn-soft:#FAEEDC;
+  --shadow:0 1px 2px rgba(20,16,15,.05),0 8px 24px -12px rgba(20,16,15,.15);
+  --measure:68ch;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#0B0B0C;
+    --ground:#0B0B0C;
+    --surface:#151314;
+    --surface-2:#1D1A1B;
+    --line:#2A2627;
+    --line-strong:#3D3839;
+    --text:#F5F1F0;
+    --text-2:#A79E9C;
+    --text-3:#776E6D;
+    --crimson:#FF4A66;
+    --crimson-soft:#2A1218;
+    --brass:#E8B740;
+    --brass-soft:#2A2213;
+    --good:#6FCB8C;
+    --good-soft:#132318;
+    --warn:#E0A44A;
+    --warn-soft:#241B10;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#0B0B0C;
+  --ground:#0B0B0C;
+  --surface:#151314;
+  --surface-2:#1D1A1B;
+  --line:#2A2627;
+  --line-strong:#3D3839;
+  --text:#F5F1F0;
+  --text-2:#A79E9C;
+  --text-3:#776E6D;
+  --crimson:#FF4A66;
+  --crimson-soft:#2A1218;
+  --brass:#E8B740;
+  --brass-soft:#2A2213;
+  --good:#6FCB8C;
+  --good-soft:#132318;
+  --warn:#E0A44A;
+  --warn-soft:#241B10;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--text);
+  font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16.5px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── Shell ─────────────────────────────── */
+.shell{max-width:1220px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:232px minmax(0,1fr);gap:56px;align-items:start}
+@media(max-width:960px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* ─── TOC ───────────────────────────────── */
+.toc{position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:40px 0 40px;font-size:13.5px}
+@media(max-width:960px){.toc{position:static;max-height:none;border-bottom:1px solid var(--line);margin-bottom:8px}}
+.toc-label{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);font-weight:600;margin-bottom:14px}
+.toc a{display:block;padding:5px 0 5px 12px;color:var(--text-2);text-decoration:none;border-left:2px solid var(--line);line-height:1.4}
+.toc a:hover{color:var(--crimson);border-left-color:var(--crimson)}
+.toc a:focus-visible{outline:2px solid var(--crimson);outline-offset:2px;border-radius:2px}
+
+/* ─── Main ──────────────────────────────── */
+main{padding:40px 0 120px;min-width:0}
+.measure{max-width:var(--measure)}
+
+/* ─── Masthead ──────────────────────────── */
+.mast{border-bottom:2px solid var(--ink);padding-bottom:28px;margin-bottom:36px}
+:root[data-theme="dark"] .mast,:root:not([data-theme="light"]) .mast{border-bottom-color:var(--line-strong)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mast{border-bottom-color:var(--line-strong)}}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--crimson);font-weight:700;margin-bottom:14px}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(40px,6.5vw,68px);line-height:1.02;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.standfirst{font-size:19px;line-height:1.5;color:var(--text-2);max-width:60ch;margin:0}
+
+/* ─── Stat strip ────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(124px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:32px 0 48px}
+.stat{background:var(--surface);padding:16px 18px}
+.stat-n{font-family:"Instrument Serif",Georgia,serif;font-size:30px;line-height:1;color:var(--text);font-variant-numeric:tabular-nums}
+.stat-n.ok{color:var(--good)}
+.stat-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-top:7px;font-weight:600}
+
+/* ─── Sections ──────────────────────────── */
+section{margin:0 0 68px;scroll-margin-top:24px}
+h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(28px,3.6vw,38px);line-height:1.14;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.h2rule{height:2px;background:var(--crimson);width:52px;margin-bottom:22px}
+h3{font-size:17px;font-weight:700;letter-spacing:-.005em;margin:34px 0 10px;color:var(--text)}
+h4{font-size:13.5px;font-weight:700;margin:22px 0 7px;color:var(--text-2);letter-spacing:.02em}
+p{margin:0 0 15px;max-width:var(--measure)}
+ul,ol{margin:0 0 15px;padding-left:22px;max-width:var(--measure)}
+li{margin-bottom:7px}
+li::marker{color:var(--text-3)}
+strong{font-weight:650;color:var(--text)}
+em{font-style:italic}
+a{color:var(--crimson)}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.855em;background:var(--surface-2);padding:1.5px 5px;border-radius:3px;color:var(--text);word-break:break-word}
+h3 code,h4 code,li code{font-size:.9em}
+
+/* ─── Callouts ──────────────────────────── */
+.note{border-left:3px solid var(--brass);background:var(--brass-soft);padding:14px 18px;margin:20px 0;max-width:var(--measure);border-radius:0 4px 4px 0}
+.note p:last-child{margin-bottom:0}
+.note .tag{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--brass);display:block;margin-bottom:6px}
+.note.warn{border-left-color:var(--crimson);background:var(--crimson-soft)}
+.note.warn .tag{color:var(--crimson)}
+.note.good{border-left-color:var(--good);background:var(--good-soft)}
+.note.good .tag{color:var(--good)}
+
+/* ─── Tables ────────────────────────────── */
+.tw{overflow-x:auto;margin:20px 0;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px;background:var(--surface)}
+th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line-strong);white-space:nowrap;background:var(--surface-2)}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+
+/* ─── Pills ─────────────────────────────── */
+.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2.5px 8px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.gap{background:var(--warn-soft);color:var(--warn)}
+.pill.no{background:var(--crimson-soft);color:var(--crimson)}
+
+/* ─── Figures ───────────────────────────── */
+figure{margin:26px 0;border:1px solid var(--line);background:var(--surface);padding:22px 20px 16px;overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;min-width:480px}
+figcaption{font-size:12.5px;color:var(--text-3);margin-top:14px;line-height:1.5;border-top:1px solid var(--line);padding-top:11px}
+
+/* ─── Q&A ───────────────────────────────── */
+.qa{border:1px solid var(--line);background:var(--surface);margin:0 0 12px;max-width:var(--measure)}
+.qa summary{padding:13px 17px;cursor:pointer;font-weight:650;font-size:15.5px;list-style:none;display:flex;gap:11px;align-items:baseline}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"▸";color:var(--crimson);font-size:12px;flex-shrink:0;transition:transform .15s}
+.qa[open] summary::before{transform:rotate(90deg)}
+.qa summary:focus-visible{outline:2px solid var(--crimson);outline-offset:-2px}
+.qa-body{padding:0 17px 15px 41px;font-size:15px;color:var(--text-2)}
+.qa-body p:last-child{margin-bottom:0}
+.qa-body strong{color:var(--text)}
+
+/* ─── Misc ──────────────────────────────── */
+.lede{font-size:17.5px;color:var(--text-2);line-height:1.55;margin-bottom:22px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 18px;font-size:14.5px;margin:16px 0;max-width:var(--measure)}
+.kv dt{font-weight:650;color:var(--text-2);white-space:nowrap}
+.kv dd{margin:0;color:var(--text)}
+hr{border:none;border-top:1px solid var(--line);margin:36px 0;max-width:var(--measure)}
+.foot{border-top:2px solid var(--line-strong);padding-top:20px;margin-top:70px;font-size:13.5px;color:var(--text-3);max-width:var(--measure)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="toc">
+  <div class="toc-label">Contents</div>
+  <a href="#state">Build state</a>
+  <a href="#what">What it is</a>
+  <a href="#stack">Stack &amp; rationale</a>
+  <a href="#arch">Architecture</a>
+  <a href="#trace">The critical path</a>
+  <a href="#audio">Audio engine</a>
+  <a href="#input">Input pipeline</a>
+  <a href="#scoring">Scoring engine</a>
+  <a href="#curriculum">Adaptive curriculum</a>
+  <a href="#state-mgmt">State &amp; persistence</a>
+  <a href="#sync">Cross-device sync</a>
+  <a href="#ai">AI layer</a>
+  <a href="#content">Content pipeline</a>
+  <a href="#game">Gamification &amp; social</a>
+  <a href="#testing">Testing</a>
+  <a href="#infra">Infrastructure</a>
+  <a href="#hard">Hard problems solved</a>
+  <a href="#gaps">Honest gaps</a>
+  <a href="#drill">Interview drill</a>
+</nav>
+
+<main>
+
+<header class="mast">
+  <div class="eyebrow">Codebase Guide · Purrrfect Keys</div>
+  <h1>How the whole thing works</h1>
+  <p class="standfirst">A React Native piano tutor with real-time pitch detection, a 120-node adaptive curriculum, and offline-first sync. This is the architecture, the reasoning behind it, and the parts that are still rough.</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n ok">3,263</div><div class="stat-l">Tests passing</div></div>
+  <div class="stat"><div class="stat-n ok">159</div><div class="stat-l">Suites</div></div>
+  <div class="stat"><div class="stat-n ok">0</div><div class="stat-l">TS errors</div></div>
+  <div class="stat"><div class="stat-n">143k</div><div class="stat-l">Lines in src</div></div>
+  <div class="stat"><div class="stat-n">599</div><div class="stat-l">Exercises</div></div>
+  <div class="stat"><div class="stat-n">582</div><div class="stat-l">Songs</div></div>
+  <div class="stat"><div class="stat-n">120</div><div class="stat-l">Skill nodes</div></div>
+  <div class="stat"><div class="stat-n">11</div><div class="stat-l">Cloud fns</div></div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<section id="state">
+<h2>Build state</h2><div class="h2rule"></div>
+
+<p>Verified on branch <code>test/stable-baseline</code>, tagged <code>stable-interview-baseline</code>:</p>
+
+<div class="tw"><table>
+<thead><tr><th>Check</th><th>Command</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>Type safety</td><td><code>npm run typecheck</code></td><td><span class="pill ok">0 errors</span></td></tr>
+<tr><td>Unit + integration</td><td><code>npm run test</code></td><td><span class="pill ok">3,263 / 3,263</span></td></tr>
+<tr><td>Suites</td><td>—</td><td><span class="pill ok">159 / 159</span></td></tr>
+<tr><td>Exit code</td><td>—</td><td><span class="pill ok">0</span></td></tr>
+<tr><td>Working tree</td><td><code>git status</code></td><td><span class="pill ok">clean</span></td></tr>
+<tr><td>Open P0 bugs</td><td>bug tracker</td><td><span class="pill ok">none</span></td></tr>
+</tbody>
+</table></div>
+
+<p>Full run takes about 42 seconds. Jest prints a worker-teardown warning at the end — a timer leak in test cleanup, not a product defect, and it does not affect the exit code.</p>
+
+<div class="note good"><span class="tag">Demo safety</span><p>The commit at <code>HEAD~1</code> is tagged <code>debug:</code> and adds diagnostic logging to <code>getDailyPlan()</code>. It routes through <code>logger.log</code>, which is wrapped in <code>__DEV__</code> — so it compiles out of release builds entirely. Safe to demo as-is. In a dev build it will chatter in the Metro console on every plan read.</p></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="what">
+<h2>What it is</h2><div class="h2rule"></div>
+
+<p class="lede">A Duolingo-shaped piano tutor. You play a real instrument — MIDI keyboard, acoustic piano via microphone, or the on-screen keyboard — and the app scores your performance note by note, adapts what it teaches you next, and wraps the whole thing in collectible cats that evolve as you improve.</p>
+
+<p>The product bet is that the two halves reinforce each other. The <strong>signal-processing half</strong> — hearing what you actually played and grading it fairly — is what makes it a real teaching tool rather than a quiz app. The <strong>retention half</strong> — streaks, gems, leagues, evolving cats — is what gets a beginner to day thirty, which is where piano skill actually starts to compound.</p>
+
+<h3>The three input methods</h3>
+<p>These are ranked by fidelity, and the app degrades down the list automatically:</p>
+<ol>
+<li><strong>MIDI</strong> — exact note, exact velocity, sub-15ms. The ideal case.</li>
+<li><strong>Microphone</strong> — an ONNX polyphonic model for chords, YIN pitch detection as the monophonic fallback. This is the differentiator: it means someone with an acoustic piano and no MIDI cable can still use the app.</li>
+<li><strong>Touch</strong> — the on-screen keyboard. Always available, teaches note geography, but can't teach real technique.</li>
+</ol>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="stack">
+<h2>Stack &amp; rationale</h2><div class="h2rule"></div>
+
+<p>The interesting question isn't <em>what</em> is in the stack — it's why each piece was chosen over the obvious alternative.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Layer</th><th>Choice</th><th>Why this over the alternative</th></tr></thead>
+<tbody>
+<tr><td>App shell</td><td>Expo SDK 52, RN 0.76</td><td>Managed workflow with a custom dev client. Bare RN would mean hand-maintaining two native build systems for one developer.</td></tr>
+<tr><td>Language</td><td>TypeScript, strict</td><td>The scoring and curriculum logic is intricate enough that structural typing catches whole classes of bug at compile time.</td></tr>
+<tr><td>State</td><td>Zustand ×14 stores</td><td>Redux ceremony without the payoff at this size. Zustand's <code>getState()</code> escape hatch matters enormously in audio callbacks — see the stale-closure discussion below.</td></tr>
+<tr><td>Audio out</td><td>react-native-audio-api, expo-av fallback</td><td>JSI means no bridge serialization on the hot path. Sub-10ms vs. 30ms+ through the old bridge.</td></tr>
+<tr><td>Pitch detection</td><td>ONNX Basic Pitch + YIN</td><td>YIN alone is monophonic — it cannot hear a chord. Basic Pitch gives polyphony; YIN is the graceful fallback when the model fails to load.</td></tr>
+<tr><td>Backend</td><td>Firebase (Auth, Firestore, Functions)</td><td>Offline persistence and a real anonymous-auth upgrade path, both out of the box. Building either on a custom backend is weeks of work.</td></tr>
+<tr><td>AI</td><td>Gemini 2.0 Flash</td><td>Fast and cheap enough for per-exercise coaching. Called through Cloud Functions so the key never ships in the bundle.</td></tr>
+<tr><td>Monitoring</td><td>Sentry + PostHog</td><td>Crash traces and product analytics answer different questions. Both degrade to no-ops when env vars are absent.</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="arch">
+<h2>Architecture</h2><div class="h2rule"></div>
+
+<p>One rule shapes everything: <strong>business logic in <code>src/core/</code> is pure TypeScript with no React imports.</strong> Scoring, curriculum planning, MMR, music theory — none of it can import a hook or touch a component.</p>
+
+<p>That constraint buys three things. The logic is testable without a renderer, which is most of why 3,263 tests run in 42 seconds. It is portable — the planned web version reuses <code>core/</code> untouched. And it forces a clean seam: if a scoring change needs a React import, the design is wrong.</p>
+
+<figure>
+<svg viewBox="0 0 720 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Layered architecture: screens and components depend on stores and hooks, which depend on pure core logic; services sit alongside and reach external systems.">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="11.5" color="currentColor">
+
+    <!-- UI layer -->
+    <rect x="16" y="14" width="420" height="66" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".85"/>
+    <text x="28" y="34" font-size="10" letter-spacing="1.4" opacity=".55">UI · REACT</text>
+    <text x="28" y="55" font-family="Public Sans, sans-serif" font-size="13" font-weight="600">screens/ (79) · components/ (119) · navigation/</text>
+    <text x="28" y="71" font-family="Public Sans, sans-serif" font-size="11.5" opacity=".6">Renders. Owns no business rules.</text>
+
+    <!-- Services (side) -->
+    <rect x="456" y="14" width="248" height="152" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".85"/>
+    <text x="468" y="34" font-size="10" letter-spacing="1.4" opacity=".55">SERVICES · I/O EDGE</text>
+    <text x="468" y="55" font-family="Public Sans, sans-serif" font-size="12.5" font-weight="600">firebase/ · ai/ · tts/</text>
+    <text x="468" y="72" font-family="Public Sans, sans-serif" font-size="12.5" font-weight="600">analytics/ · monitoring/</text>
+    <text x="468" y="96" font-family="Public Sans, sans-serif" font-size="11.5" opacity=".6">Everything that can fail for</text>
+    <text x="468" y="111" font-family="Public Sans, sans-serif" font-size="11.5" opacity=".6">reasons outside the app:</text>
+    <text x="468" y="126" font-family="Public Sans, sans-serif" font-size="11.5" opacity=".6">network, model load, permissions.</text>
+    <text x="468" y="150" font-family="Public Sans, sans-serif" font-size="11.5" font-style="italic" opacity=".75">All of it degrades, none of it throws.</text>
+
+    <!-- State layer -->
+    <rect x="16" y="100" width="420" height="66" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".85"/>
+    <text x="28" y="120" font-size="10" letter-spacing="1.4" opacity=".55">STATE · ZUSTAND</text>
+    <text x="28" y="141" font-family="Public Sans, sans-serif" font-size="13" font-weight="600">stores/ (14) · hooks/ · persistence</text>
+    <text x="28" y="157" font-family="Public Sans, sans-serif" font-size="11.5" opacity=".6">Orchestrates. Holds no algorithms.</text>
+
+    <!-- Core layer -->
+    <rect x="16" y="186" width="688" height="94" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    <text x="28" y="206" font-size="10" letter-spacing="1.4" opacity=".55">CORE · PURE TYPESCRIPT — NO REACT IMPORTS</text>
+    <text x="28" y="228" font-family="Public Sans, sans-serif" font-size="13" font-weight="600">exercises/ · curriculum/ · music/ · progression/ · ranking/ · songs/ · abilities/ · rewards/ · challenges/ · achievements/</text>
+    <text x="28" y="252" font-family="Public Sans, sans-serif" font-size="11.5" opacity=".7">Scoring · session planning · skill DAG · MMR · XP curves · ABC parsing</text>
+    <text x="28" y="269" font-family="Public Sans, sans-serif" font-size="11.5" font-style="italic" opacity=".75">Deterministic in, deterministic out. Fully unit-testable.</text>
+
+    <!-- Native layer -->
+    <rect x="16" y="300" width="688" height="38" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" opacity=".7"/>
+    <text x="28" y="324" font-family="Public Sans, sans-serif" font-size="12.5" opacity=".75">NATIVE — audio/ (JSI) · input/ (MIDI, mic, ONNX)</text>
+
+    <!-- arrows -->
+    <path d="M226,80 L226,98" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <path d="M226,166 L226,184" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <path d="M226,282 L226,298" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <path d="M454,120 L438,120" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+  </g>
+</svg>
+<figcaption>Dependencies point downward only. <code>core/</code> imports nothing above it — that is what makes it portable to web and testable without a renderer. Services sit to the side because they are the failure boundary: every one of them has a degraded mode.</figcaption>
+</figure>
+
+<h3>Directory map</h3>
+<div class="tw"><table>
+<thead><tr><th>Path</th><th>Files</th><th class="num">Lines</th><th>Holds</th></tr></thead>
+<tbody>
+<tr><td><code>src/screens/</code></td><td>79</td><td class="num">42,644</td><td>Full screens. <code>ExercisePlayer/</code> is the big one.</td></tr>
+<tr><td><code>src/components/</code></td><td>119</td><td class="num">28,903</td><td>Keyboard, PianoRoll, cat SVGs, arena, transitions</td></tr>
+<tr><td><code>src/services/</code></td><td>54</td><td class="num">16,215</td><td>Firebase, Gemini, TTS, analytics, monitoring</td></tr>
+<tr><td><code>src/core/</code></td><td>59</td><td class="num">15,478</td><td>All pure logic. The heart of the app.</td></tr>
+<tr><td><code>src/stores/</code></td><td>34</td><td class="num">12,161</td><td>14 domain stores + persistence layer</td></tr>
+<tr><td><code>src/input/</code></td><td>21</td><td class="num">7,764</td><td>MIDI, mic capture, YIN, ONNX, note tracking</td></tr>
+<tr><td><code>src/content/</code></td><td>14</td><td class="num">5,167</td><td>Content loading, cat dialogue, templates</td></tr>
+<tr><td><code>src/audio/</code></td><td>13</td><td class="num">3,989</td><td>Two engines + factory + sound manager</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="trace">
+<h2>The critical path</h2><div class="h2rule"></div>
+
+<p class="lede">If you only internalise one thing before the interview, make it this: what happens between a finger hitting a key and a score appearing.</p>
+
+<figure>
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Signal flow from three input sources through normalization into two parallel paths: immediate audio playback and deferred scoring.">
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g font-family="Public Sans, sans-serif" font-size="11.5" color="currentColor">
+
+    <text x="16" y="16" font-size="10" font-family="IBM Plex Mono, monospace" letter-spacing="1.4" opacity=".55">SOURCES</text>
+
+    <!-- inputs -->
+    <rect x="16" y="26" width="128" height="34" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="26" y="42" font-weight="600">MIDI keyboard</text><text x="26" y="54" opacity=".6" font-size="10.5">~0 ms · exact</text>
+
+    <rect x="16" y="68" width="128" height="34" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="26" y="84" font-weight="600">Microphone</text><text x="26" y="96" opacity=".6" font-size="10.5">~120 ms · inferred</text>
+
+    <rect x="16" y="110" width="128" height="34" fill="none" stroke="currentColor" opacity=".8"/>
+    <text x="26" y="126" font-weight="600">Touch keyboard</text><text x="26" y="138" opacity=".6" font-size="10.5">~2 ms · exact</text>
+
+    <!-- normalizer -->
+    <rect x="186" y="52" width="126" height="66" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="196" y="70" font-weight="700" font-size="12">InputManager</text>
+    <text x="196" y="86" opacity=".7" font-size="10.5">One MidiNoteEvent</text>
+    <text x="196" y="99" opacity=".7" font-size="10.5">shape. Latency</text>
+    <text x="196" y="112" opacity=".7" font-size="10.5">compensation applied.</text>
+
+    <path d="M146,43 L184,73" stroke="currentColor" fill="none" marker-end="url(#ar2)" opacity=".8"/>
+    <path d="M146,85 L184,85" stroke="currentColor" fill="none" marker-end="url(#ar2)" opacity=".8"/>
+    <path d="M146,127 L184,98" stroke="currentColor" fill="none" marker-end="url(#ar2)" opacity=".8"/>
+
+    <!-- split -->
+    <text x="356" y="16" font-size="10" font-family="IBM Plex Mono, monospace" letter-spacing="1.4" opacity=".55">TWO PATHS, DIFFERENT CLOCKS</text>
+
+    <!-- immediate path -->
+    <rect x="356" y="26" width="348" height="76" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="366" y="44" font-weight="700" font-size="12">A · Immediate — must feel instant</text>
+    <text x="366" y="61" opacity=".8" font-size="11">audioEngine.playNote() → JSI → native mixer</text>
+    <text x="366" y="76" opacity=".8" font-size="11">Key highlight + PERFECT / GOOD / LATE overlay</text>
+    <text x="366" y="93" opacity=".65" font-size="10.5" font-style="italic">Budget &lt;20 ms. Nearest-note match, no persistence.</text>
+
+    <!-- deferred path -->
+    <rect x="356" y="112" width="348" height="76" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="366" y="130" font-weight="700" font-size="12">B · Deferred — must be correct</text>
+    <text x="366" y="147" opacity=".8" font-size="11">Appended to playedNotesRef (a ref, never state)</text>
+    <text x="366" y="162" opacity=".8" font-size="11">On completion → scoreExerciseByType()</text>
+    <text x="366" y="179" opacity=".65" font-size="10.5" font-style="italic">Runs once. Global optimum over the whole take.</text>
+
+    <path d="M314,72 L354,60" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar2)"/>
+    <path d="M314,98 L354,142" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar2)"/>
+
+    <!-- downstream -->
+    <rect x="356" y="206" width="348" height="76" fill="none" stroke="currentColor" opacity=".8" stroke-dasharray="4 3"/>
+    <text x="366" y="224" font-weight="700" font-size="12" opacity=".85">Fan-out from the final score</text>
+    <text x="366" y="241" opacity=".7" font-size="11">XP · gems · streak · achievements · cat XP · MMR</text>
+    <text x="366" y="256" opacity=".7" font-size="11">league points · learner profile · skill mastery</text>
+    <text x="366" y="272" opacity=".7" font-size="11">→ AsyncStorage → sync queue → Firestore</text>
+    <path d="M530,190 L530,204" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#ar2)"/>
+  </g>
+</svg>
+<figcaption>The central design decision: <strong>feedback and scoring are separate systems on separate clocks.</strong> Path A is greedy and instant because a late note-sound feels broken. Path B is deferred and global because fair grading needs the whole performance. They deliberately use different matching algorithms.</figcaption>
+</figure>
+
+<h3>Why the split matters</h3>
+<p>This is the part interviewers tend to push on, so be ready to defend it.</p>
+
+<p>Real-time feedback has to be greedy — when a note lands, you must decide <em>right now</em> which expected note it was, and light up the right key. It searches ±1.5 beats for the nearest unconsumed note and marks it used.</p>
+
+<p>Final scoring cannot be greedy. If you rush the third note, a greedy matcher consumes the fourth note's slot and every subsequent note cascades into being "wrong" — one small error destroys the whole score. So <code>matchNotes()</code> runs once at the end over the complete performance and finds a globally sensible assignment.</p>
+
+<p>The cost is that the on-screen feedback and the final score can disagree slightly on a messy take. That is an accepted trade: a fair score matters more than perfect agreement with a transient overlay.</p>
+
+<div class="note"><span class="tag">Timestamp domains</span><p>A subtle bug class lives here. Played notes arrive with <code>Date.now()</code> epoch timestamps; the scoring engine expects milliseconds relative to beat zero. <code>useExercisePlayback.handleCompletion</code> converts before scoring: <code>adjusted = Date.now() − startTimeRef − countInMs</code>. Getting this wrong once meant comparing trillion-millisecond values against small relative ones — every note read as infinitely late and every score came out zero.</p></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="audio">
+<h2>Audio engine</h2><div class="h2rule"></div>
+
+<p>Two implementations behind one interface, chosen at runtime by <code>createAudioEngine()</code>.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Engine</th><th>Mechanism</th><th>Latency</th><th>Used when</th></tr></thead>
+<tbody>
+<tr><td><code>WebAudioEngine</code></td><td>react-native-audio-api over JSI — direct native calls, no bridge serialization</td><td>&lt;10 ms</td><td>Preferred. Needs the native module.</td></tr>
+<tr><td><code>ExpoAudioEngine</code></td><td>expo-av with round-robin voice pools over real FluidR3 GM piano samples</td><td>~30 ms</td><td>Fallback — Expo Go, or when the JSI module is missing</td></tr>
+</tbody>
+</table></div>
+
+<p>The factory tries to construct <code>WebAudioEngine</code> inside a <code>try/catch</code> with a lazy <code>require()</code>. If the native module isn't linked, construction throws, and it falls through to Expo. The app never hard-fails on audio.</p>
+
+<h3>Round-robin voice pools</h3>
+<p>The fallback engine's non-obvious trick. Naively, replaying a note means stop-then-play, which races: the stop is async and can land after the new play, cutting off the note you just started. Instead it pre-loads <strong>two voice objects per note</strong> and alternates. Repeating a note grabs the other voice, so there is always a free one and no stop is needed on the hot path.</p>
+
+<p>It pre-loads C2–C6 at octave spacing and pitch-shifts ±6 semitones via <code>playbackRate</code> — five samples covering the full range at about 132 KB, instead of 88 individual files.</p>
+
+<div class="note warn"><span class="tag">The rule that shapes all of this</span><p><strong>Never allocate inside an audio callback.</strong> A <code>new Float32Array()</code> per buffer triggers garbage collection mid-stream and you hear it as a click. Every buffer in the pipeline is pre-allocated once and reused. This is the single most important constraint in the audio and input code.</p></div>
+
+<h3>The iOS audio-session trap</h3>
+<p>Worth knowing because it cost real debugging time. Enabling microphone input switches iOS into <code>PlayAndRecord</code>, which by default routes output to the <em>earpiece</em> — the app goes nearly silent and looks broken. Two separate libraries (expo-av and react-native-audio-api) share one <code>AVAudioSession</code> but keep independent internal state, so whichever configures last wins.</p>
+<p>The fix: configure through <code>AudioManager.setAudioSessionOptions()</code> synchronously as the primary path, with expo-av only as fallback, and use <code>measurement</code> mode when recording. Default mode applies voice-processing that is tuned for speech and audibly mangles piano.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="input">
+<h2>Input pipeline</h2><div class="h2rule"></div>
+
+<p><code>InputManager</code> is a factory and normalizer. Whatever the source, downstream code receives one <code>MidiNoteEvent</code> shape — so the scoring engine has no idea whether a note came from a keyboard, a microphone, or a fingertip.</p>
+
+<h3>Microphone: the hard one</h3>
+<p>Two detection modes:</p>
+<ul>
+<li><strong>Polyphonic</strong> — an ONNX Basic Pitch model, 88 note bins, up to six simultaneous voices. Audio is resampled 44.1 → 22.05 kHz, inferred, then passed through <code>MultiNoteTracker</code> for per-note onset/release hysteresis. This is what lets the app hear a chord.</li>
+<li><strong>Monophonic</strong> — YIN autocorrelation with octave-error correction and a median filter. Cheaper, and the automatic fallback if ONNX fails to load.</li>
+</ul>
+
+<p>Total mic latency is roughly 120 ms. Two compensations make it usable: a fixed −100 to −120 ms offset applied at the InputManager, and a <strong>1.5× timing tolerance multiplier</strong> for mic input, because inferred onsets are genuinely fuzzier than a MIDI event and grading them on the same curve would be unfair.</p>
+
+<div class="note"><span class="tag">Tuning lesson worth quoting</span><p>Early mic tuning was done by playing piano <em>through phone speakers</em> into the mic. That signal is nothing like a real instrument — the thresholds derived from it were badly wrong on an actual piano. Retuning against a real acoustic source moved the RMS gate from 0.006 to 0.002, because measured iPhone RMS for real piano sits at 0.003–0.009. <strong>Tune against the real signal, not a convenient proxy.</strong></p></div>
+
+<p>A related gotcha: iPhones capture at 48 kHz, not the assumed 44.1 kHz. Every detected pitch was sharp by that ratio until <code>AudioCapture</code> started reading the actual rate off the buffer and calling <code>detector.setSampleRate()</code>.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="scoring">
+<h2>Scoring engine</h2><div class="h2rule"></div>
+
+<p>Pure functions in <code>src/core/exercises/</code>. No React, no I/O, heavily tested — this is the most safety-critical logic in the app, because unfair scoring destroys trust faster than any crash.</p>
+
+<h3>Five weighted dimensions</h3>
+<div class="tw"><table>
+<thead><tr><th>Dimension</th><th class="num">Weight</th><th>Measures</th></tr></thead>
+<tbody>
+<tr><td>Accuracy</td><td class="num">35%</td><td>Right notes</td></tr>
+<tr><td>Timing</td><td class="num">30%</td><td>On the beat, within tolerance windows</td></tr>
+<tr><td>Duration</td><td class="num">15%</td><td>Held for the written length</td></tr>
+<tr><td>Completeness</td><td class="num">10%</td><td>Played ÷ expected</td></tr>
+<tr><td>Extra notes</td><td class="num">10%</td><td>Inverted penalty: <code>100 × 0.85^extras</code></td></tr>
+</tbody>
+</table></div>
+
+<p>The extra-notes penalty is exponential rather than linear on purpose. One stray note is a slip and barely matters; ten stray notes means you were mashing, and the curve should say so.</p>
+
+<h3>Timing windows scale with difficulty</h3>
+<p>Tolerance is per-exercise, not global — a beginner gets ±75 ms for "perfect", an expert ±20 ms. Same algorithm, different constants, so the curve gets genuinely harder as you progress rather than the content merely getting denser.</p>
+
+<h3>Per-type strategies</h3>
+<p><code>scoreExerciseByType()</code> dispatches to a specialised scorer, with <code>default → scoreExercise</code>. Rhythm exercises are the clearest example: the tap zone emits MIDI note 60 for every tap and pitch matching is skipped entirely, because in a rhythm drill <em>which</em> note you hit is meaningless — only <em>when</em> matters.</p>
+
+<div class="note"><span class="tag">Type inventory — be precise here</span><p>17 exercise types are defined in <code>types.ts</code>. Six are genuinely implemented end-to-end with dedicated UI and scoring: <code>play</code>, <code>rhythm</code>, <code>earTraining</code>, <code>chordId</code>, <code>sightReading</code>, <code>callResponse</code> — each with its own component (<code>RhythmTapZone</code>, <code>ChordPrompt</code>, <code>ListenPhaseOverlay</code>, <code>SightReadingOverlay</code>, <code>CallResponsePhase</code>). The remaining eleven — quiz and gamified variants like <code>intervalQuiz</code>, <code>chordBuilder</code>, <code>bossBattle</code> — are typed and routed but fall through to play-along. Claim six, not seventeen.</p></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="curriculum">
+<h2>Adaptive curriculum</h2><div class="h2rule"></div>
+
+<p>The pedagogical core, and the most defensible piece of engineering in the project.</p>
+
+<h3>The skill DAG</h3>
+<p><code>SkillTree.ts</code> holds 120 skill nodes across 18 tiers in 12 categories, wired as a directed acyclic graph of prerequisites. Not a list — a graph, so multiple paths can converge and unlock the same downstream skill.</p>
+
+<h3>Skill decay</h3>
+<p>Mastery is not permanent. Each skill decays on a <strong>14-day half-life</strong>; below a 0.5 threshold it re-enters the review pool. This is spaced repetition applied to motor skill, and it is the reason the app can be honest about a user having "learned" something.</p>
+
+<h3>Session planning</h3>
+<p><code>selectSessionType()</code> picks one of five shapes from current state:</p>
+<div class="tw"><table>
+<thead><tr><th>Type</th><th>Chosen when</th></tr></thead>
+<tbody>
+<tr><td><code>review</code></td><td>3+ skills have decayed below threshold</td></tr>
+<tr><td><code>mixed</code></td><td>1–2 skills decayed — new material plus repair</td></tr>
+<tr><td><code>challenge</code></td><td>Every 5th completed exercise — a deliberate difficulty spike</td></tr>
+<tr><td><code>new-material</code></td><td>Default when nothing is decaying</td></tr>
+<tr><td><code>endgame</code></td><td>All 120 skills mastered — varied AI-generated sessions</td></tr>
+</tbody>
+</table></div>
+
+<div class="note warn"><span class="tag">The invariant to state out loud</span><p><strong>The daily plan is cached by date and must never regenerate mid-day.</strong> Adding <code>masteredSkills</code> as a dependency of plan generation seems reasonable and is catastrophic: completing an exercise mutates mastery, which regenerates the plan, which reshuffles the remaining items under the user mid-session. Plan generation depends on the date and nothing else. This is enforced in <code>DailyPlanManager.ts</code>.</p></div>
+
+<p>Supporting pieces: <code>WeakSpotDetector</code> finds recurring failure patterns (a specific note, a hand transition, a rhythmic figure) rather than just a low score, and <code>DifficultyEngine</code> nudges tempo +5 BPM per mastered exercise so progression is continuous rather than stepped.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="state-mgmt">
+<h2>State &amp; persistence</h2><div class="h2rule"></div>
+
+<p>14 Zustand domain stores, split by concern rather than by screen: <code>progressStore</code> (XP, streak, lessons), <code>authStore</code>, <code>catEvolutionStore</code>, <code>gemStore</code>, <code>learnerProfileStore</code>, <code>rankStore</code>, <code>seasonStore</code>, <code>socialStore</code>, <code>guildStore</code>, <code>leagueStore</code>, <code>songStore</code>, <code>settingsStore</code>, <code>achievementStore</code>, <code>exerciseStore</code>.</p>
+
+<h3>Two save strategies</h3>
+<div class="kv">
+<dt><code>createDebouncedSave</code></dt><dd>500 ms — settings, league standings, routine progress. Coalesces bursts.</dd>
+<dt><code>createImmediateSave</code></dt><dd>0 ms — gems, onboarding completion, selected cat. Anything that must survive a navigation or crash on the very next frame.</dd>
+</div>
+
+<p>The distinction came from a real bug: gems earned at the end of an exercise were lost because the user navigated away inside the debounce window. Currency needs a synchronous write; a volume slider does not.</p>
+
+<h3>Two patterns that recur everywhere</h3>
+<p><strong>Always read via <code>getState()</code> inside callbacks.</strong> Closures in long-lived callbacks — audio handlers, timers, event subscriptions — capture state at creation. By the time they fire, that state is stale. Reading <code>useStore.getState()</code> at call time gets the current value. This bit the codebase repeatedly, which is why the gameplay hook is built almost entirely out of refs: <code>playedNotesRef</code>, <code>testModeRef</code>, <code>skillIdParamRef</code>.</p>
+
+<p><strong>Never mutate outer variables inside a Zustand updater.</strong> <code>set(state => {...})</code> can be invoked twice under React strict mode. Any side effect inside it double-fires — which, for a gem award, means paying out twice. Read before and after with <code>get()</code> instead.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="sync">
+<h2>Cross-device sync</h2><div class="h2rule"></div>
+
+<p>Offline-first. The device is authoritative for the current session; Firestore is the durable merge point. The core loop works with no network at all.</p>
+
+<h3>Sign-in order is load-bearing</h3>
+<ol>
+<li><code>pullRemoteProgress()</code> — fetch authoritative cloud state <em>first</em></li>
+<li><code>migrateLocalToCloud()</code> — push local-only data up</li>
+<li><code>pushAllProgressData()</code> — reconcile</li>
+<li><code>startPeriodicSync()</code> — 5-minute flush cycle</li>
+</ol>
+<p>Reversing steps 1 and 2 pushes stale local state over good cloud state and silently destroys progress. The ordering is the correctness guarantee.</p>
+
+<h3>Merge strategy</h3>
+<p>Deliberately biased toward never losing user progress: <strong>highest wins</strong> for numeric values (XP, scores, MMR, gem balance), <strong>union</strong> for sets (mastered skills, owned cats, unlocked achievements). Twelve data types sync bidirectionally.</p>
+
+<div class="note warn"><span class="tag">Two rules learned the hard way</span><p><strong>Every fetch in a <code>Promise.all</code> needs its own <code>.catch()</code>.</strong> Without them a single failed request rejects the whole batch and the user loses everything on sign-in. One flaky network call should degrade one data type, not all twelve.</p>
+<p><strong>Never call <code>PersistenceManager.clearAll()</code> without first calling <code>pushAllProgressData()</code>.</strong> Sign-out clears local storage; if the push hasn't happened, that data is simply gone.</p></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="ai">
+<h2>AI layer</h2><div class="h2rule"></div>
+
+<p>Gemini 2.0 Flash in three roles, all behind Cloud Functions so the API key never ships in the client bundle.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Role</th><th>Function</th><th>Fallback when it fails</th></tr></thead>
+<tbody>
+<tr><td>Coaching feedback</td><td><code>generateCoachFeedback</code></td><td>50+ pre-written templates keyed to score band and dominant error type</td></tr>
+<tr><td>Exercise generation</td><td><code>generateExercise</code></td><td>Static template exercises mapped per skill tier</td></tr>
+<tr><td>Song generation</td><td><code>generateSong</code></td><td>Existing 582-song Firestore library</td></tr>
+</tbody>
+</table></div>
+
+<p>Every AI path has a deterministic fallback. The app is fully usable offline with AI disabled — coaching just gets less personal.</p>
+
+<h3>Cost control</h3>
+<p>Responses are cached on a composite key: exercise ID + score bucket (rounded to 10) + attempt bucket + a hash of the error profile. Roughly 80% hit rate takes projected cost from about $30/month to $6.</p>
+
+<h3>Prompt design</h3>
+<p>The system prompt is constrained hard: two to three short sentences, exactly one improvement area, one specific actionable tip, always end encouraging. It also explicitly forbids contradicting the supplied scoring data — without that, the model cheerfully congratulates a user on a failed attempt. No PII goes into any prompt; only structured score data. Audio never leaves the device.</p>
+
+<h3>Voice</h3>
+<p>ElevenLabs primary with 13 per-cat neural voices, expo-speech as fallback, file-cached to avoid re-synthesising repeated lines. Both are lazily <code>require()</code>d inside functions rather than imported at module top level — a top-level import pulls expo-file-system and expo-av into Jest's module graph and breaks the test run.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="content">
+<h2>Content pipeline</h2><div class="h2rule"></div>
+
+<p>599 exercises across 50 lessons as version-controlled JSON, plus 582 songs in Firestore.</p>
+
+<h3>Lazy loading</h3>
+<p>Requiring 599 JSON files eagerly would balloon the bundle and startup time. <code>ContentLoaderRegistry.generated.ts</code> is code-generated by a script and maps each exercise ID to a <code>() => require(...)</code> thunk — so a file is parsed only when that exercise is actually opened.</p>
+
+<h3>Song sources</h3>
+<div class="kv">
+<dt>494</dt><dd>Gemini-generated</dd>
+<dt>50</dt><dd>TheSession.org folk tunes (public domain)</dd>
+<dt>38</dt><dd>PDMX classical via a music21 script — Beethoven, Mozart, Haydn, Bach</dd>
+</div>
+<p>Songs are authored in <strong>ABC notation</strong> and parsed to <code>NoteEvent[]</code> by <code>abcParser.ts</code> using abcjs. ABC was chosen over MIDI files because it is human-readable, diffable in git, and — critically — an LLM can generate it reliably, which MIDI binary obviously cannot.</p>
+
+<p>Validation is two-layer: structural (MIDI range 21–108, positive durations, <code>passingScore ≤ starThresholds[0]</code>) and pedagogical (does the content actually match the skill it claims to teach). 134 generated exercises were auto-repaired by the second layer.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="game">
+<h2>Gamification &amp; social</h2><div class="h2rule"></div>
+
+<p>Layered so each system reinforces the next rather than competing for attention.</p>
+
+<div class="kv">
+<dt>XP &amp; levels</dt><dd>Pass 10, per star 10, first completion 25, perfect 20</dd>
+<dt>Streaks</dt><dd>Daily practice, with milestone rewards</dd>
+<dt>Gems</dt><dd>Soft currency. Earned only through gameplay — leagues pay best.</dd>
+<dt>Cats</dt><dd>12 collectible, 4 evolution stages (Baby → Teen 2k → Adult 8k → Master 25k XP)</dd>
+<dt>Abilities</dt><dd>Per-cat modifiers — wider timing windows, combo shields — applied by <code>AbilityEngine</code></dd>
+<dt>Ranked</dt><dd>9 tiers × 3 divisions, MMR-based, 4-week seasons with soft reset</dd>
+<dt>Battle pass</dt><dd>30 tiers, free and premium tracks</dd>
+<dt>Social</dt><dd>Friend codes, QR add, guilds, challenges with gem stakes</dd>
+</div>
+
+<div class="note"><span class="tag">A correctness detail worth mentioning</span><p>Cat abilities are <strong>disabled during mastery tests</strong>, guarded by <code>testModeRef</code>. Otherwise a cat that widens timing windows would inflate the very assessment used to decide whether you have mastered a skill — the measurement instrument would be affected by the thing it measures.</p></div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="testing">
+<h2>Testing</h2><div class="h2rule"></div>
+
+<p>3,263 tests across 159 suites in about 42 seconds. That speed is a direct dividend of the pure-core rule — most tests need no renderer.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Layer</th><th>Command</th><th>Covers</th></tr></thead>
+<tbody>
+<tr><td>Unit</td><td><code>npm run test</code></td><td>Core logic, stores, components</td></tr>
+<tr><td>Performance</td><td><code>npm run test:perf</code></td><td>Content load times, scoring throughput</td></tr>
+<tr><td>Security</td><td><code>npm run test:security</code></td><td>Input sanitization, data exposure, auth</td></tr>
+<tr><td>Regression</td><td><code>npm run test:regression</code></td><td>Scoring, content, ABC parsing critical paths</td></tr>
+<tr><td>Stress</td><td><code>npm run test:stress</code></td><td>Rapid store mutations, concurrency, persistence</td></tr>
+<tr><td>E2E</td><td>Maestro / Detox</td><td>Scaffolded; needs selector work</td></tr>
+</tbody>
+</table></div>
+
+<p>Coverage thresholds are enforced in CI: branches 40%, functions 45%, lines and statements 50%. Deliberately modest — high enough to catch regressions in logic, not so high that it forces low-value tests on presentational components.</p>
+
+<p>A genuinely interesting suite is <code>yearLongProgression.test.ts</code>: it simulates a year of practice sessions to verify the curriculum engine doesn't deadlock, starve a category, or run out of material. That is a class of bug no unit test would find.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="infra">
+<h2>Infrastructure</h2><div class="h2rule"></div>
+
+<div class="kv">
+<dt>Functions</dt><dd>11 deployed, nodejs22, us-central1 — 3 Gemini, 1 GDPR deletion, 4 scheduled (league assignment, weekly rewards, season-end, weekly songs), plus sync and progress helpers</dd>
+<dt>Firestore</dt><dd>Security rules and composite indexes deployed. Rules cover every collection.</dd>
+<dt>Auth</dt><dd>Anonymous by default, upgradeable to Email / Google / Apple without losing progress</dd>
+<dt>CI</dt><dd>GitHub Actions — typecheck + lint + test on every push and PR</dd>
+<dt>Builds</dt><dd>EAS, preview and production channels; builds fire on version tags</dd>
+<dt>Monitoring</dt><dd>Sentry (crashes, traces) + PostHog (analytics, flags), both no-op without env vars</dd>
+</div>
+
+<p>Two details worth having ready. <strong>GDPR deletion</strong> runs as a Cloud Function using the Admin SDK — it clears nine subcollections and scrubs the user from friends' lists, with a client-side fallback if the function is unreachable. And <strong>anonymous auth</strong> is what makes the app usable in the first thirty seconds: a new user plays immediately with no signup wall, and their progress migrates intact when they later create a real account.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="hard">
+<h2>Hard problems solved</h2><div class="h2rule"></div>
+
+<p class="lede">Interviewers ask for a hard technical problem. These are the strongest four, each with a real root cause and a real fix.</p>
+
+<h3>1 · The audio session that silenced the app</h3>
+<p><strong>Symptom:</strong> enabling the microphone made piano audio nearly inaudible.<br>
+<strong>Root cause:</strong> two libraries sharing one <code>AVAudioSession</code> with independent internal state. Mic access forces <code>PlayAndRecord</code>, which routes output to the earpiece.<br>
+<strong>Fix:</strong> a single synchronous configuration path through <code>AudioManager</code>, expo-av demoted to fallback, and <code>measurement</code> mode so iOS stops applying speech-tuned processing to piano.<br>
+<strong>Lesson:</strong> shared global native resources need one owner. Two abstractions over one resource will fight.</p>
+
+<h3>2 · Stale closures in the gameplay loop</h3>
+<p><strong>Symptom:</strong> scores computed from partial note data; abilities leaking into test mode.<br>
+<strong>Root cause:</strong> long-lived callbacks capturing state at creation time. Notes appended to a state variable were invisible to the completion handler.<br>
+<strong>Fix:</strong> refs for anything read inside a callback, and <code>getState()</code> for store reads. <code>useExercisePlayback</code> now holds roughly twenty refs — that is the pattern, not an accident.<br>
+<strong>Lesson:</strong> React's render model and real-time event streams have different lifetimes. Refs are the bridge.</p>
+
+<h3>3 · The mid-day plan reshuffle</h3>
+<p><strong>Symptom:</strong> the daily practice list changed while the user was working through it.<br>
+<strong>Root cause:</strong> <code>masteredSkills</code> was a dependency of plan generation. Completing an exercise updated mastery, which regenerated the plan.<br>
+<strong>Fix:</strong> cache keyed on date alone, persisted to AsyncStorage, regenerated only on date change or full completion.<br>
+<strong>Lesson:</strong> derived state that a user is actively consuming must be pinned. Reactivity is not always desirable.</p>
+
+<h3>4 · Timing that was fair to the microphone</h3>
+<p><strong>Symptom:</strong> mic users scored far worse than MIDI users at identical skill.<br>
+<strong>Root cause:</strong> ~120 ms inherent detection latency graded on the MIDI curve.<br>
+<strong>Fix:</strong> fixed latency compensation plus a 1.5× tolerance multiplier for mic input.<br>
+<strong>Lesson:</strong> when input fidelity differs by channel, the grading curve has to differ too — otherwise you are measuring the hardware, not the player.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="gaps">
+<h2>Honest gaps</h2><div class="h2rule"></div>
+
+<p>Name these before an interviewer finds them. Knowing your own weak spots reads as senior; being caught unaware does not.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Gap</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Exercise type variety</td><td><span class="pill gap">Partial</span></td><td>6 of 17 declared types fully implemented; the rest fall back to play-along</td></tr>
+<tr><td>Accessibility</td><td><span class="pill no">Weakest area</span></td><td>8 P0 issues — missing labels on interactive elements across most screens. Blocks App Store confidence.</td></tr>
+<tr><td>E2E coverage</td><td><span class="pill gap">Scaffolded</span></td><td>Maestro and Detox exist; selectors not customised. All real coverage is unit/integration.</td></tr>
+<tr><td>Device verification</td><td><span class="pill gap">Partial</span></td><td>Mic polyphony verified on iPhone. Core loop, songs, social still need a full hands-on pass.</td></tr>
+<tr><td>MIDI hardware</td><td><span class="pill gap">Untested</span></td><td>Code path complete, native module installed, never exercised against real hardware</td></tr>
+<tr><td>Lint warnings</td><td><span class="pill gap">~562</span></td><td>Mostly <code>no-explicit-any</code> at library boundaries. Warns, doesn't error.</td></tr>
+<tr><td>ExercisePlayer size</td><td><span class="pill gap">3,811 lines</span></td><td>Honest answer: it grew with each exercise type and wants decomposition into per-type controllers</td></tr>
+<tr><td>Stale docs</td><td><span class="pill gap">Known</span></td><td><code>CLAUDE.md</code> still describes a purple palette (it's black + crimson) and claims 2 exercise types (there are 6)</td></tr>
+</tbody>
+</table></div>
+
+<p>If asked what you would do next with a month: <strong>accessibility first</strong> — it is the only item that is both a shipping blocker and a user-facing quality issue. Then decompose <code>ExercisePlayer</code>, then finish the remaining exercise types on the seam that refactor creates.</p>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<section id="drill">
+<h2>Interview drill</h2><div class="h2rule"></div>
+
+<p class="lede">The questions this codebase invites, and the answers that hold up. Open each and say it out loud once.</p>
+
+<details class="qa"><summary>Walk me through what happens when a user plays a note.</summary><div class="qa-body">
+<p>Input arrives from one of three sources and <code>InputManager</code> normalizes it into a single <code>MidiNoteEvent</code>, applying per-source latency compensation. From there it splits into two paths on different clocks. <strong>Immediately:</strong> the audio engine plays the sample over JSI, and a greedy nearest-note match within ±1.5 beats drives the key highlight and the PERFECT/GOOD/LATE overlay — budget under 20 ms, because late feedback feels broken. <strong>Deferred:</strong> the event is appended to <code>playedNotesRef</code> — a ref, not state, to avoid stale closures. At completion, timestamps are converted from epoch to beat-relative and the whole performance is scored once, globally. That score then fans out to XP, gems, streaks, achievements, cat XP, MMR, and league points, which persist to AsyncStorage and queue for Firestore.</p>
+</div></details>
+
+<details class="qa"><summary>Why two different matching algorithms for feedback and scoring?</summary><div class="qa-body">
+<p>Because they optimise for different things. Feedback must be greedy — you have to decide instantly which note was hit to light up a key. Scoring cannot be, because greedy matching cascades: rush one note, and every subsequent note gets assigned to the wrong slot, so one small error tanks the entire score. Deferred global matching over the complete take gives a fair result. The trade-off is that the overlay and the final score can disagree slightly on a messy performance — and I would rather the <em>score</em> be right, because that is what the user's progress depends on.</p>
+</div></details>
+
+<details class="qa"><summary>How do you keep audio glitch-free?</summary><div class="qa-body">
+<p>One hard rule: no allocation in audio callbacks. A <code>new Float32Array()</code> per buffer triggers GC mid-stream and you hear it as a click, so every buffer is pre-allocated once and reused. Beyond that, JSI instead of the RN bridge to avoid serialization on the hot path, and round-robin voice pools — two sound objects per note, alternating — so repeating a note never needs an async stop that could race the next play.</p>
+</div></details>
+
+<details class="qa"><summary>Why Zustand and not Redux?</summary><div class="qa-body">
+<p>Redux's ceremony doesn't pay for itself at fourteen stores with one developer. But the decisive factor is <code>getState()</code>. A lot of this app runs in long-lived callbacks — audio handlers, timers, MIDI subscriptions — where a closure captures state at creation and is stale by the time it fires. Being able to read current state synchronously at call time, without a subscription or a hook, is exactly what real-time code needs.</p>
+</div></details>
+
+<details class="qa"><summary>How does offline mode work?</summary><div class="qa-body">
+<p>Offline-first by design: the device is authoritative for the session, Firestore is the durable merge point. Everything writes to AsyncStorage immediately, with a queue flushed every five minutes when there's a connection. Merges never lose progress — highest-wins for numbers, union for sets. The ordering on sign-in is load-bearing: pull, then migrate, then push. Reversing pull and migrate would push stale local state over good cloud state. And every fetch in the parallel pull has its own catch, so one flaky request degrades one data type instead of wiping the sign-in.</p>
+</div></details>
+
+<details class="qa"><summary>What's the hardest bug you've fixed here?</summary><div class="qa-body">
+<p>Enabling the microphone made the app nearly silent. It looked like an audio bug, but the root cause was two libraries — expo-av and react-native-audio-api — sharing one iOS <code>AVAudioSession</code> while keeping independent internal state. Requesting mic access forces <code>PlayAndRecord</code> mode, which routes output to the earpiece. Whichever library configured last won, so the behaviour was inconsistent. The fix was making one library the single owner of session configuration, synchronously, and using <code>measurement</code> mode so iOS stops applying speech-tuned voice processing that audibly mangles piano. The general lesson: a shared global native resource needs exactly one owner.</p>
+</div></details>
+
+<details class="qa"><summary>How do you test something this real-time?</summary><div class="qa-body">
+<p>By keeping the real-time part thin. All the logic worth testing — scoring, curriculum, MMR, music theory — lives in <code>src/core/</code> as pure functions with no React imports, so it tests without a renderer or a device. That's why 3,263 tests run in 42 seconds. The genuinely device-dependent parts, audio latency and mic accuracy, can't be meaningfully unit-tested, so those are verified by hand on hardware — and I'm explicit that that verification is still incomplete for some paths.</p>
+</div></details>
+
+<details class="qa"><summary>What would you refactor first?</summary><div class="qa-body">
+<p><code>ExercisePlayer.tsx</code> at 3,811 lines. It grew organically as each exercise type was added and now branches on type in too many places. I'd decompose it into per-type controllers behind a shared interface, mirroring how <code>scoreExerciseByType</code> already dispatches on the scoring side — the seam exists in the core, it just hasn't been pulled through to the UI. That refactor is also the natural place to finish the eleven exercise types that currently fall back to play-along.</p>
+</div></details>
+
+<details class="qa"><summary>How do you keep AI costs and reliability under control?</summary><div class="qa-body">
+<p>Three layers. Caching on a composite key — exercise, score bucket, attempt bucket, error-profile hash — gets roughly 80% hit rate, taking projected cost from about $30/month to $6. Every AI path has a deterministic fallback, so the app is fully usable with AI switched off; coaching just gets less personal. And all Gemini calls go through Cloud Functions, so the key never ships in the client bundle. On privacy: no PII in prompts, only structured score data, and audio never leaves the device.</p>
+</div></details>
+
+<details class="qa"><summary>What's the weakest part of this codebase?</summary><div class="qa-body">
+<p>Accessibility. There are eight P0 issues, mostly missing labels on interactive elements across most screens, and it's the one gap that's both a shipping blocker and a genuine user-facing quality problem. It's what I'd fix first with dedicated time. Second is that end-to-end coverage is scaffolded but not real — all my actual confidence comes from unit and integration tests, and I'd rather be honest about that than overstate it.</p>
+</div></details>
+</section>
+
+<div class="foot">
+<p><strong>Purrrfect Keys</strong> · branch <code>test/stable-baseline</code> · tag <code>stable-interview-baseline</code><br>
+Verified 159 suites / 3,263 tests passing, 0 TypeScript errors. Figures read directly from the source tree, not from project docs — several of which are stale.</p>
+</div>
+
+</main>
+</div>
