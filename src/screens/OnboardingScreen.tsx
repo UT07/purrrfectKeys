@@ -1241,7 +1241,9 @@ export function OnboardingScreen(): React.ReactElement {
       <ScrollView
         testID="onboarding-scroll"
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        // Tall steps (input method, learning path) overflow the fold. Hiding the
+        // indicator made the last option read as cut off rather than scrollable.
+        showsVerticalScrollIndicator
       >
         {/* Progress bar with walking cat */}
         <ProgressBar step={step} screenWidth={screenWidth} />
@@ -1279,7 +1281,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
-    paddingBottom: 80, // Room for the fixed Back button overlay
+    // Clearance for the fixed Back row below the ScrollView. Sized so the
+    // primary action does not sit flush against Back.
+    paddingBottom: 96,
   },
 
   // Progress bar
@@ -1480,6 +1484,7 @@ const styles = StyleSheet.create({
   },
   backButtonContainer: {
     paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
     paddingBottom: SPACING.md,
     flexDirection: 'row',
     gap: SPACING.md,
