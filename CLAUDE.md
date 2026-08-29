@@ -6,30 +6,87 @@ Built with React Native (Expo) + Firebase + Gemini AI.
 
 **Stack:** Expo SDK 52+, TypeScript 5.x, react-native-audio-api, Zustand, Firebase
 
-## Current State (Mar 23, 2026)
+## Current State (verified Aug 29, 2026)
 
-**Codebase Health:** 160 test suites, 3,270 tests passing, 0 TypeScript errors
+**Codebase Health:** 159 test suites, 3,263 tests passing, 0 TypeScript errors, 0 lint errors (548 warnings)
+**Stable baseline:** branch `test/stable-baseline`, tag `stable-interview-baseline`
 
-**Phases 1-14 COMPLETE. QA stabilization in progress (71 bugs fixed, ~22 open).**
+All figures below are read from the source tree, not carried forward from older docs.
+Re-verify with `npm run typecheck && npm run test` before trusting them.
+
+**Phases 1-14 COMPLETE. QA stabilization ongoing (7 open bugs, 0 P0).**
 - Core Loop, Gamification, Auth, Adaptive Learning, Curriculum, Avatar Evolution, UI Revamp
 - Audio Input (YIN + ONNX polyphonic), Music Library (582 songs), Arcade Concert Hall, Social v1
 - Foundation Cleanup, Exercise Types + UI, Content Explosion (599 exercises, 50 lessons, 120 skill nodes, 5 learning paths)
 - Social Revamp: Ranked leagues (9 tiers), guilds, battle pass, friend challenges with gem stakes, QR friend discovery, season automation
 
-**QA runs in parallel** — CI gates (typecheck + lint + test) on every push. Device verification tracked in UNIFIED-PLAN.md.
+**Scale (measured):** 269 source files / 159 test files, ~143k lines in `src/`.
+Largest areas: `screens/` 42.6k, `components/` 28.9k, `services/` 16.2k, `core/` 15.5k, `stores/` 12.2k.
 
-**Current focus:** Bug stabilization → manual device verification → merge to master → fresh development.
+**Current focus:** Accessibility P0s → device verification → merge to master.
 
 **Infrastructure:**
 - 11 Cloud Functions deployed (nodejs22, us-central1)
 - Firestore rules + indexes deployed
-- EAS Build configured (preview + production channels)
+- EAS Build configured (preview + production channels); local release build also works
 - Sentry (de.sentry.io) + PostHog integrated for crash reporting + analytics
 
-See `docs/plans/UNIFIED-PLAN.md` for the **single source of truth** on all phases.
-See `docs/plans/CONFIRMED-BUGS.md` for the **bug tracker** (71 fixed, ~22 open).
-See `docs/PRD.md` for product requirements.
-See `docs/design-system.md` for design system.
+---
+
+## Known Struggles (Aug 29, 2026)
+
+Honest list of what is weak. Ordered by how much it blocks shipping.
+
+| # | Struggle | Severity | Detail |
+|---|----------|----------|--------|
+| 1 | **Accessibility** | Blocker | 8 P0 issues — missing labels on interactive elements across most screens. Biggest gap vs. competitors and a real App Store risk. See `docs/superpowers/specs/2026-03-13-ux-accessibility-audit.md`. |
+| 2 | **Exercise type variety** | High | 17 types declared in `core/exercises/types.ts`; **6 fully implemented** (`play`, `rhythm`, `earTraining`, `chordId`, `sightReading`, `callResponse`). The other 11 route through `scoreExerciseByType`'s `default` to play-along. |
+| 3 | **`ExercisePlayer.tsx` is a God component** | High | 3,811 lines, branches on exercise type in many places. Wants decomposition into per-type controllers mirroring the `scoreExerciseByType` dispatch that already exists in core. |
+| 4 | **Dependency vulnerabilities** | High | `npm audit --omit=dev`: 46 vulns (4 critical, 34 high, 7 moderate, 1 low). Critical = protobufjs, shell-quote, tar, websocket-driver — mostly transitive build-toolchain (metro, dev-middleware), not shipped runtime. Needs triage + overrides, not a blind `audit fix --force`. |
+| 5 | **E2E coverage is scaffolded, not real** | Medium | Maestro + Detox configs exist; selectors never customised. All actual confidence comes from unit/integration tests. |
+| 6 | **Device verification incomplete** | Medium | Mic polyphony verified on iPhone. Core loop, songs, social, 10-min stability still need a hands-on pass. |
+| 7 | **MIDI hardware untested** | Medium | `@motiz88/react-native-midi` installed and the code path is complete, but never exercised against real hardware. |
+| 8 | **Lint warnings** | Low | 548 warnings, 0 errors. Mostly `no-explicit-any` at library boundaries. CI passes. |
+| 9 | **Documentation drift** | Low | This file and `agent_docs/knowledgebase.md` had stale claims (wrong palette, "only 2 exercise types", wrong test counts) for months. Re-measure before quoting any figure. |
+
+### Build gotcha — local iOS release
+
+`npx expo run:ios --configuration Release` fails in a **non-interactive shell** with:
+
+```
+Unicode Normalization not appropriate for ASCII-8BIT (Encoding::CompatibilityError)
+```
+
+Cause: `LANG` is unset and `LC_CTYPE=C`, so Ruby reads paths as ASCII-8BIT and CocoaPods'
+`unicode_normalize` throws. Expo swallows this and still **exits 0**, so the failure is silent.
+Fix — export a UTF-8 locale before building:
+
+```bash
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+```
+
+Interactive Terminal.app usually sets this already; CI and agent shells do not.
+
+**Second gotcha — wrong device identifier.** `xcrun devicectl list devices` prints an
+`Identifier` column (a CoreDevice UUID like `861CCE8B-...`). Expo/xcodebuild want the
+**hardware UDID** (`00008150-...`). Passing the Identifier fails with
+`No device UDID or name matching ...`. Get the real one:
+
+```bash
+xcrun devicectl list devices --json-output /tmp/dev.json && python3 -c "import json;[print(d['deviceProperties']['name'], d['hardwareProperties']['udid']) for d in json.load(open('/tmp/dev.json'))['result']['devices']]"
+```
+
+**Third gotcha — device not in provisioning profile.** A phone that has never been built to
+fails with `Provisioning profile ... doesn't include the currently selected device`.
+Register it (consumes one of the 100 annual device slots on the Apple Developer account):
+
+```bash
+xcodebuild -workspace ios/PurrrfectKeys.xcworkspace -scheme PurrrfectKeys -configuration Release -destination "id=<HARDWARE_UDID>" -allowProvisioningUpdates -allowProvisioningDeviceRegistration
+```
+
+**Do not pass `-derivedDataPath`** for a one-off build — it forces a from-scratch Pods
+rebuild and can fail compiling `fmt`. Use the default DerivedData location so the warm
+pod cache is reused.
 
 ## Quick Commands
 

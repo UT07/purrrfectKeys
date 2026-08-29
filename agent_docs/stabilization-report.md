@@ -112,6 +112,9 @@
 
 ### Phase 7: UI Revamp + Game Feel & Polish (Batches 1-6)
 - **Design System:** Warm dark purple palette, TYPOGRAPHY/SHADOWS/GRADIENTS/GLOW tokens, animation timing presets
+  > **Superseded:** Phase 10 (Arcade Concert Hall) replaced this with the current
+  > **"Concert Hall" palette — true black `#0A0A0A` + crimson `#DC143C`**, no purple tint.
+  > `src/theme/tokens.ts` is the authority. This line records Phase 7 history only.
 - **Bug Fixes:** Chonky Monke unlock validation, CatAvatar mood prop, MascotBubble catId prop
 - **Cat Avatar Overhaul:** Composable SVG parts (4 body shapes, 3 ear/tail variants, 4 eye variants), per-cat profiles, evolution-stage accessories, Reanimated pose system (7 poses)
 - **Salsa NPC:** Dedicated SalsaCoach component, grey cat with green eyes, placed on HomeScreen hero + 4 other screens

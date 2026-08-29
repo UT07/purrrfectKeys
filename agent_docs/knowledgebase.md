@@ -1,6 +1,6 @@
 # Purrrfect Keys — System Knowledgebase
 
-**Last Updated:** March 23, 2026
+**Last Updated:** August 29, 2026
 **Purpose:** Ground truth for how all systems work together. Read this before making changes.
 
 ---
@@ -159,29 +159,45 @@ The daily session plan is the core user experience — "Today's Practice" on Hom
 - `abilityConfig` reads from refs, returns `null` in test mode (Bug #53 fix)
 - Achievement context uses `get()` for fresh state reads (Bug #30 fix)
 
-**Exercise types — CRITICAL GAP:**
-- Only 2 gameplay modes exist: keyboard play-along and rhythm tap
-- ALL 599 exercises use these same 2 modes regardless of skill category
-- Phase 13 "Content Explosion" expanded quantity (599 exercises) but NOT variety
-- Labels like "Chord ID", "Ear Training" were removed — all now honestly say "Play Along"
-- Exercise type variety (F2) is the **single biggest gap** before a shippable product
-- AI exercise pipeline has integrity issues (F10): title mismatches, broken scoring, false "new record"
+**Exercise types — PARTIALLY CLOSED (verified Aug 29, 2026):**
+- `core/exercises/types.ts` declares **17** types across 4 families (classic / interaction / gamified / creative)
+- **6 are fully implemented** end-to-end with dedicated UI + scoring strategy:
+
+| Type | UI component | Scorer |
+|------|--------------|--------|
+| `play` | Keyboard + VerticalPianoRoll | `scoreExercise` |
+| `rhythm` | `RhythmTapZone` | `scoreRhythmExercise` |
+| `earTraining` | `ListenPhaseOverlay` | `scoreEarTrainingExercise` |
+| `chordId` | `ChordPrompt` | `scoreChordIdExercise` |
+| `sightReading` | `SightReadingOverlay` | `scoreSightReadingExercise` |
+| `callResponse` | `CallResponsePhase` | `scoreCallResponseExercise` |
+
+- The other **11** (`fillInTheBlank`, `spotTheError`, `intervalQuiz`, `chordBuilder`, `keySignatureId`,
+  `bossBattle`, `duet`, `speedRun`, `endlessMode`, `teacherChallenge`, `improvisation`) are typed and
+  routed, but fall through `scoreExerciseByType`'s `default` branch to play-along. Some appear in
+  `TierIntroScreen` as labels only.
+- **Do not claim 17.** Claim 6 implemented, 11 declared-but-fallback.
+- Rhythm rule still holds: `handleKeyDown` skips pitch matching when `exerciseType === 'rhythm'` —
+  the tap zone emits MIDI 60 for every tap, so only timing matters.
+- AI exercise pipeline integrity (F10) was **fixed Mar 29**: stable `ai-skill-{skillId}` IDs so retries
+  accumulate against one key, skill name used as title, template fallback shares the same ID/title.
 
 ---
 
-## Bug Fix Status (Mar 23)
+## Bug Fix Status (verified Aug 29, 2026)
 
-**71 fixed / 22 open bugs + 9 feature items**
+**7 open bugs, 0 P0.** The last P0 (#103/F10, AI exercise scoring integrity) was fixed Mar 29.
 
 Remaining open categories:
-- Exercise type variety (#79, F2) — deep multi-week feature
+- Accessibility P0s (8 items) — **the biggest shipping blocker**, missing labels across most screens
+- Exercise type variety — 11 of 17 types still fall back to play-along (see above)
 - Cat SVG visual issues (#20, #82) — #82 blocked on Figma
-- Dependency vulnerabilities (#73a-e) — npm overrides needed
-- Device-verification-only (#86, #87, #89, #90) — code exists, needs testing
-- Investigation needed (#62 wrong key, #75 random exercises, #80 ScoreRing, #95 level count)
+- Dependency vulnerabilities — 46 in prod deps (4 critical, 34 high), mostly transitive build toolchain
+- Device-verification-only (#86, #87, #89, #90) — code exists, needs hands-on testing
 - Edge cases (#40, #41, #48) — lower priority
 
 Full list: `docs/plans/CONFIRMED-BUGS.md`
+Full struggle list with severity: `CLAUDE.md` → "Known Struggles"
 
 ---
 
