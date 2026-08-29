@@ -31,6 +31,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSongStore } from '../stores/songStore';
 import { useGemStore } from '../stores/gemStore';
 import { useAuthStore } from '../stores/authStore';
+import { formatDuration } from '../core/songs/formatDuration';
 import { masteryColor, masteryLabel } from '../core/songs/songMastery';
 import type { SongGenre, SongSummary, SongRequestParams, MasteryTier } from '../core/songs/songTypes';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS, NEON, RARITY, glowColor } from '../theme/tokens';
@@ -310,7 +311,7 @@ function SongCard({
               </View>
               <DifficultyDots difficulty={summary.metadata.difficulty} />
               <Text style={styles.durationText}>
-                {Math.floor(summary.metadata.durationSeconds / 60)}:{String(summary.metadata.durationSeconds % 60).padStart(2, '0')}
+                {formatDuration(summary.metadata.durationSeconds)}
               </Text>
             </View>
           </View>
