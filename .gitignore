@@ -73,3 +73,7 @@ artifacts/*.app
 artifacts/ios.sim.*
 artifacts/android.*
 metro-debug.log
+
+# Python bytecode (from scripts/import-pdmx.py)
+__pycache__/
+*.pyc
