@@ -101,7 +101,12 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
           {exercise.metadata.title}
         </Text>
 
-        <View style={styles.compactProgress}>
+        <View
+          style={styles.compactProgress}
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(progressPercent) }}
+        >
           <View
             style={[
               styles.compactProgressBar,
@@ -110,7 +115,10 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
           />
         </View>
 
-        <Text style={styles.compactPercent}>
+        <Text
+          style={styles.compactPercent}
+          accessibilityLabel={`Exercise progress: ${Math.round(progressPercent)} percent complete`}
+        >
           {Math.round(progressPercent)}%
         </Text>
       </View>
@@ -213,7 +221,10 @@ const styles = StyleSheet.create({
   compactPercent: {
     fontSize: 11,
     fontWeight: '600',
-    color: COLORS.primary,
+    // Deliberately NOT the crimson accent. This is elapsed progress, not the
+    // player's score — an accent-coloured percentage next to the title was
+    // read as "you are scoring 100%" while MISS was showing on screen.
+    color: COLORS.textSecondary,
     minWidth: 30,
     textAlign: 'right',
   },
