@@ -492,7 +492,7 @@ export function TierIntroScreen() {
               onPress={handleBack}
               style={styles.backButton}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              testID="tier-intro-back"
+              testID="tier-intro-back" accessibilityRole="button" accessibilityLabel="Go back"
               soundOnPress={false}
             >
               <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
@@ -662,7 +662,7 @@ export function TierIntroScreen() {
           <PressableScale
             onPress={handleStartMasteryTest}
             style={styles.startButton}
-            testID="tier-intro-mastery-test"
+            testID="tier-intro-mastery-test" accessibilityRole="button" accessibilityLabel="Start the mastery test"
           >
             <LinearGradient
               colors={GRADIENTS.gold}
@@ -678,7 +678,7 @@ export function TierIntroScreen() {
           <PressableScale
             onPress={locked ? undefined : handleStart}
             style={[styles.startButton, locked && styles.startButtonLocked]}
-            testID="tier-intro-start"
+            testID="tier-intro-start" accessibilityRole="button" accessibilityLabel="Start this tier"
             disabled={locked}
           >
             <LinearGradient

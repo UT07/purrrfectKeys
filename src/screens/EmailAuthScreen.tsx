@@ -122,7 +122,7 @@ export function EmailAuthScreen(): React.ReactElement {
         <PressableScale
           style={styles.backButton}
           onPress={() => navigation.goBack()}
-          testID="email-auth-back"
+          testID="email-auth-back" accessibilityRole="button" accessibilityLabel="Go back"
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </PressableScale>
@@ -140,13 +140,13 @@ export function EmailAuthScreen(): React.ReactElement {
         <View style={styles.tabs}>
           <PressableScale
             style={[styles.tab, mode === 'signIn' && styles.activeTab]}
-            onPress={() => switchMode('signIn')}
+            onPress={() => switchMode('signIn')} accessibilityRole="button" accessibilityLabel="Sign in"
           >
             <Text style={[styles.tabText, mode === 'signIn' && styles.activeTabText]}>Sign In</Text>
           </PressableScale>
           <PressableScale
             style={[styles.tab, mode === 'signUp' && styles.activeTab]}
-            onPress={() => switchMode('signUp')}
+            onPress={() => switchMode('signUp')} accessibilityRole="button" accessibilityLabel="Create account"
           >
             <Text style={[styles.tabText, mode === 'signUp' && styles.activeTabText]}>Create Account</Text>
           </PressableScale>
@@ -193,7 +193,7 @@ export function EmailAuthScreen(): React.ReactElement {
             style={styles.submitButton}
             onPress={handleSubmit}
             disabled={isLoading}
-            testID="submit-button"
+            testID="submit-button" accessibilityRole="button" accessibilityLabel="Submit"
           >
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -205,7 +205,7 @@ export function EmailAuthScreen(): React.ReactElement {
           </PressableScale>
 
           {mode === 'signIn' && (
-            <PressableScale style={styles.forgotButton} onPress={handleForgotPassword} testID="forgot-password">
+            <PressableScale style={styles.forgotButton} onPress={handleForgotPassword} testID="forgot-password" accessibilityRole="button" accessibilityLabel="Reset your password">
               <Text style={styles.forgotText}>Forgot Password?</Text>
             </PressableScale>
           )}

@@ -333,7 +333,7 @@ export function AuthScreen(): React.ReactElement {
       </Animated.View>
 
       {error && (
-        <PressableScale style={styles.errorBanner} onPress={clearError} scaleDown={1}>
+        <PressableScale style={styles.errorBanner} onPress={clearError} scaleDown={1} accessibilityRole="button" accessibilityLabel="Dismiss error">
           <Text style={styles.errorText}>{error}</Text>
           <Text style={styles.errorDismiss}>Tap to dismiss</Text>
         </PressableScale>
@@ -346,7 +346,7 @@ export function AuthScreen(): React.ReactElement {
             haptic
             onPress={handleAppleSignIn}
             disabled={isLoading}
-            testID="apple-signin"
+            testID="apple-signin" accessibilityRole="button" accessibilityLabel="Continue with Apple"
           >
             <View style={[styles.button, styles.appleButton]}>
               <MaterialCommunityIcons name="apple" size={22} color="#000000" style={styles.buttonIcon} />
@@ -361,7 +361,7 @@ export function AuthScreen(): React.ReactElement {
           haptic
           onPress={handleGoogleSignIn}
           disabled={isLoading}
-          testID="google-signin"
+          testID="google-signin" accessibilityRole="button" accessibilityLabel="Continue with Google"
         >
           <View style={[styles.button, styles.googleButton]}>
             <MaterialCommunityIcons name="google" size={22} color={COLORS.textPrimary} style={styles.buttonIcon} />
@@ -375,7 +375,7 @@ export function AuthScreen(): React.ReactElement {
           haptic
           onPress={handleEmailNav}
           disabled={isLoading}
-          testID="email-signin"
+          testID="email-signin" accessibilityRole="button" accessibilityLabel="Continue with email"
         >
           <View style={[styles.button, styles.emailButton]}>
             <MaterialCommunityIcons name="email-outline" size={22} color={COLORS.textPrimary} style={styles.buttonIcon} />
@@ -387,7 +387,7 @@ export function AuthScreen(): React.ReactElement {
       <PressableScale
         onPress={handleSkip}
         disabled={isLoading}
-        testID="skip-signin"
+        testID="skip-signin" accessibilityRole="button" accessibilityLabel="Skip signing in for now"
       >
         <View style={styles.skipButton}>
           {isLoading ? (

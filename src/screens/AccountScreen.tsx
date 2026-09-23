@@ -374,7 +374,7 @@ export function AccountScreen(): React.ReactElement {
       <View style={styles.container}>
         <GradientMeshBackground accent="profile" />
         <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} testID="account-screen">
-        <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
+        <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back" accessibilityRole="button" accessibilityLabel="Go back">
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </PressableScale>
 
@@ -388,7 +388,7 @@ export function AccountScreen(): React.ReactElement {
             <PressableScale
               style={[styles.linkButton, styles.appleLink]}
               onPress={handleLinkApple}
-              testID="account-link-apple"
+              testID="account-link-apple" accessibilityRole="button" accessibilityLabel="Link your Apple account"
             >
               <Text style={[styles.linkButtonText, { color: COLORS.background }]}>Link with Apple</Text>
             </PressableScale>
@@ -396,14 +396,14 @@ export function AccountScreen(): React.ReactElement {
           <PressableScale
             style={[styles.linkButton, styles.googleLink]}
             onPress={handleLinkGoogle}
-            testID="account-link-google"
+            testID="account-link-google" accessibilityRole="button" accessibilityLabel="Link your Google account"
           >
             <Text style={styles.linkButtonText}>Link with Google</Text>
           </PressableScale>
           <PressableScale
             style={[styles.linkButton, styles.emailLink]}
             onPress={() => navigation.navigate('EmailAuth', { isLinking: true })}
-            testID="account-link-email"
+            testID="account-link-email" accessibilityRole="button" accessibilityLabel="Link an email address"
           >
             <Text style={styles.linkButtonText}>Link with Email</Text>
           </PressableScale>
@@ -423,7 +423,7 @@ export function AccountScreen(): React.ReactElement {
             <PressableScale
               style={[styles.signInButton]}
               onPress={handleSignInApple}
-              testID="account-signin-apple"
+              testID="account-signin-apple" accessibilityRole="button" accessibilityLabel="Sign in with Apple"
             >
               <Text style={styles.signInButtonText}>Sign in with Apple</Text>
             </PressableScale>
@@ -431,14 +431,14 @@ export function AccountScreen(): React.ReactElement {
           <PressableScale
             style={[styles.signInButton]}
             onPress={handleSignInGoogle}
-            testID="account-signin-google"
+            testID="account-signin-google" accessibilityRole="button" accessibilityLabel="Sign in with Google"
           >
             <Text style={styles.signInButtonText}>Sign in with Google</Text>
           </PressableScale>
           <PressableScale
             style={[styles.signInButton]}
             onPress={() => navigation.navigate('EmailAuth', { isLinking: false })}
-            testID="account-signin-email"
+            testID="account-signin-email" accessibilityRole="button" accessibilityLabel="Sign in with email"
           >
             <Text style={styles.signInButtonText}>Sign in with Email</Text>
           </PressableScale>
@@ -453,7 +453,7 @@ export function AccountScreen(): React.ReactElement {
 
         <View style={styles.dangerSection}>
           <PressableScale
-            style={styles.dangerRow}
+            style={styles.dangerRow} accessibilityRole="button" accessibilityLabel="Delete your account permanently"
             onPress={handleDeleteAccount}
             disabled={isLoading}
             testID="account-delete-anon"
@@ -482,7 +482,7 @@ export function AccountScreen(): React.ReactElement {
     <View style={styles.container}>
       <GradientMeshBackground accent="profile" />
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} testID="account-screen">
-      <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back">
+      <PressableScale style={styles.backButton} onPress={() => navigation.goBack()} testID="account-back" accessibilityRole="button" accessibilityLabel="Go back">
         <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
       </PressableScale>
 
@@ -499,16 +499,16 @@ export function AccountScreen(): React.ReactElement {
               maxLength={30}
             />
             <View style={styles.nameEditActions}>
-              <PressableScale onPress={handleSaveName} style={styles.nameEditBtn}>
+              <PressableScale onPress={handleSaveName} style={styles.nameEditBtn} accessibilityRole="button" accessibilityLabel="Save display name">
                 <Text style={styles.saveText}>Save</Text>
               </PressableScale>
-              <PressableScale onPress={() => setIsEditingName(false)} style={styles.nameEditBtn}>
+              <PressableScale onPress={() => setIsEditingName(false)} style={styles.nameEditBtn} accessibilityRole="button" accessibilityLabel="Cancel editing display name">
                 <Text style={styles.cancelText}>Cancel</Text>
               </PressableScale>
             </View>
           </View>
         ) : (
-          <PressableScale onPress={() => setIsEditingName(true)}>
+          <PressableScale onPress={() => setIsEditingName(true)} accessibilityRole="button" accessibilityLabel="Edit display name">
             <Text style={styles.displayName}>{user?.displayName ?? 'Unknown'}</Text>
           </PressableScale>
         )}
@@ -516,7 +516,7 @@ export function AccountScreen(): React.ReactElement {
       </View>
 
       {error && (
-        <PressableScale onPress={clearError}>
+        <PressableScale onPress={clearError} accessibilityRole="button" accessibilityLabel="Dismiss error">
           <Text style={styles.errorText}>{error}</Text>
         </PressableScale>
       )}
@@ -524,7 +524,7 @@ export function AccountScreen(): React.ReactElement {
       {/* Profile section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Profile</Text>
-        <PressableScale style={styles.row} onPress={() => setIsEditingName(true)}>
+        <PressableScale style={styles.row} onPress={() => setIsEditingName(true)} accessibilityRole="button" accessibilityLabel="Change display name">
           <View style={styles.rowLeft}>
             <MaterialCommunityIcons name="pencil-outline" size={20} color={COLORS.textSecondary} />
             <Text style={styles.rowText}>Change Display Name</Text>
@@ -536,7 +536,7 @@ export function AccountScreen(): React.ReactElement {
       {/* Linked Accounts section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Linked Accounts</Text>
-        <PressableScale style={styles.row} onPress={handleLinkGoogle}>
+        <PressableScale style={styles.row} onPress={handleLinkGoogle} accessibilityRole="button" accessibilityLabel="Link your Google account">
           <View style={styles.rowLeft}>
             <MaterialCommunityIcons name="google" size={20} color={COLORS.textSecondary} />
             <Text style={styles.rowText}>Google</Text>
@@ -554,7 +554,7 @@ export function AccountScreen(): React.ReactElement {
           </View>
         </PressableScale>
         {Platform.OS === 'ios' && (
-          <PressableScale style={styles.row} onPress={handleLinkApple}>
+          <PressableScale style={styles.row} onPress={handleLinkApple} accessibilityRole="button" accessibilityLabel="Link your Apple account">
             <View style={styles.rowLeft}>
               <MaterialCommunityIcons name="apple" size={20} color={COLORS.textSecondary} />
               <Text style={styles.rowText}>Apple</Text>
@@ -584,7 +584,7 @@ export function AccountScreen(): React.ReactElement {
           style={styles.dangerRow}
           onPress={handleSignOut}
           disabled={isLoading}
-          testID="account-signout"
+          testID="account-signout" accessibilityRole="button" accessibilityLabel="Sign out"
         >
           {isLoading ? (
             <ActivityIndicator color={COLORS.error} />
@@ -599,7 +599,7 @@ export function AccountScreen(): React.ReactElement {
           style={[styles.dangerRow, styles.dangerRowLast]}
           onPress={handleDeleteAccount}
           disabled={isLoading}
-          testID="account-delete"
+          testID="account-delete" accessibilityRole="button" accessibilityLabel="Delete your account permanently"
         >
           <View style={styles.rowLeft}>
             <MaterialCommunityIcons name="delete-outline" size={20} color={COLORS.error} />

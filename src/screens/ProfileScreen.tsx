@@ -202,6 +202,8 @@ function AchievementsSection(): React.ReactElement {
           const isRecent = recentlyUnlockedSet.has(achievement.id);
           return (
             <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`${achievement.title}, ${isUnlocked ? 'unlocked' : 'locked'}`}
               key={achievement.id}
               style={styles.achievementBadgeContainer}
               onPress={() => handleBadgePress(achievement, isUnlocked)}
@@ -432,6 +434,8 @@ export function ProfileScreen(): React.ReactElement {
         >
           {/* Level XP ring with cat avatar inside — tap to speak + open cat gallery */}
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Hear a message from your cat"
             style={styles.ringContainer}
             onPress={() => {
               const message = getRandomCatMessage(selectedCatId, 'idle');
@@ -512,12 +516,12 @@ export function ProfileScreen(): React.ReactElement {
                 onBlur={handleSaveName}
                 testID="name-input"
               />
-              <PressableScale onPress={handleSaveName} style={styles.inlineNameSave} testID="name-save-btn">
+              <PressableScale onPress={handleSaveName} style={styles.inlineNameSave} testID="name-save-btn" accessibilityRole="button" accessibilityLabel="Save display name">
                 <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
               </PressableScale>
             </View>
           ) : (
-            <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }} testID="name-display">
+            <PressableScale onPress={() => { setEditingName(displayName); setShowNameEditor(true); }} testID="name-display" accessibilityRole="button" accessibilityLabel="Edit display name">
               <View style={styles.nameRow}>
                 <RankBadge tier={rankRating.tier} division={rankRating.division} size="sm" />
                 <Text style={styles.displayNameText}>{displayName}</Text>
@@ -538,6 +542,9 @@ export function ProfileScreen(): React.ReactElement {
         {/* Tab Toggle */}
         <View style={styles.tabRow}>
           <PressableScale
+            accessibilityRole="tab"
+            accessibilityLabel="Me"
+            accessibilityState={{ selected: activeTab === 'me' }}
             onPress={() => setActiveTab('me')}
             style={[styles.tab, activeTab === 'me' && styles.tabActive]}
           >
@@ -545,6 +552,9 @@ export function ProfileScreen(): React.ReactElement {
             <Text style={[styles.tabText, activeTab === 'me' && styles.tabTextActive]}>Me</Text>
           </PressableScale>
           <PressableScale
+            accessibilityRole="tab"
+            accessibilityLabel="Settings"
+            accessibilityState={{ selected: activeTab === 'settings' }}
             onPress={() => setActiveTab('settings')}
             style={[styles.tab, activeTab === 'settings' && styles.tabActive]}
           >
@@ -688,7 +698,7 @@ export function ProfileScreen(): React.ReactElement {
           <Text style={styles.sectionTitle}>Settings</Text>
 
           {/* Username editor */}
-          <PressableScale style={styles.settingItem} onPress={() => { setEditingUsername(username || ''); setShowUsernameEditor(!showUsernameEditor); }}>
+          <PressableScale style={styles.settingItem} onPress={() => { setEditingUsername(username || ''); setShowUsernameEditor(!showUsernameEditor); }} accessibilityRole="button" accessibilityLabel="Username, opens editor">
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="at" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Username</Text>
@@ -726,6 +736,8 @@ export function ProfileScreen(): React.ReactElement {
                   </View>
                 ) : (
                   <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel="Save username"
                     onPress={handleSaveUsername}
                     style={[styles.usernameSaveBtn, usernameAvailable !== true && { opacity: 0.4 }]}
                     disabled={usernameAvailable !== true || usernameSaving}
@@ -744,7 +756,7 @@ export function ProfileScreen(): React.ReactElement {
             </View>
           )}
 
-          <PressableScale style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)}>
+          <PressableScale style={styles.settingItem} onPress={() => setShowGoalPicker(!showGoalPicker)} accessibilityRole="button" accessibilityLabel="Daily goal, opens picker">
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="target" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Daily Goal</Text>
@@ -758,6 +770,9 @@ export function ProfileScreen(): React.ReactElement {
             <View style={styles.pickerRow}>
               {DAILY_GOAL_OPTIONS.map((mins) => (
                 <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={`Daily goal ${mins} minutes`}
+                  accessibilityState={{ selected: dailyGoalMinutes === mins }}
                   key={mins}
                   style={[styles.pickerChip, dailyGoalMinutes === mins && styles.pickerChipActive]}
                   onPress={() => { setDailyGoalMinutes(mins); setShowGoalPicker(false); }}
@@ -770,7 +785,7 @@ export function ProfileScreen(): React.ReactElement {
             </View>
           )}
 
-          <PressableScale style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)}>
+          <PressableScale style={styles.settingItem} onPress={() => setShowVolumePicker(!showVolumePicker)} accessibilityRole="button" accessibilityLabel="Volume, opens picker">
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="volume-high" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Volume</Text>
@@ -784,6 +799,9 @@ export function ProfileScreen(): React.ReactElement {
             <View style={styles.pickerRow}>
               {VOLUME_OPTIONS.map((opt) => (
                 <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={`Volume ${opt.label}`}
+                  accessibilityState={{ selected: masterVolume === opt.value }}
                   key={opt.value}
                   style={[styles.pickerChip, masterVolume === opt.value && styles.pickerChipActive]}
                   onPress={() => { setMasterVolume(opt.value); setShowVolumePicker(false); }}
@@ -796,7 +814,7 @@ export function ProfileScreen(): React.ReactElement {
             </View>
           )}
 
-          <PressableScale style={styles.settingItem} onPress={() => setShowInputPicker(!showInputPicker)}>
+          <PressableScale style={styles.settingItem} onPress={() => setShowInputPicker(!showInputPicker)} accessibilityRole="button" accessibilityLabel="Input method, opens picker">
             <View style={styles.settingLeft}>
               <MaterialCommunityIcons name="music-note" size={24} color={COLORS.textSecondary} />
               <Text style={styles.settingLabel}>Input Method</Text>
@@ -817,6 +835,9 @@ export function ProfileScreen(): React.ReactElement {
                 { value: 'touch', label: 'Touch', icon: 'gesture-tap' },
               ] as const).map((opt) => (
                 <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={`Input method ${opt.label}`}
+                  accessibilityState={{ selected: preferredInputMethod === opt.value }}
                   key={opt.value}
                   style={[styles.pickerChip, preferredInputMethod === opt.value && styles.pickerChipActive]}
                   onPress={() => {
@@ -843,7 +864,7 @@ export function ProfileScreen(): React.ReactElement {
 
           {(preferredInputMethod === 'mic' || preferredInputMethod === 'auto') && (
             <>
-              <PressableScale style={styles.settingItem} onPress={() => setShowDetectionModePicker(!showDetectionModePicker)}>
+              <PressableScale style={styles.settingItem} onPress={() => setShowDetectionModePicker(!showDetectionModePicker)} accessibilityRole="button" accessibilityLabel="Microphone detection mode, opens picker">
                 <View style={styles.settingLeft}>
                   <MaterialCommunityIcons name="waveform" size={24} color={COLORS.textSecondary} />
                   <Text style={styles.settingLabel}>Mic Detection</Text>
@@ -862,6 +883,9 @@ export function ProfileScreen(): React.ReactElement {
                     { value: 'polyphonic' as const, label: 'Chords (AI)' },
                   ]).map((opt) => (
                     <PressableScale
+                      accessibilityRole="button"
+                      accessibilityLabel={`Microphone detection ${opt.label}`}
+                      accessibilityState={{ selected: micDetectionMode === opt.value }}
                       key={opt.value}
                       style={[styles.pickerChip, micDetectionMode === opt.value && styles.pickerChipActive]}
                       onPress={() => {
@@ -880,6 +904,8 @@ export function ProfileScreen(): React.ReactElement {
           )}
 
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Change cat companion"
             style={styles.settingItem}
             onPress={() => navigation.navigate('CatSwitch')}
             testID="profile-open-cat-switch-row"
@@ -892,6 +918,8 @@ export function ProfileScreen(): React.ReactElement {
           </PressableScale>
 
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="MIDI keyboard setup"
             style={styles.settingItem}
             onPress={() => navigation.navigate('MidiSetup')}
             testID="profile-open-midi-setup"
@@ -904,6 +932,8 @@ export function ProfileScreen(): React.ReactElement {
           </PressableScale>
 
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Account settings"
             style={styles.settingItem}
             onPress={() => navigation.navigate('Account')}
             testID="profile-open-account"
@@ -916,6 +946,8 @@ export function ProfileScreen(): React.ReactElement {
           </PressableScale>
 
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="About Purrrfect Keys"
             style={styles.settingItem}
             onPress={() => Alert.alert('About Purrrfect Keys', 'Purrrfect Keys v1.0.0\nAI-Powered Piano Learning\n\nLearn piano with real-time feedback, MIDI support, and AI coaching.')}
           >
@@ -928,6 +960,8 @@ export function ProfileScreen(): React.ReactElement {
 
           {__DEV__ && (
             <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Open debug log"
               style={styles.settingItem}
               onPress={() => navigation.navigate('DebugLog')}
               testID="profile-debug-log"

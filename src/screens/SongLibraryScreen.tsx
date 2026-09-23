@@ -399,14 +399,14 @@ function RequestSongModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
 
           <View style={styles.modalActions}>
-            <PressableScale style={styles.cancelButton} onPress={onClose}>
+            <PressableScale style={styles.cancelButton} onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel">
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </PressableScale>
             <PressableScale
               style={[styles.submitButton, (!canRequest || isGenerating) && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={!canRequest || isGenerating || !title.trim()}
-              testID="request-submit-button"
+              testID="request-submit-button" accessibilityRole="button" accessibilityLabel="Submit song request"
             >
               {isGenerating ? (
                 <ActivityIndicator size="small" color={COLORS.background} />
@@ -571,7 +571,7 @@ export function SongLibraryScreen() {
           testID="search-input"
         />
         {searchText.length > 0 && (
-          <PressableScale onPress={() => setSearchText('')} style={{ padding: SPACING.xs }}>
+          <PressableScale onPress={() => setSearchText('')} accessibilityRole="button" accessibilityLabel="Clear search" style={{ padding: SPACING.xs }}>
             <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
           </PressableScale>
         )}
@@ -614,7 +614,7 @@ export function SongLibraryScreen() {
       <PressableScale
         style={styles.fab}
         onPress={() => setRequestModalVisible(true)}
-        testID="request-fab"
+        testID="request-fab" accessibilityRole="button" accessibilityLabel="Request a new song"
       >
         <MaterialCommunityIcons name="music-note-plus" size={24} color={COLORS.background} />
       </PressableScale>

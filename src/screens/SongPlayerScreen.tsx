@@ -460,7 +460,7 @@ export function SongPlayerScreen() {
       <GradientMeshBackground accent="songs" />
       {/* Header */}
       <View style={styles.header}>
-        <PressableScale onPress={() => navigation.goBack()} testID="back-button">
+        <PressableScale onPress={() => navigation.goBack()} testID="back-button" accessibilityRole="button" accessibilityLabel="Go back">
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </PressableScale>
         <View style={styles.headerCenter}>
@@ -497,7 +497,7 @@ export function SongPlayerScreen() {
           <PressableScale
             style={[styles.sectionPill, styles.fullSongPill, selectedSectionIndex === null && styles.fullSongPillSelected]}
             onPress={() => setSelectedSectionIndex(null)}
-            testID="section-full-song"
+            testID="section-full-song" accessibilityRole="button" accessibilityLabel="Play the full song"
           >
             <MaterialCommunityIcons
               name="music-note-whole"
@@ -525,7 +525,7 @@ export function SongPlayerScreen() {
           <PressableScale
             style={[styles.layerToggle, layer === 'melody' && styles.layerToggleActive]}
             onPress={() => setLayer('melody')}
-            testID="layer-melody"
+            testID="layer-melody" accessibilityRole="button" accessibilityLabel="Melody only"
           >
             <Text
               style={[styles.layerToggleText, layer === 'melody' && styles.layerToggleTextActive]}
@@ -541,7 +541,7 @@ export function SongPlayerScreen() {
             ]}
             onPress={() => hasFullLayer && setLayer('full')}
             disabled={!hasFullLayer}
-            testID="layer-full"
+            testID="layer-full" accessibilityRole="button" accessibilityLabel="Full arrangement with accompaniment"
           >
             <Text
               style={[
@@ -558,7 +558,7 @@ export function SongPlayerScreen() {
           <PressableScale
             style={[styles.loopToggle, loop && styles.loopToggleActive]}
             onPress={() => setLoop((v) => !v)}
-            testID="loop-toggle"
+            testID="loop-toggle" accessibilityRole="button" accessibilityLabel="Loop the selected section"
           >
             <MaterialCommunityIcons
               name="repeat"
@@ -597,7 +597,7 @@ export function SongPlayerScreen() {
 
       {/* Play button */}
       <View style={styles.playButtonContainer}>
-        <PressableScale style={styles.playButton} onPress={handlePlay} testID="play-button">
+        <PressableScale style={styles.playButton} onPress={handlePlay} testID="play-button" accessibilityRole="button" accessibilityLabel="Start playing">
           <MaterialCommunityIcons name="play" size={28} color={COLORS.background} />
           <Text style={styles.playButtonText}>
             {selectedSectionIndex === null

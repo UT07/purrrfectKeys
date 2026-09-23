@@ -166,7 +166,7 @@ export function DailySessionScreen() {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            testID="daily-session-back"
+            testID="daily-session-back" accessibilityRole="button" accessibilityLabel="Go back"
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
           </PressableScale>
@@ -215,7 +215,7 @@ export function DailySessionScreen() {
             <PressableScale
               style={styles.assessmentBtn}
               onPress={handleAssessment}
-              testID="daily-session-assessment-cta"
+              testID="daily-session-assessment-cta" accessibilityRole="button" accessibilityLabel="Take the skill assessment"
             >
               <MaterialCommunityIcons name="clipboard-check-outline" size={18} color={COLORS.textPrimary} />
               <Text style={styles.assessmentBtnText}>Quick Assessment</Text>
@@ -272,7 +272,7 @@ export function DailySessionScreen() {
         <PressableScale
           style={styles.browseLessonsBtn}
           onPress={handleBrowseLessons}
-          testID="daily-session-browse-lessons"
+          testID="daily-session-browse-lessons" accessibilityRole="button" accessibilityLabel="Browse all lessons"
         >
           <MaterialCommunityIcons name="view-grid-outline" size={18} color={COLORS.textSecondary} />
           <Text style={styles.browseLessonsText}>Browse All Lessons</Text>
