@@ -308,6 +308,8 @@ function AccessoryGridItem({
   return (
     <PressableScale
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${accessory.name}${isEquipped ? ', equipped' : isOwned ? ', owned' : ''}`}
       style={[
         styles.gridItem,
         { borderColor: isSelected ? COLORS.textPrimary : isEquipped ? COLORS.primary : rarityColor },
@@ -374,16 +376,16 @@ function PreviewActionBar({
       </View>
 
       <View style={styles.actionBarButtons}>
-        <PressableScale style={styles.actionBarDismiss} onPress={onClear}>
+        <PressableScale style={styles.actionBarDismiss} onPress={onClear} accessibilityRole="button" accessibilityLabel="Dismiss">
           <MaterialCommunityIcons name="close" size={18} color={COLORS.textSecondary} />
         </PressableScale>
 
         {isEquipped ? (
-          <PressableScale style={styles.actionBarBtn} onPress={onUnequip}>
+          <PressableScale style={styles.actionBarBtn} onPress={onUnequip} accessibilityRole="button" accessibilityLabel="Unequip this item">
             <Text style={styles.actionBarBtnText}>Remove</Text>
           </PressableScale>
         ) : isOwned && canEquipItem ? (
-          <PressableScale style={[styles.actionBarBtn, styles.actionBarBtnPrimary]} onPress={onEquip}>
+          <PressableScale style={[styles.actionBarBtn, styles.actionBarBtnPrimary]} onPress={onEquip} accessibilityRole="button" accessibilityLabel="Equip this item">
             <Text style={styles.actionBarBtnTextPrimary}>Equip</Text>
           </PressableScale>
         ) : isOwned && !canEquipItem ? (
@@ -396,7 +398,7 @@ function PreviewActionBar({
         ) : (
           <PressableScale
             style={[styles.actionBarBtn, canAfford ? styles.actionBarBtnBuy : styles.actionBarBtnDisabled]}
-            onPress={canAfford ? onBuy : undefined}
+            onPress={canAfford ? onBuy : undefined} accessibilityRole="button" accessibilityLabel="Buy this item"
             disabled={!canAfford}
           >
             <MaterialCommunityIcons name="diamond-stone" size={14} color={canAfford ? COLORS.gemGold : COLORS.textMuted} />
@@ -515,7 +517,7 @@ export function CatStudioScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <PressableScale onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <PressableScale onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Go back">
           <MaterialCommunityIcons name="chevron-left" size={28} color={COLORS.textPrimary} />
         </PressableScale>
         <Text style={styles.title}>Cat Studio</Text>

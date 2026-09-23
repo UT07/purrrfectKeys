@@ -63,7 +63,7 @@ export function LoopRecorderWidget({
       <View style={styles.controlsRow}>
         {/* Record / Stop Recording */}
         <PressableScale
-          onPress={isRecording ? onStop : onRecord}
+          onPress={isRecording ? onStop : onRecord} accessibilityRole="button" accessibilityLabel="Start or stop recording"
           scaleDown={0.9}
           soundOnPress={false}
         >
@@ -79,7 +79,7 @@ export function LoopRecorderWidget({
         {/* Play / Stop Playback */}
         {hasRecording && !isRecording && (
           <PressableScale
-            onPress={isPlaying ? onStopPlayback : onPlay}
+            onPress={isPlaying ? onStopPlayback : onPlay} accessibilityRole="button" accessibilityLabel="Play or stop the recorded loop"
             scaleDown={0.9}
             soundOnPress={false}
           >
@@ -95,7 +95,7 @@ export function LoopRecorderWidget({
 
         {/* Clear */}
         {hasRecording && !isRecording && !isPlaying && (
-          <PressableScale onPress={onClear} scaleDown={0.9} soundOnPress={false}>
+          <PressableScale onPress={onClear} accessibilityRole="button" accessibilityLabel="Clear the recorded loop" scaleDown={0.9} soundOnPress={false}>
             <View style={[styles.btn, styles.btnClear]}>
               <MaterialCommunityIcons name="trash-can-outline" size={14} color={COLORS.textMuted} />
             </View>

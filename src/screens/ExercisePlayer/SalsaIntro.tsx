@@ -127,7 +127,7 @@ export function SalsaIntro({
           <Text style={styles.tier1Text}>{introText}</Text>
         </View>
         <PressableScale
-          onPress={handleDismiss}
+          onPress={handleDismiss} accessibilityRole="button" accessibilityLabel="Skip the introduction"
           style={styles.skipButtonSmall}
           testID="skip-button"
         >
@@ -185,7 +185,7 @@ export function SalsaIntro({
 
           {/* Ready / Let's go */}
           <PressableScale
-            onPress={handleDismiss}
+            onPress={handleDismiss} accessibilityRole="button" accessibilityLabel="Skip the introduction"
             style={styles.goButton}
             testID="go-button"
           >
@@ -195,7 +195,7 @@ export function SalsaIntro({
 
         {/* Skip always visible */}
         <PressableScale
-          onPress={handleDismiss}
+          onPress={handleDismiss} accessibilityRole="button" accessibilityLabel="Skip the introduction"
           style={styles.skipButton}
           testID="skip-button"
         >

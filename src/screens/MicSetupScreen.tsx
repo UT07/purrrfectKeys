@@ -64,7 +64,7 @@ export function MicSetupScreen() {
         style={styles.header}
       >
         <View style={styles.headerRow}>
-          <PressableScale onPress={handleGoBack} style={styles.backButton}>
+          <PressableScale onPress={handleGoBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
           </PressableScale>
           <Text style={styles.title}>Microphone Setup</Text>
@@ -94,13 +94,13 @@ export function MicSetupScreen() {
             <PressableScale
               style={styles.primaryButton}
               onPress={handleRequestPermission}
-              testID="mic-setup-enable"
+              testID="mic-setup-enable" accessibilityRole="button" accessibilityLabel="Allow microphone access"
             >
               <MaterialCommunityIcons name="microphone" size={20} color={COLORS.textPrimary} />
               <Text style={styles.primaryButtonText}>Enable Microphone</Text>
             </PressableScale>
 
-            <PressableScale style={styles.secondaryButton} onPress={handleGoBack}>
+            <PressableScale style={styles.secondaryButton} onPress={handleGoBack} accessibilityRole="button" accessibilityLabel="Not now">
               <Text style={styles.secondaryButtonText}>Not Now</Text>
             </PressableScale>
           </>
@@ -135,7 +135,7 @@ export function MicSetupScreen() {
             <PressableScale
               style={styles.primaryButton}
               onPress={handleEnableMic}
-              testID="mic-setup-done"
+              testID="mic-setup-done" accessibilityRole="button" accessibilityLabel="Use the microphone"
             >
               <Text style={styles.primaryButtonText}>Start Playing</Text>
             </PressableScale>
@@ -154,7 +154,7 @@ export function MicSetupScreen() {
               and grant microphone access for Purrrfect Keys.
             </Text>
 
-            <PressableScale style={styles.primaryButton} onPress={handleGoBack}>
+            <PressableScale style={styles.primaryButton} onPress={handleGoBack} accessibilityRole="button" accessibilityLabel="Done">
               <Text style={styles.primaryButtonText}>Continue with Touch</Text>
             </PressableScale>
           </>

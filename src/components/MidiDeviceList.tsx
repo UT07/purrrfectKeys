@@ -326,7 +326,7 @@ export const MidiDeviceList: React.FC<MidiDeviceListProps> = ({
 
     return (
       <PressableScale
-        onPress={() => handleSelectDevice(device)}
+        onPress={() => handleSelectDevice(device)} accessibilityRole="button" accessibilityLabel="Connect to this MIDI device"
         disabled={!selectable}
       >
         <View
@@ -419,7 +419,7 @@ export const MidiDeviceList: React.FC<MidiDeviceListProps> = ({
               {connected && !isPreferred && (
                 <PressableScale
                   style={[styles.actionButton, styles.actionButtonPrimary]}
-                  onPress={() => handleSetPreferred(device.id)}
+                  onPress={() => handleSetPreferred(device.id)} accessibilityRole="button" accessibilityLabel="Set as your preferred device"
                 >
                   <Text style={[styles.actionButtonText, styles.actionButtonTextLight]}>
                     Set as Default
@@ -429,7 +429,7 @@ export const MidiDeviceList: React.FC<MidiDeviceListProps> = ({
               {allowForget && (
                 <PressableScale
                   style={[styles.actionButton, styles.actionButtonDanger]}
-                  onPress={() => handleForgetDevice(device.id)}
+                  onPress={() => handleForgetDevice(device.id)} accessibilityRole="button" accessibilityLabel="Forget this device"
                 >
                   <Text style={[styles.actionButtonText, styles.actionButtonTextLight]}>
                     Forget

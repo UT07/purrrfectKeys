@@ -136,7 +136,7 @@ export function SongReferencePicker({
       return (
         <PressableScale
           style={styles.songRow}
-          onPress={() => handleSelect(item)}
+          onPress={() => handleSelect(item)} accessibilityRole="button" accessibilityLabel="Choose this song"
           testID={`song-pick-${item.id}`}
         >
           <View style={styles.songInfo}>
@@ -182,7 +182,7 @@ export function SongReferencePicker({
           style={styles.backdrop}
           scaleDown={1}
           soundOnPress={false}
-          onPress={onClose}
+          onPress={onClose} accessibilityRole="button" accessibilityLabel="Close"
         >
           <View style={styles.backdrop} />
         </PressableScale>
@@ -195,7 +195,7 @@ export function SongReferencePicker({
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Choose a Song</Text>
-            <PressableScale onPress={onClose} testID="song-picker-close">
+            <PressableScale onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" testID="song-picker-close">
               <MaterialCommunityIcons
                 name="close"
                 size={24}
@@ -224,7 +224,7 @@ export function SongReferencePicker({
             />
             {searchText.length > 0 && (
               <PressableScale
-                onPress={() => handleSearchChange('')}
+                onPress={() => handleSearchChange('')} accessibilityRole="button" accessibilityLabel="Clear search"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <MaterialCommunityIcons

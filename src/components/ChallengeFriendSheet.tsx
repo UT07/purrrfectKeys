@@ -135,7 +135,7 @@ export function ChallengeFriendSheet({
 
       return (
         <PressableScale
-          onPress={() => handleChallenge(item.uid, item.displayName)}
+          onPress={() => handleChallenge(item.uid, item.displayName)} accessibilityRole="button" accessibilityLabel="Challenge this friend"
           disabled={isSending || sentTo != null}
           style={styles.friendItem}
           testID={`challenge-friend-${item.uid}`}
@@ -168,7 +168,7 @@ export function ChallengeFriendSheet({
       onRequestClose={onClose}
     >
       <PressableScale
-        onPress={onClose}
+        onPress={onClose} accessibilityRole="button" accessibilityLabel="Close"
         style={styles.backdrop}
         scaleDown={1}
         soundOnPress={false}
@@ -184,7 +184,7 @@ export function ChallengeFriendSheet({
         <View style={styles.header}>
           <MaterialCommunityIcons name="sword-cross" size={24} color={COLORS.primary} />
           <Text style={styles.title}>Challenge a Friend</Text>
-          <PressableScale onPress={onClose} style={styles.closeButton} testID="challenge-sheet-close">
+          <PressableScale onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={styles.closeButton} testID="challenge-sheet-close">
             <MaterialCommunityIcons name="close" size={22} color={COLORS.textSecondary} />
           </PressableScale>
         </View>
@@ -203,7 +203,7 @@ export function ChallengeFriendSheet({
               return (
                 <PressableScale
                   key={amount}
-                  onPress={() => setSelectedStake(amount)}
+                  onPress={() => setSelectedStake(amount)} accessibilityRole="button" accessibilityLabel="Stake this many gems"
                   disabled={!canAfford}
                   style={[
                     styles.stakeChip,

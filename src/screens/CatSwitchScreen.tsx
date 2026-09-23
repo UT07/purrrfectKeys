@@ -225,7 +225,7 @@ function AbilityIconRow({ abilities, unlockedAbilities, catColor, onTap }: {
                 borderColor: isUnlocked ? glowColor(catColor, 0.38) : COLORS.cardBorder,
               },
             ]}
-            onPress={() => onTap(ability)}
+            onPress={() => onTap(ability)} accessibilityRole="button" accessibilityLabel="Show what this ability does"
           >
             <AbilityIcon
               abilityType={ability.effect.type}
@@ -308,13 +308,13 @@ function BuyModal({ visible, cat, gems, onConfirm, onCancel }: {
             {!canAfford && ` (need ${cost - gems} more)`}
           </Text>
           <View style={styles.modalButtons}>
-            <PressableScale style={styles.modalCancelBtn} onPress={onCancel}>
+            <PressableScale style={styles.modalCancelBtn} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Cancel">
               <Text style={styles.modalCancelText}>Cancel</Text>
             </PressableScale>
             {canAfford ? (
               <PressableScale
                 style={[styles.modalConfirmBtn, { backgroundColor: cat.color }]}
-                onPress={onConfirm}
+                onPress={onConfirm} accessibilityRole="button" accessibilityLabel="Confirm purchase"
               >
                 <MaterialCommunityIcons name="diamond-stone" size={16} color={COLORS.textPrimary} />
                 <Text style={styles.modalConfirmText}>Unlock</Text>
@@ -528,7 +528,7 @@ function CatCard({ cat, isSelected, isOwned, evolutionXp, stage, unlockedAbiliti
           actionButton.type === 'buy' && { backgroundColor: cat.color },
           actionButton.type === 'legendary' && { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: glowColor(COLORS.warning, 0.38) },
         ]}
-        onPress={handleSelect}
+        onPress={handleSelect} accessibilityRole="button" accessibilityLabel="Choose this cat as your companion"
         testID={`cat-switch-select-${cat.id}`}
       >
         {actionButton.type === 'selected' && (
@@ -704,7 +704,7 @@ export function CatSwitchScreen(): React.ReactElement {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            testID="cat-switch-back"
+            testID="cat-switch-back" accessibilityRole="button" accessibilityLabel="Go back"
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
           </PressableScale>
@@ -717,7 +717,7 @@ export function CatSwitchScreen(): React.ReactElement {
           {/* Customize button */}
           <PressableScale
             style={styles.customizeButton}
-            onPress={() => (navigation as any).navigate('CatStudio')}
+            onPress={() => (navigation as any).navigate('CatStudio')} accessibilityRole="button" accessibilityLabel="Open the cat studio"
           >
             <MaterialCommunityIcons name="palette" size={16} color={COLORS.primary} />
             <Text style={styles.customizeText}>Studio</Text>

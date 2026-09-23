@@ -132,7 +132,7 @@ export function MetronomeWidget({
     <View style={styles.container} testID={testID}>
       {/* BPM display with pulse */}
       <View style={styles.bpmRow}>
-        <PressableScale onPress={() => adjustBpm(-5)} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={() => adjustBpm(-5)} accessibilityRole="button" accessibilityLabel="Decrease tempo by 5 BPM" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.adjustBtn}>
             <MaterialCommunityIcons name="minus" size={14} color={COLORS.textPrimary} />
           </View>
@@ -143,7 +143,7 @@ export function MetronomeWidget({
           <Text style={styles.bpmLabel}>BPM</Text>
         </Animated.View>
 
-        <PressableScale onPress={() => adjustBpm(5)} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={() => adjustBpm(5)} accessibilityRole="button" accessibilityLabel="Increase tempo by 5 BPM" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.adjustBtn}>
             <MaterialCommunityIcons name="plus" size={14} color={COLORS.textPrimary} />
           </View>
@@ -166,7 +166,7 @@ export function MetronomeWidget({
 
       {/* Controls row */}
       <View style={styles.controlsRow}>
-        <PressableScale onPress={togglePlay} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={togglePlay} accessibilityRole="button" accessibilityLabel="Start or stop the metronome" scaleDown={0.9} soundOnPress={false}>
           <View style={[styles.playBtn, isPlaying && styles.playBtnActive]}>
             <MaterialCommunityIcons
               name={isPlaying ? 'stop' : 'play'}
@@ -176,13 +176,13 @@ export function MetronomeWidget({
           </View>
         </PressableScale>
 
-        <PressableScale onPress={handleTapTempo} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={handleTapTempo} accessibilityRole="button" accessibilityLabel="Tap to set the tempo" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.tapBtn}>
             <Text style={styles.tapText}>TAP</Text>
           </View>
         </PressableScale>
 
-        <PressableScale onPress={cycleTimeSig} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={cycleTimeSig} accessibilityRole="button" accessibilityLabel="Change the time signature" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.timeSigBtn}>
             <Text style={styles.timeSigText}>{timeSig}</Text>
           </View>

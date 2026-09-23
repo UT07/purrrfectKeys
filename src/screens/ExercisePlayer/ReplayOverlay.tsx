@@ -120,7 +120,7 @@ export function ReplayOverlay({
       <Animated.View style={[styles.backdrop, backdropAnimatedStyle]}>
         <PressableScale
           style={StyleSheet.absoluteFill}
-          onPress={onContinue}
+          onPress={onContinue} accessibilityRole="button" accessibilityLabel="Continue"
           soundOnPress={false}
           scaleDown={1}
         >
@@ -136,14 +136,14 @@ export function ReplayOverlay({
         <View style={styles.buttonRow}>
           <PressableScale
             style={styles.secondaryButton}
-            onPress={onShowCorrect}
+            onPress={onShowCorrect} accessibilityRole="button" accessibilityLabel="Show how it should sound"
           >
             <Text style={styles.secondaryButtonText}>Show me</Text>
           </PressableScale>
 
           <PressableScale
             style={styles.primaryButton}
-            onPress={onContinue}
+            onPress={onContinue} accessibilityRole="button" accessibilityLabel="Continue"
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
           </PressableScale>

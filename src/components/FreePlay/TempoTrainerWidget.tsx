@@ -88,13 +88,13 @@ export function TempoTrainerWidget({
       {/* Start BPM */}
       <View style={styles.bpmRow}>
         <Text style={styles.label}>Start</Text>
-        <PressableScale onPress={() => adjust('start', -5)} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={() => adjust('start', -5)} accessibilityRole="button" accessibilityLabel="Decrease starting tempo by 5 BPM" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.adjBtn}>
             <Text style={styles.adjText}>-</Text>
           </View>
         </PressableScale>
         <Text style={styles.bpmValue}>{startBpm}</Text>
-        <PressableScale onPress={() => adjust('start', 5)} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={() => adjust('start', 5)} accessibilityRole="button" accessibilityLabel="Increase starting tempo by 5 BPM" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.adjBtn}>
             <Text style={styles.adjText}>+</Text>
           </View>
@@ -104,13 +104,13 @@ export function TempoTrainerWidget({
       {/* Target BPM */}
       <View style={styles.bpmRow}>
         <Text style={styles.label}>Target</Text>
-        <PressableScale onPress={() => adjust('target', -5)} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={() => adjust('target', -5)} accessibilityRole="button" accessibilityLabel="Decrease target tempo by 5 BPM" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.adjBtn}>
             <Text style={styles.adjText}>-</Text>
           </View>
         </PressableScale>
         <Text style={styles.bpmValue}>{targetBpm}</Text>
-        <PressableScale onPress={() => adjust('target', 5)} scaleDown={0.9} soundOnPress={false}>
+        <PressableScale onPress={() => adjust('target', 5)} accessibilityRole="button" accessibilityLabel="Increase target tempo by 5 BPM" scaleDown={0.9} soundOnPress={false}>
           <View style={styles.adjBtn}>
             <Text style={styles.adjText}>+</Text>
           </View>
@@ -128,7 +128,7 @@ export function TempoTrainerWidget({
       {/* Controls */}
       <View style={styles.controlsRow}>
         <PressableScale
-          onPress={isRunning ? handleStop : handleStart}
+          onPress={isRunning ? handleStop : handleStart} accessibilityRole="button" accessibilityLabel="Start or stop the tempo trainer"
           scaleDown={0.9}
           soundOnPress={false}
         >
@@ -142,7 +142,7 @@ export function TempoTrainerWidget({
         </PressableScale>
 
         {isRunning && (
-          <PressableScale onPress={handleStep} scaleDown={0.9} soundOnPress={false}>
+          <PressableScale onPress={handleStep} accessibilityRole="button" accessibilityLabel="Step to the next tempo" scaleDown={0.9} soundOnPress={false}>
             <View style={styles.stepBtn}>
               <MaterialCommunityIcons name="skip-next" size={14} color={COLORS.textPrimary} />
               <Text style={styles.stepText}>+{increment}</Text>

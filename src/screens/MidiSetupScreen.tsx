@@ -272,7 +272,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
       >
       <View style={{ padding: SPACING.lg, paddingBottom: insets.bottom + SPACING.lg }}>
         {/* Back Button */}
-        <PressableScale onPress={handleGoBack} style={s.backButton} testID="midi-back">
+        <PressableScale onPress={handleGoBack} style={s.backButton} testID="midi-back" accessibilityRole="button" accessibilityLabel="Go back">
           <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.textPrimary} />
         </PressableScale>
 
@@ -281,7 +281,7 @@ export const MidiSetupScreen: React.FC<MidiSetupScreenProps> = ({
           <View style={s.errorBanner}>
             <MaterialCommunityIcons name="alert-circle-outline" size={18} color={COLORS.error} />
             <Text style={s.errorBannerText}>{errorMessage}</Text>
-            <PressableScale onPress={() => setErrorMessage(null)}>
+            <PressableScale onPress={() => setErrorMessage(null)} accessibilityRole="button" accessibilityLabel="Dismiss error">
               <MaterialCommunityIcons name="close" size={18} color={COLORS.textMuted} />
             </PressableScale>
           </View>
@@ -376,7 +376,7 @@ const WelcomeStep: React.FC<{ onStart: () => void }> = ({ onStart }) => {
         </Text>
       </View>
 
-      <PressableScale onPress={onStart} style={s.primaryButton} testID="midi-search-devices">
+      <PressableScale onPress={onStart} style={s.primaryButton} testID="midi-search-devices" accessibilityRole="button" accessibilityLabel="Search for MIDI devices">
         <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
         <Text style={s.primaryButtonText}>Search for Devices</Text>
       </PressableScale>
@@ -415,7 +415,7 @@ const SelectStep: React.FC<{
       {devices.map((device) => (
         <PressableScale
           key={device.id}
-          onPress={() => onSelect(device)}
+          onPress={() => onSelect(device)} accessibilityRole="button" accessibilityLabel="Connect to this MIDI device"
           style={[
             s.card,
             { marginBottom: SPACING.sm, flexDirection: 'row', alignItems: 'center' },
@@ -435,7 +435,7 @@ const SelectStep: React.FC<{
         </PressableScale>
       ))}
     </View>
-    <PressableScale onPress={onBack} style={s.secondaryButton}>
+    <PressableScale onPress={onBack} style={s.secondaryButton} accessibilityRole="button" accessibilityLabel="Back">
       <Text style={s.secondaryButtonText}>Back</Text>
     </PressableScale>
   </View>
@@ -511,24 +511,24 @@ const VerifyStep: React.FC<{
 
     <View style={{ gap: SPACING.md }}>
       {status === 'pending' && (
-        <PressableScale onPress={onStart} style={s.primaryButton}>
+        <PressableScale onPress={onStart} style={s.primaryButton} accessibilityRole="button" accessibilityLabel="Start the connection test">
           <MaterialCommunityIcons name="play" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
           <Text style={s.primaryButtonText}>Start Test</Text>
         </PressableScale>
       )}
       {status === 'success' && (
-        <PressableScale onPress={onSuccess} style={[s.primaryButton, { backgroundColor: COLORS.success }]}>
+        <PressableScale onPress={onSuccess} style={[s.primaryButton, { backgroundColor: COLORS.success }]} accessibilityRole="button" accessibilityLabel="Confirm it works">
           <MaterialCommunityIcons name="check" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
           <Text style={s.primaryButtonText}>Confirm & Continue</Text>
         </PressableScale>
       )}
       {status === 'failed' && (
-        <PressableScale onPress={onRetry} style={[s.primaryButton, { backgroundColor: COLORS.warning }]}>
+        <PressableScale onPress={onRetry} style={[s.primaryButton, { backgroundColor: COLORS.warning }]} accessibilityRole="button" accessibilityLabel="Try again">
           <MaterialCommunityIcons name="refresh" size={20} color={COLORS.textPrimary} style={{ marginRight: SPACING.sm }} />
           <Text style={s.primaryButtonText}>Try Again</Text>
         </PressableScale>
       )}
-      <PressableScale onPress={onBack} style={s.secondaryButton}>
+      <PressableScale onPress={onBack} style={s.secondaryButton} accessibilityRole="button" accessibilityLabel="Back">
         <Text style={s.secondaryButtonText}>Back</Text>
       </PressableScale>
     </View>
