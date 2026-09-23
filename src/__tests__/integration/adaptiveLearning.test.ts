@@ -88,7 +88,10 @@ describe('Adaptive Learning Integration', () => {
       const profile = makeProfile();
       const plan = generateSessionPlan(profile, []);
 
-      expect(plan.warmUp.length).toBeGreaterThan(0);
+      // A complete beginner deliberately gets NO warm-up: generateWarmUp falls
+      // back to the root skill, which resolves to the same exercise the lesson
+      // serves, so the learner was being handed one exercise twice. HomeScreen
+      // renders null for an empty section, so nothing orphaned appears.
       expect(plan.lesson.length).toBeGreaterThan(0);
       expect(plan.challenge.length).toBeGreaterThan(0);
       expect(plan.reasoning.length).toBeGreaterThanOrEqual(3);

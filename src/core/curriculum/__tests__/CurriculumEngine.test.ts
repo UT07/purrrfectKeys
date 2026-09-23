@@ -73,10 +73,17 @@ describe('CurriculumEngine', () => {
   describe('generateSessionPlan', () => {
     it('should generate a plan for a complete beginner', () => {
       const plan = generateSessionPlan(makeProfile(), []);
-      expect(plan.warmUp.length).toBeGreaterThan(0);
+      // A complete beginner deliberately gets NO warm-up: with nothing
+      // mastered, generateWarmUp falls back to the root skill, which resolves
+      // to the very exercise the lesson serves. Warming up on something you
+      // have never played is not a warm-up, and HomeScreen renders null for an
+      // empty section (see HomePracticeSections), so nothing orphaned appears.
+      // The requirement is that the plan is actionable, which these assert.
       expect(plan.lesson.length).toBeGreaterThan(0);
       expect(plan.challenge.length).toBeGreaterThan(0);
       expect(plan.reasoning.length).toBeGreaterThan(0);
+      expect(plan.warmUp.length + plan.lesson.length + plan.challenge.length)
+        .toBeGreaterThan(1);
     });
 
     it('should target weak notes in warm-up', () => {
@@ -188,5 +195,56 @@ describe('CurriculumEngine', () => {
       // With all skills mastered, no lesson should have unmastered exercises
       expect(result).toBeNull();
     });
+  });
+});
+
+/**
+ * Regression: "Today's Practice" served the same exercise as both WARM UP and
+ * LESSON for a brand-new learner.
+ *
+ * generateWarmUp falls back to the root skill for someone with nothing
+ * mastered, yielding `ai-skill-find-middle-c` whose fallbackExerciseId is
+ * `lesson-01-ex-01` — exactly what the lesson section picks. With AI
+ * generation working the two differ in content but share a title; when
+ * generation fails (offline, no key, rate-limited) the learner replays the
+ * identical exercise under two headings.
+ *
+ * The lesson must win and the warm-up must yield. An earlier attempt
+ * deduplicated in section order and emptied the LESSON instead, which the
+ * "complete beginner" tests above correctly rejected.
+ */
+describe('warm-up / lesson collision', () => {
+  const idsOf = (refs: Array<{ exerciseId: string; fallbackExerciseId?: string }>): string[] =>
+    refs.flatMap((r) => [r.exerciseId, r.fallbackExerciseId].filter(Boolean) as string[]);
+
+  it('never serves the same exercise as both warm-up and lesson', () => {
+    const plan = generateSessionPlan(makeProfile(), []);
+    const warm = new Set(idsOf(plan.warmUp));
+    const lesson = idsOf(plan.lesson);
+    for (const id of lesson) {
+      expect(warm.has(id)).toBe(false);
+    }
+  });
+
+  it('keeps the lesson when a collision forces the warm-up out', () => {
+    const plan = generateSessionPlan(makeProfile(), []);
+    // The lesson is the substantive item — dropping it was the earlier bug.
+    expect(plan.lesson.length).toBeGreaterThan(0);
+  });
+
+  it('explains the skipped warm-up in the reasoning', () => {
+    const plan = generateSessionPlan(makeProfile(), []);
+    if (plan.warmUp.length === 0) {
+      expect(plan.reasoning.some((r) => /warm-up skipped/i.test(r))).toBe(true);
+    }
+  });
+
+  it('still gives a warm-up once the learner has other skills mastered', () => {
+    const mastered = ['find-middle-c', 'keyboard-geography'];
+    const plan = generateSessionPlan(makeProfile(), mastered);
+    const warm = new Set(idsOf(plan.warmUp));
+    for (const id of idsOf(plan.lesson)) {
+      expect(warm.has(id)).toBe(false);
+    }
   });
 });

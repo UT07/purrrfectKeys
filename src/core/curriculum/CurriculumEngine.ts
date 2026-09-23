@@ -245,6 +245,36 @@ export function generateSessionPlan(
     }
   }
 
+  // Drop a warm-up that resolves to the same exercise as the lesson.
+  //
+  // generateWarmUp falls back to the root skill (find-middle-c) for a learner
+  // with nothing mastered yet, producing `ai-skill-find-middle-c` whose
+  // fallbackExerciseId is `lesson-01-ex-01` — which is exactly what the lesson
+  // section picks. When AI generation succeeds the two differ in content (but
+  // share a title); when it fails, and offline-first means it often does, the
+  // learner is served the identical exercise twice under two headings.
+  //
+  // The LESSON is the substantive item, so the warm-up yields — not the other
+  // way round. An earlier attempt deduplicated in section order and emptied the
+  // lesson instead, which three existing tests correctly rejected.
+  //
+  // Warming up on a skill you have never played is pedagogically wrong anyway,
+  // so dropping it costs a beginner nothing.
+  const lessonExerciseIds = new Set<string>();
+  for (const ref of lesson) {
+    lessonExerciseIds.add(ref.exerciseId);
+    if (ref.fallbackExerciseId) lessonExerciseIds.add(ref.fallbackExerciseId);
+  }
+  const warmUpCollides = (ref: ExerciseRef): boolean =>
+    lessonExerciseIds.has(ref.exerciseId) ||
+    (ref.fallbackExerciseId != null && lessonExerciseIds.has(ref.fallbackExerciseId));
+
+  const dedupedWarmUp = warmUp.filter((ref) => !warmUpCollides(ref));
+  if (dedupedWarmUp.length !== warmUp.length) {
+    reasoning.push('Warm-up skipped: it resolved to the same exercise as today\u2019s lesson');
+  }
+  warmUp = dedupedWarmUp;
+
   return { sessionType, warmUp, lesson, challenge, songs, reasoning, endgameTheme, gentleReentry };
 }
 
