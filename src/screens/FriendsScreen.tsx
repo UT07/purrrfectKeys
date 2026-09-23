@@ -124,10 +124,10 @@ function PendingRequestRow({
           <ActivityIndicator color={COLORS.primary} size="small" />
         ) : (
           <>
-            <PressableScale style={styles.acceptButton} onPress={onAccept}>
+            <PressableScale style={styles.acceptButton} onPress={onAccept} accessibilityRole="button" accessibilityLabel="Accept friend request">
               <MaterialCommunityIcons name="check" size={18} color={COLORS.textPrimary} />
             </PressableScale>
-            <PressableScale style={styles.declineButton} onPress={onDecline}>
+            <PressableScale style={styles.declineButton} onPress={onDecline} accessibilityRole="button" accessibilityLabel="Decline friend request">
               <MaterialCommunityIcons name="close" size={18} color={COLORS.textSecondary} />
             </PressableScale>
           </>
@@ -165,7 +165,7 @@ function SentRequestRow({
         {isProcessing ? (
           <ActivityIndicator color={COLORS.primary} size="small" />
         ) : (
-          <PressableScale style={styles.cancelButton} onPress={onCancel}>
+          <PressableScale style={styles.cancelButton} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Cancel challenge">
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </PressableScale>
         )}
@@ -238,7 +238,7 @@ function AcceptedFriendRow({
       ) : (
         <PressableScale
           style={styles.challengeButton}
-          onPress={handleChallenge}
+          onPress={handleChallenge} accessibilityRole="button" accessibilityLabel="Challenge this friend"
         >
           <MaterialCommunityIcons name="sword-cross" size={16} color={COLORS.primaryLight} />
           <Text style={styles.challengeButtonText}>Challenge</Text>
@@ -483,7 +483,7 @@ export function FriendsScreen(): React.JSX.Element {
           </Text>
           <PressableScale
             style={styles.emptyActionButton}
-            onPress={() => navigation.navigate('AddFriend')}
+            onPress={() => navigation.navigate('AddFriend')} accessibilityRole="button" accessibilityLabel="Add a friend"
           >
             <MaterialCommunityIcons name="account-plus" size={20} color={COLORS.textPrimary} />
             <Text style={styles.emptyActionText}>Add Friend</Text>
@@ -610,7 +610,7 @@ export function FriendsScreen(): React.JSX.Element {
       {/* Header */}
       <View style={styles.header}>
         <PressableScale
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
           style={styles.backButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           testID="friends-back"
@@ -631,7 +631,7 @@ export function FriendsScreen(): React.JSX.Element {
       <View style={styles.tabBar}>
         <PressableScale
           style={styles.tab}
-          onPress={() => setActiveTab('friends')}
+          onPress={() => setActiveTab('friends')} accessibilityRole="button" accessibilityLabel="Friends"
         >
           <View style={styles.tabInner}>
             <MaterialCommunityIcons
@@ -657,7 +657,7 @@ export function FriendsScreen(): React.JSX.Element {
         </PressableScale>
         <PressableScale
           style={styles.tab}
-          onPress={() => setActiveTab('activity')}
+          onPress={() => setActiveTab('activity')} accessibilityRole="button" accessibilityLabel="Activity"
         >
           <View style={styles.tabInner}>
             <MaterialCommunityIcons

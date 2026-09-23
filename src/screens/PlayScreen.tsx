@@ -652,7 +652,7 @@ export function PlayScreen(): React.JSX.Element {
       <View style={[styles.container, safeContainerStyle]} testID="play-screen">
         <GradientMeshBackground accent="exercise" />
         <View style={styles.topBar}>
-          <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} testID="freeplay-back">
+          <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} testID="freeplay-back" accessibilityRole="button" accessibilityLabel="Go back">
             <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
           </PressableScale>
           <View style={styles.titleArea}>
@@ -661,7 +661,7 @@ export function PlayScreen(): React.JSX.Element {
               {isLoadingSong ? 'Loading...' : songLoadError ?? 'Song unavailable'}
             </Text>
           </View>
-          <PressableScale onPress={closeSongMode}>
+          <PressableScale onPress={closeSongMode} accessibilityRole="button" accessibilityLabel="Exit song mode">
             <MaterialCommunityIcons name="close" size={20} color={COLORS.textMuted} />
           </PressableScale>
         </View>
@@ -669,7 +669,7 @@ export function PlayScreen(): React.JSX.Element {
           {isLoadingSong ? (
             <Text style={styles.loadingText}>Loading song...</Text>
           ) : (
-            <PressableScale onPress={closeSongMode}>
+            <PressableScale onPress={closeSongMode} accessibilityRole="button" accessibilityLabel="Exit song mode">
               <Text style={styles.errorText}>{songLoadError ?? 'Could not load.'} Tap to dismiss.</Text>
             </PressableScale>
           )}
@@ -683,7 +683,7 @@ export function PlayScreen(): React.JSX.Element {
       <GradientMeshBackground accent="exercise" />
       {/* ── Top Bar ──────────────────────────────────────────────────────── */}
       <LinearGradient colors={[COLORS.surfaceElevated, COLORS.surface]} style={styles.topBar}>
-        <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} testID="freeplay-back">
+        <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} testID="freeplay-back" accessibilityRole="button" accessibilityLabel="Go back">
           <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.textPrimary} />
         </PressableScale>
 
@@ -722,21 +722,21 @@ export function PlayScreen(): React.JSX.Element {
         {/* Song controls */}
         {songMode ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-            <PressableScale onPress={toggleSongPlayback} testID="song-play-pause">
+            <PressableScale onPress={toggleSongPlayback} accessibilityRole="button" accessibilityLabel="Play or pause the song" testID="song-play-pause">
               <MaterialCommunityIcons
                 name={songPlaying ? 'pause-circle' : 'play-circle'}
                 size={24}
                 color={COLORS.primary}
               />
             </PressableScale>
-            <PressableScale onPress={closeSongMode}>
+            <PressableScale onPress={closeSongMode} accessibilityRole="button" accessibilityLabel="Exit song mode">
               <MaterialCommunityIcons name="close-circle" size={20} color={COLORS.textMuted} />
             </PressableScale>
           </View>
         ) : (
           <PressableScale
             style={styles.loadSongBtn}
-            onPress={() => setShowSongPicker(true)}
+            onPress={() => setShowSongPicker(true)} accessibilityRole="button" accessibilityLabel="Choose a song"
             testID="freeplay-load-song"
           >
             <MaterialCommunityIcons name="music-note-plus" size={16} color={COLORS.primary} />
@@ -753,7 +753,7 @@ export function PlayScreen(): React.JSX.Element {
 
         {/* Portrait toggle */}
         <PressableScale
-          onPress={() => setIsPortrait((p) => !p)}
+          onPress={() => setIsPortrait((p) => !p)} accessibilityRole="button" accessibilityLabel="Switch between portrait and landscape keyboard"
           scaleDown={0.9}
           soundOnPress={false}
           testID="freeplay-orientation-toggle"
@@ -828,7 +828,7 @@ export function PlayScreen(): React.JSX.Element {
                 )}
                 {analysis.suggestedDrillType && (
                   <PressableScale
-                    onPress={handleGenerateDrill}
+                    onPress={handleGenerateDrill} accessibilityRole="button" accessibilityLabel="Generate a practice drill from what you played"
                     scaleDown={0.95}
                     soundOnPress={false}
                     testID="freeplay-generate-drill"
@@ -852,7 +852,7 @@ export function PlayScreen(): React.JSX.Element {
           {!songMode && (
             <View style={styles.octaveBar} testID="freeplay-octave-bar">
               <PressableScale
-                onPress={handleOctaveDown}
+                onPress={handleOctaveDown} accessibilityRole="button" accessibilityLabel="Shift keyboard down one octave"
                 disabled={!canShiftDown}
                 scaleDown={0.85}
                 soundOnPress={false}
@@ -868,7 +868,7 @@ export function PlayScreen(): React.JSX.Element {
               </PressableScale>
               <Text style={styles.octaveLabelText}>{currentOctaveLabel}</Text>
               <PressableScale
-                onPress={handleOctaveUp}
+                onPress={handleOctaveUp} accessibilityRole="button" accessibilityLabel="Shift keyboard up one octave"
                 disabled={!canShiftUp}
                 scaleDown={0.85}
                 soundOnPress={false}

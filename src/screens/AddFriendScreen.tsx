@@ -497,7 +497,7 @@ export function AddFriendScreen(): React.JSX.Element {
         <GradientMeshBackground accent="social" />
         <View style={styles.header}>
           <PressableScale
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
             style={styles.backButton}
             testID="add-friend-back"
           >
@@ -519,7 +519,7 @@ export function AddFriendScreen(): React.JSX.Element {
           </Text>
           <PressableScale
             style={styles.authGateButton}
-            onPress={() => navigation.navigate('Account')}
+            onPress={() => navigation.navigate('Account')} accessibilityRole="button" accessibilityLabel="Open account settings"
           >
             <Text style={styles.authGateButtonText}>Sign In</Text>
           </PressableScale>
@@ -536,7 +536,7 @@ export function AddFriendScreen(): React.JSX.Element {
         {/* Header */}
         <View style={styles.header}>
           <PressableScale
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back"
             style={styles.backButton}
             testID="add-friend-back"
           >
@@ -569,14 +569,14 @@ export function AddFriendScreen(): React.JSX.Element {
           <View style={styles.toggleRow}>
             <PressableScale
               style={[styles.toggleTab, showQR && styles.toggleTabActive]}
-              onPress={() => setShowQR(true)}
+              onPress={() => setShowQR(true)} accessibilityRole="button" accessibilityLabel="Show your QR code"
             >
               <MaterialCommunityIcons name="qrcode" size={16} color={showQR ? COLORS.textPrimary : COLORS.textMuted} />
               <Text style={[styles.toggleTabText, showQR && styles.toggleTabTextActive]}>QR Code</Text>
             </PressableScale>
             <PressableScale
               style={[styles.toggleTab, !showQR && styles.toggleTabActive]}
-              onPress={() => setShowQR(false)}
+              onPress={() => setShowQR(false)} accessibilityRole="button" accessibilityLabel="Hide your QR code"
             >
               <MaterialCommunityIcons name="text-short" size={16} color={!showQR ? COLORS.textPrimary : COLORS.textMuted} />
               <Text style={[styles.toggleTabText, !showQR && styles.toggleTabTextActive]}>Text</Text>
@@ -615,7 +615,7 @@ export function AddFriendScreen(): React.JSX.Element {
           <View style={styles.codeActions}>
             <PressableScale
               style={[styles.copyButton, copied && styles.actionButtonActive]}
-              onPress={handleCopy}
+              onPress={handleCopy} accessibilityRole="button" accessibilityLabel="Copy your friend code"
               disabled={!friendCode}
             >
               <MaterialCommunityIcons
@@ -630,7 +630,7 @@ export function AddFriendScreen(): React.JSX.Element {
 
             <PressableScale
               style={styles.shareButton}
-              onPress={handleShare}
+              onPress={handleShare} accessibilityRole="button" accessibilityLabel="Share your friend code"
               disabled={!friendCode}
             >
               <MaterialCommunityIcons name="share-variant" size={18} color={COLORS.textPrimary} />
@@ -656,7 +656,7 @@ export function AddFriendScreen(): React.JSX.Element {
           {/* Scan QR Code button */}
           <PressableScale
             style={styles.scanQrButton}
-            onPress={handleOpenScanner}
+            onPress={handleOpenScanner} accessibilityRole="button" accessibilityLabel="Scan a friend's QR code"
             testID="scan-qr-button"
           >
             <View style={styles.addButtonContent}>
@@ -703,7 +703,7 @@ export function AddFriendScreen(): React.JSX.Element {
               styles.addButton,
               (inputCode.trim().length < 3 || isLooking) && styles.addButtonDisabled,
             ]}
-            onPress={handleAddFriend}
+            onPress={handleAddFriend} accessibilityRole="button" accessibilityLabel="Add friend by code"
             disabled={inputCode.trim().length < 3 || isLooking}
           >
             {isLooking ? (
@@ -748,7 +748,7 @@ export function AddFriendScreen(): React.JSX.Element {
           {!contactsSearched ? (
             <PressableScale
               style={styles.contactsButton}
-              onPress={handleFindFromContacts}
+              onPress={handleFindFromContacts} accessibilityRole="button" accessibilityLabel="Find friends in your contacts"
               disabled={isSearchingContacts}
             >
               {isSearchingContacts ? (
@@ -802,7 +802,7 @@ export function AddFriendScreen(): React.JSX.Element {
                     ) : (
                       <PressableScale
                         style={styles.contactAddButton}
-                        onPress={() => handleAddContactFriend(match)}
+                        onPress={() => handleAddContactFriend(match)} accessibilityRole="button" accessibilityLabel="Add this contact as a friend"
                         disabled={isSending}
                       >
                         {isSending ? (
@@ -991,7 +991,7 @@ function QRScannerModal({
           <View style={scannerStyles.scanError}>
             <MaterialCommunityIcons name="alert-circle-outline" size={20} color={COLORS.error} />
             <Text style={scannerStyles.scanErrorText}>{error}</Text>
-            <PressableScale onPress={onClearError} style={scannerStyles.retryButton}>
+            <PressableScale onPress={onClearError} style={scannerStyles.retryButton} accessibilityRole="button" accessibilityLabel="Try scanning again">
               <Text style={scannerStyles.retryButtonText}>Try Again</Text>
             </PressableScale>
           </View>

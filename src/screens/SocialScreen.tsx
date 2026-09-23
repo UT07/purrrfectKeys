@@ -68,7 +68,7 @@ function AuthGate({ onSignIn }: { onSignIn: () => void }): React.JSX.Element {
           Sign in to unlock leagues, friends, and challenges
         </Text>
         <View style={styles.authGateCtaCard}>
-          <PressableScale onPress={onSignIn} style={styles.authGateButton}>
+          <PressableScale onPress={onSignIn} style={styles.authGateButton} accessibilityRole="button" accessibilityLabel="Sign in to use social features">
             <MaterialCommunityIcons name="login" size={20} color={COLORS.textPrimary} />
             <Text style={styles.authGateButtonText}>Sign In</Text>
           </PressableScale>
@@ -144,7 +144,7 @@ function LeagueCard(): React.JSX.Element {
           Compete with other players in a weekly XP league!
         </Text>
         <PressableScale
-          onPress={handleJoinLeague}
+          onPress={handleJoinLeague} accessibilityRole="button" accessibilityLabel="Join this week\u2019s league"
           style={[styles.joinLeagueButton, styles.joinLeagueButtonGlow, isJoining && styles.joinLeagueButtonDisabled]}
           testID="social-join-league"
         >
@@ -228,7 +228,7 @@ function LeagueCard(): React.JSX.Element {
       </View>
 
       <PressableScale
-        onPress={handleViewLeaderboard}
+        onPress={handleViewLeaderboard} accessibilityRole="button" accessibilityLabel="View the league leaderboard"
         style={[styles.actionButton, { backgroundColor: glowColor(config.color, 0.13) }]}
         testID="social-view-leaderboard"
       >
@@ -315,7 +315,7 @@ function FriendsSection(): React.JSX.Element {
 
       <View style={styles.friendsActions}>
         <PressableScale
-          onPress={handleViewFriends}
+          onPress={handleViewFriends} accessibilityRole="button" accessibilityLabel="View your friends"
           style={[styles.actionButton, styles.friendsActionButton]}
           testID="social-view-friends"
         >
@@ -330,7 +330,7 @@ function FriendsSection(): React.JSX.Element {
         </PressableScale>
 
         <PressableScale
-          onPress={handleAddFriend}
+          onPress={handleAddFriend} accessibilityRole="button" accessibilityLabel="Add a friend"
           style={[styles.actionButton, styles.addFriendButton]}
           testID="social-add-friend"
         >
