@@ -3008,7 +3008,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
       {isDemoPlaying && (
         <View style={styles.demoBanner} testID="demo-banner">
           <Text style={styles.demoBannerText}>Watching Demo</Text>
-          <PressableScale onPress={stopDemo} style={styles.tryNowButton} soundOnPress={false}>
+          <PressableScale onPress={stopDemo} style={styles.tryNowButton} soundOnPress={false} accessibilityRole="button" accessibilityLabel="Stop the demo and play now">
             <Text style={styles.tryNowButtonText}>Try Now</Text>
           </PressableScale>
         </View>
@@ -3142,7 +3142,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
 
             {/* Demo button */}
             <PressableScale
-              onPress={isDemoPlaying ? stopDemo : startDemo}
+              onPress={isDemoPlaying ? stopDemo : startDemo} accessibilityRole="button" accessibilityLabel="Play or stop the demo"
               style={[styles.speedPill, isDemoPlaying && styles.speedPillActive]}
               testID="demo-button"
               soundOnPress={false}
@@ -3155,7 +3155,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
             {/* Ghost notes toggle — visible after demo watched */}
             {demoWatched && (
               <PressableScale
-                onPress={() => useExerciseStore.getState().setGhostNotesEnabled(!ghostNotesEnabled)}
+                onPress={() => useExerciseStore.getState().setGhostNotesEnabled(!ghostNotesEnabled)} accessibilityRole="button" accessibilityLabel="Ghost notes" accessibilityState={{ selected: ghostNotesEnabled }}
                 style={[styles.speedPill, ghostNotesEnabled && styles.speedPillActive]}
                 testID="ghost-toggle"
                 soundOnPress={false}
@@ -3424,7 +3424,7 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
           {/* Replay top bar */}
           <View style={styles.replayTopBar}>
             <PressableScale
-              onPress={() => stopReplay(false)}
+              onPress={() => stopReplay(false)} accessibilityRole="button" accessibilityLabel="Exit replay"
               style={styles.replayExitButton}
               testID="replay-exit"
               soundOnPress={false}
@@ -3445,6 +3445,8 @@ export const ExercisePlayer: React.FC<ExercisePlayerProps> = ({
                 return (
                   <PressableScale
                     key={section.index}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Replay section ${section.index + 1}${hasIssues ? ', has issues' : ''}`}
                     onPress={() => {
                       setReplaySectionIndex(section.index);
                       demoServiceRef.current.stop();

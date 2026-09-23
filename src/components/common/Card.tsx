@@ -12,6 +12,8 @@ export interface CardProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  /** Forwarded to the touchable when onPress is set, so callers can describe the card. */
+  accessibilityLabel?: string;
   elevated?: boolean;
   padding?: 'none' | 'small' | 'medium' | 'large';
   testID?: string;
@@ -33,6 +35,7 @@ export const Card = React.memo(
     children,
     style,
     onPress,
+    accessibilityLabel,
     elevated = false,
     padding = 'medium',
     testID,
@@ -55,7 +58,11 @@ export const Card = React.memo(
 
     if (onPress) {
       return (
-        <PressableScale onPress={onPress}>
+        <PressableScale
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+        >
           {Content}
         </PressableScale>
       );

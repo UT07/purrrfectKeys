@@ -22,6 +22,8 @@ export interface GameCardProps {
   rarity: RarityLevel;
   children: React.ReactNode;
   onPress?: () => void;
+  /** Forwarded to the touchable when onPress is set, so callers can describe the card. */
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
@@ -30,6 +32,7 @@ export function GameCard({
   rarity,
   children,
   onPress,
+  accessibilityLabel,
   style,
   testID,
 }: GameCardProps): React.JSX.Element {
@@ -48,6 +51,8 @@ export function GameCard({
     return (
       <PressableScale
         onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
         glowOnPress
         glowColor={rarityConfig.borderColor}
         testID={testID}
